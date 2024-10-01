@@ -37,6 +37,8 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -221,10 +223,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     title: oldModel.title,
     uid: oldModel.uid,
     version: oldModel.version,
-    body: new SceneGridLayout({
-      isLazy: dto.preload ? false : true,
-      children: createSceneObjectsForPanels(oldModel.panels),
-      $behaviors: [trackIfEmpty],
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        isLazy: dto.preload ? false : true,
+        children: createSceneObjectsForPanels(oldModel.panels),
+        $behaviors: [trackIfEmpty],
+      }),
     }),
     $timeRange: new SceneTimeRange({
       from: oldModel.time.from,
@@ -275,6 +279,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   const titleItems: SceneObject[] = [];
 
+  if (config.featureToggles.angularDeprecationUI) {
+    titleItems.push(new AngularDeprecation());
+  }
   titleItems.push(
     new VizPanelLinks({
       rawLinks: panel.links,

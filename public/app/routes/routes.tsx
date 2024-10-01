@@ -5,7 +5,6 @@ import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPag
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
@@ -336,7 +335,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users/edit/:id',
-      component: UserAdminPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
+      ),
     },
     {
       path: '/admin/orgs',

@@ -41,7 +41,7 @@ const injectedRtkApi = api.injectEndpoints({
     getShapshotList: build.query<GetShapshotListApiResponse, GetShapshotListApiArg>({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshots`,
-        params: { page: queryArg.page, limit: queryArg.limit },
+        params: { page: queryArg.page, limit: queryArg.limit, sort: queryArg.sort },
       }),
     }),
     getCloudMigrationToken: build.query<GetCloudMigrationTokenApiResponse, GetCloudMigrationTokenApiArg>({
@@ -114,6 +114,8 @@ export type GetShapshotListApiArg = {
   limit?: number;
   /** Session UID of a session */
   uid: string;
+  /** Sort with value latest to return results sorted in descending order. */
+  sort?: string;
 };
 export type GetCloudMigrationTokenApiResponse = /** status 200 (empty) */ GetAccessTokenResponseDto;
 export type GetCloudMigrationTokenApiArg = void;
@@ -155,6 +157,7 @@ export type CreateSnapshotResponseDto = {
 };
 export type MigrateDataResponseItemDto = {
   message?: string;
+  name?: string;
   refId: string;
   status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';
   type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER' | 'LIBRARY_ELEMENT';

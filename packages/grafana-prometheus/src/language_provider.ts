@@ -6,8 +6,12 @@ import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
   AbstractQuery,
+  AdHocVariableFilter,
   getDefaultTimeRange,
   LanguageProvider,
+  Scope,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
@@ -407,6 +411,64 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(key)));
     return DEFAULT_KEYS.reduce((acc, key, i) => ({ ...acc, [key]: values[i] }), {});
   });
+
+  /**
+   * Fetch labels or values for a label based on the queries, scopes, filters and time range
+   * @param timeRange
+   * @param queries
+   * @param scopes
+   * @param adhocFilters
+   * @param labelName
+   * @param limit
+   * @param requestId
+   */
+  fetchSuggestions = async (
+    timeRange?: TimeRange,
+    queries?: PromQuery[],
+    scopes?: Scope[],
+    adhocFilters?: AdHocVariableFilter[],
+    labelName?: string,
+    limit?: number,
+    requestId?: string
+  ): Promise<string[]> => {
+    if (timeRange) {
+      this.timeRange = timeRange;
+    }
+
+    const url = '/suggestions';
+    const timeParams = this.datasource.getAdjustedInterval(this.timeRange);
+    const value = await this.request(
+      url,
+      [],
+      {
+        labelName,
+        queries: queries?.map((q) => q.expr),
+        scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
+          acc.push(...scope.spec.filters);
+
+          return acc;
+        }, []),
+        adhocFilters: adhocFilters?.map((filter) => ({
+          key: filter.key,
+          operator: scopeFilterOperatorMap[filter.operator],
+          value: filter.value,
+          values: filter.values,
+        })),
+        limit,
+        ...timeParams,
+      },
+      {
+        ...(requestId && { requestId }),
+        headers: {
+          ...this.getDefaultCacheHeaders()?.headers,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }
+    );
+
+    return value ?? [];
+  };
 }
 
 function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {
