@@ -27,7 +27,7 @@ func (is indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginRe
 	return nil, nil
 }
 
-func (is indexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
+func (is *indexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
 	if req.Key == nil {
 		is.index = NewIndex(is.s, Opts{})
 		err := is.index.Init(ctx)
