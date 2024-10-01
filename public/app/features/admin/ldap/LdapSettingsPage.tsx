@@ -15,7 +15,6 @@ import {
   Input,
   LinkButton,
   Menu,
-  Modal,
   Stack,
   Text,
   TextLink,
@@ -98,7 +97,6 @@ const emptySettings: LdapPayload = {
 export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [mapKeyCertConfigured, setMapKeyCertConfigured] = useState<MapKeyCertConfigured>({
     // values
@@ -438,26 +436,6 @@ export const LdapSettingsPage = () => {
           </form>
         </FormProvider>
       </Page.Contents>
-      <Modal
-        title={t('ldap-settings-page.discard-modal.title', 'Leave LDAP configuration?')}
-        isOpen={isModalOpen}
-        onDismiss={() => setIsModalOpen(false)}
-      >
-        <Stack direction={'column'} gap={2}>
-          <Trans i18nKey="ldap-settings-page.discard-modal.description">
-            Are you sure you want to abandon the changes you&lsquo;ve made to the LDAP configuration? All changes will
-            be lost.
-          </Trans>
-          <Stack direction="row" gap={2} justifyContent="flex-end">
-            <Button variant="secondary">
-              <Trans i18nKey="ldap-settings-page.discard-modal.cancel-button">Back to editing</Trans>
-            </Button>
-            <Button variant="destructive">
-              <Trans i18nKey="ldap-settings-page.discard-modal.discard-button">Abandon LDAP</Trans>
-            </Button>
-          </Stack>
-        </Stack>
-      </Modal>
     </Page>
   );
 };
