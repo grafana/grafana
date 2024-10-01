@@ -18,15 +18,19 @@ var _ openfgav1.OpenFGAServiceServer = (*Server)(nil)
 
 func NewServer(sql legacysql.LegacyDatabaseProvider, logger log.Logger) *Server {
 	return &Server{
-		store:  store.NewStore(sql),
-		logger: logger,
+		store:           store.NewStore(sql),
+		logger:          logger,
+		identityCache:   newCache[store.Identity](),
+		permissionCache: newCache[[]accesscontrol.Permission](),
 	}
 }
 
 type Server struct {
 	openfgav1.UnimplementedOpenFGAServiceServer
-	logger log.Logger
-	store  store.LegacyStore
+	logger          log.Logger
+	store           store.LegacyStore
+	identityCache   *cache[store.Identity]
+	permissionCache *cache[[]accesscontrol.Permission]
 }
 
 // FIXME: error handling
@@ -42,23 +46,18 @@ func (s *Server) Check(ctx context.Context, r *openfgav1.CheckRequest) (*openfga
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	s.logger.Info("check req", "id", r.TupleKey.User, "relation", r.TupleKey.Relation, "object", r.TupleKey.Object)
+	s.logger.Debug("check req", "id", r.TupleKey.User, "relation", r.TupleKey.Relation, "object", r.TupleKey.Object)
 
-	// FIXME: cache
-	res, err := s.store.GetIdentity(ctx, ns, store.GetIdentityQuery{
-		ID: r.TupleKey.User,
-	})
+	ident, err := s.getIdentity(ctx, ns, r.TupleKey.User)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	s.logger.Info("got identitiy", "id", r.TupleKey.User, "res", res)
-
 	// FIXME: cache
 	listRes, err := s.store.ListPermissions(ctx, ns, store.ListPermissionsQuery{
-		UserID: res.Identity.UserID,
-		Roles:  res.Identity.Roles,
-		Teams:  res.Identity.Teams,
+		UserID: ident.UserID,
+		Roles:  ident.Roles,
+		Teams:  ident.Teams,
 		Action: r.TupleKey.Relation,
 	})
 	if err != nil {
@@ -100,19 +99,16 @@ func (s *Server) Read(ctx context.Context, r *openfgav1.ReadRequest) (*openfgav1
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// FIXME: cache
-	res, err := s.store.GetIdentity(ctx, ns, store.GetIdentityQuery{
-		ID: r.TupleKey.User,
-	})
+	ident, err := s.getIdentity(ctx, ns, r.TupleKey.User)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// FIXME: cache
 	listRes, err := s.store.ListPermissions(ctx, ns, store.ListPermissionsQuery{
-		UserID: res.Identity.UserID,
-		Roles:  res.Identity.Roles,
-		Teams:  res.Identity.Teams,
+		UserID: ident.UserID,
+		Roles:  ident.Roles,
+		Teams:  ident.Teams,
 		Action: r.TupleKey.Relation,
 	})
 	if err != nil {
@@ -130,7 +126,6 @@ func (s *Server) Read(ctx context.Context, r *openfgav1.ReadRequest) (*openfgav1
 		})
 	}
 
-	// FIXME: pagination
 	return &openfgav1.ReadResponse{Tuples: tuples}, nil
 
 }
@@ -141,19 +136,16 @@ func (s *Server) ListObjects(ctx context.Context, r *openfgav1.ListObjectsReques
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// FIXME: cache
-	res, err := s.store.GetIdentity(ctx, ns, store.GetIdentityQuery{
-		ID: r.User,
-	})
+	ident, err := s.getIdentity(ctx, ns, r.User)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// FIXME: cache
 	listRes, err := s.store.ListPermissions(ctx, ns, store.ListPermissionsQuery{
-		UserID: res.Identity.UserID,
-		Roles:  res.Identity.Roles,
-		Teams:  res.Identity.Teams,
+		UserID: ident.UserID,
+		Roles:  ident.Roles,
+		Teams:  ident.Teams,
 		Action: r.Relation,
 	})
 	if err != nil {
@@ -168,64 +160,62 @@ func (s *Server) ListObjects(ctx context.Context, r *openfgav1.ListObjectsReques
 	return &openfgav1.ListObjectsResponse{Objects: objects}, nil
 }
 
-func (s *Server) CreateStore(context.Context, *openfgav1.CreateStoreRequest) (*openfgav1.CreateStoreResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
+func (s *Server) getIdentity(ctx context.Context, ns claims.NamespaceInfo, id string) (*store.Identity, error) {
+	ident, ok := s.identityCache.Get(identityCacheKey(ns, id))
+	if ok {
+		s.logger.Debug("got identitiy from cache", "namespace", ns.Value, "id", id, "identity", ident)
+		return &ident, nil
+	}
+
+	res, err := s.store.GetIdentity(ctx, ns, store.GetIdentityQuery{
+		ID: id,
+	})
+
+	if err != nil {
+		s.logger.Error("failed to resolve identity", "err", err, "namespace", ns.Value, "id", id)
+		return nil, err
+	}
+
+	s.logger.Debug("got identitiy from store", "namespace", ns.Value, "id", id, "identity", ident)
+	s.identityCache.Set(identityCacheKey(ns, id), res.Identity)
+	return &res.Identity, nil
 }
 
-func (s *Server) DeleteStore(context.Context, *openfgav1.DeleteStoreRequest) (*openfgav1.DeleteStoreResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
+func (s *Server) listPermissions(ctx context.Context, ns claims.NamespaceInfo, id, action string) (*store.ListPermissionsResult, error) {
+	ident, err := s.getIdentity(ctx, ns, id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	permissions, ok := s.permissionCache.Get(permissionCacheKey(ns, id, action))
+	if ok {
+		s.logger.Debug("got permissions from cache", "namespace", ns.Value, "id", id, "action", action)
+		return &store.ListPermissionsResult{Items: permissions}, nil
+	}
+
+	res, err := s.store.ListPermissions(ctx, ns, store.ListPermissionsQuery{
+		UserID: ident.UserID,
+		Roles:  ident.Roles,
+		Teams:  ident.Teams,
+		Action: action,
+	})
+
+	if err != nil {
+		s.logger.Error("failed to list permissions", "err", err, "namespace", ns.Value, "id", id, "action", action)
+		return nil, err
+	}
+
+	s.logger.Debug("got permissions from store", "namespace", ns.Value, "id", id, "action", action)
+	s.permissionCache.Set(permissionCacheKey(ns, id, action), res.Items)
+	return res, nil
 }
 
-func (s *Server) Expand(context.Context, *openfgav1.ExpandRequest) (*openfgav1.ExpandResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
+func identityCacheKey(ns claims.NamespaceInfo, id string) string {
+	return ns.Value + id
 }
 
-func (s *Server) GetStore(context.Context, *openfgav1.GetStoreRequest) (*openfgav1.GetStoreResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) ListStores(context.Context, *openfgav1.ListStoresRequest) (*openfgav1.ListStoresResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) ListUsers(context.Context, *openfgav1.ListUsersRequest) (*openfgav1.ListUsersResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) ReadAssertions(context.Context, *openfgav1.ReadAssertionsRequest) (*openfgav1.ReadAssertionsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) ReadAuthorizationModel(context.Context, *openfgav1.ReadAuthorizationModelRequest) (*openfgav1.ReadAuthorizationModelResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) ReadAuthorizationModels(context.Context, *openfgav1.ReadAuthorizationModelsRequest) (*openfgav1.ReadAuthorizationModelsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) ReadChanges(context.Context, *openfgav1.ReadChangesRequest) (*openfgav1.ReadChangesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) StreamedListObjects(*openfgav1.StreamedListObjectsRequest, openfgav1.OpenFGAService_StreamedListObjectsServer) error {
-	return status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) UpdateStore(context.Context, *openfgav1.UpdateStoreRequest) (*openfgav1.UpdateStoreResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) Write(context.Context, *openfgav1.WriteRequest) (*openfgav1.WriteResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) WriteAssertions(context.Context, *openfgav1.WriteAssertionsRequest) (*openfgav1.WriteAssertionsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
-}
-
-func (s *Server) WriteAuthorizationModel(context.Context, *openfgav1.WriteAuthorizationModelRequest) (*openfgav1.WriteAuthorizationModelResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not supported for legacy service")
+func permissionCacheKey(ns claims.NamespaceInfo, id, action string) string {
+	return ns.Value + id + action
 }
 
 func (s *Server) mustEmbedUnimplementedOpenFGAServiceServer() {}
