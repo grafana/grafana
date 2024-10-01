@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
-	github.com/grafana/grafana-plugin-sdk-go v0.250.0
+	github.com/grafana/grafana-plugin-sdk-go v0.251.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
@@ -119,8 +119,8 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.14 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.14 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.53.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.55.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.30.0 // indirect
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.23.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.29.0 // indirect
