@@ -139,7 +139,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.initDashboard();
-    this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
+    this.forceRouteReloadCounter = (this.props.location.state as any)?.routeReloadCounter || 0;
   }
 
   componentWillUnmount() {
@@ -176,7 +176,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props, prevState: State) {
     const { dashboard, params, templateVarsChangedInUrl } = this.props;
-    const routeReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter;
+    const routeReloadCounter = (this.props.location.state as any)?.routeReloadCounter;
 
     if (!dashboard) {
       return;
@@ -513,7 +513,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   if (!pageNav || dashboard.title !== pageNav.text || dashboard.meta.folderUrl !== pageNav.parentItem?.url) {
     pageNav = {
       text: dashboard.title,
-      url: locationUtil.getUrlForPartial(props.history.location, {
+      url: locationUtil.getUrlForPartial(props.location, {
         editview: null,
         editPanel: null,
         viewPanel: null,
