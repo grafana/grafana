@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Stack, Text, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 
 import { Branding } from '../../Branding/Branding';
+import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 export interface Props {
@@ -26,7 +27,7 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
         <ToolbarButton narrow onClick={handleMegaMenu}>
           <Branding.MenuLogo className={styles.img} />
         </ToolbarButton>
-        <Text truncate>{Branding.AppTitle}</Text>
+        <OrganizationSwitcher />
       </Stack>
       <IconButton
         id="dock-menu-button"

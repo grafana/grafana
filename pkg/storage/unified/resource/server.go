@@ -100,6 +100,25 @@ type ResourceServerOptions struct {
 	Now func() int64
 }
 
+type indexServer struct{}
+
+func (s indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	res := &SearchResponse{}
+	return res, nil
+}
+
+func (s indexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
+	return nil, nil
+}
+
+func (s indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
+	return nil, nil
+}
+
+func NewResourceIndexServer() ResourceIndexServer {
+	return indexServer{}
+}
+
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
@@ -108,9 +127,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
-	if opts.Index == nil {
-		opts.Index = &noopService{}
-	}
+
 	if opts.Diagnostics == nil {
 		opts.Diagnostics = &noopService{}
 	}
@@ -665,6 +682,13 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 		}
 	}
+}
+
+func (s *server) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+	return s.index.Search(ctx, req)
 }
 
 // History implements ResourceServer.
