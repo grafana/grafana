@@ -42,13 +42,22 @@ func (d *DualWriterMode1) Mode() DualWriterMode {
 }
 
 // Create overrides the behavior of the generic DualWriter and writes only to LegacyStorage.
-func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (d *DualWriterMode1) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var method = "create"
 	log := d.Log.WithValues("method", method)
 	ctx = klog.NewContext(ctx, log)
 
+	accIn, err := meta.Accessor(in)
+	if err != nil {
+		return nil, err
+	}
+
+	if accIn.GetGenerateName() != "" {
+		return nil, fmt.Errorf("generateName cannot be set")
+	}
+
 	startLegacy := time.Now()
-	created, err := d.Legacy.Create(ctx, original, createValidation, options)
+	created, err := d.Legacy.Create(ctx, in, createValidation, options)
 	d.recordLegacyDuration(err != nil, mode1Str, d.resource, method, startLegacy)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
@@ -58,7 +67,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 	createdCopy := created.DeepCopyObject()
 
 	//nolint:errcheck
-	go d.createOnUnifiedStorage(ctx, original, createValidation, createdCopy, options)
+	go d.createOnUnifiedStorage(ctx, in, createValidation, createdCopy, options)
 
 	return created, err
 }

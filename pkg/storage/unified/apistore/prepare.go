@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/apiserver/pkg/storage/names"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -29,6 +30,14 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
+	}
+
+	if obj.GetGenerateName() != "" {
+		return nil, fmt.Errorf("generateName cannot be set")
+	}
+
+	if obj.GetName() == "" {
+		obj.SetName(names.SimpleNameGenerator.GenerateName(obj.GetGenerateName()))
 	}
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")

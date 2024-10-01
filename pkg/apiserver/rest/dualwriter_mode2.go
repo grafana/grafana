@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/authlib/claims"
@@ -62,13 +61,8 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return nil, fmt.Errorf("UID should not be present: %v", accIn.GetUID())
 	}
 
-	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
-		return nil, fmt.Errorf("name is empty")
-	}
-
-	if accIn.GetName() == "" && accIn.GetGenerateName() != "" {
-		accIn.SetName(names.SimpleNameGenerator.GenerateName(accIn.GetGenerateName()))
-		accIn.SetGenerateName("")
+	if accIn.GetGenerateName() != "" {
+		return nil, fmt.Errorf("generateName cannot be set")
 	}
 
 	startLegacy := time.Now()
