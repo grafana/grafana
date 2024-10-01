@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -28,9 +28,9 @@ func TestCookiesMiddleware(t *testing.T) {
 		})
 		req.Header.Set(otherHeader, "test")
 
-		cdt := clienttest.NewClientDecoratorTest(t,
-			clienttest.WithReqContext(req, &user.SignedInUser{}),
-			clienttest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			handlertest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
 		)
 
 		jsonDataMap := map[string]any{}
@@ -44,7 +44,7 @@ func TestCookiesMiddleware(t *testing.T) {
 		}
 
 		t.Run("Should not forward cookies when calling QueryData", func(t *testing.T) {
-			_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{otherHeader: "test"},
 			})
@@ -60,7 +60,7 @@ func TestCookiesMiddleware(t *testing.T) {
 				Headers:       map[string][]string{otherHeader: {"test"}},
 			}
 			pReq.Headers[backend.CookiesHeaderName] = []string{req.Header.Get(backend.CookiesHeaderName)}
-			err = cdt.Decorator.CallResource(req.Context(), pReq, nopCallResourceSender)
+			err = cdt.MiddlewareHandler.CallResource(req.Context(), pReq, nopCallResourceSender)
 			require.NoError(t, err)
 			require.NotNil(t, cdt.CallResourceReq)
 			require.Len(t, cdt.CallResourceReq.Headers, 1)
@@ -68,7 +68,7 @@ func TestCookiesMiddleware(t *testing.T) {
 		})
 
 		t.Run("Should not forward cookies when calling CheckHealth", func(t *testing.T) {
-			_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+			_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{otherHeader: "test"},
 			})
@@ -97,9 +97,9 @@ func TestCookiesMiddleware(t *testing.T) {
 
 		req.Header.Set(otherHeader, "test")
 
-		cdt := clienttest.NewClientDecoratorTest(t,
-			clienttest.WithReqContext(req, &user.SignedInUser{}),
-			clienttest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			handlertest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
 		)
 
 		jsonDataMap := map[string]any{
@@ -115,7 +115,7 @@ func TestCookiesMiddleware(t *testing.T) {
 		}
 
 		t.Run("Should forward cookies when calling QueryData", func(t *testing.T) {
-			_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{otherHeader: "test"},
 			})
@@ -127,7 +127,7 @@ func TestCookiesMiddleware(t *testing.T) {
 		})
 
 		t.Run("Should forward cookies when calling CallResource", func(t *testing.T) {
-			err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string][]string{otherHeader: {"test"}},
 			}, nopCallResourceSender)
@@ -140,7 +140,7 @@ func TestCookiesMiddleware(t *testing.T) {
 		})
 
 		t.Run("Should forward cookies when calling CheckHealth", func(t *testing.T) {
-			_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+			_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{otherHeader: "test"},
 			})
@@ -166,9 +166,9 @@ func TestCookiesMiddleware(t *testing.T) {
 		})
 		req.Header.Set(otherHeader, "test")
 
-		cdt := clienttest.NewClientDecoratorTest(t,
-			clienttest.WithReqContext(req, &user.SignedInUser{}),
-			clienttest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			handlertest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
 		)
 
 		pluginCtx := backend.PluginContext{
@@ -181,7 +181,7 @@ func TestCookiesMiddleware(t *testing.T) {
 				Headers:       map[string]string{otherHeader: "test"},
 			}
 			pReq.Headers[backend.CookiesHeaderName] = req.Header.Get(backend.CookiesHeaderName)
-			_, err = cdt.Decorator.QueryData(req.Context(), pReq)
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), pReq)
 			require.NoError(t, err)
 			require.NotNil(t, cdt.QueryDataReq)
 			require.Len(t, cdt.QueryDataReq.Headers, 1)
@@ -194,7 +194,7 @@ func TestCookiesMiddleware(t *testing.T) {
 				Headers:       map[string][]string{otherHeader: {"test"}},
 			}
 			pReq.Headers[backend.CookiesHeaderName] = []string{req.Header.Get(backend.CookiesHeaderName)}
-			err = cdt.Decorator.CallResource(req.Context(), pReq, nopCallResourceSender)
+			err = cdt.MiddlewareHandler.CallResource(req.Context(), pReq, nopCallResourceSender)
 			require.NoError(t, err)
 			require.NotNil(t, cdt.CallResourceReq)
 			require.Len(t, cdt.CallResourceReq.Headers, 1)
@@ -207,7 +207,7 @@ func TestCookiesMiddleware(t *testing.T) {
 				Headers:       map[string]string{otherHeader: "test"},
 			}
 			pReq.Headers[backend.CookiesHeaderName] = req.Header.Get(backend.CookiesHeaderName)
-			_, err = cdt.Decorator.CheckHealth(req.Context(), pReq)
+			_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), pReq)
 			require.NoError(t, err)
 			require.NotNil(t, cdt.CheckHealthReq)
 			require.Len(t, cdt.CheckHealthReq.Headers, 1)
