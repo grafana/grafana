@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -634,6 +635,8 @@ type folderK8sHandler struct {
 	namespacer           request.NamespaceMapper
 	gvr                  schema.GroupVersionResource
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	userService          user.Service
+	accesscontrolService accesscontrol.Service
 }
 
 //-----------------------------------------------------------------------------------------
@@ -645,6 +648,8 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 		gvr:                  folderalpha1.FolderResourceInfo.GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
+		userService:          hs.userService,
+		accesscontrolService: hs.accesscontrolService,
 	}
 }
 
@@ -695,6 +700,7 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		return
 	}
 
+	fk8s.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
 	if err != nil {
 		fk8s.writeError(c, err)
