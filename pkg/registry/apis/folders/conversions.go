@@ -33,6 +33,7 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstruct
 	if cmd.UID == "" {
 		cmd.UID = util.GenerateShortUID()
 	}
+	obj.SetName(cmd.UID)
 
 	if err := setParentUID(&obj, cmd.ParentUID); err != nil {
 		return unstructured.Unstructured{}, err
