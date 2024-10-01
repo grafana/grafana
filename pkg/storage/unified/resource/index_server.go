@@ -94,47 +94,12 @@ type indexWatchServer struct {
 }
 
 func (f *indexWatchServer) Send(we *WatchEvent) error {
-	index := f.Index()
 	if we.Type == WatchEvent_ADDED {
-		r, err := getResource(we.Resource.Value)
-		if err != nil {
-			return err
-		}
-
-		key := &ResourceKey{
-			Group:     getGroup(r),
-			Resource:  r.Kind,
-			Namespace: r.Metadata.Namespace,
-			Name:      r.Metadata.Name,
-		}
-
-		value := &ResourceWrapper{
-			ResourceVersion: we.Resource.Version,
-			Value:           we.Resource.Value,
-		}
-		err = index.Index(f.context, &Data{Key: key, Value: value})
-		if err != nil {
-			return err
-		}
-		return nil
+		return f.Add(we)
 	}
 
 	if we.Type == WatchEvent_DELETED {
-		r, err := getResource(we.Previous.Value)
-		if err != nil {
-			return err
-		}
-		key := &ResourceKey{
-			Group:     getGroup(r),
-			Resource:  r.Kind,
-			Namespace: r.Metadata.Namespace,
-			Name:      r.Metadata.Name,
-		}
-		err = index.Delete(f.context, r.Metadata.Uid, key)
-		if err != nil {
-			return err
-		}
-		return nil
+		return f.Delete(we)
 	}
 
 	return nil
@@ -159,9 +124,34 @@ func (f *indexWatchServer) Index() *Index {
 	return f.is.index
 }
 
+func (f *indexWatchServer) Add(we *WatchEvent) error {
+	data, err := getData(we.Resource)
+	if err != nil {
+		return err
+	}
+	err = f.Index().Index(f.context, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *indexWatchServer) Delete(we *WatchEvent) error {
+	data, err := getData(we.Previous)
+	if err != nil {
+		return err
+	}
+	err = f.Index().Delete(f.context, data.Uid, data.Key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type Data struct {
 	Key   *ResourceKey
 	Value *ResourceWrapper
+	Uid   string
 }
 
 func getGroup(r *Resource) string {
@@ -170,4 +160,24 @@ func getGroup(r *Resource) string {
 		return v[0]
 	}
 	return ""
+}
+
+func getData(wr *WatchEvent_Resource) (*Data, error) {
+	r, err := getResource(wr.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	key := &ResourceKey{
+		Group:     getGroup(r),
+		Resource:  r.Kind,
+		Namespace: r.Metadata.Namespace,
+		Name:      r.Metadata.Name,
+	}
+
+	value := &ResourceWrapper{
+		ResourceVersion: wr.Version,
+		Value:           wr.Value,
+	}
+	return &Data{Key: key, Value: value, Uid: r.Metadata.Uid}, nil
 }
