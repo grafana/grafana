@@ -438,7 +438,7 @@ You can convert node graph data to a network layer:
 | Display tooltip | allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
-##### Node styles
+##### Node styles options
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -451,7 +451,7 @@ You can convert node graph data to a network layer:
 | Text label | configures a text label for each node. |
 <!-- prettier-ignore-end -->
 
-##### Edge styles
+##### Edge styles options
 
 <!-- prettier-ignore-start -->
 | Option | Description |
