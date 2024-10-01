@@ -116,27 +116,35 @@ function DashboardInfo({ data }: { data: ResourceTableItem }) {
 }
 
 function FolderInfo({ data }: { data: ResourceTableItem }) {
-  const { data: folderData, isLoading, isError } = useGetFolderQuery(data.refId);
+  const folderUID = data.refId;
+  let folderName = data.name;
+  let folderParentName = data.parentName;
 
-  if (isLoading || !folderData) {
-    return <InfoSkeleton />;
+  let skipApiCall = !!folderName && !!folderParentName;
+
+  const { data: folderData, isLoading, isError } = useGetFolderQuery(folderUID, { skip: skipApiCall });
+
+  if (!skipApiCall) {
+    if (isLoading || !folderData) {
+      return <InfoSkeleton />;
+    }
+    if (isError) {
+      return (
+        <>
+          <Text italic>Unable to load dashboard</Text>
+          <Text color="secondary">Dashboard {data.refId}</Text>
+        </>
+      );
+    }
+
+    folderName = folderData.title;
+    folderParentName = folderData.parents?.[folderData.parents.length - 1]?.title;
   }
-
-  if (isError) {
-    return (
-      <>
-        <Text italic>Unable to load dashboard</Text>
-        <Text color="secondary">Dashboard {data.refId}</Text>
-      </>
-    );
-  }
-
-  const parentName = folderData.parents?.[folderData.parents.length - 1]?.title;
 
   return (
     <>
-      <span>{folderData.title}</span>
-      <Text color="secondary">{parentName ?? 'Dashboards'}</Text>
+      <span>{folderName}</span>
+      <Text color="secondary">{folderParentName ?? 'Dashboards'}</Text>
     </>
   );
 }

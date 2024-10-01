@@ -629,7 +629,6 @@ func TestGetFolderNamesForFolderUIDs(t *testing.T) {
 
 		require.ElementsMatch(t, resFolderNames, tc.expectedFolderNames)
 	}
-
 }
 
 func TestGetParentNames(t *testing.T) {
@@ -640,10 +639,11 @@ func TestGetParentNames(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 
 	testcases := []struct {
-		fakeFolders         []*folder.Folder
-		folders             []folder.CreateFolderCommand
-		dashboards          []dashboards.Dashboard
-		expectedFolderNames []string
+		fakeFolders             []*folder.Folder
+		folders                 []folder.CreateFolderCommand
+		dashboards              []dashboards.Dashboard
+		expectedDashParentNames []string
+		expectedFoldParentNames []string
 	}{
 		{
 			fakeFolders: []*folder.Folder{
@@ -658,21 +658,25 @@ func TestGetParentNames(t *testing.T) {
 				{UID: "dashboardUID-1", OrgID: 1, FolderUID: "folderUID-A"},
 				{UID: "dashboardUID-2", OrgID: 1, FolderUID: "folderUID-B"},
 			},
-			expectedFolderNames: []string{"", "Folder A", "Folder B"},
+			expectedDashParentNames: []string{"", "Folder A", "Folder B"},
+			expectedFoldParentNames: []string{"Folder A"},
 		},
 	}
 
 	for _, tc := range testcases {
 		s.folderService = &foldertest.FakeService{ExpectedFolders: tc.fakeFolders}
 
-		parentUIDsToNames, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders)
+		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders)
 		require.NoError(t, err)
 
-		resParentNames := slices.Collect(maps.Values(parentUIDsToNames))
-		require.Len(t, resParentNames, len(tc.expectedFolderNames))
-		require.ElementsMatch(t, resParentNames, tc.expectedFolderNames)
-	}
+		resDashParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.DashboardDataType]))
+		require.Len(t, resDashParentNames, len(tc.expectedDashParentNames))
+		require.ElementsMatch(t, resDashParentNames, tc.expectedDashParentNames)
 
+		resFoldParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.FolderDataType]))
+		require.Len(t, resFoldParentNames, len(tc.expectedFoldParentNames))
+		require.ElementsMatch(t, resFoldParentNames, tc.expectedFoldParentNames)
+	}
 }
 
 func ctxWithSignedInUser() context.Context {
@@ -691,9 +695,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	spanRecorder := tracetest.NewSpanRecorder()
 	tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 	mockFolder := &foldertest.FakeService{
-		ExpectedFolders: []*folder.Folder{
-			{UID: "folderUID", Title: "Folder"},
-		},
+		ExpectedFolders: []*folder.Folder{{UID: "folderUID", Title: "Folder"}},
 	}
 
 	cfg := setting.NewCfg()

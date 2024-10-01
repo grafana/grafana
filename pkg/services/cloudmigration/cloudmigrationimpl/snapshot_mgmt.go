@@ -38,19 +38,6 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
-	// Obtain the names of parent folders of Folder and Dashboard data types
-	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
-	for _, resourceType := range []cloudmigration.MigrateDataType{
-		cloudmigration.FolderDataType,
-		cloudmigration.DashboardDataType,
-	} {
-		parentNamesByType[resourceType] = make(map[string]string)
-	}
-	parentUIDsToName, err := s.getParentNames(ctx, signedInUser, dashs, folders)
-	if err != nil {
-		s.log.Error("Failed to get parent folder names", "err", err)
-	}
-
 	// Obtain migration data
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
@@ -80,8 +67,6 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 				FolderUID: dashboard.FolderUID,
 			},
 		})
-		// TODO: check foldersUIDsToFolderName is not empty and has dashboard.FolderUID
-		parentNamesByType[cloudmigration.DashboardDataType][dashboard.UID] = parentUIDsToName[dashboard.FolderUID]
 	}
 
 	folders = sortFolders(folders)
@@ -92,8 +77,12 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			Name:  f.Title,
 			Data:  f,
 		})
-		// TODO: check foldersUIDsToFolderName is not empty and has dashboard.FolderUID
-		parentNamesByType[cloudmigration.FolderDataType][f.UID] = parentUIDsToName[f.ParentUID]
+	}
+
+	// Obtain the names of parent elements for Dashboard and Folders data types
+	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders)
+	if err != nil {
+		s.log.Error("Failed to get parent folder names", "err", err)
 	}
 
 	migrationData := &cloudmigration.MigrateDataRequest{
@@ -237,9 +226,8 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 			Data:  item.Data,
 		})
 
-		// Obtain parent folder name for local storage, TODO: golang optional
 		parentName := ""
-		if item.Type == cloudmigration.DashboardDataType || item.Type == cloudmigration.FolderDataType {
+		if _, exists := migrationData.ItemParentNames[item.Type]; exists {
 			parentName = migrationData.ItemParentNames[item.Type][item.RefID]
 		}
 
@@ -463,9 +451,17 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 	return folderUIDsToNames, nil
 }
 
-// getParentNames finds the parent names for resources and returns a map of parentUID : parentName
+// getParentNames finds the parent names for resources and returns a map of data type: {data UID : parentName}
 // for dashboards, folders and library elements - the parent is the parent folder
-func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand) (map[string]string, error) {
+func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand) (map[cloudmigration.MigrateDataType]map[string](string), error) {
+	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
+	for _, dataType := range []cloudmigration.MigrateDataType{
+		cloudmigration.FolderDataType,
+		cloudmigration.DashboardDataType,
+	} {
+		parentNamesByType[dataType] = make(map[string]string)
+	}
+
 	// Obtain list of unique folderUIDs
 	parentFolderUIDsSet := make(map[string]struct{})
 	for _, dashboard := range dashboards {
@@ -483,8 +479,16 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	foldersUIDsToFolderName, err := s.getFolderNamesForFolderUIDs(ctx, signedInUser, parentFolderUIDsSlice)
 	if err != nil {
 		s.log.Error("Failed to get parent folder names from folder UIDs", "err", err)
-		return nil, err
+		return parentNamesByType, err
 	}
 
-	return foldersUIDsToFolderName, err
+	// Prepare map of {data type: {data UID : parentName}}
+	for _, dashboard := range dashboards {
+		parentNamesByType[cloudmigration.DashboardDataType][dashboard.UID] = foldersUIDsToFolderName[dashboard.FolderUID]
+	}
+	for _, f := range folders {
+		parentNamesByType[cloudmigration.FolderDataType][f.UID] = foldersUIDsToFolderName[f.ParentUID]
+	}
+
+	return parentNamesByType, err
 }
