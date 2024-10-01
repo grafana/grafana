@@ -82,11 +82,16 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
 
   let shouldStop = false;
-  let subquerySubsciption: Subscription | null = null;
+  let subquerySubscription: Subscription | null = null;
   let retriesMap = new Map<string, number>();
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
+    if (subquerySubscription != null) {
+      subquerySubscription.unsubscribe();
+      subquerySubscription = null;
+    }
+    
     if (shouldStop) {
       subscriber.complete();
       return;
@@ -146,7 +151,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
       subRequest.requestId = `${group.request.requestId}_${requestN}`;
     }
 
-    subquerySubsciption = datasource.runQuery(subRequest).subscribe({
+    subquerySubscription = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
           if (retry(partialResponse)) {
@@ -178,8 +183,9 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
         clearTimeout(retryTimer);
         retryTimer = null;
       }
-      if (subquerySubsciption != null) {
-        subquerySubsciption.unsubscribe();
+      if (subquerySubscription != null) {
+        subquerySubscription.unsubscribe();
+        subquerySubscription = null;
       }
     };
   });
