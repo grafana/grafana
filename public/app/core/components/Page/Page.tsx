@@ -48,9 +48,7 @@ function usePageContext(): PageContextType {
 export function usePageToolbar(toolbar?: ReactNode) {
   const { setToolbar } = usePageContext();
   useEffect(() => {
-    setToolbar((existingToolbar) => {
-      return existingToolbar !== toolbar ? toolbar : existingToolbar;
-    });
+    setToolbar(toolbar);
     return () => setToolbar(undefined);
   }, [setToolbar, toolbar]);
 }
