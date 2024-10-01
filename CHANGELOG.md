@@ -10,6 +10,7 @@
 ### Bug fixes
 
 - **Correlations:** Limit access to correlations page to users who can access Explore [#93672](https://github.com/grafana/grafana/pull/93672), [@ifrost](https://github.com/ifrost)
+- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 10.3.11 END -->
 <!-- 10.3.10 START -->
