@@ -58,7 +58,7 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = s.GetToken(context.Background())
-	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
+	assert.ErrorIs(t, err, cloudmigration.ErrTokenNotFound)
 
 	cm := cloudmigration.CloudMigrationSession{}
 	err = s.ValidateToken(context.Background(), cm)
@@ -213,6 +213,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
+					Name:   "A name",
 					Type:   cloudmigration.DatasourceDataType,
 					RefID:  "A",
 					Status: cloudmigration.ItemStatusError,
@@ -387,18 +388,21 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
+					Name:        "1 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "1", // this will be core
 					Status:      cloudmigration.ItemStatusOK,
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "2 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "2", // this will be non-core
 					Status:      cloudmigration.ItemStatusOK,
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "3 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "3", // this will be non-core with an error
 					Status:      cloudmigration.ItemStatusError,
@@ -406,6 +410,7 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "4 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "4", // this will be deleted
 					Status:      cloudmigration.ItemStatusOK,
@@ -612,7 +617,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 			featuremgmt.FlagDashboardRestore),
 		sqlStore,
 		dsService,
-		secretskv.NewFakeSQLSecretsKVStore(t),
+		secretskv.NewFakeSQLSecretsKVStore(t, sqlStore),
 		secretsService,
 		rr,
 		prometheus.DefaultRegisterer,

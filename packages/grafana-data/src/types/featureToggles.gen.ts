@@ -204,6 +204,7 @@ export interface FeatureToggles {
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
+  alertingPrometheusRulesPrimary?: boolean;
   singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
@@ -215,4 +216,6 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   improvedExternalSessionHandling?: boolean;
   useSessionStorageForRedirection?: boolean;
+  rolePickerDrawer?: boolean;
+  unifiedStorageSearch?: boolean;
 }

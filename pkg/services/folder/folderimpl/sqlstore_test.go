@@ -865,7 +865,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 	})
 
 	t.Run("get folders by UIDs should succeed", func(t *testing.T) {
-		actualFolders, err := folderStore.GetFolders(context.Background(), NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:]}))
+		actualFolders, err := folderStore.GetFolders(context.Background(), folder.NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:]}))
 		require.NoError(t, err)
 		assert.Equal(t, len(uids[1:]), len(actualFolders))
 		for _, f := range folders[1:] {
@@ -885,7 +885,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 	})
 
 	t.Run("get folders by UIDs batching should work as expected", func(t *testing.T) {
-		q := NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], BatchSize: 3})
+		q := folder.NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], BatchSize: 3})
 		actualFolders, err := folderStore.GetFolders(context.Background(), q)
 		require.NoError(t, err)
 		assert.Equal(t, len(uids[1:]), len(actualFolders))
@@ -906,7 +906,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 	})
 
 	t.Run("get folders by UIDs with fullpath should succeed", func(t *testing.T) {
-		q := NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], WithFullpath: true})
+		q := folder.NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], WithFullpath: true})
 		q.BatchSize = 3
 		actualFolders, err := folderStore.GetFolders(context.Background(), q)
 		require.NoError(t, err)
@@ -929,12 +929,12 @@ func TestIntegrationGetFolders(t *testing.T) {
 	})
 
 	t.Run("get folders by UIDs and ancestor UIDs should work as expected", func(t *testing.T) {
-		q := NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], BatchSize: 3})
-		q.ancestorUIDs = make([]string, 0, int(q.BatchSize)+1)
+		q := folder.NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], BatchSize: 3})
+		q.AncestorUIDs = make([]string, 0, int(q.BatchSize)+1)
 		for i := 0; i < int(q.BatchSize); i++ {
-			q.ancestorUIDs = append(q.ancestorUIDs, uuid.New().String())
+			q.AncestorUIDs = append(q.AncestorUIDs, uuid.New().String())
 		}
-		q.ancestorUIDs = append(q.ancestorUIDs, folders[len(folders)-1].UID)
+		q.AncestorUIDs = append(q.AncestorUIDs, folders[len(folders)-1].UID)
 
 		actualFolders, err := folderStore.GetFolders(context.Background(), q)
 		require.NoError(t, err)
@@ -967,7 +967,7 @@ func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	return orgID
 }
 
-func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
+func CreateSubtree(t *testing.T, store *FolderStoreImpl, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{}
@@ -1006,7 +1006,7 @@ func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 	return ancestorUIDs
 }
 
-func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int) []string {
+func CreateLeaves(t *testing.T, store *FolderStoreImpl, parent *folder.Folder, num int) []string {
 	t.Helper()
 
 	leaves := make([]string, 0)
@@ -1024,7 +1024,7 @@ func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int)
 	return leaves
 }
 
-func assertAncestorUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
+func assertAncestorUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, expected []string) {
 	t.Helper()
 
 	ancestors, err := store.GetParents(context.Background(), folder.GetParentsQuery{
@@ -1039,7 +1039,7 @@ func assertAncestorUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expecte
 	assert.Equal(t, expected, actualAncestorsUIDs)
 }
 
-func assertChildrenUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
+func assertChildrenUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, expected []string) {
 	t.Helper()
 
 	ancestors, err := store.GetChildren(context.Background(), folder.GetChildrenQuery{
