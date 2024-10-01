@@ -381,7 +381,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
   }
   /**
-   *  This function is used to update state and otel variables
+   *  This function is used to update state and otel variables.
    * 
    *  1. Set the otelResources adhoc tagKey and tagValues filter functions
       2. Get the otel join query for state and variable
@@ -392,6 +392,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         - has otel resources flag
         - isStandardOtel flag (for enabliing the otel experience toggle)
         - and useOtelExperience
+   *
+   * This function is called on start and when variables change.
+   * On start will provide the deploymentEnvironments and hasOtelResources parameters.
+   * In the variable change case, we will not provide these parameters. It is assumed that the
+   * data source has been checked for otel resources and standardization and the otel variables are enabled at this point.    
    * @param datasourceUid 
    * @param timeRange 
    * @param otelDepEnvVariable 
@@ -504,7 +509,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({
         otelTargets,
         otelJoinQuery,
-        useOtelExperience: false,
       });
     }
   }
