@@ -82,7 +82,6 @@ func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identit
 	if err != nil {
 		return nil, nil, err
 	}
-
 	provenances := make(map[string]models.Provenance)
 	if len(rules) > 0 {
 		resourceType := rules[0].ResourceType()

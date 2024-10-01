@@ -38,13 +38,15 @@ function ResourceInfo({ data }: { data: ResourceTableItem }) {
     case 'LIBRARY_ELEMENT':
       return null;
     case 'ALERT_RULE':
-      return <AlertRuleInfo data={data} />;
+      return null;
     case 'CONTACT_POINT':
-      return <ContactPointInfo data={data} />;
+      return null;
     case 'NOTIFICATION_POLICY':
-      return <NotificationPolicyInfo data={data} />;
+      return null;
     case 'NOTIFICATION_TEMPLATE':
-      return <NotificationTemplateInfo data={data} />;
+      return null;
+    case 'MUTE_TIMING':
+      return null;
   }
 }
 
@@ -140,22 +142,6 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
       <Text color="secondary">{parentFolderName ?? 'Dashboards'}</Text>
     </>
   );
-}
-
-function AlertRuleInfo({ data }: { data: ResourceTableItem }) {
-  return <span>{data.name}</span>;
-}
-
-function ContactPointInfo({ data }: { data: ResourceTableItem }) {
-  return <span>{data.name}</span>;
-}
-
-function NotificationPolicyInfo({ data }: { data: ResourceTableItem }) {
-  return <span>{data.name}</span>;
-}
-
-function NotificationTemplateInfo({ data }: { data: ResourceTableItem }) {
-  return <span>{data.name}</span>;
 }
 
 function InfoSkeleton() {

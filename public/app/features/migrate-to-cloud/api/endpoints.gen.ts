@@ -41,7 +41,7 @@ const injectedRtkApi = api.injectEndpoints({
     getShapshotList: build.query<GetShapshotListApiResponse, GetShapshotListApiArg>({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshots`,
-        params: { page: queryArg.page, limit: queryArg.limit, sort: queryArg.sort },
+        params: { page: queryArg.page, limit: queryArg.limit },
       }),
     }),
     getCloudMigrationToken: build.query<GetCloudMigrationTokenApiResponse, GetCloudMigrationTokenApiArg>({
@@ -112,8 +112,6 @@ export type GetShapshotListApiArg = {
   page?: number;
   /** Max limit for results returned. */
   limit?: number;
-  /** Sort with value latest to return results sorted in descending order */
-  sort?: string;
   /** Session UID of a session */
   uid: string;
 };
@@ -156,14 +154,20 @@ export type CreateSnapshotResponseDto = {
   uid?: string;
 };
 export type MigrateDataResponseItemDto = {
-  // The value may be the empty string because the field didn't exist for
-  // migrations created in older versions of the migration api. 
-  // It should be non-empty for new migrations.
-  name?: string;
   message?: string;
+  name?: string;
   refId: string;
   status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';
-  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER' | 'LIBRARY_ELEMENT' | 'ALERT_RULE' | 'CONTACT_POINT' | 'NOTIFICATION_POLICY' | 'NOTIFICATION_TEMPLATE';
+  type:
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING';
 };
 export type SnapshotResourceStats = {
   statuses?: {
