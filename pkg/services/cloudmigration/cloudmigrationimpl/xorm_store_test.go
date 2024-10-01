@@ -283,8 +283,6 @@ func Test_SnapshotResources(t *testing.T) {
 }
 
 func TestGetSnapshotList(t *testing.T) {
-	t.Parallel()
-
 	_, s := setUpTest(t)
 	// Taken from setUpTest
 	sessionUID := "qwerty"
@@ -377,7 +375,7 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	s := &sqlStore{
 		db:             testDB,
 		secretsService: fakeSecrets.FakeSecretsService{},
-		secretsStore:   secretskv.NewFakeSQLSecretsKVStore(t),
+		secretsStore:   secretskv.NewFakeSQLSecretsKVStore(t, testDB),
 	}
 	ctx := context.Background()
 
