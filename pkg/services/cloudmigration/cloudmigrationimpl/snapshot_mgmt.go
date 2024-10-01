@@ -441,8 +441,8 @@ func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderComman
 	return input
 }
 
-// getParentNames queries the folders service to obtain folder names for a list of folderUIDs
-func (s *Service) getFolderNameForFolderUIDs(ctx context.Context, signedInUser *user.SignedInUser, folderUIDs []string) (map[string](string), error) {
+// getFolderNamesForFolderUIDs queries the folders service to obtain folder names for a list of folderUIDs
+func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser *user.SignedInUser, folderUIDs []string) (map[string](string), error) {
 	folderUIDsToNames := make(map[string](string), 0)
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUIDs,
@@ -450,16 +450,21 @@ func (s *Service) getFolderNameForFolderUIDs(ctx context.Context, signedInUser *
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
+		s.log.Error("Failed to obtain folders from folder UIDs", "err", err)
 		return nil, err
 	}
 
+	for _, folderUID := range folderUIDs {
+		folderUIDsToNames[folderUID] = ""
+	}
 	for _, f := range folders {
 		folderUIDsToNames[f.UID] = f.Title
 	}
 	return folderUIDsToNames, nil
 }
 
-// getParentNames finds the parent names for the items and returns a map of folderUID : folderName
+// getParentNames finds the parent names for resources and returns a map of parentUID : parentName
+// for dashboards, folders and library elements - the parent is the parent folder
 func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand) (map[string]string, error) {
 	// Obtain list of unique folderUIDs
 	parentFolderUIDsSet := make(map[string]struct{})
@@ -475,9 +480,10 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	}
 
 	// Obtain folder names given a list of folderUIDs
-	foldersUIDsToFolderName, err := s.getFolderNameForFolderUIDs(ctx, signedInUser, parentFolderUIDsSlice)
+	foldersUIDsToFolderName, err := s.getFolderNamesForFolderUIDs(ctx, signedInUser, parentFolderUIDsSlice)
 	if err != nil {
-		s.log.Error("Failed to get parent folder names from folder uids", "err", err)
+		s.log.Error("Failed to get parent folder names from folder UIDs", "err", err)
+		return nil, err
 	}
 
 	return foldersUIDsToFolderName, err

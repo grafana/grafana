@@ -2,8 +2,10 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -565,6 +567,113 @@ func TestReportEvent(t *testing.T) {
 		require.Equal(t, 1, gmsMock.reportEventCalled)
 	})
 }
+func TestGetFolderNamesForFolderUIDs(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	user := &user.SignedInUser{OrgID: 1}
+
+	testcases := []struct {
+		folders             []*folder.Folder
+		folderUIDs          []string
+		expectedFolderNames []string
+	}{
+		{
+			folders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
+				{UID: "folderUID-B", Title: "Folder B", OrgID: 1},
+			},
+			folderUIDs:          []string{"folderUID-A", "folderUID-B"},
+			expectedFolderNames: []string{"Folder A", "Folder B"},
+		},
+		{
+			folders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
+			},
+			folderUIDs:          []string{"folderUID-A"},
+			expectedFolderNames: []string{"Folder A"},
+		},
+		{
+			folders:             []*folder.Folder{},
+			folderUIDs:          []string{"folderUID-A"},
+			expectedFolderNames: []string{""},
+		},
+		{
+			folders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
+			},
+			folderUIDs:          []string{"folderUID-A", "folderUID-B"},
+			expectedFolderNames: []string{"Folder A", ""},
+		},
+		{
+			folders:             []*folder.Folder{},
+			folderUIDs:          []string{""},
+			expectedFolderNames: []string{""},
+		},
+		{
+			folders:             []*folder.Folder{},
+			folderUIDs:          []string{},
+			expectedFolderNames: []string{},
+		},
+	}
+
+	for _, tc := range testcases {
+		s.folderService = &foldertest.FakeService{ExpectedFolders: tc.folders}
+
+		folderUIDsToFolders, err := s.getFolderNamesForFolderUIDs(ctx, user, tc.folderUIDs)
+		require.NoError(t, err)
+
+		resFolderNames := slices.Collect(maps.Values(folderUIDsToFolders))
+		require.Len(t, resFolderNames, len(tc.expectedFolderNames))
+
+		require.ElementsMatch(t, resFolderNames, tc.expectedFolderNames)
+	}
+
+}
+
+func TestGetParentNames(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	user := &user.SignedInUser{OrgID: 1}
+
+	testcases := []struct {
+		fakeFolders         []*folder.Folder
+		folders             []folder.CreateFolderCommand
+		dashboards          []dashboards.Dashboard
+		expectedFolderNames []string
+	}{
+		{
+			fakeFolders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1, ParentUID: ""},
+				{UID: "folderUID-B", Title: "Folder B", OrgID: 1, ParentUID: "folderUID-A"},
+			},
+			folders: []folder.CreateFolderCommand{
+				{UID: "folderUID-C", Title: "Folder A", OrgID: 1, ParentUID: "folderUID-A"},
+			},
+			dashboards: []dashboards.Dashboard{
+				{UID: "dashboardUID-0", OrgID: 1, FolderUID: ""},
+				{UID: "dashboardUID-1", OrgID: 1, FolderUID: "folderUID-A"},
+				{UID: "dashboardUID-2", OrgID: 1, FolderUID: "folderUID-B"},
+			},
+			expectedFolderNames: []string{"", "Folder A", "Folder B"},
+		},
+	}
+
+	for _, tc := range testcases {
+		s.folderService = &foldertest.FakeService{ExpectedFolders: tc.fakeFolders}
+
+		parentUIDsToNames, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders)
+		require.NoError(t, err)
+
+		resParentNames := slices.Collect(maps.Values(parentUIDsToNames))
+		require.Len(t, resParentNames, len(tc.expectedFolderNames))
+		require.ElementsMatch(t, resParentNames, tc.expectedFolderNames)
+	}
+
+}
 
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
@@ -582,7 +691,9 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	spanRecorder := tracetest.NewSpanRecorder()
 	tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 	mockFolder := &foldertest.FakeService{
-		ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
+		ExpectedFolders: []*folder.Folder{
+			{UID: "folderUID", Title: "Folder"},
+		},
 	}
 
 	cfg := setting.NewCfg()
