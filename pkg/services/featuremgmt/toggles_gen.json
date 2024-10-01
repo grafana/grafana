@@ -2108,15 +2108,15 @@
     {
       "metadata": {
         "name": "notificationBanner",
-        "resourceVersion": "1727758946847",
+        "resourceVersion": "1727777007488",
         "creationTimestamp": "2024-05-13T09:32:34Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-10-01 05:02:26.847156 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-01 10:03:27.48823 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables the notification banner UI and API",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "true"
       }
