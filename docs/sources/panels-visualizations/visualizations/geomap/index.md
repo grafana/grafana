@@ -194,7 +194,16 @@ There are three options that you need to set for all maps:
 - [Data](#data)
 - [Location mode](#location-mode)
 
-Other options are dependent on your map layer type.
+Other options are dependent on your map layer type and are described within the layer type section.
+
+The layer controls allow you to create layers, change their name, reorder and delete layers.
+
+- **Add layer** creates an additional, configurable data layer for the geomap. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
+- **Edit layer name (pencil icon)** renames the layer.
+- **Trash Bin** deletes the layer.
+- **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The visualization will update the layer order as you drag and drop to help simplify choosing a layer order.
+
+You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
 
 #### Layer type
 
@@ -233,18 +242,6 @@ To enable the experimental layers using Docker, run the following command:
 ```
 docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
 ```
-
-##### Layer controls
-
-The layer controls allow you to create layers, change their name, reorder and delete layers.
-
-- **Add layer** creates an additional, configurable data layer for the geomap. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
-- The layer controls allow you to rename, delete, and reorder the layers of the visualization.
-  - **Edit layer name (pencil icon)** renames the layer.
-  - **Trash Bin** deletes the layer.
-  - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The visualization will update the layer order as you drag and drop to help simplify choosing a layer order.
-
-You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
 
 #### Data
 
@@ -517,9 +514,9 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 - [ArcGIS Services](https://services.arcgisonline.com/arcgis/rest/services)
 - [About ESRI](https://www.esri.com/en-us/about/about-esri/overview)
 
-#### XYZ tile layer
+#### XYZ Tile layer
 
-The XYZ tile layer is a map from a generic tile layer.
+The XYZ Tile layer is a map from a generic tile layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" alt="Geomap panel xyz example" >}}
 
