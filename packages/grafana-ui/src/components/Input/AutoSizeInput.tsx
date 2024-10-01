@@ -32,7 +32,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
 
   // Update internal state when controlled `value` prop changes
   useEffect(() => {
-    if (controlledValue !== undefined) {
+    if (controlledValue) {
       setValue(controlledValue);
     }
   }, [controlledValue]);
