@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/
-description: Lorem Ipsum -- List of examples templating alert rule annotations and labels
+description: Examples of templating labels and annotations in Grafana alert rules
 keywords:
   - grafana
   - alerting
@@ -12,14 +12,18 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Annotation and label template examples
+title: Templating labels and annotations in alert rules: examples and common use cases
 menuTitle: Examples
-weight: 102
+weight: 0
 ---
 
-# Annotation and label template examples
+# Templating labels and annotations in alert rules: examples and common use cases
 
-The following examples attempt to show the most common use-cases we have seen for templates. You can use these examples verbatim, or adapt them as necessary for your use case. For more information on how to write text/template refer see [the beginner's guide to alert notification templates in Grafana](https://grafana.com/blog/2023/04/05/grafana-alerting-a-beginners-guide-to-templating-alert-notifications/).
+This document is a compilation of common use cases for templating labels and annotations within Grafana alert rules. Templating allows you to dynamically generate values for both labels and annotations, making your alerts more flexible and context-aware. By leveraging variables from your metrics, you can create more informative and actionable alerts that improve both routing and response times.
+
+Each example provided here is specifically applicable to alert rules (though syntax and functionality may differ from notification templates). For those seeking examples related to notification templates—which cover the formatting of alert messages sent to external systems—please refer to the Notification Templates Examples document.
+
+For more information on how to write text/template refer see [the beginner's guide to alert notification templates in Grafana](https://grafana.com/blog/2023/04/05/grafana-alerting-a-beginners-guide-to-templating-alert-notifications/).
 
 ## Print all labels, comma separated
 
