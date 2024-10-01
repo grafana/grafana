@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
@@ -21,6 +21,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const forceScenes = props.queryParams.scenes === true;
   const forceOld = props.queryParams.scenes === false;
   const params = useParams<DashboardPageParams>();
+  const location = useLocation();
 
   if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
@@ -47,7 +48,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   }, [params.uid, props.route.routeName]);
 
   if (!config.featureToggles.dashboardSceneForViewers) {
-    return <DashboardPage {...props} params={params} />;
+    return <DashboardPage {...props} params={params} location={location} />;
   }
 
   if (dashboard.loading) {
@@ -65,7 +66,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   ) {
     return <DashboardScenePage {...props} />;
   } else {
-    return <DashboardPage {...props} params={params} />;
+    return <DashboardPage {...props} params={params} location={location} />;
   }
 }
 
