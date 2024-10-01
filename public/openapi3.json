@@ -7098,6 +7098,9 @@
           "name": {
             "type": "string"
           },
+          "parentName": {
+            "type": "string"
+          },
           "refId": {
             "type": "string"
           },
@@ -15799,6 +15802,14 @@
             "in": "path",
             "name": "uid",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "in": "query",
+            "name": "sort",
             "schema": {
               "type": "string"
             }
