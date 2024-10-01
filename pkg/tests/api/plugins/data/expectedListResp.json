@@ -24,7 +24,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -73,7 +76,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -110,7 +116,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -175,7 +184,10 @@
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -212,7 +224,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -249,7 +264,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -291,7 +309,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -328,7 +349,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -368,7 +392,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -405,7 +432,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -442,7 +472,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -486,7 +519,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -523,7 +559,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -560,7 +599,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -597,7 +639,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -634,7 +679,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -671,7 +719,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -721,7 +772,10 @@
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -758,7 +812,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -804,7 +861,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -841,7 +901,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -883,7 +946,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -920,7 +986,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -966,7 +1035,10 @@
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1003,7 +1075,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1049,7 +1124,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1086,7 +1164,10 @@
     "dependencies": {
       "grafanaDependency": "\u003e=10.4.0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1123,7 +1204,10 @@
     "dependencies": {
       "grafanaDependency": ">=10.4.0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1160,7 +1244,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1197,7 +1284,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1234,7 +1324,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1281,7 +1374,10 @@
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1318,7 +1414,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1355,7 +1454,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1397,7 +1499,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1434,7 +1539,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1471,7 +1579,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1508,7 +1619,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1545,7 +1659,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1582,7 +1699,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1624,7 +1744,10 @@
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1661,7 +1784,10 @@
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1698,7 +1824,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1735,7 +1864,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1772,7 +1904,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1809,7 +1944,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1846,7 +1984,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1886,7 +2027,10 @@
     "dependencies": {
       "grafanaDependency": "",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
@@ -1928,7 +2072,10 @@
     "dependencies": {
       "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
-      "plugins": []
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
     },
     "latestVersion": "",
     "hasUpdate": false,
