@@ -56,6 +56,10 @@
     "pause": ""
   },
   "alerting": {
+    "annotations": {
+      "description": "",
+      "title": ""
+    },
     "central-alert-history": {
       "details": {
         "error": "",
@@ -108,21 +112,39 @@
     },
     "contact-point": "",
     "contact-points": {
+      "create": "",
+      "delete-reasons": {
+        "heading": "",
+        "no-permissions": "",
+        "policies": "",
+        "provisioned": "",
+        "rules": ""
+      },
       "delivery-duration": "",
+      "empty-state": {
+        "title": ""
+      },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-delivery-attempts": "",
+      "no-integrations": "",
       "only-firing": "",
       "telegram": {
         "parse-mode-warning-body": "",
         "parse-mode-warning-title": ""
       },
-      "used-by_other": ""
+      "used-by_other": "",
+      "used-by-rules_other": ""
     },
     "contactPointFilter": {
       "label": ""
     },
     "list-view": {
+      "empty": {
+        "new-alert-rule": "",
+        "new-recording-rule": "",
+        "provisioning": ""
+      },
       "section": {
         "dataSourceManaged": {
           "title": ""
@@ -134,6 +156,10 @@
           "title": ""
         }
       }
+    },
+    "manage-permissions": {
+      "button": "",
+      "title": ""
     },
     "mute_timings": {
       "error-loading": {
@@ -186,6 +212,13 @@
       "badge-tooltip-provenance": "",
       "badge-tooltip-standard": ""
     },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": ""
+      },
+      "preview": "",
+      "previewCondition": ""
+    },
     "rule-groups": {
       "delete": {
         "success": ""
@@ -205,6 +238,12 @@
       "deleting": "",
       "paused": "",
       "recording-rule": ""
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "",
+        "alert-title": ""
+      }
     },
     "rules": {
       "add-rule": {
@@ -235,6 +274,12 @@
         "state": ""
       },
       "save-query": ""
+    },
+    "simpleCondition": {
+      "alertCondition": "",
+      "ofQuery": {
+        "To": ""
+      }
     }
   },
   "annotations": {
@@ -448,23 +493,30 @@
     },
     "source-form": {
       "control-required": "此字段是必填字段。",
-      "description": "您在目标查询中使用了以下变量：<1></1><2></2>数据点需要为所有变量提供作为字段或转换输出的值，以使关联按钮出现在可视化中。 <4></4>注意：并非每个变量都需要在下面明确定义。<7>logfmt</7> 等变换将为每个键/值对创建变量。",
-      "heading": "目标查询中使用的变量",
+      "description": "",
+      "description-external-pre": "",
+      "description-query-pre": "",
+      "external-title": "",
+      "heading-external": "",
+      "heading-query": "",
+      "query-title": "",
       "results-description": "此链接将显示在此字段的值旁边",
       "results-label": "结果字段",
       "results-required": "此字段是必填字段。",
       "source-description": "所选源数据源得到的结果有在面板中显示的链接",
       "source-label": "源",
-      "sub-text": "<0>定义哪些数据源将显示关联，以及哪些数据将取代先前定义的变量。</0>",
-      "title": "配置将链接到 {{dataSourceName}} 的数据源（第 3 步，共 3 步）。"
+      "sub-text": "<0>定义哪些数据源将显示关联，以及哪些数据将取代先前定义的变量。</0>"
     },
     "sub-title": "定义不同数据源中存在的数据如何相互关联。详细信息请参阅<2>文档<1></1></2>。",
     "target-form": {
       "control-rules": "此字段是必填字段。",
-      "sub-text": "<0>定义关联将链接到哪个数据源，以及点击关联时将会运行什么查询。</0>",
-      "target-description": "指定点击链接时查询哪个数据源",
+      "sub-text": "",
+      "target-description-external": "",
+      "target-description-query": "",
       "target-label": "目标",
-      "title": "设置关联的目标（第 2 步，共 3 步）"
+      "target-type-description": "",
+      "title": "设置关联的目标（第 2 步，共 3 步）",
+      "type-label": ""
     },
     "trans-details": {
       "logfmt-description": "使用 logfmt 解析提供的字段以获取变量",
@@ -921,6 +973,11 @@
     }
   },
   "explore-metrics": {
+    "breakdown": {
+      "clearFilter": "",
+      "labelSelect": "",
+      "noMatchingValue": ""
+    },
     "viewBy": ""
   },
   "export": {
@@ -1115,9 +1172,7 @@
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
-      "edit": {
-        "button": ""
-      },
+      "edit-button": "",
       "subtitle": "",
       "title": ""
     },
@@ -1138,15 +1193,15 @@
       "label": ""
     },
     "buttons-section": {
-      "discard": {
-        "button": ""
-      },
-      "save": {
-        "button": ""
-      },
-      "save-and-enable": {
-        "button": ""
-      }
+      "discard-button": "",
+      "save-and-enable-button": "",
+      "save-button": ""
+    },
+    "discard-modal": {
+      "cancel-button": "",
+      "description": "",
+      "discard-button": "",
+      "title": ""
     },
     "documentation": "",
     "host": {
@@ -1165,8 +1220,7 @@
     },
     "search-base-dns": {
       "description": "",
-      "label": "",
-      "placeholder": ""
+      "label": ""
     },
     "subtitle": "",
     "title": ""
@@ -1601,6 +1655,9 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
+    "groupsync": {
+      "subtitle": ""
+    },
     "help": {
       "title": "帮助"
     },
@@ -1718,6 +1775,9 @@
       "subtitle": "使用服务帐户在 Grafana 中运行自动化工作负载",
       "title": "服务帐户"
     },
+    "setup-guide": {
+      "title": ""
+    },
     "shared-dashboard": {
       "subtitle": "",
       "title": ""
@@ -1809,6 +1869,9 @@
       "server-discovery-modal-close": "",
       "server-discovery-modal-loading": "",
       "server-discovery-modal-submit": ""
+    },
+    "login": {
+      "error": ""
     }
   },
   "panel": {
@@ -1833,6 +1896,9 @@
       "unlink-library-panel": "取消链接库面板",
       "view": "查看"
     }
+  },
+  "panel-search": {
+    "unsupported-layout": ""
   },
   "playlist-edit": {
     "error-prefix": "加载播放列表时发生错误：",
@@ -1890,13 +1956,16 @@
         "button": "",
         "cloud-update-message": "",
         "error": "",
+        "error-status-text": "",
         "header": "",
         "installed-header": "",
         "modal-confirmation": "",
         "modal-dismiss": "",
+        "modal-in-progress": "",
         "modal-title": "",
         "name-header": "",
-        "update-header": ""
+        "update-header": "",
+        "update-status-text": ""
       }
     },
     "details": {
@@ -2576,11 +2645,20 @@
   "trails": {
     "metric-overview": {
       "description-label": "",
-      "labels-label": "",
+      "labels": "",
+      "metric-attributes": "",
       "no-description": "",
       "type-label": "",
       "unit-label": "",
       "unknown-type": ""
+    },
+    "metric-select": {
+      "filter-by": "",
+      "otel-switch": ""
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "",
+      "show-previews-of-metric-graphs": ""
     }
   },
   "transformations": {

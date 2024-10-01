@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
@@ -27,7 +27,7 @@ import { AccessControlAction } from 'app/types';
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
-import type { RemoveCorrelationParams } from './types';
+import type { Correlation, RemoveCorrelationParams } from './types';
 import { CorrelationData, useCorrelations } from './useCorrelations';
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
@@ -238,7 +238,7 @@ interface ExpandedRowProps {
   readOnly: boolean;
   onUpdated: () => void;
 }
-function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
+function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
   useEffect(
     () => reportInteraction('grafana_correlations_details_expanded'),
     // we only want to fire this on first render
@@ -246,13 +246,12 @@ function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly
     []
   );
 
-  return (
-    <EditCorrelationForm
-      correlation={{ ...correlation, sourceUID: source.uid, targetUID: target.uid }}
-      onUpdated={onUpdated}
-      readOnly={readOnly}
-    />
-  );
+  let corr: Correlation =
+    correlation.type === 'query'
+      ? { ...correlation, type: 'query', sourceUID: source.uid, targetUID: correlation.target.uid }
+      : { ...correlation, type: 'external', sourceUID: source.uid };
+
+  return <EditCorrelationForm correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
 }
 
 const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({
@@ -268,20 +267,22 @@ const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({
 });
 
 const DataSourceCell = memo(
-  function DataSourceCell({
-    cell: { value },
-  }: CellProps<CorrelationData, CorrelationData['source'] | CorrelationData['target']>) {
+  function DataSourceCell({ cell: { value } }: CellProps<CorrelationData, DataSourceInstanceSettings>) {
     const styles = useStyles2(getDatasourceCellStyles);
 
     return (
       <span className={styles.root}>
-        <img src={value.meta.info.logos.small} alt="" className={styles.dsLogo} />
-        {value.name}
+        {value?.name !== undefined && (
+          <>
+            <img src={value.meta.info.logos.small} alt="" className={styles.dsLogo} />
+            {value.name}
+          </>
+        )}
       </span>
     );
   },
   ({ cell: { value } }, { cell: { value: prevValue } }) => {
-    return value.type === prevValue.type && value.name === prevValue.name;
+    return value?.type === prevValue?.type && value?.name === prevValue?.name;
   }
 );
 

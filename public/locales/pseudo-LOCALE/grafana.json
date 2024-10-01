@@ -56,6 +56,10 @@
     "pause": "Päūşę ęväľūäŧįőŉ"
   },
   "alerting": {
+    "annotations": {
+      "description": "Åđđ mőřę čőŉŧęχŧ ŧő yőūř äľęřŧ ŉőŧįƒįčäŧįőŉş.",
+      "title": "Cőŉƒįģūřę ŉőŧįƒįčäŧįőŉ męşşäģę"
+    },
     "central-alert-history": {
       "details": {
         "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
@@ -108,7 +112,18 @@
     },
     "contact-point": "Cőŉŧäčŧ Pőįŉŧ",
     "contact-points": {
+      "create": "Cřęäŧę čőŉŧäčŧ pőįŉŧ",
+      "delete-reasons": {
+        "heading": "Cőŉŧäčŧ pőįŉŧ čäŉŉőŧ þę đęľęŧęđ ƒőř ŧĥę ƒőľľőŵįŉģ řęäşőŉş:",
+        "no-permissions": "Ÿőū đő ŉőŧ ĥävę ŧĥę řęqūįřęđ pęřmįşşįőŉ ŧő đęľęŧę ŧĥįş čőŉŧäčŧ pőįŉŧ",
+        "policies": "Cőŉŧäčŧ pőįŉŧ įş řęƒęřęŉčęđ þy őŉę őř mőřę ŉőŧįƒįčäŧįőŉ pőľįčįęş",
+        "provisioned": "Cőŉŧäčŧ pőįŉŧ įş přővįşįőŉęđ äŉđ čäŉŉőŧ þę đęľęŧęđ vįä ŧĥę ŮĨ",
+        "rules": "Cőŉŧäčŧ pőįŉŧ įş řęƒęřęŉčęđ þy őŉę őř mőřę äľęřŧ řūľęş"
+      },
       "delivery-duration": "Ŀäşŧ đęľįvęřy ŧőőĸ <1></1>",
+      "empty-state": {
+        "title": "Ÿőū đőŉ'ŧ ĥävę äŉy čőŉŧäčŧ pőįŉŧş yęŧ"
+      },
       "last-delivery-attempt": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ",
       "last-delivery-failed": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ ƒäįľęđ",
       "no-delivery-attempts": "Ńő đęľįvęřy äŧŧęmpŧş",
@@ -119,7 +134,9 @@
         "parse-mode-warning-title": "Ŧęľęģřäm męşşäģęş äřę ľįmįŧęđ ŧő 4096 ŮŦF-8 čĥäřäčŧęřş."
       },
       "used-by_one": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčy",
-      "used-by_other": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčy"
+      "used-by_other": "Ůşęđ þy {{ count }} ŉőŧįƒįčäŧįőŉ pőľįčįęş",
+      "used-by-rules_one": "Ůşęđ þy {{ count }} äľęřŧ řūľę",
+      "used-by-rules_other": "Ůşęđ þy {{ count }} äľęřŧ řūľęş"
     },
     "contactPointFilter": {
       "label": "Cőŉŧäčŧ pőįŉŧ"
@@ -141,6 +158,10 @@
           "title": "Ğřäƒäŉä-mäŉäģęđ"
         }
       }
+    },
+    "manage-permissions": {
+      "button": "Mäŉäģę pęřmįşşįőŉş",
+      "title": "Mäŉäģę pęřmįşşįőŉş"
     },
     "mute_timings": {
       "error-loading": {
@@ -169,7 +190,7 @@
         "inherited": "Ĩŉĥęřįŧęđ",
         "mute-time": "Mūŧęđ ŵĥęŉ",
         "n-instances_one": "įŉşŧäŉčę",
-        "n-instances_other": "įŉşŧäŉčę",
+        "n-instances_other": "įŉşŧäŉčęş",
         "timingOptions": {
           "groupInterval": {
             "description": "Ħőŵ ľőŉģ ŧő ŵäįŧ þęƒőřę şęŉđįŉģ ä ŉőŧįƒįčäŧįőŉ äþőūŧ ŉęŵ äľęřŧş ŧĥäŧ äřę äđđęđ ŧő ä ģřőūp őƒ äľęřŧş ƒőř ŵĥįčĥ äŉ įŉįŧįäľ ŉőŧįƒįčäŧįőŉ ĥäş äľřęäđy þęęŉ şęŉŧ.",
@@ -185,7 +206,7 @@
           }
         }
       },
-      "n-more-policies_one": "{{count}} äđđįŧįőŉäľ pőľįčįęş",
+      "n-more-policies_one": "{{count}} äđđįŧįőŉäľ pőľįčy",
       "n-more-policies_other": "{{count}} äđđįŧįőŉäľ pőľįčįęş",
       "new-child": "Ńęŵ čĥįľđ pőľįčy",
       "new-policy": "Åđđ ŉęŵ pőľįčy",
@@ -194,6 +215,13 @@
     "provisioning": {
       "badge-tooltip-provenance": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ vįä {{provenance}} äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ",
       "badge-tooltip-standard": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ"
+    },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": "Ŧĥę şęľęčŧęđ qūęřįęş äŉđ ęχpřęşşįőŉş čäŉŉőŧ þę čőŉvęřŧęđ ŧő đęƒäūľŧ. Ĩƒ yőū đęäčŧįväŧę äđväŉčęđ őpŧįőŉş, yőūř qūęřy äŉđ čőŉđįŧįőŉ ŵįľľ þę řęşęŧ ŧő đęƒäūľŧ şęŧŧįŉģş."
+      },
+      "preview": "Přęvįęŵ",
+      "previewCondition": "Přęvįęŵ äľęřŧ řūľę čőŉđįŧįőŉ"
     },
     "rule-groups": {
       "delete": {
@@ -214,6 +242,12 @@
       "deleting": "Đęľęŧįŉģ",
       "paused": "Päūşęđ",
       "recording-rule": "Ŗęčőřđįŉģ řūľę"
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "Åľęřŧ řūľę ĥäş þęęŉ ūpđäŧęđ. Cĥäŉģęş mäy ŧäĸę ūp ŧő ä mįŉūŧę ŧő äppęäř őŉ ŧĥę Åľęřŧ řūľęş ľįşŧ vįęŵ.",
+        "alert-title": "Ůpđäŧę įŉ přőģřęşş"
+      }
     },
     "rules": {
       "add-rule": {
@@ -244,6 +278,12 @@
         "state": "Ŝŧäŧę"
       },
       "save-query": "Ŝävę čūřřęŉŧ şęäřčĥ"
+    },
+    "simpleCondition": {
+      "alertCondition": "Åľęřŧ čőŉđįŧįőŉ",
+      "ofQuery": {
+        "To": "ŦØ"
+      }
     }
   },
   "annotations": {
@@ -291,15 +331,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} äľęřŧ řūľę",
-      "alertRule_other": "{{count}} äľęřŧ řūľę",
+      "alertRule_other": "{{count}} äľęřŧ řūľęş",
       "dashboard_one": "{{count}} đäşĥþőäřđ",
-      "dashboard_other": "{{count}} đäşĥþőäřđ",
+      "dashboard_other": "{{count}} đäşĥþőäřđş",
       "folder_one": "{{count}} ƒőľđęř",
-      "folder_other": "{{count}} ƒőľđęř",
+      "folder_other": "{{count}} ƒőľđęřş",
       "libraryPanel_one": "{{count}} ľįþřäřy päŉęľ",
-      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľ",
+      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľş",
       "total_one": "{{count}} įŧęm",
-      "total_other": "{{count}} įŧęm"
+      "total_other": "{{count}} įŧęmş"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
@@ -462,23 +502,30 @@
     },
     "source-form": {
       "control-required": "Ŧĥįş ƒįęľđ įş řęqūįřęđ.",
-      "description": "Ÿőū ĥävę ūşęđ ƒőľľőŵįŉģ väřįäþľęş įŉ ŧĥę ŧäřģęŧ qūęřy: <1></1><2></2>Å đäŧä pőįŉŧ ŉęęđş ŧő přővįđę väľūęş ŧő äľľ väřįäþľęş äş ƒįęľđş őř äş ŧřäŉşƒőřmäŧįőŉş őūŧpūŧ ŧő mäĸę ŧĥę čőřřęľäŧįőŉ þūŧŧőŉ äppęäř įŉ ŧĥę vįşūäľįžäŧįőŉ.<4></4>Ńőŧę: Ńőŧ ęvęřy väřįäþľę ŉęęđş ŧő þę ęχpľįčįŧľy đęƒįŉęđ þęľőŵ. Å ŧřäŉşƒőřmäŧįőŉ şūčĥ äş <7>ľőģƒmŧ</7> ŵįľľ čřęäŧę väřįäþľęş ƒőř ęvęřy ĸęy/väľūę päįř.",
-      "heading": "Väřįäþľęş ūşęđ įŉ ŧĥę ŧäřģęŧ qūęřy",
+      "description": "Å đäŧä pőįŉŧ ŉęęđş ŧő přővįđę väľūęş ŧő äľľ väřįäþľęş äş ƒįęľđş őř äş ŧřäŉşƒőřmäŧįőŉş őūŧpūŧ ŧő mäĸę ŧĥę čőřřęľäŧįőŉ þūŧŧőŉ äppęäř įŉ ŧĥę vįşūäľįžäŧįőŉ.<1></1>Ńőŧę: Ńőŧ ęvęřy väřįäþľę ŉęęđş ŧő þę ęχpľįčįŧľy đęƒįŉęđ þęľőŵ. Å ŧřäŉşƒőřmäŧįőŉ şūčĥ äş <4>ľőģƒmŧ</4> ŵįľľ čřęäŧę väřįäþľęş ƒőř ęvęřy ĸęy/väľūę päįř.",
+      "description-external-pre": "Ÿőū ĥävę ūşęđ ƒőľľőŵįŉģ väřįäþľęş įŉ ŧĥę ŧäřģęŧ ŮŖĿ:",
+      "description-query-pre": "Ÿőū ĥävę ūşęđ ƒőľľőŵįŉģ väřįäþľęş įŉ ŧĥę ŧäřģęŧ qūęřy:",
+      "external-title": "Cőŉƒįģūřę ŧĥę đäŧä şőūřčę ŧĥäŧ ŵįľľ ūşę ŧĥę ŮŖĿ (Ŝŧęp 3 őƒ 3)",
+      "heading-external": "Väřįäþľęş ūşęđ įŉ ŧĥę ŧäřģęŧ ŮŖĿ",
+      "heading-query": "Väřįäþľęş ūşęđ įŉ ŧĥę ŧäřģęŧ qūęřy",
+      "query-title": "Cőŉƒįģūřę ŧĥę đäŧä şőūřčę ŧĥäŧ ŵįľľ ľįŉĸ ŧő {{dataSourceName}} (Ŝŧęp 3 őƒ 3)",
       "results-description": "Ŧĥę ľįŉĸ ŵįľľ þę şĥőŵŉ ŉęχŧ ŧő ŧĥę väľūę őƒ ŧĥįş ƒįęľđ",
       "results-label": "Ŗęşūľŧş ƒįęľđ",
       "results-required": "Ŧĥįş ƒįęľđ įş řęqūįřęđ.",
       "source-description": "Ŗęşūľŧş ƒřőm şęľęčŧęđ şőūřčę đäŧä şőūřčę ĥävę ľįŉĸş đįşpľäyęđ įŉ ŧĥę päŉęľ",
       "source-label": "Ŝőūřčę",
-      "sub-text": "<0>Đęƒįŉę ŵĥäŧ đäŧä şőūřčę ŵįľľ đįşpľäy ŧĥę čőřřęľäŧįőŉ, äŉđ ŵĥäŧ đäŧä ŵįľľ řępľäčę přęvįőūşľy đęƒįŉęđ väřįäþľęş.</0>",
-      "title": "Cőŉƒįģūřę ŧĥę đäŧä şőūřčę ŧĥäŧ ŵįľľ ľįŉĸ ŧő {{dataSourceName}} (Ŝŧęp 3 őƒ 3)"
+      "sub-text": "<0>Đęƒįŉę ŵĥäŧ đäŧä şőūřčę ŵįľľ đįşpľäy ŧĥę čőřřęľäŧįőŉ, äŉđ ŵĥäŧ đäŧä ŵįľľ řępľäčę přęvįőūşľy đęƒįŉęđ väřįäþľęş.</0>"
     },
     "sub-title": "Đęƒįŉę ĥőŵ đäŧä ľįvįŉģ įŉ đįƒƒęřęŉŧ đäŧä şőūřčęş řęľäŧęş ŧő ęäčĥ őŧĥęř. Ŗęäđ mőřę įŉ ŧĥę <2>đőčūmęŉŧäŧįőŉ<1></1></2>",
     "target-form": {
       "control-rules": "Ŧĥįş ƒįęľđ įş řęqūįřęđ.",
-      "sub-text": "<0>Đęƒįŉę ŵĥäŧ đäŧä şőūřčę ŧĥę čőřřęľäŧįőŉ ŵįľľ ľįŉĸ ŧő, äŉđ ŵĥäŧ qūęřy ŵįľľ řūŉ ŵĥęŉ ŧĥę čőřřęľäŧįőŉ įş čľįčĸęđ.</0>",
-      "target-description": "Ŝpęčįƒy ŵĥįčĥ đäŧä şőūřčę įş qūęřįęđ ŵĥęŉ ŧĥę ľįŉĸ įş čľįčĸęđ",
+      "sub-text": "<0>Đęƒįŉę ŵĥäŧ ŧĥę čőřřęľäŧįőŉ ŵįľľ ľįŉĸ ŧő. Ŵįŧĥ ŧĥę qūęřy ŧypę, ä qūęřy ŵįľľ řūŉ ŵĥęŉ ŧĥę čőřřęľäŧįőŉ įş čľįčĸęđ. Ŵįŧĥ ŧĥę ęχŧęřŉäľ ŧypę, čľįčĸįŉģ ŧĥę čőřřęľäŧįőŉ ŵįľľ őpęŉ ä ŮŖĿ.</0>",
+      "target-description-external": "Ŝpęčįƒy ŧĥę ŮŖĿ ŧĥäŧ ŵįľľ őpęŉ ŵĥęŉ ŧĥę ľįŉĸ įş čľįčĸęđ",
+      "target-description-query": "Ŝpęčįƒy ŵĥįčĥ đäŧä şőūřčę įş qūęřįęđ ŵĥęŉ ŧĥę ľįŉĸ įş čľįčĸęđ",
       "target-label": "Ŧäřģęŧ",
-      "title": "Ŝęŧūp ŧĥę ŧäřģęŧ ƒőř ŧĥę čőřřęľäŧįőŉ (Ŝŧęp 2 őƒ 3)"
+      "target-type-description": "Ŝpęčįƒy ŧĥę ŧypę őƒ čőřřęľäŧįőŉ",
+      "title": "Ŝęŧūp ŧĥę ŧäřģęŧ ƒőř ŧĥę čőřřęľäŧįőŉ (Ŝŧęp 2 őƒ 3)",
+      "type-label": "Ŧypę"
     },
     "trans-details": {
       "logfmt-description": "Päřşę přővįđęđ ƒįęľđ ŵįŧĥ ľőģƒmŧ ŧő ģęŧ väřįäþľęş",
@@ -1084,7 +1131,7 @@
       "tls-ciphers-placeholder": "ę.ģ. [\"ŦĿŜ_ÅĒŜ_256_ĞCM_ŜĦÅ384\"]",
       "use-ssl-description": "Ŝęŧ ŧő ŧřūę įƒ ĿĐÅP şęřvęř şĥőūľđ ūşę ŦĿŜ čőŉŉęčŧįőŉ (ęįŧĥęř ŵįŧĥ ŜŦÅŖŦŦĿŜ őř ĿĐÅPŜ)",
       "use-ssl-label": "Ůşę ŜŜĿ",
-      "use-ssl-tooltip": "Főř ä čőmpľęŧę ľįşŧ őƒ şūppőřŧęđ čįpĥęřş äŉđ ŦĿŜ vęřşįőŉş, řęƒęř ŧő: {\n        <ŦęχŧĿįŉĸ şŧyľę={{ fontSize: 'inherit' }} ĥřęƒ=\"ĥŧŧpş://ģő.đęv/şřč/čřypŧő/ŧľş/čįpĥęř_şūįŧęş.ģő\" ęχŧęřŉäľ>\n          ĥŧŧpş://ģő.đęv/şřč/čřypŧő/ŧľş/čįpĥęř_şūįŧęş.ģő\n        </ŦęχŧĿįŉĸ>}"
+      "use-ssl-tooltip": "Főř ä čőmpľęŧę ľįşŧ őƒ şūppőřŧęđ čįpĥęřş äŉđ ŦĿŜ vęřşįőŉş, řęƒęř ŧő:"
     },
     "group-mapping": {
       "grafana-admin": {
@@ -1134,9 +1181,7 @@
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
-      "edit": {
-        "button": "Ēđįŧ"
-      },
+      "edit-button": "Ēđįŧ",
       "subtitle": "Mäppįŉģş, ęχŧřä şęčūřįŧy męäşūřęş, äŉđ mőřę.",
       "title": "Åđväŉčęđ Ŝęŧŧįŉģş"
     },
@@ -1157,20 +1202,20 @@
       "label": "ßįŉđ päşşŵőřđ"
     },
     "buttons-section": {
-      "discard": {
-        "button": "Đįşčäřđ"
-      },
-      "save": {
-        "button": "Ŝävę"
-      },
-      "save-and-enable": {
-        "button": "Ŝävę äŉđ ęŉäþľę"
-      }
+      "discard-button": "Đįşčäřđ",
+      "save-and-enable-button": "Ŝävę äŉđ ęŉäþľę",
+      "save-button": "Ŝävę"
+    },
+    "discard-modal": {
+      "cancel-button": "ßäčĸ ŧő ęđįŧįŉģ",
+      "description": "Åřę yőū şūřę yőū ŵäŉŧ ŧő äþäŉđőŉ ŧĥę čĥäŉģęş yőū&ľşqūő;vę mäđę ŧő ŧĥę ĿĐÅP čőŉƒįģūřäŧįőŉ? Åľľ čĥäŉģęş ŵįľľ þę ľőşŧ.",
+      "discard-button": "Åþäŉđőŉ ĿĐÅP",
+      "title": "Ŀęävę ĿĐÅP čőŉƒįģūřäŧįőŉ?"
     },
     "documentation": "đőčūmęŉŧäŧįőŉ",
     "host": {
       "description": "Ħőşŧŉämę őř ĨP äđđřęşş őƒ ŧĥę ĿĐÅP şęřvęř yőū ŵįşĥ ŧő čőŉŉęčŧ ŧő.",
-      "label": "Ŝęřvęř ĥőşŧ",
+      "label": "Ŝęřvęř ĥőşŧ *",
       "placeholder": "ęχämpľę: 127.0.0.1"
     },
     "login-form-alert": {
@@ -1179,7 +1224,7 @@
     },
     "search_filter": {
       "description": "ĿĐÅP şęäřčĥ ƒįľŧęř ūşęđ ŧő ľőčäŧę şpęčįƒįč ęŉŧřįęş ŵįŧĥįŉ ŧĥę đįřęčŧőřy.",
-      "label": "Ŝęäřčĥ ƒįľŧęř*",
+      "label": "Ŝęäřčĥ ƒįľŧęř *",
       "placeholder": "ęχämpľę: čŉ=%ş"
     },
     "search-base-dns": {
@@ -1740,6 +1785,9 @@
       "subtitle": "Ůşę şęřvįčę äččőūŉŧş ŧő řūŉ äūŧőmäŧęđ ŵőřĸľőäđş įŉ Ğřäƒäŉä",
       "title": "Ŝęřvįčę äččőūŉŧş"
     },
+    "setup-guide": {
+      "title": "Ŝęŧūp ģūįđę"
+    },
     "shared-dashboard": {
       "subtitle": "Mäŉäģę yőūř őřģäŉįžäŧįőŉ'ş ęχŧęřŉäľľy şĥäřęđ đäşĥþőäřđş",
       "title": "Ŝĥäřęđ đäşĥþőäřđş"
@@ -1831,6 +1879,9 @@
       "server-discovery-modal-close": "Cľőşę",
       "server-discovery-modal-loading": "Ŀőäđįŉģ...",
       "server-discovery-modal-submit": "Ŝūþmįŧ"
+    },
+    "login": {
+      "error": "Ŀőģįŉ přővįđęř đęŉįęđ ľőģįŉ řęqūęşŧ"
     }
   },
   "panel": {
@@ -1855,6 +1906,9 @@
       "unlink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
       "view": "Vįęŵ"
     }
+  },
+  "panel-search": {
+    "unsupported-layout": "Ůŉşūppőřŧęđ ľäyőūŧ"
   },
   "playlist-edit": {
     "error-prefix": "Ēřřőř ľőäđįŉģ pľäyľįşŧ:",
@@ -1912,13 +1966,16 @@
         "button": "Ůpđäŧę äľľ",
         "cloud-update-message": "* Ĩŧ mäy ŧäĸę ä ƒęŵ mįŉūŧęş ƒőř ŧĥę pľūģįŉş ŧő þę äväįľäþľę ƒőř ūşäģę.",
         "error": "Ēřřőř ūpđäŧįŉģ pľūģįŉ:",
+        "error-status-text": "ƒäįľęđ - şęę ęřřőř męşşäģęş",
         "header": "Ŧĥę ƒőľľőŵįŉģ pľūģįŉş ĥävę ūpđäŧę äväįľäþľę",
         "installed-header": "Ĩŉşŧäľľęđ",
         "modal-confirmation": "Ůpđäŧę",
         "modal-dismiss": "Cľőşę",
+        "modal-in-progress": "Ůpđäŧįŉģ...",
         "modal-title": "Ůpđäŧę Pľūģįŉş",
         "name-header": "Ńämę",
-        "update-header": "Ůpđäŧę"
+        "update-header": "Ůpđäŧę",
+        "update-status-text": "pľūģįŉş ūpđäŧęđ"
       }
     },
     "details": {
@@ -2171,16 +2228,16 @@
       "confirm-text": "Đęľęŧę",
       "delete-button": "Đęľęŧę",
       "delete-loading": "Đęľęŧįŉģ...",
-      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđ.",
       "text_other": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđş.",
       "title": "Pęřmäŉęŉŧľy Đęľęŧę Đäşĥþőäřđş"
     },
     "restore-modal": {
-      "folder-picker-text_one": "Pľęäşę čĥőőşę ä ƒőľđęř ŵĥęřę yőūř đäşĥþőäřđş ŵįľľ þę řęşŧőřęđ.",
+      "folder-picker-text_one": "Pľęäşę čĥőőşę ä ƒőľđęř ŵĥęřę yőūř đäşĥþőäřđ ŵįľľ þę řęşŧőřęđ.",
       "folder-picker-text_other": "Pľęäşę čĥőőşę ä ƒőľđęř ŵĥęřę yőūř đäşĥþőäřđş ŵįľľ þę řęşŧőřęđ.",
       "restore-button": "Ŗęşŧőřę",
       "restore-loading": "Ŗęşŧőřįŉģ...",
-      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđ.",
       "text_other": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđş.",
       "title": "Ŗęşŧőřę Đäşĥþőäřđş"
     }
