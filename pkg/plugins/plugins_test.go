@@ -54,10 +54,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				},
 
 				Extensions: Extensions{
-					AddedLinks: []AddedLink{},
-					AddedComponents: []AddedComponent{},
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
 					ExposedComponents: []ExposedComponent{},
-					ExtensionPoints: []ExtensionPoint{},
+					ExtensionPoints:   []ExtensionPoint{},
 				},
 
 				Dependencies: Dependencies{
@@ -106,12 +106,12 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:   "grafana-piechart-panel",
 				Type: TypePanel,
 				Name: "Pie Chart (old)",
-				
+
 				Extensions: Extensions{
-					AddedLinks: []AddedLink{},
-					AddedComponents: []AddedComponent{},
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
 					ExposedComponents: []ExposedComponent{},
-					ExtensionPoints: []ExtensionPoint{},
+					ExtensionPoints:   []ExtensionPoint{},
 				},
 
 				Dependencies: Dependencies{
@@ -121,7 +121,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 						ExposedComponents: []string{},
 					},
 				},
-				
+
 				Includes: []*Includes{
 					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: org.RoleViewer},
 				},
@@ -143,10 +143,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Type:     TypeDataSource,
 
 				Extensions: Extensions{
-					AddedLinks: []AddedLink{},
-					AddedComponents: []AddedComponent{},
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
 					ExposedComponents: []ExposedComponent{},
-					ExtensionPoints: []ExtensionPoint{},
+					ExtensionPoints:   []ExtensionPoint{},
 				},
 
 				Dependencies: Dependencies{
@@ -221,7 +221,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:   "myorg-extensions-app",
 				Name: "Extensions App",
 				Type: TypeApp,
-				
+
 				Extensions: Extensions{
 					AddedLinks: []AddedLink{
 						{Title: "Added link 1", Description: "Added link 1 description", Targets: []string{"grafana/dashboard/panel/menu"}},
@@ -230,10 +230,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
 					},
 					ExposedComponents: []ExposedComponent{
-						{ Id: "myorg-extensions-app/component-1/v1", Title: "Exposed component 1", Description: "Exposed component 1 description"},
+						{Id: "myorg-extensions-app/component-1/v1", Title: "Exposed component 1", Description: "Exposed component 1 description"},
 					},
 					ExtensionPoints: []ExtensionPoint{
-						{ Id: "myorg-extensions-app/extensions-point-1/v1", Title: "Extension point 1", Description: "Extension points 1 description"},
+						{Id: "myorg-extensions-app/extensions-point-1/v1", Title: "Extension point 1", Description: "Extension points 1 description"},
 					},
 				},
 
@@ -280,7 +280,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:   "myorg-extensions-app",
 				Name: "Extensions App",
 				Type: TypeApp,
-				
+
 				Extensions: Extensions{
 					AddedLinks: []AddedLink{
 						{Title: "Added link 1", Description: "Added link 1 description", Targets: []string{"grafana/dashboard/panel/menu"}},
@@ -290,7 +290,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 						{Title: "Added component 1", Description: "Added component 1 description", Targets: []string{"grafana/user/profile/tab"}},
 					},
 					ExposedComponents: []ExposedComponent{},
-					ExtensionPoints: []ExtensionPoint{},
+					ExtensionPoints:   []ExtensionPoint{},
 				},
 
 				Dependencies: Dependencies{
@@ -317,12 +317,12 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:   "myorg-extensions-app",
 				Name: "Extensions App",
 				Type: TypeApp,
-				
+
 				Extensions: Extensions{
-					AddedLinks: []AddedLink{},
-					AddedComponents: []AddedComponent{},
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
 					ExposedComponents: []ExposedComponent{},
-					ExtensionPoints: []ExtensionPoint{},
+					ExtensionPoints:   []ExtensionPoint{},
 				},
 
 				Dependencies: Dependencies{
@@ -348,12 +348,12 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:   "myorg-extensions-app",
 				Name: "Extensions App",
 				Type: TypeApp,
-				
+
 				Extensions: Extensions{
-					AddedLinks: []AddedLink{},
-					AddedComponents: []AddedComponent{},
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
 					ExposedComponents: []ExposedComponent{},
-					ExtensionPoints: []ExtensionPoint{},
+					ExtensionPoints:   []ExtensionPoint{},
 				},
 
 				Dependencies: Dependencies{
@@ -385,18 +385,18 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:   "myorg-extensions-app",
 				Name: "Extensions App",
 				Type: TypeApp,
-				
+
 				Extensions: Extensions{
-					AddedLinks: []AddedLink{},
-					AddedComponents: []AddedComponent{},
+					AddedLinks:        []AddedLink{},
+					AddedComponents:   []AddedComponent{},
 					ExposedComponents: []ExposedComponent{},
-					ExtensionPoints: []ExtensionPoint{},
+					ExtensionPoints:   []ExtensionPoint{},
 				},
 
 				Dependencies: Dependencies{
-					GrafanaVersion: "*",
+					GrafanaVersion:    "*",
 					GrafanaDependency: "10.0.0",
-					Plugins:        []Dependency{},
+					Plugins:           []Dependency{},
 					Extensions: ExtensionsDependencies{
 						ExposedComponents: []string{"myorg-extensions-app/component-1/v1"},
 					},
@@ -415,7 +415,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 			if tt.err == nil && err != nil {
 				t.Errorf("Error while reading pluginJSON: %+v", err)
 				return
-			} 
+			}
 
 			// Check if the test returns the same error as expected
 			if tt.err != nil {

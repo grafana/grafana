@@ -68,47 +68,47 @@ type ExtensionsV2 struct {
 type Extensions ExtensionsV2
 
 func (e *Extensions) UnmarshalJSON(data []byte) error {
-	var err error;
-	var extensionsV2 ExtensionsV2;
-	
-	if err = json.Unmarshal(data, &extensionsV2); err == nil {		
-		e.AddedComponents = extensionsV2.AddedComponents;
-		e.AddedLinks = extensionsV2.AddedLinks;
-		e.ExposedComponents = extensionsV2.ExposedComponents;
-		e.ExtensionPoints = extensionsV2.ExtensionPoints;
-		
-		return nil;
+	var err error
+	var extensionsV2 ExtensionsV2
+
+	if err = json.Unmarshal(data, &extensionsV2); err == nil {
+		e.AddedComponents = extensionsV2.AddedComponents
+		e.AddedLinks = extensionsV2.AddedLinks
+		e.ExposedComponents = extensionsV2.ExposedComponents
+		e.ExtensionPoints = extensionsV2.ExtensionPoints
+
+		return nil
 	}
 
 	// Fallback (V1)
-	var extensionsV1 []ExtensionV1;
+	var extensionsV1 []ExtensionV1
 	if err = json.Unmarshal(data, &extensionsV1); err == nil {
 		// Trying to process old format and add them to `AddedLinks` and `AddedComponents`
 		for _, extensionV1 := range extensionsV1 {
-			if (extensionV1.Type == "link") {
+			if extensionV1.Type == "link" {
 				extensionV2 := AddedLink{
 					Targets:     []string{extensionV1.ExtensionPointID},
 					Title:       extensionV1.Title,
 					Description: extensionV1.Description,
 				}
-				e.AddedLinks = append(e.AddedLinks, extensionV2);
-			} 
-			
-			if (extensionV1.Type == "component") {
+				e.AddedLinks = append(e.AddedLinks, extensionV2)
+			}
+
+			if extensionV1.Type == "component" {
 				extensionV2 := AddedComponent{
 					Targets:     []string{extensionV1.ExtensionPointID},
 					Title:       extensionV1.Title,
 					Description: extensionV1.Description,
 				}
 
-				e.AddedComponents = append(e.AddedComponents, extensionV2);
+				e.AddedComponents = append(e.AddedComponents, extensionV2)
 			}
 		}
 
-		return nil;
+		return nil
 	}
 
-	return err;
+	return err
 }
 
 type AddedLink struct {
