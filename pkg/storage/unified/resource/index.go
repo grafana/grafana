@@ -151,26 +151,21 @@ func createFileIndex() (bleve.Index, string, error) {
 
 // TODO: clean this up.  it was copied from owens performance test
 func createIndexMappings() *mapping.IndexMappingImpl {
-	// Define field mappings for specific fields
+	//Create mapping for the name and creationTimestamp fields in the metadata
 	nameFieldMapping := bleve.NewTextFieldMapping()
 	creationTimestampFieldMapping := bleve.NewDateTimeFieldMapping()
-	resourceFieldMapping := bleve.NewTextFieldMapping()
+	metaMapping := bleve.NewDocumentMapping()
+	metaMapping.AddFieldMappingsAt("name", nameFieldMapping)
+	metaMapping.AddFieldMappingsAt("creationTimestamp", creationTimestampFieldMapping)
+	metaMapping.Dynamic = false
 
-	//Create a K8sMeta mapping with specific fields
-	k8sMetaMapping := bleve.NewDocumentMapping()
-	k8sMetaMapping.AddFieldMappingsAt("Name", nameFieldMapping)
-	k8sMetaMapping.AddFieldMappingsAt("CreationTimestamp", creationTimestampFieldMapping)
-	k8sMetaMapping.Dynamic = false
-
-	//Create a K8sObject mapping and attach the K8sMeta mapping
-	k8sObjectMapping := bleve.NewDocumentMapping()
-	k8sObjectMapping.AddSubDocumentMapping("K8sMeta", k8sMetaMapping)
-	k8sObjectMapping.Dynamic = false
-
-	//Create the root document mapping and attach the K8sObject mapping
+	//Create a sub-document mapping for the metadata field
 	objectMapping := bleve.NewDocumentMapping()
-	objectMapping.AddSubDocumentMapping("Value", k8sObjectMapping)
-	objectMapping.AddFieldMappingsAt("Resource", resourceFieldMapping)
+	objectMapping.AddSubDocumentMapping("metadata", metaMapping)
+
+	// Map top level fields - just kind for now
+	kindFieldMapping := bleve.NewTextFieldMapping()
+	objectMapping.AddFieldMappingsAt("kind", kindFieldMapping)
 	objectMapping.Dynamic = false
 
 	// Create the index mapping
