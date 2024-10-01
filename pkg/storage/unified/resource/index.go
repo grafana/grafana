@@ -122,30 +122,6 @@ type Resource struct {
 	Metadata   Metadata
 }
 
-type Object struct {
-	Guid            string
-	ResourceVersion int64
-	Group           string
-	Resource        string
-	Namespace       string
-	Name            string
-	Value           K8sObject
-	Action          int
-}
-
-type K8sMeta struct {
-	Name              string
-	Namespace         string
-	Uid               string
-	CreationTimestamp string
-}
-
-type K8sObject struct {
-	Kind       string
-	ApiVersion string
-	K8sMeta    K8sMeta
-}
-
 type Opts struct {
 	Workers    int // This controls how many goroutines are used to index objects
 	BatchSize  int // This is the batch size for how many objects to add to the index at once
