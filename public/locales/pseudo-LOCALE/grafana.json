@@ -751,6 +751,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "Øpęŉ ĴŜØŃ ęđįŧőř",
+      "angular-deprecation-description": "Åŉģūľäř päŉęľş őpŧįőŉş čäŉ őŉľy þę ęđįŧęđ ūşįŉģ ŧĥę ĴŜØŃ ęđįŧőř.",
+      "angular-deprecation-heading": "Päŉęľ őpŧįőŉş"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1574,7 +1579,7 @@
     },
     "apps": {
       "subtitle": "Åpp pľūģįŉş ŧĥäŧ ęχŧęŉđ ŧĥę Ğřäƒäŉä ęχpęřįęŉčę",
-      "title": "Åppş"
+      "title": "Mőřę äppş"
     },
     "authentication": {
       "title": "Åūŧĥęŉŧįčäŧįőŉ"
