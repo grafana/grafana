@@ -18,18 +18,32 @@ export type ComboboxOption<T extends string | number = string> = {
   description?: string;
 };
 
-interface ComboboxProps<T extends string | number>
-  extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
+interface ComboboxBaseProps<T extends string | number>
+  extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
   isClearable?: boolean;
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>>;
   onChange: (option: ComboboxOption<T> | null) => void;
   value: T | null;
   /**
-   * Makes the input with correspond to its content. It is good to set minWidth and maxWidth for this.
-   */
-  autoSize?: boolean;
+   * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
+   * */
+  width?: number | 'auto';
 }
+
+type AutoSizeConditionals =
+  | {
+      width: 'auto';
+      minWidth: number;
+      maxWidth?: number;
+    }
+  | {
+      width?: number;
+      minWidth?: never;
+      maxWidth?: never;
+    };
+
+type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 function itemToString(item: ComboboxOption<string | number> | null) {
   return item?.label ?? item?.value.toString() ?? '';
@@ -59,7 +73,7 @@ export const Combobox = <T extends string | number>({
   isClearable = false,
   createCustomValue = false,
   id,
-  inline = false,
+  width,
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
@@ -164,12 +178,15 @@ export const Combobox = <T extends string | number>({
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
-  const InputComponent = inline ? AutoSizeInput : Input;
+  const dynamicWidth = width === 'auto' ? undefined : width;
+
+  const InputComponent = width === 'auto' ? AutoSizeInput : Input;
 
   return (
     <div>
       <InputComponent
         className={styles.input}
+        width={dynamicWidth}
         suffix={
           <>
             {!!value && value === selectedItem?.value && isClearable && (

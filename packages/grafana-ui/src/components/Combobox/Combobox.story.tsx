@@ -5,7 +5,6 @@ import React, { ComponentProps, useEffect, useState } from 'react';
 
 import { Alert } from '../Alert/Alert';
 import { Field } from '../Forms/Field';
-import { Box } from '../Layout/Box/Box';
 
 import { Combobox, ComboboxOption } from './Combobox';
 
@@ -19,7 +18,7 @@ const meta: Meta<PropsAndCustomArgs> = {
   args: {
     loading: undefined,
     invalid: undefined,
-    inline: false,
+    width: undefined,
     placeholder: 'Select an option...',
     options: [
       { label: 'Apple', value: 'apple' },
@@ -52,19 +51,17 @@ const meta: Meta<PropsAndCustomArgs> = {
 const BasicWithState: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
   return (
-    <Box maxWidth={80}>
-      <Field label="Test input" description="Input with a few options">
-        <Combobox
-          id="test-combobox"
-          {...args}
-          value={value}
-          onChange={(val) => {
-            setValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-    </Box>
+    <Field label="Test input" description="Input with a few options">
+      <Combobox
+        id="test-combobox"
+        {...args}
+        value={value}
+        onChange={(val) => {
+          setValue(val?.value || null);
+          action('onChange')(val);
+        }}
+      />
+    </Field>
   );
 };
 
@@ -108,6 +105,14 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
       }}
     />
   );
+};
+
+export const AutoSize: StoryObj<PropsAndCustomArgs> = {
+  args: {
+    width: 'auto',
+    minWidth: 5,
+    maxWidth: 200,
+  },
 };
 
 export const ManyOptions: StoryObj<PropsAndCustomArgs> = {
