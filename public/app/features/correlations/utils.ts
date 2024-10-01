@@ -92,7 +92,7 @@ Change it to use whatever the body field name is post-loki data plane
 const fixLokiDataplaneFields = (correlations: CorrelationData[], dataFrame: DataFrame) => {
   return correlations.map((correlation) => {
     if (
-      correlation.source.meta.id === 'loki' &&
+      correlation.source.meta?.id === 'loki' &&
       config.featureToggles.lokiLogsDataplane === true &&
       correlation.config.field === 'Line'
     ) {
