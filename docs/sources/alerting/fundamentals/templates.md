@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../fundamentals/notifications/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/
+  - ../fundamentals/notifications/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
   - ../contact-points/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/message-templating/
   - ../alert-rules/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-rules/message-templating/
   - ../unified-alerting/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/message-templating/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/templates/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/templates/
 description: Use templating to customize, format, and reuse alert notification messages. Create more flexible and informative alert notification messages by incorporating dynamic content, such as metric values, labels, and other contextual information.
 keywords:
   - grafana
