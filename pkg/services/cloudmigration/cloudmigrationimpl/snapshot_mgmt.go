@@ -38,7 +38,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
-	// Obtain the names of parent folders of Folder and Dahsboard data types
+	// Obtain the names of parent folders of Folder and Dashboard data types
 	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
 	for _, resourceType := range []cloudmigration.MigrateDataType{
 		cloudmigration.FolderDataType,
@@ -443,7 +443,6 @@ func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderComman
 
 // getParentNames queries the folders service to obtain folder names for a list of folderUIDs
 func (s *Service) getFolderNameForFolderUIDs(ctx context.Context, signedInUser *user.SignedInUser, folderUIDs []string) (map[string](string), error) {
-
 	folderUIDsToNames := make(map[string](string), 0)
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUIDs,
@@ -462,7 +461,6 @@ func (s *Service) getFolderNameForFolderUIDs(ctx context.Context, signedInUser *
 
 // getParentNames finds the parent names for the items and returns a map of folderUID : folderName
 func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand) (map[string]string, error) {
-
 	// Obtain list of unique folderUIDs
 	parentFolderUIDsSet := make(map[string]struct{})
 	for _, dashboard := range dashboards {
