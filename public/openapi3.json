@@ -15802,6 +15802,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
