@@ -155,7 +155,10 @@ export const LdapDrawerComponent = ({
       </CollapsableSection>
       <CollapsableSection label={t('ldap-drawer.attributes-section.label', 'Attributes')} isOpen={true}>
         <Text color="secondary">
-          {t('ldap-drawer.attributes-section.description', 'Specify the LDAP attributes that map to the user\'s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.')}
+          {t(
+            'ldap-drawer.attributes-section.description',
+            "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information."
+          )}
         </Text>
         <Field label={t('ldap-drawer.attributes-section.name-label', 'Name')}>
           <Input id={nameId} {...register(`${serverConfig}.attributes.name`)} />
@@ -194,17 +197,20 @@ export const LdapDrawerComponent = ({
         >
           <Input id="group-search-filter" {...register(`${serverConfig}.group_search_filter`)} />
         </Field>
-        <Field
-          htmlFor="group-search-base-dns"
-          label={t('ldap-drawer.group-mapping-section.group-search-base-dns-label', 'Group search base DNS')}
-          description={t(
-            'ldap-drawer.group-mapping-section.group-search-base-dns-description',
-            'Separate by commas or spaces'
-          )}
-        >
-          <Input
-            id="group-search-base-dns"
-            onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.group_search_base_dns`, [value])}
+        <Field label={t('ldap-drawer.group-mapping-section.group-search-base-dns-label', 'Group search base DNS')}>
+          <Controller
+            name={`${serverConfig}.group_search_base_dns`}
+            control={control}
+            render={({ field: { onChange, ref, value, ...field } }) => (
+              <MultiSelect
+                {...field}
+                allowCustomValue
+                className={styles.multiSelect}
+                noOptionsMessage={''}
+                onChange={(v) => onChange(v.map(({ value }) => String(value)))}
+                value={value?.map((v) => ({ label: v, value: v }))}
+              />
+            )}
           />
         </Field>
         <Field
@@ -275,26 +281,20 @@ export const LdapDrawerComponent = ({
                 onChange={({ value }) => setValue(`${serverConfig}.min_tls_version`, value)}
               />
             </Field>
-            <Field
-              label={t('ldap-drawer.extra-security-section.tls-ciphers-label', 'TLS ciphers')}
-              description={t(
-                'ldap-drawer.extra-security-section.tls-ciphers-description',
-                'List of comma- or space-separated ciphers'
-              )}
-            >
-              <Input
-                id="tls-ciphers"
-                placeholder={t(
-                  'ldap-drawer.extra-security-section.tls-ciphers-placeholder',
-                  'e.g. ["TLS_AES_256_GCM_SHA384"]'
+            <Field label={t('ldap-drawer.extra-security-section.tls-ciphers-label', 'TLS ciphers')}>
+              <Controller
+                name={`${serverConfig}.tls_ciphers`}
+                control={control}
+                render={({ field: { onChange, ref, value, ...field } }) => (
+                  <MultiSelect
+                    {...field}
+                    allowCustomValue
+                    className={styles.multiSelect}
+                    noOptionsMessage={''}
+                    onChange={(v) => onChange(v.map(({ value }) => String(value)))}
+                    value={value?.map((v) => ({ label: v, value: v }))}
+                  />
                 )}
-                value={watch(`${serverConfig}.tls_ciphers`) || ''}
-                onChange={({ currentTarget: { value } }) =>
-                  setValue(
-                    `${serverConfig}.tls_ciphers`,
-                    value?.split(/,|\s/).map((v) => v.trim())
-                  )
-                }
               />
             </Field>
             <Field

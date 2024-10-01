@@ -367,7 +367,7 @@ export const LdapSettingsPage = () => {
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                       />
                     )}
-                  ></Controller>
+                  />
                 </Field>
                 <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
                   <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
