@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/slicesext"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
