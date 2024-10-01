@@ -1,3 +1,4 @@
+import { AlertingApiExtraOptions } from 'app/features/alerting/unified/api/alertingApi';
 import { Template } from 'app/features/alerting/unified/components/receivers/form/fields/TemplateSelector';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 
@@ -28,6 +29,17 @@ export interface AlertField {
   annotations: KeyValueField[];
   labels: KeyValueField[];
 }
+
+generatedTemplatesApi.enhanceEndpoints({
+  endpoints: {
+    readNamespacedTemplateGroup: (endpoint) => {
+      // When renaming a template, we end up refetching,
+      // and we would otherwise see a "NotFound" message. We suppress this to avoid confusion in the UI
+      const extraOptions: AlertingApiExtraOptions = { hideErrorMessage: true };
+      endpoint.extraOptions = extraOptions;
+    },
+  },
+});
 
 export const templatesApi = generatedTemplatesApi.injectEndpoints({
   endpoints: (build) => ({
