@@ -615,9 +615,9 @@ export class PrometheusDatasource
         options.filters
       );
 
-      // filter out already used labels
+      // filter out already used labels and empty labels
       return suggestions
-        .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
+        .filter((labelName) => !!labelName && !options.filters.find((filter) => filter.key === labelName))
         .map((k) => ({ value: k, text: k }));
     }
 
