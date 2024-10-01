@@ -112,10 +112,10 @@ export type GetShapshotListApiArg = {
   page?: number;
   /** Max limit for results returned. */
   limit?: number;
-  /** Sort with value latest to return results sorted in descending order */
-  sort?: string;
   /** Session UID of a session */
   uid: string;
+  /** Sort with value latest to return results sorted in descending order. */
+  sort?: string;
 };
 export type GetCloudMigrationTokenApiResponse = /** status 200 (empty) */ GetAccessTokenResponseDto;
 export type GetCloudMigrationTokenApiArg = void;
@@ -157,6 +157,7 @@ export type CreateSnapshotResponseDto = {
 };
 export type MigrateDataResponseItemDto = {
   message?: string;
+  name?: string;
   refId: string;
   status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';
   type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER' | 'LIBRARY_ELEMENT';
