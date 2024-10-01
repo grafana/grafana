@@ -531,6 +531,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		updatedInterval := `"interval": "10m"`
 		legacyPayload = strings.Replace(legacyPayload, `"interval": "20s"`, updatedInterval, 1)
 		expectedResult = strings.Replace(expectedResult, `"interval": "20s"`, updatedInterval, 1)
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0]))
 		dtoResponse := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodPut,
