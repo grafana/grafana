@@ -25,15 +25,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err != nil {
 		return nil, err
 	}
-	if obj.GetName() == "" {
-		return nil, fmt.Errorf("new object must have a name")
+	if obj.GetName() == "" && obj.GetGenerateName() == "" {
+		return nil, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
-	}
-
-	if obj.GetGenerateName() != "" {
-		return nil, fmt.Errorf("generateName cannot be set")
 	}
 
 	if obj.GetName() == "" {
