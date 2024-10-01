@@ -626,6 +626,18 @@ default_baselayer_config = `{
 
 The map controls section contains various options for map information and tool overlays.
 
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| [Show zoom control](#show-zoom-control) | Displays zoom controls in the upper left corner. |
+| [Mouse wheel zoom](#mouse-wheel-zoom) | Enables the mouse wheel to be used for zooming in or out. |
+| [Show attribution](#show-attribution) | Displays attribution for basemap layers. |
+| [Show scale](#show-scale) | Displays scale information in the bottom left corner in meters (m) or kilometers (km). |
+| [Show measure tools](#show-measure-tools) | Displays measure tools in the upper right corner. This includes the [Length](#length) and [Area](#area) options. |
+| [Show debug](#show-debug) | Displays debug information in the upper right corner. |
+| [Tooltip](#tooltip) | Controls display of tooltips. |
+<!-- prettier-ignore-end -->
+
 #### Show zoom control
 
 Displays zoom controls in the upper left corner. This control can be useful when using systems that don't have a mouse.
