@@ -1,4 +1,6 @@
-import { ComponentType, useEffect } from 'react';
+import { ComponentType, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
+import { useEffectOnce } from 'react-use';
 
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
@@ -12,18 +14,24 @@ export function QueryEditorSanitizer<
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
 >(QueryEditor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
   const WithExtra = (props: QueryEditorProps<DSType, TQuery, TOptions>) => {
-    useEffect(() => {
+    const [migrated, setMigrated] = useState(false);
+    useEffectOnce(() => {
       if (props.query && props.datasource.migrateQuery) {
         const migrated = props.datasource.migrateQuery(props.query);
         if (migrated instanceof Promise) {
           migrated.then((migrated) => {
             props.onChange(migrated);
+            setMigrated(true);
           });
-        } else {
-          props.onChange(migrated);
+          return;
         }
+        props.onChange(migrated);
       }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      setMigrated(true);
+    });
+    if (!migrated) {
+      return <Skeleton />;
+    }
     return <QueryEditor {...props} />;
   };
   return WithExtra;

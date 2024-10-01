@@ -22,6 +22,7 @@ import {
   standardStreamOptionsProvider,
   toStreamingDataResponse,
 } from './DataSourceWithBackend';
+import { postMigrateQuery } from './postMigrateQuery';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 
 interface MyQuery extends DataQuery {
@@ -36,6 +37,10 @@ class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
 
   applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[] | undefined): MyQuery {
     return { ...query, applyTemplateVariablesCalled: true, filters };
+  }
+
+  migrateQuery(query: MyQuery): MyQuery | Promise<MyQuery> {
+    return postMigrateQuery(query);
   }
 }
 
@@ -556,15 +561,15 @@ describe('DataSourceWithBackend', () => {
         apiVersion: 'v0alpha1',
       });
 
-      const originalQuery = { refId: 'A', foo: 'bar' };
-      const migratedQuery = { refId: 'A', foobar: 'barfoo' };
+      const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
+      const migratedQuery = { refId: 'A', datasource: { type: 'dummy' }, foobar: 'barfoo' };
       mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
         expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
         expect(args.data).toMatchObject({ queries: [originalQuery] });
         return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
       });
 
-      const result = await ds.migrateQuery(originalQuery);
+      const result = await ds.migrateQuery!(originalQuery);
 
       expect(migratedQuery).toBe(result);
     });
