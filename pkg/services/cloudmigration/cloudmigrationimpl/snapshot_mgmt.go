@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/services/cloudmigration/slicesext"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -212,13 +212,14 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, 0)
 	for i, item := range migrationData.Items {
 		resourcesGroupedByType[item.Type] = append(resourcesGroupedByType[item.Type], snapshot.MigrateDataRequestItemDTO{
+			Name:  item.Name,
 			Type:  snapshot.MigrateDataType(item.Type),
 			RefID: item.RefID,
-			Name:  item.Name,
 			Data:  item.Data,
 		})
 
 		localSnapshotResource[i] = cloudmigration.CloudMigrationResource{
+			Name:   item.Name,
 			Type:   item.Type,
 			RefID:  item.RefID,
 			Status: cloudmigration.ItemStatusPending,
@@ -230,7 +231,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		cloudmigration.FolderDataType,
 		cloudmigration.DashboardDataType,
 	} {
-		for _, chunk := range slicesext.Chunks(int(maxItemsPerPartition), resourcesGroupedByType[resourceType]) {
+		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
 			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
 				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
 			}
