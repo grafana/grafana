@@ -324,20 +324,21 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 
 Styles can be set within the "properties" object of the GeoJSON with support for the following geometries:
 
-- Polygon, MultiPolygon
+**Polygon, MultiPolygon**
 
-  - **"fill"** - The color of the interior of the polygon(s)
-  - **"fill-opacity"** - The opacity of the interior of the polygon(s)
-  - **"stroke-width"** - The width of the line component of the polygon(s)
+- **"fill"** - The color of the interior of the polygon(s)
+- **"fill-opacity"** - The opacity of the interior of the polygon(s)
+- **"stroke-width"** - The width of the line component of the polygon(s)
 
-- Point, MultiPoint
+**Point, MultiPoint**
 
-  - **"marker-color"** - The color of the point(s)
-  - **"marker-size"** - The size of the point(s)
+- **"marker-color"** - The color of the point(s)
+- **"marker-size"** - The size of the point(s)
 
-- LineString, MultiLineString
-  - **"stroke"** - The color of the line(s)
-  - **"stroke-width"** - The width of the line(s)
+**LineString, MultiLineString**
+
+- **"stroke"** - The color of the line(s)
+- **"stroke-width"** - The width of the line(s)
 
 #### Night / Day layer
 
