@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/scottlepp/go-duck/duck"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
@@ -85,7 +84,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	rsp := mathexp.Results{}
 
-	duckDB := duck.NewInMemoryDB()
+	duckDB := sql.NewInMemoryDB()
 	var frame = &data.Frame{}
 	err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
 	if err != nil {
