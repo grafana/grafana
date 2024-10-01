@@ -79,7 +79,7 @@ const GET_AND_POST_METADATA_ENDPOINTS = [
   'api/v1/query_range',
   'api/v1/series',
   'api/v1/labels',
-  'resources',
+  'suggestions',
 ];
 
 export const InstantQueryRefIdIndex = '-Instant';
@@ -655,9 +655,7 @@ export class PrometheusDatasource
           undefined,
           requestId
         )
-      )
-        .filter((v) => !!v)
-        .map((v) => ({ value: v, text: v }));
+      ).map((v) => ({ value: v, text: v }));
     }
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
