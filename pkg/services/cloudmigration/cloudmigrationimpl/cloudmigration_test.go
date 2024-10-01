@@ -695,7 +695,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	spanRecorder := tracetest.NewSpanRecorder()
 	tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 	mockFolder := &foldertest.FakeService{
-		ExpectedFolders: []*folder.Folder{{UID: "folderUID", Title: "Folder"}},
+		ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
 	}
 
 	cfg := setting.NewCfg()

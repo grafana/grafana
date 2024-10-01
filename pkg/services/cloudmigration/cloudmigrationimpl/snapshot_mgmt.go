@@ -38,7 +38,6 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
-	// Obtain migration data
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
 		len(dataSources)+len(dashs)+len(folders),
