@@ -167,6 +167,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
 		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
 	}
+	// double-check and remove admin menu if empty
+	if sec := treeRoot.FindById(navtree.NavIDCfg); sec != nil && len(sec.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
+	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
 		treeRoot.AddSection(&navtree.NavLink{
