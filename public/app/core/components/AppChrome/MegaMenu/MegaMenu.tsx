@@ -13,6 +13,7 @@ import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
+import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
 import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
@@ -62,6 +63,10 @@ export const MegaMenu = memo(
 
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
 
+    const handleMegaMenu = () => {
+      chrome.setMegaMenuOpen(!state.megaMenuOpen);
+    };
+
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
       if (state.megaMenuDocked) {
@@ -109,22 +114,26 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        <div className={styles.mobileHeader}>
-          <Icon name="bars" size="xl" />
-          <IconButton
-            tooltip={t('navigation.megamenu.close', 'Close menu')}
-            name="times"
-            onClick={onClose}
-            size="xl"
-            variant="secondary"
-          />
-        </div>
+        {config.featureToggles.singleTopNav ? (
+          <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
+        ) : (
+          <div className={styles.mobileHeader}>
+            <Icon name="bars" size="xl" />
+            <IconButton
+              tooltip={t('navigation.megamenu.close', 'Close menu')}
+              name="times"
+              onClick={onClose}
+              size="xl"
+              variant="secondary"
+            />
+          </div>
+        )}
         <nav className={styles.content}>
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
                 <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="start">
-                  {index === 0 && (
+                  {index === 0 && !config.featureToggles.singleTopNav && (
                     <IconButton
                       id="dock-menu-button"
                       className={styles.dockMenuButton}

@@ -417,11 +417,32 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead))) {
+	contactPointsPerms := []ac.Evaluator{
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	}
+
+	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
+	// alerting API to maintain backwards compatibility.
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
+		contactPointsPerms = append(contactPointsPerms,
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		)
+	}
+
+	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Contact points", SubTitle: "Choose how to notify your  contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
+	}
+
+	if hasAccess(ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
