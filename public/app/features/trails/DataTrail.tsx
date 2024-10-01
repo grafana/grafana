@@ -10,7 +10,7 @@ import {
   VariableHide,
   urlUtil,
 } from '@grafana/data';
-import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -650,7 +650,7 @@ function getVariableSet(
         addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
-        layout: config.featureToggles.newFiltersUI ? 'combobox' : 'vertical',
+        layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
