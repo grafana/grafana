@@ -53,7 +53,7 @@ const DuplicateMessageTemplate = ({ match }: Props) => {
 
   return (
     <TemplateForm
-      alertManagerSourceName={selectedAlertmanager}
+      alertmanager={selectedAlertmanager}
       prefill={{ title: duplicatedName, content: updateDefinesWithUniqueValue(template.content) }}
     />
   );

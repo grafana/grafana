@@ -10,7 +10,7 @@ const NewMessageTemplate = () => {
     return <EntityNotFound entity="Alertmanager" />;
   }
 
-  return <TemplateForm alertManagerSourceName={selectedAlertmanager} />;
+  return <TemplateForm alertmanager={selectedAlertmanager} />;
 };
 
 export default NewMessageTemplate;

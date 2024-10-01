@@ -60,7 +60,7 @@ export const defaults: TemplateFormValues = Object.freeze({
 interface Props {
   originalTemplate?: NotificationTemplate;
   prefill?: TemplateFormValues;
-  alertManagerSourceName: string;
+  alertmanager: string;
 }
 
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
@@ -85,18 +85,18 @@ export const isDuplicating = (location: Location) => location.pathname.endsWith(
  * │                   ││           │
  * └───────────────────┘└───────────┘
  */
-export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName }: Props) => {
+export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props) => {
   const styles = useStyles2(getStyles);
 
   const appNotification = useAppNotification();
 
-  const createNewTemplate = useCreateNotificationTemplate({ alertmanager: alertManagerSourceName });
-  const updateTemplate = useUpdateNotificationTemplate({ alertmanager: alertManagerSourceName });
-  const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager: alertManagerSourceName });
+  const createNewTemplate = useCreateNotificationTemplate({ alertmanager });
+  const updateTemplate = useUpdateNotificationTemplate({ alertmanager });
+  const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
-  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
+  const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   const { error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
@@ -140,7 +140,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
   } = formApi;
 
   const submit = async (values: TemplateFormValues) => {
-    const returnLink = makeAMLink('/alerting/notifications', alertManagerSourceName, {
+    const returnLink = makeAMLink('/alerting/notifications', alertmanager, {
       tab: ContactPointsActiveTabs.NotificationTemplates,
     });
 
@@ -164,7 +164,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
       </Button>
       <LinkButton
         disabled={isSubmitting}
-        href={makeAMLink('alerting/notifications', alertManagerSourceName, {
+        href={makeAMLink('alerting/notifications', alertmanager, {
           tab: ContactPointsActiveTabs.NotificationTemplates,
         })}
         variant="secondary"
