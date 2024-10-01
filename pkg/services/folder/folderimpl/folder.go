@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -46,6 +47,8 @@ type Service struct {
 	dashboardStore       dashboards.Store
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
+	cfg                  *setting.Cfg
+	folderPermissions    accesscontrol.FolderPermissionsService
 	accessControl        accesscontrol.AccessControl
 	// bus is currently used to publish event in case of folder full path change.
 	// For example when a folder is moved to another folder or when a folder is renamed.
@@ -65,6 +68,8 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	folderPermissions accesscontrol.FolderPermissionsService,
 	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
@@ -75,6 +80,8 @@ func ProvideService(
 		dashboardFolderStore: folderStore,
 		store:                store,
 		features:             features,
+		cfg:                  cfg,
+		folderPermissions:    folderPermissions,
 		accessControl:        ac,
 		bus:                  bus,
 		db:                   db,

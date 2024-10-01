@@ -62,10 +62,11 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		ac := acmock.New()
-		db, _ := db.InitTestDBWithCfg(t)
+		db, cfg := db.InitTestDBWithCfg(t)
+		folderPermissions := acmock.NewMockedPermissionsService()
 		store := ProvideStore(db)
 		ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
-			featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+			featuremgmt.WithFeatures(), cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -810,6 +811,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		dashboardStore:       &dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		cfg:                  setting.NewCfg(),
 		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
 		tracer:               tracing.InitializeTracerForTest(),
