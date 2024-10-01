@@ -4,7 +4,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { getBackendSrv, getAppEvents, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv, getAppEvents, locationService, reportInteraction } from '@grafana/runtime';
 import {
   useStyles2,
   Alert,
@@ -199,6 +199,11 @@ export const LdapSettingsPage = () => {
         payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
       });
       reset(await getSettings());
+
+      // Delay redirect so the form state can update
+      setTimeout(() => {
+        locationService.push(`/admin/authentication`);
+      }, 300);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -237,6 +242,11 @@ export const LdapSettingsPage = () => {
       });
       reset(payload);
       reportInteraction('authentication_ldap_deleted');
+
+      // Delay redirect so the form state can update
+      setTimeout(() => {
+        locationService.push(`/admin/authentication`);
+      }, 300);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
