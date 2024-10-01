@@ -186,7 +186,7 @@ Interpolation result: "test1 + test2"
 
 ### Text to uppercase
 
-Formats single- and multi-valued variables into their uppercase text representation. For a single variable it will just return the uppercase text representation. For multi-valued variables it will return the uppercase text representation combined with `+`.
+Formats single- and multi-valued variables into their uppercase text representation. For a single variable it just returns the uppercase text representation. For multi-valued variables it returns the uppercase text representation combined with `+`.
 
 ```bash
 servers = ["test1", "test2"]
