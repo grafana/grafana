@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2 } from '@grafana/ui';
+import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createQueryText } from 'app/core/utils/richHistory';
 import { useAllQueryTemplatesQuery } from 'app/features/query-library';
@@ -123,7 +123,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
 
   return (
     <>
-      <div className={styles.selectors}>
+      <Stack gap={0.5}>
         <FilterInput
           className={styles.searchInput}
           placeholder={t('query-library.search', 'Search by data source, query content or description')}
@@ -137,9 +137,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
         </InlineLabel>
         <MultiSelect
           className={styles.multiSelect}
-          onChange={(v) => {
-            setDatasourceFilters(v);
-          }}
+          onChange={setDatasourceFilters}
           value={datasourceFilters}
           options={datasourceNames.map((r) => {
             return { value: r, label: r };
@@ -147,18 +145,13 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
           placeholder={'Filter queries for data sources(s)'}
           aria-label={'Filter queries for data sources(s)'}
         />
-      </div>
+      </Stack>
       <QueryTemplatesTable queryTemplateRows={queryTemplateRows} />
     </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  selectors: css({
-    display: 'flex',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  }),
   searchInput: css({
     maxWidth: theme.spacing(55),
   }),
