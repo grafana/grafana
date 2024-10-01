@@ -44,6 +44,14 @@ func (is *indexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResp
 	return nil, nil
 }
 
+func (is indexServer) Delete(ctx context.Context, uid string, key *ResourceKey) error {
+	err := is.index.Delete(ctx, uid, key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Init sets the resource server on the index server
 // so we can call the resource server from the index server
 // TODO: a chicken and egg problem - index server needs the resource server but the resource server is created with the index server
@@ -75,7 +83,9 @@ func NewResourceIndexServer() ResourceIndexServer {
 }
 
 type ResourceIndexer interface {
+	ResourceIndexServer
 	Init(context.Context, *server) error
+	Delete(context.Context, string, *ResourceKey) error
 }
 
 type indexWatchServer struct {
@@ -102,10 +112,29 @@ func (f *indexWatchServer) Send(we *WatchEvent) error {
 		Value:           we.Resource.Value,
 	}
 
-	_, err = f.is.Index(f.context, &IndexRequest{Key: key, Value: value})
-	if err != nil {
-		return err
+	index := f.is.s.index
+	indexer, ok := index.(ResourceIndexer)
+	if !ok {
+		return errors.New("index server does not implement ResourceIndexer")
 	}
+
+	if we.Type == WatchEvent_ADDED {
+		_, err = indexer.Index(f.context, &IndexRequest{Key: key, Value: value})
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if we.Type == WatchEvent_DELETED {
+		we.GetType()
+		err = indexer.Delete(f.context, r.Metadata.Uid, key)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	return nil
 }
 

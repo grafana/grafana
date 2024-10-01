@@ -91,6 +91,18 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	return nil
 }
 
+func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error {
+	shard, err := i.getShard(key.Namespace)
+	if err != nil {
+		return err
+	}
+	err = shard.index.Delete(uid)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func tenant(res *Resource) string {
 	return res.Metadata.Namespace
 }
