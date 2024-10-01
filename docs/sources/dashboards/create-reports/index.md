@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../administration/reports/
-  - ../enterprise/export-pdf/
-  - ../enterprise/reporting/
-  - ../panels/create-reports/
-  - reporting/
+  - ../administration/reports/ # /docs/grafana/latest/administration/reports/
+  - ../enterprise/export-pdf/ # /docs/grafana/latest/enterprise/export-pdf/
+  - ../enterprise/reporting/ # /docs/grafana/latest/enterprise/reporting/
+  - ../panels/create-reports/ # /docs/grafana/latest/panels/create-reports/
+  - reporting/ # /docs/grafana/latest/dashboards/reporting/
 keywords:
   - grafana
   - reporting

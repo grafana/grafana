@@ -1,8 +1,5 @@
 ---
 aliases:
-  - ../administration/reports/ # /docs/grafana/latest/administration/reports/
-  - ../enterprise/export-pdf/ # /docs/grafana/latest/enterprise/export-pdf/
-  - ../enterprise/reporting/ # /docs/grafana/latest/enterprise/reporting/
   - ../reference/share_dashboard/ # /docs/grafana/latest/reference/share_dashboard/
   - ../reference/share_panel/ # /docs/grafana/latest/reference/share_panel/
   - ../share-dashboards-panels/ # /docs/grafana/latest/share-dashboards-panels/
@@ -10,8 +7,7 @@ aliases:
   - ../sharing/playlists/ # /docs/grafana/latest/sharing/playlists/
   - ../sharing/share-dashboard/ # /docs/grafana/latest/sharing/share-dashboard/
   - ../sharing/share-panel/ # /docs/grafana/latest/sharing/share-panel/
-  - ./ #
-  - reporting/ # /docs/grafana/latest/dashboards/reporting/
+  - ./
   - share-dashboard/ # /docs/grafana/latest/dashboards/share-dashboard/
 keywords:
   - grafana
