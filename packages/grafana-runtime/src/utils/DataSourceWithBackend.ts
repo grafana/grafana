@@ -383,7 +383,7 @@ class DataSourceWithBackend<
   /**
    * @alpha Experimental: Calls migration endpoint. Requires grafanaAPIServerWithExperimentalAPIs or datasourceAPIServers feature toggle.
    */
-  async postMigrateQuery(query: TQuery): Promise<TQuery> {
+  migrateQuery(query: TQuery): Promise<TQuery> | TQuery {
     if (!(config.featureToggles.grafanaAPIServerWithExperimentalAPIs || config.featureToggles.datasourceAPIServers)) {
       console.warn('migrateQuery is only available with the experimental API server');
       return query;
@@ -404,8 +404,11 @@ class DataSourceWithBackend<
         },
       ],
     };
-    const response = await getBackendSrv().post(url, request);
-    return response.queries[0].JSON;
+    return getBackendSrv()
+      .post(url, request)
+      .then((res) => {
+        return res.queries[0].JSON;
+      });
   }
 }
 
