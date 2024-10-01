@@ -1,3 +1,18 @@
+<!-- 10.4.10 START -->
+
+# 10.4.10 (2024-10-01)
+
+### Features and enhancements
+
+- **Chore:** Bump Go to 1.22.7 [#93359](https://github.com/grafana/grafana/pull/93359), [@hairyhenderson](https://github.com/hairyhenderson)
+- **Chore:** Bump Go to 1.22.7 (Enterprise)
+
+### Bug fixes
+
+- **AzureMonitor:** Deduplicate resource picker rows [#93702](https://github.com/grafana/grafana/pull/93702), [@aangelisc](https://github.com/aangelisc)
+- **Correlations:** Limit access to correlations page to users who can access Explore [#93673](https://github.com/grafana/grafana/pull/93673), [@ifrost](https://github.com/ifrost)
+
+<!-- 10.4.10 END -->
 <!-- 10.3.11 START -->
 
 # 10.3.11 (2024-10-01)
