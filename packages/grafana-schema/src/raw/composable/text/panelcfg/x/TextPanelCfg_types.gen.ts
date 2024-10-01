@@ -9,7 +9,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "10.4.10";
+export const pluginVersion = "10.4.11";
 
 export enum TextMode {
   Code = 'code',
