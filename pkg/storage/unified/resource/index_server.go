@@ -53,6 +53,7 @@ func (is *indexServer) Init(ctx context.Context, rs *server) error {
 		is:      is,
 		context: ctx,
 	}
+	// TODO: how to watch all resources?
 	wr := &WatchRequest{
 		Options: &ListOptions{
 			Key: &ResourceKey{
