@@ -601,7 +601,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               />
             )}
             {/* Expression Queries */}
-            {isAdvancedMode && isGrafanaAlertingType && (
+            {isAdvancedMode && (
               <>
                 <Stack direction="column" gap={0}>
                   <Text element="h5">Expressions</Text>

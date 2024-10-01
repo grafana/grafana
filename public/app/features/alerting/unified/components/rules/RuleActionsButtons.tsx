@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
 
 import { LinkButton, Stack } from '@grafana/ui';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
@@ -40,7 +39,6 @@ interface Props {
  */
 export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton, rule, rulesSource }: Props) => {
   const dispatch = useDispatch();
-  const location = useLocation();
 
   const redirectToListView = compact ? false : true;
   const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
@@ -53,8 +51,6 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
 
   const { namespace, group, rulerRule } = rule;
   const { hasActiveFilters } = useRulesFilter();
-
-  const returnTo = location.pathname + location.search;
 
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
@@ -77,7 +73,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
         key="view"
         variant="secondary"
         icon="eye"
-        href={createViewLink(rulesSource, rule, returnTo)}
+        href={createViewLink(rulesSource, rule)}
       >
         View
       </LinkButton>
@@ -87,9 +83,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   if (rulerRule && canEditRule) {
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
-      returnTo,
-    });
+    const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
     buttons.push(
       <LinkButton title="Edit" size={buttonSize} key="edit" variant="secondary" icon="pen" href={editURL}>

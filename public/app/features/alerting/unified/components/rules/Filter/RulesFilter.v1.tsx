@@ -6,8 +6,10 @@ import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@gra
 import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { contextSrv } from 'app/core/core';
 import { Trans } from 'app/core/internationalization';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
@@ -150,7 +152,10 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     trackRulesSearchComponentInteraction('contactPoint');
   };
 
-  const canRenderContactPointSelector = config.featureToggles.alertingSimplifiedRouting ?? false;
+  const canRenderContactPointSelector =
+    (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
+      config.featureToggles.alertingSimplifiedRouting) ??
+    false;
   const searchIcon = <Icon name={'search'} />;
 
   return (
