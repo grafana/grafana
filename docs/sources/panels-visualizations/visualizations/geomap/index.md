@@ -480,9 +480,9 @@ A CARTO layer is from CARTO Raster basemaps.
 - **Theme**
   - Auto
   - Light
-    {{< figure src="/static/img/docs/geomap-panel/geomap-carto-light-9-1-0.png" max-width="1200px" caption="Geomap panel CARTO light example" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-carto-light-9-1-0.png" max-width="1200px" alt="Geomap panel CARTO light example" >}}
   - Dark
-    {{< figure src="/static/img/docs/geomap-panel/geomap-carto-dark-9-1-0.png" max-width="1200px" caption="Geomap panel CARTO dark example" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-carto-dark-9-1-0.png" max-width="1200px" alt="Geomap panel CARTO dark example" >}}
 - **Show labels** shows the Country details on top of the map.
 - **Opacity** from 0 (transparent) to 1 (opaque)
 - **Display tooltip** - allows you to toggle tooltips for the layer.
@@ -495,17 +495,17 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
 - **Server Instance** to select the map type.
   - World Street Map
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wsm-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS World Street Map" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wsm-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS World Street Map" >}}
   - World Imagery
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wi-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS World Imagery" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wi-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS World Imagery" >}}
   - World Physical
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wp-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS World Physical" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wp-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS World Physical" >}}
   - Topographic
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-topographic-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS Topographic" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-topographic-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS Topographic" >}}
   - USA Topographic
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-usa-topographic-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS USA Topographic" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-usa-topographic-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS USA Topographic" >}}
   - World Ocean
-    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-ocean-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS World Ocean" >}}
+    {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-ocean-9-1-0.png" max-width="1200px" alt="Geomap panel ArcGIS World Ocean" >}}
   - Custom MapServer (see [XYZ](#xyz-tile-layer) for formatting)
     - URL template
     - Attribution
@@ -514,26 +514,23 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
 ##### More Information
 
-- [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
-- [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
+- [ArcGIS Services](https://services.arcgisonline.com/arcgis/rest/services)
+- [About ESRI](https://www.esri.com/en-us/about/about-esri/overview)
 
 #### XYZ tile layer
 
 The XYZ tile layer is a map from a generic tile layer.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" caption="Geomap panel xyz example" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" alt="Geomap panel xyz example" >}}
 
-- **URL template**
-
-  > **Note:** Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
-
+- **URL template** - Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
 - **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
 - **Opacity** from 0 (transparent) to 1 (opaque)
 
 ##### More information
 
-- [**Tiled Web Map Wikipedia**](https://en.wikipedia.org/wiki/Tiled_web_map)
-- [**List of Open Street Map Tile Servers**](https://wiki.openstreetmap.org/wiki/Tile_servers)
+- [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
+- [List of Open Street Map Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
 ### Basemap layer options
 
@@ -624,7 +621,7 @@ The map controls section contains various options for map information and tool o
 
 Displays zoom controls in the upper left corner. This control can be useful when using systems that don't have a mouse.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-zoom-9-1-0.png" max-width="1200px" caption="Geomap panel zoom" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-zoom-9-1-0.png" max-width="1200px" alt="Geomap panel zoom" >}}
 
 #### Mouse wheel zoom
 
@@ -634,13 +631,13 @@ Enables the mouse wheel to be used for zooming in or out.
 
 Displays attribution for basemap layers.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="1200px" caption="Geomap panel attribution" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="1200px" alt="Geomap panel attribution" >}}
 
 #### Show scale
 
 Displays scale information in the bottom left corner.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-scale-9-1-0.png" max-width="1200px" caption="Geomap panel scale" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-scale-9-1-0.png" max-width="1200px" alt="Geomap panel scale" >}}
 
 {{% admonition type="note" %}}
 Currently only displays units in [m]/[km].
@@ -650,7 +647,7 @@ Currently only displays units in [m]/[km].
 
 Displays measure tools in the upper right corner. Measurements appear only when this control is open.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-9-1-0.png" max-width="1200px" caption="Geomap panel measure" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-9-1-0.png" max-width="1200px" alt="Geomap panel measure" >}}
 
 - **Click** to start measuring
 - **Continue clicking** to continue measurement
@@ -669,7 +666,7 @@ Get the spherical length of a geometry. This length is the sum of the great circ
 - **Miles (mi)**
 - **Nautical miles (nmi)**
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-length-9-1-0.png" max-width="1200px" caption="Geomap panel measure length" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-length-9-1-0.png" max-width="1200px" alt="Geomap panel measure length" >}}
 
 ##### Area
 
@@ -682,7 +679,7 @@ Get the spherical area of a geometry. This area is calculated assuming that poly
 - **Acres (acre)**
 - **Hectare (ha)**
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="1200px" caption="Geomap panel measure area" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="1200px" alt="Geomap panel measure area" >}}
 
 #### Show debug
 
@@ -691,7 +688,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 - **Zoom** displays current zoom level of the map.
 - **Center** displays the current **longitude**, **latitude** of the map center.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-debug-9-1-0.png" max-width="1200px" caption="Geomap panel debug" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-debug-9-1-0.png" max-width="1200px" alt="Geomap panel debug" >}}
 
 #### Tooltip
 
