@@ -52,6 +52,12 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+	{
+		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
 }
 
 func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
@@ -170,9 +176,13 @@ func InstallAPIs(
 			// Get the option from custom.ini/command line
 			// when missing this will default to mode zero (legacy only)
 			var mode = grafanarest.DualWriterMode(0)
+
+			var dualWriterPeriodicDataSyncJobEnabled bool
+
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
+				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
 			}
 
 			// Force using storage only -- regardless of internal synchronization state
@@ -198,7 +208,7 @@ func InstallAPIs(
 			default:
 			}
 
-			if storageOpts.DualWriterDataSyncJobEnabled[key] {
+			if dualWriterPeriodicDataSyncJobEnabled {
 				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, requestInfo)
 			}
 
@@ -210,18 +220,33 @@ func InstallAPIs(
 		}
 	}
 
+	// NOTE: we build a map structure by version only for the purposes of InstallAPIGroup
+	// in other places, working with a flat []APIGroupBuilder list is much nicer
+	buildersGroupMap := make(map[string][]APIGroupBuilder, 0)
 	for _, b := range builders {
-		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
-		if err != nil {
-			return err
+		group := b.GetGroupVersion().Group
+		if _, ok := buildersGroupMap[group]; !ok {
+			buildersGroupMap[group] = make([]APIGroupBuilder, 0)
 		}
-		if g == nil || len(g.PrioritizedVersions) < 1 {
-			continue
+		buildersGroupMap[group] = append(buildersGroupMap[group], b)
+	}
+
+	for group, buildersForGroup := range buildersGroupMap {
+		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
+		for _, b := range buildersForGroup {
+			if err := b.UpdateAPIGroupInfo(&g, scheme, optsGetter, dualWrite); err != nil {
+				return err
+			}
+			if len(g.PrioritizedVersions) < 1 {
+				continue
+			}
 		}
-		err = server.InstallAPIGroup(g)
+
+		err := server.InstallAPIGroup(&g)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }

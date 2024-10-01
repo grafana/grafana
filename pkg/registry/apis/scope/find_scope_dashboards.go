@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -91,6 +93,11 @@ func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts
 				}
 			}
 		}
+
+		// sort the dashboard lists based on dashboard title.
+		slices.SortFunc(results.Items, func(i, j scope.ScopeDashboardBinding) int {
+			return strings.Compare(i.Status.DashboardTitle, j.Status.DashboardTitle)
+		})
 
 		logger.FromContext(req.Context()).Debug("find scopedashboardbinding", "raw", len(all.Items), "filtered", len(results.Items))
 

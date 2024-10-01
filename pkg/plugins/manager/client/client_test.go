@@ -310,6 +310,48 @@ func TestCallResource(t *testing.T) {
 		require.Equal(t, "should not be deleted", res.Headers["X-Custom"][0])
 	})
 
+	t.Run("Should set proxy response headers", func(t *testing.T) {
+		resHeaders := map[string][]string{
+			"X-Custom": {"should not be deleted"},
+		}
+
+		req := &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "pid",
+			},
+		}
+
+		responses := []*backend.CallResourceResponse{}
+		sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+			responses = append(responses, res)
+			return nil
+		})
+
+		p.RegisterClient(&fakePluginBackend{
+			crr: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				return sender.Send(&backend.CallResourceResponse{
+					Headers: resHeaders,
+					Status:  http.StatusOK,
+					Body:    []byte(backendResponse),
+				})
+			},
+		})
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(registry)
+
+		err = client.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+
+		require.Len(t, responses, 1)
+		res := responses[0]
+		require.Equal(t, http.StatusOK, res.Status)
+		require.Equal(t, []byte(backendResponse), res.Body)
+		require.Equal(t, "sandbox", res.Headers["Content-Security-Policy"][0])
+		require.Equal(t, "should not be deleted", res.Headers["X-Custom"][0])
+	})
+
 	t.Run("Should ensure content type header", func(t *testing.T) {
 		tcs := []struct {
 			contentType    string

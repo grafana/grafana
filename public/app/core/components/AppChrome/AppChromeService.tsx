@@ -213,7 +213,7 @@ export class AppChromeService {
   private getNextKioskMode() {
     const { kioskMode, searchBarHidden } = this.state.getValue();
 
-    if (searchBarHidden || kioskMode === KioskMode.TV) {
+    if (searchBarHidden || kioskMode === KioskMode.TV || config.featureToggles.singleTopNav) {
       appEvents.emit(AppEvents.alertInfo, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
       return KioskMode.Full;
     }
