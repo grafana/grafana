@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import 'react-data-grid/lib/styles.css';
 import DataGrid, { Column, RenderRowProps, Row } from 'react-data-grid';
-import { createPortal } from 'react-dom';
 import { Cell } from 'react-table';
 
 import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
+import { ContextMenu } from '../../ContextMenu/ContextMenu';
+import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellDisplayMode, TableNGProps } from '../types';
 import { getCellColors } from '../utils';
@@ -40,28 +41,8 @@ export function TableNG(props: TableNGProps) {
     top: number;
     left: number;
   } | null>(null);
-  const menuRef = useRef<HTMLMenuElement | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
-  const isContextMenuOpen = contextMenuProps !== null;
-
-  useLayoutEffect(() => {
-    if (!isContextMenuOpen) {
-      return;
-    }
-
-    function onClick(event: MouseEvent) {
-      if (event.target instanceof Node && menuRef.current?.contains(event.target)) {
-        return;
-      }
-      setContextMenuProps(null);
-    }
-
-    addEventListener('click', onClick);
-
-    return () => {
-      removeEventListener('click', onClick);
-    };
-  }, [isContextMenuOpen]);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
 
   function rowHeight() {
     const bodyFontSize = theme.typography.fontSize;
@@ -144,6 +125,21 @@ export function TableNG(props: TableNGProps) {
   };
   const { columns, rows } = mapFrameToDataGrid(props.data);
 
+  const renderMenuItems = () => {
+    return (
+      <>
+        <MenuItem
+          label="Inspect value"
+          onClick={() => {
+            setIsInspecting(true);
+            setIsContextMenuOpen(false);
+          }}
+          className={styles.menuItem}
+        />
+      </>
+    );
+  };
+
   // Return the data grid
   return (
     <>
@@ -169,34 +165,18 @@ export function TableNG(props: TableNGProps) {
             top: event.clientY,
             left: event.clientX,
           });
+          setIsContextMenuOpen(true);
         }}
       />
 
-      {isContextMenuOpen &&
-        createPortal(
-          <menu
-            ref={menuRef}
-            className={styles.contextMenu}
-            style={
-              {
-                top: contextMenuProps.top,
-                left: contextMenuProps.left,
-              } as unknown as React.CSSProperties
-            }
-          >
-            <li>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsInspecting(true);
-                }}
-              >
-                Inspect value
-              </button>
-            </li>
-          </menu>,
-          document.body
-        )}
+      {isContextMenuOpen && (
+        <ContextMenu
+          x={contextMenuProps?.left || 0}
+          y={contextMenuProps?.top || 0}
+          renderMenuItems={renderMenuItems}
+          focusOnOpen={false}
+        />
+      )}
 
       {isInspecting && (
         <TableCellInspector
@@ -204,6 +184,8 @@ export function TableNG(props: TableNGProps) {
           value={contextMenuProps?.value}
           onDismiss={() => {
             setIsInspecting(false);
+            setIsContextMenuOpen(false);
+            setContextMenuProps(null);
           }}
         />
       )}
@@ -228,5 +210,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '> li': {
       padding: 8,
     },
+  }),
+  menuItem: css({
+    maxWidth: '200px',
   }),
 });
