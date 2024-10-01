@@ -178,15 +178,13 @@ export const Combobox = <T extends string | number>({
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
-  const dynamicWidth = width === 'auto' ? undefined : width;
-
   const InputComponent = width === 'auto' ? AutoSizeInput : Input;
 
   return (
     <div>
       <InputComponent
         className={styles.input}
-        width={dynamicWidth}
+        width={width === 'auto' ? undefined : width}
         suffix={
           <>
             {!!value && value === selectedItem?.value && isClearable && (
