@@ -1,3 +1,24 @@
+<!-- 11.1.7 START -->
+
+# 11.1.7 (2024-10-01)
+
+### Features and enhancements
+
+- **Chore:** Bump Go to 1.22.7 [#93355](https://github.com/grafana/grafana/pull/93355), [@hairyhenderson](https://github.com/hairyhenderson)
+- **Chore:** Bump Go to 1.22.7 (Enterprise)
+
+### Bug fixes
+
+- **Alerting:** Fix preview of silences when label name contains spaces [#93050](https://github.com/grafana/grafana/pull/93050), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Make query wrapper match up datasource UIDs if necessary [#93115](https://github.com/grafana/grafana/pull/93115), [@tomratcliffe](https://github.com/tomratcliffe)
+- **AzureMonitor:** Deduplicate resource picker rows [#93704](https://github.com/grafana/grafana/pull/93704), [@aangelisc](https://github.com/aangelisc)
+- **AzureMonitor:** Improve resource picker efficiency [#93439](https://github.com/grafana/grafana/pull/93439), [@aangelisc](https://github.com/aangelisc)
+- **AzureMonitor:** Remove Basic Logs retention warning [#93122](https://github.com/grafana/grafana/pull/93122), [@aangelisc](https://github.com/aangelisc)
+- **Correlations:** Limit access to correlations page to users who can access Explore [#93675](https://github.com/grafana/grafana/pull/93675), [@ifrost](https://github.com/ifrost)
+- **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93487](https://github.com/grafana/grafana/pull/93487), [@wbrowne](https://github.com/wbrowne)
+- **Alerting:** Fixed CVE-2024-8118.
+
+<!-- 11.1.7 END -->
 <!-- 11.0.6 START -->
 
 # 11.0.6 (2024-10-01)
