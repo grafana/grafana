@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import {
   isOnCallContactPointReady,
@@ -16,7 +16,7 @@ import { useOnCallChatOpsConnections, useOnCallOptions } from './onCall/hooks';
 import { useSloChecks } from './slo/hooks';
 
 interface UrlLink {
-  url: string;
+  url: RelativeUrl;
   queryParams?: Record<string, string>;
 }
 export interface StepButtonDto {
@@ -113,8 +113,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     isLoading,
   } = useGetConfigurationForApps();
 
-  function onIntegrationClick(integrationId: string, url: string) {
-    const urlToGoWithIntegration = createUrl(url + integrationId, {
+  function onIntegrationClick(integrationId: string, url: RelativeUrl) {
+    const urlToGoWithIntegration = createRelativeUrl(`${url} + ${integrationId}`, {
       returnTo: location.pathname + location.search,
     });
     locationService.push(urlToGoWithIntegration);
@@ -340,7 +340,7 @@ export const useGetConfigurationForUI = ({
     function getConnectDataSourceConfiguration() {
       const description = dataSourceCompatibleWithAlerting
         ? 'You have connected a datasource.'
-        : 'Connect at least one data source to start receiving data.';
+        : 'Connect at least one data source to start receiving data';
       const actionButtonTitle = dataSourceCompatibleWithAlerting ? 'View' : 'Connect';
       return {
         id: ConfigurationStepsEnum.CONNECT_DATASOURCE,
@@ -356,8 +356,8 @@ export const useGetConfigurationForUI = ({
         id: ConfigurationStepsEnum.ESSENTIALS,
         title: 'Essentials',
         titleIcon: 'star',
-        description: 'Configure the features you need to start using Grafana IRM workflows',
-        actionButtonTitle: 'Start',
+        description: 'Set up the necessary features to start using Grafana IRM workflows',
+        actionButtonTitle: stepsDone === totalStepsToDo ? 'View' : 'Configure',
         stepsDone,
         totalStepsToDo,
       },

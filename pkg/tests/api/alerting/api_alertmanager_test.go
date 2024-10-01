@@ -790,7 +790,12 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"namespace_uid": %q,
 								"rule_group": "arulegroup",
 								"no_data_state": "NoData",
-								"exec_err_state": "Alerting"
+								"exec_err_state": "Alerting",
+								"metadata": {
+									"editor_settings": {
+										"simplified_query_and_expressions_section": false
+									}
+								}
 							}
 						}
 					]
@@ -1268,7 +1273,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "metadata": {
+						      "editor_settings": {
+							      "simplified_query_and_expressions_section": false
+							  }
+						  }
 					   }
 					},
 					{
@@ -1304,7 +1314,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "metadata": {
+						      "editor_settings": {
+							      "simplified_query_and_expressions_section": false
+							  }
+						  }
 					   }
 					}
 				 ]
@@ -1612,7 +1627,12 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "namespace_uid":"nsuid",
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
-		                  "exec_err_state":"Alerting"
+		                  "exec_err_state":"Alerting",
+						  "metadata": {
+						      "editor_settings": {
+							      "simplified_query_and_expressions_section": false
+							  }
+						  }
 		               }
 		            }
 		         ]
@@ -1721,8 +1741,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
-					  "exec_err_state":"Alerting"
-				       }
+					  "exec_err_state":"Alerting",
+					  "metadata": {
+				        "editor_settings": {
+					      "simplified_query_and_expressions_section": false
+					    }
+					   }
+				      }
 				    }
 				 ]
 			      }
@@ -1809,8 +1834,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
-					  "exec_err_state":"Alerting"
-				       }
+					  "exec_err_state":"Alerting",
+					  "metadata": {
+				        "editor_settings": {
+					      "simplified_query_and_expressions_section": false
+					    }
+					   }
+				      }
 				    }
 				 ]
 			      }
@@ -1974,7 +2004,7 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
-		expErr: "unable to upsert silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
+		expErr: "unable to upsert silence: invalid silence: invalid label matcher 0: invalid label name \"\": unable to create silence",
 	}, {
 		name: "can't create silence for missing label value",
 		silence: apimodels.PostableSilence{
@@ -1991,7 +2021,7 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
-		expErr: "unable to upsert silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
+		expErr: "unable to upsert silence: invalid silence: at least one matcher must not match the empty string: unable to create silence",
 	}}
 
 	for _, tc := range cases {
@@ -2336,8 +2366,13 @@ func TestIntegrationQuota(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
-					       }
+						  "exec_err_state":"Alerting",
+						  "metadata": {
+						    "editor_settings": {
+							  "simplified_query_and_expressions_section": false
+							 }
+						   }
+					      }
 					    }
 					 ]
 				      }
@@ -2419,7 +2454,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [
@@ -2477,7 +2516,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [
@@ -2568,7 +2611,11 @@ func TestIntegrationEval(t *testing.T) {
 								"nullable": true
 							  }
 							}
-						  ]
+						  ],
+						  "meta": {
+						    "type": "numeric-multi",
+							"typeVersion": [0, 1]
+						  }
 						},
 						"data": {
 						  "values": [

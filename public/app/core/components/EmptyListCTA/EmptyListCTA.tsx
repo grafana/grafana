@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { MouseEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
+import { Alert, Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
 
 export interface Props {
   title: string;
@@ -59,10 +59,9 @@ const EmptyListCTA = ({
           ''
         )}
         {infoBox ? (
-          <div key="infoBoxHtml" className={`grafana-info-box ${infoBoxStyles}`}>
-            {infoBoxTitle && <h5>{infoBoxTitle}</h5>}
+          <Alert severity="info" title={infoBoxTitle ?? ''} className={infoBoxStyles}>
             <div dangerouslySetInnerHTML={infoBox} />
-          </div>
+          </Alert>
         ) : (
           ''
         )}

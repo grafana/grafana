@@ -47,7 +47,7 @@ refs:
   provisioning-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
+    - pattern: /docs/grafana-cloud/provision
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   explore:
     - pattern: /docs/grafana/
@@ -56,37 +56,108 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
-# Configure the Tempo data source
+# Configure a Tempo data source
 
-To configure basic settings for the Tempo data source, complete the following steps:
+The Tempo data source sets how Grafana connects to your Tempo database and lets you configure features and integrations with other telemetry signals.
 
-1.  Click **Connections** in the left-side menu.
-1.  Under Your connections, click **Data sources**.
-1.  Enter `Tempo` in the search bar.
-1.  Select **Tempo**.
+You can configure the data source using either the data source interface in Grafana or using a configuration file.
+This page explains how to set up and enable the data source capabilities using Grafana.
 
-1.  On the **Settings** tab, set the data source's basic configuration options:
+If you're using your own installation of Grafana, you can provision the Tempo data source using a YAML configuration file.
 
-    | Name           | Description                                                              |
-    | -------------- | ------------------------------------------------------------------------ |
-    | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
-    | **Default**    | Sets the data source that's pre-selected for new panels.                 |
-    | **URL**        | Sets the URL of the Tempo instance, such as `http://tempo`.              |
-    | **Basic Auth** | Enables basic authentication to the Tempo data source.                   |
-    | **User**       | Sets the user name for basic authentication.                             |
-    | **Password**   | Sets the password for basic authentication.                              |
+Depending upon your tracing environment, you may have more than one Tempo instance.
+Grafana supports multiple Tempo data sources.
 
-You can also configure settings specific to the Tempo data source.
+## Before you begin
 
-This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
+To configure a Tempo data source, you need administrator rights to your Grafana instance and a Tempo instance configured to send tracing data to Grafana.
 
-{{< youtube id="cqHO0oYW6Ic" start="298" >}}
+If you're provisioning a Tempo data source, then you also need administrative rights on the server hosting your Grafana instance.
+Refer to [Provision the data source](#provision-the-data-source) for next steps.
+
+![Provisioned data source warning](/media/docs/grafana/data-sources/tempo/tempo-data-source-provisioned-error.png)
+
+## Add or modify a data source
+
+You can use these procedures to configure a new Tempo data source or to edit an existing one.
+
+### Add a new data source
+
+Follow these steps to set up a new Tempo data source:
+
+1. Select **Connections** in the main menu.
+1. Enter `Tempo` in the search bar.
+1. Select **Tempo**.
+1. Select **Add new data source** in the top-right corner of the page.
+1. On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
+
+- Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Toggle the **Default** switch for the data source to be pre-selected for new panels.
+- Under **Connection**, enter the **URL** of the Tempo instance, for example, `https://example.com:4100`.
+- Complete the [**Authentication** section](#authentication).
+
+1. Optional: Configure other sections to add capabilities to your tracing data. Refer to the additional procedures for instructions.
+1. Select **Save & test**.
+
+### Update an existing data source
+
+To modify an existing Tempo data source:
+
+1. Select **Connections** in the main menu.
+1. Select **Data sources** to view a list of configured data sources.
+1. Select the Tempo data source you wish to modify.
+1. Configure or update additional sections to add capabilities to your tracing data. Refer to the additional procedures for instructions.
+1. After completing your updates, select **Save & test**.
+
+## Authentication
+
+Use this section to select an authentication method to access the data source.
+
+{{< admonition type="note" >}}
+Use Transport Layer Security (TLS) for an additional layer of security when working with Tempo.
+For additional information on setting up TLS encryption with Tempo, refer to [Configure TLS communication](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/network/tls/) and [Tempo configuration](https://grafana.com/docs/tempo/<TEMPO_VERSION>/configuration/).
+{{< /admonition >}}
+
+[//]: # 'Shared content for authentication section procedure in data sources'
+
+{{< docs/shared source="grafana" lookup="datasources/datasouce-authentication.md" leveloffset="+2" version="<GRAFANA_VERSION>" >}}
+
+## Streaming
+
+<!-- The traceQLStreaming toggle will be deprecated in Grafana 11.2 and removed in 11.3. -->
+
+Streaming enables TraceQL query results to be displayed as they become available.
+Without streaming, no results are displayed until all results have returned.
+
+{{< docs/public-preview product="TraceQL streaming results" >}}
+
+To use streaming, you need to:
+
+- Run Tempo version 2.2 or newer, or Grafana Enterprise Traces (GET) version 2.2 or newer, or use Grafana Cloud Traces.
+- For self-managed Tempo or GET instances: If your Tempo or GET instance is behind a load balancer or proxy that doesn't supporting gRPC or HTTP2, streaming may not work and should be disabled.
+
+### Activate streaming
+
+You can activate streaming by either setting the `traceQLStreaming` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to true or by activating the **Streaming** toggle in the Tempo data source.
+
+![Streaming section in Tempo data source](/media/docs/grafana/data-sources/tempo-data-source-streaming-v11.2.png)
+
+If you are using Grafana Cloud, the `traceQLStreaming` feature toggle is already set to `true` by default.
+
+If the Tempo data source is set to allow streaming but the `traceQLStreaming` feature toggle is set to `false` in Grafana, streaming occurs.
+
+If the data source has streaming disabled and `traceQLStreaming` is set to `true`, streaming happens for that data source.
+
+When streaming is active, it's shows as **Enabled** in **Explore**.
+To check the status, select Explore in the menu, select your Tempo data source, and expand the **Options** section.
+
+![The Explore screen shows the Tempo data source with streaming active](/media/docs/grafana/data-sources/tempo/tempo-query-stream-active.png)
 
 ## Trace to logs
 
-![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
+The **Trace to logs** setting configures [trace to logs](ref:explore-trace-integration) that's available when you integrate Grafana with Tempo.
+Trace to logs can also be used with other tracing data sources, such as Jaeger and Zipkin.
 
-The **Trace to logs** setting configures the [trace to logs feature](ref:explore-trace-integration) that is available when you integrate Grafana with Tempo.
+![Trace to logs settings](/media/docs/grafana/data-sources/tempo/tempo-data-source-trace-to-logs.png)
 
 There are two ways to configure the trace to logs feature:
 
@@ -100,8 +171,9 @@ There are two ways to configure the trace to logs feature:
    You can also click **Open advanced data source picker** to see more options, including adding a data source.
 
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
-1. Select which tags to use in the logs query. The tags you configure must be present in the span's attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful, for example, if the tag has dots in the name and the target data source does not allow using dots in labels. In that case, you can for example remap `http.status` (the span attribute) to `http_status` (the data source field). "Data source" in this context can refer to Loki, or another log data source.
-1. Optionally switch on the **Filter by trace ID** and/or **Filter by span ID** setting to further filter the logs if your logs consistently contain trace or span IDs.
+1. Select which tags to use in the logs query.
+   The tags you configure must be present in the span's attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful, for example, if the tag has dots in the name and the target data source does not allow using dots in labels. In that case, you can for example remap `http.status` (the span attribute) to `http_status` (the data source field). "Data source" in this context can refer to Loki, or another log data source.
+1. Optional: If your logs consistently trace or span IDs, you can use one or both of the **Filter by trace ID** and **Filter by span ID** settings.
 
 ### Configure a custom query
 
@@ -141,19 +213,35 @@ There are two ways to configure the trace to metrics feature:
 - Use a basic configuration with a default query, or
 - Configure one or more custom queries where you can use a [template language](ref:variable-syntax) to interpolate variables from the trace or span.
 
-### Simple config
+Refer to the [Trace to metrics configuration options](#trace-tometrics-configuration-options) section to learn about the available options.
+
+![Trace to metrics settings in the Tempo data source](/media/docs/grafana/data-sources/tempo/tempo-data-source-trace-to-metrics.png)
+
+### Set up a simple configuration
 
 To use a simple configuration, follow these steps:
 
 1. Select a metrics data source from the **Data source** drop-down.
+1. Optional: Change **Span start time shift** and **Span end time shift**. You can change one or both of these settings. The default start time shift is -2 minutes and 2 minutes for end time shift.
 1. Optional: Choose any tags to use in the query. If left blank, the default values of `cluster`, `hostname`, `namespace`, `pod`, `service.name` and `service.namespace` are used.
 
    The tags you configure must be present in the spans attributes or resources for a trace to metrics span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source doesn't allow using dots in labels. In that case you can for example remap `service.name` to `service_name`.
 
-1. Do not select **Add query**.
+1. Don't select **Add query**.
 1. Select **Save and Test**.
 
-### Custom queries
+### Set up custom queries
+
+To use custom queries, you need to configure the tags you’d like to include in the linked queries.
+For each tag, the key is the span attribute name.
+In cases where the attribute name would result in an invalid metrics query or doesn’t exactly match the desired label name, you can enter the label name as the second value.
+For example, you could map the attribute `k8s.pod` to the label `pod`.
+
+You can interpolate the configured tags using the `$__tags` keyword.
+For example, when you configure the query `requests_total{$__tags}` with the tags `k8s.pod=pod` and `cluster`, it results in `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
+The label values are dynamically inserted based on the span attributes’ values.
+
+You can link to any metric you’d like, but metrics for span durations, counts, and errors filtered by service or span are a great starting point.
 
 To use custom queries with the configuration, follow these steps:
 
@@ -174,7 +262,7 @@ To use custom queries with the configuration, follow these steps:
 
 1. Select **Save and Test**.
 
-### Configure trace to metrics
+### Trace to metrics configuration options
 
 | Setting name              | Description                                                                                                                                                                                                                                                     |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -189,11 +277,12 @@ To use custom queries with the configuration, follow these steps:
 
 [//]: # 'Shared content for Trace to profiles in the Tempo data source'
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" leveloffset="+1" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" leveloffset="+2" version="<GRAFANA_VERSION>" >}}
 
 ## Custom query variables
 
-To use a variable in your trace to logs, metrics or profiles you need to wrap it in `${}`. For example, `${__span.name}`.
+To use a variable in your trace to logs, metrics, or profiles, you need to wrap it in `${}`.
+For example, `${__span.name}`.
 
 | Variable name          | Description                                                                                                                                                                                                                                                                                                                              |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -207,27 +296,37 @@ To use a variable in your trace to logs, metrics or profiles you need to wrap it
 | **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
 | **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
 
-## Service Graph
+## Additional settings
 
-The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service_graphs/enable-service-graphs/) feature.
+Use the down arrow to expand the **Additional settings** section to view these options.
+
+### Advanced HTTP settings
+
+The Grafana Proxy deletes forwarded cookies. Use the **Allowed cookies** field to specify cookies by name that should be forwarded to the data source.
+
+The **Timeout** field sets the HTTP request timeout in seconds.
+
+### Service graph
+
+The **Service graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service_graphs/enable-service-graphs/) data.
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 
 To use the Service Graph, refer to the [Service Graph documentation](#use-the-service-graph).
 
-## Node Graph
+### Node graph
 
-The **Node Graph** setting enables the [node graph visualization](ref:node-graph), which is disabled by default.
+The **Node graph** setting enables the [node graph visualization](ref:node-graph), which isn't activated by default.
 
-Once enabled, Grafana displays the node graph above the trace view.
+Once activated, Grafana displays the node graph above the trace view.
 
-## Tempo search
+### Tempo search
 
 The **Search** setting configures [Tempo search](/docs/tempo/latest/configuration/#search).
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
-## TraceID query
+### TraceID query
 
 The **TraceID query** setting modifies how TraceID queries are run. The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. This setting is disabled by default.
 
@@ -239,7 +338,7 @@ You can configure this setting as follows:
 | **Time shift start**  | Time shift for start of search. Default: `30m`.             |
 | **Time shift end**    | Time shift for end of search. Default: `30m`.               |
 
-## Span bar
+### Span bar
 
 The **Span bar** setting helps you display additional information in the span bar row.
 
@@ -251,12 +350,30 @@ You can choose one of three options:
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
 | **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `component`. |
 
+### Private data source connect
+
+[//]: # 'Shared content for authentication section procedure in data sources'
+
+{{< docs/shared source="grafana" lookup="datasources/datasouce-private-ds-connect.md" leveloffset="+2" version="<GRAFANA_VERSION>" >}}
+
 ## Provision the data source
 
-You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the Tempo data source in YAML files as part of the Grafana provisioning system.
+Provisioning is primarily used Grafana instances that don't use Grafana Cloud.
+
+You can use version control, like git, to track and manage file changes.
+Changes can be updated or rolled back as needed.
+
 For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
-Example provision YAML file:
+{{< admonition type="note" >}}
+You can't modify a provisioned data source using the Tempo data source settings in Grafana.
+Grafana displays a message for provisioned data sources.
+{{< /admonition >}}
+
+### Example file
+
+This example provision YAML file sets up the equivalents of the options available in the Tempo data source user interface.
 
 ```yaml
 apiVersion: 1

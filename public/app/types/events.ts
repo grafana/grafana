@@ -44,20 +44,6 @@ export interface ShowConfirmModalPayload {
   onAltAction?: () => void;
 }
 
-export interface DataSourceResponse<T> {
-  data: T;
-  readonly status: number;
-  readonly statusText: string;
-  readonly ok: boolean;
-  readonly headers: Headers;
-  readonly redirected: boolean;
-  readonly type: ResponseType;
-  readonly url: string;
-  readonly config: any;
-}
-
-type DataSourceResponsePayload = DataSourceResponse<any>;
-
 export interface ToggleKioskModePayload {
   exit?: boolean;
 }
@@ -70,7 +56,7 @@ export interface GraphClickedPayload {
 
 export interface ThresholdChangedPayload {
   threshold: any;
-  handleIndex: any;
+  handleIndex: number;
 }
 
 export interface DashScrollPayload {
@@ -85,8 +71,6 @@ export interface PanelChangeViewPayload {}
  * Events
  */
 
-export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
-export const dsRequestError = eventFactory<any>('ds-request-error');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
 

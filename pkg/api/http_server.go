@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -24,15 +25,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/grafana/grafana/pkg/services/anonymous"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -48,7 +44,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -78,6 +77,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -109,6 +110,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/youmark/pkcs8"
 )
 
 type HTTPServer struct {
@@ -145,6 +147,7 @@ type HTTPServer struct {
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
+	pluginAssets                 *pluginassets.Service
 	SearchService                search.Service
 	ShortURLService              shorturls.Service
 	QueryHistoryService          queryhistory.Service
@@ -195,12 +198,13 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
+	managedPluginsService        managedplugins.Manager
 
 	userService          user.Service
 	tempUserService      tempUser.Service
 	loginAttemptService  loginAttempt.Service
 	orgService           org.Service
-	teamService          team.Service
+	TeamService          team.Service
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
 	tagService           tag.Service
@@ -245,7 +249,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
-	serviceaccountsService serviceaccounts.Service,
+	serviceaccountsService serviceaccounts.Service, pluginAssets *pluginassets.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
@@ -254,7 +258,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service,
+	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
@@ -284,6 +288,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
 		pluginDashboardService:       pluginDashboardService,
+		pluginAssets:                 pluginAssets,
 		pluginErrorResolver:          pluginErrorResolver,
 		pluginFileStore:              pluginFileStore,
 		grafanaUpdateChecker:         grafanaUpdateChecker,
@@ -350,7 +355,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
-		teamService:                  teamService,
+		TeamService:                  teamService,
 		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
@@ -359,6 +364,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		statsService:                 statsService,
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
+		managedPluginsService:        managedPlugins,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
@@ -601,6 +607,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")
 
 	if hs.Cfg.ImageUploadProvider == "local" {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
@@ -634,6 +641,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	if hs.Cfg.EnforceDomain {
 		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
+	// handle action urls
+	m.UseMiddleware(middleware.ValidateActionUrl(hs.Cfg, hs.log))
 
 	m.Use(middleware.HandleNoCacheHeaders)
 
@@ -656,6 +665,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *web.Context) {
 	}
 
 	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+		ctx.Resp.Header().Set("WWW-Authenticate", `Basic realm="Grafana"`)
 		ctx.Resp.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -678,27 +688,42 @@ func (hs *HTTPServer) healthzHandler(ctx *web.Context) {
 	}
 }
 
+// swagger:model healthResponse
+type healthResponse struct {
+	Database         string `json:"database"`
+	Version          string `json:"version,omitempty"`
+	Commit           string `json:"commit,omitempty"`
+	EnterpriseCommit string `json:"enterpriseCommit,omitempty"`
+}
+
+// swagger:route GET /health health getHealth
+//
 // apiHealthHandler will return ok if Grafana's web server is running and it
 // can access the database. If the database cannot be accessed it will return
 // http status code 503.
+//
+// Responses:
+// 200: healthResponse
+// 503: internalServerError
 func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
 	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
 		return
 	}
 
-	data := simplejson.New()
-	data.Set("database", "ok")
+	data := healthResponse{
+		Database: "ok",
+	}
 	if !hs.Cfg.AnonymousHideVersion {
-		data.Set("version", hs.Cfg.BuildVersion)
-		data.Set("commit", hs.Cfg.BuildCommit)
+		data.Version = hs.Cfg.BuildVersion
+		data.Commit = hs.Cfg.BuildCommit
 		if hs.Cfg.EnterpriseBuildCommit != "NA" && hs.Cfg.EnterpriseBuildCommit != "" {
-			data.Set("enterpriseCommit", hs.Cfg.EnterpriseBuildCommit)
+			data.EnterpriseCommit = hs.Cfg.EnterpriseBuildCommit
 		}
 	}
 
 	if !hs.databaseHealthy(ctx.Req.Context()) {
-		data.Set("database", "failing")
+		data.Database = "failing"
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
 	} else {
@@ -706,7 +731,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 		ctx.Resp.WriteHeader(http.StatusOK)
 	}
 
-	dataBytes, err := data.EncodePretty()
+	dataBytes, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		hs.log.Error("Failed to encode data", "err", err)
 		return
@@ -731,6 +756,12 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 	if hs.Cfg.Env == setting.Dev {
 		headers = func(c *web.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+		}
+	}
+
+	if prefix == "mockServiceWorker.js" {
+		headers = func(c *web.Context) {
+			c.Resp.Header().Set("Content-Type", "application/javascript")
 		}
 	}
 
@@ -801,11 +832,72 @@ func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
 		return nil, fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
+	if hs.Cfg.CertPassword != "" {
+		return handleEncryptedCertificates(hs.Cfg)
+	}
+	// previous implementation
 	tlsCert, err := tls.LoadX509KeyPair(hs.Cfg.CertFile, hs.Cfg.KeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
 	}
 	return &tlsCert, nil
+}
+
+func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
+	certKeyFilePassword := cfg.CertPassword
+	certData, err := os.ReadFile(cfg.CertFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read certificate file: %w", err)
+	}
+
+	keyData, err := os.ReadFile(cfg.KeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read private key file: %w", err)
+	}
+
+	// handle encrypted private key
+	keyPemBlock, _ := pem.Decode(keyData)
+
+	var keyBytes []byte
+	// Process the PKCS-encrypted PEM block.
+	if strings.Contains(keyPemBlock.Type, "ENCRYPTED PRIVATE KEY") {
+		// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
+		decrypted, err := pkcs8.ParsePKCS8PrivateKey(keyPemBlock.Bytes, []byte(certKeyFilePassword))
+		if err != nil {
+			return nil, fmt.Errorf("error parsing PKCS8 Private key: %w", err)
+		}
+		keyBytes, err = x509.MarshalPKCS8PrivateKey(decrypted)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling PKCS8 Private key: %w", err)
+		}
+	} else if strings.Contains(keyPemBlock.Type, "RSA PRIVATE KEY") {
+		// Check if the PEM block is encrypted with PKCS#1
+		// Even if these methods are deprecated, RSA PKCS#1 was requested by some customers and fairly used
+		// nolint:staticcheck
+		if !x509.IsEncryptedPEMBlock(keyPemBlock) {
+			return nil, fmt.Errorf("password provided but Private key is not recorgnized as encrypted")
+		}
+		// Only covers encrypted PEM data with a DEK-Info header.
+		// nolint:staticcheck
+		keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting x509 PemBlock: %w", err)
+		}
+	} else {
+		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")
+	}
+
+	var encodedKey bytes.Buffer
+	err = pem.Encode(&encodedKey, &pem.Block{Type: keyPemBlock.Type, Bytes: keyBytes})
+	if err != nil {
+		return nil, fmt.Errorf("error encoding pem file: %w", err)
+	}
+
+	cert, err := tls.X509KeyPair(certData, encodedKey.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse X509 key pair: %w", err)
+	}
+	return &cert, nil
 }
 
 func (hs *HTTPServer) configureTLS() error {
@@ -851,7 +943,7 @@ func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, er
 	return tlsCerts, nil
 }
 
-// fsnotify module can be used to detect file changes and based on the event certs can be reloaded
+// WatchAndUpdateCerts fsnotify module can be used to detect file changes and based on the event certs can be reloaded
 // since it adds a direct dependency for the optional feature. So that is the reason periodic watching
 // of cert files is chosen. If fsnotify is added as direct dependency in future, then the implementation
 // can be revisited to align to fsnotify.

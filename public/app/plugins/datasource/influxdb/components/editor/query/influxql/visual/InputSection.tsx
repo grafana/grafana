@@ -26,7 +26,7 @@ export const InputSection = ({ value, onChange, isWide, placeholder }: Props): J
     <>
       <Input
         placeholder={placeholder}
-        className={cx(isWide ?? false ? 'width-14' : 'width-8', paddingRightClass)}
+        className={cx((isWide ?? false) ? 'width-14' : 'width-8', paddingRightClass)}
         type="text"
         spellCheck={false}
         onBlur={onBlur}

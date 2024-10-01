@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -116,7 +117,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sqlStore)
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, "", sc.dashboardGuardianMock.DashUID)
@@ -139,7 +140,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.otherSavedFolder.ID, sc.dashboardGuardianMock.DashID)
@@ -162,7 +163,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
@@ -186,7 +187,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
@@ -210,7 +211,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
@@ -234,7 +235,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
@@ -258,7 +259,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
@@ -282,7 +283,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
@@ -306,7 +307,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
@@ -330,7 +331,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(t, cmd, sc.sqlStore)
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
-					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetNamespacedID())
+					userID, err := identity.IntIdentifier(sc.dashboardGuardianMock.User.GetID())
 					require.NoError(t, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
@@ -874,6 +875,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			dashboardPermissions,
 			ac,
 			foldertest.NewFakeService(),
+			folder.NewFakeStore(),
 			nil,
 		)
 		require.NoError(t, err)
@@ -939,6 +941,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		dashboardPermissions,
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
+		folder.NewFakeStore(),
 		nil,
 	)
 	require.NoError(t, err)
@@ -963,6 +966,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
+		folder.NewFakeStore(),
 		nil,
 	)
 	require.NoError(t, err)
@@ -1006,6 +1010,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		dashboardPermissions,
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
+		folder.NewFakeStore(),
 		nil,
 	)
 	require.NoError(t, err)
@@ -1056,6 +1061,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
+		folder.NewFakeStore(),
 		nil,
 	)
 	require.NoError(t, err)

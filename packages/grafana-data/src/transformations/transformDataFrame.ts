@@ -1,13 +1,13 @@
 import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
+import { DataFrame } from '../types/dataFrame';
 import {
-  DataFrame,
+  CustomTransformOperator,
   DataTransformContext,
   DataTransformerConfig,
   FrameMatcher,
-  CustomTransformOperator,
-} from '../types';
+} from '../types/transformations';
 
 import { getFrameMatchers } from './matchers';
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';

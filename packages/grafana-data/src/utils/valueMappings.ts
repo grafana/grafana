@@ -1,14 +1,14 @@
 import { getActiveThreshold } from '../field/thresholds';
 import { stringToJsRegex } from '../text/string';
+import { ThresholdsConfig } from '../types/thresholds';
 import {
   MappingType,
   SpecialValueMatch,
-  ThresholdsConfig,
+  SpecialValueOptions,
   ValueMap,
   ValueMapping,
   ValueMappingResult,
-  SpecialValueOptions,
-} from '../types';
+} from '../types/valueMapping';
 
 export function getValueMappingResult(valueMappings: ValueMapping[], value: any): ValueMappingResult | null {
   for (const vm of valueMappings) {

@@ -7,7 +7,7 @@ type OpenTsdbQuery struct {
 }
 
 type OpenTsdbResponse struct {
-	Metric     string             `json:"metric"`
-	Tags       map[string]string  `json:"tags"`
-	DataPoints map[string]float64 `json:"dps"`
+	Metric     string            `json:"metric"`
+	Tags       map[string]string `json:"tags"`
+	DataPoints [][]float64       `json:"dps"`
 }

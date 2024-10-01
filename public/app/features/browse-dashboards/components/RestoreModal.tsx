@@ -1,31 +1,72 @@
-import { ConfirmModal, Text } from '@grafana/ui';
+import { useState, useEffect } from 'react';
 
+import { reportInteraction } from '@grafana/runtime';
+import { ConfirmModal, Space, Text } from '@grafana/ui';
+
+import { FolderPicker } from '../../../core/components/Select/FolderPicker';
 import { Trans, t } from '../../../core/internationalization';
 
-export interface Props {
+export interface RestoreModalProps {
   isOpen: boolean;
-  onConfirm: () => Promise<void>;
+  onConfirm: (restoreTarget: string) => Promise<void>;
   onDismiss: () => void;
   selectedDashboards: string[];
+  dashboardOrigin: string[];
   isLoading: boolean;
 }
 
-export const RestoreModal = ({ onConfirm, onDismiss, selectedDashboards, isLoading, ...props }: Props) => {
+export const RestoreModal = ({
+  onConfirm,
+  onDismiss,
+  selectedDashboards,
+  dashboardOrigin,
+  isLoading,
+  ...props
+}: RestoreModalProps) => {
+  const [restoreTarget, setRestoreTarget] = useState<string>();
   const numberOfDashboards = selectedDashboards.length;
 
+  useEffect(() => {
+    // restoreTarget is used by the folder picker to preselect a folder and therefore enable the confirm button
+    // if there is only one dashboard selected or all selected dashboards come from the same folder
+    if (
+      dashboardOrigin.length > 0 &&
+      dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
+    ) {
+      setRestoreTarget(dashboardOrigin[0]);
+    }
+  }, [dashboardOrigin, selectedDashboards]);
+
   const onRestore = async () => {
-    await onConfirm();
-    onDismiss();
+    reportInteraction('grafana_restore_confirm_clicked', {
+      item_counts: {
+        dashboard: numberOfDashboards,
+      },
+    });
+    if (restoreTarget !== undefined) {
+      await onConfirm(restoreTarget);
+      onDismiss();
+    }
   };
 
   return (
     <ConfirmModal
       body={
-        <Text element="p">
-          <Trans i18nKey="recently-deleted.restore-modal.text" count={numberOfDashboards}>
-            This action will restore {{ numberOfDashboards }} dashboards.
-          </Trans>
-        </Text>
+        <>
+          <Text element="p">
+            <Trans i18nKey="recently-deleted.restore-modal.text" count={numberOfDashboards}>
+              This action will restore {{ numberOfDashboards }} dashboards.
+            </Trans>
+          </Text>
+          <Space v={3} />
+          <Text element="p">
+            <Trans i18nKey="recently-deleted.restore-modal.folder-picker-text" count={numberOfDashboards}>
+              Please choose a folder where your dashboards will be restored.
+            </Trans>
+          </Text>
+          <Space v={1} />
+          <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
+        </>
         // TODO: replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards)?
       }
       confirmText={
@@ -37,6 +78,7 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedDashboards, isLoadi
       onDismiss={onDismiss}
       onConfirm={onRestore}
       title={t('recently-deleted.restore-modal.title', 'Restore Dashboards')}
+      disabled={restoreTarget === undefined}
       {...props}
     />
   );

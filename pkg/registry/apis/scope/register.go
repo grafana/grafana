@@ -3,10 +3,8 @@ package scope
 import (
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -15,11 +13,12 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
+
+	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ builder.APIGroupBuilder = (*ScopeAPIBuilder)(nil)
@@ -46,11 +45,6 @@ func (b *ScopeAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *ScopeAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return scope.SchemeGroupVersion
-}
-
-func (b *ScopeAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
 }
 
 func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -117,15 +111,7 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(scope.SchemeGroupVersion)
 }
 
-func (b *ScopeAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode, // dual write desired mode (not relevant)
-	_ prometheus.Registerer, // prometheus registerer
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(scope.GROUP, scheme, metav1.ParameterCodec, codecs)
-
+func (b *ScopeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	scopeResourceInfo := scope.ScopeResourceInfo
 	scopeDashboardResourceInfo := scope.ScopeDashboardBindingResourceInfo
 	scopeNodeResourceInfo := scope.ScopeNodeResourceInfo
@@ -134,19 +120,20 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 
 	scopeStorage, err := newScopeStorage(scheme, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	storage[scopeResourceInfo.StoragePath()] = scopeStorage
 
-	scopeDashboardStorage, err := newScopeDashboardBindingStorage(scheme, optsGetter)
+	scopeDashboardStorage, scopedDashboardStatusStorage, err := newScopeDashboardBindingStorage(scheme, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	storage[scopeDashboardResourceInfo.StoragePath()] = scopeDashboardStorage
+	storage[scopeDashboardResourceInfo.StoragePath()+"/status"] = scopedDashboardStatusStorage
 
 	scopeNodeStorage, err := newScopeNodeStorage(scheme, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	storage[scopeNodeResourceInfo.StoragePath()] = scopeNodeStorage
 
@@ -161,7 +148,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	storage["scope_dashboard_bindings"] = &findScopeDashboardsREST{scopeDashboardStorage: scopeDashboardStorage}
 
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *ScopeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

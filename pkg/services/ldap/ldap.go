@@ -117,8 +117,8 @@ func (server *Server) Dial() error {
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
-				MinVersion:         server.Config.minTLSVersion,
-				CipherSuites:       server.Config.tlsCiphers,
+				MinVersion:         server.Config.MinTLSVersionID,
+				CipherSuites:       server.Config.TLSCipherIDs,
 			}
 			if len(clientCert.Certificate) > 0 {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)

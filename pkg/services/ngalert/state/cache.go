@@ -3,7 +3,6 @@ package state
 import (
 	"context"
 	"errors"
-	"math"
 	"net/url"
 	"strings"
 	"sync"
@@ -92,10 +91,10 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 		states = &ruleStates{states: make(map[data.Fingerprint]*State)}
 		c.states[stateCandidate.OrgID][stateCandidate.AlertRuleUID] = states
 	}
-	return states.getOrAdd(stateCandidate)
+	return states.getOrAdd(stateCandidate, log)
 }
 
-func (rs *ruleStates) getOrAdd(stateCandidate State) *State {
+func (rs *ruleStates) getOrAdd(stateCandidate State, log log.Logger) *State {
 	state, ok := rs.states[stateCandidate.CacheID]
 	// Check if the state with this ID already exists.
 	if !ok {
@@ -116,6 +115,10 @@ func (rs *ruleStates) getOrAdd(stateCandidate State) *State {
 	}
 	state.Annotations = stateCandidate.Annotations
 	state.Values = stateCandidate.Values
+	if state.ResultFingerprint != stateCandidate.ResultFingerprint {
+		log.Info("Result fingerprint has changed", "oldFingerprint", state.ResultFingerprint, "newFingerprint", stateCandidate.ResultFingerprint, "cacheID", state.CacheID, "stateLabels", state.Labels.String())
+		state.ResultFingerprint = stateCandidate.ResultFingerprint
+	}
 	rs.states[stateCandidate.CacheID] = state
 	return state
 }
@@ -157,15 +160,6 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
 	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
 
-	values := make(map[string]float64)
-	for refID, v := range result.Values {
-		if v.Value != nil {
-			values[refID] = *v.Value
-		} else {
-			values[refID] = math.NaN()
-		}
-	}
-
 	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels))
 	dupes := make(data.Labels)
 	for key, val := range extraLabels {
@@ -183,7 +177,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		}
 	}
 	if len(dupes) > 0 {
-		log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+		log.Debug("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
 	}
 	dupes = make(data.Labels)
 	for key, val := range resultLabels {
@@ -196,7 +190,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		}
 	}
 	if len(dupes) > 0 {
-		log.Warn("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+		log.Debug("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
 
 	cacheID := lbs.Fingerprint()
@@ -210,7 +204,6 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
-		Values:             values,
 		StartsAt:           result.EvaluatedAt,
 		EndsAt:             result.EvaluatedAt,
 		ResultFingerprint:  result.Instance.Fingerprint(), // remember original result fingerprint
@@ -376,6 +369,8 @@ func (c *cache) asInstances(skipNormalState bool) []ngModels.AlertInstance {
 					LastEvalTime:      v2.LastEvaluationTime,
 					CurrentStateSince: v2.StartsAt,
 					CurrentStateEnd:   v2.EndsAt,
+					ResolvedAt:        v2.ResolvedAt,
+					LastSentAt:        v2.LastSentAt,
 					ResultFingerprint: v2.ResultFingerprint.String(),
 				})
 			}

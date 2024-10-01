@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -270,14 +270,7 @@ export const DashNav = memo<Props>((props) => {
       return null;
     }
     return (
-      <DashNavTimeControls
-        dashboard={dashboard}
-        onChangeTimeZone={updateTimeZoneForSession}
-        onToolbarRefreshClick={DashboardInteractions.toolbarRefreshClick}
-        onToolbarZoomClick={DashboardInteractions.toolbarZoomClick}
-        onToolbarTimePickerClick={DashboardInteractions.toolbarTimePickerClick}
-        key="time-controls"
-      />
+      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
     );
   };
 
@@ -315,7 +308,6 @@ export const DashNav = memo<Props>((props) => {
               tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
               icon="save"
               onClick={() => {
-                DashboardInteractions.toolbarSaveClick();
                 showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,
@@ -343,8 +335,8 @@ export const DashNav = memo<Props>((props) => {
     if (canEdit && !isFullscreen) {
       buttons.push(
         <AddPanelButton
-          dashboard={dashboard}
           onToolbarAddMenuOpen={DashboardInteractions.toolbarAddClick}
+          dashboard={dashboard}
           key="panel-add-dropdown"
         />
       );

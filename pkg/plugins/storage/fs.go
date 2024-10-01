@@ -237,7 +237,7 @@ func readPluginJSON(pluginDir string) (plugins.JSONData, error) {
 		// nolint:gosec
 		data, err = os.ReadFile(pluginPath)
 		if err != nil {
-			return plugins.JSONData{}, fmt.Errorf("could not find plugin.json or dist/plugin.json for in %s", pluginDir)
+			return plugins.JSONData{}, fmt.Errorf("could not find plugin.json or dist/plugin.json in %s", pluginDir)
 		}
 	}
 

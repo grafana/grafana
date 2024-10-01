@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -37,7 +37,7 @@ func SetupAPITestServer(t *testing.T, opts ...func(a *TeamAPI)) *webtest.Server 
 	a := ProvideTeamAPI(router,
 		teamtest.NewFakeService(),
 		actest.FakeService{},
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		&actest.FakePermissionsService{},
 		&usertest.FakeUserService{},
 		&licensing.OSSLicensingService{},
@@ -177,9 +177,9 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				Admins:  []string{"user3"},
 			},
 			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
-				{UserID: 1, Permission: team.MemberPermissionName},
-				{UserID: 2, Permission: team.MemberPermissionName},
-				{UserID: 3, Permission: team.AdminPermissionName},
+				{UserID: 1, Permission: team.PermissionTypeMember.String()},
+				{UserID: 2, Permission: team.PermissionTypeMember.String()},
+				{UserID: 3, Permission: team.PermissionTypeAdmin.String()},
 			},
 		},
 		{
@@ -189,11 +189,11 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				Admins:  []string{"user3"},
 			},
 			currentMembers: []*team.TeamMemberDTO{
-				{Email: "user1", Permission: 0},
-				{Email: "user3", Permission: dashboardaccess.PERMISSION_ADMIN},
+				{Email: "user1", Permission: team.PermissionTypeMember},
+				{Email: "user3", Permission: team.PermissionTypeAdmin},
 			},
 			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
-				{UserID: 2, Permission: team.MemberPermissionName},
+				{UserID: 2, Permission: team.PermissionTypeMember.String()},
 			},
 		},
 		{
@@ -203,13 +203,13 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				Admins:  []string{"user3"},
 			},
 			currentMembers: []*team.TeamMemberDTO{
-				{Email: "user1", Permission: 0},
-				{Email: "user2", Permission: dashboardaccess.PERMISSION_ADMIN},
-				{Email: "user3", Permission: 0},
+				{Email: "user1", Permission: team.PermissionTypeMember},
+				{Email: "user2", Permission: team.PermissionTypeAdmin},
+				{Email: "user3", Permission: team.PermissionTypeMember},
 			},
 			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
-				{UserID: 2, Permission: team.MemberPermissionName},
-				{UserID: 3, Permission: team.AdminPermissionName},
+				{UserID: 2, Permission: team.PermissionTypeMember.String()},
+				{UserID: 3, Permission: team.PermissionTypeAdmin.String()},
 			},
 		},
 		{
@@ -219,10 +219,10 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 				Admins:  []string{"user3"},
 			},
 			currentMembers: []*team.TeamMemberDTO{
-				{Email: "user1", UserID: 1, Permission: 0},
-				{Email: "user2", UserID: 2, Permission: 0},
-				{Email: "user3", UserID: 3, Permission: dashboardaccess.PERMISSION_ADMIN},
-				{Email: "user4", UserID: 4, Permission: dashboardaccess.PERMISSION_ADMIN},
+				{Email: "user1", UserID: 1, Permission: team.PermissionTypeMember},
+				{Email: "user2", UserID: 2, Permission: team.PermissionTypeMember},
+				{Email: "user3", UserID: 3, Permission: team.PermissionTypeAdmin},
+				{Email: "user4", UserID: 4, Permission: team.PermissionTypeAdmin},
 			},
 			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
 				{UserID: 2, Permission: ""},
@@ -259,7 +259,7 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 			tapi := ProvideTeamAPI(routing.NewRouteRegister(),
 				teamSvc,
 				actest.FakeService{},
-				acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 				&actest.FakePermissionsService{},
 				userService,
 				&licensing.OSSLicensingService{},
@@ -281,5 +281,5 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 }
 
 func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
-	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
 }

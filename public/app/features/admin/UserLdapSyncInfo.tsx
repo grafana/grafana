@@ -5,6 +5,8 @@ import { Button, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, SyncInfo, UserDTO } from 'app/types';
 
+import { TagBadge } from '../../core/components/TagFilter/TagBadge';
+
 interface Props {
   ldapSyncInfo: SyncInfo;
   user: UserDTO;
@@ -40,7 +42,7 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
                   <td>External sync</td>
                   <td>User synced via LDAP. Some changes must be done in LDAP or mappings.</td>
                   <td>
-                    <span className="label label-tag">LDAP</span>
+                    <TagBadge label="LDAP" removeIcon={false} count={0} onClick={undefined} />
                   </td>
                 </tr>
                 <tr>

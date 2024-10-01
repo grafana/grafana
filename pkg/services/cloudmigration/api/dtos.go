@@ -106,22 +106,24 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
+	Name string `json:"name"`
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true
 	RefID string `json:"refId"`
 	// required:true
-	Status ItemStatus `json:"status"`
-	Error  string     `json:"error,omitempty"`
+	Status  ItemStatus `json:"status"`
+	Message string     `json:"message,omitempty"`
 }
 
 // swagger:enum MigrateDataType
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType      MigrateDataType = "DASHBOARD"
+	DatasourceDataType     MigrateDataType = "DATASOURCE"
+	FolderDataType         MigrateDataType = "FOLDER"
+	LibraryElementDataType MigrateDataType = "LIBRARY_ELEMENT"
 )
 
 // swagger:enum ItemStatus
@@ -129,6 +131,7 @@ type ItemStatus string
 
 const (
 	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
 	ItemStatusUnknown ItemStatus = "UNKNOWN"
@@ -187,23 +190,6 @@ func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse
 	}
 }
 
-func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) MigrateDataResponseDTO {
-	items := make([]MigrateDataResponseItemDTO, len(r.Items))
-	for i := 0; i < len(r.Items); i++ {
-		item := r.Items[i]
-		items[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(item.Type),
-			RefID:  item.RefID,
-			Status: ItemStatus(item.Status),
-			Error:  item.Error,
-		}
-	}
-	return MigrateDataResponseDTO{
-		RunUID: r.RunUID,
-		Items:  items,
-	}
-}
-
 // Base snapshot without results
 type SnapshotDTO struct {
 	SnapshotUID string         `json:"uid"`
@@ -224,14 +210,13 @@ const (
 	SnapshotStatusPendingProcessing SnapshotStatus = "PENDING_PROCESSING"
 	SnapshotStatusProcessing        SnapshotStatus = "PROCESSING"
 	SnapshotStatusFinished          SnapshotStatus = "FINISHED"
+	SnapshotStatusCanceled          SnapshotStatus = "CANCELED"
 	SnapshotStatusError             SnapshotStatus = "ERROR"
 	SnapshotStatusUnknown           SnapshotStatus = "UNKNOWN"
 )
 
 func fromSnapshotStatus(status cloudmigration.SnapshotStatus) SnapshotStatus {
 	switch status {
-	case cloudmigration.SnapshotStatusInitializing:
-		return SnapshotStatusInitializing
 	case cloudmigration.SnapshotStatusCreating:
 		return SnapshotStatusCreating
 	case cloudmigration.SnapshotStatusPendingUpload:
@@ -244,6 +229,8 @@ func fromSnapshotStatus(status cloudmigration.SnapshotStatus) SnapshotStatus {
 		return SnapshotStatusProcessing
 	case cloudmigration.SnapshotStatusFinished:
 		return SnapshotStatusFinished
+	case cloudmigration.SnapshotStatusCanceled:
+		return SnapshotStatusCanceled
 	case cloudmigration.SnapshotStatusError:
 		return SnapshotStatusError
 	default:
@@ -299,7 +286,14 @@ type GetSnapshotResponse struct {
 
 type GetSnapshotResponseDTO struct {
 	SnapshotDTO
-	Results []MigrateDataResponseItemDTO `json:"results"`
+	Results     []MigrateDataResponseItemDTO `json:"results"`
+	StatsRollup SnapshotResourceStats        `json:"stats"`
+}
+
+type SnapshotResourceStats struct {
+	Types    map[MigrateDataType]int `json:"types"`
+	Statuses map[ItemStatus]int      `json:"statuses"`
+	Total    int                     `json:"total"`
 }
 
 // swagger:parameters getShapshotList

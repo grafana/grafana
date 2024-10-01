@@ -22,6 +22,7 @@ type UserGrafanaConfig struct {
 	Default                   bool                          `json:"default"`
 	Promoted                  bool                          `json:"promoted"`
 	ExternalURL               string                        `json:"external_url"`
+	StaticHeaders             map[string]string             `json:"static_headers"`
 }
 
 func (mc *Mimir) ShouldPromoteConfig() bool {
@@ -55,6 +56,7 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimo
 		Default:                   isDefault,
 		Promoted:                  mc.promoteConfig,
 		ExternalURL:               mc.externalURL,
+		StaticHeaders:             mc.staticHeaders,
 	})
 	if err != nil {
 		return err

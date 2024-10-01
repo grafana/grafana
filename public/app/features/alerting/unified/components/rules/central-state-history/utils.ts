@@ -1,33 +1,65 @@
 import { groupBy } from 'lodash';
 
-import { DataFrame, Field as DataFrameField, DataFrameJSON, Field, FieldType } from '@grafana/data';
+import {
+  DataFrame,
+  Field as DataFrameField,
+  DataFrameJSON,
+  Field,
+  FieldType,
+  GrafanaTheme2,
+  MappingType,
+  ThresholdsMode,
+  getDisplayProcessor,
+} from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
+import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
-import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
+import { labelsMatchMatchers } from '../../../utils/alertmanager';
+import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } from './CentralAlertHistoryScene';
 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
 const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
+
+const emptyFilters = {
+  stateTo: 'all',
+  stateFrom: 'all',
+};
+
 /*
- * This function is used to convert the history response to a DataFrame list and filter the data by labels.
+ * This function is used to convert the history response to a DataFrame list and filter the data by labels and states
  * The response is a list of log records, each log record has a timestamp and a line.
  * We group all records by alert instance (unique set of labels) and create a DataFrame for each group (instance).
- * This allows us to be able to filter by labels in the groupDataFramesByTime function.
+ * This allows us to be able to filter by labels and states in the groupDataFramesByTime function.
  */
-export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
-  const tsValues = data?.data?.values[0] ?? [];
-  const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
-  const lines = data?.data?.values[1] ?? [];
+export function historyResultToDataFrame({ data }: DataFrameJSON, filters = emptyFilters): DataFrame[] {
+  const { stateTo, stateFrom } = filters;
 
-  const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+  // Extract timestamps and lines from the response
+  const [tsValues = [], lines = []] = data?.values ?? [];
+  const timestamps = isNumbers(tsValues) ? tsValues : [];
+
+  // Filter log records by state and create a list of log records with the timestamp and line
+  const logRecords = timestamps.reduce<LogRecord[]>((acc, timestamp: number, index: number) => {
     const line = lines[index];
-    // values property can be undefined for some instance states (e.g. NoData)
-    if (isLine(line)) {
+    if (!isLine(line)) {
+      return acc;
+    }
+
+    // we have to filter out by state at that point , because we are going to group by timestamp and these states are going to be lost
+    const baseStateTo = mapStateWithReasonToBaseState(line.current);
+    const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
+    const stateToMatch = stateTo !== StateFilterValues.all ? stateTo === baseStateTo : true;
+    const stateFromMatch = stateFrom !== StateFilterValues.all ? stateFrom === baseStateFrom : true;
+
+    // filter by state
+    if (stateToMatch && stateFromMatch) {
       acc.push({ timestamp, line });
     }
+
     return acc;
   }, []);
 
@@ -47,9 +79,19 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
 }
 
 // Scenes sync variables in the URL adding a prefix to the variable name.
-function getFilterInQueryParams() {
+export function getLabelsFilterInQueryParams() {
   const queryParams = new URLSearchParams(window.location.search);
   return queryParams.get(`${QUERY_PARAM_PREFIX}${LABELS_FILTER}`) ?? '';
+}
+
+export function getStateFilterToInQueryParams() {
+  const queryParams = new URLSearchParams(window.location.search);
+  return queryParams.get(`${QUERY_PARAM_PREFIX}${STATE_FILTER_TO}`) ?? StateFilterValues.all;
+}
+
+export function getStateFilterFromInQueryParams() {
+  const queryParams = new URLSearchParams(window.location.search);
+  return queryParams.get(`${QUERY_PARAM_PREFIX}${STATE_FILTER_FROM}`) ?? StateFilterValues.all;
 }
 
 /*
@@ -58,10 +100,11 @@ function getFilterInQueryParams() {
  * */
 function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[]): DataFrame[] {
   // Filter data frames by labels. This is used to filter out the data frames that do not match the query.
-  const filterValue = getFilterInQueryParams();
+  const labelsFilterValue = getLabelsFilterInQueryParams();
   const dataframesFiltered = dataFrames.filter((frame) => {
     const labels = JSON.parse(frame.name ?? ''); // in name we store the labels stringified
-    const matchers = Boolean(filterValue) ? parseMatchers(filterValue) : [];
+
+    const matchers = Boolean(labelsFilterValue) ? parsePromQLStyleMatcherLooseSafe(labelsFilterValue) : [];
     return labelsMatchMatchers(labels, matchers);
   });
   // Extract time fields from filtered data frames
@@ -133,6 +176,80 @@ function logRecordsToDataFrame(instanceLabels: string, records: LogRecord[]): Da
     length: timeField.values.length,
     name: instanceLabels,
   };
+
+  return frame;
+}
+
+/*
+ * This function is used to convert the log records to a DataFrame.
+ * The DataFrame has two fields: time and value.
+ * The time field is the timestamp of the log record.
+ * The value field is the state of the log record.
+ * The state is converted to a string and color is assigned based on the state.
+ * The state can be Alerting, Pending, Normal, or NoData.
+ *
+ * */
+export function logRecordsToDataFrameForState(records: LogRecord[], theme: GrafanaTheme2): DataFrame {
+  const timeField: DataFrameField = {
+    name: 'time',
+    type: FieldType.time,
+    values: [...records.map((record) => record.timestamp), Date.now()],
+    config: { displayName: 'Time', custom: { fillOpacity: 100 } },
+  };
+
+  // Sort time field values
+  const timeIndex = timeField.values.map((_, index) => index);
+  timeIndex.sort(fieldIndexComparer(timeField));
+
+  const stateValues = [...records.map((record) => record.line.current), records.at(-1)?.line.current];
+
+  // Create DataFrame with time and value fields
+  const frame: DataFrame = {
+    fields: [
+      {
+        ...timeField,
+        values: timeField.values.map((_, i) => timeField.values[timeIndex[i]]),
+      },
+      {
+        name: 'State',
+        type: FieldType.string,
+        values: stateValues.map((_, i) => stateValues[timeIndex[i]]),
+        config: {
+          displayName: 'State',
+          color: { mode: 'thresholds' },
+          custom: { fillOpacity: 100 },
+          mappings: [
+            {
+              type: MappingType.ValueToText,
+              options: {
+                Alerting: {
+                  color: theme.colors.error.main,
+                },
+                Pending: {
+                  color: theme.colors.warning.main,
+                },
+                Normal: {
+                  color: theme.colors.success.main,
+                },
+                NoData: {
+                  color: theme.colors.info.main,
+                },
+              },
+            },
+          ],
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [],
+          },
+        },
+      },
+    ],
+    length: timeField.values.length,
+    name: '',
+  };
+  frame.fields.forEach((field) => {
+    field.display = getDisplayProcessor({ field, theme });
+  });
 
   return frame;
 }

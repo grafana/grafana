@@ -64,6 +64,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 
 	// create user
 	usr = user.User{
+		UID:        util.GenerateShortUID(),
 		Email:      args.Email,
 		Login:      args.Login,
 		IsAdmin:    args.IsAdmin,

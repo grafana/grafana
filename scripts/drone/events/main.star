@@ -36,6 +36,10 @@ load(
     "enterprise_downstream_pipeline",
 )
 load(
+    "scripts/drone/pipelines/verify_storybook.star",
+    "verify_storybook",
+)
+load(
     "scripts/drone/pipelines/windows.star",
     "windows",
 )
@@ -70,6 +74,7 @@ def main_pipelines():
         lint_frontend_pipeline(trigger, ver_mode),
         test_backend(trigger, ver_mode),
         lint_backend_pipeline(trigger, ver_mode),
+        verify_storybook(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
         windows(trigger, ver_mode = ver_mode),

@@ -253,7 +253,11 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
             Edit in TraceQL
           </Button>
         </div>
-        <TempoQueryBuilderOptions onChange={onChange} query={query} />
+        <TempoQueryBuilderOptions
+          onChange={onChange}
+          query={query}
+          isStreaming={datasource.isStreamingSearchEnabled() ?? false}
+        />
       </div>
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>

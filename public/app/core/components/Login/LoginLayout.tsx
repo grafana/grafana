@@ -86,6 +86,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       minHeight: '100%',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
+      flex: 1,
       minWidth: '100%',
       marginLeft: 0,
       display: 'flex',

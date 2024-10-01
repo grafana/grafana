@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +30,8 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("error if referenced mute time interval is not existing", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.configStore.store = &MockAMConfigStore{}
+		mockStore := &legacy_storage.MockAMConfigStore{}
+		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(mockStore)
 		cfg := createTestAlertingConfig()
 		cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
 			{
@@ -37,10 +39,10 @@ func TestNotificationPolicyService(t *testing.T) {
 				TimeIntervals: []timeinterval.TimeInterval{},
 			},
 		}
-		data, _ := serializeAlertmanagerConfig(*cfg)
-		sut.configStore.store.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
+		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		sut.configStore.store.(*MockAMConfigStore).EXPECT().
+		mockStore.EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
@@ -55,7 +57,8 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("pass if referenced mute time interval is existing", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.configStore.store = &MockAMConfigStore{}
+		mockStore := &legacy_storage.MockAMConfigStore{}
+		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(mockStore)
 		cfg := createTestAlertingConfig()
 		cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
 			{
@@ -63,16 +66,22 @@ func TestNotificationPolicyService(t *testing.T) {
 				TimeIntervals: []timeinterval.TimeInterval{},
 			},
 		}
-		data, _ := serializeAlertmanagerConfig(*cfg)
-		sut.configStore.store.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+		cfg.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{
+			{
+				Name:          "existing-ti",
+				TimeIntervals: []timeinterval.TimeInterval{},
+			},
+		}
+		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
+		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		sut.configStore.store.(*MockAMConfigStore).EXPECT().
+		mockStore.EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
 		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
 			Receiver:          "slack receiver",
-			MuteTimeIntervals: []string{"existing"},
+			MuteTimeIntervals: []string{"existing", "existing-ti"},
 		})
 
 		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
@@ -131,12 +140,13 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("existing receiver reference will pass", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.configStore.store = &MockAMConfigStore{}
+		mockStore := &legacy_storage.MockAMConfigStore{}
+		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(mockStore)
 		cfg := createTestAlertingConfig()
-		data, _ := serializeAlertmanagerConfig(*cfg)
-		sut.configStore.store.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
+		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		sut.configStore.store.(*MockAMConfigStore).EXPECT().
+		mockStore.EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
 		newRoute := createTestRoutingTree()
@@ -171,15 +181,16 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
+		fake := fakes.NewFakeAlertmanagerConfigStore(defaultAlertmanagerConfigJSON)
+		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(fake)
 		newRoute := createTestRoutingTree()
-		config, err := sut.GetAMConfigStore().GetLatestAlertmanagerConfiguration(context.Background(), 1)
+		config, err := sut.configStore.Get(context.Background(), 1)
 		require.NoError(t, err)
-		expectedConcurrencyToken := config.ConfigurationHash
+		expectedConcurrencyToken := config.ConcurrencyToken
 
 		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		fake := sut.GetAMConfigStore().(*fakes.FakeAlertmanagerConfigStore)
 		intercepted := fake.LastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
 	})
@@ -209,7 +220,8 @@ func TestNotificationPolicyService(t *testing.T) {
 
 	t.Run("deleting route with missing default receiver restores receiver", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
-		sut.configStore.store = &MockAMConfigStore{}
+		mockStore := &legacy_storage.MockAMConfigStore{}
+		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(mockStore)
 		cfg := createTestAlertingConfig()
 		cfg.AlertmanagerConfig.Route = &definitions.Route{
 			Receiver: "slack receiver",
@@ -222,11 +234,11 @@ func TestNotificationPolicyService(t *testing.T) {
 			},
 			// No default receiver! Only our custom one.
 		}
-		data, _ := serializeAlertmanagerConfig(*cfg)
-		sut.configStore.store.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
+		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
+		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
 			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
 		var interceptedSave = models.SaveAlertmanagerConfigurationCmd{}
-		sut.configStore.store.(*MockAMConfigStore).EXPECT().SaveSucceedsIntercept(&interceptedSave)
+		mockStore.EXPECT().SaveSucceedsIntercept(&interceptedSave)
 
 		tree, err := sut.ResetPolicyTree(context.Background(), 1)
 
@@ -234,7 +246,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.Equal(t, "grafana-default-email", tree.Receiver)
 		require.NotEmpty(t, interceptedSave.AlertmanagerConfiguration)
 		// Deserializing with no error asserts that the saved configStore is semantically valid.
-		newCfg, err := deserializeAlertmanagerConfig([]byte(interceptedSave.AlertmanagerConfiguration))
+		newCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(interceptedSave.AlertmanagerConfiguration))
 		require.NoError(t, err)
 		require.Len(t, newCfg.AlertmanagerConfig.Receivers, 2)
 	})
@@ -242,7 +254,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 func createNotificationPolicyServiceSut() *NotificationPolicyService {
 	return &NotificationPolicyService{
-		configStore:     &alertmanagerConfigStoreImpl{store: fakes.NewFakeAlertmanagerConfigStore(defaultAlertmanagerConfigJSON)},
+		configStore:     legacy_storage.NewAlertmanagerConfigStore(fakes.NewFakeAlertmanagerConfigStore(defaultAlertmanagerConfigJSON)),
 		provenanceStore: fakes.NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
@@ -259,7 +271,7 @@ func createTestRoutingTree() definitions.Route {
 }
 
 func createTestAlertingConfig() *definitions.PostableUserConfig {
-	cfg, _ := deserializeAlertmanagerConfig([]byte(defaultConfig))
+	cfg, _ := legacy_storage.DeserializeAlertmanagerConfig([]byte(setting.GetAlertmanagerDefaultConfiguration()))
 	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
 		&definitions.PostableApiReceiver{
 			Receiver: config.Receiver{

@@ -5,7 +5,7 @@ import {
   time_plus_15,
   time_plus_30,
   time_plus_5,
-} from '../../../mocks/alertRuleApi';
+} from '../../../mocks/grafanaRulerApi';
 
 import { historyResultToDataFrame } from './utils';
 

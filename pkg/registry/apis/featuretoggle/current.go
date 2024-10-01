@@ -13,12 +13,11 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -77,9 +76,9 @@ func (b *FeatureFlagAPIBuilder) getResolvedToggleState(ctx context.Context) v0al
 	return state
 }
 
-func (b *FeatureFlagAPIBuilder) userCanRead(ctx context.Context, u *user.SignedInUser) bool {
+func (b *FeatureFlagAPIBuilder) userCanRead(ctx context.Context, u identity.Requester) bool {
 	if u == nil {
-		u, _ = appcontext.User(ctx)
+		u, _ = identity.GetRequester(ctx)
 		if u == nil {
 			return false
 		}
@@ -88,9 +87,9 @@ func (b *FeatureFlagAPIBuilder) userCanRead(ctx context.Context, u *user.SignedI
 	return ok && err == nil
 }
 
-func (b *FeatureFlagAPIBuilder) userCanWrite(ctx context.Context, u *user.SignedInUser) bool {
+func (b *FeatureFlagAPIBuilder) userCanWrite(ctx context.Context, u identity.Requester) bool {
 	if u == nil {
-		u, _ = appcontext.User(ctx)
+		u, _ = identity.GetRequester(ctx)
 		if u == nil {
 			return false
 		}
@@ -107,7 +106,7 @@ func (b *FeatureFlagAPIBuilder) handleCurrentStatus(w http.ResponseWriter, r *ht
 
 	// Check if the user can access toggle info
 	ctx := r.Context()
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -115,7 +114,7 @@ func (b *FeatureFlagAPIBuilder) handleCurrentStatus(w http.ResponseWriter, r *ht
 
 	if !b.userCanRead(ctx, user) {
 		err = errutil.Unauthorized("featuretoggle.canNotRead",
-			errutil.WithPublicMessage("missing read permission")).Errorf("user %s does not have read permissions", user.Login)
+			errutil.WithPublicMessage("missing read permission")).Errorf("user %s does not have read permissions", user.GetLogin())
 		errhttp.Write(ctx, err, w)
 		return
 	}
@@ -136,7 +135,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 		return
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
@@ -144,7 +143,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 
 	if !b.userCanWrite(ctx, user) {
 		err = errutil.Unauthorized("featuretoggle.canNotWrite",
-			errutil.WithPublicMessage("missing write permission")).Errorf("user %s does not have write permissions", user.Login)
+			errutil.WithPublicMessage("missing write permission")).Errorf("user %s does not have write permissions", user.GetLogin())
 		errhttp.Write(ctx, err, w)
 		return
 	}
@@ -185,7 +184,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 
 	payload := featuremgmt.FeatureToggleWebhookPayload{
 		FeatureToggles: changes,
-		User:           user.Email,
+		User:           user.GetEmail(),
 	}
 
 	err = sendWebhookUpdate(b.features.Settings, payload)

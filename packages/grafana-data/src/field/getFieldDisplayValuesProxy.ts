@@ -1,6 +1,8 @@
 import { toNumber } from 'lodash';
 
-import { DataFrame, DisplayValue, TimeZone } from '../types';
+import { DataFrame } from '../types/dataFrame';
+import { DisplayValue } from '../types/displayValue';
+import { TimeZone } from '../types/time';
 import { formattedValueToString } from '../valueFormats/valueFormats';
 
 import { getDisplayProcessor } from './displayProcessor';

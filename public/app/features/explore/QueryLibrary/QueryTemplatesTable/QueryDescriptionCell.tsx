@@ -1,7 +1,8 @@
 import { cx } from '@emotion/css';
 import { CellProps } from 'react-table';
 
-import { Spinner } from '@grafana/ui';
+import { Spinner, Tooltip } from '@grafana/ui';
+import { createQueryText } from 'app/core/utils/richHistory';
 
 import { useDatasource } from '../utils/useDatasource';
 
@@ -20,6 +21,7 @@ export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
     return <div>No queries</div>;
   }
   const query = props.row.original.query;
+  const queryDisplayText = createQueryText(query, datasourceApi);
   const description = props.row.original.description;
   const dsName = datasourceApi?.name || '';
 
@@ -33,7 +35,9 @@ export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
         />
         {dsName}
       </p>
-      <p className={cx(styles.mainText, styles.singleLine)}>{datasourceApi?.getQueryDisplayText?.(query)}</p>
+      <Tooltip content={queryDisplayText} placement="bottom-start">
+        <p className={cx(styles.mainText, styles.singleLine)}>{queryDisplayText}</p>
+      </Tooltip>
       <p className={cx(styles.otherText, styles.singleLine)}>{description}</p>
     </div>
   );

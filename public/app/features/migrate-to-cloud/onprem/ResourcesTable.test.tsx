@@ -8,12 +8,16 @@ import { wellFormedDashboardMigrationItem, wellFormedDatasourceMigrationItem } f
 import { registerMockAPI } from '../fixtures/mswAPI';
 import { wellFormedDatasource } from '../fixtures/others';
 
-import { ResourcesTable } from './ResourcesTable';
+import { ResourcesTable, ResourcesTableProps } from './ResourcesTable';
 
 setBackendSrv(backendSrv);
 
-function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(<TestProvider>{ui}</TestProvider>, options);
+function render(props: Partial<ResourcesTableProps>) {
+  rtlRender(
+    <TestProvider>
+      <ResourcesTable onChangePage={() => {}} numberOfPages={10} page={0} resources={props.resources || []} />
+    </TestProvider>
+  );
 }
 
 describe('ResourcesTable', () => {
@@ -46,7 +50,7 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(screen.getByText('Datasource A')).toBeInTheDocument();
   });
@@ -55,7 +59,7 @@ describe('ResourcesTable', () => {
     const item = wellFormedDatasourceMigrationItem(2);
     const resources = [item];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(screen.getByText(`Data source ${item.refId}`)).toBeInTheDocument();
     expect(screen.getByText(`Unknown data source`)).toBeInTheDocument();
@@ -64,7 +68,7 @@ describe('ResourcesTable', () => {
   it('renders dashboards', async () => {
     const resources = [wellFormedDashboardMigrationItem(1)];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(await screen.findByText('My Dashboard')).toBeInTheDocument();
   });
@@ -76,7 +80,7 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(await screen.findByText('Unable to load dashboard')).toBeInTheDocument();
     expect(await screen.findByText('Dashboard dashboard-404')).toBeInTheDocument();
@@ -90,12 +94,12 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(screen.getByText('Uploaded to cloud')).toBeInTheDocument();
   });
 
-  it('renders the success error correctly', () => {
+  it('renders the error status correctly', () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
@@ -103,21 +107,52 @@ describe('ResourcesTable', () => {
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
 
     expect(screen.getByText('Error')).toBeInTheDocument();
   });
 
-  it("shows a details button when there's an error description", () => {
+  it("shows a details button when there's an error message", () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
         status: 'ERROR',
-        error: 'Some error',
+        message: 'Some error',
       }),
     ];
 
-    render(<ResourcesTable resources={resources} />);
+    render({ resources });
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Details',
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('renders the warning status correctly', () => {
+    const resources = [
+      wellFormedDatasourceMigrationItem(1, {
+        refId: datasourceA.uid,
+        status: 'WARNING',
+      }),
+    ];
+
+    render({ resources });
+
+    expect(screen.getByText('Uploaded with warning')).toBeInTheDocument();
+  });
+
+  it("shows a details button when there's a warning message", () => {
+    const resources = [
+      wellFormedDatasourceMigrationItem(1, {
+        refId: datasourceA.uid,
+        status: 'WARNING',
+        message: 'Some warning',
+      }),
+    ];
+
+    render({ resources });
 
     expect(
       screen.getByRole('button', {

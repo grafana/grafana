@@ -202,34 +202,6 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.Equal(t, exp, entry.Fingerprint)
 		})
 	})
-
-	t.Run("selector string", func(t *testing.T) {
-		selectors := []Selector{{"name", "=", "Bob"}, {"age", "=~", "30"}}
-		expected := "{name=\"Bob\",age=~\"30\"}"
-		result := selectorString(selectors, nil)
-		require.Equal(t, expected, result)
-
-		selectors = []Selector{{"name", "=", "quoted\"string"}, {"age", "=~", "30"}}
-		expected = "{name=\"quoted\\\"string\",age=~\"30\",folderUID=~`some\\\\d\\.r\\$|normal_string`}"
-		result = selectorString(selectors, []string{`some\d.r$`, "normal_string"})
-		require.Equal(t, expected, result)
-
-		selectors = []Selector{}
-		expected = "{}"
-		result = selectorString(selectors, nil)
-		require.Equal(t, expected, result)
-	})
-
-	t.Run("new selector", func(t *testing.T) {
-		selector, err := NewSelector("label", "=", "value")
-		require.NoError(t, err)
-		require.Equal(t, "label", selector.Label)
-		require.Equal(t, Eq, selector.Op)
-		require.Equal(t, "value", selector.Value)
-
-		selector, err = NewSelector("label", "invalid", "value")
-		require.Error(t, err)
-	})
 }
 
 func TestBuildLogQuery(t *testing.T) {
@@ -238,21 +210,20 @@ func TestBuildLogQuery(t *testing.T) {
 		name       string
 		query      models.HistoryQuery
 		folderUIDs []string
-		exp        string
+		exp        []string
 		expErr     error
-		expDropped bool
 	}{
 		{
 			name:  "default includes state history label and orgID label",
 			query: models.HistoryQuery{},
-			exp:   `{orgID="0",from="state-history"}`,
+			exp:   []string{`{orgID="0",from="state-history"}`},
 		},
 		{
 			name: "adds stream label filter for orgID",
 			query: models.HistoryQuery{
 				OrgID: 123,
 			},
-			exp: `{orgID="123",from="state-history"}`,
+			exp: []string{`{orgID="123",from="state-history"}`},
 		},
 		{
 			name: "filters ruleUID in log line",
@@ -260,7 +231,7 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID:   123,
 				RuleUID: "rule-uid",
 			},
-			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid"`,
+			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid"`},
 		},
 		{
 			name: "filters dashboardUID in log line",
@@ -268,7 +239,7 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID:        123,
 				DashboardUID: "dash-uid",
 			},
-			exp: `{orgID="123",from="state-history"} | json | dashboardUID="dash-uid"`,
+			exp: []string{`{orgID="123",from="state-history"} | json | dashboardUID="dash-uid"`},
 		},
 		{
 			name: "filters panelID in log line",
@@ -276,7 +247,7 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID:   123,
 				PanelID: 456,
 			},
-			exp: `{orgID="123",from="state-history"} | json | panelID=456`,
+			exp: []string{`{orgID="123",from="state-history"} | json | panelID=456`},
 		},
 		{
 			name: "filters instance labels in log line",
@@ -287,7 +258,7 @@ func TestBuildLogQuery(t *testing.T) {
 					"labeltwo":    "labelvaluetwo",
 				},
 			},
-			exp: `{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`,
+			exp: []string{`{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`},
 		},
 		{
 			name: "filters both instance labels + ruleUID",
@@ -298,7 +269,8 @@ func TestBuildLogQuery(t *testing.T) {
 					"customlabel": "customvalue",
 				},
 			},
-			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
+			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
+		},
 		{
 			name: "should return if query does not exceed max limit",
 			query: models.HistoryQuery{
@@ -308,7 +280,7 @@ func TestBuildLogQuery(t *testing.T) {
 					"customlabel": strings.Repeat("!", 24),
 				},
 			},
-			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`,
+			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`},
 		},
 		{
 			name: "should return error if query is too long",
@@ -327,34 +299,48 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID: 123,
 			},
 			folderUIDs: []string{"folder-1", "folder\\d"},
-			exp:        `{orgID="123",from="state-history",folderUID=~` + "`folder-1|folder\\\\d`" + `}`,
+			exp:        []string{`{orgID="123",from="state-history",folderUID=~` + "`folder-1|folder\\\\d`" + `}`},
 		},
 		{
-			name: "should drop folders if it's too long",
+			name: "should batch queries to fit all folders",
 			query: models.HistoryQuery{
-				OrgID:   123,
-				RuleUID: "rule-uid",
+				OrgID: 123,
 				Labels: map[string]string{
 					"customlabel": "customvalue",
 				},
 			},
-			folderUIDs: []string{"folder-1", "folder-2", "folder\\d"},
-			exp:        `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
-			expDropped: true,
+			folderUIDs: []string{"folder-1", "folder-2", "folder\\d", "folder-" + strings.Repeat("!", 13)},
+			exp: []string{
+				`{orgID="123",from="state-history",folderUID=~` + "`folder-1|folder-2`" + `} | json | labels_customlabel="customvalue"`,
+				`{orgID="123",from="state-history",folderUID=~` + "`folder\\\\d`" + `} | json | labels_customlabel="customvalue"`,
+				`{orgID="123",from="state-history",folderUID=~` + "`folder-!!!!!!!!!!!!!`" + `} | json | labels_customlabel="customvalue"`,
+			},
+		},
+		{
+			name: "should fail if a single folder UID is too long",
+			query: models.HistoryQuery{
+				OrgID: 123,
+				Labels: map[string]string{
+					"customlabel": "customvalue",
+				},
+			},
+			folderUIDs: []string{"folder-1", "folder-2", "folder-" + strings.Repeat("!", 14)},
+			expErr:     ErrLokiQueryTooLong,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, dropped, err := BuildLogQuery(tc.query, tc.folderUIDs, maxQuerySize)
+			res, err := BuildLogQuery(tc.query, tc.folderUIDs, maxQuerySize)
 			if tc.expErr != nil {
 				require.ErrorIs(t, err, tc.expErr)
 				return
 			}
-			require.LessOrEqual(t, len(res), maxQuerySize)
-			require.Equal(t, tc.expDropped, dropped)
 			require.NoError(t, err)
-			require.Equal(t, tc.exp, res)
+			assert.EqualValues(t, tc.exp, res)
+			for i, q := range res {
+				assert.LessOrEqualf(t, len(q), maxQuerySize, "query at index %d exceeded max query size. Query: %s", i, q)
+			}
 		})
 	}
 }
@@ -625,7 +611,7 @@ func TestMerge(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			expectedJson, err := tc.expected.MarshalJSON()
 			require.NoError(t, err)
-			m, err := merge(tc.res, tc.folderUIDs)
+			m, err := merge(tc.res.Data.Result, tc.folderUIDs)
 			require.NoError(t, err)
 			actualJson, err := m.MarshalJSON()
 			assert.NoError(t, err)
@@ -856,16 +842,21 @@ func TestGetFolderUIDsForFilter(t *testing.T) {
 
 			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
 			assert.NoError(t, err)
-			assert.EqualValues(t, folders, result)
+			assert.ElementsMatch(t, folders, result)
 
 			assert.Len(t, ac.Calls, len(folders)+1)
 			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
 			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
-			for i, folderUID := range folders {
-				assert.Equal(t, "HasAccessInFolder", ac.Calls[i+1].MethodName)
-				assert.Equal(t, usr, ac.Calls[i+1].Arguments[1])
-				assert.Equal(t, folderUID, ac.Calls[i+1].Arguments[2].(models.Namespaced).GetNamespaceUID())
+
+			var called []string
+			for _, call := range ac.Calls[1:] {
+				if !assert.Equal(t, "HasAccessInFolder", call.MethodName) {
+					continue
+				}
+				assert.Equal(t, usr, call.Arguments[1])
+				called = append(called, call.Arguments[2].(models.Namespaced).GetNamespaceUID())
 			}
+			assert.ElementsMatch(t, folders, called)
 
 			t.Run("should fail if no folders to read", func(t *testing.T) {
 				loki := createLoki(ac)

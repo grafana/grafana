@@ -1,7 +1,6 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { match } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
@@ -40,15 +39,14 @@ async function setupTestContext({ get = defaultGet }: { get?: typeof defaultGet 
     ...getRouteComponentProps({
       match: {
         params: { code: 'some code' },
-      } as unknown as match,
+        isExact: false,
+        path: '',
+        url: '',
+      },
     }),
   };
 
-  render(
-    <TestProvider>
-      <SignupInvitedPage {...props} />
-    </TestProvider>
-  );
+  render(<SignupInvitedPage {...props} />);
 
   await waitFor(() => expect(getSpy).toHaveBeenCalled());
   expect(getSpy).toHaveBeenCalledTimes(1);

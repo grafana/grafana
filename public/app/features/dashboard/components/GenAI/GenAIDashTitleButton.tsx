@@ -1,8 +1,15 @@
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { getDashboardPanelPrompt, Message, Role } from './utils';
+import {
+  DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE,
+  getDashboardPanelPrompt,
+  getPanelStrings,
+  Message,
+  Role,
+} from './utils';
 
 interface GenAIDashTitleButtonProps {
   onGenerate: (description: string) => void;
@@ -22,19 +29,22 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'Respond with only the title of the dashboard.';
 
 export const GenAIDashTitleButton = ({ onGenerate }: GenAIDashTitleButtonProps) => {
+  const dashboard = getDashboardSrv().getCurrent()!;
+  const panelStrings = getPanelStrings(dashboard);
+
   return (
     <GenAIButton
-      messages={getMessages}
+      messages={getMessages(dashboard)}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.dashboardTitle}
       toggleTipTitle={'Improve your dashboard title'}
+      disabled={panelStrings.length === 0}
+      tooltip={panelStrings.length === 0 ? DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE : undefined}
     />
   );
 };
 
-function getMessages(): Message[] {
-  const dashboard = getDashboardSrv().getCurrent()!;
-
+function getMessages(dashboard: DashboardModel): Message[] {
   return [
     {
       content: TITLE_GENERATION_STANDARD_PROMPT,

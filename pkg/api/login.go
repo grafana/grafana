@@ -137,7 +137,12 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 			}
 		}
 
-		c.Redirect(hs.GetRedirectURL(c))
+		if !c.UseSessionStorageRedirect {
+			c.Redirect(hs.GetRedirectURL(c))
+			return
+		}
+
+		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
 	}
 
@@ -201,7 +206,7 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
-	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
+	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req})
 	if err != nil {
 		tokenErr := &auth.CreateTokenErr{}
 		if errors.As(err, &tokenErr) {
@@ -211,7 +216,7 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 	}
 
 	metrics.MApiLoginPost.Inc()
-	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
+	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {
@@ -257,8 +262,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		return
 	}
 
-	_, id := c.SignedInUser.GetNamespacedID()
-	hs.log.Info("Successful Logout", "userID", id)
+	hs.log.Info("Successful Logout", "id", c.SignedInUser.GetID())
 	c.Redirect(redirect.URL)
 }
 
@@ -305,7 +309,7 @@ func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err
 		var userID int64
 		if c.SignedInUser != nil && !c.SignedInUser.IsNil() {
 			var errID error
-			userID, errID = identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+			userID, errID = identity.UserIdentifier(c.SignedInUser.GetID())
 			if errID != nil {
 				hs.log.Error("failed to retrieve user ID", "error", errID)
 			}

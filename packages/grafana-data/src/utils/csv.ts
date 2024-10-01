@@ -6,7 +6,7 @@ import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
-import { DataFrame, Field, FieldConfig, FieldType } from '../types';
+import { DataFrame, Field, FieldConfig, FieldType } from '../types/dataFrame';
 import { formattedValueToString } from '../valueFormats/valueFormats';
 
 export enum CSVHeaderStyle {
@@ -309,7 +309,11 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
             csv = csv + config.delimiter;
           }
 
-          const v = fields[j].values[i];
+          let v = fields[j].values[i];
+          // For FieldType frame, use value if it exists to prevent exporting [object object]
+          if (fields[j].type === FieldType.frame && fields[j].values[i].value) {
+            v = fields[j].values[i].value;
+          }
           if (v !== null) {
             csv = csv + writers[j](v);
           }

@@ -69,6 +69,14 @@ export const Pages = {
           shareSnapshot: 'data-testid new share button share snapshot',
         },
       },
+      NewExportButton: {
+        container: 'data-testid new export button',
+        arrowMenu: 'data-testid new export button arrow menu',
+        Menu: {
+          container: 'data-testid new export button menu',
+          exportAsJson: 'data-testid new export button export as json',
+        },
+      },
       playlistControls: {
         prev: 'data-testid playlist previous dashboard button',
         stop: 'data-testid playlist stop dashboard button',
@@ -278,13 +286,51 @@ export const Pages = {
     },
   },
   ShareDashboardDrawer: {
+    ShareInternally: {
+      container: 'data-testid share internally drawer container',
+      lockTimeRangeSwitch: 'data-testid share internally lock time range switch',
+      shortenUrlSwitch: 'data-testid share internally shorten url switch',
+      copyUrlButton: 'data-testid share internally copy url button',
+    },
     ShareExternally: {
       container: 'data-testid share externally drawer container',
-      copyUrlButton: 'data-testid share externally copy url button',
+      publicAlert: 'data-testid public share alert',
+      emailSharingAlert: 'data-testid email share alert',
       shareTypeSelect: 'data-testid share externally share type select',
+      Creation: {
+        PublicShare: {
+          createButton: 'data-testid public share dashboard create button',
+          cancelButton: 'data-testid public share dashboard cancel button',
+        },
+        EmailShare: {
+          createButton: 'data-testid email share dashboard create button',
+          cancelButton: 'data-testid email share dashboard cancel button',
+        },
+        willBePublicCheckbox: 'data-testid share dashboard will be public checkbox',
+      },
+      Configuration: {
+        enableTimeRangeSwitch: 'data-testid share externally enable time range switch',
+        enableAnnotationsSwitch: 'data-testid share externally enable annotations switch',
+        copyUrlButton: 'data-testid share externally copy url button',
+        revokeAccessButton: 'data-testid share externally revoke access button',
+        toggleAccessButton: 'data-testid share externally pause or resume access button',
+      },
     },
     ShareSnapshot: {
+      url: (key: string) => `/dashboard/snapshot/${key}`,
       container: 'data-testid share snapshot drawer container',
+      publishSnapshot: 'data-testid share snapshot publish button',
+      copyUrlButton: 'data-testid share snapshot copy url button',
+    },
+  },
+  ExportDashboardDrawer: {
+    ExportAsJson: {
+      container: 'data-testid export as json drawer container',
+      codeEditor: 'data-testid export as json code editor',
+      exportExternallyToggle: 'data-testid export as json externally switch',
+      saveToFileButton: 'data-testid export as json save to file button',
+      copyToClipboardButton: 'data-testid export as json copy to clipboard button',
+      cancelButton: 'data-testid export as json cancel button',
     },
   },
   PublicDashboard: {

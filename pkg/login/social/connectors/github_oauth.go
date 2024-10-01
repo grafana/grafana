@@ -82,13 +82,18 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 	return provider
 }
 
-func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings, _ ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+func (s *SocialGithub) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info, requester)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	if err != nil {
+		oldInfo = &social.OAuthInfo{}
+	}
+
+	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
 	}
@@ -185,7 +190,7 @@ func (s *SocialGithub) fetchPrivateEmail(ctx context.Context, client *http.Clien
 		Verified bool   `json:"verified"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/emails")
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
@@ -208,7 +213,7 @@ func (s *SocialGithub) fetchPrivateEmail(ctx context.Context, client *http.Clien
 }
 
 func (s *SocialGithub) fetchTeamMemberships(ctx context.Context, client *http.Client) ([]GithubTeam, error) {
-	url := fmt.Sprintf(s.info.ApiUrl + "/teams?per_page=100")
+	url := s.info.ApiUrl + "/teams?per_page=100"
 	hasMore := true
 	teams := make([]GithubTeam, 0)
 
@@ -342,7 +347,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		userInfo.Name = data.Name
 	}
 
-	organizationsUrl := fmt.Sprintf(s.info.ApiUrl + "/orgs?per_page=100")
+	organizationsUrl := s.info.ApiUrl + "/orgs?per_page=100"
 
 	if !s.isTeamMember(ctx, client) {
 		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", s.teamIds)

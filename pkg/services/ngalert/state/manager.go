@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -186,6 +187,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				continue
 			}
 
+			// nil safety.
+			annotations := ruleForEntry.Annotations
+			if annotations == nil {
+				annotations = make(map[string]string)
+			}
+
 			rulesStates, ok := orgStates[entry.RuleUID]
 			if !ok {
 				rulesStates = &ruleStates{states: make(map[data.Fingerprint]*State)}
@@ -213,8 +220,10 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
 				LastEvaluationTime:   entry.LastEvalTime,
-				Annotations:          ruleForEntry.Annotations,
+				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
+				ResolvedAt:           entry.ResolvedAt,
+				LastSentAt:           entry.LastSentAt,
 			}
 			statesCount++
 		}
@@ -367,9 +376,37 @@ func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Ti
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {
 	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
-		// TODO aggregate UID of datasources that returned NoData into one and provide as auxiliary info, probably annotation
+		// aggregate UID of datasources that returned NoData into one and provide as auxiliary info via annotationa. See: https://github.com/grafana/grafana/issues/88184
+		var refIds strings.Builder
+		var datasourceUIDs strings.Builder
+		// for deduplication of datasourceUIDs
+		dsUIDSet := make(map[string]bool)
+		for i, result := range results {
+			if refid, ok := result.Instance["ref_id"]; ok {
+				if i > 0 {
+					refIds.WriteString(",")
+				}
+				refIds.WriteString(refid)
+			}
+			if dsUID, ok := result.Instance["datasource_uid"]; ok {
+				if !dsUIDSet[dsUID] {
+					if i > 0 {
+						refIds.WriteString(",")
+					}
+					datasourceUIDs.WriteString(dsUID)
+					dsUIDSet[dsUID] = true
+				}
+			}
+		}
 		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
 		if len(transitions) > 0 {
+			for _, t := range transitions {
+				if t.State.Annotations == nil {
+					t.State.Annotations = make(map[string]string)
+				}
+				t.State.Annotations["datasource_uid"] = datasourceUIDs.String()
+				t.State.Annotations["ref_id"] = refIds.String()
+			}
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
 	}
@@ -405,10 +442,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
+	currentState.SetNextValues(result)
 	currentState.LatestResult = &Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
-		Values:          NewEvaluationValues(result.Values),
+		Values:          currentState.Values,
 		Condition:       alertRule.Condition,
 	}
 	currentState.LastEvaluationString = result.EvaluationString
@@ -518,6 +556,11 @@ func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*Stat
 	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotSaveNormalState)
 }
 
+func (st *Manager) GetStatusForRuleUID(orgID int64, alertRuleUID string) ngModels.RuleStatus {
+	states := st.GetStatesForRuleUID(orgID, alertRuleUID)
+	return StatesToRuleStatus(states)
+}
+
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.cache.set(s)
@@ -584,4 +627,35 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 
 func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
+}
+
+func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
+	status := ngModels.RuleStatus{
+		Health:              "ok",
+		LastError:           nil,
+		EvaluationTimestamp: time.Time{},
+	}
+	for _, state := range states {
+		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
+			status.EvaluationTimestamp = state.LastEvaluationTime
+		}
+
+		status.EvaluationDuration = state.EvaluationDuration
+
+		switch state.State {
+		case eval.Normal:
+		case eval.Pending:
+		case eval.Alerting:
+		case eval.Error:
+			status.Health = "error"
+		case eval.NoData:
+			status.Health = "nodata"
+		}
+
+		if state.Error != nil {
+			status.LastError = state.Error
+			status.Health = "error"
+		}
+	}
+	return status
 }

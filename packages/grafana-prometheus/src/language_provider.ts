@@ -6,12 +6,17 @@ import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
   AbstractQuery,
+  AdHocVariableFilter,
   getDefaultTimeRange,
   LanguageProvider,
+  Scope,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
+import { DEFAULT_SERIES_LIMIT, REMOVE_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
@@ -29,6 +34,13 @@ const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
 export const SUGGESTIONS_LIMIT = 10000;
+
+type UrlParamsType = {
+  start?: string;
+  end?: string;
+  'match[]'?: string;
+  limit?: string;
+};
 
 const buildCacheHeaders = (durationInSeconds: number) => {
   return {
@@ -181,7 +193,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       if (selector === EMPTY_SELECTOR) {
         return await this.fetchDefaultSeries();
       } else {
-        return await this.fetchSeriesLabels(selector, withName);
+        return await this.fetchSeriesLabels(selector, withName, REMOVE_SERIES_LIMIT);
       }
     } catch (error) {
       // TODO: better error handling
@@ -325,7 +337,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     if (this.datasource.hasLabelsMatchAPISupport()) {
       return this.fetchSeriesLabelsMatch(name, withName);
     } else {
-      return this.fetchSeriesLabels(name, withName);
+      return this.fetchSeriesLabels(name, withName, REMOVE_SERIES_LIMIT);
     }
   };
 
@@ -334,14 +346,24 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * they can change over requested time.
    * @param name
    * @param withName
+   * @param withLimit
    */
-  fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+  fetchSeriesLabels = async (
+    name: string,
+    withName?: boolean,
+    withLimit?: string
+  ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(this.timeRange);
-    const urlParams = {
+    let urlParams: UrlParamsType = {
       ...range,
       'match[]': interpolatedName,
     };
+
+    if (withLimit !== 'none') {
+      urlParams = { ...urlParams, limit: withLimit ?? DEFAULT_SERIES_LIMIT };
+    }
+
     const url = `/api/v1/series`;
 
     const data = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
@@ -389,6 +411,64 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(key)));
     return DEFAULT_KEYS.reduce((acc, key, i) => ({ ...acc, [key]: values[i] }), {});
   });
+
+  /**
+   * Fetch labels or values for a label based on the queries, scopes, filters and time range
+   * @param timeRange
+   * @param queries
+   * @param scopes
+   * @param adhocFilters
+   * @param labelName
+   * @param limit
+   * @param requestId
+   */
+  fetchSuggestions = async (
+    timeRange?: TimeRange,
+    queries?: PromQuery[],
+    scopes?: Scope[],
+    adhocFilters?: AdHocVariableFilter[],
+    labelName?: string,
+    limit?: number,
+    requestId?: string
+  ): Promise<string[]> => {
+    if (timeRange) {
+      this.timeRange = timeRange;
+    }
+
+    const url = '/suggestions';
+    const timeParams = this.datasource.getAdjustedInterval(this.timeRange);
+    const value = await this.request(
+      url,
+      [],
+      {
+        labelName,
+        queries: queries?.map((q) => q.expr),
+        scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
+          acc.push(...scope.spec.filters);
+
+          return acc;
+        }, []),
+        adhocFilters: adhocFilters?.map((filter) => ({
+          key: filter.key,
+          operator: scopeFilterOperatorMap[filter.operator],
+          value: filter.value,
+          values: filter.values,
+        })),
+        limit,
+        ...timeParams,
+      },
+      {
+        ...(requestId && { requestId }),
+        headers: {
+          ...this.getDefaultCacheHeaders()?.headers,
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      }
+    );
+
+    return value ?? [];
+  };
 }
 
 function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token>): string {

@@ -86,7 +86,7 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 			LatestResult: &state.Evaluation{
 				EvaluationTime:  evaluationTime.Add(1 * time.Minute),
 				EvaluationState: eval.Normal,
-				Values:          make(map[string]*float64),
+				Values:          make(map[string]float64),
 			},
 			LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 			EvaluationDuration: evaluationDuration,
@@ -129,6 +129,11 @@ func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix strin
 	panic("implement me")
 }
 
+func (a *recordingAccessControlFake) WithoutResolvers() ac.AccessControl {
+	// TODO implement me
+	panic("implement me")
+}
+
 func (a *recordingAccessControlFake) IsDisabled() bool {
 	return a.Disabled
 }
@@ -160,4 +165,30 @@ func (f fakeRuleAccessControlService) AuthorizeDatasourceAccessForRule(ctx conte
 
 func (f fakeRuleAccessControlService) AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 	return nil
+}
+
+type statesReader interface {
+	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State
+}
+
+type fakeSchedulerReader struct {
+	states statesReader
+}
+
+func newFakeSchedulerReader(t *testing.T) *fakeSchedulerReader {
+	return &fakeSchedulerReader{}
+}
+
+// setupStates allows the fake scheduler to return data consistent with states defined elsewhere.
+// This can be combined with fakeAlertInstanceManager, for instance.
+func (f *fakeSchedulerReader) setupStates(reader statesReader) *fakeSchedulerReader {
+	f.states = reader
+	return f
+}
+
+func (f *fakeSchedulerReader) Status(key models.AlertRuleKey) (models.RuleStatus, bool) {
+	if f.states == nil {
+		return models.RuleStatus{}, false
+	}
+	return state.StatesToRuleStatus(f.states.GetStatesForRuleUID(key.OrgID, key.UID)), true
 }

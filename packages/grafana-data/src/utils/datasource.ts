@@ -1,14 +1,15 @@
 import { isString } from 'lodash';
 
+import { DataSourceRef } from '@grafana/schema';
+
+import { KeyValue } from '../types/data';
 import {
-  DataSourcePluginOptionsEditorProps,
-  SelectableValue,
-  KeyValue,
-  DataSourceSettings,
   DataSourceInstanceSettings,
-  DataSourceRef,
   DataSourceJsonData,
-} from '../types';
+  DataSourcePluginOptionsEditorProps,
+  DataSourceSettings,
+} from '../types/datasource';
+import { SelectableValue } from '../types/select';
 
 /**
  * Convert instance settings to a reference
@@ -16,7 +17,11 @@ import {
  * @public
  */
 export function getDataSourceRef(ds: DataSourceInstanceSettings): DataSourceRef {
-  return { uid: ds.uid, type: ds.type };
+  const ref: DataSourceRef = { uid: ds.uid, type: ds.type };
+  if (ds.apiVersion) {
+    ref.apiVersion = ds.apiVersion;
+  }
+  return ref;
 }
 
 /**

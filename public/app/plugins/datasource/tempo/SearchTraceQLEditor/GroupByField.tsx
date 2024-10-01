@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
+import { HorizontalGroup, InputActionMeta, Select, useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
 import InlineSearchField from './InlineSearchField';
-import { withTemplateVariableOptions } from './SearchField';
+import { maxOptions, withTemplateVariableOptions } from './SearchField';
 import { replaceAt } from './utils';
 
 interface Props {
@@ -26,6 +26,7 @@ export const GroupByField = (props: Props) => {
   const { datasource, onChange, query, isTagsLoading, addVariablesToOptions } = props;
   const styles = useStyles2(getStyles);
   const generateId = () => uuidv4().slice(0, 8);
+  const [tagQuery, setTagQuery] = useState<string>('');
 
   useEffect(() => {
     if (!query.groupBy || query.groupBy.length === 0) {
@@ -41,9 +42,18 @@ export const GroupByField = (props: Props) => {
     }
   }, [onChange, query]);
 
-  const getTags = (f: TraceqlFilter) => {
-    return datasource!.languageProvider.getMetricsSummaryTags(f.scope);
-  };
+  const tagOptions = useMemo(
+    () => (f: TraceqlFilter) => {
+      const tags = datasource!.languageProvider.getMetricsSummaryTags(f.scope);
+      if (tagQuery.length === 0) {
+        return tags.slice(0, maxOptions);
+      }
+
+      const queryLowerCase = tagQuery.toLowerCase();
+      return tags.filter((tag) => tag.toLowerCase().includes(queryLowerCase)).slice(0, maxOptions);
+    },
+    [datasource, tagQuery]
+  );
 
   const addFilter = () => {
     updateFilter({
@@ -74,8 +84,8 @@ export const GroupByField = (props: Props) => {
     <InlineSearchField label="Aggregate by" tooltip="Select one or more tags to see the metrics summary.">
       <>
         {query.groupBy?.map((f, i) => {
-          const tags = getTags(f)
-            ?.concat(f.tag !== undefined && !getTags(f)?.includes(f.tag) ? [f.tag] : [])
+          const tags = tagOptions(f)
+            ?.concat(f.tag !== undefined && !tagOptions(f)?.includes(f.tag) ? [f.tag] : [])
             .map((t) => ({
               label: t,
               value: t,
@@ -102,6 +112,12 @@ export const GroupByField = (props: Props) => {
                     updateFilter({ ...f, tag: v?.value });
                   }}
                   options={addVariablesToOptions ? withTemplateVariableOptions(tags) : tags}
+                  onInputChange={(value: string, { action }: InputActionMeta) => {
+                    if (action === 'input-change') {
+                      setTagQuery(value);
+                    }
+                  }}
+                  onCloseMenu={() => setTagQuery('')}
                   placeholder="Select tag"
                   value={f.tag || ''}
                 />

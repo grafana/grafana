@@ -1,4 +1,4 @@
-import { CSSInterpolation } from '@emotion/css';
+import { CSSInterpolation } from '@emotion/serialize';
 
 import { GrafanaTheme2, ThemeBreakpointsKey } from '@grafana/data';
 

@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/openfga/language/pkg/go/transformer"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
@@ -28,9 +28,16 @@ func WithLogger(logger log.Logger) ClientOption {
 	}
 }
 
+func WithSchema(modules []transformer.ModuleFile) ClientOption {
+	return func(c *Client) {
+		c.modules = modules
+	}
+}
+
 type Client struct {
 	logger   log.Logger
 	client   openfgav1.OpenFGAServiceClient
+	modules  []transformer.ModuleFile
 	tenantID string
 	storeID  string
 	modelID  string
@@ -53,6 +60,10 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 		c.tenantID = "stack-default"
 	}
 
+	if len(c.modules) == 0 {
+		c.modules = schema.SchemaModules
+	}
+
 	store, err := c.getOrCreateStore(ctx, c.tenantID)
 	if err != nil {
 		return nil, err
@@ -60,7 +71,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 
 	c.storeID = store.GetId()
 
-	modelID, err := c.loadModel(ctx, c.storeID, schema.DSL)
+	modelID, err := c.loadModel(ctx, c.storeID, c.modules)
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +81,23 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest, opts ...grpc.CallOption) (*openfgav1.CheckResponse, error) {
-	return c.client.Check(ctx, in, opts...)
+func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	return c.client.Check(ctx, in)
 }
 
-func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest, opts ...grpc.CallOption) (*openfgav1.ListObjectsResponse, error) {
-	return c.client.ListObjects(ctx, in, opts...)
+func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	return c.client.ListObjects(ctx, in)
+}
+
+func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+	in.StoreId = c.storeID
+	in.AuthorizationModelId = c.modelID
+	_, err := c.client.Write(ctx, in)
+	return err
 }
 
 func (c *Client) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
@@ -129,8 +151,13 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 	}
 }
 
-func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (string, error) {
+func (c *Client) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
 	var continuationToken string
+
+	model, err := schema.TransformModulesToModel(modules)
+	if err != nil {
+		return "", err
+	}
 
 	for {
 		// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
@@ -145,16 +172,10 @@ func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (str
 			return "", fmt.Errorf("failed to load authorization model: %w", err)
 		}
 
-		for _, model := range res.GetAuthorizationModels() {
-			// We need to first convert stored model into dsl and compare it to provided dsl.
-			storedDSL, err := schema.TransformToDSL(model)
-			if err != nil {
-				return "", err
-			}
-
+		for _, m := range res.GetAuthorizationModels() {
 			// If provided dsl is equal to a stored dsl we use that as the authorization id
-			if schema.EqualModels(dsl, storedDSL) {
-				return res.AuthorizationModels[0].GetId(), nil
+			if schema.EqualModels(m, model) {
+				return m.GetId(), nil
 			}
 		}
 
@@ -164,11 +185,6 @@ func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (str
 		}
 
 		continuationToken = res.GetContinuationToken()
-	}
-
-	model, err := schema.TransformToModel(dsl)
-	if err != nil {
-		return "", err
 	}
 
 	writeRes, err := c.client.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{

@@ -9,6 +9,8 @@ import (
 
 const (
 	TypeDashboard = "dashboard"
+
+	ActionAppAccess = "plugins.app:access"
 )
 
 var (
@@ -80,10 +82,7 @@ type Dependency struct {
 }
 
 type BuildInfo struct {
-	Time   int64  `json:"time,omitempty"`
-	Repo   string `json:"repo,omitempty"`
-	Branch string `json:"branch,omitempty"`
-	Hash   string `json:"hash,omitempty"`
+	Time int64 `json:"time,omitempty"`
 }
 
 type Info struct {
@@ -169,13 +168,12 @@ type Signature struct {
 
 type PluginMetaDTO struct {
 	JSONData
-
-	Signature SignatureStatus `json:"signature"`
-
-	Module  string `json:"module"`
-	BaseURL string `json:"baseUrl"`
-
-	Angular AngularMeta `json:"angular"`
+	Signature                 SignatureStatus `json:"signature"`
+	Module                    string          `json:"module"`
+	BaseURL                   string          `json:"baseUrl"`
+	Angular                   AngularMeta     `json:"angular"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators"`
+	LoadingStrategy           LoadingStrategy `json:"loadingStrategy"`
 }
 
 type DataSourceDTO struct {
@@ -191,6 +189,7 @@ type DataSourceDTO struct {
 	Module     string         `json:"module,omitempty"`
 	JSONData   map[string]any `json:"jsonData"`
 	ReadOnly   bool           `json:"readOnly"`
+	APIVersion string         `json:"apiVersion,omitempty"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
@@ -210,28 +209,28 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID            string   `json:"id"`
-	Name          string   `json:"name"`
-	AliasIDs      []string `json:"aliasIds,omitempty"`
-	Info          Info     `json:"info"`
-	HideFromList  bool     `json:"hideFromList"`
-	Sort          int      `json:"sort"`
-	SkipDataQuery bool     `json:"skipDataQuery"`
-	ReleaseState  string   `json:"state"`
-	BaseURL       string   `json:"baseUrl"`
-	Signature     string   `json:"signature"`
-	Module        string   `json:"module"`
-
-	Angular AngularMeta `json:"angular"`
+	ID              string          `json:"id"`
+	Name            string          `json:"name"`
+	AliasIDs        []string        `json:"aliasIds,omitempty"`
+	Info            Info            `json:"info"`
+	HideFromList    bool            `json:"hideFromList"`
+	Sort            int             `json:"sort"`
+	SkipDataQuery   bool            `json:"skipDataQuery"`
+	ReleaseState    string          `json:"state"`
+	BaseURL         string          `json:"baseUrl"`
+	Signature       string          `json:"signature"`
+	Module          string          `json:"module"`
+	Angular         AngularMeta     `json:"angular"`
+	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
 }
 
 type AppDTO struct {
-	ID      string `json:"id"`
-	Path    string `json:"path"`
-	Version string `json:"version"`
-	Preload bool   `json:"preload"`
-
-	Angular AngularMeta `json:"angular"`
+	ID              string          `json:"id"`
+	Path            string          `json:"path"`
+	Version         string          `json:"version"`
+	Preload         bool            `json:"preload"`
+	Angular         AngularMeta     `json:"angular"`
+	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
 }
 
 const (
@@ -250,6 +249,13 @@ type Error struct {
 	SignatureStatus SignatureStatus `json:"status,omitempty"`
 	message         string          `json:"-"`
 }
+
+type LoadingStrategy string
+
+const (
+	LoadingStrategyFetch  LoadingStrategy = "fetch"
+	LoadingStrategyScript LoadingStrategy = "script"
+)
 
 func (e Error) Error() string {
 	if e.message != "" {
@@ -313,8 +319,6 @@ func (e Error) PublicMessage() string {
 	return "Plugin failed to load"
 }
 
-// Access-Control related definitions
-
 // RoleRegistration stores a role and its assignments to basic roles
 // (Viewer, Editor, Admin, Grafana Admin)
 type RoleRegistration struct {
@@ -332,6 +336,12 @@ type Role struct {
 type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
+}
+
+// ActionSet is the model for ActionSet in RBAC.
+type ActionSet struct {
+	Action  string   `json:"action"`
+	Actions []string `json:"actions"`
 }
 
 type QueryCachingConfig struct {

@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t, Trans } from 'app/core/internationalization';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -20,7 +18,6 @@ import { MoveModal } from './MoveModal';
 export interface Props {}
 
 export function BrowseActions() {
-  const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
   const [deleteItems] = useDeleteItemsMutation();
@@ -87,7 +84,7 @@ export function BrowseActions() {
   );
 
   return (
-    <div className={styles.row} data-testid="manage-actions">
+    <Stack gap={1} data-testid="manage-actions">
       {moveIsInvalid ? (
         <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
           {moveButton}
@@ -99,18 +96,9 @@ export function BrowseActions() {
       <Button onClick={showDeleteModal} variant="destructive">
         <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
       </Button>
-    </div>
+    </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  row: css({
-    display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(2),
-  }),
-});
 
 const actionMap = {
   move: 'grafana_manage_dashboards_item_moved',
@@ -127,5 +115,6 @@ function trackAction(action: keyof typeof actionMap, selectedItems: Omit<Dashboa
       dashboard: selectedDashboards.length,
     },
     source: 'tree_actions',
+    restore_enabled: config.featureToggles.dashboardRestoreUI,
   });
 }

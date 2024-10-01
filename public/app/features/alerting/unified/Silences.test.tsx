@@ -6,12 +6,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
 import {
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
   MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
 } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
+import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -24,7 +25,7 @@ import {
   mockDataSource,
   mockSilences,
 } from './mocks';
-import { grafanaRulerRule } from './mocks/alertRuleApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
@@ -304,6 +305,14 @@ describe('Silence create/edit', () => {
     TEST_TIMEOUT
   );
 
+  it('works when previewing alerts with spaces in label name', async () => {
+    renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
+
+    await enterSilenceLabel(0, 'label with spaces', MatcherOperator.equal, 'value with spaces');
+
+    expect((await screen.findAllByTestId('row'))[0]).toBeInTheDocument();
+  });
+
   it('shows an error when existing silence cannot be found', async () => {
     renderSilences('/alerting/silence/foo-bar/edit');
 
@@ -328,6 +337,11 @@ describe('Silence create/edit', () => {
   it('populates form with existing silence information that has __alert_rule_uid__', async () => {
     mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
+    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
+  });
+
+  it('populates form with information when specifying alert rule UID in matchers', async () => {
+    renderSilences(`/alerting/silence/new?matcher=${MATCHER_ALERT_RULE_UID}%3D${grafanaRulerRule.grafana_alert.uid}`);
     expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
   });
 

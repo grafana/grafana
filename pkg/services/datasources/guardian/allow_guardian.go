@@ -14,6 +14,10 @@ func (n AllowGuardian) CanQuery(datasourceID int64) (bool, error) {
 	return true, nil
 }
 
+func (n AllowGuardian) FilterDatasourcesByReadPermissions(ds []*datasources.DataSource) ([]*datasources.DataSource, error) {
+	return ds, nil
+}
+
 func (n AllowGuardian) FilterDatasourcesByQueryPermissions(ds []*datasources.DataSource) ([]*datasources.DataSource, error) {
 	return ds, nil
 }

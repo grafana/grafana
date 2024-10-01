@@ -62,18 +62,18 @@ export class LiveConnectionWarning extends PureComponent<Props, State> {
 
 const getStyle = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    foot: css`
-      position: absolute;
-      bottom: 0px;
-      left: 0px;
-      right: 0px;
-      z-index: 10000;
-      cursor: wait;
-      margin: 16px;
-    `,
-    warn: css`
-      max-width: 400px;
-      margin: auto;
-    `,
+    foot: css({
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10000,
+      cursor: 'wait',
+      margin: theme.spacing(2),
+    }),
+    warn: css({
+      maxWidth: '400px',
+      margin: 'auto',
+    }),
   };
 });

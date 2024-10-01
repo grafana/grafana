@@ -4,6 +4,7 @@ import {
   DataSourceJsonData,
   DataSourcePlugin,
   DataSourcePluginMeta,
+  PluginLoadingStrategy,
   PluginMeta,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -18,7 +19,7 @@ import { SystemJS } from './loader/systemjs';
 import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
-import { buildImportMap, isHostedOnCDN, resolveModulePath } from './loader/utils';
+import { buildImportMap, resolveModulePath } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { isFrontendSandboxSupported } from './sandbox/utils';
 
@@ -29,13 +30,17 @@ SystemJS.addImportMap({ imports });
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
 
 // This instructs SystemJS to load plugin assets using fetch and eval if it returns a truthy value, otherwise
-// it will load the plugin using a script tag. We only want to fetch and eval files that are
-// hosted on a CDN, are related to Angular plugins or are not js files.
+// it will load the plugin using a script tag. The logic that sets loadingStrategy comes from the backend.
+// See: pkg/services/pluginsintegration/pluginassets/pluginassets.go
 systemJSPrototype.shouldFetch = function (url) {
   const pluginInfo = getPluginFromCache(url);
   const jsTypeRegEx = /^[^#?]+\.(js)([?#].*)?$/;
 
-  return isHostedOnCDN(url) || Boolean(pluginInfo?.isAngular) || !jsTypeRegEx.test(url);
+  if (!jsTypeRegEx.test(url)) {
+    return true;
+  }
+
+  return Boolean(pluginInfo?.loadingStrategy !== PluginLoadingStrategy.script);
 };
 
 const originalImport = systemJSPrototype.import;
@@ -64,17 +69,19 @@ systemJSPrototype.onload = decorateSystemJsOnload;
 
 export async function importPluginModule({
   path,
+  pluginId,
+  loadingStrategy,
   version,
   isAngular,
-  pluginId,
 }: {
   path: string;
   pluginId: string;
+  loadingStrategy: PluginLoadingStrategy;
   version?: string;
   isAngular?: boolean;
 }): Promise<System.Module> {
   if (version) {
-    registerPluginInCache({ pluginId, version, isAngular });
+    registerPluginInCache({ path, version, loadingStrategy });
   }
 
   const builtIn = builtInPlugins[path];
@@ -99,10 +106,12 @@ export async function importPluginModule({
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
   const isAngular = meta.angular?.detected ?? meta.angularDetected;
+  const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
     isAngular,
+    loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
@@ -128,10 +137,12 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
 
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   const isAngular = meta.angular?.detected ?? meta.angularDetected;
+  const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
     isAngular,
+    loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
   }).then((pluginExports) => {
     const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();

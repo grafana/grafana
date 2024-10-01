@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { DashboardCursorSync, GrafanaTheme2 } from '@grafana/data';
+import { useChromeHeaderHeight } from '@grafana/runtime';
 import {
   behaviors,
   SceneComponentProps,
@@ -35,7 +36,8 @@ export class MetricGraphScene extends SceneObjectBase<MetricGraphSceneState> {
   public static Component = ({ model }: SceneComponentProps<MetricGraphScene>) => {
     const { topView, selectedTab } = model.useState();
     const { stickyMainGraph } = getTrailSettings(model).useState();
-    const styles = useStyles2(getStyles);
+    const chromeHeaderHeight = useChromeHeaderHeight();
+    const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
 
     return (
       <div className={styles.container}>
@@ -48,7 +50,7 @@ export class MetricGraphScene extends SceneObjectBase<MetricGraphSceneState> {
   };
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
   return {
     container: css({
       display: 'flex',
@@ -60,7 +62,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'row',
       background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
       position: 'sticky',
-      top: '70px',
+      top: `${chromeHeaderHeight + 70}px`,
       zIndex: 10,
     }),
     nonSticky: css({

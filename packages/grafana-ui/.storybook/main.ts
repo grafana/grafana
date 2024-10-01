@@ -15,7 +15,7 @@ const stories = ['../src/Intro.mdx', storyGlob];
 // We limit icon paths to only the available icons so publishing
 // doesn't require uploading 1000s of unused assets.
 const iconPaths = Object.keys(availableIconsIndex)
-  .filter((iconName) => !iconName.includes('fa'))
+  .filter((iconName) => !iconName.startsWith('fa '))
   .map((iconName) => {
     const subDir = getIconSubDir(iconName as IconName, 'default');
     return {

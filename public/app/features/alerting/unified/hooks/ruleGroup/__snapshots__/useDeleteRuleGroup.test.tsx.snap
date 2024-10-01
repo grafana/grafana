@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Grafana managed should be able to delete a Grafana managed rule group 1`] = `
+[
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "DELETE",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+]
+`;
+
+exports[`data-source managed should be able to delete a data-source managed rule group 1`] = `
+[
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "DELETE",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
+  },
+]
+`;

@@ -35,7 +35,7 @@ labels:
 title: Geomap
 weight: 100
 refs:
-  data-format-supported-by-the-node-graph-visualization:
+  data-format:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/#data-api
     - pattern: /docs/grafana-cloud/
@@ -49,19 +49,97 @@ refs:
 
 # Geomap
 
-Geomaps allow you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
+Geomaps allow you to view and customize the world map using geospatial data. It's the ideal visualization if you have data that includes location information and you want to see it displayed in a map.
 
-> We would love your feedback on geomaps. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+You can configure and overlay [map layers](#types), like heatmaps and networks, and blend included basemaps or your own custom maps. This helps you to easily focus on the important location-based characteristics of the data.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" alt="Geomap visualization" >}}
 
-Pan the map, while it's in focus, by using the arrow keys. Zoom in and out by using the `+` and `-` keys.
+When a geomap is in focus, in addition to typical mouse controls, you can pan around using the arrow keys or zoom in and out using the plus (`+`) and minus (`-`) keys or icons.
+
+Geomaps are also useful when you have location data that’s changing in real time and you want to visualize where an element is moving, using auto-refresh.
+
+You can use a geomap visualization if you need to:
+
+- Track your fleet of vehicles and associated metrics
+- Show the locations and statuses of data centers or other connected assets in a network
+- Display geographic trends in a heatmap
+- Visualize the relationship of your locations' HVAC consumption or solar production with the sun's location
+
+{{< admonition type="note" >}}
+We'd love your feedback on the geomap visualization. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
+{{< /admonition >}}
+
+## Configure a geomap visualization
 
 The following video provides beginner steps for creating geomap visualizations. You'll learn the data requirements and caveats, special customizations, preconfigured displays and much more:
 
 {{< youtube id="HwM8AFQ7EUs" >}}
 
 {{< docs/play title="Geomap Examples" url="https://play.grafana.org/d/panel-geomap/" >}}
+
+## Supported data formats
+
+To create a geomap visualization, you need datasets containing fields with location information.
+
+The supported location formats are:
+
+- Latitude and longitude
+- Geohash
+- Lookup codes: country, US states, or airports
+
+To learn more, refer to [Location mode](#location-mode).
+
+Geomaps also support additional fields with various data types to define things like labels, numbers, heat sizes, and colors.
+
+### Example - Latitude and longitude
+
+If you plan to use latitude and longitude coordinates, the dataset must include at least two fields (or columns): one called `latitude` (you can also use`lat`), and one called `longitude` (also `lon` or `lng`). When you use this naming convention, the visualization automatically detects the fields and displays the elements. The order of the fields doesn't matter as long as there is one latitude and one longitude.
+
+| Name            | latitude  | longitude | value |
+| --------------- | --------- | --------- | ----- |
+| Disneyland      | 33.8121   | -117.9190 | 4     |
+| DisneyWorld     | 28.3772   | -81.5707  | 10    |
+| EuroDisney      | 48.867374 | 2.784018  | 3     |
+| Tokyo Disney    | 35.6329   | 139.8804  | 70    |
+| Shanghai Disney | 31.1414   | 121.6682  | 1     |
+
+If your latitude and longitude fields are named differently, you can specify them, as indicated in the [Location mode](#location-mode) section.
+
+### Example - Geohash
+
+If your location data is in geohash format, the visualization requires at least one field (or column) containing location data.
+
+If the field is named `geohash`, the visualization automatically detects the location and displays the elements. The order of the fields doesn't matter and the data set can have multiple other numeric, text, and time fields.
+
+| Name      | geohash      | trips |
+| --------- | ------------ | ----- |
+| Cancun    | d5f21        | 8     |
+| Honolulu  | 87z9ps       | 0     |
+| Palm Cove | rhzxudynb014 | 1     |
+| Mykonos   | swdj02ey9gyx | 3     |
+
+If your field containing geohash location data is not named as above, you can configure the visualization to use geohash and specify which field to use, as explained in the [Location mode](#location-mode) section.
+
+### Example - Lookup codes
+
+The geomap visualization can identify locations based on country, airport, or US state codes.
+
+For this configuration, the dataset must contain at least one field (or column) containing the location code.
+
+If the field is named `lookup`, the visualization automatically detects it and displays points based on country codes.
+
+| Year | lookup | gdp       |
+| ---- | ------ | --------- |
+| 2016 | MEX    | 104171935 |
+| 2016 | DEU    | 94393454  |
+| 2016 | FRA    | 83654250  |
+| 2016 | BRA    | 80921527  |
+| 2016 | CAN    | 79699762  |
+
+The other location types&mdash; airport codes or US state codes&mdash;aren't automatically detected.
+
+If you want to use other codes or give the field a custom name, you can follow the steps in the [Location mode](#location-mode) section.
 
 ## Panel options
 
@@ -97,6 +175,14 @@ The initial view configures how the geomap renders when the panel is first loade
     - **Australia**
     - **Oceania**
 - **Zoom** sets the initial zoom level.
+
+### Share view
+
+The **Share view** option allows you to link the movement and zoom actions of multiple map visualizations within the same dashboard. The map visualizations that have this option enabled act in tandem when one of them is moved or zoomed, leaving the other ones independent.
+
+{{< admonition type="note" >}}
+You might need to reload the dashboard for this feature to work.
+{{< /admonition >}}
 
 ## Map layers
 
@@ -156,9 +242,13 @@ The layer controls allow you to create layers, change their name, reorder and de
 
 You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
 
-### Location
+### Data
 
-Geomaps need a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
+Geomaps need a source of geographical data gathered from a data source query which can return multiple datasets. By default Grafana picks the first dataset, but this drop-down allows you to pick other datasets if the query returns more than one.
+
+### Location mode
+
+There are four options to map the data returned by the selected query:
 
 - **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
   - geohash: “geohash”
@@ -258,8 +348,9 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer](/static/img/docs/geomap-panel/geomap-markers-8-1-0.png)
 
-![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/geomap-markers-options-11-1-0.png" max-width="350px" alt="Markers layer options" >}}
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Size** configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range.
 - **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
 - **Symbol Vertical Align** configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol.
@@ -282,8 +373,9 @@ Similar to `Markers`, you are prompted with various options to determine which d
 
 ![Heatmap Layer](/static/img/docs/geomap-panel/geomap-heatmap-8-1-0.png)
 
-![Heatmap Layer Options](/static/img/docs/geomap-panel/geomap-heatmap-options-8-1-0.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/geomap-heatmap-options-11-1-0.png" max-width="350px" alt="Heatmap layer options" >}}
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Weight values** configure the intensity of the heatmap clusters. `Fixed value` keeps a constant weight value throughout all data points. This value should be in the range of 0~1. Similar to Markers, there is an alternate option in the drop-down to automatically scale the weight values depending on data values.
 - **Radius** configures the size of the heatmap clusters.
 - **Blur** configures the amount of blur on each cluster.
@@ -333,6 +425,7 @@ The Night / Day layer displays night and day regions based on the current time r
 
 ### Options
 
+- **Data** configures the data set for the layer. For more information, refer to [Data](#data).
 - **Show** toggles the time source from panel time range.
 - **Night region color** picks the color for the night region.
 - **Display sun** toggles the sun icon.
@@ -357,6 +450,7 @@ The Route layer renders data points as a route.
 
 ### Options
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Size** sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale.
 - **Color** sets the route color. Set to `Fixed color` by default. You can also tie the color to field data.
 - **Fill opacity** configures the opacity of the route.
@@ -385,6 +479,7 @@ The Photos layer renders a photo at each data point.
 
 ### Options
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Image Source field** allows you to select a string field containing image data in either of the following formats:
   - **Image URLs**
   - **Base64 encoded** - Image binary ("data:image/png;base64,...")
@@ -412,13 +507,14 @@ The Photos layer renders a photo at each data point.
 The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{% /admonition %}}
 
-The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format-supported-by-the-node-graph-visualization) with the addition of [geospatial data]({{< relref "#location">}}) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
+The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format) with the addition of [geospatial data](#location-mode) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
 {{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" caption="Node graph to Geomap network layer" >}}
 
 ### Options
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Arrow** sets the arrow direction to display for each edge, with forward meaning source to target. Choose from:
   - **None**
   - **Forward**

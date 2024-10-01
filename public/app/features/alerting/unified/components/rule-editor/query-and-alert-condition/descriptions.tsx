@@ -15,6 +15,13 @@ export const DESCRIPTIONS: Record<RuleFormType, FormDescriptions> = {
       'Pre-compute frequently needed or computationally expensive expressions and save their result as a new set of time series.',
     helpLink: '',
   },
+  [RuleFormType.grafanaRecording]: {
+    sectionTitle: 'Define recording rule',
+    helpLabel: 'Define your recording rule',
+    helpContent:
+      'Pre-compute frequently needed or computationally expensive expressions and save their result as a new set of time series.',
+    helpLink: '',
+  },
   [RuleFormType.grafana]: {
     sectionTitle: 'Define query and alert condition',
     helpLabel: 'Define query and alert condition',

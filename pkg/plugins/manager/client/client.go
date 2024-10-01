@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -94,15 +95,18 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	removeNonAllowedHeaders(req.Headers)
 
 	processedStreams := 0
-	wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+	wrappedSender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		// Expected that headers and status are only part of first stream
 		if processedStreams == 0 && res != nil {
 			if len(res.Headers) > 0 {
 				removeConnectionHeaders(res.Headers)
 				removeHopByHopHeaders(res.Headers)
 				removeNonAllowedHeaders(res.Headers)
+			} else {
+				res.Headers = map[string][]string{}
 			}
 
+			proxyutil.SetProxyResponseHeaders(res.Headers)
 			ensureContentTypeHeader(res)
 		}
 
@@ -218,7 +222,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 }
 
 // ConvertObject implements plugins.Client.
-func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (s *Service) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -228,7 +232,7 @@ func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequ
 		return nil, plugins.ErrPluginNotRegistered
 	}
 
-	return plugin.ConvertObject(ctx, req)
+	return plugin.ConvertObjects(ctx, req)
 }
 
 // MutateAdmission implements plugins.Client.
@@ -353,10 +357,4 @@ func ensureContentTypeHeader(res *backend.CallResourceResponse) {
 	if !hasContentType && res.Status != http.StatusNoContent {
 		res.Headers[contentTypeHeaderName] = []string{defaultContentType}
 	}
-}
-
-type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
-
-func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
-	return fn(res)
 }

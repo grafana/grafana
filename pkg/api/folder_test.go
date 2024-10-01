@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -282,7 +283,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 
 		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
 			}),
@@ -311,7 +312,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 
 		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("parentUid")},
 				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
@@ -336,7 +337,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 
 		req := server.NewGetRequest("/api/folders/folderUid")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
 			}),

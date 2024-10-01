@@ -1,6 +1,4 @@
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { FolderState } from 'app/types';
@@ -74,11 +72,7 @@ describe('AlertsFolderView tests', () => {
     combinedNamespaceMock.mockReturnValue([grafanaNamespace]);
 
     // Act
-    render(
-      <TestProvider>
-        <AlertsFolderView folder={folder} />
-      </TestProvider>
-    );
+    render(<AlertsFolderView folder={folder} />);
 
     // Assert
     const alertRows = ui.ruleList.row.queryAll();
@@ -114,11 +108,7 @@ describe('AlertsFolderView tests', () => {
     combinedNamespaceMock.mockReturnValue([grafanaNamespace]);
 
     // Act
-    render(
-      <TestProvider>
-        <AlertsFolderView folder={folder} />
-      </TestProvider>
-    );
+    render(<AlertsFolderView folder={folder} />);
 
     // Assert
     expect(ui.ruleList.row.queryAll()).toHaveLength(0);
@@ -144,13 +134,9 @@ describe('AlertsFolderView tests', () => {
     combinedNamespaceMock.mockReturnValue([grafanaNamespace]);
 
     // Act
-    render(
-      <TestProvider>
-        <AlertsFolderView folder={folder} />
-      </TestProvider>
-    );
+    const { user } = render(<AlertsFolderView folder={folder} />);
 
-    await userEvent.type(ui.filter.name.get(), 'cpu');
+    await user.type(ui.filter.name.get(), 'cpu');
 
     // Assert
     expect(ui.ruleList.row.queryAll()).toHaveLength(1);
@@ -180,13 +166,9 @@ describe('AlertsFolderView tests', () => {
     combinedNamespaceMock.mockReturnValue([grafanaNamespace]);
 
     // Act
-    render(
-      <TestProvider>
-        <AlertsFolderView folder={folder} />
-      </TestProvider>
-    );
+    const { user } = render(<AlertsFolderView folder={folder} />);
 
-    await userEvent.type(ui.filter.label.get(), 'severity=critical');
+    await user.type(ui.filter.label.get(), 'severity=critical');
 
     // Assert
     expect(ui.ruleList.row.queryAll()).toHaveLength(1);
