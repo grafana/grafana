@@ -38,8 +38,7 @@ func (p addReceiverReaderToRulesWritersMigrator) Exec(sess *xorm.Session, migrat
 	userResult, err := sess.Exec(`
 INSERT INTO user_role (org_id, user_id, role_id, created)
 SELECT ur.org_id, ur.user_id, rr.id, ?
-FROM role as rr
-         JOIN
+FROM role as rr,
      (SELECT user_id, org_id
       FROM user_role as u
       WHERE EXISTS (SELECT 1
@@ -69,8 +68,7 @@ WHERE rr.name = 'fixed:alerting.receivers:reader'
 	teamResult, err := sess.Exec(`
 INSERT INTO team_role (org_id, team_id, role_id, created)
 SELECT tr.org_id, tr.team_id, rr.id, ?
-FROM role as rr
-         JOIN
+FROM role as rr,
      (SELECT team_id, org_id
       FROM team_role as t
       WHERE EXISTS (SELECT 1
