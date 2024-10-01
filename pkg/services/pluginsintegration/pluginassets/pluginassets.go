@@ -106,14 +106,12 @@ func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 // If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
 // module.js file, rather than for the provided plugin.
 func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSBase string) (r string, err error) {
-	// Ignore unsigned plugins
-	if !p.Signature.IsValid() {
+	if !s.cfg.Features.SriChecksEnabled {
 		return "", nil
 	}
 
-	// Always calculate the hash for CDN plugins.
-	// Do not calculate the hash for filesystem plugins, unless the corresponding feature toggle is enabled.
-	if !s.cdnEnabled(p.ID, p.Class) && !s.cfg.Features.FilesystemSriChecksEnabled {
+	// Ignore unsigned plugins
+	if !p.Signature.IsValid() {
 		return "", nil
 	}
 

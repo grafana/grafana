@@ -1507,8 +1507,8 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:        "pluginsFilesystemSriChecks",
-			Description: "Enables SRI checks for plugin assets loaded from the filesystem",
+			Name:        "pluginsSriChecks",
+			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
