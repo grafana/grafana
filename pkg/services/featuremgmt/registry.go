@@ -1240,6 +1240,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: false,
+			Expression:   "true",
 		},
 		{
 			Name:              "dashboardRestore",
