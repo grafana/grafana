@@ -1,8 +1,9 @@
 ---
 aliases:
   - ../fundamentals/annotation-label/variables-label-annotation/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/variables-label-annotation/
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templating-labels-annotations/
-description: Learn about how to template labels and annotations
+  - ../alerting-rules/templating-labels-annotations/ # /docs/grafana/<GRAFANA_VERSION>/alerting-rules/templating-labels-annotations/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/
+description: Learn how to template annotations and labels to include data from queries and expressions in alert messages
 keywords:
   - grafana
   - alerting
@@ -14,7 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Template labels and annotations
+title: Template annotations and labels
 weight: 500
 refs:
   explore:
@@ -22,7 +23,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
-# Template labels and annotations
+# Template annotations and labels
 
 You can use templates to include data from queries and expressions in labels and annotations. For example, you might want to set the severity label for an alert based on the value of the query, or use the instance label from the query in a summary annotation so you know which server is experiencing high CPU usage.
 

@@ -33,9 +33,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
   templating-labels-annotations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
   notification-message-reference:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
