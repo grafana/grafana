@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
@@ -99,6 +100,25 @@ type ResourceServerOptions struct {
 	Now func() int64
 }
 
+type indexServer struct{}
+
+func (s indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	res := &SearchResponse{}
+	return res, nil
+}
+
+func (s indexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
+	return nil, nil
+}
+
+func (s indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
+	return nil, nil
+}
+
+func NewResourceIndexServer() ResourceIndexServer {
+	return indexServer{}
+}
+
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
@@ -107,9 +127,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
-	if opts.Index == nil {
-		opts.Index = &noopService{}
-	}
+
 	if opts.Diagnostics == nil {
 		opts.Diagnostics = &noopService{}
 	}
@@ -144,14 +162,15 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	tracer      trace.Tracer
-	log         *slog.Logger
-	backend     StorageBackend
-	index       ResourceIndexServer
-	diagnostics DiagnosticsServer
-	access      WriteAccessHooks
-	lifecycle   LifecycleHooks
-	now         func() int64
+	tracer       trace.Tracer
+	log          *slog.Logger
+	backend      StorageBackend
+	index        ResourceIndexServer
+	diagnostics  DiagnosticsServer
+	access       WriteAccessHooks
+	lifecycle    LifecycleHooks
+	now          func() int64
+	mostRecentRV atomic.Int64 // The most recent resource version seen by the server
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -326,12 +345,12 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		rsp.Error = e
 		return rsp, nil
 	}
-
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
+	s.log.Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
 
@@ -537,6 +556,8 @@ func (s *server) initWatcher() error {
 			for {
 				// pipe all events
 				v := <-events
+				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
+				s.mostRecentRV.Store(v.ResourceVersion)
 				out <- v
 			}
 		}()
@@ -552,23 +573,67 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		return err
 	}
 
-	// Start listening -- this will buffer any changes that happen while we backfill
+	// Start listening -- this will buffer any changes that happen while we backfill.
+	// If events are generated faster than we can process them, then some events will be dropped.
+	// TODO: Think of a way to allow the client to catch up.
 	stream, err := s.broadcaster.Subscribe(ctx)
 	if err != nil {
 		return err
 	}
 	defer s.broadcaster.Unsubscribe(stream)
 
-	since := req.Since
-	if req.SendInitialEvents {
-		fmt.Printf("TODO... query\n")
-		// All initial events are CREATE
+	if !req.SendInitialEvents && req.Since == 0 {
+		// This is a temporary hack only relevant for tests to ensure that the first events are sent.
+		// This is required because the SQL backend polls the database every 100ms.
+		// TODO: Implement a getLatestResourceVersion method in the backend.
+		time.Sleep(10 * time.Millisecond)
+	}
 
-		if req.AllowWatchBookmarks {
-			fmt.Printf("TODO... send bookmark\n")
+	mostRecentRV := s.mostRecentRV.Load() // get the latest resource version
+	var initialEventsRV int64             // resource version coming from the initial events
+	if req.SendInitialEvents {
+		// Backfill the stream by adding every existing entities.
+		initialEventsRV, err = s.backend.ListIterator(ctx, &ListRequest{Options: req.Options}, func(iter ListIterator) error {
+			for iter.Next() {
+				if err := iter.Error(); err != nil {
+					return err
+				}
+				if err := srv.Send(&WatchEvent{
+					Type: WatchEvent_ADDED,
+					Resource: &WatchEvent_Resource{
+						Value:   iter.Value(),
+						Version: iter.ResourceVersion(),
+					},
+				}); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if req.SendInitialEvents && req.AllowWatchBookmarks {
+		if err := srv.Send(&WatchEvent{
+			Type: WatchEvent_BOOKMARK,
+			Resource: &WatchEvent_Resource{
+				Version: initialEventsRV,
+			},
+		}); err != nil {
+			return err
 		}
 	}
 
+	var since int64 // resource version to start watching from
+	switch {
+	case req.SendInitialEvents:
+		since = initialEventsRV
+	case req.Since == 0:
+		since = mostRecentRV
+	default:
+		since = req.Since
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -579,28 +644,51 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				s.log.Debug("watch events closed")
 				return nil
 			}
-
+			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				// Currently sending *every* event
-				// if req.Options.Labels != nil {
-				// 	// match *either* the old or new object
-				// }
-				// TODO: return values that match either the old or the new
-
-				if err := srv.Send(&WatchEvent{
+				value := event.Value
+				// remove the delete marker stored in the value for deleted objects
+				if event.Type == WatchEvent_DELETED {
+					value = []byte{}
+				}
+				resp := &WatchEvent{
 					Timestamp: event.Timestamp,
 					Type:      event.Type,
 					Resource: &WatchEvent_Resource{
-						Value:   event.Value,
+						Value:   value,
 						Version: event.ResourceVersion,
 					},
-					// TODO... previous???
-				}); err != nil {
+				}
+				if event.PreviousRV > 0 {
+					prevObj, err := s.Read(ctx, &ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
+					if err != nil {
+						// This scenario should never happen, but if it does, we should log it and continue
+						// sending the event without the previous object. The client will decide what to do.
+						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
+					} else {
+						if prevObj.ResourceVersion != event.PreviousRV {
+							s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
+							return fmt.Errorf("resource version mismatch")
+						}
+						resp.Previous = &WatchEvent_Resource{
+							Value:   prevObj.Value,
+							Version: prevObj.ResourceVersion,
+						}
+					}
+				}
+				if err := srv.Send(resp); err != nil {
 					return err
 				}
 			}
 		}
 	}
+}
+
+func (s *server) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+	return s.index.Search(ctx, req)
 }
 
 // History implements ResourceServer.

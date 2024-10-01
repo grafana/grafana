@@ -41,7 +41,6 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	hash.Reset()
 	_, _ = hash.Write([]byte(setting.BuildVersion))
 	_, _ = hash.Write([]byte(setting.BuildCommit))
-	_, _ = hash.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
 	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	// Plugin configs

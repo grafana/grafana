@@ -23,9 +23,10 @@ type sqlStore struct {
 }
 
 const (
-	tableName       = "cloud_migration_resource"
-	secretType      = "cloudmigration-snapshot-encryption-key"
-	GetAllSnapshots = -1
+	tableName                    = "cloud_migration_resource"
+	secretType                   = "cloudmigration-snapshot-encryption-key"
+	GetAllSnapshots              = -1
+	GetSnapshotListSortingLatest = "latest"
 )
 
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -49,22 +50,6 @@ func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*
 	}
 
 	return &cm, err
-}
-
-func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error) {
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		cmr.Created = time.Now()
-		cmr.Updated = time.Now()
-		cmr.Finished = time.Now()
-		cmr.UID = util.GenerateShortUID()
-
-		_, err := sess.Insert(&cmr)
-		return err
-	})
-	if err != nil {
-		return "", err
-	}
-	return cmr.UID, nil
 }
 
 func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudmigration.CloudMigrationSession) (*cloudmigration.CloudMigrationSession, error) {
@@ -174,34 +159,6 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string)
 	}
 
 	return &c, snapshots, nil
-}
-
-func (ss *sqlStore) GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
-	var c cloudmigration.CloudMigrationSnapshot
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("uid=?", cmrUID).Get(&c)
-		if err != nil {
-			return err
-		}
-		if !exist {
-			return cloudmigration.ErrMigrationRunNotFound
-		}
-		return nil
-	})
-	return &c, err
-}
-
-func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.CloudMigrationSnapshot, error) {
-	var runs = make([]*cloudmigration.CloudMigrationSnapshot, 0)
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Find(&runs, &cloudmigration.CloudMigrationSnapshot{
-			SessionUID: migrationUID,
-		})
-	})
-	if err != nil {
-		return nil, err
-	}
-	return runs, nil
 }
 
 func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
@@ -322,7 +279,9 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 			offset := (query.Page - 1) * query.Limit
 			sess.Limit(query.Limit, offset)
 		}
-		sess.OrderBy("created DESC")
+		if query.Sort == GetSnapshotListSortingLatest {
+			sess.OrderBy("cloud_migration_snapshot.created DESC")
+		}
 		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,
 		})
@@ -476,16 +435,16 @@ func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 
 func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMigrationSession) error {
 	if cm == nil {
-		return cloudmigration.ErrMigrationNotFound
+		return fmt.Errorf("unable to decypt token because migration session was not found: %w", cloudmigration.ErrMigrationNotFound)
 	}
 
 	if len(cm.AuthToken) == 0 {
-		return cloudmigration.ErrTokenNotFound
+		return fmt.Errorf("unable to decrypt token because token is empty: %w", cloudmigration.ErrTokenNotFound)
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(cm.AuthToken)
 	if err != nil {
-		return fmt.Errorf("token could not be decoded")
+		return fmt.Errorf("unable to base64 decode token: %w", err)
 	}
 
 	t, err := ss.secretsService.Decrypt(ctx, decoded)

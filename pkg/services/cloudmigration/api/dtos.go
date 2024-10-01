@@ -106,6 +106,7 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
+	Name string `json:"name"`
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true
@@ -119,9 +120,10 @@ type MigrateDataResponseItemDTO struct {
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType      MigrateDataType = "DASHBOARD"
+	DatasourceDataType     MigrateDataType = "DATASOURCE"
+	FolderDataType         MigrateDataType = "FOLDER"
+	LibraryElementDataType MigrateDataType = "LIBRARY_ELEMENT"
 )
 
 // swagger:enum ItemStatus
@@ -185,23 +187,6 @@ func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse
 	}
 	return CloudMigrationSessionListResponseDTO{
 		Sessions: slDTOs,
-	}
-}
-
-func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) MigrateDataResponseDTO {
-	items := make([]MigrateDataResponseItemDTO, len(r.Items))
-	for i := 0; i < len(r.Items); i++ {
-		item := r.Items[i]
-		items[i] = MigrateDataResponseItemDTO{
-			Type:    MigrateDataType(item.Type),
-			RefID:   item.RefID,
-			Status:  ItemStatus(item.Status),
-			Message: item.Error,
-		}
-	}
-	return MigrateDataResponseDTO{
-		RunUID: r.RunUID,
-		Items:  items,
 	}
 }
 
@@ -328,6 +313,11 @@ type GetSnapshotListParams struct {
 	// Session UID of a session
 	// in: path
 	UID string `json:"uid"`
+
+	// Sort with value latest to return results sorted in descending order.
+	// in:query
+	// required:false
+	Sort string `json:"sort"`
 }
 
 // swagger:response snapshotListResponse

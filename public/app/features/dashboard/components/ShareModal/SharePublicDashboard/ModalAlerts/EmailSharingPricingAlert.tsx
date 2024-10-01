@@ -2,7 +2,8 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-const EMAIL_SHARING_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#email-sharing';
+const EMAIL_SHARING_URL =
+  'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/shared-dashboards/#share-externally-with-specific-people';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 

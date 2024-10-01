@@ -167,6 +167,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
 		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
 	}
+	// double-check and remove admin menu if empty
+	if sec := treeRoot.FindById(navtree.NavIDCfg); sec != nil && len(sec.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
+	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
 		treeRoot.AddSection(&navtree.NavLink{
@@ -201,6 +205,18 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Url:        homeUrl,
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
+	}
+	ctx := c.Req.Context()
+	if s.features.IsEnabled(ctx, featuremgmt.FlagHomeSetupGuide) {
+		var children []*navtree.NavLink
+		// setup guide (a submenu item under Home)
+		children = append(children, &navtree.NavLink{
+			Id:         "home-setup-guide",
+			Text:       "Setup guide",
+			Url:        homeUrl + "/setup-guide",
+			SortWeight: navtree.WeightHome,
+		})
+		homeNode.Children = children
 	}
 	return homeNode
 }
@@ -405,11 +421,32 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead))) {
+	contactPointsPerms := []ac.Evaluator{
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	}
+
+	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
+	// alerting API to maintain backwards compatibility.
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
+		contactPointsPerms = append(contactPointsPerms,
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		)
+	}
+
+	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Contact points", SubTitle: "Choose how to notify your  contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
+	}
+
+	if hasAccess(ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 

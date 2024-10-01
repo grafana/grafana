@@ -237,8 +237,7 @@ describe('getDashboardChangesFromScene', () => {
       dashboard.onEnterEditMode();
       dashboard.setState({ editPanel: editScene });
 
-      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
-      editScene.commitChanges();
+      editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 
       const result = getDashboardChangesFromScene(dashboard, false, true);
       const panelSaveModel = result.changedSaveModel.panels![0];

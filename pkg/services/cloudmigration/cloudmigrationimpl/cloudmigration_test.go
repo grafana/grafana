@@ -58,76 +58,11 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = s.GetToken(context.Background())
-	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
+	assert.ErrorIs(t, err, cloudmigration.ErrTokenNotFound)
 
 	cm := cloudmigration.CloudMigrationSession{}
 	err = s.ValidateToken(context.Background(), cm)
 	assert.NoError(t, err)
-}
-
-func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
-	s := setUpServiceTest(t, true)
-
-	createTokenResp, err := s.CreateToken(context.Background())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, createTokenResp.Token)
-
-	cmd := cloudmigration.CloudMigrationSessionRequest{
-		AuthToken: createTokenResp.Token,
-	}
-
-	createResp, err := s.CreateSession(context.Background(), cmd)
-	require.NoError(t, err)
-	require.NotEmpty(t, createResp.UID)
-	require.NotEmpty(t, createResp.Slug)
-
-	getMigResp, err := s.GetSession(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.NotNil(t, getMigResp)
-	require.Equal(t, createResp.UID, getMigResp.UID)
-	require.Equal(t, createResp.Slug, getMigResp.Slug)
-
-	listResp, err := s.GetSessionList(context.Background())
-	require.NoError(t, err)
-	require.NotNil(t, listResp)
-	require.Equal(t, 1, len(listResp.Sessions))
-	require.Equal(t, createResp.UID, listResp.Sessions[0].UID)
-	require.Equal(t, createResp.Slug, listResp.Sessions[0].Slug)
-
-	runResp, err := s.RunMigration(ctxWithSignedInUser(), createResp.UID)
-	require.NoError(t, err)
-	require.NotNil(t, runResp)
-	resultItemsByType := make(map[string]int)
-	for _, item := range runResp.Items {
-		resultItemsByType[string(item.Type)] = resultItemsByType[string(item.Type)] + 1
-	}
-	require.Equal(t, 1, resultItemsByType["DASHBOARD"])
-	require.Equal(t, 2, resultItemsByType["DATASOURCE"])
-	require.Equal(t, 2, len(resultItemsByType))
-
-	runStatusResp, err := s.GetMigrationStatus(context.Background(), runResp.RunUID)
-	require.NoError(t, err)
-	require.Equal(t, runResp.RunUID, runStatusResp.UID)
-
-	listRunResp, err := s.GetMigrationRunList(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(listRunResp.Runs))
-	require.Equal(t, runResp.RunUID, listRunResp.Runs[0].RunUID)
-
-	/**
-	-- This is not working at the moment since it is a mix of old and new methods
-	will be fixed later when we clean the old functions and stick to the new ones.
-
-	delMigResp, err := s.DeleteSession(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.NotNil(t, createResp.UID, delMigResp.UID)
-
-	// after deleting the session, the snapshots and resources should not exist anymore.
-	// we check the snapshot for now
-	listRunResp2, err := s.GetMigrationRunList(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.Equal(t, 0, len(listRunResp2.Runs))
-	*/
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
@@ -278,6 +213,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
+					Name:   "A name",
 					Type:   cloudmigration.DatasourceDataType,
 					RefID:  "A",
 					Status: cloudmigration.ItemStatusError,
@@ -452,18 +388,21 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
+					Name:        "1 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "1", // this will be core
 					Status:      cloudmigration.ItemStatusOK,
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "2 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "2", // this will be non-core
 					Status:      cloudmigration.ItemStatusOK,
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "3 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "3", // this will be non-core with an error
 					Status:      cloudmigration.ItemStatusError,
@@ -471,6 +410,7 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "4 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "4", // this will be deleted
 					Status:      cloudmigration.ItemStatusOK,
@@ -677,7 +617,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 			featuremgmt.FlagDashboardRestore),
 		sqlStore,
 		dsService,
-		secretskv.NewFakeSQLSecretsKVStore(t),
+		secretskv.NewFakeSQLSecretsKVStore(t, sqlStore),
 		secretsService,
 		rr,
 		prometheus.DefaultRegisterer,
