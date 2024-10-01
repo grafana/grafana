@@ -643,6 +643,7 @@ export class PrometheusDatasource
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
+    const requestId = `[${this.uid}][${options.key}]`;
     if (config.featureToggles.promQLScope) {
       return (
         await this.languageProvider.fetchSuggestions(
@@ -650,9 +651,12 @@ export class PrometheusDatasource
           options.queries,
           options.scopes,
           options.filters,
-          options.key
+          options.key,
+          requestId
         )
-      ).map((k) => ({ value: k, text: k }));
+      )
+        .filter((v) => !!v)
+        .map((v) => ({ value: v, text: v }));
     }
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
@@ -664,7 +668,6 @@ export class PrometheusDatasource
     const expr = promQueryModeller.renderLabels(labelFilters);
 
     if (this.hasLabelsMatchAPISupport()) {
-      const requestId = `[${this.uid}][${options.key}]`;
       return (
         await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
       ).map((v) => ({

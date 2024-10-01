@@ -419,13 +419,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param scopes
    * @param adhocFilters
    * @param labelName
+   * @param requestId
    */
   fetchSuggestions = async (
     timeRange?: TimeRange,
     queries?: PromQuery[],
     scopes?: Scope[],
     adhocFilters?: AdHocVariableFilter[],
-    labelName?: string
+    labelName?: string,
+    requestId?: string
   ): Promise<string[]> => {
     if (timeRange) {
       this.timeRange = timeRange;
@@ -453,6 +455,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         ...timeParams,
       },
       {
+        ...(requestId && { requestId }),
         headers: {
           ...this.getDefaultCacheHeaders()?.headers,
           'Content-Type': 'application/json',
