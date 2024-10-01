@@ -1574,7 +1574,7 @@
     },
     "apps": {
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
-      "title": "Aplicaciones"
+      "title": ""
     },
     "authentication": {
       "title": "Autenticación"
