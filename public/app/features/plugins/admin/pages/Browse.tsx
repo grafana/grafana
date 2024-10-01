@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ReactElement, useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
@@ -7,7 +7,6 @@ import { locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { useSelector } from 'app/types';
@@ -21,7 +20,7 @@ import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
 import { useGetAll, useGetUpdatable, useIsRemotePluginsAvailable } from '../state/hooks';
 
-export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
+export default function Browse() {
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
   const navModel = useSelector((state) => getNavModel(state.navIndex, 'plugins'));

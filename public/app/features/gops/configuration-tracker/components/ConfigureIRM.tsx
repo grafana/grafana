@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconName, Text, useStyles2 } from '@grafana/ui';
@@ -13,6 +13,7 @@ import { useGetConfigurationForUI, useGetEssentialsConfiguration } from '../irmH
 
 import { ConfigCard } from './ConfigCard';
 import { Essentials } from './Essentials';
+
 export interface IrmCardConfiguration {
   id: number;
   title: string;
@@ -40,7 +41,7 @@ function useGetDataSourceConfiguration(): DataSourceConfigurationData {
 
 export function ConfigureIRM() {
   const styles = useStyles2(getStyles);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   // get all the configuration data
   const dataSourceConfigurationData = useGetDataSourceConfiguration();
@@ -72,9 +73,9 @@ export function ConfigureIRM() {
     switch (configID) {
       case ConfigurationStepsEnum.CONNECT_DATASOURCE:
         if (isDone) {
-          history.push(DATASOURCES_ROUTES.List);
+          navigate(DATASOURCES_ROUTES.List);
         } else {
-          history.push(DATASOURCES_ROUTES.New);
+          navigate(DATASOURCES_ROUTES.New);
         }
         break;
       case ConfigurationStepsEnum.ESSENTIALS:
