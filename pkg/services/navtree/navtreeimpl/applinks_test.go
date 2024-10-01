@@ -121,14 +121,14 @@ func TestAddAppLinks(t *testing.T) {
 		},
 	}
 
-	t.Run("Should move apps to Apps category", func(t *testing.T) {
+	t.Run("Should move apps to 'More apps' category", func(t *testing.T) {
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
-		require.Equal(t, "Apps", appsNode.Text)
+		require.Equal(t, "More apps", appsNode.Text)
 		require.Len(t, appsNode.Children, 3)
 		require.Equal(t, testApp1.Name, appsNode.Children[0].Text)
 	})
@@ -169,7 +169,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, treeRoot.Children, 2)
 		require.Equal(t, "plugin-page-test-app1", treeRoot.Children[0].Id)
 
-		// Check if it is not under the "Apps" section anymore
+		// Check if it is not under the "More apps" section anymore
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
 		require.Len(t, appsNode.Children, 2)
@@ -197,7 +197,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Len(t, adminNode.Children, 1)
 		require.Equal(t, "plugin-page-test-app1", adminNode.Children[0].Id)
 
-		// Check if it is not under the "Apps" section anymore
+		// Check if it is not under the "More apps" section anymore
 		appsNode := treeRoot.FindById(navtree.NavIDApps)
 		require.NotNil(t, appsNode)
 		require.Len(t, appsNode.Children, 2)

@@ -195,7 +195,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 		switch sectionID {
 		case navtree.NavIDApps:
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:       "Apps",
+				Text:       "More apps",
 				Icon:       "layer-group",
 				SubTitle:   "App plugins that extend the Grafana experience",
 				Id:         navtree.NavIDApps,
