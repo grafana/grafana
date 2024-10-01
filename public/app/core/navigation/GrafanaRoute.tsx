@@ -25,7 +25,7 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     updateBodyClassNames(props.route);
     cleanupDOM();
-    navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
+    navigationLogger('GrafanaRoute', false, 'Mounted', props.route);
 
     return () => {
       navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);
@@ -38,7 +38,7 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     cleanupDOM();
     reportPageview();
-    navigationLogger('GrafanaRoute', false, 'Updated', props);
+    navigationLogger('GrafanaRoute', false, 'Updated', props.route);
   });
 
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
