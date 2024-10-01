@@ -87,6 +87,8 @@ refs:
 
 Use contact points to select your preferred communication channel for receiving notifications when your alert rules are firing. You can add, edit, delete, export, and test a contact point.
 
+Testing a contact point is only available for Grafana Alertmanager.
+
 On the **Contact Points** tab, you can:
 
 - Search for name and type of contact points and integrations.
@@ -143,6 +145,8 @@ Complete the following steps to add templates to your contact point.
 1. Click **Save contact point**.
 
 ## Test a contact point
+
+** For Grafana Alertmanager only.**
 
 Complete the following steps to test a contact point.
 
