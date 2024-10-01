@@ -14,7 +14,8 @@ labels:
     - enterprise
     - oss
 title: Use images in notifications
-weight: 500
+menuTitle: Use images
+weight: 105
 ---
 
 # Use images in notifications

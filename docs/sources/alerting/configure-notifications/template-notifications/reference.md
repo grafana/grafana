@@ -13,11 +13,12 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Reference
-weight: 400
+title: Notification template reference
+menuTitle: Template reference
+weight: 102
 ---
 
-# Reference
+# Notification template reference
 
 ## Data
 

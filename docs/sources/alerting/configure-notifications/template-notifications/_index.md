@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Configure notification messages
+title: Template notifications
 weight: 430
 refs:
   use-notification-templates:
@@ -28,12 +28,12 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
   using-go-templating-language:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/templating-language/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/using-go-templating-language/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/templating-language/
 ---
 
-# Configure notification messages
+# Template notifications
 
 Customize the content of your notifications with notifications templates.
 

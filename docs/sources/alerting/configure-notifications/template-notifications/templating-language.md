@@ -1,7 +1,8 @@
 ---
 aliases:
   - ../../manage-notifications/template-notifications/using-go-templating-language/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/using-go-templating-language/
-canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/using-go-templating-language/
+  - ../../configure-notifications/template-notifications/using-go-templating-language/ # /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language/
+canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/templating-language/
 description: Use Go's templating language to create your own notification templates
 keywords:
   - grafana
@@ -14,14 +15,15 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Using Go's templating language
-weight: 100
+title: Go's templating language
+menuTitle: Templating language
+weight: 104
 refs:
   create-notification-templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
   extendeddata:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#extendeddata
@@ -34,7 +36,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
 ---
 
-# Using Go's templating language
+# Go's templating language
 
 You write notification templates in Go's templating language, [text/template](https://pkg.go.dev/text/template).
 
