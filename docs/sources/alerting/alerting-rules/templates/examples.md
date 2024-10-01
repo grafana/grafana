@@ -12,12 +12,12 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Templating labels and annotations in alert rules: examples and common use cases
+title: Examples of templating labels and annotations in alert rules
 menuTitle: Examples
 weight: 0
 ---
 
-# Templating labels and annotations in alert rules: examples and common use cases
+# Examples of templating labels and annotations in alert rules
 
 This document is a compilation of common use cases for templating labels and annotations within Grafana alert rules. Templating allows you to dynamically generate values for both labels and annotations, making your alerts more flexible and context-aware. By leveraging variables from your metrics, you can create more informative and actionable alerts that improve both routing and response times.
 
