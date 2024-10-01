@@ -173,9 +173,6 @@
       "save": "Ŝävę mūŧę ŧįmįŉģ",
       "saving": "Ŝävįŉģ mūŧę ŧįmįŉģ"
     },
-    "plugins": {
-      "managedBy": "mäŉäģęđ þy {{pluginName}}"
-    },
     "policies": {
       "default-policy": {
         "description": "Åľľ äľęřŧ įŉşŧäŉčęş ŵįľľ þę ĥäŉđľęđ þy ŧĥę đęƒäūľŧ pőľįčy įƒ ŉő őŧĥęř mäŧčĥįŉģ pőľįčįęş äřę ƒőūŉđ.",

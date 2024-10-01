@@ -173,9 +173,6 @@
       "save": "Save mute timing",
       "saving": "Saving mute timing"
     },
-    "plugins": {
-      "managedBy": "managed by {{pluginName}}"
-    },
     "policies": {
       "default-policy": {
         "description": "All alert instances will be handled by the default policy if no other matching policies are found.",
