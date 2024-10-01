@@ -61,6 +61,7 @@ func (is *indexServer) Init(ctx context.Context, rs *server) error {
 			},
 		},
 	}
+	// TODO: handle watch error
 	var err error
 	go func() {
 		err = rs.Watch(wr, is.ws)
