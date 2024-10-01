@@ -166,9 +166,21 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         </div>
         <div className={styles.trailList}>
           {recentExplorations &&
-            recentExplorations.map((recent, index) => {
+            recentExplorations.map((recent, index, total) => {
+              // debugger
+              // get the number of groups of 3
+              const groups = Math.floor(total.length / 3);
+              // get the perfect amount where there are no extra, no overages for groups
+              const perfectGrouping = groups * 3;
+              // get the position not in zero index;
+              const truePosition = index + 1;
+              // make sure this element is in the last extra group
+              const isInLastGroup = truePosition - (groups * 3) < 3 && truePosition - (groups * 3) >= 1;
+              // let the world know!
+              console.log("isInLastGroup", isInLastGroup, recent);
               return (
-                <div key={index} className={styles.trailCard}>
+                // when there is no remainder, use normal trailCard style
+                <div key={index} className={isInLastGroup ? styles.remainderTrailCard : styles.trailCard}>
                   <recent.Component model={recent} key={recent.state.key} />{' '}
                   {/* how we mount a scene inside of react */}
                 </div>
@@ -238,23 +250,17 @@ function getStyles(theme: GrafanaTheme2) {
       textAlign: 'center',
       marginBottom: '20px', // Add 20px space below the text, currently not working/being applied
     }),
-    newTrail: css({
-      height: 'auto',
-      justifyContent: 'center',
-      fontSize: theme.typography.h5.fontSize,
-    }),
     trailList: css({
       display: 'flex',
       flexWrap: 'wrap',
       gap: '31px',
       // flexDirection: 'column',
-      alignItems: 'center', // vertically center cards in their boxes
-      alignSelf: 'stretch', // not sure what this does
-      justifyContent: 'center',
+      alignItems: 'stretch', // vertically center cards in their boxes
+      // alignSelf: 'stretch', // not sure what this does
+      justifyContent: 'flex-start', // need to do flex-start so remainder trail cards align left
     }),
     trailCard: css({
-      flex: '1 1 25%', // unsure why 25% makes 3 columns
-      // flex: '1 1 calc(33.333% - 20px)',
+      flex: '1 1 32%', // unsure why 33% and over makes 2 columns, might need to come back to later
       boxSizing: 'border-box',
       width: '100%',
       minHeight: '151px',
@@ -265,6 +271,15 @@ function getStyles(theme: GrafanaTheme2) {
       // // flexDirection: 'columnOptionsTab',
       // alignItems: 'flex-start',
       // gap: 'var(--spacing-x0_5, 4px)',
+    }),
+    remainderTrailCard: css({
+      flex: '1 1 25%',
+      boxSizing: 'border-box',
+      maxWidth: '32%', // force the remainder cards to be 1/3 of the page max
+      minHeight: '151px',
+      maxHeight: '151px',
+      alignSelf: 'flex-start',
+      backgroundColor: 'red',
     }),
     verticalLine: css({
       borderLeft: `1px solid ${theme.colors.border.weak}`,

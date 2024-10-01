@@ -1,8 +1,11 @@
-import { dateTimeFormat } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, AdHocFiltersVariable, SceneObjectBase } from '@grafana/scenes';
 import { Card, Stack, Tag, IconButton, useStyles2 } from '@grafana/ui';
 
-import { getStyles } from './DataTrailCard';
+// import { getStyles } from './DataTrailCard';
+
 import { getDataSourceName } from './utils';
 
 type Filters = AdHocFiltersVariable['state']['filters']; // type is actually AdHocFilterWithLabels[]
@@ -78,4 +81,32 @@ function RecentExploration({ model }: Props) {
     </div>
     // REACH TODO: add sparklines
   );
+}
+
+export function getStyles(theme: GrafanaTheme2) {
+  return {
+    tag: css({
+      maxWidth: '260px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }),
+    card: css({
+      padding: theme.spacing(1),
+      height: '100%',
+    }),
+    secondary: css({
+      color: theme.colors.text.secondary,
+      fontSize: '12px',
+    }),
+    description: css({
+      width: '100%',
+      gridArea: 'Description',
+      margin: theme.spacing(1, 0, 0),
+      color: theme.colors.text.secondary,
+      lineHeight: theme.typography.body.lineHeight,
+    }),
+    actions: css({
+      marginRight: theme.spacing(1),
+    }),
+  };
 }
