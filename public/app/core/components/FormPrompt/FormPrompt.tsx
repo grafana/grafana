@@ -81,7 +81,7 @@ export const FormPrompt = ({ confirmRedirect, onDiscard, onLocationChange }: Pro
   return (
     <>
       <Prompt when={true} message={handleRedirect} />
-      {blockedLocation && changesDiscarded && <Navigate to={blockedLocation} />}
+      {blockedLocation && changesDiscarded && <Navigate replace to={blockedLocation} />}
       <UnsavedChangesModal isOpen={modalIsOpen} onDiscard={onDiscardChanges} onBackToForm={onBackToForm} />
     </>
   );

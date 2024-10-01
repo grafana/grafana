@@ -18,6 +18,7 @@ function RedirectToAddNewConnection() {
   const { search } = useLocation();
   return (
     <Navigate
+      replace
       to={{
         pathname: ROUTES.AddNewConnection,
         search,
@@ -41,7 +42,7 @@ export default function Connections() {
     >
       <Switch>
         {/* Redirect to "Add new connection" by default */}
-        <Route exact sensitive path={ROUTES.Base} component={() => <Navigate to={ROUTES.AddNewConnection} />} />
+        <Route exact sensitive path={ROUTES.Base} component={() => <Navigate replace to={ROUTES.AddNewConnection} />} />
         <Route exact sensitive path={ROUTES.DataSources} component={DataSourcesListPage} />
         <Route exact sensitive path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
         <Route exact sensitive path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
@@ -57,12 +58,12 @@ export default function Connections() {
         <Route exact path={ROUTES.ConnectDataOutdated} component={RedirectToAddNewConnection} />
         <Route
           path={`${ROUTES.Base}/your-connections/:page`}
-          component={() => <Navigate to={`${ROUTES.Base}/:page`} />}
+          component={() => <Navigate replace to={`${ROUTES.Base}/:page`} />}
         />
-        <Route path={ROUTES.YourConnectionsOutdated} component={() => <Navigate to={ROUTES.DataSources} />} />
+        <Route path={ROUTES.YourConnectionsOutdated} component={() => <Navigate replace to={ROUTES.DataSources} />} />
 
         {/* Not found */}
-        <Route component={() => <Navigate to="/notfound" />} />
+        <Route component={() => <Navigate replace to="/notfound" />} />
       </Switch>
     </DataSourcesRoutesContext.Provider>
   );
