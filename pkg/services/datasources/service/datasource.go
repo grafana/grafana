@@ -532,7 +532,9 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && !cmd.OnlyUpdateLBACRulesFromAPI {
 			s.logger.Warn("Overriding LBAC rules with stored ones. Use updateDatasourceLBACRules API to update team HTTP headers instead.")
 			previousRules := dataSource.JsonData.Get("teamHttpHeaders")
-			if previousRules != nil {
+			if previousRules == nil {
+				cmd.JsonData.Del("teamHttpHeaders")
+			} else {
 				cmd.JsonData.Set("teamHttpHeaders", previousRules)
 			}
 		}
