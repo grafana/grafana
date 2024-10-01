@@ -652,6 +652,7 @@ export class PrometheusDatasource
           options.scopes,
           options.filters,
           options.key,
+          undefined,
           requestId
         )
       )

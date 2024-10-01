@@ -419,6 +419,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param scopes
    * @param adhocFilters
    * @param labelName
+   * @param limit
    * @param requestId
    */
   fetchSuggestions = async (
@@ -427,6 +428,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     scopes?: Scope[],
     adhocFilters?: AdHocVariableFilter[],
     labelName?: string,
+    limit?: number,
     requestId?: string
   ): Promise<string[]> => {
     if (timeRange) {
@@ -452,6 +454,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
           value: filter.value,
           values: filter.values,
         })),
+        limit,
         ...timeParams,
       },
       {
