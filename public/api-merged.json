@@ -2600,6 +2600,12 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "name": "sort",
+            "in": "query"
           }
         ],
         "responses": {

@@ -216,6 +216,13 @@
       "badge-tooltip-provenance": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ vįä {{provenance}} äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ",
       "badge-tooltip-standard": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ"
     },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": "Ŧĥę şęľęčŧęđ qūęřįęş äŉđ ęχpřęşşįőŉş čäŉŉőŧ þę čőŉvęřŧęđ ŧő đęƒäūľŧ. Ĩƒ yőū đęäčŧįväŧę äđväŉčęđ őpŧįőŉş, yőūř qūęřy äŉđ čőŉđįŧįőŉ ŵįľľ þę řęşęŧ ŧő đęƒäūľŧ şęŧŧįŉģş."
+      },
+      "preview": "Přęvįęŵ",
+      "previewCondition": "Přęvįęŵ äľęřŧ řūľę čőŉđįŧįőŉ"
+    },
     "rule-groups": {
       "delete": {
         "success": "Ŝūččęşşƒūľľy đęľęŧęđ řūľę ģřőūp"
@@ -744,6 +751,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "Øpęŉ ĴŜØŃ ęđįŧőř",
+      "angular-deprecation-description": "Åŉģūľäř päŉęľş őpŧįőŉş čäŉ őŉľy þę ęđįŧęđ ūşįŉģ ŧĥę ĴŜØŃ ęđįŧőř.",
+      "angular-deprecation-heading": "Päŉęľ őpŧįőŉş"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1567,7 +1579,7 @@
     },
     "apps": {
       "subtitle": "Åpp pľūģįŉş ŧĥäŧ ęχŧęŉđ ŧĥę Ğřäƒäŉä ęχpęřįęŉčę",
-      "title": "Åppş"
+      "title": "Mőřę äppş"
     },
     "authentication": {
       "title": "Åūŧĥęŉŧįčäŧįőŉ"

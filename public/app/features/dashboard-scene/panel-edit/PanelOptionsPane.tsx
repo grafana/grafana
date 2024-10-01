@@ -8,8 +8,10 @@ import {
   isStandardFieldProp,
   PanelPluginMeta,
   restoreCustomOverrideRules,
+  PluginType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config, locationService } from '@grafana/runtime';
 import {
   DeepPartial,
   SceneComponentProps,
@@ -19,11 +21,15 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Button, Card, FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
+import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
+
+import { isUsingAngularPanelPlugin } from '../scene/angular/AngularDeprecation';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -82,13 +88,20 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     this.setState({ listMode });
   };
 
+  onOpenPanelJSON = (vizPanel: VizPanel) => {
+    locationService.partial({
+      inspect: vizPanel.state.key,
+      inspectTab: 'json',
+    });
+  };
+
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode, panelRef } = model.useState();
     const panel = panelRef.resolve();
     const { pluginId } = panel.useState();
     const { data } = sceneGraph.getData(panel).useState();
     const styles = useStyles2(getStyles);
-
+    const isAngularPanel = isUsingAngularPanelPlugin(panel);
     return (
       <>
         {!isVizPickerOpen && (
@@ -102,6 +115,39 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 onChange={model.onSetSearchQuery}
               />
             </div>
+            {isAngularPanel && (
+              <div className={styles.angularDeprecationContainer}>
+                <AngularDeprecationPluginNotice
+                  showPluginDetailsLink={true}
+                  pluginId={pluginId}
+                  pluginType={PluginType.panel}
+                  angularSupportEnabled={config?.angularSupportEnabled}
+                  interactionElementId="panel-options"
+                >
+                  <Card.Heading>
+                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-heading">Panel options</Trans>
+                  </Card.Heading>
+                  <Card.Description>
+                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-description">
+                      Angular panels options can only be edited using the JSON editor.
+                    </Trans>
+                  </Card.Description>
+                  <Card.Actions>
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      onClick={() => {
+                        model.onOpenPanelJSON(panel);
+                      }}
+                    >
+                      <Trans i18nKey="dashboards.panel-edit.angular-deprecation-button-open-panel-json">
+                        Open JSON editor
+                      </Trans>
+                    </Button>
+                  </Card.Actions>
+                </AngularDeprecationPluginNotice>
+              </div>
+            )}
             <div className={styles.listOfOptions}>
               <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
             </div>
@@ -145,6 +191,13 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rotateIcon: css({
       rotate: '180deg',
+    }),
+    angularDeprecationContainer: css({
+      label: 'angular-deprecation-container',
+      padding: theme.spacing(1),
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-end',
     }),
   };
 }

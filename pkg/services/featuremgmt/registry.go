@@ -1237,9 +1237,10 @@ var (
 		{
 			Name:         "notificationBanner",
 			Description:  "Enables the notification banner UI and API",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: false,
+			Expression:   "true",
 		},
 		{
 			Name:              "dashboardRestore",
@@ -1496,6 +1497,14 @@ var (
 			Description: "Enables the new role picker drawer design",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
+		},
+		{
+			Name:              "unifiedStorageSearch",
+			Description:       "Enable unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )
