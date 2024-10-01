@@ -467,8 +467,6 @@ service ResourceIndex {
 
   // Used for efficient provisioning
   rpc Origin(OriginRequest) returns (OriginResponse);
-
-  rpc Index(IndexRequest) returns (IndexResponse);
 }
 
 // Clients can use this service directly

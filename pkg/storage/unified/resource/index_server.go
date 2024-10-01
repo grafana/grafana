@@ -8,26 +8,27 @@ import (
 	"google.golang.org/grpc"
 )
 
-type indexServer struct {
+type IndexServer struct {
+	ResourceServer
 	s     *server
 	index *Index
 	ws    *indexWatchServer
 }
 
-func (is indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+func (is IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	res := &SearchResponse{}
 	return res, nil
 }
 
-func (is indexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
+func (is IndexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
 	return nil, nil
 }
 
-func (is indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
+func (is IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
 	return nil, nil
 }
 
-func (is *indexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
+func (is *IndexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
 	if req.Key == nil {
 		is.index = NewIndex(is.s, Opts{})
 		err := is.index.Init(ctx)
@@ -44,7 +45,7 @@ func (is *indexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResp
 	return nil, nil
 }
 
-func (is indexServer) Delete(ctx context.Context, uid string, key *ResourceKey) error {
+func (is IndexServer) Remove(ctx context.Context, uid string, key *ResourceKey) error {
 	err := is.index.Delete(ctx, uid, key)
 	if err != nil {
 		return err
@@ -55,7 +56,7 @@ func (is indexServer) Delete(ctx context.Context, uid string, key *ResourceKey) 
 // Init sets the resource server on the index server
 // so we can call the resource server from the index server
 // TODO: a chicken and egg problem - index server needs the resource server but the resource server is created with the index server
-func (is *indexServer) Init(ctx context.Context, rs *server) error {
+func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 	is.s = rs
 	is.ws = &indexWatchServer{
 		is:      is,
@@ -79,47 +80,39 @@ func (is *indexServer) Init(ctx context.Context, rs *server) error {
 }
 
 func NewResourceIndexServer() ResourceIndexServer {
-	return &indexServer{}
+	return &IndexServer{}
 }
 
 type ResourceIndexer interface {
-	ResourceIndexServer
-	Init(context.Context, *server) error
-	Delete(context.Context, string, *ResourceKey) error
+	Index(ctx context.Context) (*Index, error)
 }
 
 type indexWatchServer struct {
 	grpc.ServerStream
 	context context.Context
-	is      *indexServer
+	is      *IndexServer
 }
 
 func (f *indexWatchServer) Send(we *WatchEvent) error {
-	r, err := getResource(we.Resource.Value)
-	if err != nil {
-		return err
-	}
-
-	key := &ResourceKey{
-		Group:     getGroup(r),
-		Resource:  r.Kind,
-		Namespace: r.Metadata.Namespace,
-		Name:      r.Metadata.Name,
-	}
-
-	value := &ResourceWrapper{
-		ResourceVersion: we.Resource.Version,
-		Value:           we.Resource.Value,
-	}
-
-	index := f.is.s.index
-	indexer, ok := index.(ResourceIndexer)
-	if !ok {
-		return errors.New("index server does not implement ResourceIndexer")
-	}
-
+	index := f.Index()
 	if we.Type == WatchEvent_ADDED {
-		_, err = indexer.Index(f.context, &IndexRequest{Key: key, Value: value})
+		r, err := getResource(we.Resource.Value)
+		if err != nil {
+			return err
+		}
+
+		key := &ResourceKey{
+			Group:     getGroup(r),
+			Resource:  r.Kind,
+			Namespace: r.Metadata.Namespace,
+			Name:      r.Metadata.Name,
+		}
+
+		value := &ResourceWrapper{
+			ResourceVersion: we.Resource.Version,
+			Value:           we.Resource.Value,
+		}
+		err = index.Index(f.context, &Data{Key: key, Value: value})
 		if err != nil {
 			return err
 		}
@@ -127,8 +120,17 @@ func (f *indexWatchServer) Send(we *WatchEvent) error {
 	}
 
 	if we.Type == WatchEvent_DELETED {
-		we.GetType()
-		err = indexer.Delete(f.context, r.Metadata.Uid, key)
+		r, err := getResource(we.Previous.Value)
+		if err != nil {
+			return err
+		}
+		key := &ResourceKey{
+			Group:     getGroup(r),
+			Resource:  r.Kind,
+			Namespace: r.Metadata.Namespace,
+			Name:      r.Metadata.Name,
+		}
+		err = index.Delete(f.context, r.Metadata.Uid, key)
 		if err != nil {
 			return err
 		}
@@ -151,6 +153,10 @@ func (f *indexWatchServer) Context() context.Context {
 		f.context = context.Background()
 	}
 	return f.context
+}
+
+func (f *indexWatchServer) Index() *Index {
+	return f.is.index
 }
 
 type Data struct {

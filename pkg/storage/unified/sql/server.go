@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"errors"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -36,7 +37,11 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 			return nil, err
 		}
 		// initialze the search index
-		_, err = server.Index(ctx, &resource.IndexRequest{})
+		indexer, ok := server.(resource.ResourceIndexer)
+		if !ok {
+			return nil, errors.New("index server does not implement ResourceIndexer")
+		}
+		_, err = indexer.Index(ctx)
 		return server, err
 	}
 
