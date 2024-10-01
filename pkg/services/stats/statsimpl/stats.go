@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,12 +17,12 @@ import (
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func ProvideService(cfg *setting.Cfg, db *sqlstore.ReplStore) stats.Service {
+func ProvideService(cfg *setting.Cfg, db db.DB) stats.Service {
 	return &sqlStatsService{cfg: cfg, db: db}
 }
 
 type sqlStatsService struct {
-	db  *sqlstore.ReplStore
+	db  db.DB
 	cfg *setting.Cfg
 }
 
@@ -63,8 +62,8 @@ func notServiceAccount(dialect migrator.Dialect) string {
 }
 
 func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) (result *stats.SystemStats, err error) {
-	dialect := ss.db.ReadReplica().GetDialect()
-	err = ss.db.ReadReplica().WithDbSession(ctx, func(dbSession *db.Session) error {
+	dialect := ss.db.GetDialect()
+	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sb := &db.SQLBuilder{}
 		sb.Write("SELECT ")
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
@@ -149,8 +148,8 @@ func (ss *sqlStatsService) roleCounterSQL(ctx context.Context) string {
 }
 
 func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAdminStatsQuery) (result *stats.AdminStats, err error) {
-	err = ss.db.ReadReplica().WithDbSession(ctx, func(dbSession *db.Session) error {
-		dialect := ss.db.ReadReplica().GetDialect()
+	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		dialect := ss.db.GetDialect()
 		now := time.Now()
 		activeEndDate := now.Add(-activeUserTimeLimit)
 		dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)

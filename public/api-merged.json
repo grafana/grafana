@@ -16868,6 +16868,9 @@
         "message": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },
@@ -16886,7 +16889,8 @@
           "enum": [
             "DASHBOARD",
             "DATASOURCE",
-            "FOLDER"
+            "FOLDER",
+            "LIBRARY_ELEMENT"
           ]
         }
       }
