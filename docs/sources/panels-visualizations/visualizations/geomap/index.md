@@ -188,6 +188,14 @@ You might need to reload the dashboard for this feature to work.
 
 Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
 
+There are three options that you need to set for all maps:
+
+- [Layer type](#layer-type)
+- [Data](#data)
+- [Location mode](#location-mode)
+
+Other options are dependent on your map layer type.
+
 #### Layer type
 
 There are seven map layer types to choose from in a geomap.
@@ -225,6 +233,8 @@ To enable the experimental layers using Docker, run the following command:
 ```
 docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
 ```
+
+##### Layer controls
 
 The layer controls allow you to create layers, change their name, reorder and delete layers.
 
