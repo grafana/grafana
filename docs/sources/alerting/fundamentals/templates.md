@@ -17,7 +17,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Alert message templates
+title: Templates
 meta_image: /media/docs/alerting/how-notification-templates-works.png
 weight: 115
 refs:
@@ -53,7 +53,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates/
 ---
 
-# Alert message templates
+# Templates
 
 Use templating to customize, format, and reuse alert notification messages. Create more flexible and informative alert notification messages by incorporating dynamic content, such as metric values, labels, and other contextual information.
 
