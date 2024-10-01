@@ -22,7 +22,10 @@ import {
   trackUseSingleTemplateInInput,
 } from 'app/features/alerting/unified/Analytics';
 import { templatesApi } from 'app/features/alerting/unified/api/templateApi';
-import { useAlertmanagerConfig } from 'app/features/alerting/unified/hooks/useAlertmanagerConfig';
+import {
+  NotificationTemplate,
+  useNotificationTemplates,
+} from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { NotificationChannelOption } from 'app/types';
 
@@ -71,10 +74,10 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
 
 type TemplateFieldOption = 'Existing' | 'Custom';
 
-export function getTemplateOptions(templateFiles: Record<string, string>, defaultTemplates: Template[] = []) {
+export function getTemplateOptions(templateFiles: NotificationTemplate[], defaultTemplates: Template[] = []) {
   // Add default templates
   const templateMap = new Map<string, SelectableValue<Template>>();
-  Object.entries(templateFiles).forEach(([_, content]) => {
+  templateFiles.forEach(({ content }) => {
     const templates: Template[] = parseTemplates(content);
     templates.forEach((template) => {
       templateMap.set(template.name, {
@@ -122,14 +125,14 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   const [inputToUpdateCustom, setInputToUpdateCustom] = useState<string>(valueInForm);
 
   const { selectedAlertmanager } = useAlertmanager();
-  const { data, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data = [], error } = useNotificationTemplates({ alertmanager: selectedAlertmanager! });
   const { data: defaultTemplates } = useGetDefaultTemplatesQuery();
   const [templateOption, setTemplateOption] = useState<TemplateFieldOption>('Existing');
   const [_, copyToClipboard] = useCopyToClipboard();
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
-      label: 'Selecting existing template',
+      label: 'Select existing template',
       value: 'Existing',
       description: `Select a single template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save will save your changes to the selected template.' : ''}`,
     },
@@ -158,7 +161,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     if (!defaultTemplates) {
       return [];
     }
-    return getTemplateOptions(data?.template_files ?? {}, defaultTemplates);
+    return getTemplateOptions(data, defaultTemplates);
   }, [data, defaultTemplates]);
 
   // if we are using only one template, we should settemplate to that template
@@ -199,12 +202,15 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
           <Stack direction="column" gap={1}>
             <Stack direction="row" gap={1} alignItems="center">
               <Select<Template>
-                aria-label="Template"
+                placeholder="Choose template"
+                aria-label="Choose template"
                 onChange={(value: SelectableValue<Template>, _) => {
+                  console.log('change');
                   setTemplate(value?.value);
                 }}
                 options={options}
                 width={50}
+                isOpen
                 value={template ? { label: template.name, value: template } : undefined}
               />
               <IconButton
