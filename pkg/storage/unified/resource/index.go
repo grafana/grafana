@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
@@ -33,12 +34,6 @@ func NewIndex(s *server, opts Opts) *Index {
 }
 
 func (i *Index) Init(ctx context.Context) error {
-	// TODO: maybe but we know this is slower
-	// if opts.InMemory {
-	// 	index := createInMemoryIndex()
-	// 	return index, nil
-	// }
-
 	// TODO: configure resources to index in ini file?
 	r := &ListRequest{Options: &ListOptions{
 		Key: &ResourceKey{
@@ -55,28 +50,15 @@ func (i *Index) Init(ctx context.Context) error {
 	for _, obj := range list.Items {
 		// example resource
 		//{"kind":"Playlist","apiVersion":"playlist.grafana.app/v0alpha1","metadata":{"name":"xkhv8h","namespace":"default","uid":"9972273d-7fb2-4977-91b7-15501d52cb95","creationTimestamp":"2024-09-24T15:54:09Z","labels":{"foo":"bar"},"annotations":{"grafana.app/createdBy":"user:edxplq00uoi68d","grafana.app/slug":"slugger"},"managedFields":[{"manager":"kubectl-create","operation":"Update","apiVersion":"playlist.grafana.app/v0alpha1","time":"2024-09-24T15:54:09Z","fieldsType":"FieldsV1","fieldsV1":{"f:metadata":{"f:annotations":{".":{},"f:grafana.app/slug":{},"f:grafana.app/updatedBy":{}},"f:generateName":{},"f:labels":{".":{},"f:foo":{}}},"f:spec":{"f:interval":{},"f:items":{},"f:title":{}}}}]},"spec":{"interval":"5m","items":[{"type":"dashboard_by_tag","value":"panel-tests"},{"type":"dashboard_by_uid","value":"vmie2cmWz"}],"title":"Playlist with auto generated UID"},"status":{}}
-		res := &Resource{}
-		err := json.Unmarshal(obj.Value, res)
+		res, err := getResource(obj.Value)
 		if err != nil {
 			return err
 		}
-		// TODO: how to get tenant?
-		tenant := tenant(res)
-		shard, ok := i.shards[tenant]
-		if !ok {
-			index, path, err := createFileIndex()
-			if err != nil {
-				return err
-			}
 
-			shard = Shard{
-				index: index,
-				path:  path,
-				batch: index.NewBatch(),
-			}
-			i.shards[tenant] = shard
+		shard, err := i.getShard(tenant(res))
+		if err != nil {
+			return err
 		}
-
 		err = shard.batch.Index(res.Metadata.Uid, obj)
 		if err != nil {
 			return err
@@ -94,13 +76,25 @@ func (i *Index) Init(ctx context.Context) error {
 	return nil
 }
 
-// TODO: how to get tenant?
-func tenant(res *Resource) string {
-	tenant, ok := res.Metadata.Annotations["grafana.app/slug"]
-	if !ok {
-		tenant = "default"
+func (i *Index) Index(ctx context.Context, data *Data) error {
+	res, err := getResource(data.Value.Value)
+	if err != nil {
+		return err
 	}
-	return tenant
+	tenant := tenant(res)
+	shard, err := i.getShard(tenant)
+	if err != nil {
+		return err
+	}
+	err = shard.index.Index(res.Metadata.Uid, data.Value.Value)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func tenant(res *Resource) string {
+	return res.Metadata.Namespace
 }
 
 type Metadata struct {
@@ -145,28 +139,17 @@ type K8sObject struct {
 type Opts struct {
 	Workers    int // This controls how many goroutines are used to index objects
 	BatchSize  int // This is the batch size for how many objects to add to the index at once
-	InMemory   bool
 	Concurrent bool
 }
 
 func createFileIndex() (bleve.Index, string, error) {
-	indexPath := os.TempDir() + uuid.New().String() + ".bleve"
+	indexPath := fmt.Sprintf("%s%s.bleve", os.TempDir(), uuid.New().String())
 	index, err := bleve.New(indexPath, createIndexMappings())
 	if err != nil {
 		log.Fatalf("Failed to create index: %v", err)
 	}
 	return index, indexPath, err
 }
-
-// TODO: maybe but we know this is slower
-// func createInMemoryIndex() *bleve.Index {
-// 	index, err := bleve.NewMemOnly(createIndexMappings())
-// 	if err != nil {
-// 		log.Fatalf("Failed to create index: %v", err)
-// 	}
-
-// 	return &index
-// }
 
 func createIndexMappings() *mapping.IndexMappingImpl {
 	// Define field mappings for specific fields
@@ -197,4 +180,33 @@ func createIndexMappings() *mapping.IndexMappingImpl {
 	indexMapping.DefaultMapping.Dynamic = false
 
 	return indexMapping
+}
+
+func getResource(data []byte) (*Resource, error) {
+	res := &Resource{}
+	err := json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (i *Index) getShard(tenant string) (Shard, error) {
+	shard, ok := i.shards[tenant]
+	if ok {
+		return shard, nil
+	}
+	index, path, err := createFileIndex()
+	if err != nil {
+		return Shard{}, err
+	}
+
+	shard = Shard{
+		index: index,
+		path:  path,
+		batch: index.NewBatch(),
+	}
+	// TODO: do we need to lock this?
+	i.shards[tenant] = shard
+	return shard, nil
 }

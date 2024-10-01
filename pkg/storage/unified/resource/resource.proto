@@ -451,8 +451,10 @@ message IndexResponse {
 }
 
 message IndexRequest {
-  // The resource
+  // The resource key
   ResourceKey key = 1;
+  // The resource value
+  ResourceWrapper value = 2;
 }
 
 // Unlike the ResourceStore, this service can be exposed to clients directly

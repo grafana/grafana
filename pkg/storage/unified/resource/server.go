@@ -632,7 +632,10 @@ func (s *server) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, 
 	if !ok {
 		return nil, fmt.Errorf("indexer not initializable - doeesn't implement ResourceIndexer interface")
 	}
-	indexer.Init(s)
+	err := indexer.Init(ctx, s)
+	if err != nil {
+		return nil, err
+	}
 	return s.index.Index(ctx, req)
 }
 
