@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
@@ -64,7 +63,6 @@ type Plugin struct {
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
 	log            log.Logger
-	trace          tracing.Tracer
 
 	SkipHostEnvVars bool
 
@@ -272,14 +270,6 @@ func (p *Plugin) PluginID() string {
 
 func (p *Plugin) Logger() log.Logger {
 	return p.log
-}
-
-func (p *Plugin) Tracer() tracing.Tracer {
-	return p.trace
-}
-
-func (p *Plugin) SetTracer(t tracing.Tracer) {
-	p.trace = t
 }
 
 func (p *Plugin) SetLogger(l log.Logger) {

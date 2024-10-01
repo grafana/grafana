@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -21,20 +22,22 @@ type BackendClientInit struct {
 	envVarProvider  envvars.Provider
 	backendProvider plugins.BackendFactoryProvider
 	log             log.Logger
+	tracer          tracing.Tracer
 }
 
 // BackendClientInitStep returns a new InitializeFunc for registering a backend plugin process.
 func BackendClientInitStep(envVarProvider envvars.Provider,
-	backendProvider plugins.BackendFactoryProvider) InitializeFunc {
-	return newBackendProcessRegistration(envVarProvider, backendProvider).Initialize
+	backendProvider plugins.BackendFactoryProvider, tracer tracing.Tracer) InitializeFunc {
+	return newBackendProcessRegistration(envVarProvider, backendProvider, tracer).Initialize
 }
 
 func newBackendProcessRegistration(envVarProvider envvars.Provider,
-	backendProvider plugins.BackendFactoryProvider) *BackendClientInit {
+	backendProvider plugins.BackendFactoryProvider, tracer tracing.Tracer) *BackendClientInit {
 	return &BackendClientInit{
 		backendProvider: backendProvider,
 		envVarProvider:  envVarProvider,
 		log:             log.New("plugins.backend.registration"),
+		tracer:          tracer,
 	}
 }
 
@@ -49,7 +52,7 @@ func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (
 		// this will ensure that the env variables are calculated every time a plugin is started
 		envFunc := func() []string { return b.envVarProvider.PluginEnvVars(ctx, p) }
 
-		if backendClient, err := backendFactory(p.ID, p.Logger(), p.Tracer(), envFunc); err != nil {
+		if backendClient, err := backendFactory(p.ID, p.Logger(), b.tracer, envFunc); err != nil {
 			return nil, err
 		} else {
 			p.RegisterClient(backendClient)
