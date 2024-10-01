@@ -63,6 +63,11 @@ function splitQueriesByStreamShard(
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, cycle: number, shardRequests: number[][]) => {
+    if (subquerySubscription != null) {
+      subquerySubscription.unsubscribe();
+      subquerySubscription = null;
+    }
+
     if (shouldStop) {
       subscriber.complete();
       return;
@@ -100,6 +105,7 @@ function splitQueriesByStreamShard(
         () => {
           console.log(`Retrying ${cycle} (${retries + 1})`);
           runNextRequest(subscriber, cycle, shardRequests);
+          retryTimer = null;
         },
         1500 * Math.pow(2, retries)
       ); // Exponential backoff
@@ -182,8 +188,12 @@ function splitQueriesByStreamShard(
       });
     return () => {
       shouldStop = true;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
       if (subquerySubscription != null) {
         subquerySubscription.unsubscribe();
+        subquerySubscription = null;
       }
     };
   });
