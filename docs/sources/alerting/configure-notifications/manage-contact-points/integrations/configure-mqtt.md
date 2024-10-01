@@ -33,6 +33,9 @@ To configure the MQTT integration for Alerting, complete the following steps.
 1. Enter the MQTT topic name in the **Topic** field.
 1. In **Optional MQTT settings**, specify additional settings for the MQTT integration if needed.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
    A test alert notification should be sent to the MQTT broker.
 1. Click **Save** contact point.
 

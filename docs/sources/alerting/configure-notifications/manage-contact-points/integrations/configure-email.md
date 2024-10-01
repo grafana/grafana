@@ -64,6 +64,8 @@ For Grafana OSS, you enable email notifications by first configuring [SMTP setti
 
 1. Test email notifications.
 
+   ** For Grafana Alertmanager only.**
+
    After restarting Grafana, test the email notification functionality by creating an email contact point.
 
 ## Procedure
