@@ -237,6 +237,14 @@ type PostableRuleGroupConfig struct {
 	Name     string                     `yaml:"name" json:"name"`
 	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
 	Rules    []PostableExtendedRuleNode `yaml:"rules" json:"rules"`
+
+	// fields below are used by Mimir/Loki rulers
+
+	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
 }
 
 func (c *PostableRuleGroupConfig) UnmarshalJSON(b []byte) error {
@@ -275,15 +283,26 @@ func (c *PostableRuleGroupConfig) validate() error {
 	if hasGrafRules && hasLotexRules {
 		return fmt.Errorf("cannot mix Grafana & Prometheus style rules")
 	}
+
+	if hasGrafRules && (len(c.SourceTenants) > 0 || c.EvaluationDelay != nil || c.QueryOffset != nil || c.AlignEvaluationTimeOnInterval || c.Limit > 0) {
+		return fmt.Errorf("fields source_tenants, evaluation_delay, query_offset, align_evaluation_time_on_interval and limit are not supported for Grafana rules")
+	}
 	return nil
 }
 
 // swagger:model
 type GettableRuleGroupConfig struct {
-	Name          string                     `yaml:"name" json:"name"`
-	Interval      model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
-	SourceTenants []string                   `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
-	Rules         []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+	Name     string                     `yaml:"name" json:"name"`
+	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Rules    []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+
+	// fields below are used by Mimir/Loki rulers
+
+	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
 }
 
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
