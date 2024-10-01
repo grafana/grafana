@@ -41,7 +41,7 @@ const injectedRtkApi = api.injectEndpoints({
     getShapshotList: build.query<GetShapshotListApiResponse, GetShapshotListApiArg>({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshots`,
-        params: { page: queryArg.page, limit: queryArg.limit },
+        params: { page: queryArg.page, limit: queryArg.limit, sort: queryArg.sort },
       }),
     }),
     getCloudMigrationToken: build.query<GetCloudMigrationTokenApiResponse, GetCloudMigrationTokenApiArg>({
