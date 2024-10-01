@@ -42,7 +42,8 @@ To create your Amazon SNS integration in Grafana Alerting, complete the followin
 1. Copy in the URL from above into the **The Amazon SNS API URL** field.
 1. Click **Test** to check that your integration works.
 
-    ** For Grafana Alertmanager only.**
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps

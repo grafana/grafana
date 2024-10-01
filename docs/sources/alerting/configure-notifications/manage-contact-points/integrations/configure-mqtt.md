@@ -37,6 +37,7 @@ To configure the MQTT integration for Alerting, complete the following steps.
    ** For Grafana Alertmanager only.**
 
    A test alert notification should be sent to the MQTT broker.
+
 1. Click **Save** contact point.
 
 The integration sends data in JSON format by default. You can change that using **Message format** field in the **Optional MQTT settings** section. There are two supported formats:

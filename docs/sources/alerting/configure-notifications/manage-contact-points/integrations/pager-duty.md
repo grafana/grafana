@@ -59,7 +59,7 @@ To create your PagerDuty integration in Grafana Alerting, complete the following
 
 ** For Grafana Alertmanager only.**
 
-   An incident should display in the Service’s Activity tab in PagerDuty.
+An incident should display in the Service’s Activity tab in PagerDuty.
 
 1. Click **Save contact point**.
 

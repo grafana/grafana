@@ -41,7 +41,7 @@ To create your Google Chat integration in Grafana Alerting, complete the followi
 
 ** For Grafana Alertmanager only.**
 
-   A test alert notification should be sent to the Google Chat space that you associated with the Webhook.
+A test alert notification should be sent to the Google Chat space that you associated with the Webhook.
 
 1. Click **Save contact point**.
 

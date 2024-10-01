@@ -47,6 +47,7 @@ To create your MS Teams integration in Grafana Alerting, complete the following 
    ** For Grafana Alertmanager only.**
 
    A test alert notification should be sent to the MS Team channel.
+
 1. Click **Save** contact point.
 
 ## Next steps
