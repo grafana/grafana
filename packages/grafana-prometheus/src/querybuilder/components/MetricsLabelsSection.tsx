@@ -243,7 +243,7 @@ async function getMetrics(
     const expr = promQueryModeller.renderLabels(query.labels);
     metrics = (await datasource.languageProvider.getSeries(expr, true))['__name__'] ?? [];
   } else {
-    metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
+    metrics = (await datasource.languageProvider.getLabelValues('__name__', true)) ?? [];
   }
 
   return metrics.map((m) => ({

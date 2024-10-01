@@ -8,6 +8,7 @@ import {
   AbstractQuery,
   getDefaultTimeRange,
   LanguageProvider,
+  MetricFindValue,
   TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
@@ -136,6 +137,37 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return Promise.all([this.loadMetricsMetadata(), this.fetchLabels()]);
   };
 
+  /**
+   * Only used for getting metrics from a data source that
+   * supports the match[] parameter
+   * where we can get a list of metrics based on user input
+   * that is passed to the label values endpoint
+   * with the extra param to match on series that contain the input
+   * as regex for the __name__ label
+   *
+   * Also takes a limit param to limit the number of metrics returned
+   *
+   * @param metricRegex
+   * @param limit
+   * @returns
+   */
+  async getLimitedMetrics(metricRegex: string): Promise<string[]> {
+    const limit = this.datasource.metricNamesAutocompleteSuggestionLimit.toString();
+
+    const options = {
+      key: '__name__',
+      filters: [{ key: '__name__', value: '.*' + metricRegex + '.*', operator: '=~' }],
+      limit,
+    };
+    const metricNames = await this.datasource.getTagValues(options);
+    // metrics should only be strings but MetricFindValue from getTagKeys is a (string|number|undefined)
+    if (metricNames.every((el: MetricFindValue) => typeof el.value === 'string')) {
+      return metricNames.map((m: { text: string }) => m.text);
+    }
+
+    return [];
+  }
+
   async loadMetricsMetadata() {
     const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * secondsInDay);
     this.metricsMetadata = fixSummariesMetadata(
@@ -199,18 +231,43 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   /**
+   * Used to fetch label values and to fetch metrics with the label key __name__
+   * Used in
+   * - languageProvider.start()
+   * - languageProvider.getLabelValues()
+   * - languageProvider.fetchDefaultSeries()
+   *
    * @param key
    */
-  fetchLabelValues = async (key: string): Promise<string[]> => {
-    const params = this.datasource.getAdjustedInterval(this.timeRange);
+  fetchLabelValues = async (key: string, fromQueryBuilder?: boolean): Promise<string[]> => {
+    let params: UrlParamsType = this.datasource.getAdjustedInterval(this.timeRange);
+
+    // Do not limit the query builder metric suggestions
+    // Limit metrics from the code editor and metrics browser
+    // metric names come from the label __name__
+    if (!fromQueryBuilder && this.datasource.metricNamesAutocompleteSuggestionLimit && key === '__name__') {
+      const limit = this.datasource.metricNamesAutocompleteSuggestionLimit.toString();
+      // add limit to the params
+      params = { ...params, limit };
+    }
+
     const interpolatedName = this.datasource.interpolateString(key);
     const url = `/api/v1/label/${interpolatedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
     return value ?? [];
   };
 
-  async getLabelValues(key: string): Promise<string[]> {
-    return await this.fetchLabelValues(key);
+  /**
+   * This function is used to retrieve label values in completions.ts in Monaco editor
+   * and used for general label values in the query builder
+   * Extra: it is also used in the query builder to load initial metrics when there are no label filters
+   *
+   * @param key
+   * @param fromQueryBuilder
+   * @returns
+   */
+  async getLabelValues(key: string, fromQueryBuilder?: boolean): Promise<string[]> {
+    return await this.fetchLabelValues(key, fromQueryBuilder);
   }
 
   /**
@@ -266,6 +323,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   /**
    * Fetches all values for a label, with optional match[]
+   * Used in the following locations
+   * - datasource.getTagValues() for adhoc label values and metrics here languageProvider.getLimitedMetrics which calls getTagValues()
+   * - languageProvider.getSeriesValues()
+   * - MetricsLabelsSection.tsx, getLabelValuesFromLabelValuesAPI() for labels
+   *
    * @param name
    * @param match
    * @param timeRange
@@ -280,10 +342,17 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
     const range = this.datasource.getAdjustedInterval(timeRange);
-    const urlParams = {
+    let urlParams: UrlParamsType = {
       ...range,
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
     };
+
+    // only use the limit if calling for metrics and the limit has been set in the config
+    if (this.datasource.metricNamesAutocompleteSuggestionLimit && interpolatedName === '__name__') {
+      const limit = this.datasource.metricNamesAutocompleteSuggestionLimit.toString();
+      urlParams = { ...urlParams, limit };
+    }
+
     let requestOptions: Partial<BackendSrvRequest> | undefined = {
       ...this.getDefaultCacheHeaders(),
       ...(requestId && { requestId }),
