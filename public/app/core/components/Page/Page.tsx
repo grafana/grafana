@@ -1,5 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { useLayoutEffect } from 'react';
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -17,6 +26,35 @@ import { PageType } from './types';
 import { usePageNav } from './usePageNav';
 import { usePageTitle } from './usePageTitle';
 
+export interface PageContextType {
+  setToolbar: Dispatch<SetStateAction<ReactNode>>;
+}
+
+export const PageContext = createContext<PageContextType | undefined>(undefined);
+
+function usePageContext(): PageContextType {
+  const context = useContext(PageContext);
+  if (!context) {
+    throw new Error('No PageContext found');
+  }
+  return context;
+}
+
+/**
+ * Hook to dynamically set the toolbar of a Page from a child component.
+ * Prefer setting the toolbar directly as a prop to Page.
+ * @param toolbar a ReactNode that will be rendered in a second toolbar
+ */
+export function usePageToolbar(toolbar?: ReactNode) {
+  const { setToolbar } = usePageContext();
+  useEffect(() => {
+    setToolbar((existingToolbar) => {
+      return existingToolbar !== toolbar ? toolbar : existingToolbar;
+    });
+    return () => setToolbar(undefined);
+  }, [setToolbar, toolbar]);
+}
+
 export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
@@ -27,13 +65,14 @@ export const Page: PageType = ({
   subTitle,
   children,
   className,
-  toolbar,
+  toolbar: toolbarProp,
   info,
   layout = PageLayoutType.Standard,
   onSetScrollRef,
   ...otherProps
 }) => {
   const isSingleTopNav = config.featureToggles.singleTopNav;
+  const [toolbar, setToolbar] = useState(toolbarProp);
   const styles = useStyles2(getStyles, Boolean(isSingleTopNav && toolbar));
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
@@ -55,43 +94,45 @@ export const Page: PageType = ({
   }, [navModel, pageNav, chrome, layout]);
 
   return (
-    <div className={cx(styles.wrapper, className)} {...otherProps}>
-      {isSingleTopNav && toolbar && <PageToolbarActions>{toolbar}</PageToolbarActions>}
-      {layout === PageLayoutType.Standard && (
-        <NativeScrollbar
-          // This id is used by the image renderer to scroll through the dashboard
-          divId="page-scrollbar"
-          onSetScrollRef={onSetScrollRef}
-        >
-          <div className={styles.pageInner}>
-            {pageHeaderNav && (
-              <PageHeader
-                actions={actions}
-                onEditTitle={onEditTitle}
-                navItem={pageHeaderNav}
-                renderTitle={renderTitle}
-                info={info}
-                subTitle={subTitle}
-              />
-            )}
-            {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-            <div className={styles.pageContent}>{children}</div>
-          </div>
-        </NativeScrollbar>
-      )}
+    <PageContext.Provider value={{ setToolbar }}>
+      <div className={cx(styles.wrapper, className)} {...otherProps}>
+        {isSingleTopNav && toolbar && <PageToolbarActions>{toolbar}</PageToolbarActions>}
+        {layout === PageLayoutType.Standard && (
+          <NativeScrollbar
+            // This id is used by the image renderer to scroll through the dashboard
+            divId="page-scrollbar"
+            onSetScrollRef={onSetScrollRef}
+          >
+            <div className={styles.pageInner}>
+              {pageHeaderNav && (
+                <PageHeader
+                  actions={actions}
+                  onEditTitle={onEditTitle}
+                  navItem={pageHeaderNav}
+                  renderTitle={renderTitle}
+                  info={info}
+                  subTitle={subTitle}
+                />
+              )}
+              {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
+              <div className={styles.pageContent}>{children}</div>
+            </div>
+          </NativeScrollbar>
+        )}
 
-      {layout === PageLayoutType.Canvas && (
-        <NativeScrollbar
-          // This id is used by the image renderer to scroll through the dashboard
-          divId="page-scrollbar"
-          onSetScrollRef={onSetScrollRef}
-        >
-          <div className={styles.canvasContent}>{children}</div>
-        </NativeScrollbar>
-      )}
+        {layout === PageLayoutType.Canvas && (
+          <NativeScrollbar
+            // This id is used by the image renderer to scroll through the dashboard
+            divId="page-scrollbar"
+            onSetScrollRef={onSetScrollRef}
+          >
+            <div className={styles.canvasContent}>{children}</div>
+          </NativeScrollbar>
+        )}
 
-      {layout === PageLayoutType.Custom && children}
-    </div>
+        {layout === PageLayoutType.Custom && children}
+      </div>
+    </PageContext.Provider>
   );
 };
 
