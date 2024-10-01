@@ -570,6 +570,9 @@ geomap_default_baselayer = `{
 
 - **esri-xyz** loads the ESRI tile server. There are already multiple server instances implemented to show the various map styles: `world-imagery`, `world-physical`, `topo`, `usa-topo`, and `ocean`. The `custom` server option allows you to configure your own ArcGIS map server. Here are some examples:
 
+{{< tabs >}}
+{{< tab-content name="World imagery" >}}
+
 ```ini
 geomap_default_baselayer = `{
   "type": "esri-xyz",
@@ -578,6 +581,9 @@ geomap_default_baselayer = `{
   }
 }`
 ```
+
+{{< /tab-content >}}
+{{< tab-content name="Custom" >}}
 
 ```ini
 geomap_default_baselayer = `{
@@ -589,6 +595,9 @@ geomap_default_baselayer = `{
   }
 }`
 ```
+
+{{< /tab-content >}}
+{{< /tabs >}}
 
 - **osm-standard** loads the OpenStreetMap tile server. There are no additional configurations needed and the `config` fields can be left blank. Here is an example:
 
