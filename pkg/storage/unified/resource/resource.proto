@@ -329,7 +329,7 @@ message SearchRequest {
 }
 
 message SearchResponse {
-  repeated ResourceWrapper items = 1;
+  repeated bytes searchSummaries = 1;
 }
 
 message HistoryRequest {

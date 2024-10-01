@@ -57,7 +57,7 @@ func (i *Index) Init(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		err = shard.batch.Index(res.Metadata.Uid, obj)
+		err = shard.batch.Index(res.Metadata.Uid, res)
 		if err != nil {
 			return err
 		}
@@ -84,7 +84,7 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	if err != nil {
 		return err
 	}
-	err = shard.index.Index(res.Metadata.Uid, data.Value.Value)
+	err = shard.index.Index(res.Metadata.Uid, res)
 	if err != nil {
 		return err
 	}
@@ -137,23 +137,28 @@ func createFileIndex() (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
-// TODO: clean this up.  it was copied from owens performance test
+// This only index common fields: Kind, Name, and CreationTimestamp
+// The casing of the fields is important, it should match the casing of the fields in the struct that are indexed
 func createIndexMappings() *mapping.IndexMappingImpl {
 	//Create mapping for the name and creationTimestamp fields in the metadata
 	nameFieldMapping := bleve.NewTextFieldMapping()
+	nameFieldMapping.Store = true
 	creationTimestampFieldMapping := bleve.NewDateTimeFieldMapping()
+	creationTimestampFieldMapping.Store = true
 	metaMapping := bleve.NewDocumentMapping()
-	metaMapping.AddFieldMappingsAt("name", nameFieldMapping)
-	metaMapping.AddFieldMappingsAt("creationTimestamp", creationTimestampFieldMapping)
+	metaMapping.AddFieldMappingsAt("Name", nameFieldMapping)
+	metaMapping.AddFieldMappingsAt("CreationTimestamp", creationTimestampFieldMapping)
 	metaMapping.Dynamic = false
 
 	//Create a sub-document mapping for the metadata field
 	objectMapping := bleve.NewDocumentMapping()
-	objectMapping.AddSubDocumentMapping("metadata", metaMapping)
+	objectMapping.AddSubDocumentMapping("Metadata", metaMapping)
+	objectMapping.Dynamic = false
 
 	// Map top level fields - just kind for now
 	kindFieldMapping := bleve.NewTextFieldMapping()
-	objectMapping.AddFieldMappingsAt("kind", kindFieldMapping)
+	kindFieldMapping.Store = true
+	objectMapping.AddFieldMappingsAt("Kind", kindFieldMapping)
 	objectMapping.Dynamic = false
 
 	// Create the index mapping

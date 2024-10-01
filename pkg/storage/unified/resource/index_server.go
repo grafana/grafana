@@ -2,9 +2,12 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
+	"github.com/blevesearch/bleve/v2"
 	"google.golang.org/grpc"
 )
 
@@ -14,9 +17,47 @@ type indexServer struct {
 	ws    *indexWatchServer
 }
 
+/*
+TODO
+1. Does the client only provide a bleve query string?
+2. What SearchRequest fields do we need to fill in?
+3. What are sensible defaults? Size? Sorting? Fields?
+4. Response items are showing as base64 encoded JSON. Is this expected?
+5. How do we get the tenant?
+*/
 func (is indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	res := &SearchResponse{}
-	return res, nil
+	fmt.Println(req.Query)
+
+	// TODO how do we get tenant?
+	tenant := "default"
+	tenantIndex := is.index.shards[tenant].index
+
+	// assume the query is a bleve query string for now
+	//query := bleve.NewQueryStringQuery(req.Query)
+	query := bleve.NewMatchAllQuery()
+	searchReq := bleve.SearchRequest{Query: query, Size: 100, Fields: []string{"Kind", "Metadata.CreationTimestamp"}}
+
+	res, err := tenantIndex.Search(&searchReq)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchResponse{}
+	response.SearchSummaries = make([][]byte, len(res.Hits))
+	for i, hit := range res.Hits {
+		// create a summary
+		summary := map[string]interface{}{}
+		summary["Kind"] = hit.Fields["Kind"]
+		summary["CreationTimestamp"] = hit.Fields["Metadata.CreationTimestamp"]
+		// marshal the summary and append it to response results
+		jsonBytes, err := json.Marshal(summary)
+		if err != nil {
+			return nil, err
+		}
+		response.SearchSummaries[i] = jsonBytes
+	}
+
+	return response, nil
 }
 
 func (is indexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
