@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/reference/
-description: Lorem Ipsum
+description: Reference for variables and functions in Grafana alert rule templating.
 keywords:
   - grafana
   - alerting
@@ -12,9 +12,9 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Annotation and label template reference
+title: Alert rule templating reference
 menuTitle: Template reference
-weight: 101
+weight: 0
 refs:
   print-all-labels-from-a-classic-condition:
     - pattern: /docs/grafana/
@@ -23,9 +23,25 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/examples/#print-all-labels-from-a-classic-condition
 ---
 
-# Annotation and label template reference
+# Alert rule templating reference
+
+## Variables vs Functions
+
+Variables and functions serve distinct roles in Grafana alert templating. Variables are dynamic placeholders that hold key data, such as labels and metric values, providing access to alert-related information at runtime. In contrast, functions perform actions to process or format this data, enabling string manipulation and number formatting. Together, they create dynamic, context-aware alerts by combining essential data with customized formatting.
+
+| **Aspect**       | **Variables**                                  | **Functions**                                                   |
+|------------------|------------------------------------------------|-----------------------------------------------------------------|
+| **Purpose**      | Reference data dynamically (placeholders).      | Perform actions, transformations, or formatting on data.        |
+| **Role**         | Hold values like label data, metric values, or alert properties. | Process or manipulate the data stored in variables.             |
+| **Examples**     | `$labels.instance`, `$value`, `$alertname`      | `printf`, `toUpper`, `join`, `add`                              |
+| **Action**       | Do not perform any action, just represent data. | Perform operations (e.g., string concatenation, formatting).     |
+| **Dynamic**      | Populated at runtime based on the metric/alert. | Executed at runtime to transform or display the data dynamically.|
+| **Use Case**     | Access labels, metric values, alert metadata.   | Format strings, perform logic, and combine or modify variable values.|
+
 
 ## Variables
+
+Templating can be applied by using variables and functions. These variables can represent dynamic values retrieved from your data queries.
 
 In Grafana templating, the `$` and `.` symbols are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the `$` symbol followed by the variable name. Similarly, you can access properties of variables using the dot (`.`) notation within alert rule definitions.
 
@@ -85,7 +101,7 @@ If you want to print just some of the string instead of the full string then use
 
 ## Functions
 
-The following functions are available to you when templating labels and annotations:
+The following functions are available to you when templating labels and annotations. Some of these functions are part of the standard Go template library, while others come from Prometheus' templating engine.
 
 ### Numbers
 
