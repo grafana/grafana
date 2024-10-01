@@ -5,7 +5,6 @@ INSERT INTO "resource"
         "resource",
         "namespace",
         "name",
-        "previous_resource_version",
         "value",
         "action"
     )
@@ -15,7 +14,6 @@ INSERT INTO "resource"
         'rr',
         'nn',
         'name',
-        123,
         '[]',
         'ADDED'
     )

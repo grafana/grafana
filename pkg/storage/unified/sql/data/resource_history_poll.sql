@@ -5,8 +5,7 @@ SELECT
     {{ .Ident "resource" | .Into .Response.Key.Resource }},
     {{ .Ident "name" | .Into .Response.Key.Name }},
     {{ .Ident "value" | .Into .Response.Value }},
-    {{ .Ident "action" | .Into .Response.Action }},
-    {{ .Ident "previous_resource_version" | .Into .Response.PreviousRV }}
+    {{ .Ident "action" | .Into .Response.Action }}
 
     FROM {{ .Ident "resource_history" }}
     WHERE 1 = 1

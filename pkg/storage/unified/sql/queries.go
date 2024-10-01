@@ -70,7 +70,6 @@ func (r sqlResourceRequest) Validate() error {
 type historyPollResponse struct {
 	Key             resource.ResourceKey
 	ResourceVersion int64
-	PreviousRV      int64
 	Value           []byte
 	Action          int
 }
@@ -102,7 +101,6 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 			Name:      r.Response.Key.Name,
 		},
 		ResourceVersion: r.Response.ResourceVersion,
-		PreviousRV:      r.Response.PreviousRV,
 		Value:           r.Response.Value,
 		Action:          r.Response.Action,
 	}, nil
