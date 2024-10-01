@@ -1,4 +1,5 @@
-import { RouteChildrenProps } from 'react-router-dom';
+import { RouteChildrenProps, useParams } from 'react-router-dom';
+// import { useParams } from 'react-router-dom-v5-compat';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -9,10 +10,9 @@ import { TemplateForm } from '../receivers/TemplateForm';
 
 import { useGetNotificationTemplate } from './useNotificationTemplates';
 
-type Props = RouteChildrenProps<{ name: string }>;
-
-const EditMessageTemplate = ({ match }: Props) => {
-  const templateUid = match?.params.name ? decodeURIComponent(match?.params.name) : undefined;
+const EditMessageTemplate = () => {
+  const { name } = useParams<{ name: string }>();
+  const templateUid = name ? decodeURIComponent(name) : undefined;
 
   const { selectedAlertmanager } = useAlertmanager();
   const { currentData, isLoading, error } = useGetNotificationTemplate({
@@ -40,7 +40,7 @@ const EditMessageTemplate = ({ match }: Props) => {
     return <EntityNotFound entity="Notification template" />;
   }
 
-  return <TemplateForm alertManagerSourceName={selectedAlertmanager ?? ''} originalTemplate={currentData} />;
+  return <TemplateForm alertmanager={selectedAlertmanager ?? ''} originalTemplate={currentData} />;
 };
 
 export default EditMessageTemplate;
