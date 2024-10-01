@@ -3,10 +3,10 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
 
 import Templates from './Templates';
@@ -48,7 +48,9 @@ beforeEach(() => {
 
 describe('Templates routes', () => {
   it('allows duplication of template with spaces in name', async () => {
-    render(<Templates />, { historyOptions: { initialEntries: [navUrl.duplicate('template%20with%20spaces')] } });
+    render(<Templates />, {
+      historyOptions: { initialEntries: [navUrl.duplicate('template%20with%20spaces')] },
+    });
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
@@ -70,13 +72,7 @@ describe('Templates routes', () => {
 });
 
 describe('Templates K8s API', () => {
-  beforeAll(() => {
-    config.featureToggles.alertingApiServer = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.alertingApiServer = false;
-  });
+  testWithFeatureToggles(['alertingApiServer']);
 
   it('form edit renders with correct form values', async () => {
     render(<Templates />, {
