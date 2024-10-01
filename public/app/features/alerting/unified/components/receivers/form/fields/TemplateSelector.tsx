@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useState, PropsWithChildren, useEffect, useMemo } from 'react';
+import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
@@ -125,7 +125,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   const [inputToUpdateCustom, setInputToUpdateCustom] = useState<string>(valueInForm);
 
   const { selectedAlertmanager } = useAlertmanager();
-  const { data = [], error } = useNotificationTemplates({ alertmanager: selectedAlertmanager! });
+  const { data = [], error, isLoading } = useNotificationTemplates({ alertmanager: selectedAlertmanager! });
   const { data: defaultTemplates } = useGetDefaultTemplatesQuery();
   const [templateOption, setTemplateOption] = useState<TemplateFieldOption>('Existing');
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -158,11 +158,11 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   };
 
   const options = useMemo(() => {
-    if (!defaultTemplates) {
+    if (!defaultTemplates || !data || isLoading || error) {
       return [];
     }
     return getTemplateOptions(data, defaultTemplates);
-  }, [data, defaultTemplates]);
+  }, [data, defaultTemplates, isLoading, error]);
 
   // if we are using only one template, we should settemplate to that template
   useEffect(() => {
@@ -184,7 +184,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     return <div>Error loading templates</div>;
   }
 
-  if (!data) {
+  if (isLoading || !data || !defaultTemplates) {
     return <div>Loading...</div>;
   }
 
@@ -205,12 +205,10 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
                 placeholder="Choose template"
                 aria-label="Choose template"
                 onChange={(value: SelectableValue<Template>, _) => {
-                  console.log('change');
                   setTemplate(value?.value);
                 }}
                 options={options}
                 width={50}
-                isOpen
                 value={template ? { label: template.name, value: template } : undefined}
               />
               <IconButton
