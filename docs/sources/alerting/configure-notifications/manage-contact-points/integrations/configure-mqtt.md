@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: MQTT notifier
 title: Configure the MQTT notifier for Alerting
-weight: 80
+weight: 0
 ---
 
 # Configure the MQTT notifier for Alerting
