@@ -102,7 +102,10 @@ func (f *indexWatchServer) Send(we *WatchEvent) error {
 		Value:           we.Resource.Value,
 	}
 
-	f.is.Index(f.context, &IndexRequest{Key: key, Value: value})
+	_, err = f.is.Index(f.context, &IndexRequest{Key: key, Value: value})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
