@@ -1,10 +1,12 @@
-import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 
 import { withErrorBoundary } from '@grafana/ui';
 import {
   defaultsFromQuery,
   getDefaultSilenceFormValues,
 } from 'app/features/alerting/unified/components/silences/utils';
+import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
+import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
@@ -30,19 +32,26 @@ const Silences = () => {
         <Route exact path="/alerting/silence/new">
           {({ location }) => {
             const queryParams = new URLSearchParams(location.search);
+
+            const potentialAlertRuleMatcher = parseQueryParamMatchers(queryParams.getAll('matcher')).find(
+              (m) => m.name === MATCHER_ALERT_RULE_UID
+            );
+
+            const potentialRuleUid = potentialAlertRuleMatcher?.value;
+
             const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
 
-            return <SilencesEditor formValues={formValues} alertManagerSourceName={selectedAlertmanager} />;
+            return (
+              <SilencesEditor
+                formValues={formValues}
+                alertManagerSourceName={selectedAlertmanager}
+                ruleUid={potentialRuleUid}
+              />
+            );
           }}
         </Route>
         <Route exact path="/alerting/silence/:id/edit">
-          {({ match }: RouteChildrenProps<{ id: string }>) => {
-            return (
-              match?.params.id && (
-                <ExistingSilenceEditor silenceId={match.params.id} alertManagerSourceName={selectedAlertmanager} />
-              )
-            );
-          }}
+          <ExistingSilenceEditor alertManagerSourceName={selectedAlertmanager} />
         </Route>
       </Switch>
     </>

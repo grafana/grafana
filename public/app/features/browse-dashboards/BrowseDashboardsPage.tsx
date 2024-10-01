@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
@@ -24,17 +23,9 @@ import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { setAllSelection, useHasSelection } from './state';
 
-export interface BrowseDashboardsPageRouteParams {
-  uid?: string;
-  slug?: string;
-}
-
-export interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRouteParams> {}
-
 // New Browse/Manage/Search Dashboards views for nested folders
-
-const BrowseDashboardsPage = memo(({ match }: Props) => {
-  const { uid: folderUID } = match.params;
+const BrowseDashboardsPage = memo(() => {
+  const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
   const styles = useStyles2(getStyles);

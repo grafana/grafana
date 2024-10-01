@@ -68,6 +68,7 @@ type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
+	Name   string          `xorm:"name" json:"name"`
 	Type   MigrateDataType `xorm:"resource_type" json:"type"`
 	RefID  string          `xorm:"resource_uid" json:"refId"`
 	Status ItemStatus      `xorm:"status" json:"status"`
@@ -143,6 +144,7 @@ type ListSnapshotsQuery struct {
 	SessionUID string
 	Page       int
 	Limit      int
+	Sort       string
 }
 
 type UpdateSnapshotCmd struct {
