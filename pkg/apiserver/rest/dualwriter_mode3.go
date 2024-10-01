@@ -59,8 +59,8 @@ func (d *DualWriterMode3) Create(ctx context.Context, in runtime.Object, createV
 		return nil, fmt.Errorf("UID should not be: %v", accIn.GetUID())
 	}
 
-	if accIn.GetGenerateName() != "" {
-		return nil, fmt.Errorf("generateName cannot be set")
+	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
+		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
 	startStorage := time.Now()
