@@ -12,9 +12,9 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Alert rule template reference
+title: Annotation and label template reference
 menuTitle: Template reference
 weight: 101
 ---
 
-# Alert rule template reference
+# Annotation and label template reference

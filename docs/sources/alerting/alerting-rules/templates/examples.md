@@ -12,12 +12,12 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Alert rule template examples
+title: Annotation and label template examples
 menuTitle: Examples
 weight: 102
 ---
 
-# Alert rule template examples
+# Annotation and label template examples
 
 The following examples attempt to show the most common use-cases we have seen for templates. You can use these examples verbatim, or adapt them as necessary for your use case. For more information on how to write text/template refer see [the beginner's guide to alert notification templates in Grafana](https://grafana.com/blog/2023/04/05/grafana-alerting-a-beginners-guide-to-templating-alert-notifications/).
 

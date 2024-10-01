@@ -2,8 +2,8 @@
 aliases:
   - ../../manage-notifications/template-notifications/using-go-templating-language/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/using-go-templating-language/
   - ../../configure-notifications/template-notifications/using-go-templating-language/ # /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language/
-canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/templating-language/
-description: Use Go's templating language to create your own notification templates
+canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/language/
+description: Use Go's template language to create your own notification templates
 keywords:
   - grafana
   - alerting
@@ -15,8 +15,8 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Go's templating language
-menuTitle: Templating language
+title: Notification template language
+menuTitle: Template language
 weight: 104
 refs:
   create-notification-templates:
@@ -36,7 +36,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
 ---
 
-# Go's templating language
+# Notification template language
 
 You write notification templates in Go's templating language, [text/template](https://pkg.go.dev/text/template).
 
