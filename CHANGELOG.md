@@ -1,3 +1,17 @@
+<!-- 10.3.11 START -->
+
+# 10.3.11 (2024-10-01)
+
+### Features and enhancements
+
+- **Chore:** Bump Go to 1.22.7 [#93360](https://github.com/grafana/grafana/pull/93360), [@hairyhenderson](https://github.com/hairyhenderson)
+- **Chore:** Bump Go to 1.22.7 (Enterprise)
+
+### Bug fixes
+
+- **Correlations:** Limit access to correlations page to users who can access Explore [#93672](https://github.com/grafana/grafana/pull/93672), [@ifrost](https://github.com/ifrost)
+
+<!-- 10.3.11 END -->
 <!-- 11.2.1 START -->
 
 # 11.2.1 (2024-09-26)
