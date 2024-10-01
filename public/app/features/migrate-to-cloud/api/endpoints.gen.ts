@@ -114,6 +114,8 @@ export type GetShapshotListApiArg = {
   limit?: number;
   /** Session UID of a session */
   uid: string;
+  /** Sort with value latest to return results sorted in descending order. */
+  sort?: string;
 };
 export type GetCloudMigrationTokenApiResponse = /** status 200 (empty) */ GetAccessTokenResponseDto;
 export type GetCloudMigrationTokenApiArg = void;
