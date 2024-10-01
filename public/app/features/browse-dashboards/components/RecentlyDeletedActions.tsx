@@ -43,8 +43,6 @@ export function RecentlyDeletedActions() {
     }
   }
 
-  console.log('selectedDashboardOrigin', selectedDashboardOrigin);
-
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 

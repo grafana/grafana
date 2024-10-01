@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
@@ -24,15 +24,13 @@ export const RestoreModal = ({
   ...props
 }: RestoreModalProps) => {
   const [restoreTarget, setRestoreTarget] = useState<string | undefined>(() => {
-    // Preselect the restore target if all selected dashboards come from the same folder
+    // Preselect the restore target and therefore enable the confirm button if all selected dashboards come from the same folder
     return dashboardOrigin.length > 0 &&
       dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
       ? dashboardOrigin[0]
       : undefined;
   });
   const numberOfDashboards = selectedDashboards.length;
-
-  console.info('restoreTarget', restoreTarget);
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {
@@ -45,11 +43,6 @@ export const RestoreModal = ({
       onDismiss();
     }
   };
-
-  const handleFolderPickerChange = useCallback((folderUID: string) => {
-    console.log('handle folder picker change', { folderUID });
-    setRestoreTarget(folderUID);
-  }, []);
 
   return (
     <ConfirmModal
@@ -67,7 +60,7 @@ export const RestoreModal = ({
             </Trans>
           </Text>
           <Space v={1} />
-          <FolderPicker onChange={handleFolderPickerChange} value={restoreTarget} />
+          <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
         </>
         // TODO: replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards)?
       }
