@@ -47,15 +47,6 @@ func (d *DualWriterMode1) Create(ctx context.Context, in runtime.Object, createV
 	log := d.Log.WithValues("method", method)
 	ctx = klog.NewContext(ctx, log)
 
-	accIn, err := meta.Accessor(in)
-	if err != nil {
-		return nil, err
-	}
-
-	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
-		return nil, fmt.Errorf("name or generatename have to be set")
-	}
-
 	startLegacy := time.Now()
 	created, err := d.Legacy.Create(ctx, in, createValidation, options)
 	d.recordLegacyDuration(err != nil, mode1Str, d.resource, method, startLegacy)
