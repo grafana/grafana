@@ -11,7 +11,6 @@
 
 - **AzureMonitor:** Deduplicate resource picker rows [#93702](https://github.com/grafana/grafana/pull/93702), [@aangelisc](https://github.com/aangelisc)
 - **Correlations:** Limit access to correlations page to users who can access Explore [#93673](https://github.com/grafana/grafana/pull/93673), [@ifrost](https://github.com/ifrost)
-- **Alerting:** Fixed CVE-2024-8118. 
 
 <!-- 10.4.10 END -->
 <!-- 10.4.9 START -->
@@ -25,6 +24,7 @@
 ### Bug fixes
 
 - **Provisioning:** Prevent provisioning folder errors from failing startup [#92591](https://github.com/grafana/grafana/pull/92591), [@suntala](https://github.com/suntala)
+- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 10.4.9 END -->
 <!-- 10.4.8 START -->
