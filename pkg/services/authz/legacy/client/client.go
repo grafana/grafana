@@ -132,7 +132,7 @@ func (c *Client) Checker(ctx context.Context, r ListRequest) (ItemChecker, error
 		for _, c := range extra {
 			scopes = append(scopes, formatObject(c.Resource, c.Attr, c.Name))
 		}
-		return check(formatObject(r.Resource, r.Attr, name))
+		return check(scopes...)
 	}, nil
 }
 
@@ -142,7 +142,6 @@ func formatObject(resource, attr, name string) string {
 
 // Duplicated from accesscontrol package
 func newChecker(action string, scopes []string) func(scopes ...string) bool {
-
 	lookup := make(map[string]bool, len(scopes))
 	for i := range scopes {
 		lookup[scopes[i]] = true

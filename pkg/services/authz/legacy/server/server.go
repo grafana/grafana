@@ -48,21 +48,11 @@ func (s *Server) Check(ctx context.Context, r *openfgav1.CheckRequest) (*openfga
 
 	s.logger.Debug("check req", "id", r.TupleKey.User, "relation", r.TupleKey.Relation, "object", r.TupleKey.Object)
 
-	ident, err := s.getIdentity(ctx, ns, r.TupleKey.User)
+	list, err := s.listPermissions(ctx, ns, r.TupleKey.User, r.TupleKey.Relation)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
 	// FIXME: cache
-	listRes, err := s.store.ListPermissions(ctx, ns, store.ListPermissionsQuery{
-		UserID: ident.UserID,
-		Roles:  ident.Roles,
-		Teams:  ident.Teams,
-		Action: r.TupleKey.Relation,
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 
 	// If we did not provide an object for check we just want to check precense of action.
 	var eval accesscontrol.Evaluator
@@ -71,7 +61,7 @@ func (s *Server) Check(ctx context.Context, r *openfgav1.CheckRequest) (*openfga
 	} else {
 		scopes := []string{r.TupleKey.Object}
 
-		// This is not entierly correct. In openfga contextuals are things that would be
+		// This is not entirely correct. In openfga contextuals are things that would be
 		// counted when doing evaluation but we are using it here to be able to provide other things
 		// we want to check access for e.g. folder for object.
 		if r.ContextualTuples != nil {
@@ -82,7 +72,7 @@ func (s *Server) Check(ctx context.Context, r *openfgav1.CheckRequest) (*openfga
 		eval = accesscontrol.EvalPermission(r.TupleKey.Relation, scopes...)
 	}
 
-	if !eval.Evaluate(accesscontrol.GroupScopesByActionContext(ctx, listRes.Items)) {
+	if !eval.Evaluate(accesscontrol.GroupScopesByActionContext(ctx, list.Items)) {
 		return &openfgav1.CheckResponse{Allowed: false}, nil
 	}
 
@@ -99,24 +89,13 @@ func (s *Server) Read(ctx context.Context, r *openfgav1.ReadRequest) (*openfgav1
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	ident, err := s.getIdentity(ctx, ns, r.TupleKey.User)
+	list, err := s.listPermissions(ctx, ns, r.TupleKey.User, r.TupleKey.Relation)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// FIXME: cache
-	listRes, err := s.store.ListPermissions(ctx, ns, store.ListPermissionsQuery{
-		UserID: ident.UserID,
-		Roles:  ident.Roles,
-		Teams:  ident.Teams,
-		Action: r.TupleKey.Relation,
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	tuples := make([]*openfgav1.Tuple, 0, len(listRes.Items))
-	for _, p := range listRes.Items {
+	tuples := make([]*openfgav1.Tuple, 0, len(list.Items))
+	for _, p := range list.Items {
 		tuples = append(tuples, &openfgav1.Tuple{
 			Key: &openfgav1.TupleKey{
 				User:     r.TupleKey.User,
@@ -127,7 +106,6 @@ func (s *Server) Read(ctx context.Context, r *openfgav1.ReadRequest) (*openfgav1
 	}
 
 	return &openfgav1.ReadResponse{Tuples: tuples}, nil
-
 }
 
 func (s *Server) ListObjects(ctx context.Context, r *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
@@ -136,24 +114,13 @@ func (s *Server) ListObjects(ctx context.Context, r *openfgav1.ListObjectsReques
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	ident, err := s.getIdentity(ctx, ns, r.User)
+	list, err := s.listPermissions(ctx, ns, r.User, r.Relation)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// FIXME: cache
-	listRes, err := s.store.ListPermissions(ctx, ns, store.ListPermissionsQuery{
-		UserID: ident.UserID,
-		Roles:  ident.Roles,
-		Teams:  ident.Teams,
-		Action: r.Relation,
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	objects := make([]string, 0, len(listRes.Items))
-	for _, p := range listRes.Items {
+	objects := make([]string, 0, len(list.Items))
+	for _, p := range list.Items {
 		objects = append(objects, p.Scope)
 	}
 
@@ -217,5 +184,3 @@ func identityCacheKey(ns claims.NamespaceInfo, id string) string {
 func permissionCacheKey(ns claims.NamespaceInfo, id, action string) string {
 	return ns.Value + id + action
 }
-
-func (s *Server) mustEmbedUnimplementedOpenFGAServiceServer() {}

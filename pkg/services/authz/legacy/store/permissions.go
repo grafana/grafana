@@ -9,11 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-type Permission struct {
-	Action string
-	Scope  string
-}
-
 type ListPermissionsQuery struct {
 	UserID int64
 	Roles  []string
@@ -46,7 +41,7 @@ func (s *Store) ListPermissions(ctx context.Context, ns claims.NamespaceInfo, q 
 		return nil, err
 	}
 
-	sql.DB.WithDbSession(ctx, func(sess *db.Session) error {
+	err = sql.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		filter, params := accesscontrol.UserRolesFilter(ns.OrgID, q.UserID, q.Teams, q.Roles)
 
 		query := `
@@ -68,6 +63,10 @@ func (s *Store) ListPermissions(ctx context.Context, ns claims.NamespaceInfo, q 
 
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &result, nil
 }
