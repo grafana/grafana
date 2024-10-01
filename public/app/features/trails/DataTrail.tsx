@@ -10,7 +10,7 @@ import {
   VariableHide,
   urlUtil,
 } from '@grafana/data';
-import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -504,6 +504,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({
         otelTargets,
         otelJoinQuery,
+        useOtelExperience: false,
       });
     }
   }
@@ -550,6 +551,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({
         otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
+        useOtelExperience: false,
       });
     }
   }
@@ -648,7 +650,7 @@ function getVariableSet(
         addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
-        layout: config.featureToggles.newFiltersUI ? 'combobox' : 'vertical',
+        layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
