@@ -36,22 +36,26 @@ export class TrailStore {
   private _recent: Array<SceneObjectRef<DataTrail>> = [];
   private _bookmarks: DataTrailBookmark[] = [];
   private _save: () => void;
+  private _lastModified: number;
 
   constructor() {
     this.load();
 
     const doSave = () => {
+      console.log('calling doSave!');
       const serializedRecent = this._recent
         .slice(0, MAX_RECENT_TRAILS)
         .map((trail) => this._serializeTrail(trail.resolve()));
       localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify(serializedRecent));
 
       localStorage.setItem(TRAIL_BOOKMARKS_KEY, JSON.stringify(this._bookmarks));
+      this._lastModified = Date.now();
     };
 
     this._save = debounce(doSave, 1000);
 
     window.addEventListener('beforeunload', (ev) => {
+      console.log('removing debounce (eventlistener)!');
       // Before closing or reloading the page, we want to remove the debounce from `_save` so that
       // any calls to is on event `unload` are actualized. Debouncing would cause a delay until after the page has been unloaded.
       this._save = doSave;
@@ -168,13 +172,21 @@ export class TrailStore {
     return this._recent;
   }
 
+  // Last updated metric
+  get lastModified() {
+    return this._lastModified
+  }
+
+
   load() {
     this._recent = this._loadRecentTrailsFromStorage();
     this._bookmarks = this._loadBookmarksFromStorage();
     this._refreshBookmarkIndexMap();
+    this._lastModified = Date.now();
   }
 
   setRecentTrail(recentTrail: DataTrail) {
+    console.log('setting recent trail!');
     const { steps } = recentTrail.state.history.state;
     if (steps.length === 0 || (steps.length === 1 && steps[0].type === 'start')) {
       // We do not set an uninitialized trail, or a single node "start" trail as recent
