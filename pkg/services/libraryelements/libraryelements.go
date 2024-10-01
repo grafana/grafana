@@ -27,7 +27,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 	}
 
 	l.registerAPIEndpoints()
-	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, l.folderService, folderStore))
+	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, folderStore))
 
 	return l
 }

@@ -35,7 +35,7 @@ var (
 
 // LibraryPanelUIDScopeResolver provides a ScopeAttributeResolver that is able to convert a scope prefixed with "library.panels:uid:"
 // into uid based scopes for a library panel and its associated folder hierarchy
-func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Service, folderStore folder.Store) (string, ac.ScopeAttributeResolver) {
+func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderStore folder.Store) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeLibraryPanelsProvider.GetResourceScopeUID("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
