@@ -149,6 +149,7 @@ func createFileIndex() (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
+// TODO: clean this up.  it was copied from owens performance test
 func createIndexMappings() *mapping.IndexMappingImpl {
 	// Define field mappings for specific fields
 	nameFieldMapping := bleve.NewTextFieldMapping()
