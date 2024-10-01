@@ -206,7 +206,11 @@ export const LdapDrawerComponent = ({
                 {...field}
                 allowCustomValue
                 className={styles.multiSelect}
-                noOptionsMessage={''}
+                noOptionsMessage=""
+                placeholder={t(
+                  'ldap-drawer.group-mapping-section.group-search-base-dns-placeholder',
+                  'example: ou=groups,dc=example,dc=com'
+                )}
                 onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                 value={value?.map((v) => ({ label: v, value: v }))}
               />
@@ -290,7 +294,11 @@ export const LdapDrawerComponent = ({
                     {...field}
                     allowCustomValue
                     className={styles.multiSelect}
-                    noOptionsMessage={''}
+                    noOptionsMessage=""
+                    placeholder={t(
+                      'ldap-drawer.extra-security-section.tls-ciphers-placeholder',
+                      'example: TLS_AES_256_GCM_SHA384'
+                    )}
                     onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                     value={value?.map((v) => ({ label: v, value: v }))}
                   />
@@ -342,7 +350,11 @@ export const LdapDrawerComponent = ({
                         {...field}
                         allowCustomValue
                         className={styles.multiSelect}
-                        noOptionsMessage={''}
+                        noOptionsMessage=""
+                        placeholder={t(
+                          'ldap-drawer.extra-security-section.root-ca-cert-value-placeholder',
+                          'example: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t'
+                        )}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                         value={value?.map((v) => ({ label: renderMultiSelectLabel(v), value: v }))}
                       />
@@ -449,7 +461,7 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(4),
     }),
     multiSelect: css({
-      svg: {
+      'div:last-of-type > svg': {
         display: 'none',
       },
     }),

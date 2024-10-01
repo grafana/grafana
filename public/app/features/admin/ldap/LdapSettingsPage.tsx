@@ -363,7 +363,8 @@ export const LdapSettingsPage = () => {
                         {...field}
                         allowCustomValue
                         className={styles.multiSelect}
-                        noOptionsMessage={''}
+                        noOptionsMessage=""
+                        placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: dc=grafana,dc=org')}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                       />
                     )}
@@ -467,7 +468,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: theme.spacing(68),
     }),
     multiSelect: css({
-      svg: {
+      'div:last-of-type > svg': {
         display: 'none',
       },
     }),
