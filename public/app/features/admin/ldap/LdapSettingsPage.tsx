@@ -49,6 +49,8 @@ const pageNav: NavModelItem = {
 
 const serverConfig = 'settings.config.servers.0';
 
+const isOptionDefined = (option: string | undefined) => option !== undefined && option !== '';
+
 const emptySettings: LdapPayload = {
   id: '',
   provider: '',
@@ -131,11 +133,11 @@ export const LdapSettingsPage = () => {
       }
       setMapKeyCertConfigured({
         rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
-        clientCertValue: serverConfig.client_cert_value !== '',
-        clientKeyCertValue: serverConfig.client_key_value !== '',
-        rootCaCertPath: serverConfig.root_ca_cert !== '',
-        clientCertPath: serverConfig.client_cert !== '',
-        clientKeyCertPath: serverConfig.client_key !== '',
+        clientCertValue: isOptionDefined(serverConfig.client_cert_value),
+        clientKeyCertValue: isOptionDefined(serverConfig.client_key_value),
+        rootCaCertPath: isOptionDefined(serverConfig.root_ca_cert),
+        clientCertPath: isOptionDefined(serverConfig.client_cert),
+        clientKeyCertPath: isOptionDefined(serverConfig.client_key),
       });
 
       reset(payload);
