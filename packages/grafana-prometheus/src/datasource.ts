@@ -74,7 +74,13 @@ import {
 import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
+const GET_AND_POST_METADATA_ENDPOINTS = [
+  'api/v1/query',
+  'api/v1/query_range',
+  'api/v1/series',
+  'api/v1/labels',
+  'suggestions',
+];
 
 export const InstantQueryRefIdIndex = '-Instant';
 
@@ -263,7 +269,9 @@ export class PrometheusDatasource
             .join('&');
       }
     } else {
-      options.headers!['Content-Type'] = 'application/x-www-form-urlencoded';
+      if (!options.headers!['Content-Type']) {
+        options.headers!['Content-Type'] = 'application/x-www-form-urlencoded';
+      }
       options.data = data;
     }
 
@@ -599,6 +607,20 @@ export class PrometheusDatasource
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    if (config.featureToggles.promQLScope && !!options) {
+      const suggestions = await this.languageProvider.fetchSuggestions(
+        options.timeRange,
+        options.queries,
+        options.scopes,
+        options.filters
+      );
+
+      // filter out already used labels and empty labels
+      return suggestions
+        .filter((labelName) => !!labelName && !options.filters.find((filter) => filter.key === labelName))
+        .map((k) => ({ value: k, text: k }));
+    }
+
     if (!options || options.filters.length === 0) {
       await this.languageProvider.fetchLabels(options.timeRange, options.queries);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
@@ -621,6 +643,21 @@ export class PrometheusDatasource
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
+    const requestId = `[${this.uid}][${options.key}]`;
+    if (config.featureToggles.promQLScope) {
+      return (
+        await this.languageProvider.fetchSuggestions(
+          options.timeRange,
+          options.queries,
+          options.scopes,
+          options.filters,
+          options.key,
+          undefined,
+          requestId
+        )
+      ).map((v) => ({ value: v, text: v }));
+    }
+
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
       value: f.value,
@@ -630,7 +667,6 @@ export class PrometheusDatasource
     const expr = promQueryModeller.renderLabels(labelFilters);
 
     if (this.hasLabelsMatchAPISupport()) {
-      const requestId = `[${this.uid}][${options.key}]`;
       return (
         await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
       ).map((v) => ({
