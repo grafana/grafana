@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -41,7 +42,11 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		// Enable zanzana and run in embedded mode (part of grafana server)
 		cfg.Zanzana.ZanzanaOnlyEvaluation = true
 		cfg.Zanzana.Mode = setting.ZanzanaModeEmbedded
+		cfg.Zanzana.ConcurrentChecks = 10
 		setDBConfig(t, cfg, db)
+
+		_, err := cfg.Raw.Section("rbac").NewKey("resources_with_managed_permissions_on_creation", "dashboard, folder")
+		require.NoError(t, err)
 
 		quotaService := quotatest.New(false, nil)
 		tagService := tagimpl.ProvideService(db)
@@ -66,16 +71,13 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		_, err = dashboardStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-			OrgID: 1,
-			// FolderUID: folderUID,
-			IsFolder: false,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"id":    nil,
-				"title": "Test",
-			}),
-		})
-		require.NoError(t, err)
+		guardianMock := &guardian.FakeDashboardGuardian{
+			CanSaveValue: true,
+		}
+		guardian.MockDashboardGuardian(guardianMock)
+
+		createDashboards(t, service, dashboardStore, 100, "test-a")
+		createDashboards(t, service, dashboardStore, 100, "test-b")
 
 		// Sync Grafana DB with zanzana (migrate data)
 		zanzanaSyncronizer := migrator.NewZanzanaSynchroniser(zclient, db)
@@ -83,6 +85,8 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		require.NoError(t, err)
 
 		query := &dashboards.FindPersistedDashboardsQuery{
+			Title: "test-a",
+			Limit: 1000,
 			SignedInUser: &user.SignedInUser{
 				OrgID:  1,
 				UserID: 1,
@@ -104,4 +108,34 @@ func setDBConfig(t *testing.T, cfg *setting.Cfg, db *sqlstore.SQLStore) {
 	require.NoError(t, err)
 	_, err = cfg.Raw.Section("database").NewKey("password", "password")
 	require.NoError(t, err)
+}
+
+func createDashboard(t *testing.T, service dashboards.DashboardService, dashboardStore dashboards.Store, uid, title string) {
+	dto := &dashboards.SaveDashboardDTO{
+		OrgID: 1,
+		// User:  user,
+		User: &user.SignedInUser{
+			OrgID:  1,
+			UserID: 1,
+		},
+	}
+	dto.Dashboard = dashboards.NewDashboard(title)
+	dto.Dashboard.SetUID(uid)
+
+	// saveCmd, err := service.BuildSaveDashboardCommand(context.Background(), dto, false)
+	// require.NoError(t, err)
+
+	_, err := service.SaveDashboard(context.Background(), dto, false)
+	require.NoError(t, err)
+
+	// _, err = dashboardStore.SaveDashboard(context.Background(), *saveCmd)
+	// require.NoError(t, err)
+}
+
+func createDashboards(t *testing.T, service dashboards.DashboardService, dashboardStore dashboards.Store, number int, prefix string) {
+	for i := 0; i < int(number); i++ {
+		title := fmt.Sprintf("%s-%d", prefix, i)
+		uid := fmt.Sprintf("dash-%s", title)
+		createDashboard(t, service, dashboardStore, uid, title)
+	}
 }
