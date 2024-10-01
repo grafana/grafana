@@ -32,9 +32,6 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, storage.ErrResourceVersionSetOnCreate
 	}
 
-	if obj.GetName() == "" {
-		obj.SetName(names.SimpleNameGenerator.GenerateName(obj.GetGenerateName()))
-	}
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
