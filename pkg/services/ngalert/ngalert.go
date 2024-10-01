@@ -311,7 +311,21 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	moa, err := notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, ng.FeatureToggles, overrides...)
+	moa, err := notifier.NewMultiOrgAlertmanager(
+		ng.Cfg,
+		ng.store,
+		ng.store,
+		ng.KVStore,
+		ng.store,
+		decryptFn,
+		multiOrgMetrics,
+		ng.NotificationService,
+		ng.ResourcePermissions,
+		moaLogger,
+		ng.SecretsService,
+		ng.FeatureToggles,
+		overrides...,
+	)
 	if err != nil {
 		return err
 	}
@@ -464,6 +478,7 @@ func (ng *AlertNG) init() error {
 		ProvenanceStore:      ng.store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
+		Scheduler:            scheduler,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ReceiverService:      receiverService,

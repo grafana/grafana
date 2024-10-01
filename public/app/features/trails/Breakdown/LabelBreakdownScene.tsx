@@ -33,7 +33,7 @@ import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { ALL_VARIABLE_VALUE } from '../services/variables';
-import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
+import { MDP_METRIC_PREVIEW, trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
@@ -304,7 +304,7 @@ export function buildAllLayout(
       .setTitle(option.label!)
       .setData(
         new SceneQueryRunner({
-          maxDataPoints: 250,
+          maxDataPoints: MDP_METRIC_PREVIEW,
           datasource: trailDS,
           queries: [
             {
@@ -395,7 +395,7 @@ function buildNormalLayout(
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
       datasource: trailDS,
-      maxDataPoints: 300,
+      maxDataPoints: MDP_METRIC_PREVIEW,
       queries: queryDef.queries,
     }),
     breakdownLayoutOptions: [
