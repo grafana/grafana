@@ -12,8 +12,8 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList,
 } from '../../openapi/templatesApi.gen';
 import { updateAlertManagerConfigAction } from '../../state/actions';
-import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from '../../utils/k8s/constants';
-import { shouldUseK8sApi, getK8sNamespace } from '../../utils/k8s/utils';
+import { K8sAnnotations, PROVENANCE_NONE } from '../../utils/k8s/constants';
+import { shouldUseK8sApi, getK8sNamespace, getAnnotation } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
 import { TemplateFormValues } from '../receivers/TemplateForm';
 
@@ -73,14 +73,13 @@ function templateGroupsToTemplates(
 function templateGroupToTemplate(
   templateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
 ): NotificationTemplate {
+  const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? PROVENANCE_NONE;
   return {
     // K8s entities should always have a metadata.name property. The type is marked as optional because it's also used in other places
     uid: templateGroup.metadata.name ?? templateGroup.spec.title,
     title: templateGroup.spec.title,
     content: templateGroup.spec.content,
-    provenance: templateGroup.metadata.annotations
-      ? templateGroup.metadata.annotations[PROVENANCE_ANNOTATION]
-      : PROVENANCE_NONE,
+    provenance,
   };
 }
 
@@ -119,6 +118,9 @@ export function useGetNotificationTemplate({ alertmanager, uid }: GetTemplatePar
 
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
+  // TODO: Decide on a consistent approach for conditionally calling in our hooks -
+  // useEffect? or using `skip` properly in RTKQ hooks?
+  // What are pros and cons of each?
   useEffect(() => {
     if (k8sApiSupported) {
       fetchTemplate({ namespace: getK8sNamespace(), name: uid });
@@ -282,17 +284,20 @@ export function useValidateNotificationTemplate({ alertmanager }: BaseAlertmanag
   const titleIsUnique: Validate<string, TemplateFormValues> = async (name) => {
     const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
-    if (!k8sApiSupported) {
-      const amConfig = await fetchAmConfig(alertmanager).unwrap();
-      const templates = amConfigToTemplates(amConfig);
-      const templateOfThisNameExists = templates.some((t) => t.title === name);
-
-      if (templateOfThisNameExists) {
-        return 'Another template with this name already exists';
-      }
+    if (k8sApiSupported) {
+      // K8s API handles validation for us, so we can just return true
+      // and rely on API errors
+      return true;
     }
 
-    // K8s API handle validation for us, so we can just return true
+    const amConfig = await fetchAmConfig(alertmanager).unwrap();
+    const templates = amConfigToTemplates(amConfig);
+    const templateOfThisNameExists = templates.some((t) => t.title === name);
+
+    if (templateOfThisNameExists) {
+      return 'Another template with this name already exists';
+    }
+
     return true;
   };
 
