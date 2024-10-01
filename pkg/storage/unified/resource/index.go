@@ -48,8 +48,6 @@ func (i *Index) Init(ctx context.Context) error {
 	}
 
 	for _, obj := range list.Items {
-		// example resource
-		//{"kind":"Playlist","apiVersion":"playlist.grafana.app/v0alpha1","metadata":{"name":"xkhv8h","namespace":"default","uid":"9972273d-7fb2-4977-91b7-15501d52cb95","creationTimestamp":"2024-09-24T15:54:09Z","labels":{"foo":"bar"},"annotations":{"grafana.app/createdBy":"user:edxplq00uoi68d","grafana.app/slug":"slugger"},"managedFields":[{"manager":"kubectl-create","operation":"Update","apiVersion":"playlist.grafana.app/v0alpha1","time":"2024-09-24T15:54:09Z","fieldsType":"FieldsV1","fieldsV1":{"f:metadata":{"f:annotations":{".":{},"f:grafana.app/slug":{},"f:grafana.app/updatedBy":{}},"f:generateName":{},"f:labels":{".":{},"f:foo":{}}},"f:spec":{"f:interval":{},"f:items":{},"f:title":{}}}}]},"spec":{"interval":"5m","items":[{"type":"dashboard_by_tag","value":"panel-tests"},{"type":"dashboard_by_uid","value":"vmie2cmWz"}],"title":"Playlist with auto generated UID"},"status":{}}
 		res, err := getResource(obj.Value)
 		if err != nil {
 			return err
