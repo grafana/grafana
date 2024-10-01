@@ -751,6 +751,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "Open JSON editor",
+      "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
+      "angular-deprecation-heading": "Panel options"
+    },
     "settings": {
       "variables": {
         "dependencies": {

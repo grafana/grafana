@@ -18,7 +18,6 @@ export function getAngularPanelMigrationHandler(oldModel: PanelModel) {
       const wasAngular = autoMigrateAngular[oldModel.autoMigrateFrom] != null;
       const oldOptions = oldModel.getOptionsToRemember();
       const prevPluginId = oldModel.autoMigrateFrom;
-
       if (plugin.onPanelTypeChanged) {
         const prevOptions = wasAngular ? { angular: oldOptions } : oldOptions.options;
         Object.assign(panel.options, plugin.onPanelTypeChanged(panel, prevPluginId, prevOptions, panel.fieldConfig));

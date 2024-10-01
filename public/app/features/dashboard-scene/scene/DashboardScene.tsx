@@ -67,6 +67,7 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
+import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from './types';
@@ -660,6 +661,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Need to mark it non dirty to navigate away without unsaved changes warning
     this.setState({ isDirty: false });
     locationService.replace('/');
+  }
+
+  public getDashboardPanels() {
+    return dashboardSceneGraph.getVizPanels(this);
+  }
+
+  public hasDashboardAngularPlugins() {
+    const sceneGridLayout = this.state.body;
+    if (!(sceneGridLayout instanceof DefaultGridLayoutManager)) {
+      return false;
+    }
+    const gridItems = sceneGridLayout.state.grid.state.children;
+    const dashboardWasAngular = gridItems.some((gridItem) => {
+      if (!(gridItem instanceof DashboardGridItem)) {
+        return false;
+      }
+      const isAngularPanel = isUsingAngularPanelPlugin(gridItem.state.body);
+      const isAngularDs = isUsingAngularDatasourcePlugin(gridItem.state.body);
+      return isAngularPanel || isAngularDs;
+    });
+    return dashboardWasAngular;
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
