@@ -34,7 +34,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagZanzana)
 
-		sqlStore := db.InitTestReplDB(t)
+		sqlStore := db.InitTestDB(t)
 
 		cfg := setting.NewCfg()
 		// Enable zanzana and run in embedded mode (part of grafana server)
@@ -47,9 +47,11 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		cfg.Raw.Section("database").NewKey("password", "password")
 
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
+		tagService := tagimpl.ProvideService(sqlStore)
+		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+		fStore := folderimpl.ProvideStore(sqlStore)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagService, quotaService)
 		require.NoError(t, err)
-		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 
 		zclient, err := authz.ProvideZanzana(cfg, sqlStore, features)
 		require.NoError(t, err)
@@ -62,6 +64,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 			accesscontrolmock.NewMockedPermissionsService(),
 			ac,
 			foldertest.NewFakeService(),
+			fStore,
 			nil,
 		)
 
