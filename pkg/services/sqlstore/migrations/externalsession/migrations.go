@@ -4,7 +4,7 @@ import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func AddMigration(mg *migrator.Migrator) {
 	externalSessionV1 := migrator.Table{
-		Name: "external_session",
+		Name: "user_external_session",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "user_auth_id", Type: migrator.DB_BigInt, Nullable: false},
@@ -26,5 +26,5 @@ func AddMigration(mg *migrator.Migrator) {
 		},
 	}
 
-	mg.AddMigration("create external_session table", migrator.NewAddTableMigration(externalSessionV1))
+	mg.AddMigration("create user_external_session table", migrator.NewAddTableMigration(externalSessionV1))
 }

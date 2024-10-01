@@ -1,4 +1,4 @@
-package externalsessionimpl
+package authimpl
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type Store struct {
 	tracer         tracing.Tracer
 }
 
-func ProvideStore(sqlStore db.DB, secretService secrets.Service, tracer tracing.Tracer) auth.ExternalSessionStore {
+func ProvideExternalSessionStore(sqlStore db.DB, secretService secrets.Service, tracer tracing.Tracer) auth.ExternalSessionStore {
 	return &Store{
 		sqlStore:       sqlStore,
 		secretsService: secretService,
@@ -169,6 +169,18 @@ func (s *Store) DeleteExternalSessionsByUserID(ctx context.Context, userID int64
 	externalSession := &auth.ExternalSession{UserID: userID}
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Delete(externalSession)
+		return err
+	})
+	return err
+}
+
+func (s *Store) BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userIDs []int64) error {
+	ctx, span := s.tracer.Start(ctx, "externalsession.BatchDeleteExternalSessionsByUserIDs")
+	defer span.End()
+
+	externalSession := &auth.ExternalSession{}
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.In("user_id", userIDs).Delete(externalSession)
 		return err
 	})
 	return err

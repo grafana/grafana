@@ -1,4 +1,4 @@
-package externalsessionimpl
+package authimpl
 
 import (
 	"context"
@@ -8,13 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/stretchr/testify/require"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func TestGetExternalSession(t *testing.T) {
 	if testing.Short() {
@@ -183,10 +178,51 @@ func TestDeleteExternalSession(t *testing.T) {
 	})
 }
 
+func TestBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	t.Run("deletes all external sessions for given user IDs", func(t *testing.T) {
+		store := setupTest(t)
+
+		userID1 := int64(1)
+		userID2 := int64(2)
+		extSession1 := &auth.ExternalSession{
+			UserID:      userID1,
+			AccessToken: "access-token-1",
+		}
+		extSession2 := &auth.ExternalSession{
+			UserID:      userID2,
+			AccessToken: "access-token-2",
+		}
+
+		err := store.CreateExternalSession(context.Background(), extSession1)
+		require.NoError(t, err)
+		err = store.CreateExternalSession(context.Background(), extSession2)
+		require.NoError(t, err)
+
+		err = store.BatchDeleteExternalSessionsByUserIDs(context.Background(), []int64{userID1, userID2})
+		require.NoError(t, err)
+
+		query := &auth.GetExternalSessionQuery{}
+		actual, err := store.FindExternalSessions(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, actual, 0)
+	})
+
+	t.Run("returns no error if no external sessions exist for the given user IDs", func(t *testing.T) {
+		store := setupTest(t)
+
+		err := store.BatchDeleteExternalSessionsByUserIDs(context.Background(), []int64{999, 1000})
+		require.NoError(t, err)
+	})
+}
+
 func setupTest(t *testing.T) *Store {
 	sqlStore := db.InitTestDB(t)
 	secretService := fakes.NewFakeSecretsService()
 	tracer := tracing.InitializeTracerForTest()
-	externalSessionStore := ProvideStore(sqlStore, secretService, tracer).(*Store)
+	externalSessionStore := ProvideExternalSessionStore(sqlStore, secretService, tracer).(*Store)
 	return externalSessionStore
 }

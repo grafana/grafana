@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -138,6 +139,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			})
 
 			t.Run("Can revoke all user tokens", func(t *testing.T) {
+				ctx.externalSessionStoreMock.On("DeleteExternalSessionsByUserID", mock.Anything, userToken.UserId).Return(nil)
+
 				err := ctx.tokenService.RevokeAllUserTokens(context.Background(), usr.ID)
 				require.Nil(t, err)
 
@@ -161,6 +164,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 						net.ParseIP("192.168.10.11"), "some user agent", nil)
 					require.Nil(t, err)
 				}
+
+				ctx.externalSessionStoreMock.On("BatchDeleteExternalSessionsByUserIDs", mock.Anything, userIds).Return(nil)
 
 				err := ctx.tokenService.BatchRevokeAllUserTokens(context.Background(), userIds)
 				require.Nil(t, err)
@@ -552,23 +557,27 @@ func createTestContext(t *testing.T) *testContext {
 		TokenRotationIntervalMinutes: 10,
 	}
 
+	extSessionStoreMock := &authtest.MockExternalSessionStore{}
+
 	tokenService := &UserAuthTokenService{
-		sqlStore:     sqlstore,
-		cfg:          cfg,
-		log:          log.New("test-logger"),
-		features:     featuremgmt.WithFeatures(),
-		singleflight: new(singleflight.Group),
+		sqlStore:             sqlstore,
+		cfg:                  cfg,
+		log:                  log.New("test-logger"),
+		singleflight:         new(singleflight.Group),
+		externalSessionStore: extSessionStoreMock,
 	}
 
 	return &testContext{
-		sqlstore:     sqlstore,
-		tokenService: tokenService,
+		sqlstore:                 sqlstore,
+		tokenService:             tokenService,
+		externalSessionStoreMock: extSessionStoreMock,
 	}
 }
 
 type testContext struct {
-	sqlstore     db.DB
-	tokenService *UserAuthTokenService
+	sqlstore                 db.DB
+	tokenService             *UserAuthTokenService
+	externalSessionStoreMock *authtest.MockExternalSessionStore
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
