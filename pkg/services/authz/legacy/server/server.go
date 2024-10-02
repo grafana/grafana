@@ -52,7 +52,6 @@ func (s *Server) Check(ctx context.Context, r *openfgav1.CheckRequest) (*openfga
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	// FIXME: cache
 
 	// If we did not provide an object for check we just want to check precense of action.
 	var eval accesscontrol.Evaluator
