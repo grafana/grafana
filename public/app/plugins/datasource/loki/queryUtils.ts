@@ -344,18 +344,18 @@ export const addShardingPlaceholderSelector = (query: string) => {
   return query.replace('}', `, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`);
 };
 
-export const interpolateShardingSelector = (queries: LokiQuery[], shards?: number[][], i?: number) => {
-  if (shards === undefined || i === undefined) {
+export const interpolateShardingSelector = (queries: LokiQuery[], shards?: number[]) => {
+  if (shards === undefined || shards.length === 0) {
     return queries.map((query) => ({
       ...query,
       expr: query.expr.replace(`, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`, '}'),
     }));
   }
 
-  let shardValue = shards[i].join('|');
+  let shardValue = shards.join('|');
 
   // -1 means empty shard value
-  if (shardValue === '-1' || shards[i].length === 1) {
+  if (shardValue === '-1' || shards.length === 1) {
     shardValue = shardValue === '-1' ? '' : shardValue;
     return queries.map((query) => ({
       ...query,
