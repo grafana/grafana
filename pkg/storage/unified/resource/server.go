@@ -637,6 +637,11 @@ func (s *server) Index(ctx context.Context) (*Index, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		err = index.Watch(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return index.index, nil
 }

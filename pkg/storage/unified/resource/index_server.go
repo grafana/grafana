@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -31,7 +32,30 @@ func (is IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginRe
 // Load the index
 func (is *IndexServer) Load(ctx context.Context) error {
 	is.index = NewIndex(is.s, Opts{})
-	return is.index.Init(ctx)
+	err := is.index.Init(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Watch resources for changes and update the index
+func (is *IndexServer) Watch(ctx context.Context) error {
+	rtList := fetchResourceTypes()
+	for _, rt := range rtList {
+		wr := &WatchRequest{
+			Options: rt,
+		}
+
+		go func() {
+			// TODO: handle error
+			err := is.s.Watch(wr, is.ws)
+			if err != nil {
+				log.Printf("Error watching resource %v", err)
+			}
+		}()
+	}
+	return nil
 }
 
 // Init sets the resource server on the index server
@@ -43,21 +67,7 @@ func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 		is:      is,
 		context: ctx,
 	}
-	// TODO: watch more resources
-	wr := &WatchRequest{
-		Options: &ListOptions{
-			Key: &ResourceKey{
-				Group:    "playlist.grafana.app",
-				Resource: "playlists",
-			},
-		},
-	}
-	// TODO: handle watch error
-	var err error
-	go func() {
-		err = rs.Watch(wr, is.ws)
-	}()
-	return err
+	return nil
 }
 
 func NewResourceIndexServer() ResourceIndexServer {
