@@ -10,20 +10,22 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
 	"go.opentelemetry.io/otel/attribute"
 )
 
 type S3 struct {
 	httpClient *http.Client
+	tracer     tracing.Tracer
 }
 
-func NewS3(httpClient *http.Client) *S3 {
-	return &S3{httpClient: httpClient}
+func NewS3(httpClient *http.Client, tracer tracing.Tracer) *S3 {
+	return &S3{httpClient: httpClient, tracer: tracer}
 }
 
 func (s3 *S3) PresignedURLUpload(ctx context.Context, presignedURL, key string, reader io.Reader) (err error) {
-	ctx, span := tracing.DefaultTracer().Start(ctx, "objectstorage.S3.PresignedURLUpload")
+	ctx, span := s3.tracer.Start(ctx, "objectstorage.S3.PresignedURLUpload")
 	span.SetAttributes(attribute.String("key", key))
 	defer span.End()
 

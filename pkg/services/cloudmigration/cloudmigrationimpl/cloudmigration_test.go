@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -644,6 +645,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 
 	s, err := ProvideService(
 		cfg,
+		httpclient.NewProvider(),
 		featuremgmt.WithFeatures(
 			featuremgmt.FlagOnPremToCloudMigrations,
 			featuremgmt.FlagDashboardRestore),

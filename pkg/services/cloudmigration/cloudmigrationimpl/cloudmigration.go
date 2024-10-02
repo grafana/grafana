@@ -125,7 +125,7 @@ func ProvideService(
 	if err != nil {
 		return nil, fmt.Errorf("creating http client for S3: %w", err)
 	}
-	s.objectStorage = objectstorage.NewS3(httpClientS3)
+	s.objectStorage = objectstorage.NewS3(httpClientS3, tracer)
 
 	if !cfg.CloudMigration.IsDeveloperMode {
 		httpClientGMS, err := httpClientProvider.New()
@@ -696,6 +696,7 @@ func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapsho
 			attribute.String("snapshotUid", snapshotUid),
 		),
 	)
+	defer span.End()
 
 	// The cancel func itself is protected by a mutex in the async threads, so it may or may not be set by the time CancelSnapshot is called
 	// Attempt to cancel and recover from the panic if the cancel function is nil

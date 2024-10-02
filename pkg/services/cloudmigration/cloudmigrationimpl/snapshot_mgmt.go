@@ -378,7 +378,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		}
 	}()
 
-	index, err := snapshot.ReadIndex(indexFile)
+	index, err := snapshot.ReadIndex(ctx, indexFile)
 	if err != nil {
 		return fmt.Errorf("reading index from file: %w", err)
 	}
