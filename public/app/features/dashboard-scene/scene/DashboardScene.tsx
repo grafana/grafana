@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  sceneGraph,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
@@ -24,6 +23,7 @@ import {
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
+import { SceneContextObject } from '@grafana/scenes-react';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
@@ -123,10 +123,10 @@ export interface DashboardSceneState extends SceneObjectState {
   kioskMode?: KioskMode;
   /** Share view */
   shareView?: string;
-  /** Renders panels in grid and filtered */
-  panelSearch?: string;
-  /** How many panels to show per row for search results */
-  panelsPerRow?: number;
+  /**
+   * Context object to support scenes-react hooks
+   */
+  context?: SceneContextObject;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -181,6 +181,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
+      context: new SceneContextObject({}),
       ...state,
     });
 
@@ -195,8 +196,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     let prevSceneContext = window.__grafanaSceneContext;
 
     window.__grafanaSceneContext = this;
-
-    this._initializePanelSearch();
 
     if (this.state.isEditing) {
       this._initialUrlState = locationService.getLocation();
@@ -229,19 +228,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
-  }
-
-  private _initializePanelSearch() {
-    const systemPanelFilter = sceneGraph.lookupVariable(PANEL_SEARCH_VAR, this)?.getValue();
-    if (typeof systemPanelFilter === 'string') {
-      this.setState({ panelSearch: systemPanelFilter });
-    }
-
-    const panelsPerRow = sceneGraph.lookupVariable(PANELS_PER_ROW_VAR, this)?.getValue();
-    if (typeof panelsPerRow === 'string') {
-      const perRow = Number.parseInt(panelsPerRow, 10);
-      this.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
-    }
   }
 
   public onEnterEditMode = (fromExplore = false) => {
@@ -716,19 +702,6 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
-    }
-
-    if (variable.state.name === PANEL_SEARCH_VAR) {
-      const searchValue = variable.getValue();
-      if (typeof searchValue === 'string') {
-        this._dashboard.setState({ panelSearch: searchValue });
-      }
-    } else if (variable.state.name === PANELS_PER_ROW_VAR) {
-      const panelsPerRow = variable.getValue();
-      if (typeof panelsPerRow === 'string') {
-        const perRow = Number.parseInt(panelsPerRow, 10);
-        this._dashboard.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
-      }
     }
 
     /**

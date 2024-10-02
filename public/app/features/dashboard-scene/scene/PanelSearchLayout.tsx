@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import classNames from 'classnames';
-import { useEffect } from 'react';
+import { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { VizPanel, sceneGraph } from '@grafana/scenes';
+import { SceneGridRow, VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -16,10 +15,8 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 export interface Props {
   dashboard: DashboardScene;
   panelSearch?: string;
-  panelsPerRow?: number;
+  panelsPerRow?: string;
 }
-
-const panelsPerRowCSSVar = '--panels-per-row';
 
 export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }: Props) {
   const { body } = dashboard.state;
@@ -34,25 +31,38 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
 
   for (const gridItem of bodyGrid.state.children) {
     if (gridItem instanceof DashboardGridItem) {
-      const panel = gridItem.state.body;
-      const interpolatedTitle = sceneGraph.interpolate(dashboard, panel.state.title).toLowerCase();
-      const interpolatedSearchString = sceneGraph.interpolate(dashboard, panelSearch).toLowerCase();
-      if (interpolatedTitle.includes(interpolatedSearchString)) {
-        panels.push(gridItem.state.body);
+      processPanel(gridItem, dashboard, panelSearch, panels);
+    } else if (gridItem instanceof SceneGridRow) {
+      for (const rowItem of gridItem.state.children) {
+        if (rowItem instanceof DashboardGridItem) {
+          processPanel(rowItem, dashboard, panelSearch, panels);
+        }
       }
     }
   }
 
+  const style: CSSProperties = {};
+  if (panelsPerRow) {
+    style.gridTemplateColumns = `repeat(${panelsPerRow}, 1fr)`;
+  }
+
   return (
-    <div
-      className={classNames(styles.grid, { [styles.perRow]: panelsPerRow !== undefined })}
-      style={{ [panelsPerRowCSSVar]: panelsPerRow } as Record<string, number>}
-    >
+    <div className={styles.grid} style={style}>
       {panels.map((panel) => (
         <PanelSearchHit key={panel.state.key} panel={panel} />
       ))}
     </div>
   );
+}
+
+function processPanel(gridItem: DashboardGridItem, dashboard: DashboardScene, panelSearch: string, panels: VizPanel[]) {
+  const panel = gridItem.state.body;
+  const interpolatedTitle = sceneGraph.interpolate(dashboard, panel.state.title).toLowerCase();
+  const interpolatedSearchString = sceneGraph.interpolate(dashboard, panelSearch).toLowerCase();
+
+  if (interpolatedTitle.includes(interpolatedSearchString)) {
+    panels.push(gridItem.state.body);
+  }
 }
 
 function PanelSearchHit({ panel }: { panel: VizPanel }) {
@@ -68,9 +78,6 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
       gap: theme.spacing(1),
       gridAutoRows: '320px',
-    }),
-    perRow: css({
-      gridTemplateColumns: `repeat(var(${panelsPerRowCSSVar}, 3), 1fr)`,
     }),
   };
 }

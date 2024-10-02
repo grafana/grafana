@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
+import { useVariableValue } from '@grafana/scenes-react';
 import { useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
@@ -13,14 +14,13 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 import { useSelector } from 'app/types';
 
-import { DashboardScene } from './DashboardScene';
+import { DashboardScene, PANEL_SEARCH_VAR, PANELS_PER_ROW_VAR } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, panelSearch, panelsPerRow } =
-    model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene } = model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
   const location = useLocation();
@@ -30,6 +30,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const hasControls = controls?.hasControls();
   const isSettingsOpen = editview !== undefined;
+  const [panelSearch] = useVariableValue<string>(PANEL_SEARCH_VAR);
+  const [panelsPerRow] = useVariableValue<string>(PANELS_PER_ROW_VAR);
 
   // Remember scroll pos when going into view panel, edit panel or settings
   useMemo(() => {

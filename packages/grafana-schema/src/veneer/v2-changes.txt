@@ -1,0 +1,14 @@
+
+
+Dashboard 
+ 
+* refresh => time.autoRefresh
+* weekStart => time.weekStart
+* timezone => time.timezone
+* timepicker.hidden => time.hideTimePicker
+* timepicker.nowDelay => time.nowDelay
+* timepicker.refresh_intervals => time.autoRefreshIntervals
+* timepicker.time_options => time.quickRanges 
+* templating.list => variables
+* annotations => queries.annotations (or just a type of query under queries)
+
