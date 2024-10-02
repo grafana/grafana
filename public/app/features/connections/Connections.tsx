@@ -1,4 +1,5 @@
-import { Redirect, Route, Switch, useLocation } from 'react-router-dom';
+import { Route, Switch, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom-v5-compat';
 
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
 import { StoreState, useSelector } from 'app/types';
@@ -16,7 +17,8 @@ import {
 function RedirectToAddNewConnection() {
   const { search } = useLocation();
   return (
-    <Redirect
+    <Navigate
+      replace
       to={{
         pathname: ROUTES.AddNewConnection,
         search,
@@ -40,7 +42,7 @@ export default function Connections() {
     >
       <Switch>
         {/* Redirect to "Add new connection" by default */}
-        <Route exact sensitive path={ROUTES.Base} component={() => <Redirect to={ROUTES.AddNewConnection} />} />
+        <Route exact sensitive path={ROUTES.Base} component={() => <Navigate replace to={ROUTES.AddNewConnection} />} />
         <Route exact sensitive path={ROUTES.DataSources} component={DataSourcesListPage} />
         <Route exact sensitive path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
         <Route exact sensitive path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
@@ -54,11 +56,14 @@ export default function Connections() {
 
         {/* Redirect from earlier routes to updated routes */}
         <Route exact path={ROUTES.ConnectDataOutdated} component={RedirectToAddNewConnection} />
-        <Redirect from={`${ROUTES.Base}/your-connections/:page`} to={`${ROUTES.Base}/:page`} />
-        <Redirect from={ROUTES.YourConnectionsOutdated} to={ROUTES.DataSources} />
+        <Route
+          path={`${ROUTES.Base}/your-connections/:page`}
+          component={() => <Navigate replace to={`${ROUTES.Base}/:page`} />}
+        />
+        <Route path={ROUTES.YourConnectionsOutdated} component={() => <Navigate replace to={ROUTES.DataSources} />} />
 
         {/* Not found */}
-        <Route component={() => <Redirect to="/notfound" />} />
+        <Route component={() => <Navigate replace to="/notfound" />} />
       </Switch>
     </DataSourcesRoutesContext.Provider>
   );

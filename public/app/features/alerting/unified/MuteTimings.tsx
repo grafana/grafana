@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Redirect, Route, Switch, useRouteMatch } from 'react-router-dom';
+import { Route, Switch, useRouteMatch } from 'react-router-dom';
+import { Navigate } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { useGetMuteTiming } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
@@ -23,7 +24,7 @@ const EditTimingRoute = () => {
   });
 
   if (!name) {
-    return <Redirect to="/alerting/routes" />;
+    return <Navigate replace to="/alerting/routes" />;
   }
 
   return (
