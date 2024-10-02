@@ -122,6 +122,35 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
   },
 };
 
+const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  const [value, setValue] = useState(args.value);
+  return (
+    <Field label="Test input" description="Input with a few options">
+      <Combobox
+        id="test-combobox"
+        options={async (inputValue) => {
+          console.log('I was called');
+          return await Promise.resolve([
+            { value: 'async option' },
+            { value: 'option1' },
+            { value: 'option2' },
+            { value: 'option3' },
+          ]);
+        }}
+        value={value}
+        onChange={(val) => {
+          action('onChange')(val);
+          setValue(val?.label || null);
+        }}
+      />
+    </Field>
+  );
+};
+
+export const Async: StoryObj<PropsAndCustomArgs> = {
+  render: AsyncStory,
+};
+
 export default meta;
 
 function InDevDecorator(Story: React.ElementType) {

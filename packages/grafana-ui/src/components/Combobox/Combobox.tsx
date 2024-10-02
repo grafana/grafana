@@ -12,7 +12,7 @@ import { getComboboxStyles } from './getComboboxStyles';
 import { estimateSize, useComboboxFloat } from './useComboboxFloat';
 
 export type ComboboxOption<T extends string | number = string> = {
-  label: string;
+  label?: string;
   value: T;
   description?: string;
 };
@@ -21,7 +21,7 @@ interface ComboboxProps<T extends string | number>
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
   isClearable?: boolean;
   createCustomValue?: boolean;
-  options: Array<ComboboxOption<T>>;
+  options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
   onChange: (option: ComboboxOption<T> | null) => void;
   value: T | null;
 }
@@ -57,9 +57,16 @@ export const Combobox = <T extends string | number>({
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
-  const [items, setItems] = useState(options);
+  const isAsync = options instanceof Function;
+
+  const [asyncLoading, setAsyncLoading] = useState(false);
+
+  const [items, setItems] = useState(isAsync ? [] : options);
 
   const selectedItemIndex = useMemo(() => {
+    if (isAsync) {
+      return null;
+    }
     if (value === null) {
       return null;
     }
@@ -70,10 +77,10 @@ export const Combobox = <T extends string | number>({
     }
 
     return index;
-  }, [options, value]);
+  }, [options, value, isAsync]);
 
   const selectedItem = useMemo(() => {
-    if (selectedItemIndex !== null) {
+    if (selectedItemIndex !== null && !isAsync) {
       return options[selectedItemIndex];
     }
 
@@ -85,7 +92,7 @@ export const Combobox = <T extends string | number>({
       };
     }
     return null;
-  }, [selectedItemIndex, options, value]);
+  }, [selectedItemIndex, options, value, isAsync]);
 
   const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
   const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
@@ -119,11 +126,21 @@ export const Combobox = <T extends string | number>({
     itemToString,
     selectedItem,
     onSelectedItemChange: ({ selectedItem }) => {
+      // @ts-ignore
       onChange(selectedItem);
     },
     defaultHighlightedIndex: selectedItemIndex ?? 0,
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
+      if (isAsync) {
+        setAsyncLoading(true);
+        options(inputValue).then((opts) => {
+          setItems(opts);
+          setAsyncLoading(false);
+        });
+        return;
+      }
+
       const filteredItems = options.filter(itemFilter(inputValue));
       if (createCustomValue && inputValue && filteredItems.findIndex((opt) => opt.label === inputValue) === -1) {
         const customValueOption: ComboboxOption<T> = {
@@ -141,8 +158,16 @@ export const Combobox = <T extends string | number>({
     },
     onIsOpenChange: ({ isOpen }) => {
       // Default to displaying all values when opening
-      if (isOpen) {
+      if (isOpen && !isAsync) {
         setItems(options);
+        return;
+      }
+      if (isOpen && isAsync) {
+        setAsyncLoading(true);
+        options('').then((options) => {
+          setItems(options);
+          setAsyncLoading(false);
+        });
         return;
       }
     },
@@ -152,6 +177,7 @@ export const Combobox = <T extends string | number>({
       }
     },
   });
+
   const { inputRef, floatingRef, floatStyles } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
   const onBlur = useCallback(() => {
@@ -192,6 +218,7 @@ export const Combobox = <T extends string | number>({
             />
           </>
         }
+        loading={asyncLoading}
         {...restProps}
         {...getInputProps({
           ref: inputRef,
@@ -219,7 +246,7 @@ export const Combobox = <T extends string | number>({
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
-                  key={items[virtualRow.index].value + items[virtualRow.index].label}
+                  key={`${items[virtualRow.index].value}-${virtualRow.index}`}
                   data-index={virtualRow.index}
                   className={cx(
                     styles.option,
@@ -236,7 +263,9 @@ export const Combobox = <T extends string | number>({
                   })}
                 >
                   <div className={styles.optionBody}>
-                    <span className={styles.optionLabel}>{items[virtualRow.index].label}</span>
+                    <span className={styles.optionLabel}>
+                      {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                    </span>
                     {items[virtualRow.index].description && (
                       <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
                     )}
