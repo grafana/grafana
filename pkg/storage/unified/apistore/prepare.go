@@ -24,7 +24,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err != nil {
 		return nil, err
 	}
-	if obj.GetName() == "" && obj.GetGenerateName() == "" {
+	if obj.GetName() == "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetResourceVersion() != "" {
@@ -78,15 +78,14 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return nil, fmt.Errorf("object is missing UID")
 	}
 
+	if obj.GetName() != previous.GetName() {
+		return nil, fmt.Errorf("name mismatch between existing and updated object")
+	}
+
 	obj.SetUID(previous.GetUID())
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("")
-	obj.SetName(previous.GetName())
-
-	if obj.GetGenerateName() == "" {
-		obj.SetGenerateName(obj.GetName())
-	}
 
 	// Read+write will verify that origin format is accurate
 	origin, err := obj.GetOriginInfo()

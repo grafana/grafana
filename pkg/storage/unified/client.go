@@ -25,6 +25,7 @@ func ProvideUnifiedStorageClient(
 	db infraDB.DB,
 	tracer tracing.Tracer,
 ) (resource.ResourceClient, error) {
+	fmt.Println("HELLOOOOO")
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := options.StorageOptions{
@@ -61,6 +62,7 @@ func ProvideUnifiedStorageClient(
 		return resource.NewLocalResourceClient(server), nil
 
 	case options.StorageTypeUnifiedGrpc:
+		fmt.Println("GRPC????")
 		if opts.Address == "" {
 			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
 		}
