@@ -14,8 +14,13 @@ labels:
     - oss
 title: Annotation and label template reference
 menuTitle: Template reference
-weight: 0
+weight: 101
 refs:
+  template-language:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/
   template-language-functions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/
@@ -26,13 +31,20 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/examples/#print-all-labels-from-a-classic-condition
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/examples/#print-all-labels-from-a-classic-condition
+  template-annotations-and-labels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
 ---
 
 # Annotation and label template reference
 
-Templating allows you to customize alert messages using variables and functions. Variables represent dynamic values retrieved from alert rule queries, while functions perform actions like transforming or formatting data.
+Annotations and labels in alert rules can be defined using plain text. However, you can also define templates to customize their values with dynamic data from alert rule queries.
 
-TODO: connect it with Template language
+For example, you can template the `summary` annotation to include information from query values, providing relevant alert context for responders. Refer to [Template annotations and labels](ref:template-annotations-and-labels) for various use cases.
+
+In templates, variables represent dynamic values from queries, while functions perform actions to transform or format this data.
 
 ## Variables
 
@@ -43,6 +55,8 @@ The `$` and `.` symbols are used to reference variables and their properties. Yo
 ```
 {{ $values.A.Value }}
 ```
+
+Templates uses the Go's templating system. Refer to [Template language](ref:template-language) for additional information.
 
 The following variables are available when templating annotations and labels:
 
@@ -152,7 +166,7 @@ In addition, the following functions are also available for templating annotatio
 | [externalURL](#externalurl) | none          | string                 | Returns the external URL of the Grafana server as configured in the ini file(s). |
 | [pathPrefix](#pathprefix)   | none          | string                 | Returns the path of the Grafana server as configured in the ini file(s).         |
 
-For reference, templating in Grafana is based on the [Prometheus template implementation](https://prometheus.io/docs/prometheus/latest/configuration/template_reference/), allowing the use of Prometheus-like templates in Grafana for formatting alert messages and other components.
+For further context on these functions, note that templating in Grafana is based on the [Prometheus template implementation](https://prometheus.io/docs/prometheus/latest/configuration/template_reference/), enabling the use of these functions and Prometheus-like templates for formatting alert messages within Grafana.
 
 #### humanize
 
