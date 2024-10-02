@@ -243,7 +243,9 @@ export const LdapSettingsPage = () => {
       reset(payload);
       reportInteraction('authentication_ldap_deleted');
 
-      locationService.push(`/admin/authentication`);
+      setTimeout(() => {
+        locationService.push(`/admin/authentication`);
+      }, 300);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
