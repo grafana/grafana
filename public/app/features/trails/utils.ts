@@ -148,8 +148,15 @@ export function limitAdhocProviders(
       replace?: boolean;
       values: GetTagResponse | MetricFindValue[];
     }> => {
+      // For the Prometheus label names endpoint, '/api/v1/labels'
+      // get the previously selected filters from the variable
+      // to use in the query to filter the response
+      // using filters, e.g. {previously_selected_label:"value"},
+      // as the series match[] parameter in Prometheus labels endpoint
       const filters = filtersVariable.state.filters;
+      // call getTagKeys and truncate the response
       const values = (await datasourceHelper.getTagKeys({ filters })).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
     getTagValuesProvider: async (
@@ -159,12 +166,20 @@ export function limitAdhocProviders(
       replace?: boolean;
       values: GetTagResponse | MetricFindValue[];
     }> => {
+      // For the Prometheus label values endpoint, /api/v1/label/${interpolatedName}/values
+      // get the previously selected filters from the variable
+      // to use in the query to filter the response
+      // using filters, e.g. {previously_selected_label:"value"},
+      // as the series match[] parameter in Prometheus label values endpoint
       const filtersValues = filtersVariable.state.filters;
+      // remove current selected filter if updating a chosen filter
       const filters = filtersValues.filter((f) => f.key !== filter.key);
+      // call getTagValues and truncate the response
       const values = (await datasourceHelper.getTagValues({ key: filter.key, filters })).slice(
         0,
         MAX_ADHOC_VARIABLE_OPTIONS
       );
+      // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
   });
