@@ -1,7 +1,7 @@
 //go:build ignore
 // +build ignore
 
-//go:generate go run gen.go
+//go:generate go run kinds_gen.go
 
 package main
 
@@ -20,17 +20,25 @@ import (
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
-	"github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/codegen/kinds"
 )
+
+const KindsFolder = "kinds"
 
 // CoreDefParentPath is the path, relative to the repository root, where
 // each child directory is expected to contain .cue files defining one
 // Core kind.
-var CoreDefParentPath = "kinds"
+var CoreDefParentPath = filepath.Join("codegen", KindsFolder)
 
 // TSCoreKindParentPath is the path, relative to the repository root, to the directory that
 // contains one directory per kind, full of generated TS kind output: types and default consts.
-var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
+var TSCoreKindParentPath = filepath.Join("..", "packages", "grafana-schema", "src", "raw")
+
+// TSCommonPackages is the common schemas that are shared between panels and datasources
+var TSCommonPackages = filepath.Join("..", "packages", "grafana-schema", "src", "common")
+
+// TSIndexPath is the path where TS index is generated
+var TSIndexPath = filepath.Join("packages", "grafana-schema", "src")
 
 func main() {
 	if len(os.Args) > 1 {
@@ -40,20 +48,20 @@ func main() {
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from core kinds.
-	coreKindsGen := codejen.JennyListWithNamer(func(def codegen.SchemaForGen) string {
+	coreKindsGen := codejen.JennyListWithNamer(func(def kinds.SchemaForGen) string {
 		return def.Name
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		&codegen.GoSpecJenny{},
-		&codegen.K8ResourcesJenny{},
-		&codegen.CoreRegistryJenny{},
-		codegen.LatestMajorsOrXJenny(TSCoreKindParentPath),
-		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		&kinds.GoSpecJenny{},
+		&kinds.K8ResourcesJenny{},
+		&kinds.CoreRegistryJenny{},
+		kinds.LatestMajorsOrXJenny(TSCoreKindParentPath),
+		kinds.TSVeneerIndexJenny(TSIndexPath),
 	)
 
-	header := codegen.SlashHeaderMapper("kinds/gen.go")
+	header := kinds.SlashHeaderMapper("kinds/gen.go")
 	coreKindsGen.AddPostprocessors(header)
 
 	ctx := cuecontext.New()
@@ -64,6 +72,8 @@ func main() {
 		os.Exit(1)
 	}
 	groot := filepath.Dir(cwd)
+
+	fmt.Println(groot)
 
 	f := os.DirFS(filepath.Join(groot, CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
@@ -91,7 +101,7 @@ func main() {
 		if err = jfs.Verify(context.Background(), groot); err != nil {
 			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
 		}
-	} else if err = jfs.Write(context.Background(), groot); err != nil {
+	} else if err = jfs.Write(context.Background(), filepath.Join(groot)); err != nil {
 		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
 }
@@ -100,11 +110,14 @@ type dummyCommonJenny struct{}
 
 func genCommon(ctx *cue.Context, groot string) (*codejen.FS, error) {
 	fsys := codejen.NewFS()
-	path := filepath.Join("packages", "grafana-schema", "src", "common")
 	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
 
 	commonFiles := make([]string, 0)
-	filepath.WalkDir(filepath.Join(groot, path), func(path string, d fs.DirEntry, err error) error {
+	filepath.WalkDir(filepath.Join(groot, TSCommonPackages), func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
 		if d.IsDir() || filepath.Ext(d.Name()) != ".cue" {
 			return nil
 		}
@@ -122,7 +135,7 @@ func genCommon(ctx *cue.Context, groot string) (*codejen.FS, error) {
 		Export: true,
 	}))("failed to generate common schema TS")
 
-	_ = fsys.Add(*codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}))
+	_ = fsys.Add(*codejen.NewFile(filepath.Join(TSCommonPackages, "common.gen.ts"), b, dummyCommonJenny{}))
 	return fsys, nil
 }
 
@@ -159,24 +172,28 @@ func die(err error) {
 	os.Exit(1)
 }
 
-func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen, error) {
-	values := make([]codegen.SchemaForGen, 0)
+func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]kinds.SchemaForGen, error) {
+	values := make([]kinds.SchemaForGen, 0)
 	for _, dir := range dirs {
 		if !dir.IsDir() {
 			continue
 		}
 
-		entries, err := os.ReadDir(dir.Name())
+		if dir.Name() == "tmpl" {
+			continue
+		}
+
+		entries, err := os.ReadDir(filepath.Join(KindsFolder, dir.Name()))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error opening %s directory: %s", dir, err)
+			fmt.Fprintf(os.Stderr, "error opening %s directory: %s\n", dir.Name(), err)
 			os.Exit(1)
 		}
 
 		// It's assuming that we only have one file in each folder
-		entry := filepath.Join(dir.Name(), entries[0].Name())
+		entry := filepath.Join(KindsFolder, dir.Name(), entries[0].Name())
 		cueFile, err := os.ReadFile(entry)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s", dir, entries[0].Name(), err)
+			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s\n", dir.Name(), entries[0].Name(), err)
 			os.Exit(1)
 		}
 
@@ -186,7 +203,7 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen,
 			return nil, err
 		}
 
-		sch := codegen.SchemaForGen{
+		sch := kinds.SchemaForGen{
 			Name:       name,
 			FilePath:   "./" + filepath.Join(CoreDefParentPath, entry),
 			CueFile:    v,

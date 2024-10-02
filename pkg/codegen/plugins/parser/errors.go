@@ -1,4 +1,4 @@
-package pfs
+package parser
 
 import "errors"
 

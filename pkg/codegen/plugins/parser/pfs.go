@@ -1,4 +1,4 @@
-package pfs
+package parser
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
-	"github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/codegen/kinds"
 )
 
 // PackageName is the name of the CUE package that Grafana will load when
@@ -29,7 +29,7 @@ var schemaInterface = map[string]SchemaInterface{
 
 // PermittedCUEImports returns the list of import paths that may be used in a
 // plugin's grafanaplugin cue package.
-var PermittedCUEImports = codegen.PermittedCUEImports
+var PermittedCUEImports = kinds.PermittedCUEImports
 
 func importAllowed(path string) bool {
 	for _, p := range PermittedCUEImports() {

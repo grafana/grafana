@@ -1,4 +1,4 @@
-package codegen
+package kinds
 
 import (
 	"fmt"
@@ -38,7 +38,7 @@ func (jenny *GoSpecJenny) Generate(sfg ...SchemaForGen) (codejen.Files, error) {
 			return nil, err
 		}
 
-		files[i] = *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_spec_gen.go", packageName, packageName), b, jenny)
+		files[i] = *codejen.NewFile(fmt.Sprintf("kinds/%s/%s_spec_gen.go", packageName, packageName), b, jenny)
 	}
 
 	return files, nil

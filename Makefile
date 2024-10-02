@@ -139,8 +139,8 @@ i18n-extract: i18n-extract-enterprise
 .PHONY: gen-cue
 gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
-	go generate ./kinds/gen.go
-	go generate ./public/app/plugins/gen.go
+	go generate ./pkg/codegen/kinds_gen.go
+	go generate ./pkg/codegen/plugins_gen.go
 
 .PHONY: gen-feature-toggles
 gen-feature-toggles:

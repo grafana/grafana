@@ -1,4 +1,4 @@
-package pfs
+package parser
 
 import (
 	"cuelang.org/go/cue"

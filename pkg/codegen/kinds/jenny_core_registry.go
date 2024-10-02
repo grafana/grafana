@@ -1,4 +1,4 @@
-package codegen
+package kinds
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/codejen"
 )
 
-var registryPath = filepath.Join("pkg", "registry", "schemas")
+var registryPath = filepath.Join("registry", "schemas")
 
 // CoreRegistryJenny generates a registry with all core kinds.
 type CoreRegistryJenny struct {

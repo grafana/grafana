@@ -1,4 +1,4 @@
-package codegen
+package plugins
 
 import (
 	"fmt"
@@ -9,34 +9,34 @@ import (
 
 	"github.com/grafana/codejen"
 	tsast "github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/codegen/kinds"
+	"github.com/grafana/grafana/pkg/codegen/plugins/parser"
 )
 
 var versionedPluginPath = filepath.Join("packages", "grafana-schema", "src", "raw", "composable")
 
-func PluginTSTypesJenny(root string) codejen.OneToMany[*pfs.PluginDecl] {
+func PluginTSTypesJenny(root string) codejen.OneToMany[*parser.PluginDecl] {
 	return &ptsJenny{
 		root:  root,
-		inner: adaptToPipeline(codegen.TSTypesJenny{}),
+		inner: adaptToPipeline(kinds.TSTypesJenny{}),
 	}
 }
 
 type ptsJenny struct {
 	root  string
-	inner codejen.OneToOne[*pfs.PluginDecl]
+	inner codejen.OneToOne[*parser.PluginDecl]
 }
 
 func (j *ptsJenny) JennyName() string {
 	return "PluginTsTypesJenny"
 }
 
-func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
+func (j *ptsJenny) Generate(decl *parser.PluginDecl) (codejen.Files, error) {
 	genFile := &tsast.File{}
 	versionedFile := &tsast.File{}
 
 	for _, im := range decl.Imports {
-		if tsim, err := codegen.ConvertImport(im); err != nil {
+		if tsim, err := kinds.ConvertImport(im); err != nil {
 			return nil, err
 		} else if tsim.From.Value != "" {
 			genFile.Imports = append(genFile.Imports, tsim)
@@ -86,9 +86,9 @@ func getPluginVersion(pluginVersion *string) string {
 	return version
 }
 
-func adaptToPipeline(j codejen.OneToOne[codegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) codegen.SchemaForGen {
-		return codegen.SchemaForGen{
+func adaptToPipeline(j codejen.OneToOne[kinds.SchemaForGen]) codejen.OneToOne[*parser.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *parser.PluginDecl) kinds.SchemaForGen {
+		return kinds.SchemaForGen{
 			Name:    derivePascalName(pd.PluginMeta.Id, pd.PluginMeta.Name) + pd.SchemaInterface.Name,
 			CueFile: pd.CueFile,
 			IsGroup: pd.SchemaInterface.IsGroup,
