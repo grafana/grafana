@@ -140,7 +140,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         value={value}
         onChange={(val) => {
           action('onChange')(val);
-          setValue(val?.label || null);
+          setValue(val?.value || null);
         }}
       />
     </Field>
