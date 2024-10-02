@@ -627,8 +627,11 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 func (s *server) Index(ctx context.Context) (*Index, error) {
 	index := s.index.(*IndexServer)
 	if index.index == nil {
-		index.Init(ctx, s)
-		_, err := index.Index(ctx, &IndexRequest{})
+		err := index.Init(ctx, s)
+		if err != nil {
+			return nil, err
+		}
+		_, err = index.Index(ctx, &IndexRequest{})
 		if err != nil {
 			return nil, err
 		}
