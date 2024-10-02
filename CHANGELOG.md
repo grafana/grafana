@@ -24,6 +24,7 @@
 ### Bug fixes
 
 - **Provisioning:** Prevent provisioning folder errors from failing startup [#92591](https://github.com/grafana/grafana/pull/92591), [@suntala](https://github.com/suntala)
+- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 10.4.9 END -->
 <!-- 10.4.8 START -->
