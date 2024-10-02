@@ -58,7 +58,7 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = s.GetToken(context.Background())
-	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
+	assert.ErrorIs(t, err, cloudmigration.ErrTokenNotFound)
 
 	cm := cloudmigration.CloudMigrationSession{}
 	err = s.ValidateToken(context.Background(), cm)
@@ -617,7 +617,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 			featuremgmt.FlagDashboardRestore),
 		sqlStore,
 		dsService,
-		secretskv.NewFakeSQLSecretsKVStore(t),
+		secretskv.NewFakeSQLSecretsKVStore(t, sqlStore),
 		secretsService,
 		rr,
 		prometheus.DefaultRegisterer,
