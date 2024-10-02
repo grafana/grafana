@@ -16,6 +16,14 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
+//mock updateDefinesWithUniqueValue
+jest.mock('app/features/alerting/unified/utils/templates', () => ({
+  ...jest.requireActual('app/features/alerting/unified/utils/templates'),
+  updateDefinesWithUniqueValue: (templateContent: string) => {
+    return templateContent.replace(/custom-email/g, 'custom-email_NEW');
+  },
+}));
+
 jest.mock(
   'react-virtualized-auto-sizer',
   () =>
@@ -97,8 +105,8 @@ describe('Templates K8s API', () => {
 
     expect(form).toBeInTheDocument();
     expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('custom-email (copy)');
-    expect(within(form).getAllByTestId('code-editor')[0]).toHaveValue(
-      '{{ define "custom-email" }}  Custom email template {{ end }}'
+    expect(within(form).getAllByTestId('code-editor')[0]).toHaveTextContent(
+      '{{ define "custom-email_NEW" }} Custom email template {{ end }}'
     );
   });
 
