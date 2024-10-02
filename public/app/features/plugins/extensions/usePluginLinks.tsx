@@ -47,7 +47,9 @@ export function usePluginLinks({
     }
 
     if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      logWarning(`usePluginLinks("${extensionPointId}") - The extension point is missing from the "plugin.json" file.`);
+      logWarning(
+        `Invalid extension point. Reason: The extension point is not declared in the "plugin.json" file. ExtensionPointId: "${extensionPointId}"`
+      );
       return {
         isLoading: false,
         links: [],
