@@ -13,7 +13,7 @@ import {
 } from '../../openapi/templatesApi.gen';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { K8sAnnotations, PROVENANCE_NONE } from '../../utils/k8s/constants';
-import { shouldUseK8sApi, getK8sNamespace, getAnnotation } from '../../utils/k8s/utils';
+import { getAnnotation, getK8sNamespace, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
 import { TemplateFormValues } from '../receivers/TemplateForm';
 
@@ -155,7 +155,11 @@ export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanager
     // it's not obvious that this is needed for template to work
     const content = ensureDefine(templateValues.title, templateValues.content);
 
-    // TODO Check we're NOT overriding an existing template
+    const targetTemplateExists = amConfig.template_files?.[templateValues.title] !== undefined;
+    if (targetTemplateExists) {
+      throw new Error('target template already exists');
+    }
+
     const updatedConfig = produce(amConfig, (draft) => {
       draft.template_files[templateValues.title] = content;
       draft.alertmanager_config.templates = [...(draft.alertmanager_config.templates ?? []), templateValues.title];
