@@ -1,42 +1,67 @@
 import { RouteChildrenProps } from 'react-router-dom';
 
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
+import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { DuplicateTemplateView } from '../receivers/DuplicateTemplateView';
+import { generateCopiedName } from '../../utils/duplicate';
+import { stringifyErrorLike } from '../../utils/misc';
+import { updateDefinesWithUniqueValue } from '../../utils/templates';
+import { TemplateForm } from '../receivers/TemplateForm';
+
+import { useGetNotificationTemplate, useNotificationTemplates } from './useNotificationTemplates';
 
 type Props = RouteChildrenProps<{ name: string }>;
 
-const NewMessageTemplate = ({ match }: Props) => {
-  const { selectedAlertmanager } = useAlertmanager();
-  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
+const notFoundComponent = <EntityNotFound entity="Notification template" />;
 
-  const name = match?.params.name;
-  if (!name) {
+const DuplicateMessageTemplate = ({ match }: Props) => {
+  const { selectedAlertmanager } = useAlertmanager();
+  const templateUid = match?.params.name ? decodeURIComponent(match?.params.name) : undefined;
+
+  const {
+    currentData: template,
+    isLoading,
+    error,
+  } = useGetNotificationTemplate({ alertmanager: selectedAlertmanager ?? '', uid: templateUid ?? '' });
+
+  const {
+    currentData: templates,
+    isLoading: templatesLoading,
+    error: templatesError,
+  } = useNotificationTemplates({ alertmanager: selectedAlertmanager ?? '' });
+
+  if (!selectedAlertmanager) {
+    return <EntityNotFound entity="Alertmanager" />;
+  }
+
+  if (!templateUid) {
     return <EntityNotFound entity="Notification template" />;
   }
 
-  if (isLoading && !data) {
-    return 'loading...';
+  if (isLoading || templatesLoading) {
+    return <LoadingPlaceholder text="Loading notification template" />;
   }
 
-  // TODO decent error handling
-  if (error) {
-    return String(error);
+  if (error || templatesError || !template || !templates) {
+    return isNotFoundError(error) ? (
+      notFoundComponent
+    ) : (
+      <Alert title="Error loading notification template" severity="error">
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
   }
 
-  if (!data) {
-    return null;
-  }
+  const duplicatedName = generateCopiedName(template.title, templates?.map((t) => t.title) ?? []);
 
   return (
-    <DuplicateTemplateView
-      alertManagerSourceName={selectedAlertmanager!}
-      config={data}
-      templateName={decodeURIComponent(name)}
+    <TemplateForm
+      alertmanager={selectedAlertmanager}
+      prefill={{ title: duplicatedName, content: updateDefinesWithUniqueValue(template.content) }}
     />
   );
 };
 
-export default NewMessageTemplate;
+export default DuplicateMessageTemplate;
