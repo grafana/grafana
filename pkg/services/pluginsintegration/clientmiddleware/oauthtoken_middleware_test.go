@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -23,9 +23,9 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		req.Header.Set(otherHeader, "test")
 
 		oAuthTokenService := &oauthtokentest.Service{}
-		cdt := clienttest.NewClientDecoratorTest(t,
-			clienttest.WithReqContext(req, &user.SignedInUser{}),
-			clienttest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService)),
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			handlertest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService)),
 		)
 
 		jsonDataMap := map[string]any{}
@@ -39,7 +39,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		}
 
 		t.Run("Should not forward OAuth Identity when calling QueryData", func(t *testing.T) {
-			_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{otherHeader: "test"},
 			})
@@ -50,7 +50,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		})
 
 		t.Run("Should not forward OAuth Identity when calling CallResource", func(t *testing.T) {
-			err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string][]string{otherHeader: {"test"}},
 			}, nopCallResourceSender)
@@ -61,7 +61,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		})
 
 		t.Run("Should not forward OAuth Identity when calling CheckHealth", func(t *testing.T) {
-			_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+			_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{otherHeader: "test"},
 			})
@@ -86,9 +86,9 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		oAuthTokenService := &oauthtokentest.Service{
 			Token: token,
 		}
-		cdt := clienttest.NewClientDecoratorTest(t,
-			clienttest.WithReqContext(req, &user.SignedInUser{}),
-			clienttest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService)),
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			handlertest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService)),
 		)
 
 		jsonDataMap := map[string]any{
@@ -104,7 +104,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		}
 
 		t.Run("Should forward OAuth Identity when calling QueryData", func(t *testing.T) {
-			_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+			_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{otherHeader: "test"},
 			})
@@ -117,7 +117,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		})
 
 		t.Run("Should forward OAuth Identity when calling CallResource", func(t *testing.T) {
-			err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string][]string{otherHeader: {"test"}},
 			}, nopCallResourceSender)
@@ -132,7 +132,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 		})
 
 		t.Run("Should forward OAuth Identity when calling CheckHealth", func(t *testing.T) {
-			_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+			_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{otherHeader: "test"},
 			})
