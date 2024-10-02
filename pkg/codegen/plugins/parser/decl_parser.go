@@ -37,6 +37,7 @@ func (psr *DeclParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 		}
 
 		dir, _ := fs.Sub(root, path)
+
 		pp, err := ParsePluginFS(ctx, dir, path)
 		if err != nil {
 			return nil, fmt.Errorf("parsing plugin failed for %s: %s", dir, err)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"path/filepath"
 	"strings"
 
 	"cuelang.org/go/cue"
@@ -84,13 +85,9 @@ func ParsePluginFS(ctx *cue.Context, fsys fs.FS, dir string) (ParsedPlugin, erro
 		Properties: metadata,
 	}
 
-	if err != nil {
-		return ParsedPlugin{}, err
-	}
-
 	bi := load.Instances(cuefiles, &load.Config{
 		Package: PackageName,
-		Dir:     dir,
+		Dir:     filepath.Join("../..", "public", "app", "plugins", dir),
 	})[0]
 	if bi.Err != nil {
 		return ParsedPlugin{}, bi.Err
@@ -114,7 +111,7 @@ func ParsePluginFS(ctx *cue.Context, fsys fs.FS, dir string) (ParsedPlugin, erro
 	// become a no-op, and we'd lose enforcement of import restrictions in plugins without
 	// realizing it.
 	if len(bi.Files) != len(bi.BuildFiles) {
-		panic("Refactor required - upstream CUE implementation changed, bi.Files is no longer populated")
+		return ParsedPlugin{}, errors.New("Refactor required - upstream CUE implementation changed, bi.Files is no longer populated")
 	}
 
 	gpi := ctx.BuildInstance(bi)

@@ -134,7 +134,7 @@ func getGrafanaVersion() string {
 		return ""
 	}
 
-	pkg, err := OpenPackageJSON(path.Join(dir, "../../../"))
+	pkg, err := OpenPackageJSON(path.Join(dir, "../.."))
 	if err != nil {
 		return ""
 	}

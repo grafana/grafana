@@ -27,6 +27,8 @@ var skipPlugins = map[string]bool{
 
 const sep = string(filepath.Separator)
 
+var PluginsPath = filepath.Join("..", "..", "public", "app", "plugins")
+
 func main() {
 	if len(os.Args) > 1 {
 		log.Fatal(fmt.Errorf("plugin thema code generator does not currently accept any arguments\n, got %q", os.Args))
@@ -36,7 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not get working directory: %s", err))
 	}
-	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
+	groot := filepath.Clean(filepath.Join(cwd, "../.."))
 
 	pluginKindGen := codejen.JennyListWithNamer(func(d *parser.PluginDecl) string {
 		return d.PluginMeta.Id
@@ -45,13 +47,13 @@ func main() {
 	pluginKindGen.Append(
 		&plugins.PluginRegistryJenny{},
 		plugins.PluginGoTypesJenny("pkg/tsdb"),
-		plugins.PluginTSTypesJenny("public/app/plugins"),
+		plugins.PluginTSTypesJenny(PluginsPath),
 	)
 
 	pluginKindGen.AddPostprocessors(kinds.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer())
 
 	declParser := parser.NewDeclParser(skipPlugins)
-	decls, err := declParser.Parse(os.DirFS(cwd))
+	decls, err := declParser.Parse(os.DirFS(filepath.Join(cwd, PluginsPath)))
 	if err != nil {
 		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
 	}
