@@ -73,8 +73,6 @@ func main() {
 	}
 	groot := filepath.Dir(cwd)
 
-	fmt.Println(groot)
-
 	f := os.DirFS(filepath.Join(groot, CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
 	all, err := loadCueFiles(ctx, kinddirs)
