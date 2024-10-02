@@ -180,6 +180,7 @@ export const QueryWrapper = ({
       <div className={styles.wrapper}>
         <QueryEditorRow<AlertDataQuery>
           alerting
+          hideRefId={!isAdvancedMode}
           hideActionButtons={!isAdvancedMode}
           collapsable={false}
           dataSource={dsSettings}
