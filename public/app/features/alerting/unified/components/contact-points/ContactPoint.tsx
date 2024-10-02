@@ -13,7 +13,6 @@ import { useAlertmanager } from 'app/features/alerting/unified/state/Alertmanage
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
-import { isLoading } from '../../hooks/useAsync';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
@@ -23,15 +22,14 @@ import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from
 import { ContactPointWithMetadata, getReceiverDescription, ReceiverConfigWithMetadata } from './utils';
 
 interface ContactPointProps {
-  disabled?: boolean;
   contactPoint: ContactPointWithMetadata;
 }
 
-export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointProps) => {
+export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
   const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
-  const [deleteTrigger, deleteRequestState] = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
+  const [deleteTrigger] = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger.execute);
 
   // TODO probably not the best way to figure out if we want to show either only the summary or full metadata for the receivers?
@@ -42,7 +40,6 @@ export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointPro
       <Stack direction="column" gap={0}>
         <ContactPointHeader
           contactPoint={contactPoint}
-          disabled={disabled || isLoading(deleteRequestState)}
           onDelete={(contactPointToDelete) =>
             showDeleteModal({
               name: contactPointToDelete.id || contactPointToDelete.name,
