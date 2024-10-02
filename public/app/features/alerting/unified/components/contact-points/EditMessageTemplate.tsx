@@ -3,11 +3,14 @@ import { useParams } from 'react-router-dom';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
+import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { stringifyErrorLike } from '../../utils/misc';
 import { TemplateForm } from '../receivers/TemplateForm';
 
 import { useGetNotificationTemplate } from './useNotificationTemplates';
+
+const notFoundComponent = <EntityNotFound entity="Notification template" />;
 
 const EditMessageTemplate = () => {
   const { name } = useParams<{ name: string }>();
@@ -28,7 +31,9 @@ const EditMessageTemplate = () => {
   }
 
   if (error) {
-    return (
+    return isNotFoundError(error) ? (
+      notFoundComponent
+    ) : (
       <Alert severity="error" title="Failed to fetch notification template">
         {stringifyErrorLike(error)}
       </Alert>
@@ -36,7 +41,7 @@ const EditMessageTemplate = () => {
   }
 
   if (!currentData) {
-    return <EntityNotFound entity="Notification template" />;
+    return notFoundComponent;
   }
 
   return <TemplateForm alertmanager={selectedAlertmanager ?? ''} originalTemplate={currentData} />;

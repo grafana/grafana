@@ -3,6 +3,7 @@ import { RouteChildrenProps } from 'react-router-dom';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
+import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { generateCopiedName } from '../../utils/duplicate';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -12,6 +13,8 @@ import { TemplateForm } from '../receivers/TemplateForm';
 import { useGetNotificationTemplate, useNotificationTemplates } from './useNotificationTemplates';
 
 type Props = RouteChildrenProps<{ name: string }>;
+
+const notFoundComponent = <EntityNotFound entity="Notification template" />;
 
 const DuplicateMessageTemplate = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
@@ -42,7 +45,9 @@ const DuplicateMessageTemplate = ({ match }: Props) => {
   }
 
   if (error || templatesError || !template || !templates) {
-    return (
+    return isNotFoundError(error) ? (
+      notFoundComponent
+    ) : (
       <Alert title="Error loading notification template" severity="error">
         {stringifyErrorLike(error)}
       </Alert>
