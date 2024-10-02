@@ -100,12 +100,12 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	if err != nil {
 		return nil, err
 	}
-	query := legacy.ListUserQuery{
-		OrgID:      ns.OrgID,
-		Pagination: common.Pagination{Limit: 1},
-	}
 
-	found, err := s.store.ListUsers(ctx, ns, query)
+	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+		OrgID:      ns.OrgID,
+		UID:        name,
+		Pagination: common.Pagination{Limit: 1},
+	})
 	if found == nil || err != nil {
 		return nil, resource.NewNotFound(name)
 	}

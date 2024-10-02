@@ -1,3 +1,26 @@
+<!-- 11.2.2 START -->
+
+# 11.2.2 (2024-10-01)
+
+### Features and enhancements
+
+- **Chore:** Bump Go to 1.22.7 [#93353](https://github.com/grafana/grafana/pull/93353), [@hairyhenderson](https://github.com/hairyhenderson)
+- **Chore:** Bump Go to 1.22.7 (Enterprise)
+- **Data sources:** Hide the datasource redirection banner for users who can't interact with data sources [#93103](https://github.com/grafana/grafana/pull/93103), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+
+### Bug fixes
+
+- **Alerting:** Fix preview of silences when label name contains spaces [#93051](https://github.com/grafana/grafana/pull/93051), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Make query wrapper match up datasource UIDs if necessary [#93114](https://github.com/grafana/grafana/pull/93114), [@tomratcliffe](https://github.com/tomratcliffe)
+- **AzureMonitor:** Deduplicate resource picker rows [#93705](https://github.com/grafana/grafana/pull/93705), [@aangelisc](https://github.com/aangelisc)
+- **AzureMonitor:** Improve resource picker efficiency [#93440](https://github.com/grafana/grafana/pull/93440), [@aangelisc](https://github.com/aangelisc)
+- **AzureMonitor:** Remove Basic Logs retention warning [#93123](https://github.com/grafana/grafana/pull/93123), [@aangelisc](https://github.com/aangelisc)
+- **CloudWatch:** Fix segfault when migrating legacy queries [#93544](https://github.com/grafana/grafana/pull/93544), [@iwysiu](https://github.com/iwysiu)
+- **Correlations:** Limit access to correlations page to users who can access Explore [#93676](https://github.com/grafana/grafana/pull/93676), [@ifrost](https://github.com/ifrost)
+- **DashboardScene:** Fix broken error handling and error rendering [#93690](https://github.com/grafana/grafana/pull/93690), [@torkelo](https://github.com/torkelo)
+- **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93488](https://github.com/grafana/grafana/pull/93488), [@wbrowne](https://github.com/wbrowne)
+
+<!-- 11.2.2 END -->
 <!-- 11.1.7 START -->
 
 # 11.1.7 (2024-10-01)
@@ -91,6 +114,7 @@
 - **Reporting:** Disable dashboardSceneSolo when rendering PDFs the old way (Enterprise)
 - **Templating:** Fix searching non-latin template variables [#92893](https://github.com/grafana/grafana/pull/92893), [@leeoniya](https://github.com/leeoniya)
 - **TutorialCard:** Fix link to tutorial not opening [#92647](https://github.com/grafana/grafana/pull/92647), [@eledobleefe](https://github.com/eledobleefe)
+- **Alerting:** Fixed CVE-2024-8118.
 
 ### Plugin development fixes & changes
 
