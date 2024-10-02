@@ -56,7 +56,7 @@ The `$` and `.` symbols are used to reference variables and their properties. Yo
 {{ $values.A.Value }}
 ```
 
-Templates uses the Go's templating system. Refer to [Template language](ref:template-language) for additional information.
+Templates are based on the **Go templating system**. Refer to [Template language](ref:template-language) for additional information.
 
 The following variables are available when templating annotations and labels:
 

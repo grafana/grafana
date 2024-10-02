@@ -14,7 +14,7 @@ labels:
     - oss
 title: Examples of templating labels and annotations in alert rules
 menuTitle: Examples
-weight: 0
+weight: 102
 ---
 
 # Labels and annotations template examples
@@ -40,7 +40,6 @@ You can also show the amount of disk space used with the $values variable. For e
 ```
 The database server {{ index $labels "instance" }} has exceeded 75% of available disk space. Disk space used is {{ index $values "B" }}%, please resize the disk within the next 24 hours
 ```
-
 
 ### Print all labels, comma separated
 
