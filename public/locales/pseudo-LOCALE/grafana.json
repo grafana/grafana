@@ -2198,7 +2198,10 @@
     }
   },
   "query-library": {
-    "delete-query-button": "Đęľęŧę qūęřy"
+    "datasource-names": "Đäŧäşőūřčę ŉämę(ş):",
+    "delete-query-button": "Đęľęŧę qūęřy",
+    "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ qūęřy ŧęmpľäŧę ƒřőm ŧĥę ľįþřäřy: {{error}}",
+    "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ"
   },
   "query-operation": {
     "header": {
