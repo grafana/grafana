@@ -421,7 +421,7 @@ export const isExtensionPointMetaInfoMissing = (extensionPointId: string, plugin
   const pluginId = pluginContext.meta?.id;
   const extensionPoints = pluginContext.meta?.extensions?.extensionPoints;
 
-  if (!extensionPoints || !extensionPoints.find((ep) => ep.id === extensionPointId)) {
+  if (!extensionPoints || !extensionPoints.some((ep) => ep.id === extensionPointId)) {
     logWarning(
       `Extension point "${extensionPointId}" - it's not recorded in the "plugin.json" for "${pluginId}". Please add it under "extensions.extensionPoints[]".`
     );
