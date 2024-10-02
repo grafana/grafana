@@ -122,6 +122,16 @@ export function getFilters(scene: SceneObject) {
 // frontend hardening limit
 const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
 
+/**
+ * Add custom providers for the adhoc filters variable that limit the responses for labels keys and label values.
+ * Currently hard coded to 10000.
+ *
+ * The current provider functions for adhoc filter variables are the functions getTagKeys and getTagValues in the data source.
+ * This function still uses these functions from inside the data source helper.
+ *
+ * @param filtersVariable
+ * @param datasourceHelper
+ */
 export function limitAdhocProviders(
   filtersVariable: SceneVariable<SceneVariableState> | null,
   datasourceHelper: MetricDatasourceHelper
