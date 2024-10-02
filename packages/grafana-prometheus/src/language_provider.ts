@@ -442,7 +442,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       [],
       {
         labelName,
-        queries: queries?.map((q) => q.expr),
+        queries: queries?.map((q) =>
+          this.datasource.interpolateString(q.expr, {
+            ...this.datasource.getIntervalVars(),
+            ...this.datasource.getRangeScopedVars(this.timeRange),
+          })
+        ),
         scopes: scopes?.reduce<ScopeSpecFilter[]>((acc, scope) => {
           acc.push(...scope.spec.filters);
 
