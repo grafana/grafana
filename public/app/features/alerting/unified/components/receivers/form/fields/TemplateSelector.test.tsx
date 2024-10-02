@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
-import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -81,7 +80,7 @@ describe('getTemplateOptions function', () => {
   });
 });
 
-describe.skip('TemplatesPicker', () => {
+describe('TemplatesPicker', () => {
   testWithFeatureToggles(['alertingApiServer']);
 
   beforeEach(() => {
@@ -96,7 +95,12 @@ describe.skip('TemplatesPicker', () => {
     const mockOption = { label: 'title' } as NotificationChannelOption;
     const { user } = renderWithProvider(<TemplatesPicker onSelect={onSelect} option={mockOption} valueInForm="" />);
     await user.click(await screen.findByText(/edit title/i));
-    await clickSelectOption(await screen.findByLabelText('Select options menu'), 'slack-template');
-    expect(await screen.findByText(/Custom slack template/)).toBeInTheDocument();
+    const input = screen.getByRole('combobox');
+    expect(screen.queryByText('slack-template')).not.toBeInTheDocument();
+    await userEvent.click(input);
+    expect(screen.getAllByRole('option')).toHaveLength(7); // 4 templates in mock plus 3 in the default template
+    const template = screen.getByRole('option', { name: 'slack-template' });
+    await userEvent.click(template);
+    expect(screen.getByText('slack-template')).toBeInTheDocument();
   });
 });
