@@ -84,6 +84,7 @@ func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerCha
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
 		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
+		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false
 
