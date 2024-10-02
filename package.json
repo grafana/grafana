@@ -79,7 +79,7 @@
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "7.0.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
-    "@grafana/plugin-e2e": "^1.8.2",
+    "@grafana/plugin-e2e": "^1.8.3",
     "@grafana/tsconfig": "^2.0.0",
     "@manypkg/get-packages": "^2.2.0",
     "@playwright/test": "1.47.2",
