@@ -1102,7 +1102,7 @@
   },
   "ldap-drawer": {
     "attributes-section": {
-      "description": "Ŝpęčįƒy ŧĥę ĿĐÅP äŧŧřįþūŧęş ŧĥäŧ mäp ŧő ŧĥę ūşęř&ľşqūő;ş ģįvęŉ ŉämę, şūřŉämę, äŉđ ęmäįľ äđđřęşş, ęŉşūřįŉģ ŧĥę äppľįčäŧįőŉ čőřřęčŧľy řęŧřįęvęş äŉđ đįşpľäyş ūşęř įŉƒőřmäŧįőŉ.",
+      "description": "Ŝpęčįƒy ŧĥę ĿĐÅP äŧŧřįþūŧęş ŧĥäŧ mäp ŧő ŧĥę ūşęř'ş ģįvęŉ ŉämę, şūřŉämę, äŉđ ęmäįľ äđđřęşş, ęŉşūřįŉģ ŧĥę äppľįčäŧįőŉ čőřřęčŧľy řęŧřįęvęş äŉđ đįşpľäyş ūşęř įŉƒőřmäŧįőŉ.",
       "email-label": "Ēmäįľ",
       "label": "Åŧŧřįþūŧęş",
       "member-of-label": "Męmþęř Øƒ",
@@ -1129,11 +1129,11 @@
       "root-ca-cert-label": "Ŗőőŧ CÅ čęřŧįƒįčäŧę päŧĥ",
       "root-ca-cert-placeholder": "/päŧĥ/ŧő/řőőŧ_čä_čęřŧ.pęm",
       "root-ca-cert-value-label": "Ŗőőŧ CÅ čęřŧįƒįčäŧę čőŉŧęŉŧ",
+      "root-ca-cert-value-placeholder": "ęχämpľę: ĿŜ0ŧĿŜ1CŖŮđĴŦįßĐŖVĴŮŜŮŻĴQ0FŮŖŜ0ŧĿŜ0ŧ",
       "start-tls-description": "Ĩƒ şęŧ ŧő ŧřūę, ūşę ĿĐÅP ŵįŧĥ ŜŦÅŖŦŦĿŜ įŉşŧęäđ őƒ ĿĐÅPŜ",
       "start-tls-label": "Ŝŧäřŧ ŦĿŜ",
-      "tls-ciphers-description": "Ŀįşŧ őƒ čőmmä- őř şpäčę-şępäřäŧęđ čįpĥęřş",
       "tls-ciphers-label": "ŦĿŜ čįpĥęřş",
-      "tls-ciphers-placeholder": "ę.ģ. [\"ŦĿŜ_ÅĒŜ_256_ĞCM_ŜĦÅ384\"]",
+      "tls-ciphers-placeholder": "ęχämpľę: ŦĿŜ_ÅĒŜ_256_ĞCM_ŜĦÅ384",
       "use-ssl-description": "Ŝęŧ ŧő ŧřūę įƒ ĿĐÅP şęřvęř şĥőūľđ ūşę ŦĿŜ čőŉŉęčŧįőŉ (ęįŧĥęř ŵįŧĥ ŜŦÅŖŦŦĿŜ őř ĿĐÅPŜ)",
       "use-ssl-label": "Ůşę ŜŜĿ",
       "use-ssl-tooltip": "Főř ä čőmpľęŧę ľįşŧ őƒ şūppőřŧęđ čįpĥęřş äŉđ ŦĿŜ vęřşįőŉş, řęƒęř ŧő:"
@@ -1163,8 +1163,8 @@
         "button": "Åđđ ģřőūp mäppįŉģ"
       },
       "description": "Mäp ĿĐÅP ģřőūpş ŧő Ğřäƒäŉä őřģ řőľęş",
-      "group-search-base-dns-description": "Ŝępäřäŧę þy čőmmäş őř şpäčęş",
       "group-search-base-dns-label": "Ğřőūp şęäřčĥ þäşę ĐŃŜ",
+      "group-search-base-dns-placeholder": "ęχämpľę: őū=ģřőūpş,đč=ęχämpľę,đč=čőm",
       "group-search-filter-description": "Ůşęđ ŧő ƒįľŧęř äŉđ įđęŉŧįƒy ģřőūp ęŉŧřįęş ŵįŧĥįŉ ŧĥę đįřęčŧőřy",
       "group-search-filter-label": "Ğřőūp şęäřčĥ ƒįľŧęř",
       "group-search-filter-user-attribute-description": "Ĩđęŉŧįƒįęş ūşęřş ŵįŧĥįŉ ģřőūp ęŉŧřįęş ƒőř ƒįľŧęřįŉģ pūřpőşęş",
@@ -1207,15 +1207,10 @@
       "label": "ßįŉđ päşşŵőřđ"
     },
     "buttons-section": {
+      "disable-button": "Đįşäþľę",
       "discard-button": "Đįşčäřđ",
       "save-and-enable-button": "Ŝävę äŉđ ęŉäþľę",
       "save-button": "Ŝävę"
-    },
-    "discard-modal": {
-      "cancel-button": "ßäčĸ ŧő ęđįŧįŉģ",
-      "description": "Åřę yőū şūřę yőū ŵäŉŧ ŧő äþäŉđőŉ ŧĥę čĥäŉģęş yőū&ľşqūő;vę mäđę ŧő ŧĥę ĿĐÅP čőŉƒįģūřäŧįőŉ? Åľľ čĥäŉģęş ŵįľľ þę ľőşŧ.",
-      "discard-button": "Åþäŉđőŉ ĿĐÅP",
-      "title": "Ŀęävę ĿĐÅP čőŉƒįģūřäŧįőŉ?"
     },
     "documentation": "đőčūmęŉŧäŧįőŉ",
     "host": {
@@ -1234,7 +1229,8 @@
     },
     "search-base-dns": {
       "description": "Åŉ äřřäy őƒ þäşę đŉş ŧő şęäřčĥ ŧĥřőūģĥ.",
-      "label": "Ŝęäřčĥ þäşę ĐŃŜ *"
+      "label": "Ŝęäřčĥ þäşę ĐŃŜ *",
+      "placeholder": "ęχämpľę: đč=ģřäƒäŉä,đč=őřģ"
     },
     "subtitle": "Ŧĥę ĿĐÅP įŉŧęģřäŧįőŉ įŉ Ğřäƒäŉä äľľőŵş yőūř Ğřäƒäŉä ūşęřş ŧő ľőģ įŉ ŵįŧĥ ŧĥęįř ĿĐÅP čřęđęŉŧįäľş. Fįŉđ őūŧ mőřę įŉ őūř <2><0>đőčūmęŉŧäŧįőŉ</0></2>.",
     "title": "ßäşįč Ŝęŧŧįŉģş"
