@@ -1102,7 +1102,7 @@
   },
   "ldap-drawer": {
     "attributes-section": {
-      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "description": "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
       "email-label": "Email",
       "label": "Attributes",
       "member-of-label": "Member Of",
@@ -1129,11 +1129,11 @@
       "root-ca-cert-label": "Root CA certificate path",
       "root-ca-cert-placeholder": "/path/to/root_ca_cert.pem",
       "root-ca-cert-value-label": "Root CA certificate content",
+      "root-ca-cert-value-placeholder": "example: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t",
       "start-tls-description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
       "start-tls-label": "Start TLS",
-      "tls-ciphers-description": "List of comma- or space-separated ciphers",
       "tls-ciphers-label": "TLS ciphers",
-      "tls-ciphers-placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]",
+      "tls-ciphers-placeholder": "example: TLS_AES_256_GCM_SHA384",
       "use-ssl-description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
       "use-ssl-label": "Use SSL",
       "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to:"
@@ -1163,8 +1163,8 @@
         "button": "Add group mapping"
       },
       "description": "Map LDAP groups to Grafana org roles",
-      "group-search-base-dns-description": "Separate by commas or spaces",
       "group-search-base-dns-label": "Group search base DNS",
+      "group-search-base-dns-placeholder": "example: ou=groups,dc=example,dc=com",
       "group-search-filter-description": "Used to filter and identify group entries within the directory",
       "group-search-filter-label": "Group search filter",
       "group-search-filter-user-attribute-description": "Identifies users within group entries for filtering purposes",
@@ -1207,15 +1207,10 @@
       "label": "Bind password"
     },
     "buttons-section": {
+      "disable-button": "Disable",
       "discard-button": "Discard",
       "save-and-enable-button": "Save and enable",
       "save-button": "Save"
-    },
-    "discard-modal": {
-      "cancel-button": "Back to editing",
-      "description": "Are you sure you want to abandon the changes you&lsquo;ve made to the LDAP configuration? All changes will be lost.",
-      "discard-button": "Abandon LDAP",
-      "title": "Leave LDAP configuration?"
     },
     "documentation": "documentation",
     "host": {
@@ -1234,7 +1229,8 @@
     },
     "search-base-dns": {
       "description": "An array of base dns to search through.",
-      "label": "Search base DNS *"
+      "label": "Search base DNS *",
+      "placeholder": "example: dc=grafana,dc=org"
     },
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><0>documentation</0></2>.",
     "title": "Basic Settings"

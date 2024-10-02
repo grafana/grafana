@@ -1,8 +1,8 @@
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
-import { Redirect, Switch, RouteComponentProps } from 'react-router-dom';
-import { CompatRoute, useLocation } from 'react-router-dom-v5-compat';
+import { Switch, RouteComponentProps } from 'react-router-dom';
+import { CompatRoute, useLocation, Navigate } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';
@@ -129,7 +129,7 @@ function RouteComponent(props: Props) {
   // TODO[Router]: test this logic
   if (roles?.length) {
     if (!roles.some((r: string) => contextSrv.hasRole(r))) {
-      return <Redirect to="/" />;
+      return <Navigate replace to="/" />;
     }
   }
 
