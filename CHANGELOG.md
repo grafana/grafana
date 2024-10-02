@@ -39,7 +39,6 @@
 - **AzureMonitor:** Remove Basic Logs retention warning [#93122](https://github.com/grafana/grafana/pull/93122), [@aangelisc](https://github.com/aangelisc)
 - **Correlations:** Limit access to correlations page to users who can access Explore [#93675](https://github.com/grafana/grafana/pull/93675), [@ifrost](https://github.com/ifrost)
 - **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93487](https://github.com/grafana/grafana/pull/93487), [@wbrowne](https://github.com/wbrowne)
-- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 11.1.7 END -->
 <!-- 11.0.6 START -->
@@ -57,7 +56,6 @@
 - **AzureMonitor:** Improve resource picker efficiency [#93438](https://github.com/grafana/grafana/pull/93438), [@aangelisc](https://github.com/aangelisc)
 - **Correlations:** Limit access to correlations page to users who can access Explore [#93674](https://github.com/grafana/grafana/pull/93674), [@ifrost](https://github.com/ifrost)
 - **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93486](https://github.com/grafana/grafana/pull/93486), [@wbrowne](https://github.com/wbrowne)
-- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 11.0.6 END -->
 <!-- 10.4.10 START -->
@@ -73,7 +71,6 @@
 
 - **AzureMonitor:** Deduplicate resource picker rows [#93702](https://github.com/grafana/grafana/pull/93702), [@aangelisc](https://github.com/aangelisc)
 - **Correlations:** Limit access to correlations page to users who can access Explore [#93673](https://github.com/grafana/grafana/pull/93673), [@ifrost](https://github.com/ifrost)
-- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 10.4.10 END -->
 <!-- 10.3.11 START -->
@@ -88,7 +85,6 @@
 ### Bug fixes
 
 - **Correlations:** Limit access to correlations page to users who can access Explore [#93672](https://github.com/grafana/grafana/pull/93672), [@ifrost](https://github.com/ifrost)
-- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 10.3.11 END -->
 <!-- 11.2.1 START -->
@@ -137,6 +133,7 @@
 ### Plugin development fixes & changes
 
 - **Bugfix:** QueryField typeahead missing background color [#92316](https://github.com/grafana/grafana/pull/92316), [@mckn](https://github.com/mckn)
+- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 11.1.6 END -->
 <!-- 11.0.5 START -->
@@ -151,6 +148,7 @@
 
 - **Provisioning:** Prevent provisioning folder errors from failing startup [#92588](https://github.com/grafana/grafana/pull/92588), [@suntala](https://github.com/suntala)
 - **TutorialCard:** Fix link to tutorial not opening [#92645](https://github.com/grafana/grafana/pull/92645), [@eledobleefe](https://github.com/eledobleefe)
+- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 11.0.5 END -->
 <!-- 10.4.9 START -->
@@ -164,11 +162,16 @@
 ### Bug fixes
 
 - **Provisioning:** Prevent provisioning folder errors from failing startup [#92591](https://github.com/grafana/grafana/pull/92591), [@suntala](https://github.com/suntala)
+- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 10.4.9 END -->
 <!-- 10.3.10 START -->
 
 # 10.3.10 (2024-09-26)
+
+### Bug fixes
+
+- **Alerting:** Fixed CVE-2024-8118.
 
 <!-- 10.3.10 END -->
 <!-- 11.2.0 START -->
