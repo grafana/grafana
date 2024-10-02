@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Alert rule templating reference
+title: Annotation and label template reference
 menuTitle: Template reference
 weight: 0
 refs:
@@ -23,36 +23,46 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/examples/#print-all-labels-from-a-classic-condition
 ---
 
-# Alert rule templating reference
+# Annotation and label template reference
 
-## Variables vs Functions
+Templating allows you to customize alert messages using variables and functions. Variables represent dynamic values retrieved from alert rule queries, while functions perform actions like transforming or formatting data.
 
-Variables and functions serve distinct roles in Grafana alert templating. Variables are dynamic placeholders that hold key data, such as labels and metric values, providing access to alert-related information at runtime. In contrast, functions perform actions to process or format this data, enabling string manipulation and number formatting. Together, they create dynamic, context-aware alerts by combining essential data with customized formatting.
-
-| **Aspect**       | **Variables**                                  | **Functions**                                                   |
-|------------------|------------------------------------------------|-----------------------------------------------------------------|
-| **Purpose**      | Reference data dynamically (placeholders).      | Perform actions, transformations, or formatting on data.        |
-| **Role**         | Hold values like label data, metric values, or alert properties. | Process or manipulate the data stored in variables.             |
-| **Examples**     | `$labels.instance`, `$value`, `$alertname`      | `printf`, `toUpper`, `join`, `add`                              |
-| **Action**       | Do not perform any action, just represent data. | Perform operations (e.g., string concatenation, formatting).     |
-| **Dynamic**      | Populated at runtime based on the metric/alert. | Executed at runtime to transform or display the data dynamically.|
-| **Use Case**     | Access labels, metric values, alert metadata.   | Format strings, perform logic, and combine or modify variable values.|
-
+TODO: connect it with Template language
 
 ## Variables
 
-Templating can be applied by using variables and functions. These variables can represent dynamic values retrieved from your data queries.
+Variables represent dynamic values from alert rule queries that can be displayed or accessed in your templates.
 
-In Grafana templating, the `$` and `.` symbols are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the `$` symbol followed by the variable name. Similarly, you can access properties of variables using the dot (`.`) notation within alert rule definitions.
+The `$` and `.` symbols are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the `$` symbol followed by the variable name. Similarly, you can access properties of variables using the dot (`.`) notation in alert rule templates.
 
-The following variables are available to you when templating labels and annotations:
+```
+{{ $values.A.Value }}
+```
+
+The following variables are available when templating annotations and labels:
+
+| Variables          | Description                                                                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [$labels](#labels) | Contains all labels from the query.                                                                                                                 |
+| [$values](#values) | Contains the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs.                                     |
+| [$value](#value)   | A string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule. |
 
 ### $labels
 
-The `$labels` variable contains all labels from the query. For example, suppose you have a query that returns CPU usage for all of your servers, and you have an alert rule that fires when any of your servers have exceeded 80% CPU usage for the last 5 minutes. You want to add a summary annotation to the alert that tells you which server is experiencing high CPU usage. With the `$labels` variable you can write a template that prints a human-readable sentence such as:
+The `$labels` variable contains all labels from the query.
+
+{{< figure src="/media/docs/alerting/query-labels-and_value.png" max-width="1200px" caption="An alert rule diplaying labels and value from a query" >}}
+
+For example, suppose you have a query that returns CPU usage for all of your servers, and you have an alert rule that fires when any of your servers have exceeded 80% CPU usage for the last 5 minutes. You want to add a summary annotation to the alert that tells you which server is experiencing high CPU usage. With the `$labels` variable you can write a template that prints a human-readable sentence such as:
 
 ```
 CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes
+```
+
+The outcome of this template would be:
+
+```
+CPU usage for server1 has exceeded 80% for the last 5 minutes
 ```
 
 > If you are using a classic condition then `$labels` will not contain any labels from the query. Classic conditions discard these labels in order to enforce uni-dimensional behavior (at most one alert per alert rule). If you want to use labels from the query in your template then use the example [here](ref:print-all-labels-from-a-classic-condition).
@@ -64,19 +74,19 @@ The `$values` variable is a table containing the labels and floating point value
 To print the value of the instant query with Ref ID A:
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "A" }}
+{{ index $values "A" }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
 ```
 
 For example, given an alert with the labels `instance=server1` and an instant query with the value `81.2345`, this would print:
 
 ```
-CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
+81.2345 CPU usage for instance1 over the last 5 minutes.
 ```
 
 If the query in Ref ID A is a range query rather than an instant query then add a reduce expression with Ref ID B and replace `(index $values "A")` with `(index $values "B")`:
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "B" }}
+{{ index $values "B" }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
 ```
 
 ### $value
@@ -86,24 +96,32 @@ The `$value` variable is a string containing the labels and values of all instan
 To print the `$value` variable in the summary you would write something like this:
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ $value }}
+{{ $value }}: CPU usage has exceeded 80% for the last 5 minutes.
 ```
 
 And would look something like this:
 
 ```
-CPU usage for instance1 has exceeded 80% for the last 5 minutes: [ var='A' labels={instance=instance1} value=81.234 ]
+[ var='A' labels={instance=instance1} value=81.234 ]: CPU usage has exceeded 80% for the last 5 minutes.
 ```
 
 Here `var='A'` refers to the instant query with Ref ID A, `labels={instance=instance1}` refers to the labels, and `value=81.234` refers to the average CPU usage over the last 5 minutes.
 
-If you want to print just some of the string instead of the full string then use the `$values` variable. It contains the same information as `$value`, but in a structured table, and is much easier to use then writing a regular expression to match just the text you want.
+If you want to print just some of the string instead of the full string then use the [$values](#values) variable. It contains the same information as `$value`, but in a structured table, and is much easier to use then writing a regular expression to match just the text you want.
 
 ## Functions
 
-The following functions are available to you when templating labels and annotations. Some of these functions are part of the standard Go template library, while others come from Prometheus' templating engine.
+The following functions are available when templating annotations and labels:
 
 ### Numbers
+
+| Name                                      | Arguments        | Returns | Description                                                      |
+| ----------------------------------------- | ---------------- | ------- | ---------------------------------------------------------------- |
+| [humanize](#humanize)                     | Number or string | String  | Humanizes decimal numbers.                                       |
+| [humanize1024](#humanize1024)             | Number or string | String  | Like `humanize`, but but uses 1024 as the base rather than 1000. |
+| [humanizeDuration](#humanizeduration)     | Number or string | String  | Humanizes a duration in seconds.                                 |
+| [humanizePercentage](#humanizepercentage) | Number or string | String  | Humanizes a ratio value to a percentage.                         |
+| [humanizeTimestamp](#humanizetimestamp)   | Number or string | String  | Humanizes a Unix timestamp.                                      |
 
 #### humanize
 
@@ -165,31 +183,7 @@ The `humanizeTimestamp` function humanizes a Unix timestamp:
 2020-01-01 00:00:00 +0000 UTC
 ```
 
-#### match
-
-The `match` function matches the text against a regular expression pattern:
-
-```
-{{ match "a.*" "abc" }}
-```
-
-```
-true
-```
-
 ### Strings
-
-#### tableLink
-
-The `tableLink` function returns the path to the tabular view in [Explore](ref:explore) for the given expression and data source:
-
-```
-{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}
-```
-
-```
-/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]
-```
 
 #### title
 
@@ -201,6 +195,18 @@ The `title` function capitalizes the first character of each word:
 
 ```
 Hello, World!
+```
+
+#### toUpper
+
+The `toUpper` function returns all text in uppercase:
+
+```
+{{ toUpper "Hello, world!" }}
+```
+
+```
+HELLO, WORLD!
 ```
 
 #### toLower
@@ -215,16 +221,16 @@ The `toLower` function returns all text in lowercase:
 hello, world!
 ```
 
-#### toUpper
+#### match
 
-The `toUpper` function returns all text in uppercase:
-
-```
-{{ toUpper "Hello, world!" }}
-```
+The `match` function matches the text against a regular expression pattern:
 
 ```
-HELLO, WORLD!
+{{ match "a.*" "abc" }}
+```
+
+```
+true
 ```
 
 #### reReplaceAll
@@ -249,6 +255,18 @@ The `graphLink` function returns the path to the graphical view in [Explore](ref
 
 ```
 /explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]
+```
+
+#### tableLink
+
+The `tableLink` function returns the path to the tabular view in [Explore](ref:explore) for the given expression and data source:
+
+```
+{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}
+```
+
+```
+/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]
 ```
 
 ### Others
