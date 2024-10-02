@@ -91,8 +91,8 @@ function splitQueriesByStreamShard(
     };
 
     const nextRequest = () => {
-      const nextCycle = cycle + groupSize;
-      if (nextCycle < shards.length) {
+      const nextCycle = Math.min(cycle + groupSize, shards.length);
+      if (cycle < shards.length && nextCycle <= shards.length) {
         runNextRequest(subscriber, nextCycle, shards, nextGroupSize);
         return;
       }
@@ -199,7 +199,6 @@ function splitQueriesByStreamShard(
           console.warn(`Shard splitting not supported. Issuing a regular query.`);
           runNonSplitRequest(subscriber);
         } else {
-          shards.push(-1);
           shards.sort((a, b) => b - a);
           console.log(`Querying ${shards.join(', ')} shards`);
           runNextRequest(subscriber, 0, shards, 1);
@@ -237,14 +236,16 @@ function updateGroupSizeFromResponse(response: DataQueryResponse, currentSize: n
     // Positive scenarios
     if (metaExecutionTime.value < 1) {
       return currentSize * 2;
-    } else if (metaExecutionTime.value < 5) {
+    } else if (metaExecutionTime.value < 6) {
+      return currentSize + 2;
+    } else if (metaExecutionTime.value < 16) {
       return currentSize + 1;
     } 
     
     // Negative scenarios
     if (currentSize === 1) {
       return currentSize;
-    } else if (metaExecutionTime.value < 10) {
+    } else if (metaExecutionTime.value < 20) {
       return currentSize - 1;
     } else {
       return Math.floor(currentSize / 2);
@@ -255,6 +256,9 @@ function updateGroupSizeFromResponse(response: DataQueryResponse, currentSize: n
 }
 
 function groupShardRequests(shards: number[], start: number, groupSize: number) {
+  if (start === shards.length) {
+    return [-1];
+  }
   return shards.slice(start, start + groupSize);
 }
 
