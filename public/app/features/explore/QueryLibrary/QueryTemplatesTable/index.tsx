@@ -53,8 +53,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'tbody tr': {
       position: 'relative',
       backgroundColor: theme.colors.background.secondary,
+      borderCollapse: 'collapse',
       borderBottom: 'unset',
-      overflow: 'hidden', // Ensure the row doesn't overflow and cause scrollbars
+      overflow: 'hidden', // Ensure the row doesn't overflow and cause additonal scrollbars
     },
     /* Adds the pseudo-element for the lines between table rows */
     'tbody tr::after': {
