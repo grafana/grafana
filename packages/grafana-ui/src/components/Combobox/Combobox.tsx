@@ -183,7 +183,6 @@ export const Combobox = <T extends string | number>({
   return (
     <div>
       <InputComponent
-        className={styles.input}
         width={width === 'auto' ? undefined : width}
         suffix={
           <>
