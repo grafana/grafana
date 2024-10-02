@@ -1,8 +1,8 @@
 package dtos
 
 import (
+	pfs "github.com/grafana/grafana/pkg/codegen/plugins/parser"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
