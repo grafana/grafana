@@ -126,6 +126,29 @@ func TestCompositeStore(t *testing.T) {
 		res, _ := store.GetTags(context.Background(), annotations.TagsQuery{})
 		require.Equal(t, expected, res.Tags)
 	})
+
+	// Check if reader is not modifying query since it might cause a race condition in case of composite store
+	t.Run("should not modify query", func(t *testing.T) {
+		getFn1 := func(ctx context.Context, query annotations.ItemQuery, resources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+			query.From = 1
+			return []*annotations.ItemDTO{}, nil
+		}
+		getFn2 := func(ctx context.Context, query annotations.ItemQuery, resources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+			return []*annotations.ItemDTO{}, nil
+		}
+
+		r1 := newFakeReader(withGetFn(getFn1))
+		r2 := newFakeReader(withGetFn(getFn2))
+
+		store := &CompositeStore{
+			log.NewNopLogger(),
+			[]readStore{r1, r2},
+		}
+
+		query := annotations.ItemQuery{}
+		store.Get(context.Background(), query, nil)
+		require.Equal(t, int64(0), query.From)
+	})
 }
 
 type fakeReader struct {
