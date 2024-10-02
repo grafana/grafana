@@ -509,7 +509,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 			s.log.Error("building snapshot", "err", err.Error())
 
 			// Update status to error with retries
-			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
+			if err := s.updateSnapshotWithRetries(asyncCtx, cloudmigration.UpdateSnapshotCmd{
 				UID:       snapshot.UID,
 				SessionID: sessionUid,
 				Status:    cloudmigration.SnapshotStatusError,
