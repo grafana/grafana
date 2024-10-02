@@ -27,7 +27,10 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
 
-export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;
+export type Props = Omit<
+  GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>,
+  'match' | 'history'
+>;
 
 const selectors = e2eSelectors.pages.PublicDashboard;
 
