@@ -28,24 +28,10 @@ func (is IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginRe
 	return nil, nil
 }
 
-// Index with add a resource to the index, or initialize the index if no resource is provided
-func (is *IndexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
-	// if no resource is provided to index, this indicates to initialize the index
-	// TODO: make this more explicit
-	if req.Key == nil {
-		is.index = NewIndex(is.s, Opts{})
-		err := is.index.Init(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return nil, nil
-	}
-
-	err := is.index.Index(ctx, &Data{Key: req.Key, Value: req.Value})
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+// Load the index
+func (is *IndexServer) Load(ctx context.Context) error {
+	is.index = NewIndex(is.s, Opts{})
+	return is.index.Init(ctx)
 }
 
 // Init sets the resource server on the index server
@@ -136,7 +122,16 @@ func (f *indexWatchServer) Add(we *WatchEvent) error {
 }
 
 func (f *indexWatchServer) Delete(we *WatchEvent) error {
-	data, err := getData(we.Previous)
+	// TODO: this seems flakey. Does a delete have a Resource or Previous?
+	// both cases have happened ( maybe because Georges pr was reverted )
+	rs := we.Resource
+	if rs == nil {
+		rs = we.Previous
+	}
+	if rs == nil {
+		return errors.New("resource not found")
+	}
+	data, err := getData(rs)
 	if err != nil {
 		return err
 	}
