@@ -158,23 +158,26 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     }
   };
 
-  const actionButtons = useMemo(() => (
-    <Stack>
-      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
-        Save
-      </Button>
-      <LinkButton
-        disabled={isSubmitting}
-        href={makeAMLink('alerting/notifications', alertmanager, {
-          tab: ContactPointsActiveTabs.NotificationTemplates,
-        })}
-        variant="secondary"
-        size="sm"
-      >
-        Cancel
-      </LinkButton>
-    </Stack>
-  ), [alertmanager, isSubmitting]);
+  const actionButtons = useMemo(
+    () => (
+      <Stack>
+        <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
+          Save
+        </Button>
+        <LinkButton
+          disabled={isSubmitting}
+          href={makeAMLink('alerting/notifications', alertmanager, {
+            tab: ContactPointsActiveTabs.NotificationTemplates,
+          })}
+          variant="secondary"
+          size="sm"
+        >
+          Cancel
+        </LinkButton>
+      </Stack>
+    ),
+    [alertmanager, isSubmitting]
+  );
 
   usePageToolbar(actionButtons);
 
