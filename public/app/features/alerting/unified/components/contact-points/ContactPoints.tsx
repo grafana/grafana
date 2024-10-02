@@ -224,16 +224,10 @@ const ContactPointsPageContents = () => {
 interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
-  disabled?: boolean;
   pageSize?: number;
 }
 
-const ContactPointsList = ({
-  contactPoints,
-  disabled = false,
-  search,
-  pageSize = DEFAULT_PAGE_SIZE,
-}: ContactPointsListProps) => {
+const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
@@ -241,7 +235,7 @@ const ContactPointsList = ({
     <>
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
-        return <ContactPoint key={key} contactPoint={contactPoint} disabled={disabled} />;
+        return <ContactPoint key={key} contactPoint={contactPoint} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>
