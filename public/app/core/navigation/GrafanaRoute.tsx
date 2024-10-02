@@ -38,7 +38,7 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     cleanupDOM();
     reportPageview();
-    navigationLogger('GrafanaRoute', false, 'Updated', props.route);
+    navigationLogger('GrafanaRoute', false, 'Updated', props);
   });
 
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
