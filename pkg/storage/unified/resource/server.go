@@ -624,6 +624,7 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 	return s.index.Origin(ctx, req)
 }
 
+// Index returns the search index. If the index is not initialized, it will be initialized.
 func (s *server) Index(ctx context.Context) (*Index, error) {
 	index := s.index.(*IndexServer)
 	if index.index == nil {
