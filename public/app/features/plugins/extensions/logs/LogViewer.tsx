@@ -1,14 +1,15 @@
+import { isEmpty } from 'lodash';
 import { nanoid } from 'nanoid';
 import { ReactElement, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { SceneQueryRunner, sceneUtils, VizConfigBuilders } from '@grafana/scenes';
-import { SceneContextProvider, useQueryRunner, VizPanel } from '@grafana/scenes-react';
-import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
+import { DataTransformerConfig, MatcherConfig, ValueMatcherID } from '@grafana/data';
+import { sceneUtils, VizConfigBuilders } from '@grafana/scenes';
+import { SceneContextProvider, useDataTransformer, useQueryRunner, VizPanel } from '@grafana/scenes-react';
 import { Page } from 'app/core/components/Page/Page';
 
+import { LogFilter, LogViewFilters } from './LogViewFilters';
 import { VizGrid } from './VizGrid';
-import { ExtensionsLogDataSource, LogDataQuery } from './dataSource';
+import { ExtensionsLogDataSource } from './dataSource';
 import { log } from './log';
 
 const DATASOURCE_REF = {
@@ -18,8 +19,9 @@ const DATASOURCE_REF = {
 
 const logsViz = VizConfigBuilders.logs().build();
 
-const dataSource = new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log);
-sceneUtils.registerRuntimeDataSource({ dataSource });
+sceneUtils.registerRuntimeDataSource({
+  dataSource: new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log),
+});
 
 export default function LogViewer(): ReactElement | null {
   return (
@@ -30,71 +32,67 @@ export default function LogViewer(): ReactElement | null {
 }
 
 function LogViewScene(): ReactElement | null {
-  const [query, setQuery] = useState<LogDataQuery>({ refId: 'A' });
+  const [filter, setFilter] = useState<LogFilter>({});
 
-  const queryRunner = useQueryRunner({
+  const data = useQueryRunner({
     datasource: DATASOURCE_REF,
-    queries: [query],
+    queries: [{ refId: 'A' }],
     maxDataPoints: 1000,
     liveStreaming: true,
   });
 
+  const filteredData = useDataTransformer({
+    transformations: mapToTransformations(filter),
+    data: data,
+  });
+
   return (
-    <Page navId="extensions" actions={<LogFilters queryRunner={queryRunner} query={query} onChangeQuery={setQuery} />}>
-      <SceneContextProvider>
-        <VizGrid>
-          <VizPanel title="Logs" viz={logsViz} dataProvider={queryRunner} />
-        </VizGrid>
-      </SceneContextProvider>
+    <Page navId="extensions" actions={<LogViewFilters queryRunner={data} filter={filter} onChange={setFilter} />}>
+      <VizGrid>
+        <VizPanel title="Logs" viz={logsViz} dataProvider={filteredData} />
+      </VizGrid>
     </Page>
   );
 }
 
-interface LogFilterProps {
-  queryRunner: SceneQueryRunner;
-  query: LogDataQuery;
-  onChangeQuery: (query: LogDataQuery) => void;
-}
-
-function LogFilters({ queryRunner, query, onChangeQuery }: LogFilterProps): ReactElement {
-  const pluginIds = dataSource.getPluginIds().map((id) => ({ label: id, value: id }));
-  const extensionPointIds = dataSource.getExtensionPointIds().map((id) => ({ label: id, value: id }));
-  const levels = dataSource.getLevels().map((id) => ({ label: id, value: id }));
-
-  // Added to get responsive UI with the selectable options when things changes in the data.
-  queryRunner.useState();
-
-  const onChangePluginIds = (values: Array<SelectableValue<string>>) => {
-    onChangeQuery({ ...query, pluginIds: mapToSet(values) });
-  };
-
-  const onChangeExtensionPointIds = (values: Array<SelectableValue<string>>) => {
-    onChangeQuery({ ...query, extensionPointIds: mapToSet(values) });
-  };
-
-  const onChangeLevels = (values: Array<SelectableValue<string>>) => {
-    onChangeQuery({ ...query, levels: mapToSet(values) });
-  };
-
-  return (
-    <InlineFieldRow>
-      <InlineField label="Plugin Id">
-        <MultiSelect options={pluginIds} onChange={onChangePluginIds} />
-      </InlineField>
-      <InlineField label="Extension">
-        <MultiSelect options={extensionPointIds} onChange={onChangeExtensionPointIds} />
-      </InlineField>
-      <InlineField label="Levels">
-        <MultiSelect options={levels} onChange={onChangeLevels} />
-      </InlineField>
-    </InlineFieldRow>
-  );
-}
-
-function mapToSet(selected: Array<SelectableValue<string>>): Set<string> | undefined {
-  if (selected.length <= 0) {
-    return undefined;
+function mapToTransformations(filter: LogFilter): DataTransformerConfig[] {
+  if (isEmpty(filter.extensionPointIds) && isEmpty(filter.levels) && isEmpty(filter.pluginIds)) {
+    return [];
   }
 
-  return new Set<string>(selected.map((item) => item.value!));
+  const filters: Array<{ fieldName: string; config: MatcherConfig }> = [];
+
+  if (!isEmpty(filter.extensionPointIds)) {
+    const extensionPointsFilters = Array.from(filter.extensionPointIds!).map((value) => ({
+      fieldName: 'extensionPointId',
+      config: { id: ValueMatcherID.equal, options: { value } },
+    }));
+    filters.push.apply(filters, extensionPointsFilters);
+  }
+
+  if (!isEmpty(filter.pluginIds)) {
+    const pluginFilters = Array.from(filter.pluginIds!).map((value) => ({
+      fieldName: 'pluginId',
+      config: { id: ValueMatcherID.equal, options: { value } },
+    }));
+    filters.push.apply(filters, pluginFilters);
+  }
+
+  if (!isEmpty(filter.levels)) {
+    const levelFilters = Array.from(filter.levels!).map((value) => ({
+      fieldName: 'severity',
+      config: { id: ValueMatcherID.equal, options: { value } },
+    }));
+    filters.push.apply(filters, levelFilters);
+  }
+
+  return [
+    {
+      id: 'filterByValue',
+      options: {
+        filters: filters,
+        match: 'all',
+      },
+    },
+  ];
 }

@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { nanoid } from 'nanoid';
 import { Observable, ReplaySubject } from 'rxjs';
 
@@ -9,6 +10,8 @@ export type LogItem = {
   labels: Record<string | symbol, unknown>;
   message: string;
   id: string;
+  pluginId?: string;
+  extensionPointId?: string;
 };
 
 const channelName = 'ui-extension-logs';
@@ -53,15 +56,17 @@ export class ExtensionsLog {
   }
 
   private log(level: LogLevel, message: string, labels?: LogItem['labels']): void {
+    const combinedLabels = { ...labels, ...this.baseLabels };
+    const { pluginId, extensionPointId, ...rest } = combinedLabels;
+
     const item: LogItem = {
       level: level,
-      labels: {
-        ...labels,
-        ...this.baseLabels,
-      },
+      labels: rest,
       timestamp: Date.now(),
       id: nanoid(),
       message: message,
+      pluginId: isString(pluginId) ? pluginId : undefined,
+      extensionPointId: isString(extensionPointId) ? extensionPointId : undefined,
     };
 
     this.channel.postMessage(item);
