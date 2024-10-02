@@ -347,3 +347,7 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 ```
 /grafana
 ```
+
+## Differences with notification templates
+
+Regardless of whether you are templating a label or an annotation, you should write each template inline inside the label or annotation that you are templating. This means you cannot share templates between labels and annotations, and instead you will need to copy templates wherever you want to use them.

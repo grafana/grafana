@@ -21,18 +21,59 @@ refs:
   explore:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  intro-to-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/templates/
+  alert-rule-template-reference:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/
+  notification-template-reference:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
 ---
 
 # Template annotations and labels
 
-You can use templates to include data from queries and expressions in labels and annotations. For example, you might want to set the severity label for an alert based on the value of the query, or use the instance label from the query in a summary annotation so you know which server is experiencing high CPU usage.
+You can use templates to customize alert and notification messages, including dynamic data from alert rule queries and expressions.
+
+Grafana Alerting offers two ways for templating alert notification messages:
+
+1. **Template annotations and labels**: In the alert rule definition, you can template annotations and labels to add extra information from query data, enriching individual alerts with new relevant data.
+1. **Template notifications**: You can template notifications to control the content and appearance of their notifications.
+
+Both types of templates are written in the Go templating system. However, it's important to understand that [variables and functions used in notification templates](ref:notification-template-reference) are different from those used in [annotation and label templates](ref:alert-rule-template-reference).
+
+## How templating works
+
+See the differences between both types of templates in this diagram:
+
+{{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" alt="How templating works" >}}
+
+1.  **Template annotations and labels**: Alert rule templates add extra information to individual alert instances. Template variables such as `$labels` and `$values` represent only data from the individual alert query.
+1.  **Template notifications**: Notification templates format the notification messages for a group of alerts, including template variables for all firing (`.Alerts.Firing`) and resolved alerts (`.Alerts.Resolved`) in the alert group.
+
+For a more detailed explanation of this diagram, refer to the [Templates Introduction](ref:intro-to-templates).
+
+## Template annotations
+
+, or use the instance label from the query in a summary annotation so you know which server is experiencing high CPU usage.
+
+### Preview annotations
+
+## Template labels
+
+For example, you might want to set the severity label for an alert based on the value of the query
 
 When using custom labels with templates it is important to make sure that the label value does not change between consecutive evaluations of the alert rule as this will end up creating large numbers of distinct alerts. However, it is OK for the template to produce different label values for different alerts. For example, do not put the value of the query in a custom label as this will end up creating a new set of alerts each time the value changes. Instead use annotations.
-
-All templates should be written in [text/template](https://pkg.go.dev/text/template). Regardless of whether you are templating a label or an annotation, you should write each template inline inside the label or annotation that you are templating. This means you cannot share templates between labels and annotations, and instead you will need to copy templates wherever you want to use them.
-
-Each template is evaluated whenever the alert rule is evaluated, and is evaluated for every alert separately. For example, if your alert rule has a templated summary annotation, and the alert rule has 10 firing alerts, then the template will be executed 10 times, once for each alert. You should try to avoid doing expensive computations in your templates as much as possible.
 
 {{% admonition type="caution" %}}
 Extra whitespace in label templates can break matches with notification policies.
 {{% /admonition %}}
+
+### Preview labels
