@@ -3949,7 +3949,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:1.8.3":
+"@grafana/plugin-e2e@npm:^1.8.3":
   version: 1.8.3
   resolution: "@grafana/plugin-e2e@npm:1.8.3"
   dependencies:
@@ -18943,7 +18943,7 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.6"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:1.8.3"
+    "@grafana/plugin-e2e": "npm:^1.8.3"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
