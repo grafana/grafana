@@ -67,7 +67,8 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
             payload: [
               t(
                 'query-library.query-template-get-error',
-                `Error attempting to get query template from the library: ${JSON.stringify(error)}`
+                'Error attempting to get query template from the library: {{error}}',
+                { error: JSON.stringify(error) }
               ),
             ],
           });
