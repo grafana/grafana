@@ -57,11 +57,11 @@ export class ExtensionsLog {
 
   private log(level: LogLevel, message: string, labels?: LogItem['labels']): void {
     const combinedLabels = { ...labels, ...this.baseLabels };
-    const { pluginId, extensionPointId, ...rest } = combinedLabels;
+    const { pluginId, extensionPointId } = combinedLabels;
 
     const item: LogItem = {
       level: level,
-      labels: rest,
+      labels: combinedLabels,
       timestamp: Date.now(),
       id: nanoid(),
       message: message,

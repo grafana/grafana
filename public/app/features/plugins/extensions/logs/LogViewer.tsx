@@ -2,12 +2,12 @@ import { isEmpty } from 'lodash';
 import { nanoid } from 'nanoid';
 import { ReactElement, useState } from 'react';
 
-import { DataTransformerConfig, MatcherConfig, ValueMatcherID } from '@grafana/data';
+import { DataTransformerConfig } from '@grafana/data';
 import { sceneUtils, VizConfigBuilders } from '@grafana/scenes';
 import { SceneContextProvider, useDataTransformer, useQueryRunner, VizPanel } from '@grafana/scenes-react';
 import { Page } from 'app/core/components/Page/Page';
 
-import { LogFilter, LogViewFilters } from './LogViewFilters';
+import { FilterConfig, LogFilter, LogViewFilters } from './LogViewFilters';
 import { VizGrid } from './VizGrid';
 import { ExtensionsLogDataSource } from './dataSource';
 import { log } from './log';
@@ -47,7 +47,10 @@ function LogViewScene(): ReactElement | null {
   });
 
   return (
-    <Page navId="extensions" actions={<LogViewFilters queryRunner={data} filter={filter} onChange={setFilter} />}>
+    <Page
+      navId="extensions"
+      actions={<LogViewFilters provider={data} filteredProvider={filteredData} filter={filter} onChange={setFilter} />}
+    >
       <VizGrid>
         <VizPanel title="Logs" viz={logsViz} dataProvider={filteredData} />
       </VizGrid>
@@ -56,34 +59,22 @@ function LogViewScene(): ReactElement | null {
 }
 
 function mapToTransformations(filter: LogFilter): DataTransformerConfig[] {
-  if (isEmpty(filter.extensionPointIds) && isEmpty(filter.levels) && isEmpty(filter.pluginIds)) {
+  if (isEmpty(filter.extensionPointIds) && isEmpty(filter.severity) && isEmpty(filter.pluginIds)) {
     return [];
   }
 
-  const filters: Array<{ fieldName: string; config: MatcherConfig }> = [];
+  const filters: FilterConfig[] = [];
 
-  if (!isEmpty(filter.extensionPointIds)) {
-    const extensionPointsFilters = Array.from(filter.extensionPointIds!).map((value) => ({
-      fieldName: 'extensionPointId',
-      config: { id: ValueMatcherID.equal, options: { value } },
-    }));
-    filters.push.apply(filters, extensionPointsFilters);
+  if (filter.extensionPointIds && !isEmpty(filter.extensionPointIds)) {
+    filters.push.apply(filters, filter.extensionPointIds);
   }
 
-  if (!isEmpty(filter.pluginIds)) {
-    const pluginFilters = Array.from(filter.pluginIds!).map((value) => ({
-      fieldName: 'pluginId',
-      config: { id: ValueMatcherID.equal, options: { value } },
-    }));
-    filters.push.apply(filters, pluginFilters);
+  if (filter.pluginIds && !isEmpty(filter.pluginIds)) {
+    filters.push.apply(filters, filter.pluginIds);
   }
 
-  if (!isEmpty(filter.levels)) {
-    const levelFilters = Array.from(filter.levels!).map((value) => ({
-      fieldName: 'severity',
-      config: { id: ValueMatcherID.equal, options: { value } },
-    }));
-    filters.push.apply(filters, levelFilters);
+  if (filter.severity && !isEmpty(filter.severity)) {
+    filters.push.apply(filters, filter.severity);
   }
 
   return [
