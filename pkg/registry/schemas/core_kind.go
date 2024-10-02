@@ -28,7 +28,7 @@ func GetCoreKinds() ([]CoreKind, error) {
 	kinds := make([]CoreKind, 0)
 
 	_, caller, _, _ := runtime.Caller(0)
-	root := filepath.Join(caller, "../../../..")
+	root := filepath.Join(caller, "../../..")
 
 	accesspolicyCue, err := loadCueFile(ctx, filepath.Join(root, "./codegen/kinds/kinds/accesspolicy/access_policy_kind.cue"))
 	if err != nil {
