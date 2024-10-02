@@ -3,6 +3,8 @@ import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
 import { Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom-v5-compat';
+import { Switch, RouteComponentProps } from 'react-router-dom';
+import { CompatRoute, Navigate } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';

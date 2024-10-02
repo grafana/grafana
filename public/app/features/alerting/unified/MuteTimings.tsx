@@ -24,7 +24,7 @@ const EditTimingRoute = () => {
   });
 
   if (!name) {
-    return <Navigate to="/alerting/routes" />;
+    return <Navigate replace to="/alerting/routes" />;
   }
 
   return (

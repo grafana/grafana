@@ -53,7 +53,7 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   } = useCloudCombinedRulesMatching(name, sourceName, { namespace, groupName: group });
 
   if (!name || !sourceName) {
-    return <Navigate to="/notfound" />;
+    return <Navigate replace to="/notfound" />;
   }
 
   if (error) {
@@ -95,7 +95,7 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   if (rules.length === 1) {
     const [rule] = rules;
     const to = createViewLink(rulesSource, rule, '/alerting/list').replace(subUrl, '');
-    return <Navigate to={to} />;
+    return <Navigate replace to={to} />;
   }
 
   if (rules.length === 0) {
