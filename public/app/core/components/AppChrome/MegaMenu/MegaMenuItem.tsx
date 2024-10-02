@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, Text, IconButton, Icon, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -39,6 +40,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   );
   const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
   const item = useRef<HTMLLIElement>(null);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const styles = useStyles2(getStyles);
 
@@ -74,6 +76,29 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
     );
   }
 
+  function getIconName(isExpanded: boolean) {
+    if (isSingleTopNav) {
+      return isExpanded ? 'angle-up' : 'angle-down';
+    } else {
+      return isExpanded ? 'angle-down' : 'angle-right';
+    }
+  }
+
+  const collapseIcon = (
+    <div className={styles.collapseButtonWrapper}>
+      {showExpandButton && (
+        <IconButton
+          aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+          className={styles.collapseButton}
+          onClick={() => setSectionExpanded(!sectionExpanded)}
+          name={getIconName(Boolean(sectionExpanded))}
+          size="md"
+          variant="secondary"
+        />
+      )}
+    </div>
+  );
+
   return (
     <li ref={item} className={styles.listItem}>
       <div
@@ -83,18 +108,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
       >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
-        <div className={styles.collapseButtonWrapper}>
-          {showExpandButton && (
-            <IconButton
-              aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
-              className={styles.collapseButton}
-              onClick={() => setSectionExpanded(!sectionExpanded)}
-              name={sectionExpanded ? 'angle-down' : 'angle-right'}
-              size="md"
-              variant="secondary"
-            />
-          )}
-        </div>
+        {!isSingleTopNav && collapseIcon}
         <div className={styles.collapsibleSectionWrapper}>
           <MegaMenuItemText
             isActive={isActive}
@@ -118,6 +132,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             </div>
           </MegaMenuItemText>
         </div>
+        {isSingleTopNav && collapseIcon}
       </div>
       {showExpandButton && sectionExpanded && (
         <ul className={styles.children}>
