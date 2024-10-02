@@ -118,7 +118,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   };
 
   const handleButtonClickToRecentlyDeleted = () => {
-    reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted');
+    reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
+      origin: window.location.pathname === '/dashboards' ? 'Dashboards' : 'Folder view',
+    });
   };
 
   return (
@@ -131,7 +133,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           {config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI && hasAdminRights && (
             <LinkButton
               variant="secondary"
-              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
+              href={'/dashboard/recently-deleted'}
               onClick={handleButtonClickToRecentlyDeleted}
             >
               <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
