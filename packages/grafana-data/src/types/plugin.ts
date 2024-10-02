@@ -118,33 +118,31 @@ export interface PluginDependencies {
   };
 }
 
+export type ExtensionInfo = {
+  targets: string | string[];
+  title: string;
+  description?: string;
+};
+
 export interface PluginExtensions {
   // The component extensions that the plugin registers
-  addedComponents: Array<{
-    targets: string[];
-    title: string;
-    description: string;
-  }>;
+  addedComponents: ExtensionInfo[];
 
   // The link extensions that the plugin registers
-  addedLinks: Array<{
-    targets: string[];
-    title: string;
-    description: string;
-  }>;
+  addedLinks: ExtensionInfo[];
 
   // The React components that the plugin exposes
   exposedComponents: Array<{
     id: string;
     title: string;
-    description: string;
+    description?: string;
   }>;
 
   // The extension points that the plugin provides
   extensionPoints: Array<{
     id: string;
     title: string;
-    description: string;
+    description?: string;
   }>;
 }
 
