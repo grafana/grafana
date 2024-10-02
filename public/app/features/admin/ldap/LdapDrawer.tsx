@@ -75,7 +75,10 @@ export const LdapDrawerComponent = ({
   const attributesLabel = (
     <Label
       className={styles.sectionLabel}
-      description={t('ldap-drawer.attributes-section.description', 'Specify the LDAP attributes')}
+      description={t(
+        'ldap-drawer.attributes-section.description',
+        "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information."
+      )}
     >
       <Trans i18nKey="ldap-drawer.attributes-section.label">Attributes</Trans>
     </Label>
