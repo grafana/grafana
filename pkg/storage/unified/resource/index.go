@@ -34,7 +34,7 @@ func NewIndex(s *server, opts Opts) *Index {
 }
 
 func (i *Index) Init(ctx context.Context) error {
-	// TODO: configure resources to index in ini file?
+	// TODO: list more than just playlists
 	r := &ListRequest{Options: &ListOptions{
 		Key: &ResourceKey{
 			Group:    "playlist.grafana.app",
