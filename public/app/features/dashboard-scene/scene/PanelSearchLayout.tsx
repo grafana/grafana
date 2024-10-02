@@ -23,7 +23,7 @@ const panelsPerRowCSSVar = '--panels-per-row';
 
 export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }: Props) {
   const { body } = dashboard.state;
-  const panels: VizPanel[] = [];
+  const filteredPanels: VizPanel[] = [];
   const styles = useStyles2(getStyles);
 
   const bodyGrid = body instanceof DefaultGridLayoutManager ? body.state.grid : null;
@@ -34,11 +34,13 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
 
   for (const gridItem of bodyGrid.state.children) {
     if (gridItem instanceof DashboardGridItem) {
-      const panel = gridItem.state.body;
-      const interpolatedTitle = sceneGraph.interpolate(dashboard, panel.state.title).toLowerCase();
-      const interpolatedSearchString = sceneGraph.interpolate(dashboard, panelSearch).toLowerCase();
-      if (interpolatedTitle.includes(interpolatedSearchString)) {
-        panels.push(gridItem.state.body);
+      const panels = gridItem.state.repeatedPanels ?? [gridItem.state.body];
+      for (const panel of panels) {
+        const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
+        const interpolatedSearchString = sceneGraph.interpolate(dashboard, panelSearch).toLowerCase();
+        if (interpolatedTitle.includes(interpolatedSearchString)) {
+          filteredPanels.push(panel);
+        }
       }
     }
   }
@@ -48,7 +50,7 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
       className={classNames(styles.grid, { [styles.perRow]: panelsPerRow !== undefined })}
       style={{ [panelsPerRowCSSVar]: panelsPerRow } as Record<string, number>}
     >
-      {panels.map((panel) => (
+      {filteredPanels.map((panel) => (
         <PanelSearchHit key={panel.state.key} panel={panel} />
       ))}
     </div>
