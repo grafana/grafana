@@ -19,7 +19,7 @@ func GetCoreKinds() ([]CoreKind, error) {
     kinds := make([]CoreKind, 0)
     
     _, caller, _, _ := runtime.Caller(0)
-    root := filepath.Join(caller, "../../..")
+    root := filepath.Join(caller, "../..")
     
     {{- range .Schemas }}
     

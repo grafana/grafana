@@ -658,7 +658,8 @@ playwright.config.ts @grafana/plugins-platform-frontend
 
 
 # Kind definitions
-/pkg/codegen/kinds/dashboard @grafana/dashboards-squad
+/kinds/dashboard @grafana/dashboards-squad
+/kinds @grafana/grafana-as-code
 
 # Kind system and code generation
 /pkg/kinds/ @grafana/grafana-as-code

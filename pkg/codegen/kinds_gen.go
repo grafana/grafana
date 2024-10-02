@@ -28,7 +28,7 @@ const KindsFolder = "kinds"
 // CoreDefParentPath is the path, relative to the repository root, where
 // each child directory is expected to contain .cue files defining one
 // Core kind.
-var CoreDefParentPath = filepath.Join("codegen", KindsFolder)
+var CoreDefParentPath = filepath.Join("..", KindsFolder)
 
 // TSCoreKindParentPath is the path, relative to the repository root, to the directory that
 // contains one directory per kind, full of generated TS kind output: types and default consts.
@@ -181,14 +181,14 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]kinds.SchemaForGen, e
 			continue
 		}
 
-		entries, err := os.ReadDir(filepath.Join(KindsFolder, dir.Name()))
+		entries, err := os.ReadDir(filepath.Join("..", CoreDefParentPath, dir.Name()))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error opening %s directory: %s\n", dir.Name(), err)
 			os.Exit(1)
 		}
 
 		// It's assuming that we only have one file in each folder
-		entry := filepath.Join(KindsFolder, dir.Name(), entries[0].Name())
+		entry := filepath.Join("..", CoreDefParentPath, dir.Name(), entries[0].Name())
 		cueFile, err := os.ReadFile(entry)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "unable to open %s/%s file: %s\n", dir.Name(), entries[0].Name(), err)

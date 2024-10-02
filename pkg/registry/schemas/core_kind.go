@@ -28,9 +28,9 @@ func GetCoreKinds() ([]CoreKind, error) {
 	kinds := make([]CoreKind, 0)
 
 	_, caller, _, _ := runtime.Caller(0)
-	root := filepath.Join(caller, "../../..")
+	root := filepath.Join(caller, "../..")
 
-	accesspolicyCue, err := loadCueFile(ctx, filepath.Join(root, "./codegen/kinds/kinds/accesspolicy/access_policy_kind.cue"))
+	accesspolicyCue, err := loadCueFile(ctx, filepath.Join(root, "./../../kinds/accesspolicy/access_policy_kind.cue"))
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: accesspolicyCue,
 	})
 
-	dashboardCue, err := loadCueFile(ctx, filepath.Join(root, "./codegen/kinds/kinds/dashboard/dashboard_kind.cue"))
+	dashboardCue, err := loadCueFile(ctx, filepath.Join(root, "./../../kinds/dashboard/dashboard_kind.cue"))
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: dashboardCue,
 	})
 
-	librarypanelCue, err := loadCueFile(ctx, filepath.Join(root, "./codegen/kinds/kinds/librarypanel/librarypanel_kind.cue"))
+	librarypanelCue, err := loadCueFile(ctx, filepath.Join(root, "./../../kinds/librarypanel/librarypanel_kind.cue"))
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: librarypanelCue,
 	})
 
-	preferencesCue, err := loadCueFile(ctx, filepath.Join(root, "./codegen/kinds/kinds/preferences/preferences_kind.cue"))
+	preferencesCue, err := loadCueFile(ctx, filepath.Join(root, "./../../kinds/preferences/preferences_kind.cue"))
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: preferencesCue,
 	})
 
-	publicdashboardCue, err := loadCueFile(ctx, filepath.Join(root, "./codegen/kinds/kinds/publicdashboard/public_dashboard_kind.cue"))
+	publicdashboardCue, err := loadCueFile(ctx, filepath.Join(root, "./../../kinds/publicdashboard/public_dashboard_kind.cue"))
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: publicdashboardCue,
 	})
 
-	roleCue, err := loadCueFile(ctx, filepath.Join(root, "./codegen/kinds/kinds/role/role_kind.cue"))
+	roleCue, err := loadCueFile(ctx, filepath.Join(root, "./../../kinds/role/role_kind.cue"))
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: roleCue,
 	})
 
-	rolebindingCue, err := loadCueFile(ctx, filepath.Join(root, "./codegen/kinds/kinds/rolebinding/role_binding_kind.cue"))
+	rolebindingCue, err := loadCueFile(ctx, filepath.Join(root, "./../../kinds/rolebinding/role_binding_kind.cue"))
 	if err != nil {
 		return nil, err
 	}
