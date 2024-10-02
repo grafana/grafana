@@ -289,13 +289,14 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 	if engine == nil {
 		// Ensure that parseTime is enabled for MySQL
-		if ss.features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) && ss.dbCfg.Type == migrator.MySQL && !strings.Contains(ss.dbCfg.ConnectionString, "parseTime=") {
+		if ss.features.IsEnabledGlobally(featuremgmt.FlagMysqlParseTime) && strings.Contains(ss.dbCfg.Type, migrator.MySQL) && !strings.Contains(ss.dbCfg.ConnectionString, "parseTime=") {
 			if strings.Contains(ss.dbCfg.ConnectionString, "?") {
 				ss.dbCfg.ConnectionString += "&parseTime=true"
 			} else {
 				ss.dbCfg.ConnectionString += "?parseTime=true"
 			}
 		}
+		fmt.Println(ss.dbCfg.ConnectionString)
 
 		var err error
 		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
