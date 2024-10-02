@@ -1,18 +1,13 @@
 ---
 aliases:
-  - ../administration/reports/
-  - ../enterprise/export-pdf/
-  - ../enterprise/reporting/
-  - ../reference/share_dashboard/
-  - ../reference/share_panel/
-  - ../share-dashboards-panels/
-  - ../sharing/
-  - ../sharing/playlists/
-  - ../sharing/share-dashboard/
-  - ../sharing/share-panel/
-  - ./
-  - reporting/
-  - share-dashboard/
+  - ../reference/share_dashboard/ # /docs/grafana/latest/reference/share_dashboard/
+  - ../reference/share_panel/ # /docs/grafana/latest/reference/share_panel/
+  - ../share-dashboards-panels/ # /docs/grafana/latest/share-dashboards-panels/
+  - ../sharing/ # /docs/grafana/latest/sharing/
+  - ../sharing/playlists/ # /docs/grafana/latest/sharing/playlists/
+  - ../sharing/share-dashboard/ # /docs/grafana/latest/sharing/share-dashboard/
+  - ../sharing/share-panel/ # /docs/grafana/latest/sharing/share-panel/
+  - share-dashboard/ # /docs/grafana/latest/dashboards/share-dashboard/
 keywords:
   - grafana
   - dashboard
