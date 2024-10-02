@@ -7,7 +7,6 @@ aliases:
   - ../sharing/playlists/ # /docs/grafana/latest/sharing/playlists/
   - ../sharing/share-dashboard/ # /docs/grafana/latest/sharing/share-dashboard/
   - ../sharing/share-panel/ # /docs/grafana/latest/sharing/share-panel/
-  - ./
   - share-dashboard/ # /docs/grafana/latest/dashboards/share-dashboard/
 keywords:
   - grafana
