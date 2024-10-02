@@ -33,8 +33,6 @@ For an example setup, see [Example Minimal Setup Using Assumed IAM Role]({{< rel
 
 With AWS resources configured, proceed to add SNS as a contact point in Grafana.
 
-### 1. Add a New Contact Point
-
 - Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 - Click on **"Add contact point"**.
 - **Name**: Enter a descriptive name (e.g., `AWS SNS`).
