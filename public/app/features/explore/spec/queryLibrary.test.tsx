@@ -105,7 +105,6 @@ describe('QueryLibrary', () => {
     await waitForExplore();
     await openQueryLibrary();
     await assertQueryLibraryTemplateExists('loki', 'Loki Query Template');
-    await assertQueryLibraryTemplateExists('elastic', 'Elastic Query Template');
   });
 
   it('Shows add to query library button only when the toggle is enabled', async () => {

@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { SortByFn } from 'react-table';
 
 import { Column, InteractiveTable } from '@grafana/ui';
@@ -30,14 +29,6 @@ const columns: Array<Column<QueryTemplateRow>> = [
   },
 ];
 
-const styles = {
-  tableWithSpacing: css({
-    'th:first-child': {
-      width: '50%',
-    },
-  }),
-};
-
 type Props = {
   queryTemplateRows: QueryTemplateRow[];
 };
@@ -45,10 +36,10 @@ type Props = {
 export default function QueryTemplatesTable({ queryTemplateRows }: Props) {
   return (
     <InteractiveTable
-      className={styles.tableWithSpacing}
       columns={columns}
       data={queryTemplateRows}
       getRowId={(row: { index: string }) => row.index}
+      pageSize={20}
     />
   );
 }
