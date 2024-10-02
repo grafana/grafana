@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import 'react-data-grid/lib/styles.css';
 import DataGrid, { Column, RenderRowProps, Row } from 'react-data-grid';
 import { Cell } from 'react-table';
@@ -43,6 +43,22 @@ export function TableNG(props: TableNGProps) {
   } | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!isContextMenuOpen) {
+      return;
+    }
+
+    function onClick(event: MouseEvent) {
+      setIsContextMenuOpen(false);
+    }
+
+    addEventListener('click', onClick);
+
+    return () => {
+      removeEventListener('click', onClick);
+    };
+  }, [isContextMenuOpen]);
 
   function rowHeight() {
     const bodyFontSize = theme.typography.fontSize;
@@ -132,7 +148,6 @@ export function TableNG(props: TableNGProps) {
           label="Inspect value"
           onClick={() => {
             setIsInspecting(true);
-            setIsContextMenuOpen(false);
           }}
           className={styles.menuItem}
         />
@@ -184,7 +199,6 @@ export function TableNG(props: TableNGProps) {
           value={contextMenuProps?.value}
           onDismiss={() => {
             setIsInspecting(false);
-            setIsContextMenuOpen(false);
             setContextMenuProps(null);
           }}
         />
