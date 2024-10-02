@@ -26,27 +26,25 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
       {(provided) => (
-        <>
-          <div
-            className={cx(styles.wrapper, styles.dragRow)}
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            key={index}
-          >
-            <div className={styles.linkDetails}>
-              <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
-                {hasTitle ? title : 'Action title not provided'}
-              </div>
-            </div>
-            <div className={styles.icons}>
-              <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit action title" />
-              <IconButton name="times" onClick={onRemove} className={styles.icon} tooltip="Remove action title" />
-              <div className={styles.dragIcon} {...provided.dragHandleProps}>
-                <Icon name="draggabledots" size="lg" />
-              </div>
+        <div
+          className={cx(styles.wrapper, styles.dragRow)}
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          key={index}
+        >
+          <div className={styles.linkDetails}>
+            <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
+              {hasTitle ? title : 'Action title not provided'}
             </div>
           </div>
-        </>
+          <div className={styles.icons}>
+            <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit action title" />
+            <IconButton name="times" onClick={onRemove} className={styles.icon} tooltip="Remove action title" />
+            <div className={styles.dragIcon} {...provided.dragHandleProps}>
+              <Icon name="draggabledots" size="lg" />
+            </div>
+          </div>
+        </div>
       )}
     </Draggable>
   );
