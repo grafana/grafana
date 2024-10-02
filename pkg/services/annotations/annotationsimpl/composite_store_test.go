@@ -146,7 +146,8 @@ func TestCompositeStore(t *testing.T) {
 		}
 
 		query := annotations.ItemQuery{}
-		store.Get(context.Background(), query, nil)
+		_, err := store.Get(context.Background(), query, nil)
+		require.NoError(t, err)
 		require.Equal(t, int64(0), query.From)
 	})
 }
