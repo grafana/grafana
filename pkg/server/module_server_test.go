@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 
-	"cuelang.org/go/pkg/regexp"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/modules"
@@ -78,8 +78,9 @@ func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
 		sec, err := cfg.Raw.GetSection("database")
 		require.NoError(t, err)
 		connString := sec.Key("connection_string").String()
-		matches, err := regexp.FindSubmatch("(.+):(.+)@tcp\\((.+):(\\d+)\\)/(.+)\\?", connString)
+		exp, err := regexp.Compile("(.+):(.+)@tcp\\((.+):(\\d+)\\)/(.+)\\?")
 		require.NoError(t, err)
+		matches := exp.FindStringSubmatch(connString)
 		_, _ = s.NewKey("db_host", matches[3])
 		_, _ = s.NewKey("db_name", matches[5])
 		_, _ = s.NewKey("db_user", matches[1])

@@ -2,10 +2,10 @@ package util
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 
-	"cuelang.org/go/pkg/strings"
 	"github.com/stretchr/testify/require"
 	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/util/validation"
