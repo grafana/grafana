@@ -2259,6 +2259,16 @@ github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWm
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20240930154843-22cee00b280e h1:RttFYx5+RTNuMPlaftx8i9f91kwUi9LdxsoPLHnticU=
 github.com/grafana/alerting v0.0.0-20240930154843-22cee00b280e/go.mod h1:QsnoKX/iYZxA4Cv+H+wC7uxutBD8qi8ZW5UJvD2TYmU=
+github.com/grafana/alerting v0.0.0-20241002161130-650b93651bcc h1:x0GodCjXOIH9JCZW47gto4yvDnz7QiXWQiwLuMAUjvc=
+github.com/grafana/alerting v0.0.0-20241002161130-650b93651bcc/go.mod h1:ZRm8AO9Y+I0g6ElRcyCPxmHEyECHsZGpHBlofs9VbGk=
+github.com/grafana/alerting v0.0.0-20241002161354-f926f417dad0 h1:Rr4Flkxjbe0L0AozSEU6sIg6l632l6FuatcSIKrClU8=
+github.com/grafana/alerting v0.0.0-20241002161354-f926f417dad0/go.mod h1:ZRm8AO9Y+I0g6ElRcyCPxmHEyECHsZGpHBlofs9VbGk=
+github.com/grafana/alerting v0.0.0-20241002162427-55895512f3b3 h1:Aw7O0RIBJJt34Mjony75EmnFnMpcWsw+lSWPT+anHCs=
+github.com/grafana/alerting v0.0.0-20241002162427-55895512f3b3/go.mod h1:ZRm8AO9Y+I0g6ElRcyCPxmHEyECHsZGpHBlofs9VbGk=
+github.com/grafana/alerting v0.0.0-20241002164447-5725f291c348 h1:4hEBHMEKRyolM8RQg2V78L584g+sisYllK0ouj6irl4=
+github.com/grafana/alerting v0.0.0-20241002164447-5725f291c348/go.mod h1:CfuBOWI+Txk2m2aUL+YIBHAhKRMbgtqM8QSzlyzoi4w=
+github.com/grafana/alerting v0.0.0-20241002214348-f74fe53b9257 h1:t4KvQXetO7IZEbgrOTZOhy3BsY+HayhIimiru132WNw=
+github.com/grafana/alerting v0.0.0-20241002214348-f74fe53b9257/go.mod h1:79uMo7lUI+Nftkiy/3t8Bo3BiFaT8Qc4r+ZeJev3H/w=
 github.com/grafana/authlib v0.0.0-20240919120951-58259833c564 h1:zYF/RBulpvMqPYR3gbzJZ8t/j/Eymn5FNidSYkueNCA=
 github.com/grafana/authlib v0.0.0-20240919120951-58259833c564/go.mod h1:PFzXbCrn0GIpN4KwT6NP1l5Z1CPLfmKHnYx8rZzQcyY=
 github.com/grafana/authlib/claims v0.0.0-20240827210201-19d5347dd8dd h1:sIlR7n38/MnZvX2qxDEszywXdI5soCwQ78aTDSARvus=
