@@ -84,7 +84,7 @@ describe('Templates K8s API', () => {
     expect(form).toBeInTheDocument();
     expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('custom-email');
     expect(within(form).getAllByTestId('code-editor')[0]).toHaveValue(
-      "{{ define 'custom-email' }}  Custom email template {{ end }}"
+      '{{ define "custom-email" }}  Custom email template {{ end }}'
     );
   });
 
@@ -98,7 +98,7 @@ describe('Templates K8s API', () => {
     expect(form).toBeInTheDocument();
     expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('custom-email (copy)');
     expect(within(form).getAllByTestId('code-editor')[0]).toHaveValue(
-      "{{ define 'custom-email' }}  Custom email template {{ end }}"
+      '{{ define "custom-email" }}  Custom email template {{ end }}'
     );
   });
 
@@ -118,7 +118,7 @@ describe('Templates K8s API', () => {
     const templateEditor = within(form).getAllByTestId('code-editor')[0];
 
     await user.clear(templateEditor);
-    await user.type(templateEditor, "{{ define 'custom-email' }}Updated custom email template{{ end }}");
+    await user.type(templateEditor, '{{ define "custom-email" }}Updated custom email template{{ end }}');
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
