@@ -445,18 +445,6 @@ service ResourceStore {
   rpc Watch(WatchRequest) returns (stream WatchEvent);
 }
 
-message IndexResponse {
-  // Error details
-  ErrorResult error = 1;
-}
-
-message IndexRequest {
-  // The resource key
-  ResourceKey key = 1;
-  // The resource value
-  ResourceWrapper value = 2;
-}
-
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
