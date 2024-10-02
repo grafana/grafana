@@ -45,7 +45,7 @@ import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } 
  */
 const server = setupMswServer();
 
-const renderWithProvider = (
+export const renderWithProvider = (
   children: ReactNode,
   historyOptions?: MemoryHistoryBuildOptions,
   providerProps?: Partial<ComponentProps<typeof AlertmanagerProvider>>
