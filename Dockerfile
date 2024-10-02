@@ -67,6 +67,7 @@ COPY pkg/storage/unified/apistore/go.* pkg/storage/unified/apistore/
 COPY pkg/semconv/go.* pkg/semconv/
 COPY pkg/aggregator/go.* pkg/aggregator/
 COPY apps/playlist/go.* apps/playlist/
+COPY pkg/codegen/go.* pkg/codegen/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
