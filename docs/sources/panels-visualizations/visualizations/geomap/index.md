@@ -269,18 +269,18 @@ The markers layer allows you to display data points as different marker shapes s
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
-| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
-| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
-| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
-| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
-| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
-| Fill opacity | configures the transparency of each marker. |
-| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
-| Text label | configures a text label for each marker. |
-| Show legend | allows you to toggle the legend for the layer. |
-| Display tooltip | allows you to toggle tooltips for the layer. |
+| Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | Allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | Configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | Configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | Configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | Configures the transparency of each marker. |
+| Rotation angle | Configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | Configures a text label for each marker. |
+| Show legend | Allows you to toggle the legend for the layer. |
+| Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
 #### Heatmap layer
@@ -297,13 +297,13 @@ Similar to `Markers`, you are prompted with various options to determine which d
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
-| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Weight values | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
-| Radius | configures the size of the heatmap clusters. |
-| Blur | configures the amount of blur on each cluster. |
-| Opacity | configures the opacity of each cluster. |
-| Display tooltip | allows you to toggle tooltips for the layer. |
+| Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Weight values | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Radius | Configures the size of the heatmap clusters. |
+| Blur | Configures the amount of blur on each cluster. |
+| Opacity | Configures the opacity of each cluster. |
+| Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
 #### GeoJSON layer
@@ -313,10 +313,10 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| GeoJSON URL | provides a choice of GeoJSON files that ship with Grafana. |
-| Default Style | controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
-| Style Rules | apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
-| Display tooltip | allows you to toggle tooltips for the layer. |
+| GeoJSON URL | Provides a choice of GeoJSON files that ship with Grafana. |
+| Default Style | Controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
+| Style Rules | Apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
+| Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
 Styles can be set within the "properties" object of the GeoJSON with support for the following geometries:
@@ -346,12 +346,12 @@ The Night / Day layer displays night and day regions based on the current time r
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Data | configures the data set for the layer. For more information, refer to [Data](#data). |
-| Show | toggles the time source from panel time range. |
-| Night region color | picks the color for the night region. |
-| Display sun | toggles the sun icon. |
-| Opacity | set the opacity from `0` (transparent) to `1` (opaque). |
-| Display tooltip | allows you to toggle tooltips for the layer. |
+| Data | Configures the data set for the layer. For more information, refer to [Data](#data). |
+| Show | Toggles the time source from panel time range. |
+| Night region color | Picks the color for the night region. |
+| Display sun | Toggles the sun icon. |
+| Opacity | Set the opacity from `0` (transparent) to `1` (opaque). |
+| Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
 [Extensions for OpenLayers - DayNight](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
@@ -398,16 +398,16 @@ The Photos layer renders a photo at each data point.
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
-| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Image Source field | allows you to select a string field containing image data in either of the following formats:<ul><li>**Image URLs**</li><li>**Base64 encoded** - Image binary ("data:image/png;base64,...")</li></ul> |
-| Kind | sets the frame style around the images. Choose from: **Square**, **Circle**, **Anchored**, and **Folio**. |
-| Crop | toggles whether the images are cropped to fit. |
-| Shadow | toggles a box shadow behind the images. |
-| Border | sets the border size around images. |
-| Border color | sets the border color around images. |
-| Radius | sets the overall size of images in pixels. |
-| Display tooltip | allows you to toggle tooltips for the layer. |
+| Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Image Source field | Allows you to select a string field containing image data in either of the following formats:<ul><li>**Image URLs**</li><li>**Base64 encoded** - Image binary ("data:image/png;base64,...")</li></ul> |
+| Kind | Sets the frame style around the images. Choose from: **Square**, **Circle**, **Anchored**, and **Folio**. |
+| Crop | Toggles whether the images are cropped to fit. |
+| Shadow | Toggles a box shadow behind the images. |
+| Border | Sets the border size around images. |
+| Border color | Sets the border color around images. |
+| Radius | Sets the overall size of images in pixels. |
+| Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
 [Extensions for OpenLayers - Image Photo Style](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
@@ -428,11 +428,11 @@ You can convert node graph data to a network layer:
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
-| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Arrow | sets the arrow direction to display for each edge, with forward meaning source to target. Choose from: **None**, **Forward**, **Reverse** and **Both**. |
-| Show legend | allows you to toggle the legend for the layer. **Note:** The legend currently only supports node data. |
-| Display tooltip | allows you to toggle tooltips for the layer. |
+| Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Arrow | Sets the arrow direction to display for each edge, with forward meaning source to target. Choose from: **None**, **Forward**, **Reverse** and **Both**. |
+| Show legend | Allows you to toggle the legend for the layer. **Note:** The legend currently only supports node data. |
+| Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
 ##### Node styles options
@@ -440,12 +440,12 @@ You can convert node graph data to a network layer:
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Size | configures the size of the nodes. The default is `Fixed size`, which makes all node sizes the same regardless of the data; however, there is also an option to size the nodes based on data corresponding to a selected field. `Min` and `Max` node sizes have to be set such that the nodes can scale within this range. |
-| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
-| Color | configures the color of the nodes. The default `Fixed color` sets all nodes to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
-| Fill opacity | configures the transparency of each node. |
-| Rotation angle | configures the rotation angle of each node. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field. |
-| Text label | configures a text label for each node. |
+| Size | Configures the size of the nodes. The default is `Fixed size`, which makes all node sizes the same regardless of the data; however, there is also an option to size the nodes based on data corresponding to a selected field. `Min` and `Max` node sizes have to be set such that the nodes can scale within this range. |
+| Symbol | Allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Color | Configures the color of the nodes. The default `Fixed color` sets all nodes to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | Configures the transparency of each node. |
+| Rotation angle | Configures the rotation angle of each node. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field. |
+| Text label | Configures a text label for each node. |
 <!-- prettier-ignore-end -->
 
 ##### Edge styles options
@@ -453,10 +453,10 @@ You can convert node graph data to a network layer:
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Size | configures the line width of the edges. The default is `Fixed size`, which makes all edge line widths the same regardless of the data; however, there is also an option to size the edges based on data corresponding to a selected field. `Min` and `Max` eges sizes have to be set such that the edges can scale within this range. |
-| Color | configures the color of the edges. The default `Fixed color` sets all edges to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
-| Fill opacity | configures the transparency of each edge. |
-| Text label | configures a text label for each edge. |
+| Size | Configures the line width of the edges. The default is `Fixed size`, which makes all edge line widths the same regardless of the data; however, there is also an option to size the edges based on data corresponding to a selected field. `Min` and `Max` eges sizes have to be set such that the edges can scale within this range. |
+| Color | Configures the color of the edges. The default `Fixed color` sets all edges to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | Configures the transparency of each edge. |
+| Text label | Configures a text label for each edge. |
 <!-- prettier-ignore-end -->
 
 #### Open Street Map layer
