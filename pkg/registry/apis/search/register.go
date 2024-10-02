@@ -73,17 +73,24 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				Handler: func(w http.ResponseWriter, r *http.Request) {
 					urlQuery := r.URL.Query().Get("query")
 					searchRequest := &resource.SearchRequest{Query: urlQuery}
 					res, err := b.unified.Search(r.Context(), searchRequest)
 					if err != nil {
 						panic(err)
 					}
-					if err := json.NewEncoder(w).Encode(res); err != nil {
+
+					// the [][]byte response already contains the marshalled JSON, so we don't need to re-encode it
+					rawMessages := make([]json.RawMessage, len(res.GetSearchSummaries()))
+					for i, item := range res.GetSearchSummaries() {
+						rawMessages[i] = item
+					}
+					w.Header().Set("Content-Type", "application/json")
+					if err := json.NewEncoder(w).Encode(rawMessages); err != nil {
 						panic(err)
 					}
-				}),
+				},
 			},
 		},
 	}
