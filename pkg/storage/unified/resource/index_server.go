@@ -45,14 +45,6 @@ func (is *IndexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResp
 	return nil, nil
 }
 
-func (is IndexServer) Remove(ctx context.Context, uid string, key *ResourceKey) error {
-	err := is.index.Delete(ctx, uid, key)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Init sets the resource server on the index server
 // so we can call the resource server from the index server
 // TODO: a chicken and egg problem - index server needs the resource server but the resource server is created with the index server
@@ -102,6 +94,10 @@ func (f *indexWatchServer) Send(we *WatchEvent) error {
 		return f.Delete(we)
 	}
 
+	if we.Type == WatchEvent_MODIFIED {
+		return f.Update(we)
+	}
+
 	return nil
 }
 
@@ -142,6 +138,22 @@ func (f *indexWatchServer) Delete(we *WatchEvent) error {
 		return err
 	}
 	err = f.Index().Delete(f.context, data.Uid, data.Key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *indexWatchServer) Update(we *WatchEvent) error {
+	data, err := getData(we.Resource)
+	if err != nil {
+		return err
+	}
+	err = f.Index().Delete(f.context, data.Uid, data.Key)
+	if err != nil {
+		return err
+	}
+	err = f.Index().Index(f.context, data)
 	if err != nil {
 		return err
 	}
