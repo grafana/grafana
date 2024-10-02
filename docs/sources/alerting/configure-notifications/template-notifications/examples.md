@@ -19,9 +19,166 @@ weight: 103
 
 # Notification template examples
 
-Lorem ipsum
+This document is a compilation of common use cases for templating within Grafana notification templates. Templating in notification templates allows you to dynamically generate and reuse content for alert messages sent to external systems, such as email, Slack, or PagerDuty. By using variables and functions, you can create more detailed and customized notifications that enhance alert clarity and improve response.
 
-## Template the subject of an email
+Each example provided here applies specifically to notification templates (note that the syntax and behavior may differ from alert rule templating). For examples related to templating within alert rules, please refer to the Alert Rule Templating Examples document.
+
+## Common use cases
+
+Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [corresponding documentation](#). 
+
+Note that some notification template examples require a summary annotation in each alert. The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work.
+
+### Firing and resolved alerts, with summary annotation
+
+This template prints the summary of all firing and resolved alerts. It requires a summary annotation in each alert.
+
+```
+{{ define "alerts.message" -}}
+{{ if .Alerts.Firing -}}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ template "alerts.summarize" .Alerts.Firing }}
+{{- end }}
+{{- if .Alerts.Resolved -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ template "alerts.summarize" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+
+{{ define "alerts.summarize" -}}
+{{ range . -}}
+- {{ index .Annotations "summary" }}
+{{ end }}
+{{ end }}
+```
+
+The output of this template looks like this:
+
+```
+1 firing alert(s)
+- The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
+
+1 resolved alert(s)
+- The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
+```
+
+### Firing and resolved alerts, with summary, description, and runbook URL
+
+This template shows the summary, the description, and the runbook URL of all firing and resolved alerts. The Description and Runbook URL are optional and are omitted if absent from the alert. It requires a summary annotation in each alert.
+
+```
+{{ define "alerts.message" -}}
+{{ if .Alerts.Firing -}}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ template "alerts.summarize_large" .Alerts.Firing }}
+{{- end }}
+{{- if .Alerts.Resolved -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ template "alerts.summarize_large" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+
+{{ define "alerts.summarize_large" -}}
+{{ range . }}
+Summary: {{ index .Annotations "summary" }}
+{{- if index .Annotations "description" }}
+Description: {{ index .Annotations "description" }}{{ end }}
+{{- if index .Annotations "runbook_url" }}
+Runbook: {{ index .Annotations "runbook_url" }}{{ end }}
+{{ end }}
+{{ end }}
+```
+
+The output of this template looks like this:
+
+```
+1 firing alert(s)
+Summary: The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
+Description: This alert fires when a database server is at risk of running out of disk space. You should take measures to increase the maximum available disk space as soon as possible to avoid possible corruption.
+Runbook: https://example.com/on-call/database_server_high_disk_usage
+
+1 resolved alert(s)
+Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
+Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service. Please refer to the runbook for more information.
+Runbook: https://example.com/on-call/web_server_high_5xx_rate
+```
+
+###  Labels with values of instant queries and expressions
+
+This notification template example does not require a summary annotation in each alert/ It requires a summary annotation in each alert.
+
+```
+{{ define "alerts.message" -}}
+{{ if .Alerts.Firing -}}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ template "alerts.summarize_labels_and_values" .Alerts.Firing }}
+{{- end }}
+{{- if .Alerts.Resolved -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ template "alerts.summarize_labels_and_values" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+
+{{ define "alerts.summarize_labels_and_values" -}}
+{{ range . -}}
+- {{ range $k, $v := .Labels }}{{ $k }}={{ $v }} {{ end }}{{ range $k, $v := .Values }}{{ $k }}={{ $v }} {{ end }}
+{{ end }}
+{{ end }}
+```
+
+The output of this template looks like this:
+
+```
+1 firing alert(s):
+- alertname=database_high_disk_usage server=db1 B=0.76 C=1
+
+1 resolved alert(s):
+- alertname=web_server_high_5xx_rate server=web1 B=0 C=0
+```
+
+### Firing and resolved alerts, with labels, summary, and silencing
+
+This template example prints the summary annotation, and then links to both silence the alert and show in the alert in Grafana. It requires a summary annotation in each alert.
+
+```
+{{ define "alerts.message" -}}
+{{ if .Alerts.Firing -}}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ template "alerts.summarize_with_links" .Alerts.Firing }}
+{{- end }}
+{{- if .Alerts.Resolved -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ template "alerts.summarize_with_links" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+
+{{ define "alerts.summarize_with_links" -}}
+{{ range . -}}
+{{ range $k, $v := .Labels }}{{ $k }}={{ $v }} {{ end }}
+{{ index .Annotations "summary" }}
+{{- if eq .Status "firing" }}
+- Silence this alert: {{ .SilenceURL }}{{ end }}
+- View on Grafana: {{ .GeneratorURL }}
+{{ end }}
+{{ end }}
+```
+
+The output of this template looks like this:
+
+```
+1 firing alert(s):
+alertname=database_high_disk_usage server=db1
+The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
+- Silence this alert: https://example.com/grafana/alerting/silence/new
+- View on Grafana: https://example.com/grafana/alerting/grafana/view
+
+1 resolved alert(s):
+alertname=web_server_high_5xx_rate server=web1
+The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
+- View on Grafana: https://example.com/grafana/alerting/grafana/view
+```
+
+### Template the subject of an email
 
 Template the subject of an email to contain the number of firing and resolved alerts:
 
@@ -43,7 +200,7 @@ Template the subject of an email to contain the number of firing and resolved al
    {{ template "email.subject" . }}
    ```
 
-## Template the message of an email
+### Template the message of an email
 
 Template the message of an email to contain a summary of all firing and resolved alerts:
 
@@ -96,7 +253,7 @@ Resolved alerts:
    {{ template "email.message" . }}
    ```
 
-## Group multiple alert instances into one email notification
+### Group multiple alert instances into one email notification
 
 To make alerts more concise, you can group multiple instances of a firing alert into a single email notification in a table format. This way, you avoid long, repetitive emails and make alerts easier to digest.
 
@@ -142,7 +299,7 @@ Follow these steps to create a custom notification template that consolidates al
 
    This generates a neatly formatted table in the email, grouping information for all affected servers into a single notification.
 
-## Conditional notification template
+### Conditional notification template
 
 Template alert notifications based on a label. In this example the label represents a namespace.
 
@@ -176,7 +333,7 @@ Template alert notifications based on a label. In this example the label represe
 
    This template alters the content of alert notifications depending on the namespace value.
 
-## Template the title of a Slack message
+### Template the title of a Slack message
 
 Template the title of a Slack message to contain the number of firing and resolved alerts:
 
@@ -198,7 +355,7 @@ Template the title of a Slack message to contain the number of firing and resolv
    {{ template "slack.title" . }}
    ```
 
-## Template the content of a Slack message
+### Template the content of a Slack message
 
 Template the content of a Slack message to contain a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL.
 
@@ -279,7 +436,7 @@ Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
    {{ template "slack.message" . }}
    ```
 
-## Template both email and Slack with shared templates
+### Template both email and Slack with shared templates
 
 Instead of creating separate notification templates for email and Slack, you can share the same template.
 
