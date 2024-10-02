@@ -307,7 +307,6 @@
 /pkg/services/datasourceproxy/ @grafana/plugins-platform-backend
 /pkg/services/datasources/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
-/pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/tsdb/grafana-testdata-datasource/ @grafana/plugins-platform-backend
 /pkg/tsdb/Magefile.go @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
@@ -659,11 +658,9 @@ playwright.config.ts @grafana/plugins-platform-frontend
 
 
 # Kind definitions
-/kinds/dashboard @grafana/dashboards-squad
-/kinds/ @grafana/grafana-as-code
+/codegen/kinds/dashboard @grafana/dashboards-squad
 
 # Kind system and code generation
-embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
@@ -671,9 +668,11 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
+/pkg/codegen/kinds @grafana/grafana-as-code
+/pkg/codegen/plugins @grafana/grafana-as-code
+/pkg/codegen/plugins/parser @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/schemas/ @grafana/grafana-as-code
-/public/app/plugins/*gen.go @grafana/grafana-as-code
 /cue.mod/ @grafana/grafana-as-code
 
 # GitHub Workflows and Templates
