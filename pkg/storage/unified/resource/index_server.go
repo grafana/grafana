@@ -28,7 +28,10 @@ func (is IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginRe
 	return nil, nil
 }
 
+// Index with add a resource to the index, or initialize the index if no resource is provided
 func (is *IndexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
+	// if no resource is provided to index, this indicates to initialize the index
+	// TODO: make this more explicit
 	if req.Key == nil {
 		is.index = NewIndex(is.s, Opts{})
 		err := is.index.Init(ctx)

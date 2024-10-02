@@ -632,6 +632,7 @@ func (s *server) Index(ctx context.Context) (*Index, error) {
 		if err != nil {
 			return nil, err
 		}
+		// load the index from resources
 		_, err = index.Index(ctx, &IndexRequest{})
 		if err != nil {
 			return nil, err
