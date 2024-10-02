@@ -136,34 +136,36 @@ export function limitAdhocProviders(
   filtersVariable: SceneVariable<SceneVariableState> | null,
   datasourceHelper: MetricDatasourceHelper
 ) {
-  if (filtersVariable instanceof AdHocFiltersVariable) {
-    filtersVariable.setState({
-      getTagKeysProvider: async (
-        variable: AdHocFiltersVariable,
-        currentKey: string | null
-      ): Promise<{
-        replace?: boolean;
-        values: GetTagResponse | MetricFindValue[];
-      }> => {
-        const filters = filtersVariable.state.filters;
-        const values = (await datasourceHelper.getTagKeys({ filters })).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
-        return { replace: true, values };
-      },
-      getTagValuesProvider: async (
-        variable: AdHocFiltersVariable,
-        filter: AdHocVariableFilter
-      ): Promise<{
-        replace?: boolean;
-        values: GetTagResponse | MetricFindValue[];
-      }> => {
-        const filtersValues = filtersVariable.state.filters;
-        const filters = filtersValues.filter((f) => f.key !== filter.key);
-        const values = (await datasourceHelper.getTagValues({ key: filter.key, filters })).slice(
-          0,
-          MAX_ADHOC_VARIABLE_OPTIONS
-        );
-        return { replace: true, values };
-      },
-    });
+  if (!(filtersVariable instanceof AdHocFiltersVariable)) {
+    return;
   }
+
+  filtersVariable.setState({
+    getTagKeysProvider: async (
+      variable: AdHocFiltersVariable,
+      currentKey: string | null
+    ): Promise<{
+      replace?: boolean;
+      values: GetTagResponse | MetricFindValue[];
+    }> => {
+      const filters = filtersVariable.state.filters;
+      const values = (await datasourceHelper.getTagKeys({ filters })).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      return { replace: true, values };
+    },
+    getTagValuesProvider: async (
+      variable: AdHocFiltersVariable,
+      filter: AdHocVariableFilter
+    ): Promise<{
+      replace?: boolean;
+      values: GetTagResponse | MetricFindValue[];
+    }> => {
+      const filtersValues = filtersVariable.state.filters;
+      const filters = filtersValues.filter((f) => f.key !== filter.key);
+      const values = (await datasourceHelper.getTagValues({ key: filter.key, filters })).slice(
+        0,
+        MAX_ADHOC_VARIABLE_OPTIONS
+      );
+      return { replace: true, values };
+    },
+  });
 }
