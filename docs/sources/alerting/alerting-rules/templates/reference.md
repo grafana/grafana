@@ -16,6 +16,11 @@ title: Annotation and label template reference
 menuTitle: Template reference
 weight: 0
 refs:
+  template-language-functions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/
   print-all-labels-from-a-classic-condition:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/examples/#print-all-labels-from-a-classic-condition
@@ -111,17 +116,43 @@ If you want to print just some of the string instead of the full string then use
 
 ## Functions
 
-The following functions are available when templating annotations and labels:
+Functions can perform actions in templates such as transforming or formatting data.
 
-### Numbers
+Note that the [functions provided by Go's template language](ref:template-language-functions), such as `index`, `and`, `printf`, and `len`, are available, along with many others.
+
+In addition, the following functions are also available for templating annotations and labels:
+
+**Numbers**
 
 | Name                                      | Arguments        | Returns | Description                                                      |
 | ----------------------------------------- | ---------------- | ------- | ---------------------------------------------------------------- |
-| [humanize](#humanize)                     | Number or string | String  | Humanizes decimal numbers.                                       |
-| [humanize1024](#humanize1024)             | Number or string | String  | Like `humanize`, but but uses 1024 as the base rather than 1000. |
-| [humanizeDuration](#humanizeduration)     | Number or string | String  | Humanizes a duration in seconds.                                 |
-| [humanizePercentage](#humanizepercentage) | Number or string | String  | Humanizes a ratio value to a percentage.                         |
-| [humanizeTimestamp](#humanizetimestamp)   | Number or string | String  | Humanizes a Unix timestamp.                                      |
+| [humanize](#humanize)                     | number or string | string  | Humanizes decimal numbers.                                       |
+| [humanize1024](#humanize1024)             | number or string | string  | Like `humanize`, but but uses 1024 as the base rather than 1000. |
+| [humanizeDuration](#humanizeduration)     | number or string | string  | Humanizes a duration in seconds.                                 |
+| [humanizePercentage](#humanizepercentage) | number or string | string  | Humanizes a ratio value to a percentage.                         |
+| [humanizeTimestamp](#humanizetimestamp)   | number or string | string  | Humanizes a Unix timestamp.                                      |
+
+**Strings**
+
+| Name                          | Arguments                  | Returns | Description                                                                                   |
+| ----------------------------- | -------------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| [title](#humanize)            | string                     | string  | Capitalizes the first character of each word.                                                 |
+| [toUpper](#toupper)           | string                     | string  | Returns all text in uppercase.                                                                |
+| [toLower](#tolower)           | string                     | string  | Returns all text in lowercase.                                                                |
+| [match](#match)               | pattern, text              | boolean | Matches the text against a regular expression pattern.                                        |
+| [reReplaceAll](#rereplaceall) | pattern, replacement, text | string  | Replaces text matching the regular expression.                                                |
+| [graphLink](#graphlink)       | expr                       | string  | Returns the path to the graphical view in `Explore` for the given expression and data source. |
+| [tableLink](#tablelink)       | expr                       | string  | Returns the path to the tabular view in `Explore` for the given expression and data source.   |
+
+**Others**
+
+| Name                        | Arguments     | Returns                | Description                                                                      |
+| --------------------------- | ------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| [args](#args)               | []interface{} | map[string]interface{} | Translates a list of objects to a map with keys arg0, arg1 etc.                  |
+| [externalURL](#externalurl) | none          | string                 | Returns the external URL of the Grafana server as configured in the ini file(s). |
+| [pathPrefix](#pathprefix)   | none          | string                 | Returns the path of the Grafana server as configured in the ini file(s).         |
+
+For reference, templating in Grafana is based on the [Prometheus template implementation](https://prometheus.io/docs/prometheus/latest/configuration/template_reference/), allowing the use of Prometheus-like templates in Grafana for formatting alert messages and other components.
 
 #### humanize
 
@@ -182,8 +213,6 @@ The `humanizeTimestamp` function humanizes a Unix timestamp:
 ```
 2020-01-01 00:00:00 +0000 UTC
 ```
-
-### Strings
 
 #### title
 
@@ -268,8 +297,6 @@ The `tableLink` function returns the path to the tabular view in [Explore](ref:e
 ```
 /explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]
 ```
-
-### Others
 
 #### args
 
