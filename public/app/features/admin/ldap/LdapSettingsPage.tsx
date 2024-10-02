@@ -200,7 +200,10 @@ export const LdapSettingsPage = () => {
       });
       reset(await getSettings());
 
-      locationService.push(`/admin/authentication`);
+      // Delay redirect so the form state can update
+      setTimeout(() => {
+        locationService.push(`/admin/authentication`);
+      }, 300);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
