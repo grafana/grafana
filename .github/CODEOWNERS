@@ -80,6 +80,16 @@
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/cmd/ @grafana/grafana-backend-group
+/pkg/cmd/grafana-cli/commands/install_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/install_command_test.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/listremote_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/listversions_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/ls_command_test.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/ls_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/remove_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/upgrade_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/upgrade_all_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/upgrade_all_command_test.go @grafana/plugins-platform-backend
 /pkg/components/apikeygen/ @grafana/identity-squad
 /pkg/components/satokengen/ @grafana/identity-squad
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
