@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { uniqBy } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
 import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createQueryText } from 'app/core/utils/richHistory';
@@ -13,6 +13,7 @@ import { QueryTemplate } from 'app/features/query-library/types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 import { QueryLibraryProps } from './QueryLibrary';
+import { queryLibraryTrackFilterDatasource } from './QueryLibraryAnalyticsEvents';
 import QueryTemplatesTable from './QueryTemplatesTable';
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
 import { searchQueryLibrary } from './utils/search';
@@ -31,7 +32,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    let isMounted = true;
+    let shouldCancel = true;
 
     const fetchRows = async () => {
       if (!data) {
@@ -39,8 +40,8 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
         return;
       }
 
-      try {
-        const rowsPromises = data.map(async (queryTemplate: QueryTemplate, index: number) => {
+      const rowsPromises = data.map(async (queryTemplate: QueryTemplate, index: number) => {
+        try {
           const datasourceRef = queryTemplate.targets[0]?.datasource;
           const datasourceApi = await getDataSourceSrv().get(datasourceRef);
           const datasourceType = getDatasourceSrv().getInstanceSettings(datasourceRef)?.meta.name || '';
@@ -60,26 +61,33 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
             description: queryTemplate.title,
             user: queryTemplate.user,
           };
-        });
-
-        const rows = await Promise.all(rowsPromises);
-
-        if (isMounted) {
-          setAllQueryTemplateRows(rows);
-          setIsRowsLoading(false);
+        } catch (error) {
+          getAppEvents().publish({
+            type: AppEvents.alertError.name,
+            payload: [
+              t(
+                'query-library.query-template-get-error',
+                `Error attempting to get query template from the library: ${JSON.stringify(error)}`
+              ),
+            ],
+          });
+          return { index: index.toString(), error };
         }
-      } catch (error) {
-        console.error('Error fetching query template rows:', error);
-        if (isMounted) {
-          setIsRowsLoading(false);
-        }
+      });
+
+      const results = await Promise.allSettled(rowsPromises);
+      const rows = results.filter((result) => result.status === 'fulfilled').map((result) => result.value);
+
+      if (shouldCancel) {
+        setAllQueryTemplateRows(rows);
+        setIsRowsLoading(false);
       }
     };
 
     fetchRows();
 
     return () => {
-      isMounted = false;
+      shouldCancel = false;
     };
   }, [data]);
 
@@ -137,7 +145,10 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
         </InlineLabel>
         <MultiSelect
           className={styles.multiSelect}
-          onChange={setDatasourceFilters}
+          onChange={(items, actionMeta) => {
+            setDatasourceFilters(items);
+            actionMeta.action === 'select-option' && queryLibraryTrackFilterDatasource();
+          }}
           value={datasourceFilters}
           options={datasourceNames.map((r) => {
             return { value: r, label: r };
