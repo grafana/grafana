@@ -9,7 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	
+
 	"github.com/andybalholm/brotli"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
@@ -21,8 +21,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery,
-) (*backend.DataResponse, error) {
+func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	ctxLogger.Debug("Getting trace", "function", logEntrypoint())
 
@@ -84,8 +83,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to get trace", "error", err, "function", logEntrypoint())
-		result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", *model.Query, resp.Status,
-			string(body))
+		result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", *model.Query, resp.Status, string(body))
 		span.RecordError(result.Error)
 		span.SetStatus(codes.Error, result.Error.Error())
 		return result, nil
@@ -116,8 +114,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	return result, nil
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, traceID string, start int64, end int64,
-) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, traceID string, start int64, end int64) (*http.Request, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	var tempoQuery string
 
