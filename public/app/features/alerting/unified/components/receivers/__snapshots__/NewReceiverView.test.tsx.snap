@@ -165,10 +165,10 @@ exports[`alerting API server disabled should be able to test and save a receiver
       "provisioned-template": "api",
     },
     "template_files": {
-      "custom-email": "{{ define 'custom-email' }}  Custom email template {{ end }}",
-      "provisioned-template": "{{ define 'provisioned-template' }}  Custom provisioned template {{ end }}",
-      "slack-template": "{{ define 'slack-template' }} Custom slack template {{ end }}",
-      "template with spaces": "{{ define 'template with spaces' }}  Custom template with spaces in the name {{ end }}",
+      "custom-email": "{{ define "custom-email" }}  Custom email template {{ end }}",
+      "provisioned-template": "{{ define "provisioned-template" }}  Custom provisioned template {{ end }}",
+      "slack-template": "{{ define "slack-template" }} Custom slack template {{ end }}",
+      "template with spaces": "{{ define "template with spaces" }}  Custom template with spaces in the name {{ end }}",
     },
   },
 ]
