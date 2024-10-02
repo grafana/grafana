@@ -2283,8 +2283,8 @@ github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e h1:UlEET0InuoFa
 github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e/go.mod h1:IGRj8oOoxwJbHBYl1+OhS9UjQR0dv6SQOep7HqmtyFU=
 github.com/grafana/grafana-app-sdk v0.19.0 h1:RY9HvCFR+4WUy81n53wejZnof9qE6++pd6r24d6+JYs=
 github.com/grafana/grafana-app-sdk v0.19.0/go.mod h1:y0BgzYxc+a7CwOqkwUhN9zXd5cgZJjd2zAbgHEd/xzo=
-github.com/grafana/grafana-aws-sdk v0.31.2 h1:Mv01GAHcIG3S2pVtRlt1cUnnWzUAr4qr74HJvYv11JQ=
-github.com/grafana/grafana-aws-sdk v0.31.2/go.mod h1:5nt5Gmp6+GyM+Jr7xsXKJtbizxbYXXLmEac6kw5paQI=
+github.com/grafana/grafana-aws-sdk v0.31.3 h1:QlgIwyyozYYQf/dL279Baicyax+SuE99Set5chMnq1s=
+github.com/grafana/grafana-aws-sdk v0.31.3/go.mod h1:5nt5Gmp6+GyM+Jr7xsXKJtbizxbYXXLmEac6kw5paQI=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 h1:fV6IgVtViXcYZ4VqTAMuVBTLuGAnI27HhQkaLttzbPE=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2/go.mod h1:Cbh94bfL5o6mUSaHFiOkx4r4CRKlo/DJLx4dPL8XrE0=
 github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 h1:F0O9eTy4jHjEd1Z3/qIza2GdY7PYpTddUeaq9p3NKGU=
