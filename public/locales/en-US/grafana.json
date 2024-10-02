@@ -280,10 +280,10 @@
       "save-query": "Save current search"
     },
     "simpleCondition": {
-      "alertCondition": "Alert condition",
-      "ofQuery": {
-        "To": "TO"
-      }
+      "alertCondition": "Alert condition"
+    },
+    "threshold": {
+      "To": "TO"
     }
   },
   "annotations": {
