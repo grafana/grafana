@@ -382,6 +382,7 @@ export class BackendSrv implements BackendService {
                       },
                     })
                   );
+                  this.dependencies.contextSrv.setRedirectToUrl();
                   return throwError(() => error);
                 }
 
