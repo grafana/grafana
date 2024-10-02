@@ -200,10 +200,7 @@ export const LdapSettingsPage = () => {
       });
       reset(await getSettings());
 
-      // Delay redirect so the form state can update
-      setTimeout(() => {
-        locationService.push(`/admin/authentication`);
-      }, 300);
+      locationService.push(`/admin/authentication`);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -243,10 +240,7 @@ export const LdapSettingsPage = () => {
       reset(payload);
       reportInteraction('authentication_ldap_deleted');
 
-      // Delay redirect so the form state can update
-      setTimeout(() => {
-        locationService.push(`/admin/authentication`);
-      }, 300);
+      locationService.push(`/admin/authentication`);
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,

@@ -17,7 +17,6 @@ import {
   Select,
   Stack,
   Switch,
-  Text,
   TextLink,
   Tooltip,
   RadioButtonGroup,
@@ -72,6 +71,15 @@ export const LdapDrawerComponent = ({
     }
     return value;
   };
+
+  const attributesLabel = (
+    <Label
+      className={styles.sectionLabel}
+      description={t('ldap-drawer.attributes-section.description', 'Specify the LDAP attributes')}
+    >
+      <Trans i18nKey="ldap-drawer.attributes-section.label">Attributes</Trans>
+    </Label>
+  );
 
   const groupMappingsLabel = (
     <Label
@@ -153,13 +161,7 @@ export const LdapDrawerComponent = ({
           />
         </Field>
       </CollapsableSection>
-      <CollapsableSection label={t('ldap-drawer.attributes-section.label', 'Attributes')} isOpen={true}>
-        <Text color="secondary">
-          {t(
-            'ldap-drawer.attributes-section.description',
-            "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information."
-          )}
-        </Text>
+      <CollapsableSection label={attributesLabel} isOpen={true}>
         <Field label={t('ldap-drawer.attributes-section.name-label', 'Name')}>
           <Input id={nameId} {...register(`${serverConfig}.attributes.name`)} />
         </Field>
