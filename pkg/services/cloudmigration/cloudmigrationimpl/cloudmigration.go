@@ -660,8 +660,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 		asyncCtx, asyncSpan := s.tracer.Start(asyncCtx, "CloudMigrationService.UploadSnapshot")
 		defer asyncSpan.End()
 
-		asyncCtx, cancelFunc := context.WithCancel(context.Background())
-		s.cancelFunc = cancelFunc
+		asyncCtx, s.cancelFunc = context.WithCancel(asyncCtx)
 
 		s.report(asyncCtx, session, gmsclient.EventStartUploadingSnapshot, 0, nil)
 
@@ -673,7 +672,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 			s.log.Error("uploading snapshot", "err", err.Error())
 			// Update status to error with retries
-			if err := s.updateSnapshotWithRetries(context.Background(), cloudmigration.UpdateSnapshotCmd{
+			if err := s.updateSnapshotWithRetries(asyncCtx, cloudmigration.UpdateSnapshotCmd{
 				UID:       snapshot.UID,
 				SessionID: sessionUid,
 				Status:    cloudmigration.SnapshotStatusError,

@@ -378,10 +378,16 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		}
 	}()
 
-	index, err := snapshot.ReadIndex(ctx, indexFile)
+	_, readIndexSpan := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.readIndex")
+	index, err := snapshot.ReadIndex(indexFile)
 	if err != nil {
+		readIndexSpan.SetStatus(codes.Error, "reading index from file")
+		readIndexSpan.RecordError(err)
+		readIndexSpan.End()
+
 		return fmt.Errorf("reading index from file: %w", err)
 	}
+	readIndexSpan.End()
 
 	s.log.Debug(fmt.Sprintf("uploadSnapshot: read index file in %d ms", time.Since(start).Milliseconds()))
 
@@ -417,7 +423,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		return fmt.Errorf("seeking to beginning of index file: %w", err)
 	}
 
-	if err := s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, indexFile); err != nil {
+	if err := s.objectStorage.PresignedURLUpload(uploadCtx, uploadUrl, key, indexFile); err != nil {
 		uploadSpan.SetStatus(codes.Error, "uploading index file using presigned url")
 		uploadSpan.RecordError(err)
 		uploadSpan.End()
