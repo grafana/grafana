@@ -2,14 +2,7 @@ import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import {
-  SceneGridLayout,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneObjectUrlSyncHandler,
-  SceneObjectUrlValues,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types';
 
@@ -18,11 +11,12 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanelBehavior, isPanelClone } from '../utils/utils';
+import { findVizPanelByKey, getLibraryPanelBehavior, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
@@ -36,15 +30,24 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
   getUrlState(): SceneObjectUrlValues {
     const state = this._scene.state;
+
     return {
       inspect: state.inspectPanelKey,
-      autofitpanels: state.body instanceof SceneGridLayout && !!state.body.state.UNSAFE_fitPanels ? 'true' : undefined,
+      autofitpanels: this.getAutoFitPanels(),
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
       kiosk: state.kioskMode === KioskMode.Full ? '' : state.kioskMode === KioskMode.TV ? 'tv' : undefined,
       shareView: state.shareView,
     };
+  }
+
+  private getAutoFitPanels(): string | undefined {
+    if (this._scene.state.body instanceof DefaultGridLayoutManager) {
+      return this._scene.state.body.state.grid.state.UNSAFE_fitPanels ? 'true' : undefined;
+    }
+
+    return undefined;
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
@@ -78,9 +81,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelKey = values.inspect;
-      update.overlay = new PanelInspectDrawer({
-        $behaviors: [new ResolveInspectPanelByKey({ panelKey: values.inspect })],
-      });
+      update.overlay = new PanelInspectDrawer({ panelRef: panel.getRef() });
     } else if (inspectPanelKey) {
       update.inspectPanelKey = undefined;
       update.overlay = undefined;
@@ -151,11 +152,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.shareView = undefined;
     }
 
-    if (this._scene.state.body instanceof SceneGridLayout) {
+    const layout = this._scene.state.body;
+    if (layout instanceof DefaultGridLayoutManager) {
       const UNSAFE_fitPanels = typeof values.autofitpanels === 'string';
 
-      if (!!this._scene.state.body.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
-        this._scene.state.body.setState({ UNSAFE_fitPanels });
+      if (!!layout.state.grid.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
+        layout.state.grid.setState({ UNSAFE_fitPanels });
       }
     }
 
@@ -195,38 +197,4 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     });
   }
-}
-
-interface ResolveInspectPanelByKeyState extends SceneObjectState {
-  panelKey: string;
-}
-
-class ResolveInspectPanelByKey extends SceneObjectBase<ResolveInspectPanelByKeyState> {
-  constructor(state: ResolveInspectPanelByKeyState) {
-    super(state);
-    this.addActivationHandler(this._onActivate);
-  }
-
-  private _onActivate = () => {
-    const parent = this.parent;
-
-    if (!parent || !(parent instanceof PanelInspectDrawer)) {
-      throw new Error('ResolveInspectPanelByKey must be attached to a PanelInspectDrawer');
-    }
-
-    const dashboard = getDashboardSceneFor(parent);
-    if (!dashboard) {
-      return;
-    }
-    const panelId = this.state.panelKey;
-    let panel = findVizPanelByKey(dashboard, panelId);
-
-    if (dashboard.state.editPanel) {
-      panel = dashboard.state.editPanel.state.vizManager.state.panel;
-    }
-
-    if (panel) {
-      parent.setState({ panelRef: panel.getRef() });
-    }
-  };
 }

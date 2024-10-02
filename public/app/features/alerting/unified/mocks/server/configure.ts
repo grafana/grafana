@@ -17,6 +17,7 @@ import {
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
@@ -49,6 +50,14 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
  */
 export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']) => {
   server.use(getFolderHandler(mockFolder({ hasAcl: true, accessControl })));
+};
+
+/**
+ * Makes the mock server respond with different folder response, for just the folder in question
+ */
+export const setFolderResponse = (response: Partial<FolderDTO>) => {
+  const handler = http.get<{ folderUid: string }>(`/api/folders/${response.uid}`, () => HttpResponse.json(response));
+  server.use(handler);
 };
 
 /**
@@ -126,6 +135,7 @@ export const removePlugin = (pluginId: string) => {
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
+  clearPluginSettingsCache(pluginId);
   server.use(getDisabledPluginHandler(pluginId));
 };
 
