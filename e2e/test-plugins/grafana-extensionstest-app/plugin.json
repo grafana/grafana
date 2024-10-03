@@ -87,7 +87,7 @@
         "title": "Legacy extension point - usePluginExtensions() and usePluginLinkExtensions()"
       },
       {
-        "id": "plugins/grafana-extensionexample2-app/configure-extension-component/v1",
+        "id": "plugins/grafana-extensionstest-app/configure-extension-component/v1",
         "title": "Legacy extension point - usePluginComponentExtensions()"
       }
     ]
