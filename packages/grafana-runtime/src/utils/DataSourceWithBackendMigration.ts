@@ -14,7 +14,7 @@ export class DataSourceWithBackendMigration<
     super(instanceSettings);
   }
 
-  private async postMigrateRequest<TQuery extends DataQuery = DataQuery>(queries: TQuery[]): Promise<TQuery[]> {
+  private async postMigrateRequest(queries: TQuery[]): Promise<TQuery[]> {
     if (!(config.featureToggles.grafanaAPIServerWithExperimentalAPIs || config.featureToggles.datasourceAPIServers)) {
       console.warn('migrateQuery is only available with the experimental API server');
       return queries;
@@ -41,7 +41,7 @@ export class DataSourceWithBackendMigration<
   /**
    * @alpha Experimental: Calls migration endpoint with one query. Requires grafanaAPIServerWithExperimentalAPIs or datasourceAPIServers feature toggle.
    */
-  migrateQuery<TQuery extends DataQuery = DataQuery>(query: TQuery): Promise<TQuery> | TQuery {
+  migrateQuery(query: TQuery): Promise<TQuery> | TQuery {
     return this.postMigrateRequest([query]).then((res) => {
       return res[0];
     });
@@ -50,9 +50,7 @@ export class DataSourceWithBackendMigration<
   /**
    * @alpha Experimental: Calls migration endpoint with multiple queries. Requires grafanaAPIServerWithExperimentalAPIs or datasourceAPIServers feature toggle.
    */
-  async migrateRequest<TQuery extends DataQuery = DataQuery>(
-    request: DataQueryRequest<TQuery>
-  ): Promise<DataQueryRequest<TQuery>> {
+  async migrateRequest(request: DataQueryRequest<TQuery>): Promise<DataQueryRequest<TQuery>> {
     return this.postMigrateRequest(request.targets).then((res) => {
       request.targets = res;
       return request;
