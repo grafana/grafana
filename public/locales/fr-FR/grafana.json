@@ -1395,7 +1395,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1467,6 +1468,8 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1474,6 +1477,7 @@
       "dashboard": "Tableau de bord",
       "datasource": "Source de données",
       "folder": "",
+      "library_element": "",
       "unknown": "Inconnu"
     },
     "summary": {
