@@ -14,7 +14,7 @@ import { log } from './log';
 
 const DATASOURCE_REF = {
   uid: nanoid(),
-  type: 'grafana-extensions-log',
+  type: 'grafana-extensionslog-datasource',
 };
 
 const logsViz = VizConfigBuilders.logs().build();
