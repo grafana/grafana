@@ -2280,13 +2280,17 @@
     {
       "metadata": {
         "name": "pinNavItems",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-10T11:40:03Z"
+        "resourceVersion": "1727948775526",
+        "creationTimestamp": "2024-06-10T11:40:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-03 09:46:15.526594 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables pinning of nav items",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "true"
       }
     },
     {
