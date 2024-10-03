@@ -1,16 +1,19 @@
-import 'react-data-grid/lib/styles.css';
-
 import { css } from '@emotion/css';
+import React, { useState, useLayoutEffect } from 'react';
+import 'react-data-grid/lib/styles.css';
 import DataGrid, { Column, RenderRowProps, Row } from 'react-data-grid';
 import { Cell } from 'react-table';
 
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes';
+import { ContextMenu } from '../../ContextMenu/ContextMenu';
+import { MenuItem } from '../../Menu/MenuItem';
+import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellDisplayMode, TableNGProps } from '../types';
+import { getCellColors } from '../utils';
 
 import { TableCellNG } from './Cells/TableCellNG';
-import { getCellColors } from '../utils';
 
 const DEFAULT_CELL_PADDING = 6;
 
@@ -24,14 +27,38 @@ interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   rowHeight: number;
-  field: Omit<Field, "values">;
+  field: Omit<Field, 'values'>;
 }
-
-
 
 export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight } = props;
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+
+  const [contextMenuProps, setContextMenuProps] = useState<{
+    rowIdx: number;
+    value: string;
+    top: number;
+    left: number;
+  } | null>(null);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!isContextMenuOpen) {
+      return;
+    }
+
+    function onClick(event: MouseEvent) {
+      setIsContextMenuOpen(false);
+    }
+
+    addEventListener('click', onClick);
+
+    return () => {
+      removeEventListener('click', onClick);
+    };
+  }, [isContextMenuOpen]);
 
   function rowHeight() {
     const bodyFontSize = theme.typography.fontSize;
@@ -48,12 +75,9 @@ export function TableNG(props: TableNGProps) {
   }
   const rowHeightNumber = rowHeight();
 
-
   const mapFrameToDataGrid = (main: DataFrame) => {
     const columns: TableColumn[] = [];
     const rows: Array<{ [key: string]: string }> = [];
-
-
 
     main.fields.map((field) => {
       const key = field.name;
@@ -84,17 +108,18 @@ export function TableNG(props: TableNGProps) {
           const { row } = props;
           const value = row[key];
 
-
           // Cell level rendering here
-          return <TableCellNG
-            key={key}
-            value={value}
-            field={shallowField}
-            theme={theme}
-            timeRange={timeRange}
-            height={rowHeight}
-          />
-        }
+          return (
+            <TableCellNG
+              key={key}
+              value={value}
+              field={shallowField}
+              theme={theme}
+              timeRange={timeRange}
+              height={rowHeight}
+            />
+          );
+        },
       });
 
       // Create row objects
@@ -110,36 +135,97 @@ export function TableNG(props: TableNGProps) {
     });
 
     return {
-      columns, rows
-    }
-  }
+      columns,
+      rows,
+    };
+  };
   const { columns, rows } = mapFrameToDataGrid(props.data);
+
+  const renderMenuItems = () => {
+    return (
+      <>
+        <MenuItem
+          label="Inspect value"
+          onClick={() => {
+            setIsInspecting(true);
+          }}
+          className={styles.menuItem}
+        />
+      </>
+    );
+  };
 
   // Return the data grid
   return (
-    <DataGrid
-      rows={rows}
-      columns={columns}
-      defaultColumnOptions={{
-        sortable: true,
-        resizable: true,
-        maxWidth: 200,
-      }}
+    <>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        defaultColumnOptions={{
+          sortable: true,
+          resizable: true,
+          maxWidth: 200,
+        }}
+        rowHeight={rowHeightNumber}
+        // TODO: This doesn't follow current table behavior
+        style={{ width, height }}
+        renderers={{ renderRow: myRowRenderer }}
+        onCellContextMenu={({ row, column }, event) => {
+          event.preventGridDefault();
+          // Do not show the default context menu
+          event.preventDefault();
+          setContextMenuProps({
+            rowIdx: rows.indexOf(row),
+            value: row[column.key],
+            top: event.clientY,
+            left: event.clientX,
+          });
+          setIsContextMenuOpen(true);
+        }}
+      />
 
-      rowHeight={rowHeightNumber}
-      // TODO: This doesn't follow current table behavior
-      style={{ width, height }}
-      renderers={{ renderRow: myRowRenderer }}
-    />
+      {isContextMenuOpen && (
+        <ContextMenu
+          x={contextMenuProps?.left || 0}
+          y={contextMenuProps?.top || 0}
+          renderMenuItems={renderMenuItems}
+          focusOnOpen={false}
+        />
+      )}
+
+      {isInspecting && (
+        <TableCellInspector
+          mode={TableCellInspectorMode.text}
+          value={contextMenuProps?.value}
+          onDismiss={() => {
+            setIsInspecting(false);
+            setContextMenuProps(null);
+          }}
+        />
+      )}
+    </>
   );
-
 }
-
 
 function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
   // Let's render row level things here!
   // i.e. we can look at row styles and such here
-  return (
-    <Row {...props} />
-  );
+  return <Row {...props} />;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  contextMenu: css({
+    position: 'absolute',
+    backgroundColor: '#ffffff',
+    border: '1px solid black',
+    padding: '16px',
+    listStyle: 'none',
+
+    '> li': {
+      padding: 8,
+    },
+  }),
+  menuItem: css({
+    maxWidth: '200px',
+  }),
+});
