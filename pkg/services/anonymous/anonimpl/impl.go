@@ -2,6 +2,7 @@ package anonimpl
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -96,7 +97,7 @@ func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, device *anonstore.D
 	}
 
 	if err := a.anonStore.CreateOrUpdateDevice(ctx, device); err != nil {
-		if err == anonstore.ErrDeviceLimitReached {
+		if errors.Is(err, anonstore.ErrDeviceLimitReached) {
 			a.localCache.SetDefault(key, false)
 			return err
 		}
