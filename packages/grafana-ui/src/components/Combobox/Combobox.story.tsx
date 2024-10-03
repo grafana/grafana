@@ -129,13 +129,17 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
       <Combobox
         id="test-combobox"
         options={async (inputValue) => {
-          console.log('I was called');
           return await Promise.resolve([
             { value: 'async option' },
-            { value: 'option1' },
+            { value: 'inputValue' },
             { value: 'option2' },
             { value: 'option3' },
-          ]);
+            { value: inputValue },
+          ]).then((options) => {
+            return new Promise((resolve) => {
+              setTimeout(() => resolve(options), inputValue.length % 2 === 0 ? 200 : 1000); // Simulate promises that take longer time
+            });
+          });
         }}
         value={value}
         onChange={(val) => {
