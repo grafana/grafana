@@ -48,7 +48,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/MuteTimings')
+        () =>
+          import(
+            /* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/components/mute-timings/NewMuteTiming'
+          )
       ),
     },
     {
@@ -58,7 +61,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/MuteTimings')
+        () =>
+          import(
+            /* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTiming'
+          )
       ),
     },
     {
