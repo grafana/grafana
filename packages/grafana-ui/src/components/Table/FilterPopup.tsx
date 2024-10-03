@@ -76,7 +76,7 @@ export const FilterPopup = ({
               setOperator={setOperator}
             />
           </Stack>
-          <Stack gap={3}>
+          <Stack justifyContent={'space-between'}>
             <Stack>
               <Button size="sm" onClick={onFilter}>
                 Filter
