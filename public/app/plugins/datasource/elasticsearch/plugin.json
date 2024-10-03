@@ -9,7 +9,7 @@
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
-    "keywords": ["elasticsearch", "datasource", "database"],
+    "keywords": ["elasticsearch", "datasource", "database", "logs", "metrics"],
     "logos": {
       "small": "img/elasticsearch.svg",
       "large": "img/elasticsearch.svg"
