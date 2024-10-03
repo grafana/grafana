@@ -26,7 +26,13 @@ export class ReloadOnFiltersChangeBehavior extends SceneObjectBase<ReloadOnFilte
     }
   }
 
+  private isEditing() {
+    return this.parent && 'isEditing' in this.parent.state && this.parent.state.isEditing;
+  }
+
   private reloadDashboard() {
-    getDashboardScenePageStateManager().reloadDashboard();
+    if (!this.isEditing()) {
+      getDashboardScenePageStateManager().reloadDashboard();
+    }
   }
 }

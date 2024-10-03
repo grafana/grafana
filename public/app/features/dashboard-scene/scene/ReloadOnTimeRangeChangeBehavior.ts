@@ -22,7 +22,7 @@ export class ReloadOnTimeRangeChangeBehavior extends SceneObjectBase<ReloadOnTim
     }
 
     const sub = sceneGraph.getTimeRange(this).subscribeToState((newState, prevState) => {
-      if (!isEqual(newState.value, prevState.value)) {
+      if (!isEqual(newState.value, prevState.value) && !this.isEditing()) {
         // We need to wait for the query params to be updated before reloading as we pass those query params to the dashboard API
         setTimeout(() => this.reloadDashboard());
       }
@@ -31,6 +31,10 @@ export class ReloadOnTimeRangeChangeBehavior extends SceneObjectBase<ReloadOnTim
     return () => {
       sub.unsubscribe();
     };
+  }
+
+  private isEditing() {
+    return this.parent && 'isEditing' in this.parent?.state && this.parent?.state.isEditing;
   }
 
   private reloadDashboard() {
