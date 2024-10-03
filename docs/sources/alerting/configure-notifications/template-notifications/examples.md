@@ -103,9 +103,9 @@ Description: This alert fires when a web server responds with more 5xx errors th
 Runbook: https://example.com/on-call/web_server_high_5xx_rate
 ```
 
-###  Labels with values of instant queries and expressions
+### Labels with values of instant queries and expressions
 
-This notification template example does not require a summary annotation in each alert/ It requires a summary annotation in each alert.
+This notification template prints the labels and the values of any instant queries, expression and condition. It does not require a summary annotation in each alert.
 
 ```
 {{ define "alerts.message" -}}
@@ -177,6 +177,8 @@ alertname=web_server_high_5xx_rate server=web1
 The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
 - View on Grafana: https://example.com/grafana/alerting/grafana/view
 ```
+
+## Templates for contact points
 
 ### Template the subject of an email
 
