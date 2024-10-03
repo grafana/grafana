@@ -174,7 +174,7 @@
         },
         "plugins": {
           "type": "array",
-          "description": "An array of required plugins on which this plugin depends.",
+          "description": "An array of required plugins on which this plugin depends. Only non-core (that is, external plugins) have to be specified in this list.",
           "additionalItems": false,
           "items": {
             "type": "object",

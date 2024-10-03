@@ -2326,41 +2326,6 @@
         }
       }
     },
-    "/cloudmigration/migration/run/{runUID}": {
-      "get": {
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Get the result of a single migration run.",
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "RunUID of a migration run",
-            "name": "runUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/cloudmigration/migration/{uid}": {
       "get": {
         "tags": [
@@ -2411,75 +2376,6 @@
           }
         ],
         "responses": {
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/cloudmigration/migration/{uid}/run": {
-      "get": {
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Get a list of migration runs for a migration.",
-        "operationId": "getCloudMigrationRunList",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID of a migration",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunListResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "It returns migrations that has been created.",
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Trigger the run of a migration to the Grafana Cloud.",
-        "operationId": "runCloudMigration",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID of a migration",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
-          },
           "400": {
             "$ref": "#/responses/badRequestError"
           },
@@ -2704,6 +2600,12 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "name": "sort",
+            "in": "query"
           }
         ],
         "responses": {
@@ -12492,6 +12394,14 @@
         }
       }
     },
+    "AlertRuleEditorSettings": {
+      "type": "object",
+      "properties": {
+        "simplified_query_and_expressions_section": {
+          "type": "boolean"
+        }
+      }
+    },
     "AlertRuleExport": {
       "type": "object",
       "title": "AlertRuleExport is the provisioned file export of models.AlertRule.",
@@ -12612,6 +12522,14 @@
         "interval": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AlertRuleMetadata": {
+      "type": "object",
+      "properties": {
+        "editor_settings": {
+          "$ref": "#/definitions/AlertRuleEditorSettings"
         }
       }
     },
@@ -13897,6 +13815,7 @@
       }
     },
     "CorrelationType": {
+      "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
       "type": "string"
     },
     "CounterResetHint": {
@@ -15896,6 +15815,9 @@
         "is_paused": {
           "type": "boolean"
         },
+        "metadata": {
+          "$ref": "#/definitions/AlertRuleMetadata"
+        },
         "namespace_uid": {
           "type": "string"
         },
@@ -15983,10 +15905,23 @@
     "GettableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
@@ -16971,6 +16906,9 @@
         "message": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },
@@ -16989,7 +16927,8 @@
           "enum": [
             "DASHBOARD",
             "DATASOURCE",
-            "FOLDER"
+            "FOLDER",
+            "LIBRARY_ELEMENT"
           ]
         }
       }
@@ -18180,6 +18119,9 @@
         "is_paused": {
           "type": "boolean"
         },
+        "metadata": {
+          "$ref": "#/definitions/AlertRuleMetadata"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -18218,16 +18160,35 @@
     "PostableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -19693,10 +19654,23 @@
     "RuleGroupConfigResponse": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {

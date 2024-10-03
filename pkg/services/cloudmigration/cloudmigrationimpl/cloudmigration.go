@@ -6,14 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -28,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -55,13 +54,14 @@ type Service struct {
 	gmsClient     gmsclient.Client
 	objectStorage objectstorage.ObjectStorage
 
-	dsService        datasources.DataSourceService
-	gcomService      gcom.Service
-	dashboardService dashboards.DashboardService
-	folderService    folder.Service
-	pluginStore      pluginstore.Store
-	secretsService   secrets.Service
-	kvStore          *kvstore.NamespacedKVStore
+	dsService              datasources.DataSourceService
+	gcomService            gcom.Service
+	dashboardService       dashboards.DashboardService
+	folderService          folder.Service
+	pluginStore            pluginstore.Store
+	secretsService         secrets.Service
+	kvStore                *kvstore.NamespacedKVStore
+	libraryElementsService libraryelements.Service
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -95,24 +95,26 @@ func ProvideService(
 	folderService folder.Service,
 	pluginStore pluginstore.Store,
 	kvStore kvstore.KVStore,
+	libraryElementsService libraryelements.Service,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
 	}
 
 	s := &Service{
-		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
-		log:              log.New(LogPrefix),
-		cfg:              cfg,
-		features:         features,
-		dsService:        dsService,
-		tracer:           tracer,
-		metrics:          newMetrics(),
-		secretsService:   secretsService,
-		dashboardService: dashboardService,
-		folderService:    folderService,
-		pluginStore:      pluginStore,
-		kvStore:          kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
+		store:                  &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
+		log:                    log.New(LogPrefix),
+		cfg:                    cfg,
+		features:               features,
+		dsService:              dsService,
+		tracer:                 tracer,
+		metrics:                newMetrics(),
+		secretsService:         secretsService,
+		dashboardService:       dashboardService,
+		folderService:          folderService,
+		pluginStore:            pluginStore,
+		kvStore:                kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
+		libraryElementsService: libraryElementsService,
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
@@ -181,7 +183,8 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 	}
 
 	logger.Info("cloud migration token not found")
-	return gcom.TokenView{}, cloudmigration.ErrTokenNotFound
+	return gcom.TokenView{}, fmt.Errorf("fetching cloud migration token: instance=%+v accessPolicyName=%s accessTokenName=%s %w",
+		instance, accessPolicyName, accessTokenName, cloudmigration.ErrTokenNotFound)
 }
 
 func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
@@ -302,7 +305,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	defer span.End()
 
 	if err := s.gmsClient.ValidateKey(ctx, cm); err != nil {
-		return fmt.Errorf("validating key: %w", err)
+		return fmt.Errorf("validating token: %w", err)
 	}
 
 	return nil
@@ -399,74 +402,6 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		Created: cm.Created,
 		Updated: cm.Updated,
 	}, nil
-}
-
-func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateDataResponse, error) {
-	// Get migration to read the auth token
-	migration, err := s.GetSession(ctx, uid)
-	if err != nil {
-		return nil, fmt.Errorf("migration get error: %w", err)
-	}
-
-	// Get migration data JSON
-	request, err := s.getMigrationDataJSON(ctx, &user.SignedInUser{})
-	if err != nil {
-		s.log.Error("error getting the json request body for migration run", "err", err.Error())
-		return nil, fmt.Errorf("migration data get error: %w", err)
-	}
-
-	// Call the gms service
-	resp, err := s.gmsClient.MigrateData(ctx, *migration, *request)
-	if err != nil {
-		s.log.Error("error migrating data: %w", err)
-		return nil, fmt.Errorf("migrate data error: %w", err)
-	}
-
-	// save the result of the migration
-	runUID, err := s.createMigrationRun(ctx, cloudmigration.CloudMigrationSnapshot{
-		SessionUID: migration.UID,
-		Resources:  resp.Items,
-	})
-	if err != nil {
-		response.Error(http.StatusInternalServerError, "migration run save error", err)
-	}
-
-	resp.RunUID = runUID
-
-	return resp, nil
-}
-
-func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error) {
-	uid, err := s.store.CreateMigrationRun(ctx, cmr)
-	if err != nil {
-		s.log.Error("Failed to save migration run", "err", err)
-		return "", err
-	}
-	return uid, nil
-}
-
-func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
-	cmr, err := s.store.GetMigrationStatus(ctx, runUID)
-	if err != nil {
-		return nil, fmt.Errorf("retrieving migration status from db: %w", err)
-	}
-	return cmr, nil
-}
-
-func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*cloudmigration.CloudMigrationRunList, error) {
-	runs, err := s.store.GetMigrationStatusList(ctx, migUID)
-	if err != nil {
-		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
-	}
-
-	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseList{}}
-	for _, s := range runs {
-		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseList{
-			RunUID: s.UID,
-		})
-	}
-
-	return runList, nil
 }
 
 func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
