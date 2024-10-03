@@ -6,7 +6,6 @@ import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import TempoLanguageProvider from '../language_provider';
-import { intrinsics } from '../traceql/traceql';
 import { Scope } from '../types';
 
 export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: ScopedVars) => {
@@ -29,14 +28,14 @@ export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: Scoped
   return interpolatedFilters;
 };
 
-export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
+export const generateQueryFromFilters = (filters: TraceqlFilter[], lp: TempoLanguageProvider) => {
   if (!filters) {
     return '';
   }
 
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
-    .map((f) => `${scopeHelper(f)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
+    .map((f) => `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
     .join(' && ')}}`;
 };
 
@@ -50,9 +49,9 @@ const valueHelper = (f: TraceqlFilter) => {
   return f.value;
 };
 
-const scopeHelper = (f: TraceqlFilter) => {
+const scopeHelper = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
   // Intrinsic fields don't have a scope
-  if (intrinsics.find((t) => t === f.tag)) {
+  if (lp.getIntrinsics().find((t) => t === f.tag)) {
     return '';
   }
   return (
@@ -71,15 +70,15 @@ const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
   return f.tag;
 };
 
-export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[]) => {
+export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[], lp: TempoLanguageProvider) => {
   return `{${filters
     .filter((f) => f.key && f.operator && f.value)
-    .map((f) => `${f.key}${f.operator}${adHocValueHelper(f)}`)
+    .map((f) => `${f.key}${f.operator}${adHocValueHelper(f, lp)}`)
     .join(' && ')}}`;
 };
 
-const adHocValueHelper = (f: AdHocVariableFilter) => {
-  if (intrinsics.find((t) => t === f.key)) {
+const adHocValueHelper = (f: AdHocVariableFilter, lp: TempoLanguageProvider) => {
+  if (lp.getIntrinsics().find((t) => t === f.key)) {
     return f.value;
   }
   if (parseInt(f.value, 10).toString() === f.value) {
@@ -92,11 +91,11 @@ export const getTagWithoutScope = (tag: string) => {
   return tag.replace(/^(event|link|resource|span)\./, '');
 };
 
-export const filterScopedTag = (f: TraceqlFilter) => {
-  return scopeHelper(f) + f.tag;
+export const filterScopedTag = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
+  return scopeHelper(f, lp) + f.tag;
 };
 
-export const filterTitle = (f: TraceqlFilter) => {
+export const filterTitle = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
   // Special case for the intrinsic "name" since a label called "Name" isn't explicit
   if (f.tag === 'name') {
     return 'Span Name';
@@ -105,7 +104,7 @@ export const filterTitle = (f: TraceqlFilter) => {
   if (f.tag === 'service.name' && f.scope === TraceqlSearchScope.Resource) {
     return 'Service Name';
   }
-  return startCase(filterScopedTag(f));
+  return startCase(filterScopedTag(f, lp));
 };
 
 export const getFilteredTags = (

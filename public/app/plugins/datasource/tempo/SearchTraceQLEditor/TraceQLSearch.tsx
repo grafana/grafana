@@ -64,8 +64,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
 
   const templateVariables = getTemplateSrv().getVariables();
   useEffect(() => {
-    setTraceQlQuery(generateQueryFromFilters(interpolateFilters(query.filters || [])));
-  }, [query, templateVariables]);
+    setTraceQlQuery(generateQueryFromFilters(interpolateFilters(query.filters || []), datasource.languageProvider));
+  }, [datasource.languageProvider, query, templateVariables]);
 
   const findFilter = useCallback((id: string) => query.filters?.find((f) => f.id === id), [query.filters]);
 
@@ -122,9 +122,10 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               f.tag && (
                 <InlineSearchField
                   key={f.id}
-                  label={filterTitle(f)}
+                  label={filterTitle(f, datasource.languageProvider)}
                   tooltip={`Filter your search by ${filterScopedTag(
-                    f
+                    f,
+                    datasource.languageProvider
                   )}. To modify the default filters shown for search visit the Tempo datasource configuration page.`}
                 >
                   <SearchField
@@ -246,7 +247,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               });
 
               onClearResults();
-              const traceQlQuery = generateQueryFromFilters(query.filters || []);
+              const traceQlQuery = generateQueryFromFilters(query.filters || [], datasource.languageProvider);
               onChange({
                 ...query,
                 query: traceQlQuery,

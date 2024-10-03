@@ -14,153 +14,191 @@ import {
   generateQueryFromAdHocFilters,
 } from './utils';
 
+const datasource: TempoDatasource = {
+  search: {
+    filters: [],
+  },
+} as unknown as TempoDatasource;
+const lp = new TempoLanguageProvider(datasource);
+
 describe('generateQueryFromFilters generates the correct query for', () => {
   it('an empty array', () => {
-    expect(generateQueryFromFilters([])).toBe('{}');
+    expect(generateQueryFromFilters([], lp)).toBe('{}');
   });
 
   it('a field without value', () => {
-    expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', operator: '=' }])).toBe('{}');
+    expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', operator: '=' }], lp)).toBe('{}');
   });
 
   it('a field with value but without tag', () => {
-    expect(generateQueryFromFilters([{ id: 'foo', value: 'foovalue', operator: '=' }])).toBe('{}');
+    expect(generateQueryFromFilters([{ id: 'foo', value: 'foovalue', operator: '=' }], lp)).toBe('{}');
   });
 
   it('a field with value and tag but without operator', () => {
-    expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue' }])).toBe('{}');
+    expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue' }], lp)).toBe('{}');
   });
 
   describe('generates correct query for duration when duration type', () => {
     it('not set', () => {
       expect(
-        generateQueryFromFilters([
-          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
-        ])
+        generateQueryFromFilters(
+          [{ id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' }],
+          lp
+        )
       ).toBe('{duration>100ms}');
     });
     it('set to span', () => {
       expect(
-        generateQueryFromFilters([
-          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
-          { id: 'duration-type', value: 'span' },
-        ])
+        generateQueryFromFilters(
+          [
+            { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
+            { id: 'duration-type', value: 'span' },
+          ],
+          lp
+        )
       ).toBe('{duration>100ms}');
     });
     it('set to trace', () => {
       expect(
-        generateQueryFromFilters([
-          { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
-          { id: 'duration-type', value: 'trace' },
-        ])
+        generateQueryFromFilters(
+          [
+            { id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration', value: '100ms' },
+            { id: 'duration-type', value: 'trace' },
+          ],
+          lp
+        )
       ).toBe('{traceDuration>100ms}');
     });
   });
 
   it('a field with tag, operator and tag', () => {
-    expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue', operator: '=' }])).toBe(
+    expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue', operator: '=' }], lp)).toBe(
       '{.footag=foovalue}'
     );
     expect(
-      generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue', operator: '=', valueType: 'string' }])
+      generateQueryFromFilters(
+        [{ id: 'foo', tag: 'footag', value: 'foovalue', operator: '=', valueType: 'string' }],
+        lp
+      )
     ).toBe('{.footag="foovalue"}');
   });
 
   it('a field with valueType as integer', () => {
     expect(
-      generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: '1234', operator: '>', valueType: 'integer' }])
+      generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: '1234', operator: '>', valueType: 'integer' }], lp)
     ).toBe('{.footag>1234}');
   });
   it('two fields with everything filled in', () => {
     expect(
-      generateQueryFromFilters([
-        { id: 'foo', tag: 'footag', value: '1234', operator: '>=', valueType: 'integer' },
-        { id: 'bar', tag: 'bartag', value: 'barvalue', operator: '=', valueType: 'string' },
-      ])
+      generateQueryFromFilters(
+        [
+          { id: 'foo', tag: 'footag', value: '1234', operator: '>=', valueType: 'integer' },
+          { id: 'bar', tag: 'bartag', value: 'barvalue', operator: '=', valueType: 'string' },
+        ],
+        lp
+      )
     ).toBe('{.footag>=1234 && .bartag="barvalue"}');
   });
   it('two fields but one is missing a value', () => {
     expect(
-      generateQueryFromFilters([
-        { id: 'foo', tag: 'footag', value: '1234', operator: '>=', valueType: 'integer' },
-        { id: 'bar', tag: 'bartag', operator: '=', valueType: 'string' },
-      ])
+      generateQueryFromFilters(
+        [
+          { id: 'foo', tag: 'footag', value: '1234', operator: '>=', valueType: 'integer' },
+          { id: 'bar', tag: 'bartag', operator: '=', valueType: 'string' },
+        ],
+        lp
+      )
     ).toBe('{.footag>=1234}');
   });
   it('two fields but one is missing a value and the other a tag', () => {
     expect(
-      generateQueryFromFilters([
-        { id: 'foo', value: '1234', operator: '>=', valueType: 'integer' },
-        { id: 'bar', tag: 'bartag', operator: '=', valueType: 'string' },
-      ])
+      generateQueryFromFilters(
+        [
+          { id: 'foo', value: '1234', operator: '>=', valueType: 'integer' },
+          { id: 'bar', tag: 'bartag', operator: '=', valueType: 'string' },
+        ],
+        lp
+      )
     ).toBe('{}');
   });
   it('scope is unscoped', () => {
     expect(
-      generateQueryFromFilters([
-        {
-          id: 'foo',
-          tag: 'footag',
-          value: '1234',
-          operator: '>=',
-          scope: TraceqlSearchScope.Unscoped,
-          valueType: 'integer',
-        },
-      ])
+      generateQueryFromFilters(
+        [
+          {
+            id: 'foo',
+            tag: 'footag',
+            value: '1234',
+            operator: '>=',
+            scope: TraceqlSearchScope.Unscoped,
+            valueType: 'integer',
+          },
+        ],
+        lp
+      )
     ).toBe('{.footag>=1234}');
   });
   it('scope is span', () => {
     expect(
-      generateQueryFromFilters([
-        {
-          id: 'foo',
-          tag: 'footag',
-          value: '1234',
-          operator: '>=',
-          scope: TraceqlSearchScope.Span,
-          valueType: 'integer',
-        },
-      ])
+      generateQueryFromFilters(
+        [
+          {
+            id: 'foo',
+            tag: 'footag',
+            value: '1234',
+            operator: '>=',
+            scope: TraceqlSearchScope.Span,
+            valueType: 'integer',
+          },
+        ],
+        lp
+      )
     ).toBe('{span.footag>=1234}');
   });
   it('scope is resource', () => {
     expect(
-      generateQueryFromFilters([
-        {
-          id: 'foo',
-          tag: 'footag',
-          value: '1234',
-          operator: '>=',
-          scope: TraceqlSearchScope.Resource,
-          valueType: 'integer',
-        },
-      ])
+      generateQueryFromFilters(
+        [
+          {
+            id: 'foo',
+            tag: 'footag',
+            value: '1234',
+            operator: '>=',
+            scope: TraceqlSearchScope.Resource,
+            valueType: 'integer',
+          },
+        ],
+        lp
+      )
     ).toBe('{resource.footag>=1234}');
   });
 });
 
 describe('generateQueryFromAdHocFilters generates the correct query for', () => {
   it('an empty array', () => {
-    expect(generateQueryFromAdHocFilters([])).toBe('{}');
+    expect(generateQueryFromAdHocFilters([], lp)).toBe('{}');
   });
 
   it('a filter with values', () => {
-    expect(generateQueryFromAdHocFilters([{ key: 'footag', operator: '=', value: 'foovalue' }])).toBe(
+    expect(generateQueryFromAdHocFilters([{ key: 'footag', operator: '=', value: 'foovalue' }], lp)).toBe(
       '{footag="foovalue"}'
     );
   });
 
   it('two filters with values', () => {
     expect(
-      generateQueryFromAdHocFilters([
-        { key: 'footag', operator: '=', value: 'foovalue' },
-        { key: 'bartag', operator: '=', value: '0' },
-      ])
+      generateQueryFromAdHocFilters(
+        [
+          { key: 'footag', operator: '=', value: 'foovalue' },
+          { key: 'bartag', operator: '=', value: '0' },
+        ],
+        lp
+      )
     ).toBe('{footag="foovalue" && bartag=0}');
   });
 
   it('a filter with intrinsic values', () => {
-    expect(generateQueryFromAdHocFilters([{ key: 'kind', operator: '=', value: 'server' }])).toBe('{kind=server}');
+    expect(generateQueryFromAdHocFilters([{ key: 'kind', operator: '=', value: 'server' }], lp)).toBe('{kind=server}');
   });
 });
 
