@@ -2,35 +2,15 @@ import { css } from '@emotion/css';
 import moment from 'moment';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Card, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
+import { GrafanaTheme2, store } from '@grafana/data';
+import { Card, IconButton, Space, Stack, Text, useStyles2 } from '@grafana/ui';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { HistoryChangedEvent } from 'app/types/events';
 
+import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntryApp } from '../types';
 
 export function HistoryWrapper() {
-  const grafana = useGrafana().chrome;
-  const { history } = grafana.useState();
-
-  getAppEvents().subscribe(HistoryChangedEvent, (ev) => {
-    let lastEntry = history[0];
-    const newUrl = ev.payload.url;
-    const lastUrl = lastEntry.views[0]?.url;
-    if (lastUrl !== newUrl) {
-      lastEntry.views = [
-        {
-          name: ev.payload.name,
-          description: ev.payload.description,
-          url: newUrl,
-        },
-        ...lastEntry.views,
-      ];
-      grafana.setHistory([...history]);
-    }
-  });
+  const history = store.getObject<HistoryEntryApp[]>(HISTORY_LOCAL_STORAGE_KEY, []);
 
   return (
     <div>
@@ -47,18 +27,23 @@ interface ItemProps {
 
 function HistoryEntryAppView({ entry, isFirst }: ItemProps) {
   const styles = useStyles2(getStyles);
-  const [isExpanded, setIsExpanded] = useState(isFirst);
+  const [isExpanded, setIsExpanded] = useState(isFirst && entry.views.length > 0);
   const { breadcrumbs, views, time } = entry;
 
   return (
     <Stack direction="column" gap={1}>
       <Stack>
-        <IconButton
-          name={isExpanded ? 'angle-down' : 'angle-right'}
-          onClick={() => setIsExpanded(!isExpanded)}
-          aria-label="Expand / collapse"
-          className={styles.iconButton}
-        />
+        {views.length > 0 ? (
+          <IconButton
+            name={isExpanded ? 'angle-down' : 'angle-right'}
+            onClick={() => setIsExpanded(!isExpanded)}
+            aria-label="Expand / collapse"
+            className={styles.iconButton}
+          />
+        ) : (
+          <Space h={2} />
+        )}
+
         {breadcrumbs.map((breadcrumb, index) => {
           if (breadcrumb.id === HOME_NAV_ID) {
             return null;

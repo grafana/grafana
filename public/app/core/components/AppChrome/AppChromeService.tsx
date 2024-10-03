@@ -29,7 +29,6 @@ export interface AppChromeState {
     title: ReturnToPreviousProps['title'];
     href: ReturnToPreviousProps['href'];
   };
-  history: HistoryEntryApp[];
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -58,7 +57,6 @@ export class AppChromeService {
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
-    history: store.getObject(HISTORY_LOCAL_STORAGE_KEY, []),
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -90,8 +88,7 @@ export class AppChromeService {
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
     if (!this.ignoreStateUpdate(newState, current)) {
-      newState.history = this.getUpdatedHistory(newState, current);
-      store.setObject(HISTORY_LOCAL_STORAGE_KEY, newState.history);
+      store.setObject(HISTORY_LOCAL_STORAGE_KEY, this.getUpdatedHistory(newState));
       this.state.next(newState);
     }
   }
@@ -120,11 +117,11 @@ export class AppChromeService {
     window.sessionStorage.removeItem('returnToPrevious');
   };
 
-  private getUpdatedHistory(newState: AppChromeState, currentState: AppChromeState): HistoryEntryApp[] {
+  private getUpdatedHistory(newState: AppChromeState): HistoryEntryApp[] {
     const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
     const newPageNav = newState.pageNav || newState.sectionNav.node;
 
-    let entries = currentState.history;
+    let entries = store.getObject<HistoryEntryApp[]>(HISTORY_LOCAL_STORAGE_KEY, []);
     if (!newPageNav) {
       return entries;
     }
@@ -133,7 +130,7 @@ export class AppChromeService {
     if (!lastEntry || lastEntry.name !== newPageNav.text) {
       lastEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now() };
     }
-    if (lastEntry !== currentState.history[0]) {
+    if (lastEntry !== entries[0]) {
       entries = [lastEntry, ...entries];
     }
     return entries;
