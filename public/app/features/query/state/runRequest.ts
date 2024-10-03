@@ -1,7 +1,7 @@
 // Libraries
 import { isString, map as isArray } from 'lodash';
 import { from, merge, Observable, of, timer } from 'rxjs';
-import { catchError, map, mapTo, mergeAll, share, takeUntil, tap } from 'rxjs/operators';
+import { catchError, map, mapTo, mergeMap, share, takeUntil, tap } from 'rxjs/operators';
 
 // Utils & Services
 // Types
@@ -191,15 +191,13 @@ function callQueryMethodWithMigration(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
-  let migratedRequest: Observable<DataQueryRequest> = of(request);
   if (datasource instanceof DataSourceWithBackendMigration) {
     const migratedRequestPromise = datasource.migrateRequest(request);
-    migratedRequest = from(migratedRequestPromise);
+    return from(migratedRequestPromise).pipe(
+      mergeMap((migratedRequest) => callQueryMethod(datasource, migratedRequest, queryFunction))
+    );
   }
-  return migratedRequest.pipe(
-    map((migratedRequest) => callQueryMethod(datasource, migratedRequest, queryFunction)),
-    mergeAll()
-  );
+  return callQueryMethod(datasource, request, queryFunction);
 }
 
 export function callQueryMethod(
