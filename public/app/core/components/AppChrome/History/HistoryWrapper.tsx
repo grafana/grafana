@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import moment from 'moment';
 import { useState } from 'react';
-import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -13,8 +12,6 @@ import { HistoryChangedEvent } from 'app/types/events';
 import { HistoryEntryApp } from '../types';
 
 export function HistoryWrapper() {
-  const styles = useStyles2(getStyles);
-  const [widthRef, widthMeasure] = useMeasure<HTMLDivElement>();
   const grafana = useGrafana().chrome;
   const { history } = grafana.useState();
 
@@ -36,7 +33,7 @@ export function HistoryWrapper() {
   });
 
   return (
-    <div ref={widthRef}>
+    <div>
       {history.map((entry, index) => (
         <HistoryEntryAppView key={index} entry={entry} isFirst={index === 0} />
       ))}

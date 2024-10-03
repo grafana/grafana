@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { url } from 'inspector';
 import { useMemo } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
