@@ -39,7 +39,7 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles) *AuthService 
 }
 
 // Authorize checks if the user has permission to read annotations, then returns a struct containing dashboards and scope types that the user has access to.
-func (authz *AuthService) Authorize(ctx context.Context, query *annotations.ItemQuery) (*AccessResources, error) {
+func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQuery) (*AccessResources, error) {
 	user := query.SignedInUser
 	if user == nil || user.IsNil() {
 		return nil, ErrReadForbidden.Errorf("missing user")
@@ -80,7 +80,7 @@ func (authz *AuthService) Authorize(ctx context.Context, query *annotations.Item
 	}, nil
 }
 
-func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query *annotations.ItemQuery) (int64, error) {
+func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query annotations.ItemQuery) (int64, error) {
 	var items []annotations.Item
 	params := make([]any, 0)
 	err := authz.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -106,7 +106,7 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query *ann
 	return items[0].DashboardID, nil
 }
 
-func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, query *annotations.ItemQuery) (map[string]int64, error) {
+func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, query annotations.ItemQuery) (map[string]int64, error) {
 	recursiveQueriesSupported, err := authz.db.RecursiveQueriesAreSupported()
 	if err != nil {
 		return nil, err
