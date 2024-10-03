@@ -10,8 +10,9 @@ import {
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { getSelectedScopesNames } from 'app/features/scopes';
 import { DashboardDTO, DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
+
+import { getScopes, getTimeRangeAndFilters } from './utils';
 
 export interface DashboardAPI {
   /** Get a dashboard with the access control metadata */
@@ -42,8 +43,9 @@ class LegacyDashboardAPI implements DashboardAPI {
   }
 
   getDashboardDTO(uid: string): Promise<DashboardDTO> {
-    const scopes = config.featureToggles.passScopeToDashboardApi ? getSelectedScopesNames() : [];
-    const queryParams = scopes.length > 0 ? { scopes } : undefined;
+    const scopes = getScopes();
+    const timeRangeAndFilters = getTimeRangeAndFilters();
+    const queryParams = scopes || timeRangeAndFilters ? { scopes, ...timeRangeAndFilters } : undefined;
 
     return getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, queryParams);
   }

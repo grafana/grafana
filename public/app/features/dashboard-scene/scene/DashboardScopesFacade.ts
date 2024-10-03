@@ -1,6 +1,7 @@
-import { locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { ScopesFacade } from 'app/features/scopes';
+
+import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 
 export interface DashboardScopesFacadeState {
   reloadOnScopesChange?: boolean;
@@ -12,11 +13,15 @@ export class DashboardScopesFacade extends ScopesFacade {
     super({
       handler: (facade) => {
         if (reloadOnScopesChange && uid) {
-          locationService.reload();
+          this.reloadDashboard();
         } else {
           sceneGraph.getTimeRange(facade).onRefresh();
         }
       },
     });
+  }
+
+  private reloadDashboard() {
+    getDashboardScenePageStateManager().reloadDashboard();
   }
 }

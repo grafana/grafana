@@ -77,6 +77,14 @@ export interface DashboardMeta {
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes changes
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnScopesChange?: boolean;
+
+  // This is a property added specifically for edge cases where dashboards should be reloaded when time range changes
+  // This property is not persisted in the DB but its existence is controlled by the API
+  reloadOnTimeRangeChange?: boolean;
+
+  // This is a property added specifically for edge cases where dashboards should be reloaded when either specific filter changes or any filter changes
+  // This property is not persisted in the DB but its existence is controlled by the API
+  reloadOnFiltersChange?: string[] | boolean;
 }
 
 export interface AnnotationActions {

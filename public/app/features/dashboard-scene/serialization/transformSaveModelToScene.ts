@@ -37,6 +37,8 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { ReloadOnFiltersChangeBehavior } from '../scene/ReloadOnFiltersChangeBehavior';
+import { ReloadOnTimeRangeChangeBehavior } from '../scene/ReloadOnTimeRangeChangeBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -252,6 +254,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       addPanelsOnLoadBehavior,
       new DashboardScopesFacade({
         reloadOnScopesChange: oldModel.meta.reloadOnScopesChange,
+        uid: oldModel.uid,
+      }),
+      new ReloadOnTimeRangeChangeBehavior({
+        reloadOnTimeRangeChange: true,
+        uid: oldModel.uid,
+      }),
+      new ReloadOnFiltersChangeBehavior({
+        reloadOnFiltersChange: true,
         uid: oldModel.uid,
       }),
     ],

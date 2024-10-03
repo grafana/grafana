@@ -1,13 +1,13 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, urlUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
+import { getScopes, getTimeRangeAndFilters } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
-import { getSelectedScopesNames } from 'app/features/scopes';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
@@ -20,6 +20,7 @@ import { updateNavModel } from './utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
+  options?: LoadDashboardOptions;
   panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
@@ -159,7 +160,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         restoreDashboardStateFromLocalStorage(dashboard);
       }
 
-      this.setState({ dashboard: dashboard, isLoading: false });
+      this.setState({ dashboard: dashboard, isLoading: false, options });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
@@ -175,6 +176,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       const msg = getMessageFromError(err);
       this.setState({ isLoading: false, loadError: msg });
     }
+  }
+
+  public async reloadDashboard() {
+    return this.loadDashboard(this.state.options!);
   }
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
@@ -260,13 +265,17 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public getCacheKey(cacheKey: string): string {
-    const scopesCacheKey = getSelectedScopesNames().sort().join('__scp__');
+    // The following are the scopes
+    // We need those as there is a feature where we pass the scopes to fetch dashboard API hence we need to cache based on these
+    const scopes = getScopes(true);
+    const scopesCacheKey = scopes ? `__scp__${scopes.join(',')}` : '';
 
-    if (!scopesCacheKey) {
-      return cacheKey;
-    }
+    // The following are the query params for time range and filters
+    // We need those as there is a feature where we pass these query params to fetch dashboard API hence we need to cache based on these
+    const queryParams = getTimeRangeAndFilters(true);
+    const queryParamsKey = queryParams ? `__qp__${urlUtil.serializeParams(queryParams)}` : '';
 
-    return `${cacheKey}__scp__${scopesCacheKey}`;
+    return `${cacheKey}${scopesCacheKey}${queryParamsKey}`;
   }
 }
 
