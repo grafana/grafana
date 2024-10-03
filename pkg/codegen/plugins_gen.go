@@ -27,7 +27,7 @@ var skipPlugins = map[string]bool{
 
 const sep = string(filepath.Separator)
 
-var PluginsPath = filepath.Join("..", "..", "public", "app", "plugins")
+var PluginsPath = filepath.Join("public", "app", "plugins")
 
 func main() {
 	if len(os.Args) > 1 {
@@ -53,7 +53,7 @@ func main() {
 	pluginKindGen.AddPostprocessors(kinds.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer())
 
 	declParser := parser.NewDeclParser(skipPlugins)
-	decls, err := declParser.Parse(os.DirFS(filepath.Join(cwd, PluginsPath)))
+	decls, err := declParser.Parse(os.DirFS(filepath.Join(groot, PluginsPath)))
 	if err != nil {
 		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
 	}
