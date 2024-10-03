@@ -25,7 +25,7 @@ export function usePluginComponents<Props extends object = {}>({
     const enableRestrictions = isGrafanaDevMode() && pluginContext;
     const components: Array<React.ComponentType<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
-    const pluginId = pluginContext?.meta.id;
+    const pluginId = pluginContext?.meta.id ?? '';
 
     if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
       logWarning(

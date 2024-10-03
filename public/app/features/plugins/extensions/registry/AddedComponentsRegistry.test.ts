@@ -347,29 +347,6 @@ describe('AddedComponentsRegistry', () => {
     });
   });
 
-  it('should skip registering component and log a warning when id is not prefixed with plugin id or grafana', async () => {
-    const registry = new AddedComponentsRegistry();
-    const wrongExtensionPointId = 'alerting/home';
-
-    registry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Component 1 title',
-          description: 'Component 1 description',
-          targets: [wrongExtensionPointId],
-          component: () => React.createElement('div', null, 'Hello World1'),
-        },
-      ],
-    });
-
-    expect(consoleWarn).toHaveBeenCalledWith(
-      `[Plugin Extensions] Could not register added component with title 'Component 1 title'. Reason: The extension point id ("${wrongExtensionPointId}") has an invalid format.`
-    );
-    const currentState = await registry.getState();
-    expect(Object.keys(currentState)).toHaveLength(0);
-  });
-
   it('should log a warning when added component id is not suffixed with component version', async () => {
     const registry = new AddedComponentsRegistry();
     const extensionPointId = 'grafana/test/home';

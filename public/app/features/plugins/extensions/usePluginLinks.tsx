@@ -34,7 +34,7 @@ export function usePluginLinks({
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
     const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
-    const pluginId = pluginContext?.meta.id;
+    const pluginId = pluginContext?.meta.id ?? '';
 
     if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
       logWarning(

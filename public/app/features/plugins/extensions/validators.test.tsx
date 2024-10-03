@@ -189,21 +189,18 @@ describe('Plugin Extension Validators', () => {
   describe('isExtensionPointIdValid()', () => {
     test.each([
       // We (for now allow core Grafana extension points to run without a version)
-      ['grafana/extension-point', undefined],
-      ['grafana/extension-point/v1', undefined],
-      ['myorg-extensions-app/extension-point', undefined],
-      ['myorg-extensions-app/extension-point/v1', undefined],
-      ['plugins/myorg-extensions-app/extension-point/v1', undefined],
-      ['plugins/myorg-basic-app/start', undefined],
+      ['grafana/extension-point', ''],
+      ['grafana/extension-point', 'grafana'],
+      ['myorg-extensions-app/extension-point', 'myorg-extensions-app'],
       ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
       ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
-      ['plugins/grafana-k8s-app/cluster/action', undefined],
+      ['plugins/myorg-basic-app/start', 'myorg-basic-app'],
+      ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/grafana-app-observability-app/service/action', 'grafana-app-observability-app'],
       ['plugins/grafana-k8s-app/cluster/action', 'grafana-k8s-app'],
-      ['plugins/grafana-oncall-app/alert-group/action', undefined],
       ['plugins/grafana-oncall-app/alert-group/action', 'grafana-oncall-app'],
-      ['plugins/grafana-oncall-app/alert-group/action/v1', undefined],
       ['plugins/grafana-oncall-app/alert-group/action/v1', 'grafana-oncall-app'],
-      ['plugins/grafana-oncall-app/alert-group/action/v1.0.0', undefined],
       ['plugins/grafana-oncall-app/alert-group/action/v1.0.0', 'grafana-oncall-app'],
     ])('should return TRUE if the extension point id is valid ("%s", "%s")', (extensionPointId, pluginId) => {
       expect(
@@ -215,36 +212,10 @@ describe('Plugin Extension Validators', () => {
     });
 
     test.each([
-      ['extension-point', undefined],
-      [
-        // Wrong plugin id format
-        'myapp/extension-point',
-        undefined,
-      ],
-      [
-        // Wrong plugin id format
-        'plugins/myapp/extension-point',
-        undefined,
-      ],
-      [
-        // Wrong plugin id format
-        'myapp/extension-point/v1',
-        undefined,
-      ],
-      [
-        // Wrong plugin id format
-        'plugins/myapp/extension-point/v1',
-        undefined,
-      ],
       [
         // Plugin id mismatch
         'myorg-extensions-app/extension-point/v1',
         'myorgs-other-app',
-      ],
-      [
-        // Plugin id mismatch
-        'grafana/extension-point/v1',
-        'myorgs-extensions-app',
       ],
       [
         // Missing plugin id prefix

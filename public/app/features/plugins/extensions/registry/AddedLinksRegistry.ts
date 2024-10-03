@@ -7,7 +7,6 @@ import { isAddedLinkMetaInfoMissing, isGrafanaDevMode, logWarning } from '../uti
 import {
   extensionPointEndsWithVersion,
   isConfigureFnValid,
-  isExtensionPointIdValid,
   isGrafanaCoreExtensionPoint,
   isLinkPathValid,
 } from '../validators';
@@ -79,13 +78,6 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
       const extensionPointIds = Array.isArray(targets) ? targets : [targets];
       for (const extensionPointId of extensionPointIds) {
-        if (!isExtensionPointIdValid({ extensionPointId })) {
-          logWarning(
-            `Could not register added link with title '${config.title}'. Reason: Reason: The extension point id ("${extensionPointId}") has an invalid format.`
-          );
-          continue;
-        }
-
         if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
           logWarning(
             `Added link "${config.title}: it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`

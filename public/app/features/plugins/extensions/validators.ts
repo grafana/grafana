@@ -58,26 +58,13 @@ export function isExtensionPointIdValid({
   pluginId,
 }: {
   extensionPointId: string;
-  // Pass a `pluginId` if you would like to validate an extension point created inside a plugin
-  // with either `usePluginLinks()` or `usePluginComponents()`.
-  pluginId?: string;
+  pluginId: string;
 }) {
-  // We don't enforce the "/{version}" suffix here, as it's not a hard requirement for the extension point ids yet.
-  // (We do warn about it though.)
-  const regex = new RegExp(
-    '^(?:plugins/)?[0-9a-z]+-([0-9a-z]+-)?(app|panel|datasource|secretsmanager)/[a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)*(?:/v[0-9_.-]+)?$'
-  );
-
-  // If a `pluginId` is provided, the extension point should be prefixed with the plugin id.
-  if (pluginId) {
-    return Boolean(extensionPointId.startsWith(`plugins/${pluginId}/`) || extensionPointId.startsWith(`${pluginId}/`));
-  }
-
   if (extensionPointId.startsWith('grafana/')) {
     return true;
   }
 
-  return Boolean(extensionPointId.match(regex));
+  return Boolean(extensionPointId.startsWith(`plugins/${pluginId}/`) || extensionPointId.startsWith(`${pluginId}/`));
 }
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {
