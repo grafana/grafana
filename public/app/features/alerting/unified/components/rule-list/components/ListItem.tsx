@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 interface ListItemProps {
   icon?: ReactNode;
@@ -32,8 +32,17 @@ export const ListItem = (props: ListItemProps) => {
           </Stack>
 
           {/* metadata */}
-          <Stack direction="row" gap={1}>
-            {meta}
+          <Stack direction="row" gap={0.5} alignItems="center">
+            {meta?.map((item, index) => (
+              <React.Fragment key={index}>
+                {index > 0 && (
+                  <Text color="secondary" variant="bodySmall">
+                    ·
+                  </Text>
+                )}
+                {item}
+              </React.Fragment>
+            ))}
           </Stack>
         </Stack>
 
