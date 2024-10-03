@@ -117,6 +117,7 @@ export interface FeatureToggles {
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
   kubernetesFolders?: boolean;
+  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;

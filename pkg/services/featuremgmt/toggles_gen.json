@@ -1386,6 +1386,18 @@
     },
     {
       "metadata": {
+        "name": "grafanaAPIServerTestingWithExperimentalAPIs",
+        "resourceVersion": "1727945615419",
+        "creationTimestamp": "2024-10-03T08:53:35Z"
+      },
+      "spec": {
+        "description": "Facilitate integration testing of experimental APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerWithExperimentalAPIs",
         "resourceVersion": "1726731672938",
         "creationTimestamp": "2023-10-06T18:55:22Z",
