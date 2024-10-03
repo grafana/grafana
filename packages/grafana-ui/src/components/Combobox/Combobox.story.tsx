@@ -18,7 +18,7 @@ const meta: Meta<PropsAndCustomArgs> = {
   args: {
     loading: undefined,
     invalid: undefined,
-    width: 30,
+    width: undefined,
     placeholder: 'Select an option...',
     options: [
       { label: 'Apple', value: 'apple' },
@@ -105,6 +105,14 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
       }}
     />
   );
+};
+
+export const AutoSize: StoryObj<PropsAndCustomArgs> = {
+  args: {
+    width: 'auto',
+    minWidth: 5,
+    maxWidth: 200,
+  },
 };
 
 export const ManyOptions: StoryObj<PropsAndCustomArgs> = {

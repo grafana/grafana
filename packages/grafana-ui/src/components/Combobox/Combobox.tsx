@@ -6,6 +6,7 @@ import { useCallback, useId, useMemo, useState } from 'react';
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
+import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
@@ -17,14 +18,32 @@ export type ComboboxOption<T extends string | number = string> = {
   description?: string;
 };
 
-interface ComboboxProps<T extends string | number>
-  extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
+interface ComboboxBaseProps<T extends string | number>
+  extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
   isClearable?: boolean;
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>>;
   onChange: (option: ComboboxOption<T> | null) => void;
   value: T | null;
+  /**
+   * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
+   * */
+  width?: number | 'auto';
 }
+
+type AutoSizeConditionals =
+  | {
+      width: 'auto';
+      minWidth: number;
+      maxWidth?: number;
+    }
+  | {
+      width?: number;
+      minWidth?: never;
+      maxWidth?: never;
+    };
+
+type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 function itemToString(item: ComboboxOption<string | number> | null) {
   return item?.label ?? item?.value.toString() ?? '';
@@ -54,6 +73,7 @@ export const Combobox = <T extends string | number>({
   isClearable = false,
   createCustomValue = false,
   id,
+  width,
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
@@ -158,9 +178,12 @@ export const Combobox = <T extends string | number>({
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
+  const InputComponent = width === 'auto' ? AutoSizeInput : Input;
+
   return (
     <div>
-      <Input
+      <InputComponent
+        width={width === 'auto' ? undefined : width}
         suffix={
           <>
             {!!value && value === selectedItem?.value && isClearable && (
