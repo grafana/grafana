@@ -31,6 +31,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/
+  alert-rule-template-examples:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/examples/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/examples/
   notification-template-reference:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
@@ -62,9 +67,41 @@ For a more detailed explanation of this diagram, refer to the [Templates Introdu
 
 ## Template annotations
 
-, or use the instance label from the query in a summary annotation so you know which server is experiencing high CPU usage.
+Annotations add additional information to alert instances and are often used to help identify the alert and guide responders on how to address the issue.
 
-### Preview annotations
+Annotations are key-value pairs defined in the alert rule. They can contain plain text or template code that is evaluated when the alert fires.
+
+Grafana includes several optional annotations, such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`, which can be edited in the alert rule. You can also create your custom annotations. For example, you might create a new annotation named `location` to report the location of the system that triggered the alert.
+
+Here’s an example of a `summary` annotation explaining why the alert was triggered, using plain text:
+
+```
+CPU usage has exceeded 80% for the last 5 minutes.
+```
+
+However, if you want to display dynamic query values in annotations, you need to use template code. Common use cases include:
+
+- Displaying the query value or threshold that triggered the alert.
+- Highlighting label information that identifies the alert, such as environment, region, or priority.
+- Providing specific instructions based on query values.
+- Customizing runbook links depending on query or label values.
+- Including contact information based on alert labels.
+
+For instance, you can template the previous example to display the specific instance and CPU value that triggered the alert:
+
+```
+CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
+```
+
+The result of this annotation would now be:
+
+```
+CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
+```
+
+For more information on how to template annotations, refer to the [Template reference](ref:alert-rule-template-reference) and [examples](ref:alert-rule-template-examples).
+
+### Preview annotation templates
 
 ## Template labels
 
@@ -76,4 +113,4 @@ When using custom labels with templates it is important to make sure that the la
 Extra whitespace in label templates can break matches with notification policies.
 {{% /admonition %}}
 
-### Preview labels
+### Preview label templates
