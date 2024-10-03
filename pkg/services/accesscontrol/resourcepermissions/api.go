@@ -36,27 +36,6 @@ func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.Rou
 	return &api{cfg, ac, router, manager, permissions}
 }
 
-func TeamUIDResolver(teamService team.Service, paramName string) web.Handler {
-	return func(c *contextmodel.ReqContext) {
-		// Get team id from request, fetch team and replace teamId with team id
-		teamID := web.Params(c.Req)[paramName]
-		// if teamID is empty or is an integer, we assume it's a team id and we don't need to resolve it
-		_, err := strconv.ParseInt(teamID, 10, 64)
-		if teamID == "" || err == nil {
-			return
-		}
-
-		team, err := teamService.GetTeamByID(c.Req.Context(), &team.GetTeamByIDQuery{UID: teamID, OrgID: c.OrgID})
-		if err == nil {
-			gotParams := web.Params(c.Req)
-			gotParams[paramName] = strconv.FormatInt(team.ID, 10)
-			web.SetURLParams(c.Req, gotParams)
-		} else {
-			c.JsonApiErr(404, "Not found", nil)
-		}
-	}
-}
-
 func (a *api) registerEndpoints() {
 	auth := accesscontrol.Middleware(a.ac)
 	licenseMW := a.service.options.LicenseMW
@@ -64,10 +43,10 @@ func (a *api) registerEndpoints() {
 		licenseMW = nopMiddleware
 	}
 
-	teamUIDResolver := TeamUIDResolver(a.service.teamService, ":teamID")
+	teamUIDResolver := team.MiddlewareTeamUIDResolver(a.service.teamService, ":teamID")
 	teamUIDResolverResource := func() web.Handler { return func(c *contextmodel.ReqContext) {} }() // no-op
 	if a.service.options.Resource == "teams" {
-		teamUIDResolverResource = TeamUIDResolver(a.service.teamService, ":resourceID")
+		teamUIDResolverResource = team.MiddlewareTeamUIDResolver(a.service.teamService, ":resourceID")
 	}
 
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {

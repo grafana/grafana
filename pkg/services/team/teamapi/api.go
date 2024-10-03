@@ -80,7 +80,7 @@ func TeamUIDResolver(teamService team.Service) web.Handler {
 
 func (tapi *TeamAPI) registerRoutes(router routing.RouteRegister, ac accesscontrol.AccessControl) {
 	authorize := accesscontrol.Middleware(ac)
-	teamResolver := TeamUIDResolver(tapi.teamService)
+	teamResolver := team.MiddlewareTeamUIDResolver(tapi.teamService, ":teamId")
 	router.Group("/api", func(apiRoute routing.RouteRegister) {
 		// team (admin permission required)
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
