@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { addMinutes, subDays, subHours } from 'date-fns';
 import { Location } from 'history';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { isFetchError, locationService } from '@grafana/runtime';
+import { config as runtimeConfig, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -21,6 +21,7 @@ import {
   InlineField,
   Box,
 } from '@grafana/ui';
+import { usePageToolbar } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
@@ -157,28 +158,33 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     }
   };
 
-  const actionButtons = (
-    <Stack>
-      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
-        Save
-      </Button>
-      <LinkButton
-        disabled={isSubmitting}
-        href={makeAMLink('alerting/notifications', alertmanager, {
-          tab: ContactPointsActiveTabs.NotificationTemplates,
-        })}
-        variant="secondary"
-        size="sm"
-      >
-        Cancel
-      </LinkButton>
-    </Stack>
+  const actionButtons = useMemo(
+    () => (
+      <Stack>
+        <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
+          Save
+        </Button>
+        <LinkButton
+          disabled={isSubmitting}
+          href={makeAMLink('alerting/notifications', alertmanager, {
+            tab: ContactPointsActiveTabs.NotificationTemplates,
+          })}
+          variant="secondary"
+          size="sm"
+        >
+          Cancel
+        </LinkButton>
+      </Stack>
+    ),
+    [alertmanager, isSubmitting]
   );
+
+  usePageToolbar(actionButtons);
 
   return (
     <>
       <FormProvider {...formApi}>
-        <AppChromeUpdate actions={actionButtons} />
+        {!runtimeConfig.featureToggles.singleTopNav && <AppChromeUpdate actions={actionButtons} />}
         <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form} aria-label="Template form">
           {/* error message */}
           {error && (

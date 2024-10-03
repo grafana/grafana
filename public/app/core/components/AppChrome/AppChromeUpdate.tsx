@@ -7,8 +7,7 @@ export interface AppChromeUpdateProps {
   actions?: React.ReactNode;
 }
 /**
- * This needs to be moved to @grafana/ui or runtime.
- * This is the way core pages and plugins update the breadcrumbs and page toolbar actions
+ * @deprecated This component is deprecated and will be removed in a future release.
  */
 export const AppChromeUpdate = React.memo<AppChromeUpdateProps>(({ actions }: AppChromeUpdateProps) => {
   const { chrome } = useGrafana();

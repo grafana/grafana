@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -89,6 +89,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
@@ -206,9 +207,11 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   return (
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      <div>
-        <AppChromeUpdate actions={navBarActions} />
-      </div>
+      {!isSingleTopNav && (
+        <div>
+          <AppChromeUpdate actions={navBarActions} />
+        </div>
+      )}
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
@@ -233,6 +236,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
+          isSingleTopNav && <ShortLinkButtonMenu key="share" />,
         ].filter(Boolean)}
         forceShowLeftItems
       >
