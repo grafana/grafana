@@ -3,7 +3,7 @@ import { memo, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -84,7 +84,7 @@ const BrowseDashboardsPage = memo(() => {
   const { data: rootFolder } = useGetFolderQuery('general');
   let folder = folderDTO ? folderDTO : rootFolder;
   const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
-  const hasAdminRights = contextSrv.user.orgRole === OrgRole.Admin;
+  const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   const showEditTitle = canEditFolders && folderUID;
   const canSelect = canEditFolders || canEditDashboards;
