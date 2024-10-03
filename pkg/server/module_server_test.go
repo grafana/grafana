@@ -78,7 +78,7 @@ func addStorageServerToConfig(t *testing.T, cfg *setting.Cfg, dbType string) {
 		sec, err := cfg.Raw.GetSection("database")
 		require.NoError(t, err)
 		connString := sec.Key("connection_string").String()
-		exp, err := regexp.Compile("(.+):(.+)@tcp\\((.+):(\\d+)\\)/(.+)\\?")
+		exp, err := regexp.Compile(`(.+):(.+)@tcp\\((.+):(\\d+)\\)/(.+)\\?`)
 		require.NoError(t, err)
 		matches := exp.FindStringSubmatch(connString)
 		_, _ = s.NewKey("db_host", matches[3])
