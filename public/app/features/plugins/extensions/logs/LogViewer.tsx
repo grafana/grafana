@@ -4,11 +4,16 @@ import { ReactElement, useState } from 'react';
 
 import { DataTransformerConfig } from '@grafana/data';
 import { sceneUtils, VizConfigBuilders } from '@grafana/scenes';
-import { SceneContextProvider, useDataTransformer, useQueryRunner, VizPanel } from '@grafana/scenes-react';
+import {
+  SceneContextProvider,
+  useDataTransformer,
+  useQueryRunner,
+  VizGridLayout,
+  VizPanel,
+} from '@grafana/scenes-react';
 import { Page } from 'app/core/components/Page/Page';
 
 import { FilterConfig, LogFilter, LogViewFilters } from './LogViewFilters';
-import { VizGrid } from './VizGrid';
 import { ExtensionsLogDataSource } from './dataSource';
 import { log } from './log';
 
@@ -51,9 +56,9 @@ function LogViewScene(): ReactElement | null {
       navId="extensions"
       actions={<LogViewFilters provider={data} filteredProvider={filteredData} filter={filter} onChange={setFilter} />}
     >
-      <VizGrid>
+      <VizGridLayout>
         <VizPanel title="Logs" viz={logsViz} dataProvider={filteredData} />
-      </VizGrid>
+      </VizGridLayout>
     </Page>
   );
 }
