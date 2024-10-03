@@ -1,7 +1,8 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useCallback, useId, useMemo, useState } from 'react';
+//import { debounce } from 'lodash';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -78,8 +79,9 @@ export const Combobox = <T extends string | number>({
   ...restProps
 }: ComboboxProps<T>) => {
   const isAsync = options instanceof Function;
-
   const [asyncLoading, setAsyncLoading] = useState(false);
+  // Discard results from requests that do not match the latest request string
+  const latestRequestString = useRef('');
 
   const [items, setItems] = useState(isAsync ? [] : options);
 
@@ -153,11 +155,18 @@ export const Combobox = <T extends string | number>({
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
       if (isAsync) {
+        latestRequestString.current = inputValue;
         setAsyncLoading(true);
+
         options(inputValue).then((opts) => {
+          console.log('request complete', inputValue, latestRequestString.current);
+          if (latestRequestString.current !== inputValue) {
+            return;
+          }
           setItems(opts);
           setAsyncLoading(false);
         });
+
         return;
       }
 
