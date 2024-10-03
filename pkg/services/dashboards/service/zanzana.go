@@ -128,7 +128,12 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	var page int64 = 1
 	query.SkipAccessControlFilter = true
 	// Set limit to default to prevent pagination issues
+	// Remember initial query limit
 	limit := query.Limit
+	query.limit = defaultQueryLimit
+	defer func() {
+	  query.Limit = limit
+	}()
 
 	for len(result) < int(limit) {
 		query.Page = page
