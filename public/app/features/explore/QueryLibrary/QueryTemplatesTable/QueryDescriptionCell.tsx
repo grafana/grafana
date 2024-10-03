@@ -1,8 +1,8 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { CellProps } from 'react-table';
 
-import { Spinner, Tooltip } from '@grafana/ui';
-import { createQueryText } from 'app/core/utils/richHistory';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useDatasource } from '../utils/useDatasource';
 
@@ -11,7 +11,8 @@ import { QueryTemplateRow } from './types';
 
 export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
   const datasourceApi = useDatasource(props.row.original.datasourceRef);
-  const styles = useQueryLibraryListStyles();
+  const queryLibraryListStyles = useQueryLibraryListStyles();
+  const styles = useStyles2(getStyles);
 
   if (!datasourceApi) {
     return <Spinner />;
@@ -20,25 +21,35 @@ export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
   if (!props.row.original.query) {
     return <div>No queries</div>;
   }
-  const query = props.row.original.query;
-  const queryDisplayText = createQueryText(query, datasourceApi);
+  const queryDisplayText = props.row.original.queryText;
   const description = props.row.original.description;
-  const dsName = datasourceApi?.name || '';
+  const dsName = props.row.original.datasourceName;
 
   return (
-    <div aria-label={`Query template for ${dsName}: ${description}`}>
-      <p className={styles.header}>
+    <div className={styles.container} aria-label={`Query template for ${dsName}: ${description}`}>
+      <p className={queryLibraryListStyles.header}>
         <img
-          className={styles.logo}
+          className={queryLibraryListStyles.logo}
           src={datasourceApi?.meta.info.logos.small || 'public/img/icn-datasource.svg'}
           alt={datasourceApi?.meta.info.description}
         />
         {dsName}
       </p>
-      <Tooltip content={queryDisplayText} placement="bottom-start">
-        <p className={cx(styles.mainText, styles.singleLine)}>{queryDisplayText}</p>
+      <Tooltip content={queryDisplayText ?? ''} placement="bottom-start">
+        <p className={cx(queryLibraryListStyles.mainText, queryLibraryListStyles.singleLine, styles.queryDisplayText)}>
+          {queryDisplayText}
+        </p>
       </Tooltip>
-      <p className={cx(styles.otherText, styles.singleLine)}>{description}</p>
+      <p className={cx(queryLibraryListStyles.otherText, queryLibraryListStyles.singleLine)}>{description}</p>
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    maxWidth: theme.spacing(60),
+  }),
+  queryDisplayText: css({
+    backgroundColor: theme.colors.background.canvas,
+  }),
+});
