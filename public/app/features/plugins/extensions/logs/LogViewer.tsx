@@ -41,7 +41,6 @@ function LogViewScene(): ReactElement | null {
   const data = useQueryRunner({
     datasource: DATASOURCE_REF,
     queries: [{ refId: 'A' }],
-    maxDataPoints: 1000,
     liveStreaming: true,
   });
 
