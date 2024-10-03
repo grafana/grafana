@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -30,8 +31,6 @@ import (
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
