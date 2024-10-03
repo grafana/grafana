@@ -72,6 +72,7 @@ import {
   queriesAndExpressionsReducer,
   removeExpression,
   removeExpressions,
+  removeFirstReducer,
   resetToSimpleCondition,
   rewireExpressions,
   setDataQueries,
@@ -90,8 +91,10 @@ export function areQueriesTransformableToSimpleCondition(
   if (dataQueries.length !== 1) {
     return false;
   }
+  const reducerRemovedOk =
+    'instant' in dataQueries[0].model && dataQueries[0].model.instant && expressionQueries.length === 1;
 
-  if (expressionQueries.length !== 2) {
+  if (expressionQueries.length !== 2 && !reducerRemovedOk) {
     return false;
   }
 
@@ -116,9 +119,9 @@ export function areQueriesTransformableToSimpleCondition(
   );
   const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
   const conditions = thresholdExpression?.model.conditions ?? [];
-  const thresholdOk =
-    thresholdExpression && thresholdExpressionIndex === 1 && conditions[0]?.unloadEvaluator === undefined;
-  return Boolean(reduceOk) && Boolean(thresholdOk);
+  const thresholdIndexOk = reducerRemovedOk ? thresholdExpressionIndex === 0 : thresholdExpressionIndex === 1;
+  const thresholdOk = thresholdExpression && thresholdIndexOk && conditions[0]?.unloadEvaluator === undefined;
+  return (Boolean(reduceOk) || Boolean(reducerRemovedOk)) && Boolean(thresholdOk);
 }
 
 interface Props {
@@ -289,6 +292,17 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       const expressionQueries = previousQueries.filter((query) => isExpressionQuery(query.model));
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
+
+      // In case we are in the state of having 1 query and 2 expressions,
+      // then,we want to remove the reducer expression if query is instant to simplify the process of creating a non complex alert
+      const shouldRemoveReducer =
+        updatedQueries.length === 1 &&
+        'instant' in updatedQueries[0].model &&
+        updatedQueries[0].model.instant &&
+        expressionQueries.length === 2;
+      if (shouldRemoveReducer) {
+        dispatch(removeFirstReducer());
+      }
 
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());

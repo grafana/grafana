@@ -20,6 +20,8 @@ import { getDefaultQueries } from '../../../utils/rule-form';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
+import { SIMPLE_CONDITION_QUERY_ID } from './SimpleCondition';
+
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
 }
@@ -60,6 +62,7 @@ export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: 
 export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
 export const resetToSimpleCondition = createAction('resetToSimpleCondition');
+export const removeFirstReducer = createAction('removeFirstReducer');
 
 export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
   'setRecordingRulesQueries'
@@ -224,6 +227,27 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     .addCase(rewireExpressions, (state, { payload }) => {
       state.queries = queriesWithUpdatedReferences(state.queries, payload.oldRefId, payload.newRefId);
+    })
+    .addCase(removeFirstReducer, (state) => {
+      const removedReducerQueries = state.queries.filter(
+        (query, index) =>
+          !isExpressionQuery(query.model) ||
+          (isExpressionQuery(query.model) && !(query.model.type === ExpressionQueryType.reduce && index === 1))
+      );
+      state.queries = removedReducerQueries.map((query, index) => {
+        if (index === 1) {
+          // we update the only expression (threshold) to point to the query as in this case we removed the reducer
+          return {
+            ...query,
+            model: {
+              ...query.model,
+              expression: SIMPLE_CONDITION_QUERY_ID,
+            },
+          };
+        } else {
+          return query;
+        }
+      });
     })
     .addCase(updateExpressionType, (state, action) => {
       state.queries = state.queries.map((query) => {
