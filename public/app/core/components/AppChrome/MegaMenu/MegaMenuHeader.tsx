@@ -23,8 +23,8 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
 
   return (
     <div className={styles.header}>
-      <Stack alignItems="center" minWidth={0}>
-        <ToolbarButton narrow onClick={handleMegaMenu}>
+      <Stack alignItems="center" minWidth={0} gap={0.25}>
+        <ToolbarButton narrow onClick={handleMegaMenu} tooltip={t('navigation.megamenu.close', 'Close menu')}>
           <Branding.MenuLogo className={styles.img} />
         </ToolbarButton>
         <OrganizationSwitcher />
@@ -69,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     gap: theme.spacing(1),
     justifyContent: 'space-between',
-    padding: theme.spacing(0, 1, 0, 0.5),
+    padding: theme.spacing(0, 1, 0, 0.75),
     height: TOP_BAR_LEVEL_HEIGHT,
     minHeight: TOP_BAR_LEVEL_HEIGHT,
   }),

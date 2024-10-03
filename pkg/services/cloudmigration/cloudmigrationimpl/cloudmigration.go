@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -53,13 +54,14 @@ type Service struct {
 	gmsClient     gmsclient.Client
 	objectStorage objectstorage.ObjectStorage
 
-	dsService        datasources.DataSourceService
-	gcomService      gcom.Service
-	dashboardService dashboards.DashboardService
-	folderService    folder.Service
-	pluginStore      pluginstore.Store
-	secretsService   secrets.Service
-	kvStore          *kvstore.NamespacedKVStore
+	dsService              datasources.DataSourceService
+	gcomService            gcom.Service
+	dashboardService       dashboards.DashboardService
+	folderService          folder.Service
+	pluginStore            pluginstore.Store
+	secretsService         secrets.Service
+	kvStore                *kvstore.NamespacedKVStore
+	libraryElementsService libraryelements.Service
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -93,24 +95,26 @@ func ProvideService(
 	folderService folder.Service,
 	pluginStore pluginstore.Store,
 	kvStore kvstore.KVStore,
+	libraryElementsService libraryelements.Service,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
 	}
 
 	s := &Service{
-		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
-		log:              log.New(LogPrefix),
-		cfg:              cfg,
-		features:         features,
-		dsService:        dsService,
-		tracer:           tracer,
-		metrics:          newMetrics(),
-		secretsService:   secretsService,
-		dashboardService: dashboardService,
-		folderService:    folderService,
-		pluginStore:      pluginStore,
-		kvStore:          kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
+		store:                  &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
+		log:                    log.New(LogPrefix),
+		cfg:                    cfg,
+		features:               features,
+		dsService:              dsService,
+		tracer:                 tracer,
+		metrics:                newMetrics(),
+		secretsService:         secretsService,
+		dashboardService:       dashboardService,
+		folderService:          folderService,
+		pluginStore:            pluginStore,
+		kvStore:                kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
+		libraryElementsService: libraryElementsService,
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 

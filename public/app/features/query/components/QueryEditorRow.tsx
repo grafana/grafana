@@ -69,6 +69,7 @@ export interface Props<TQuery extends DataQuery> {
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
   collapsable?: boolean;
+  hideRefId?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -509,7 +510,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
+    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, hideRefId } =
+      this.props;
 
     return (
       <QueryEditorRowHeader
@@ -523,6 +525,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
         alerting={alerting}
+        hideRefId={hideRefId}
       />
     );
   };
