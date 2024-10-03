@@ -372,6 +372,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.GeomapDisableCustomBaseLayer = true
 	}
 
+	frontendSettings.DatasourceLBACEnabled = hs.Cfg.DatasourceLBACEnabled
+
 	// Set the kubernetes namespace
 	frontendSettings.Namespace = hs.namespacer(c.SignedInUser.OrgID)
 

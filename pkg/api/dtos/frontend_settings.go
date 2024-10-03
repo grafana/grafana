@@ -266,6 +266,8 @@ type FrontendSettingsDTO struct {
 
 	LoginError string `json:"loginError,omitempty"`
 
+	DatasourceLBACEnabled bool `json:"datasourceLBACEnabled"`
+
 	// The K8s namespace to use for this user
 	Namespace string `json:"namespace,omitempty"`
 

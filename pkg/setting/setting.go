@@ -333,7 +333,8 @@ type Cfg struct {
 	// Data sources
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
-	ConcurrentQueryCount int
+	ConcurrentQueryCount  int
+	DatasourceLBACEnabled bool
 
 	// IP range access control
 	IPRangeACEnabled     bool
@@ -1981,6 +1982,7 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
+	cfg.DatasourceLBACEnabled = datasources.Key("lbac_enabled").MustBool(false)
 }
 
 func (cfg *Cfg) readDataSourceSecuritySettings() {
