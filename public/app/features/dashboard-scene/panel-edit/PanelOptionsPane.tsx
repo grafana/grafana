@@ -15,21 +15,25 @@ import { config, locationService } from '@grafana/runtime';
 import {
   DeepPartial,
   SceneComponentProps,
+  SceneDataTransformer,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneQueryRunner,
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
 import { Button, Card, FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
 import { isUsingAngularPanelPlugin } from '../scene/angular/AngularDeprecation';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -74,6 +78,25 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     if (cachedFieldConfig) {
       newFieldConfig = restoreCustomOverrideRules(newFieldConfig, cachedFieldConfig);
+    }
+
+    if (!this.state.$data) {
+      let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
+      if (!ds) {
+        ds = config.defaultDatasource;
+      }
+
+      panel.setState({
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            datasource: {
+              uid: ds,
+            },
+            queries: [{ refId: 'A' }],
+          }),
+          transformations: [],
+        }),
+      });
     }
 
     panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
