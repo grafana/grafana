@@ -18,6 +18,16 @@ labels:
 title: Template annotations and labels
 weight: 500
 refs:
+  labels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#labels
+  annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
   explore:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
@@ -77,7 +87,7 @@ For a more detailed explanation of this diagram, refer to the [Templates Introdu
 
 ## Template annotations
 
-Annotations add additional information to alert instances and are often used to help identify the alert and guide responders on how to address the issue.
+[Annotations](ref:annotations) add additional information to alert instances and are often used to help identify the alert and guide responders on how to address the issue.
 
 Annotations are key-value pairs defined in the alert rule. They can contain plain text or template code that is evaluated when the alert fires.
 
@@ -109,27 +119,63 @@ The result of this annotation would now be:
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```
 
-For more information on how to template annotations, refer to the [Template reference](ref:alert-rule-template-reference) and [examples](ref:alert-rule-template-examples).
-
 #### Preview annotation templates
 
 You can template annotations when creating or editing an alert rule.
 
 {{< figure src="/media/docs/alerting/alert-rule-using-annotation-template.png" max-width="1200px" alt="An alert rule templating the annotation summary" >}}
 
-Two common methods to test or preview annotation templates are:
+Two common methods are used to test and preview annotation templates:
 
 1. Trigger the alert and [view the alert instance state in the Grafana UI](ref:view-alert-state), where all annotations of the alert instance are displayed.
-1. Create a notification template that displays the alert annotation, then [preview the notification template](ref:preview-notifications) using the alert instance.
+1. Use a notification template that displays all annotations, then [preview the notification template](ref:preview-notifications) using the alert instance.
 
 ## Template labels
 
-For example, you might want to set the severity label for an alert based on the value of the query
+The set of [labels](ref:labels) for an alert instance is used to uniquely identify that alert among all other alert instances.
 
-When using custom labels with templates it is important to make sure that the label value does not change between consecutive evaluations of the alert rule as this will end up creating large numbers of distinct alerts. However, it is OK for the template to produce different label values for different alerts. For example, do not put the value of the query in a custom label as this will end up creating a new set of alerts each time the value changes. Instead use annotations.
+Labels determine how alerts are routed and managed for notifications, making their design key to the effectiveness of your alerting system.
 
-{{% admonition type="caution" %}}
-Extra whitespace in label templates can break matches with notification policies.
+Labels can be returned from an alert rule query, such as the `pod` label in a Kubernetes Prometheus query. You can also define additional labels in the alert rule to provide extra information for processing alerts.
+
+Like annotations, labels are key-value pairs that can contain plain text or template code evaluated when the alert fires.
+
+Template labels when the labels returned by your queries are insufficient. For instance:
+
+- A new label based on a query value can group a subset of alerts differently, changing how notifications are sent.
+- A new label based on a query value can be used in a notification policy to alter the notification contact point.
+
+Here’s an example of templating a `severity` label based on the query value:
+
+```
+{{ if (gt $values.A.Value 90.0) -}}
+critical
+{{ else if (gt $values.A.Value 80.0) -}}
+high
+{{ else if (gt $values.A.Value 60.0) -}}
+medium
+{{ else -}}
+low
+{{- end }}
+```
+
+In this example, the value of the `severity` label is determined by the query value, and the possible options are `critical`, `high`, `medium`, or `low`. You can then use the `severity` label to change their notifications—for instance, sending `critical` alerts immediately or routing `low` alerts to a specific team for further review.
+
+{{% admonition type="note" %}}
+You should avoid displaying query values in labels, as this may create numerous unique alert instances when only one instance is necessary. Instead, use annotations to inform about query values.
 {{% /admonition %}}
 
-**Preview label templates**
+#### Preview label templates
+
+You can template label values when creating or editing an alert rule.
+
+To preview label values, select `Use notification policy`, and then click on `Preview routing`:
+
+{{< figure src="/media/docs/alerting/alert-instance-routing-preview.png" max-width="1200px" alt="Routing preview displays label values" >}}
+
+## More information
+
+For further details on how to template alert rules, refer to:
+
+- [Annotation and label template reference](ref:alert-rule-template-reference)
+- [Annotation and label examples](ref:alert-rule-template-examples)
