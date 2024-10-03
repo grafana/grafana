@@ -41,6 +41,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
+  view-alert-state:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-state-health/
+  preview-notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates
 ---
 
 # Template annotations and labels
@@ -101,7 +111,16 @@ CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 
 For more information on how to template annotations, refer to the [Template reference](ref:alert-rule-template-reference) and [examples](ref:alert-rule-template-examples).
 
-### Preview annotation templates
+#### Preview annotation templates
+
+You can template annotations when creating or editing an alert rule.
+
+{{< figure src="/media/docs/alerting/alert-rule-using-annotation-template.png" max-width="1200px" alt="An alert rule templating the annotation summary" >}}
+
+Two common methods to test or preview annotation templates are:
+
+1. Trigger the alert and [view the alert instance state in the Grafana UI](ref:view-alert-state), where all annotations of the alert instance are displayed.
+1. Create a notification template that displays the alert annotation, then [preview the notification template](ref:preview-notifications) using the alert instance.
 
 ## Template labels
 
@@ -113,4 +132,4 @@ When using custom labels with templates it is important to make sure that the la
 Extra whitespace in label templates can break matches with notification policies.
 {{% /admonition %}}
 
-### Preview label templates
+**Preview label templates**
