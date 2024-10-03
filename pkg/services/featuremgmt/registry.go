@@ -751,6 +751,12 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
+			Name:        "grafanaAPIServerTestingWithExperimentalAPIs",
+			Description: "Facilitate integration testing of experimental APIs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:            "datasourceQueryTypes",
 			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
 			Stage:           FeatureStageExperimental,
@@ -1297,8 +1303,9 @@ var (
 		{
 			Name:        "pinNavItems",
 			Description: "Enables pinning of nav items",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:              "authZGRPCServer",
