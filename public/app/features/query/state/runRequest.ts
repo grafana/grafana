@@ -193,7 +193,7 @@ function callQueryMethodWithMigration(
 ) {
   let migratedRequest: Observable<DataQueryRequest> = of(request);
   if (datasource instanceof DataSourceWithBackendMigration) {
-    const migratedRequestPromise = datasource.postMigrateQueries(request);
+    const migratedRequestPromise = datasource.migrateRequest(request);
     migratedRequest = from(migratedRequestPromise);
   }
   return migratedRequest.pipe(

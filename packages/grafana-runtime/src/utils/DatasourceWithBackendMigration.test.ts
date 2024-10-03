@@ -52,7 +52,7 @@ describe('query migration', () => {
       return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
     });
 
-    const result = await ds.postMigrateQuery!(originalQuery);
+    const result = await ds.migrateQuery!(originalQuery);
 
     expect(migratedQuery).toBe(result);
   });

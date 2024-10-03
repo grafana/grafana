@@ -41,7 +41,7 @@ export class DataSourceWithBackendMigration<
   /**
    * @alpha Experimental: Calls migration endpoint with one query. Requires grafanaAPIServerWithExperimentalAPIs or datasourceAPIServers feature toggle.
    */
-  postMigrateQuery<TQuery extends DataQuery = DataQuery>(query: TQuery): Promise<TQuery> | TQuery {
+  migrateQuery<TQuery extends DataQuery = DataQuery>(query: TQuery): Promise<TQuery> | TQuery {
     return this.postMigrateRequest([query]).then((res) => {
       return res[0];
     });
@@ -50,7 +50,7 @@ export class DataSourceWithBackendMigration<
   /**
    * @alpha Experimental: Calls migration endpoint with multiple queries. Requires grafanaAPIServerWithExperimentalAPIs or datasourceAPIServers feature toggle.
    */
-  async postMigrateQueries<TQuery extends DataQuery = DataQuery>(
+  async migrateRequest<TQuery extends DataQuery = DataQuery>(
     request: DataQueryRequest<TQuery>
   ): Promise<DataQueryRequest<TQuery>> {
     return this.postMigrateRequest(request.targets).then((res) => {

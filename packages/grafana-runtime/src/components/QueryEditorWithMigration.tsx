@@ -19,7 +19,7 @@ export function QueryEditorWithMigration<
     const [query, setQuery] = useState(props.query);
     useEffectOnce(() => {
       if (props.query) {
-        const migrated = props.datasource.postMigrateQuery(props.query);
+        const migrated = props.datasource.migrateQuery(props.query);
         if (migrated instanceof Promise) {
           migrated.then((migrated) => {
             props.onChange(migrated);
