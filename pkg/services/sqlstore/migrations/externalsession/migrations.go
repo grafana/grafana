@@ -9,6 +9,7 @@ func AddMigration(mg *migrator.Migrator) {
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "user_auth_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "user_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "auth_module", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "access_token", Type: migrator.DB_Text, Nullable: true},
 			{Name: "id_token", Type: migrator.DB_Text, Nullable: true},
 			{Name: "refresh_token", Type: migrator.DB_Text, Nullable: true},

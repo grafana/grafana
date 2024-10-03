@@ -9,6 +9,7 @@ type ExternalSession struct {
 	ID            int64     `xorm:"pk autoincr 'id'"`
 	UserID        int64     `xorm:"user_id"`
 	UserAuthID    int64     `xorm:"user_auth_id"`
+	AuthModule    string    `xorm:"auth_module"`
 	AccessToken   string    `xorm:"access_token"`
 	IDToken       string    `xorm:"id_token"`
 	RefreshToken  string    `xorm:"refresh_token"`
@@ -29,6 +30,7 @@ func (e *ExternalSession) Clone() *ExternalSession {
 		ID:            e.ID,
 		UserID:        e.UserID,
 		UserAuthID:    e.UserAuthID,
+		AuthModule:    e.AuthModule,
 		AccessToken:   e.AccessToken,
 		IDToken:       e.IDToken,
 		RefreshToken:  e.RefreshToken,
