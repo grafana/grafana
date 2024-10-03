@@ -1,7 +1,7 @@
 import { sceneGraph } from '@grafana/scenes';
+import { appEvents } from 'app/core/core';
 import { ScopesFacade } from 'app/features/scopes';
-
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import { ReloadDashboardEvent } from 'app/types/events';
 
 export interface DashboardScopesFacadeState {
   reloadOnScopesChange?: boolean;
@@ -22,6 +22,6 @@ export class DashboardScopesFacade extends ScopesFacade {
   }
 
   private reloadDashboard() {
-    getDashboardScenePageStateManager().reloadDashboard();
+    appEvents.publish(new ReloadDashboardEvent());
   }
 }

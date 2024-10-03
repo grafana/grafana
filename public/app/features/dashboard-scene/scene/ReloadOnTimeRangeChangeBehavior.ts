@@ -1,8 +1,8 @@
 import { isEqual } from 'lodash';
 
 import { sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import { appEvents } from 'app/core/core';
+import { ReloadDashboardEvent } from 'app/types/events';
 
 export interface ReloadOnTimeRangeChangeBehaviorState extends SceneObjectState {
   reloadOnTimeRangeChange?: boolean;
@@ -38,6 +38,6 @@ export class ReloadOnTimeRangeChangeBehavior extends SceneObjectBase<ReloadOnTim
   }
 
   private reloadDashboard() {
-    getDashboardScenePageStateManager().reloadDashboard();
+    appEvents.publish(new ReloadDashboardEvent());
   }
 }

@@ -1,6 +1,6 @@
 import { SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
-
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import { appEvents } from 'app/core/core';
+import { ReloadDashboardEvent } from 'app/types/events';
 
 export interface ReloadOnFiltersChangeBehaviorState extends SceneObjectState {
   reloadOnFiltersChange?: string[] | boolean;
@@ -32,7 +32,7 @@ export class ReloadOnFiltersChangeBehavior extends SceneObjectBase<ReloadOnFilte
 
   private reloadDashboard() {
     if (!this.isEditing()) {
-      getDashboardScenePageStateManager().reloadDashboard();
+      appEvents.publish(new ReloadDashboardEvent());
     }
   }
 }
