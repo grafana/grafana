@@ -30,7 +30,7 @@ var errGrafanaDBInstrumentedNotSupported = errors.New("Resource API is " +
 	" [database] INI section since a database configuration was not provided" +
 	" in the [resource_api] section. But we detected that the key `" +
 	grafanaDBInstrumentQueriesKey + "` is enabled in [database], and that" +
-	" setup is currently unsupported. Please, consider disabling that flag.")
+	" setup is currently unsupported. Please, consider disabling that flag")
 
 func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracing.Tracer) (db.DBProvider, error) {
 	p, err := newResourceDBProvider(grafanaDB, cfg, tracer)
