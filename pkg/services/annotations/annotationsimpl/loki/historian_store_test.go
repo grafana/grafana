@@ -93,7 +93,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -119,7 +119,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -143,7 +143,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -169,7 +169,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -199,7 +199,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -228,7 +228,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -262,7 +262,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
