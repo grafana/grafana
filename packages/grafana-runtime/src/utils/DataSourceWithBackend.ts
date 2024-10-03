@@ -4,6 +4,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 import {
   DataFrame,
   dataFrameToJSON,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   TestDataSourceResponse,
@@ -17,7 +18,6 @@ import {
   ScopedVars,
   AdHocVariableFilter,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
 
 import { config } from '../config';
 import {

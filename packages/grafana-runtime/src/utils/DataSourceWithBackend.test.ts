@@ -22,7 +22,6 @@ import {
   standardStreamOptionsProvider,
   toStreamingDataResponse,
 } from './DataSourceWithBackend';
-import { postMigrateQuery } from './postMigrateQuery';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 
 interface MyQuery extends DataQuery {
@@ -38,21 +37,13 @@ class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
   applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[] | undefined): MyQuery {
     return { ...query, applyTemplateVariablesCalled: true, filters };
   }
-
-  migrateQuery(query: MyQuery): MyQuery | Promise<MyQuery> {
-    return postMigrateQuery(query);
-  }
 }
 
 const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
-let mockDatasourcePost = jest.fn();
 
 const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
     return of(mockDatasourceRequest(options));
-  },
-  post<T = unknown>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>): Promise<T> {
-    return mockDatasourcePost({ url, data, ...options });
   },
 } as unknown as BackendSrv;
 
@@ -545,45 +536,15 @@ describe('DataSourceWithBackend', () => {
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });
-
-  describe('query migration', () => {
-    // Configure config.featureToggles.grafanaAPIServerWithExperimentalAPIs
-    const originalFeatureToggles = config.featureToggles;
-    beforeEach(() => {
-      config.featureToggles = { ...originalFeatureToggles, grafanaAPIServerWithExperimentalAPIs: true };
-    });
-    afterEach(() => {
-      config.featureToggles = originalFeatureToggles;
-    });
-
-    test('check that postMigrateQuery is called when query is migrated', async () => {
-      const { ds } = createMockDatasource({
-        apiVersion: 'v0alpha1',
-      });
-
-      const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
-      const migratedQuery = { refId: 'A', datasource: { type: 'dummy' }, foobar: 'barfoo' };
-      mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
-        expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
-        expect(args.data).toMatchObject({ queries: [originalQuery] });
-        return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
-      });
-
-      const result = await ds.migrateQuery!(originalQuery);
-
-      expect(migratedQuery).toBe(result);
-    });
-  });
 });
 
-function createMockDatasource(otherSettings?: Partial<DataSourceInstanceSettings<DataSourceJsonData>>) {
+function createMockDatasource() {
   const settings = {
     name: 'test',
     id: 1234,
     uid: 'abc',
     type: 'dummy',
     jsonData: {},
-    ...otherSettings,
   } as DataSourceInstanceSettings<DataSourceJsonData>;
 
   mockDatasourceRequest.mockReset();

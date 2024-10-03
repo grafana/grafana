@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 
 import { DataSourceRef } from '@grafana/schema';
 
-import { QueryEditorSanitizer } from '../utils/QueryEditorSanitizer';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
 import { ScopedVars } from './ScopedVars';
@@ -68,7 +67,7 @@ export class DataSourcePlugin<
   }
 
   setQueryEditor(QueryEditor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.QueryEditor = QueryEditorSanitizer(QueryEditor);
+    this.components.QueryEditor = QueryEditor;
     return this;
   }
 
@@ -375,12 +374,6 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
-
-  /**
-   * Optionally, use this method to migrate a query
-   * @alpha -- experimental
-   */
-  migrateQuery?(query: TQuery): Promise<TQuery> | TQuery;
 }
 
 /**
