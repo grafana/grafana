@@ -74,7 +74,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newDashboardSharingComponent`         | Enables the new sharing drawer design                                                                                                                                     |                    |
 | `notificationBanner`                   | Enables the notification banner UI and API                                                                                                                                | Yes                |
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                                                                     |                    |
-| `pinNavItems`                          | Enables pinning of nav items                                                                                                                                              |                    |
+| `pinNavItems`                          | Enables pinning of nav items                                                                                                                                              | Yes                |
 | `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                          | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                                                             | Yes                |
 
