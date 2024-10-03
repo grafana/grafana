@@ -5,6 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import TempoLanguageProvider from '../language_provider';
 import { intrinsics } from '../traceql/traceql';
 import { Scope } from '../types';
 
@@ -107,8 +108,12 @@ export const filterTitle = (f: TraceqlFilter) => {
   return startCase(filterScopedTag(f));
 };
 
-export const getFilteredTags = (tags: string[], staticTags: Array<string | undefined>) => {
-  return [...intrinsics, ...tags].filter((t) => !staticTags.includes(t));
+export const getFilteredTags = (
+  tags: string[],
+  languageProvider: TempoLanguageProvider,
+  staticTags: Array<string | undefined>
+) => {
+  return [...languageProvider.getIntrinsics(), ...tags].filter((t) => !staticTags.includes(t));
 };
 
 export const getUnscopedTags = (scopes: Scope[]) => {
@@ -116,6 +121,16 @@ export const getUnscopedTags = (scopes: Scope[]) => {
     scopes
       .map((scope: Scope) =>
         scope.name && scope.name !== TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []
+      )
+      .flat()
+  );
+};
+
+export const getIntrinsicTags = (scopes: Scope[]) => {
+  return uniq(
+    scopes
+      .map((scope: Scope) =>
+        scope.name && scope.name === TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []
       )
       .flat()
   );

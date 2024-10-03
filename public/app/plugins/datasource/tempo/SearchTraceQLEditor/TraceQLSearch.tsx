@@ -99,6 +99,10 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
   const staticTags = datasource.search?.filters?.map((f) => f.tag) || [];
   staticTags.push('duration');
   staticTags.push('traceDuration');
+  staticTags.push('span:duration');
+  staticTags.push('trace:duration');
+  staticTags.push('status');
+  staticTags.push('span:status');
 
   // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
   // The duration and status fields are a special case since its selector is hard-coded

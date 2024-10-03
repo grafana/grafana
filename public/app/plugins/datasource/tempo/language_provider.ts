@@ -2,9 +2,10 @@ import { LanguageProvider, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
-import { getAllTags, getTagsByScope, getUnscopedTags } from './SearchTraceQLEditor/utils';
+import { getAllTags, getIntrinsicTags, getTagsByScope, getUnscopedTags } from './SearchTraceQLEditor/utils';
 import { TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
+import { intrinsicsV1 } from './traceql/traceql';
 import { Scope } from './types';
 
 export default class TempoLanguageProvider extends LanguageProvider {
@@ -54,6 +55,13 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
   setV2Tags = (tags: Scope[]) => {
     this.tagsV2 = tags;
+  };
+
+  getIntrinsics = () => {
+    if (this.tagsV2) {
+      return getIntrinsicTags(this.tagsV2);
+    }
+    return intrinsicsV1;
   };
 
   getTags = (scope?: TraceqlSearchScope) => {

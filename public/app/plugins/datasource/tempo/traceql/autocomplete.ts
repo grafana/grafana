@@ -7,7 +7,7 @@ import type { Monaco, monacoTypes } from '@grafana/ui';
 import TempoLanguageProvider from '../language_provider';
 
 import { getSituation, Situation } from './situation';
-import { intrinsics, scopes } from './traceql';
+import { scopes } from './traceql';
 
 type MinimalCompletionItem = {
   label: string;
@@ -437,7 +437,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getIntrinsicsCompletions(prepend?: string, append?: string): CompletionItem[] {
-    return intrinsics.map((key) => ({
+    return this.languageProvider.getIntrinsics().map((key) => ({
       label: key,
       insertText: (prepend || '') + key + (append || ''),
       type: 'KEYWORD',

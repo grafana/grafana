@@ -1,6 +1,9 @@
 import { uniq } from 'lodash';
 
 import { TraceqlSearchScope } from '../dataquery.gen';
+import { TempoDatasource } from '../datasource';
+import TempoLanguageProvider from '../language_provider';
+import { intrinsicsV1 } from '../traceql/traceql';
 
 import {
   generateQueryFromFilters,
@@ -162,81 +165,42 @@ describe('generateQueryFromAdHocFilters generates the correct query for', () => 
 });
 
 describe('gets correct tags', () => {
+  const datasource: TempoDatasource = {
+    search: {
+      filters: [],
+    },
+  } as unknown as TempoDatasource;
+  const lp = new TempoLanguageProvider(datasource);
+
   it('for filtered tags when no tags supplied', () => {
-    const tags = getFilteredTags(emptyTags, []);
-    expect(tags).toEqual([
-      'duration',
-      'kind',
-      'name',
-      'rootName',
-      'rootServiceName',
-      'status',
-      'statusMessage',
-      'traceDuration',
-    ]);
+    const tags = getFilteredTags(emptyTags, lp, []);
+    expect(tags).toEqual(intrinsicsV1);
   });
 
   it('for filtered tags when API v1 tags supplied', () => {
-    const tags = getFilteredTags(v1Tags, []);
-    expect(tags).toEqual([
-      'duration',
-      'kind',
-      'name',
-      'rootName',
-      'rootServiceName',
-      'status',
-      'statusMessage',
-      'traceDuration',
-      'bar',
-      'foo',
-    ]);
+    const tags = getFilteredTags(v1Tags, lp, []);
+    expect(tags).toEqual(intrinsicsV1.concat(['bar', 'foo']));
   });
 
   it('for filtered tags when API v1 tags supplied with tags to filter out', () => {
-    const tags = getFilteredTags(v1Tags, ['duration']);
-    expect(tags).toEqual([
-      'kind',
-      'name',
-      'rootName',
-      'rootServiceName',
-      'status',
-      'statusMessage',
-      'traceDuration',
-      'bar',
-      'foo',
-    ]);
+    const tags = getFilteredTags(v1Tags, lp, ['duration']);
+    expect(tags).toEqual(intrinsicsV1.filter((x) => x !== 'duration').concat(['bar', 'foo']));
   });
 
   it('for filtered tags when API v2 tags supplied', () => {
-    const tags = getFilteredTags(uniq(getUnscopedTags(v2Tags)), []);
-    expect(tags).toEqual([
-      'duration',
-      'kind',
-      'name',
-      'rootName',
-      'rootServiceName',
-      'status',
-      'statusMessage',
-      'traceDuration',
-      'cluster',
-      'container',
-      'db',
-    ]);
+    const tags = getFilteredTags(uniq(getUnscopedTags(v2Tags)), lp, []);
+    expect(tags).toEqual(intrinsicsV1.concat(['cluster', 'container', 'db']));
   });
 
   it('for filtered tags when API v2 tags supplied with tags to filter out', () => {
-    const tags = getFilteredTags(getUnscopedTags(v2Tags), ['duration', 'cluster']);
-    expect(tags).toEqual([
-      'kind',
-      'name',
-      'rootName',
-      'rootServiceName',
-      'status',
-      'statusMessage',
-      'traceDuration',
-      'container',
-      'db',
-    ]);
+    const tags = getFilteredTags(getUnscopedTags(v2Tags), lp, ['duration', 'cluster']);
+    expect(tags).toEqual(intrinsicsV1.filter((x) => x !== 'duration').concat(['container', 'db']));
+  });
+
+  it('for filtered tags when API v2 tags set', () => {
+    lp.setV2Tags(v2Tags);
+    const tags = getFilteredTags(uniq(getUnscopedTags(v2Tags)), lp, []);
+    expect(tags).toEqual(testIntrinsics.concat(['cluster', 'container', 'db']));
   });
 
   it('for unscoped tags', () => {
@@ -261,6 +225,7 @@ describe('gets correct tags', () => {
 });
 
 export const emptyTags = [];
+export const testIntrinsics = ['duration', 'kind', 'name', 'status'];
 export const v1Tags = ['bar', 'foo'];
 export const v2Tags = [
   {
@@ -273,6 +238,6 @@ export const v2Tags = [
   },
   {
     name: 'intrinsic',
-    tags: ['duration', 'kind', 'name', 'status'],
+    tags: testIntrinsics,
   },
 ];
