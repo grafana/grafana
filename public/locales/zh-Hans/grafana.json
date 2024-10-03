@@ -1385,7 +1385,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1457,6 +1458,8 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1464,6 +1467,7 @@
       "dashboard": "仪表板",
       "datasource": "数据源",
       "folder": "",
+      "library_element": "",
       "unknown": "未知"
     },
     "summary": {
