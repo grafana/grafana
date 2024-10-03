@@ -257,11 +257,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         uid: oldModel.uid,
       }),
       new ReloadOnTimeRangeChangeBehavior({
-        reloadOnTimeRangeChange: true,
+        reloadOnTimeRangeChange: oldModel.meta.reloadOnTimeRangeChange,
         uid: oldModel.uid,
       }),
       new ReloadOnFiltersChangeBehavior({
-        reloadOnFiltersChange: true,
+        reloadOnFiltersChange: oldModel.meta.reloadOnFiltersChange,
         uid: oldModel.uid,
       }),
     ],
