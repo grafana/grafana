@@ -39,9 +39,9 @@ export default class GraphiteQuery {
   checkOtherSegmentsIndex = 0;
   removeTagValue: string;
   templateSrv: any;
-  scopedVars: any;
+  scopedVars?: ScopedVars;
 
-  constructor(datasource: any, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
+  constructor(datasource: GraphiteDatasource, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.datasource = datasource;
     this.target = target;
     this.templateSrv = templateSrv;
@@ -153,7 +153,7 @@ export default class GraphiteQuery {
     }
   }
 
-  updateSegmentValue(segment: any, index: number) {
+  updateSegmentValue(segment: GraphiteSegment, index: number) {
     this.segments[index].value = segment.value;
   }
 

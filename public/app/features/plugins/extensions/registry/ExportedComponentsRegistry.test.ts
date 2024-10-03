@@ -2,6 +2,7 @@ import React from 'react';
 import { firstValueFrom } from 'rxjs';
 
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
+import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
 
 describe('ExposedComponentsRegistry', () => {
   const consoleWarn = jest.fn();
@@ -338,5 +339,62 @@ describe('ExposedComponentsRegistry', () => {
 
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);
+  });
+
+  it('should not be possible to register a component on a read-only registry', async () => {
+    const pluginId = 'grafana-basic-app';
+    const registry = new ExposedComponentsRegistry();
+    const readOnlyRegistry = registry.readOnly();
+
+    expect(() => {
+      readOnlyRegistry.register({
+        pluginId,
+        configs: [
+          {
+            id: `${pluginId}/hello-world/v1`,
+            title: 'not important',
+            description: 'not important',
+            component: () => React.createElement('div', null, 'Hello World1'),
+          },
+        ],
+      });
+    }).toThrow(MSG_CANNOT_REGISTER_READ_ONLY);
+
+    const currentState = await readOnlyRegistry.getState();
+    expect(Object.keys(currentState)).toHaveLength(0);
+  });
+
+  it('should pass down fresh registrations to the read-only version of the registry', async () => {
+    const pluginId = 'grafana-basic-app';
+    const registry = new ExposedComponentsRegistry();
+    const readOnlyRegistry = registry.readOnly();
+    const subscribeCallback = jest.fn();
+    let readOnlyState;
+
+    // Should have no extensions registered in the beginning
+    readOnlyState = await readOnlyRegistry.getState();
+    expect(Object.keys(readOnlyState)).toHaveLength(0);
+
+    readOnlyRegistry.asObservable().subscribe(subscribeCallback);
+
+    // Register an extension to the original (writable) registry
+    registry.register({
+      pluginId,
+      configs: [
+        {
+          id: `${pluginId}/hello-world/v1`,
+          title: 'not important',
+          description: 'not important',
+          component: () => React.createElement('div', null, 'Hello World1'),
+        },
+      ],
+    });
+
+    // The read-only registry should have received the new extension
+    readOnlyState = await readOnlyRegistry.getState();
+    expect(Object.keys(readOnlyState)).toHaveLength(1);
+
+    expect(subscribeCallback).toHaveBeenCalledTimes(2);
+    expect(Object.keys(subscribeCallback.mock.calls[1][0])).toEqual([`${pluginId}/hello-world/v1`]);
   });
 });

@@ -84,7 +84,9 @@ export interface LdapServerConfig {
   bind_dn: string;
   bind_password?: string;
   client_cert: string;
+  client_cert_value: string;
   client_key: string;
+  client_key_value: string;
   group_mappings: GroupMapping[];
   group_search_base_dns: string[];
   group_search_filter: string;
@@ -93,6 +95,7 @@ export interface LdapServerConfig {
   min_tls_version?: string;
   port: number;
   root_ca_cert: string;
+  root_ca_cert_value: string[];
   search_base_dns: string[];
   search_filter: string;
   skip_org_role_sync: boolean;
@@ -134,4 +137,13 @@ export interface LdapPayload {
   provider: string;
   settings: LdapSettings;
   source: string;
+}
+
+export interface MapKeyCertConfigured {
+  rootCaCertValue: boolean;
+  clientCertValue: boolean;
+  clientKeyCertValue: boolean;
+  rootCaCertPath: boolean;
+  clientCertPath: boolean;
+  clientKeyCertPath: boolean;
 }

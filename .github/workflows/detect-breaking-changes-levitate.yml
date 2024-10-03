@@ -254,6 +254,8 @@ jobs:
 
             [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
             [Console output](${{ steps.levitate-run.outputs.job_link }})
+
+            * Your pull request merge won't be blocked.
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       # Remove comment from the PR (no more breaking changes)
@@ -353,5 +355,9 @@ jobs:
             });
 
       - name: Exit
-        run: exit ${{ steps.levitate-run.outputs.exit_code }}
+        run: |
+          if [ "${{ steps.levitate-run.outputs.exit_code }}" -ne 0 ]; then
+            echo "Breaking changes detected. Please check the levitate report in your pull request. This workflow won't block merging."
+          fi
+          exit ${{ steps.levitate-run.outputs.exit_code }}
         shell: bash

@@ -1,6 +1,6 @@
-import { type PluginExtensionLinkConfig } from '@grafana/data';
+import { PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { getExploreExtensionConfigs } from 'app/features/explore/extensions/getExploreExtensionConfigs';
 
-export function getCoreExtensionConfigurations(): PluginExtensionLinkConfig[] {
+export function getCoreExtensionConfigurations(): PluginExtensionAddedLinkConfig[] {
   return [...getExploreExtensionConfigs()];
 }

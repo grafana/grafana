@@ -785,6 +785,19 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
   });
 }
 
+export function getVanillaPromRule(override?: Partial<Omit<CombinedRule, 'rulerRule'>>) {
+  return mockCombinedRule({
+    namespace: {
+      groups: [],
+      name: 'Prometheus',
+      rulesSource: mockDataSource(),
+    },
+    promRule: mockPromAlertingRule(),
+    rulerRule: undefined,
+    ...override,
+  });
+}
+
 export function mockPluginLinkExtension(extension: Partial<PluginExtensionLink>): PluginExtensionLink {
   return {
     type: PluginExtensionTypes.link,

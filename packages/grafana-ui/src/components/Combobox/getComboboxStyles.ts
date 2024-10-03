@@ -2,18 +2,20 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
+const MAX_HEIGHT = 400;
+
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
   return {
+    menuClosed: css({
+      display: 'none',
+    }),
     menu: css({
       label: 'grafana-select-menu',
       background: theme.components.dropdown.background,
       boxShadow: theme.shadows.z3,
-      position: 'relative',
-      zIndex: 1,
-    }),
-    menuHeight: css({
-      height: 400,
-      overflowY: 'scroll',
+      zIndex: theme.zIndex.dropdown,
+      maxHeight: MAX_HEIGHT,
+      overflowY: 'auto',
       position: 'relative',
     }),
     menuUlContainer: css({

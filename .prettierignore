@@ -28,5 +28,8 @@ public/api-merged.json
 public/api-enterprise-spec.json
 public/openapi3.json
 
+# Generated mock service worker
+public/mockServiceWorker.js
+
 # Crowdin files
 public/locales/**/*.json

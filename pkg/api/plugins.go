@@ -144,7 +144,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			AngularDetected: pluginDef.Angular.Detected,
 		}
 
-		if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+		if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 			listItem.IAM = pluginDef.IAM
 		}
 
@@ -208,6 +208,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		SignatureOrg:     plugin.SignatureOrg,
 		SecureJsonFields: map[string]bool{},
 		AngularDetected:  plugin.Angular.Detected,
+		LoadingStrategy:  hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
 	}
 
 	if plugin.IsApp() {
@@ -483,7 +484,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+	if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 		// This is a non-blocking function that verifies that the installer has
 		// the permissions that the plugin requests to have on Grafana.
 		// If we want to make this blocking, the check will have to happen before or during the installation.

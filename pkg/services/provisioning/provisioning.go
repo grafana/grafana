@@ -53,6 +53,7 @@ func ProvideService(
 	quotaService quota.Service,
 	secrectService secrets.Service,
 	orgService org.Service,
+	resourcePermissions accesscontrol.ReceiverPermissionsService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -76,6 +77,7 @@ func ProvideService(
 		log:                          log.New("provisioning"),
 		orgService:                   orgService,
 		folderService:                folderService,
+		resourcePermissions:          resourcePermissions,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -154,6 +156,7 @@ type ProvisioningServiceImpl struct {
 	quotaService                 quota.Service
 	secretService                secrets.Service
 	folderService                folder.Service
+	resourcePermissions          accesscontrol.ReceiverPermissionsService
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -235,13 +238,18 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
+	err := ps.setDashboardProvisioner()
+	if err != nil {
+		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
 
 	ps.cancelPolling()
 	ps.dashboardProvisioner.CleanUpOrphanedDashboards(ctx)
 
-	err := ps.dashboardProvisioner.Provision(ctx)
+	err = ps.dashboardProvisioner.Provision(ctx)
 	if err != nil {
 		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 		// old provisioner as we did not switch them yet.
@@ -282,9 +290,10 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.secretService,
 		ps.SQLStore,
 		ps.log,
+		ps.resourcePermissions,
 	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
-		st, ps.SQLStore, receiverSvc, ps.log, &st)
+		st, ps.SQLStore, receiverSvc, ps.log, &st, ps.resourcePermissions)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(configStore, st, &st, ps.log, &st)

@@ -49,12 +49,12 @@ export function K8sNameLookup(props: Props) {
         console.log('LIST', url, table);
         const options: Array<SelectableValue<string>> = [];
         if (table.rows?.length) {
-          table.rows.forEach((row: any) => {
+          for (const row of table.rows) {
             const n = row.object?.metadata?.name;
             if (n) {
               options.push({ label: n, value: n });
             }
-          });
+          }
         } else {
           setPlaceholder('No items found');
         }

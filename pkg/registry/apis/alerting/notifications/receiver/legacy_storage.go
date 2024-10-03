@@ -2,9 +2,10 @@ package receiver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,6 +15,7 @@ import (
 	notifications "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanaRest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -33,10 +35,16 @@ type ReceiverService interface {
 	DeleteReceiver(ctx context.Context, name string, provenance definitions.Provenance, version string, orgID int64, user identity.Requester) error
 }
 
+type MetadataService interface {
+	AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverPermissionSet, error)
+	InUseMetadata(ctx context.Context, orgID int64, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverMetadata, error)
+}
+
 type legacyStorage struct {
 	service        ReceiverService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	metadata       MetadataService
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -61,7 +69,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
@@ -82,10 +90,27 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 
 	res, err := s.service.GetReceivers(ctx, q, user)
 	if err != nil {
-		return nil, err
+		// This API should not be returning a forbidden error when the user does not have access to any resources.
+		// This can be true for a contact point creator role, for example.
+		// This should eventually be changed downstream in the auth logic but provisioning API currently relies on this
+		//  behaviour to return useful forbidden errors when exporting decrypted receivers.
+		if !errors.Is(err, alertingac.ErrAuthorizationBase) {
+			return nil, err
+		}
+		res = nil
 	}
 
-	return convertToK8sResources(orgId, res, s.namespacer)
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, res...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+
+	inUses, err := s.metadata.InUseMetadata(ctx, orgId, res...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
+	}
+
+	return convertToK8sResources(orgId, res, accesses, inUses, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -96,7 +121,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 
 	name, err := legacy_storage.UidToName(uid)
 	if err != nil {
-		return nil, errors.NewNotFound(resourceInfo.GroupResource(), uid)
+		return nil, apierrors.NewNotFound(resourceInfo.GroupResource(), uid)
 	}
 	q := ngmodels.GetReceiverQuery{
 		OrgID:   info.OrgID,
@@ -113,7 +138,28 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, r, s.namespacer)
+
+	var access *ngmodels.ReceiverPermissionSet
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, r)
+	if err == nil {
+		if a, ok := accesses[r.GetUID()]; ok {
+			access = &a
+		}
+	} else {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+
+	var inUse *ngmodels.ReceiverMetadata
+	inUses, err := s.metadata.InUseMetadata(ctx, info.OrgID, r)
+	if err == nil {
+		if a, ok := inUses[r.GetUID()]; ok {
+			inUse = &a
+		}
+	} else {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+
+	return convertToK8sResource(info.OrgID, r, access, inUse, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -135,7 +181,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, fmt.Errorf("expected receiver but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
 	if p.ObjectMeta.Name != "" { // TODO remove when metadata.name can be defined by user
-		return nil, errors.NewBadRequest("object's metadata.name should be empty")
+		return nil, apierrors.NewBadRequest("object's metadata.name should be empty")
 	}
 	model, _, err := convertToDomainModel(p)
 	if err != nil {
@@ -151,7 +197,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, s.namespacer)
+	return convertToK8sResource(info.OrgID, out, nil, nil, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -194,16 +240,12 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	if p.ObjectMeta.Name != model.GetUID() {
-		return nil, false, errors.NewBadRequest("title cannot be changed. Consider creating a new resource.")
-	}
-
 	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID, user)
 	if err != nil {
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, s.namespacer)
+	r, err := convertToK8sResource(info.OrgID, updated, nil, nil, s.namespacer)
 	return r, false, err
 }
 
@@ -238,5 +280,5 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errors.NewMethodNotSupported(resourceInfo.GroupResource(), "deleteCollection")
+	return nil, apierrors.NewMethodNotSupported(resourceInfo.GroupResource(), "deleteCollection")
 }

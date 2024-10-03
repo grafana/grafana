@@ -1,5 +1,50 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Moving a Data source managed rule should move a rule in a namespace to another existing namespace 1`] = `
+[
+  {
+    "body": {
+      "name": "group-1",
+      "rules": [
+        {
+          "alert": "alert1",
+          "annotations": {
+            "summary": "test alert",
+          },
+          "expr": "up = 1",
+          "labels": {
+            "severity": "warning",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2?subtype=mimir",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "DELETE",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
+  },
+]
+`;
+
 exports[`Moving a Data source managed rule should move a rule in an existing group to a new group 1`] = `
 [
   {
@@ -125,7 +170,7 @@ exports[`Moving a Data source managed rule should move a rule in an existing gro
       ],
     ],
     "method": "POST",
-    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1?subtype=mimir",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2?subtype=mimir",
   },
   {
     "body": "",

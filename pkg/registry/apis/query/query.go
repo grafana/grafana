@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -135,26 +135,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		// get headers from the original http req and add them to each sub request
-		// headers are case insensitive, however some datasources still check for camel casing so we have to send them camel cased
-		expectedHeaders := map[string]string{
-			"fromalert":      "FromAlert",
-			"content-type":   "Content-Type",
-			"content-length": "Content-Length",
-			"user-agent":     "User-Agent",
-			"accept":         "Accept",
-		}
-
 		for i := range req.Requests {
-			req.Requests[i].Headers = make(map[string]string)
-			for k, v := range httpreq.Header {
-				headerToSend, ok := expectedHeaders[strings.ToLower(k)]
-				if ok {
-					req.Requests[i].Headers[headerToSend] = v[0]
-				} else {
-					b.log.Warn(fmt.Sprintf("query service received an unexpected header, ignoring it: %s", k))
-				}
-			}
+			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
 		}
 
 		// Actually run the query
@@ -176,6 +158,9 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		qdr = &backend.QueryDataResponse{}
 	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
+		if alertQueryWithoutExpression(req) {
+			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
+		}
 	default:
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
 	}
@@ -390,6 +375,35 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	return qdr, nil
 }
 
+func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
+	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
+	if len(req.Request.Queries) == 0 {
+		return nil, errors.New("no queries to convert")
+	}
+	if qdr == nil {
+		return nil, errors.New("queryDataResponse is nil")
+	}
+	allowLongFrames := false
+	refID := req.Request.Queries[0].RefID
+	if _, exist := qdr.Responses[refID]; !exist {
+		return nil, fmt.Errorf("refID '%s' does not exist", refID)
+	}
+	frames := qdr.Responses[refID].Frames
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, allowLongFrames)
+	if err != nil {
+		results.Error = err
+	}
+	qdr = &backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			refID: {
+				Frames: results.Values.AsDataFrames(refID),
+				Error:  results.Error,
+			},
+		},
+	}
+	return qdr, err
+}
+
 type responderWrapper struct {
 	wrapped    rest.Responder
 	onObjectFn func(statusCode int, obj runtime.Object)
@@ -418,4 +432,17 @@ func (r responderWrapper) Error(err error) {
 	}
 
 	r.wrapped.Error(err)
+}
+
+// Checks if the request only contains a single query and not expression.
+func alertQueryWithoutExpression(req parsedRequestInfo) bool {
+	if len(req.Requests) != 1 {
+		return false
+	}
+	headers := req.Requests[0].Headers
+	_, exist := headers[models.FromAlertHeaderName]
+	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
+		return true
+	}
+	return false
 }

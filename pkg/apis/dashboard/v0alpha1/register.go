@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var DashboardResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"dashboards", "dashboard", "Dashboard",
 	func() runtime.Object { return &Dashboard{} },
 	func() runtime.Object { return &DashboardList{} },
@@ -43,7 +42,7 @@ var DashboardResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var LibraryPanelResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var LibraryPanelResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"librarypanels", "librarypanel", "LibraryPanel",
 	func() runtime.Object { return &LibraryPanel{} },
 	func() runtime.Object { return &LibraryPanelList{} },

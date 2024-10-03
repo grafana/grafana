@@ -41,23 +41,7 @@ func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.C
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
-func (s *NoopServiceImpl) GetMigrationRunList(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRunList, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
 func (s *NoopServiceImpl) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
-func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.CloudMigrationSnapshot) (string, error) {
-	return "", cloudmigration.ErrInternalNotImplementedError
-}
-
-func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateDataResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 

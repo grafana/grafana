@@ -18,7 +18,7 @@ import { AccessControlAction } from 'app/types';
 
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
-import { getAnyOneWithTheLinkShareOption } from './ShareExternally';
+import { getAnyOneWithTheLinkShareOption } from './utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 export default function ShareTypeSelect({
@@ -82,10 +82,10 @@ export default function ShareTypeSelect({
           className={styles.select}
         />
       ) : (
-        <>
+        <Stack gap={1} alignItems="center">
           {toIconName(anyOneWithTheLinkOpt.icon) && <Icon name={toIconName(anyOneWithTheLinkOpt.icon)!} />}
           <Text>{anyOneWithTheLinkOpt.label}</Text>
-        </>
+        </Stack>
       )}
     </div>
   );

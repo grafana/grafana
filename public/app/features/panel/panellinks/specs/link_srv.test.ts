@@ -165,7 +165,7 @@ describe('linkSrv', () => {
         url: '/graph?home=$home',
         title: 'Visit home',
         tooltip: 'Visit ${home:raw}',
-      });
+      } as unknown as DashboardLink);
 
       expect(linkSrv.getLinkUrl).toBeCalledTimes(1);
       expect(templateSrv.replace).toBeCalledTimes(3);

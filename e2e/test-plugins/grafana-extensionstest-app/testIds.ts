@@ -36,5 +36,6 @@ export const testIds = {
   },
   addedLinksPage: {
     container: 'data-testid pg-added-links-container',
+    section1: 'use-plugin-links',
   },
 };

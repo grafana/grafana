@@ -4,7 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
 
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 
 import {
   AlertTemplateData,
@@ -35,13 +35,13 @@ export function TemplateDataDocs() {
         dataItems={GlobalTemplateData}
         typeRenderer={(type) =>
           type === '[]Alert' ? (
-            <HoverCard content={AlertTemplateDataTable}>
+            <PopupCard content={AlertTemplateDataTable}>
               <div className={styles.interactiveType}>{type}</div>
-            </HoverCard>
+            </PopupCard>
           ) : type === 'KeyValue' ? (
-            <HoverCard content={<KeyValueTemplateDataTable />}>
+            <PopupCard content={<KeyValueTemplateDataTable />}>
               <div className={styles.interactiveType}>{type}</div>
-            </HoverCard>
+            </PopupCard>
           ) : (
             type
           )

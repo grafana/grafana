@@ -2,6 +2,7 @@ import React from 'react';
 import { firstValueFrom } from 'rxjs';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
+import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
 
 describe('AddedComponentsRegistry', () => {
   const consoleWarn = jest.fn();
@@ -314,7 +315,7 @@ describe('AddedComponentsRegistry', () => {
     expect(Object.keys(currentState)).toHaveLength(0);
   });
 
-  it('should log a warning when exposed component id is not suffixed with component version', async () => {
+  it('should log a warning when added component id is not suffixed with component version', async () => {
     const registry = new AddedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app',
@@ -322,14 +323,14 @@ describe('AddedComponentsRegistry', () => {
         {
           title: 'Component 1 title',
           description: 'Component 1 description',
-          targets: ['grafana/alerting/home'],
+          targets: ['grafana/test/home'],
           component: () => React.createElement('div', null, 'Hello World1'),
         },
       ],
     });
 
     expect(consoleWarn).toHaveBeenCalledWith(
-      "[Plugin Extensions] Added component with id 'grafana/alerting/home' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'."
+      "[Plugin Extensions] Added component with id 'grafana/test/home' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'."
     );
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(1);
@@ -376,5 +377,61 @@ describe('AddedComponentsRegistry', () => {
 
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);
+  });
+
+  it('should not be possible to register a component on a read-only registry', async () => {
+    const registry = new AddedComponentsRegistry();
+    const readOnlyRegistry = registry.readOnly();
+
+    expect(() => {
+      readOnlyRegistry.register({
+        pluginId: 'grafana-basic-app',
+        configs: [
+          {
+            title: 'Component 1 title',
+            description: '',
+            targets: ['grafana/alerting/home'],
+            component: () => React.createElement('div', null, 'Hello World1'),
+          },
+        ],
+      });
+    }).toThrow(MSG_CANNOT_REGISTER_READ_ONLY);
+
+    const currentState = await readOnlyRegistry.getState();
+    expect(Object.keys(currentState)).toHaveLength(0);
+  });
+
+  it('should pass down fresh registrations to the read-only version of the registry', async () => {
+    const pluginId = 'grafana-basic-app';
+    const registry = new AddedComponentsRegistry();
+    const readOnlyRegistry = registry.readOnly();
+    const subscribeCallback = jest.fn();
+    let readOnlyState;
+
+    // Should have no extensions registered in the beginning
+    readOnlyState = await readOnlyRegistry.getState();
+    expect(Object.keys(readOnlyState)).toHaveLength(0);
+
+    readOnlyRegistry.asObservable().subscribe(subscribeCallback);
+
+    // Register an extension to the original (writable) registry
+    registry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Component 1 title',
+          description: 'Component 1 description',
+          targets: ['grafana/alerting/home'],
+          component: () => React.createElement('div', null, 'Hello World1'),
+        },
+      ],
+    });
+
+    // The read-only registry should have received the new extension
+    readOnlyState = await readOnlyRegistry.getState();
+    expect(Object.keys(readOnlyState)).toHaveLength(1);
+
+    expect(subscribeCallback).toHaveBeenCalledTimes(2);
+    expect(Object.keys(subscribeCallback.mock.calls[1][0])).toEqual(['grafana/alerting/home']);
   });
 });
