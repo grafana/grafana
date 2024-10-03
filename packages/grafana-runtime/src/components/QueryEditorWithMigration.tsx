@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { useEffectOnce } from 'react-use';
 
 import { DataSourceOptionsType, DataSourceQueryType, QueryEditorProps } from '@grafana/data';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
@@ -17,7 +16,7 @@ export function QueryEditorWithMigration<
   const WithExtra = (props: QueryEditorProps<DSType, TQuery, TOptions>) => {
     const [migrated, setMigrated] = useState(false);
     const [query, setQuery] = useState(props.query);
-    useEffectOnce(() => {
+    useEffect(() => {
       if (props.query) {
         const migrated = props.datasource.migrateQuery(props.query);
         if (migrated instanceof Promise) {
@@ -31,7 +30,7 @@ export function QueryEditorWithMigration<
         props.onChange(migrated);
       }
       setMigrated(true);
-    });
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
     useEffect(() => {
       setQuery(props.query);
     }, [props.query]);
