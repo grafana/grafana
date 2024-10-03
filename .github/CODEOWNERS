@@ -662,6 +662,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /kinds @grafana/grafana-as-code
 
 # Kind system and code generation
+embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
