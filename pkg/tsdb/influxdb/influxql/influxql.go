@@ -33,13 +33,13 @@ var (
 	glog               = log.New("tsdb.influx_influxql")
 )
 
-func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest, features featuremgmt.FeatureToggles) (*backend.QueryDataResponse, error) {
+func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := glog.FromContext(ctx)
 	response := backend.NewQueryDataResponse()
 	var err error
 
 	// We are testing running of queries in parallel behind feature flag
-	if features.IsEnabled(ctx, featuremgmt.FlagInfluxdbRunQueriesInParallel) {
+	if isFeatureEnabled(ctx, featuremgmt.FlagInfluxdbRunQueriesInParallel) {
 		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 		if err != nil {
 			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), featuremgmt.FlagInfluxdbRunQueriesInParallel)
@@ -71,7 +71,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 				return err
 			}
 
-			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, isFeatureEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
 
 			responseLock.Lock()
 			defer responseLock.Unlock()
@@ -110,7 +110,7 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 				return &backend.QueryDataResponse{}, err
 			}
 
-			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, isFeatureEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
 
 			if err != nil {
 				response.Responses[query.RefID] = backend.DataResponse{Error: err}
@@ -223,4 +223,8 @@ func startTrace(ctx context.Context, tracer trace.Tracer, name string, attribute
 	return ctx, func() {
 		span.End()
 	}
+}
+
+func isFeatureEnabled(ctx context.Context, feature string) bool {
+	return backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
 }
