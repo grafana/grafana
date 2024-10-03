@@ -1297,8 +1297,9 @@ var (
 		{
 			Name:        "pinNavItems",
 			Description: "Enables pinning of nav items",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false", // disabled by default
 		},
 		{
 			Name:              "authZGRPCServer",
