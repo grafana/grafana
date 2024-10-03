@@ -16,6 +16,11 @@ title: Annotation and label template reference
 menuTitle: Template reference
 weight: 101
 refs:
+  notification-template-reference:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
   template-language:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/
@@ -350,4 +355,12 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 
 ## Differences with notification templates
 
-Regardless of whether you are templating a label or an annotation, you should write each template inline inside the label or annotation that you are templating. This means you cannot share templates between labels and annotations, and instead you will need to copy templates wherever you want to use them.
+Both notification templates and alert rule templates use the Go templating system. However, the functions and variables available in notification templates differ from those used in annotations and labels templates.
+
+Annotation and label templates operate in the context of an individual alert instance, while notification templates apply to the context of a notification for a group of alerts.
+
+For example, notification templates provide the `.Alerts` variable, which includes the list of all firing and resolved alerts in the notification. For more details, refer to the [list of variables and functions in notification templates](ref:notification-template-reference).
+
+Additionally, you cannot use the `define` and `template` functions to share templates for labels and annotations as you can in notification templates.
+
+Instead, you need to write each template inline within the label or annotation fields and manually copy the templates wherever you want to reuse them.

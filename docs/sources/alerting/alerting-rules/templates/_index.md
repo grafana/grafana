@@ -40,11 +40,11 @@ refs:
 
 # Template annotations and labels
 
-You can use templates to customize alert and notification messages, including dynamic data from alert rule queries and expressions.
+You can use templates to customize alert and notification messages, including dynamic data from alert rule queries.
 
-Grafana Alerting offers two ways for templating alert notification messages:
+Grafana Alerting offers two ways for templating alert messages:
 
-1. **Template annotations and labels**: In the alert rule definition, you can template annotations and labels to add extra information from query data, enriching individual alerts with new relevant data.
+1. **Template annotations and labels**: In the alert rule definition, you can template annotations and labels to add extra information from query data, enriching individual alerts with meaningful details from query results.
 1. **Template notifications**: You can template notifications to control the content and appearance of their notifications.
 
 Both types of templates are written in the Go templating system. However, it's important to understand that [variables and functions used in notification templates](ref:notification-template-reference) are different from those used in [annotation and label templates](ref:alert-rule-template-reference).
@@ -55,8 +55,8 @@ See the differences between both types of templates in this diagram:
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" alt="How templating works" >}}
 
-1.  **Template annotations and labels**: Alert rule templates add extra information to individual alert instances. Template variables such as `$labels` and `$values` represent only data from the individual alert query.
-1.  **Template notifications**: Notification templates format the notification messages for a group of alerts, including template variables for all firing (`.Alerts.Firing`) and resolved alerts (`.Alerts.Resolved`) in the alert group.
+1.  **Template annotations and labels**: These templates add extra information to individual alert instances. Template variables like `$labels` and `$values` represent alert query data of the individual alert instance.
+1.  **Template notifications**: Notification templates format the notification content for a group of alerts, including variables for all firing (`.Alerts.Firing`) and resolved alerts (`.Alerts.Resolved`) in the notification.
 
 For a more detailed explanation of this diagram, refer to the [Templates Introduction](ref:intro-to-templates).
 
