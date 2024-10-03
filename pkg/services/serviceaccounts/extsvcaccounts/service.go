@@ -28,12 +28,12 @@ import (
 type ExtSvcAccountsService struct {
 	acSvc        ac.Service
 	defaultOrgID int64
-	features     featuremgmt.FeatureToggles
 	logger       log.Logger
 	metrics      *metrics
 	saSvc        sa.Service
 	skvStore     kvstore.SecretsKVStore
 	tracer       tracing.Tracer
+	enabled      bool
 }
 
 func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service, tracer tracing.Tracer) *ExtSvcAccountsService {
@@ -43,12 +43,12 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bu
 		defaultOrgID: cfg.DefaultOrgID(),
 		logger:       logger,
 		saSvc:        saSvc,
-		features:     features,
 		skvStore:     kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 		tracer:       tracer,
+		enabled:      cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) {
+	if esa.enabled {
 		// Register the metrics
 		esa.metrics = newMetrics(reg, esa.defaultOrgID, saSvc, logger)
 
@@ -138,7 +138,7 @@ func (esa *ExtSvcAccountsService) GetExternalServiceNames(ctx context.Context) (
 // SaveExternalService creates, updates or delete a service account (and its token) with the requested permissions.
 func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
-	if !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	if !esa.enabled {
 		esa.logger.FromContext(ctx).Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return nil, nil
 	}
@@ -184,7 +184,7 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 
 func (esa *ExtSvcAccountsService) RemoveExternalService(ctx context.Context, name string) error {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
-	if !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	if !esa.enabled {
 		esa.logger.Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return nil
 	}
@@ -225,7 +225,7 @@ func (esa *ExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID
 // ManageExtSvcAccount creates, updates or deletes the service account associated with an external service
 func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *sa.ManageExtSvcAccountCmd) (int64, error) {
 	// This is double proofing, we should never reach here anyway the flags have already been checked.
-	if !esa.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	if !esa.enabled {
 		esa.logger.FromContext(ctx).Warn("This feature is behind a feature flag, please set it if you want to save external services")
 		return 0, nil
 	}

@@ -137,8 +137,8 @@ message CreateRequest {
   // If name is not set, a unique name will be generated
   // The resourceVersion should not be set
   ResourceKey key = 1;
-  
-  // The resource JSON.  
+
+  // The resource JSON.
   bytes value = 2;
 }
 
@@ -157,7 +157,7 @@ message UpdateRequest {
   // The current resource version
   int64 resource_version = 2;
 
-  // The resource JSON.  
+  // The resource JSON.
   bytes value = 3;
 }
 
@@ -245,7 +245,7 @@ message ListRequest {
 
   // The resource version
   int64 resource_version = 2;
-  
+
   // List options
   ResourceVersionMatch version_match = 3;
 
@@ -302,8 +302,8 @@ message WatchEvent {
     ADDED = 1;
     MODIFIED = 2;
     DELETED = 3;
-    BOOKMARK = 4;  
-    ERROR = 5;  
+    BOOKMARK = 4;
+    ERROR = 5;
   }
 
   message Resource {
@@ -322,6 +322,14 @@ message WatchEvent {
 
   // Previous resource version (for update+delete)
   Resource previous = 4;
+}
+
+message SearchRequest {
+  string query = 1;
+}
+
+message SearchResponse {
+  repeated ResourceWrapper items = 1;
 }
 
 message HistoryRequest {
@@ -418,7 +426,7 @@ message HealthCheckResponse {
 
 // This provides the CRUD+List+Watch support needed for a k8s apiserver
 // The semantics and behaviors of this service are constrained by kubernetes
-// This does not understand the resource schemas, only deals with json bytes 
+// This does not understand the resource schemas, only deals with json bytes
 // Clients should not use this interface directly; it is for use in API Servers
 service ResourceStore {
   rpc Read(ReadRequest) returns (ReadResponse);
@@ -427,12 +435,12 @@ service ResourceStore {
   rpc Delete(DeleteRequest) returns (DeleteResponse);
 
   // The results *may* include values that should not be returned to the user
-  // This will perform best-effort filtering to increase performace. 
+  // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc List(ListRequest) returns (ListResponse);
 
   // The results *may* include values that should not be returned to the user
-  // This will perform best-effort filtering to increase performace. 
+  // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
 }
@@ -440,7 +448,7 @@ service ResourceStore {
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
-  // TODO: rpc Search(...) ... eventually a typed response
+   rpc Search(SearchRequest) returns (SearchResponse);
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);
