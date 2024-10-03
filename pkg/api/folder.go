@@ -8,6 +8,7 @@ import (
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -697,16 +698,7 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		return
 	}
 
-	fk8s.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
-	if err != nil {
-		fk8s.writeError(c, err)
-		return
-	}
-
-	legacyFolder := internalfolders.UnstructuredToLegacyFolder(*out)
-
-	folderDTO, err := fk8s.newToFolderDto(c, legacyFolder, f)
+	folderDTO, err := fk8s.newToFolderDto(c, *out)
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
@@ -727,19 +719,11 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 // 		return
 // 	}
 
-// 	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
-
-// 	legacyFolder := internalfolders.UnstructuredToLegacyFolder(*out)
-
-// 	folderDTO, err := fk8s.newToFolderDto(c, legacyFolder, f)
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
+// folderDTO, err := fk8s.newToFolderDto(c, *out)
+// if err != nil {
+// 	fk8s.writeError(c, err)
+// 	return
+// }
 
 // 	c.JSON(http.StatusOK, folderDTO)
 // }
@@ -777,19 +761,11 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 // 		return
 // 	}
 
-// 	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
-
-// 	legacyFolder := internalfolders.UnstructuredToLegacyFolder(*out)
-
-// 	folderDTO, err := fk8s.newToFolderDto(c, legacyFolder, f)
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
+// folderDTO, err := fk8s.newToFolderDto(c, *out)
+// if err != nil {
+// 	fk8s.writeError(c, err)
+// 	return
+// }
 
 // 	c.JSON(http.StatusOK, folderDTO)
 // }
@@ -817,8 +793,16 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 	errhttp.Write(c.Req.Context(), err, c.Resp)
 }
 
-func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder, fDTO *dtos.Folder) (dtos.Folder, error) {
+func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured) (dtos.Folder, error) {
 	ctx := c.Req.Context()
+
+	f := internalfolders.UnstructuredToLegacyFolder(item)
+
+	fDTO, err := internalfolders.UnstructuredToLegacyFolderDTO(item)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
+
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
 		g, err := guardian.NewByFolder(c.Req.Context(), f, c.SignedInUser.GetOrgID(), c.SignedInUser)
 		if err != nil {
