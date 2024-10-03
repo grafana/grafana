@@ -76,8 +76,8 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		}
 		guardian.MockDashboardGuardian(guardianMock)
 
-		createDashboards(t, service, dashboardStore, 100, "test-a")
-		createDashboards(t, service, dashboardStore, 100, "test-b")
+		createDashboards(t, service, 100, "test-a")
+		createDashboards(t, service, 100, "test-b")
 
 		// Sync Grafana DB with zanzana (migrate data)
 		zanzanaSyncronizer := migrator.NewZanzanaSynchroniser(zclient, db)
@@ -110,7 +110,7 @@ func setDBConfig(t *testing.T, cfg *setting.Cfg, db *sqlstore.SQLStore) {
 	require.NoError(t, err)
 }
 
-func createDashboard(t *testing.T, service dashboards.DashboardService, dashboardStore dashboards.Store, uid, title string) {
+func createDashboard(t *testing.T, service dashboards.DashboardService, uid, title string) {
 	dto := &dashboards.SaveDashboardDTO{
 		OrgID: 1,
 		// User:  user,
@@ -122,20 +122,14 @@ func createDashboard(t *testing.T, service dashboards.DashboardService, dashboar
 	dto.Dashboard = dashboards.NewDashboard(title)
 	dto.Dashboard.SetUID(uid)
 
-	// saveCmd, err := service.BuildSaveDashboardCommand(context.Background(), dto, false)
-	// require.NoError(t, err)
-
 	_, err := service.SaveDashboard(context.Background(), dto, false)
 	require.NoError(t, err)
-
-	// _, err = dashboardStore.SaveDashboard(context.Background(), *saveCmd)
-	// require.NoError(t, err)
 }
 
-func createDashboards(t *testing.T, service dashboards.DashboardService, dashboardStore dashboards.Store, number int, prefix string) {
-	for i := 0; i < int(number); i++ {
+func createDashboards(t *testing.T, service dashboards.DashboardService, number int, prefix string) {
+	for i := 0; i < number; i++ {
 		title := fmt.Sprintf("%s-%d", prefix, i)
 		uid := fmt.Sprintf("dash-%s", title)
-		createDashboard(t, service, dashboardStore, uid, title)
+		createDashboard(t, service, uid, title)
 	}
 }
