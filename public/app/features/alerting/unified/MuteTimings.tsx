@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Route, Switch, useRouteMatch } from 'react-router-dom';
-import { Navigate } from 'react-router-dom-v5-compat';
+import { Route, Switch } from 'react-router-dom';
+import { Navigate, useMatch } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { useGetMuteTiming } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
@@ -64,22 +64,23 @@ const MuteTimingsPage = () => {
 };
 
 export function useMuteTimingNavData() {
-  const { isExact, path } = useRouteMatch();
+  const isNewPath = useMatch('/alerting/routes/mute-timing/new');
+  const isEditPath = useMatch('/alerting/routes/mute-timing/edit');
   const [pageNav, setPageNav] = useState<Pick<NavModelItem, 'id' | 'text' | 'icon'> | undefined>();
 
   useEffect(() => {
-    if (path === '/alerting/routes/mute-timing/new') {
+    if (isNewPath) {
       setPageNav({
         id: 'alert-policy-new',
         text: 'Add mute timing',
       });
-    } else if (path === '/alerting/routes/mute-timing/edit') {
+    } else if (isEditPath) {
       setPageNav({
         id: 'alert-policy-edit',
         text: 'Edit mute timing',
       });
     }
-  }, [path, isExact]);
+  }, [isEditPath, isNewPath]);
 
   return pageNav;
 }
