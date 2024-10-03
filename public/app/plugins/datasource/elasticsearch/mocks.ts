@@ -1,23 +1,24 @@
 import {
+  AdHocVariableFilter,
   CoreApp,
   DataQueryRequest,
   DataSourceInstanceSettings,
   FieldType,
   PluginType,
-  TypedVariableModel,
   dateTime,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import type { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { ElasticDatasource } from './datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 export function createElasticDatasource(
   settings: Partial<DataSourceInstanceSettings<Partial<ElasticsearchOptions>>> & {
-    getVariables?: () => TypedVariableModel[];
+    getAdhocFilters?: (dsName: string, ignoreWarnings?: boolean) => AdHocVariableFilter[];
   } = {}
 ) {
-  const { jsonData, getVariables = () => [], ...rest } = settings;
+  const { jsonData, getAdhocFilters = (dsName: string) => [], ...rest } = settings;
 
   const instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions> = {
     id: 1,
@@ -57,8 +58,9 @@ export function createElasticDatasource(
     ...rest,
   };
 
-  const templateSrv: TemplateSrv = {
-    getVariables,
+  const templateSrv: BaseTemplateSrv & Pick<TemplateSrv, 'getAdhocFilters'> = {
+    getVariables: () => [],
+    getAdhocFilters,
     replace: (text?: string) => {
       if (text?.startsWith('$')) {
         return `resolvedVariable`;

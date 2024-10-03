@@ -37,16 +37,16 @@ import {
   DataSourceGetTagValuesOptions,
   AdHocVariableFilter,
   DataSourceWithQueryModificationSupport,
-  AdHocVariableModel,
   TypedVariableModel,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
   getDataSourceSrv,
   BackendSrvRequest,
-  TemplateSrv,
+  TemplateSrv as BaseTemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
@@ -130,7 +130,7 @@ export class ElasticDatasource
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+    private readonly templateSrv: BaseTemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
@@ -272,9 +272,7 @@ export class ElasticDatasource
     const timeEndField = annotation.timeEndField || null;
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const adhocVariables = this.templateSrv.getVariables().filter((v) => v.type === 'adhoc') as AdHocVariableModel[];
-    const annotationRelatedVariables = adhocVariables.filter((v) => v.datasource?.uid === annotation.datasource.uid);
-    const filters = annotationRelatedVariables.map((v) => v.filters).flat();
+    const filters = (this.templateSrv as TemplateSrv).getAdhocFilters(this.name, true);
 
     // the `target.query` is the "new" location for the query.
     // normally we would write this code as

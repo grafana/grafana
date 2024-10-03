@@ -938,23 +938,13 @@ describe('ElasticDatasource', () => {
 
       it('should process annotation request using dashboard adhoc variables', async () => {
         const ds = createElasticDatasource({
-          getVariables: () =>
-            [
-              {
-                type: 'adhoc',
-                datasource: {
-                  type: 'elasticsearch',
-                  uid: 'gdev-elasticsearch',
-                },
-                filters: [
-                  {
-                    key: 'abc_key',
-                    operator: '=',
-                    value: 'abc_value',
-                  },
-                ],
-              },
-            ] as any[],
+          getAdhocFilters: () => [
+            {
+              key: 'abc_key',
+              operator: '=',
+              value: 'abc_value',
+            },
+          ],
         });
         const postResourceRequestMock = jest.spyOn(ds, 'postResourceRequest').mockResolvedValue({
           responses: [
