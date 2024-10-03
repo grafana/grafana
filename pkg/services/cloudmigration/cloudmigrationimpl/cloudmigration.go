@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -60,6 +61,7 @@ type Service struct {
 	pluginStore      pluginstore.Store
 	secretsService   secrets.Service
 	kvStore          *kvstore.NamespacedKVStore
+	ngalert          *ngalert.AlertNG
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -93,6 +95,7 @@ func ProvideService(
 	folderService folder.Service,
 	pluginStore pluginstore.Store,
 	kvStore kvstore.KVStore,
+	ngalert *ngalert.AlertNG,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
@@ -111,6 +114,7 @@ func ProvideService(
 		folderService:    folderService,
 		pluginStore:      pluginStore,
 		kvStore:          kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
+		ngalert:          ngalert,
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
