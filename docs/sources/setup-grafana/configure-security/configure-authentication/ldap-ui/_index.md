@@ -119,4 +119,4 @@ Additional security settings options for LDAP authentication.
 
 Once you have configured the LDAP settings, click **Save** to persist the configuration.
 
-If you want to delete all the changes made through the UI and revert to the configuration file settings, click the three dots and click **Reset to default values**.
+If you want to delete all the changes made through the UI and revert to the configuration file settings, click the three dots menu icon and click **Reset to default values**.
