@@ -270,10 +270,9 @@ export class ElasticDatasource
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
-    const dashboard = options.dashboard;
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const adhocVariables = dashboard.getVariables().filter((v) => v.type === 'adhoc') as AdHocVariableModel[];
+    const adhocVariables = this.templateSrv.getVariables().filter((v) => v.type === 'adhoc') as AdHocVariableModel[];
     const annotationRelatedVariables = adhocVariables.filter((v) => v.datasource?.uid === annotation.datasource.uid);
     const filters = annotationRelatedVariables.map((v) => v.filters).flat();
 

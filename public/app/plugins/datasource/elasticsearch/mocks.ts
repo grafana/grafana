@@ -1,13 +1,23 @@
-import { CoreApp, DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType, dateTime } from '@grafana/data';
+import {
+  CoreApp,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  FieldType,
+  PluginType,
+  TypedVariableModel,
+  dateTime,
+} from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { ElasticDatasource } from './datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 export function createElasticDatasource(
-  settings: Partial<DataSourceInstanceSettings<Partial<ElasticsearchOptions>>> = {}
+  settings: Partial<DataSourceInstanceSettings<Partial<ElasticsearchOptions>>> & {
+    getVariables?: () => TypedVariableModel[];
+  } = {}
 ) {
-  const { jsonData, ...rest } = settings;
+  const { jsonData, getVariables = () => [], ...rest } = settings;
 
   const instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions> = {
     id: 1,
@@ -48,7 +58,7 @@ export function createElasticDatasource(
   };
 
   const templateSrv: TemplateSrv = {
-    getVariables: () => [],
+    getVariables,
     replace: (text?: string) => {
       if (text?.startsWith('$')) {
         return `resolvedVariable`;
