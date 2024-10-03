@@ -72,6 +72,15 @@ To create a notification template that contains more than one template:
 
 To create a notification template that makes reference to a annotation. For example a summary annotation.
 
+1. Navigate to **Alerts & IRM** and edit your alert rule.
+1. Add a **summary** annotation to your alert rule, and click **Save rule and exit**.
+
+    Example of a summary annotation that will ouput the labels of "instance":
+
+    ```
+    The database server {{ index $labels "instance" }} has exceeded 75% of available disk space
+    ```
+1. Navigate back to the notification template.
 1. Ensure that `summary` is defined in the notification template. Similarly, if you create a notification template that makes reference to a description annotation, or runbook url, you must define the `description`, or `runbook_url` annotation in the template.
 
    Example of mapping a summary annotation to a notification template.
@@ -83,8 +92,8 @@ To create a notification template that makes reference to a annotation. For exam
    {{ end }}
    {{ end }}
    ```
-   
-    The word "summary" is present in the line where the index function, which will print the summary annotation.
+
+    Note that the word "summary" is present in the line where the index function, which will print the summary annotation.
 
 ## Use notification templates
 

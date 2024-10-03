@@ -25,15 +25,13 @@ Each example provided here applies specifically to notification templates (note 
 
 > Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See more details in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
 
-
-
 ## Common use cases
 
-Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [corresponding documentation](#). 
+Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](#). 
 
 ### Firing and resolved alerts, with summary annotation
 
-This template prints the summary of all firing and resolved alerts. It requires a summary annotation in each alert. See the note in the [Notification templates examples](#notification-template-examples) section.
+This template prints the summary of all firing and resolved alerts. It requires a summary annotation in each alert. More details in the [Notification templates examples](#notification-template-examples) section.
 
 ```
 {{ define "alerts.message" -}}
