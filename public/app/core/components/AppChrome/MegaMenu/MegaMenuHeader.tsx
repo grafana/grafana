@@ -24,7 +24,7 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={0.25}>
-        <ToolbarButton narrow onClick={handleMegaMenu}>
+        <ToolbarButton narrow onClick={handleMegaMenu} tooltip={t('navigation.megamenu.close', 'Close menu')}>
           <Branding.MenuLogo className={styles.img} />
         </ToolbarButton>
         <OrganizationSwitcher />
