@@ -70,6 +70,22 @@ To create a notification template that contains more than one template:
 
 4. Save your changes.
 
+To create a notification template that makes reference to a annotation. For example a summary annotation.
+
+1. Ensure that `summary` is defined in the notification template. Similarly, if you create a notification template that makes reference to a description annotation, or runbook url, you must define the `description`, or `runbook_url` annotation in the template.
+
+   Example of mapping a summary annotation to a notification template.
+
+   ```
+   {{ define "alerts.summarize" -}}
+   {{ range . -}}
+   - {{ index .Annotations "summary" }}
+   {{ end }}
+   {{ end }}
+   ```
+   
+    The word "summary" is present in the line where the index function, which will print the summary annotation.
+
 ## Use notification templates
 
 Use templates in contact points to customize your notifications.
