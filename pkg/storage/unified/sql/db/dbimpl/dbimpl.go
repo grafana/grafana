@@ -25,7 +25,7 @@ const (
 
 const grafanaDBInstrumentQueriesKey = "instrument_queries"
 
-var errGrafanaDBInstrumentedNotSupported = errors.New("Resource API is " +
+var errGrafanaDBInstrumentedNotSupported = errors.New("the Resource API is " +
 	"attempting to leverage the database from core Grafana defined in the" +
 	" [database] INI section since a database configuration was not provided" +
 	" in the [resource_api] section. But we detected that the key `" +
