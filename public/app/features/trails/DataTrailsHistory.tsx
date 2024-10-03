@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
+import { url } from 'inspector';
 import { useMemo } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { getAppEvents } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -15,6 +17,7 @@ import {
   SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { HistoryChangedEvent } from 'app/types/events';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
 import { SerializedTrailHistory } from './TrailStore/TrailStore';
@@ -148,15 +151,21 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
             return;
           }
 
-          this.addTrailStep(
-            trail,
-            'time',
-            parseTimeTooltip({
-              from: newState.from,
-              to: newState.to,
-              timeZone: newState.timeZone,
+          const tooltip = parseTimeTooltip({
+            from: newState.from,
+            to: newState.to,
+            timeZone: newState.timeZone,
+          });
+
+          getAppEvents().publish(
+            new HistoryChangedEvent({
+              name: 'Time range changed',
+              description: tooltip,
+              url: window.location.href,
             })
           );
+
+          this.addTrailStep(trail, 'time', tooltip);
         }
       }
     });

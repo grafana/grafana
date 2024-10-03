@@ -1,17 +1,20 @@
 import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
-import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
+import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue, urlUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import store from 'app/core/store';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
+import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+import { HistoryEntryApp } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
@@ -27,10 +30,12 @@ export interface AppChromeState {
     title: ReturnToPreviousProps['title'];
     href: ReturnToPreviousProps['href'];
   };
+  history: HistoryEntryApp[];
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
+export const HISTORY_LOCAL_STORAGE_KEY = 'grafana.navigation.history';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -54,6 +59,7 @@ export class AppChromeService {
     kioskMode: null,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
+    history: store.getObject(HISTORY_LOCAL_STORAGE_KEY, []),
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -85,6 +91,8 @@ export class AppChromeService {
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
     if (!this.ignoreStateUpdate(newState, current)) {
+      newState.history = this.getUpdatedHistory(newState, current);
+      store.setObject(HISTORY_LOCAL_STORAGE_KEY, newState.history);
       this.state.next(newState);
     }
   }
@@ -113,6 +121,24 @@ export class AppChromeService {
     window.sessionStorage.removeItem('returnToPrevious');
   };
 
+  private getUpdatedHistory(newState: AppChromeState, currentState: AppChromeState): HistoryEntryApp[] {
+    const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
+    const newPageNav = newState.pageNav || newState.sectionNav.node;
+
+    let entries = currentState.history;
+    if (!newPageNav) {
+      return entries;
+    }
+
+    let lastEntry = entries[0];
+    if (!lastEntry || lastEntry.name !== newPageNav.text) {
+      lastEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now() };
+    }
+    if (lastEntry !== currentState.history[0]) {
+      entries = [lastEntry, ...entries];
+    }
+    return entries;
+  }
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {
       return true;
@@ -223,6 +249,10 @@ export class AppChromeService {
     }
 
     return null;
+  }
+
+  public setHistory(history: HistoryEntryApp[]) {
+    this.update({ history });
   }
 }
 

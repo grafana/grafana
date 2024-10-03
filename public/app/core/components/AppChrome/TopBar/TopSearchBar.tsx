@@ -11,6 +11,7 @@ import { ScopesSelector } from 'app/features/scopes';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
+import { HistoryContainer } from '../History/HistoryContainer';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
@@ -52,6 +53,7 @@ export const TopSearchBar = memo(function TopSearchBar() {
 
       <TopSearchBarSection align="right">
         <QuickAdd />
+        <HistoryContainer />
         {enrichedHelpNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
