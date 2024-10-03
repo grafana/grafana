@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneGridLayout, VizPanel, sceneGraph } from '@grafana/scenes';
+import { VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -11,6 +11,7 @@ import { activateInActiveParents } from '../utils/utils';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -22,20 +23,24 @@ const panelsPerRowCSSVar = '--panels-per-row';
 
 export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }: Props) {
   const { body } = dashboard.state;
-  const panels: VizPanel[] = [];
+  const filteredPanels: VizPanel[] = [];
   const styles = useStyles2(getStyles);
 
-  if (!(body instanceof SceneGridLayout)) {
+  const bodyGrid = body instanceof DefaultGridLayoutManager ? body.state.grid : null;
+
+  if (!bodyGrid) {
     return <Trans i18nKey="panel-search.unsupported-layout">Unsupported layout</Trans>;
   }
 
-  for (const gridItem of body.state.children) {
+  for (const gridItem of bodyGrid.state.children) {
     if (gridItem instanceof DashboardGridItem) {
-      const panel = gridItem.state.body;
-      const interpolatedTitle = sceneGraph.interpolate(dashboard, panel.state.title).toLowerCase();
-      const interpolatedSearchString = sceneGraph.interpolate(dashboard, panelSearch).toLowerCase();
-      if (interpolatedTitle.includes(interpolatedSearchString)) {
-        panels.push(gridItem.state.body);
+      const panels = gridItem.state.repeatedPanels ?? [gridItem.state.body];
+      for (const panel of panels) {
+        const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
+        const interpolatedSearchString = sceneGraph.interpolate(dashboard, panelSearch).toLowerCase();
+        if (interpolatedTitle.includes(interpolatedSearchString)) {
+          filteredPanels.push(panel);
+        }
       }
     }
   }
@@ -45,7 +50,7 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
       className={classNames(styles.grid, { [styles.perRow]: panelsPerRow !== undefined })}
       style={{ [panelsPerRowCSSVar]: panelsPerRow } as Record<string, number>}
     >
-      {panels.map((panel) => (
+      {filteredPanels.map((panel) => (
         <PanelSearchHit key={panel.state.key} panel={panel} />
       ))}
     </div>

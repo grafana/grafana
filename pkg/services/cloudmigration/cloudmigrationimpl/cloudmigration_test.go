@@ -617,7 +617,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 			featuremgmt.FlagDashboardRestore),
 		sqlStore,
 		dsService,
-		secretskv.NewFakeSQLSecretsKVStore(t),
+		secretskv.NewFakeSQLSecretsKVStore(t, sqlStore),
 		secretsService,
 		rr,
 		prometheus.DefaultRegisterer,

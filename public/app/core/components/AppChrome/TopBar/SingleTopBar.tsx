@@ -16,7 +16,6 @@ import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
-import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
@@ -59,7 +58,6 @@ export const SingleTopBar = memo(function SingleTopBar({
           </ToolbarButton>
         )}
         <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-        <OrganizationSwitcher />
         <ScopesSelector />
       </TopSearchBarSection>
 
@@ -98,7 +96,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     gap: theme.spacing(1),
     alignItems: 'center',
     padding: theme.spacing(0, 1),
-    paddingLeft: menuDockedAndOpen ? theme.spacing(3.5) : theme.spacing(0.5),
+    paddingLeft: menuDockedAndOpen ? theme.spacing(3.5) : theme.spacing(0.75),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
 
