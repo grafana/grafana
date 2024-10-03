@@ -190,6 +190,131 @@ describe('sceneVariablesSetToVariables', () => {
     `);
   });
 
+  it('should handle Query variable when sceneVariablesSetToVariables should discard options', () => {
+    const variable = new QueryVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      value: ['selected-value'],
+      text: ['selected-value-text'],
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      query: 'query',
+      options: [
+        { label: 'test', value: 'test' },
+        { label: 'test1', value: 'test1' },
+        { label: 'test2', value: 'test2' },
+      ],
+      includeAll: true,
+      allValue: 'test-all',
+      isMulti: true,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+    const result = sceneVariablesSetToVariables(set);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "allValue": "test-all",
+      "current": {
+        "text": [
+          "selected-value-text",
+        ],
+        "value": [
+          "selected-value",
+        ],
+      },
+      "datasource": {
+        "type": "fake-std",
+        "uid": "fake-std",
+      },
+      "definition": undefined,
+      "description": "test-desc",
+      "includeAll": true,
+      "label": "test-label",
+      "multi": true,
+      "name": "test",
+      "options": [],
+      "query": "query",
+      "refresh": 1,
+      "regex": "",
+      "type": "query",
+    }
+    `);
+  });
+
+  it('should handle Query variable when sceneVariablesSetToVariables shoudl keep options', () => {
+    const variable = new QueryVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      value: ['test'],
+      text: ['test'],
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      query: 'query',
+      options: [
+        { label: 'test', value: 'test' },
+        { label: 'test1', value: 'test1' },
+        { label: 'test2', value: 'test2' },
+      ],
+      includeAll: true,
+      allValue: 'test-all',
+      isMulti: true,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+    const keepQueryOptions = true;
+    const result = sceneVariablesSetToVariables(set, keepQueryOptions);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "allValue": "test-all",
+      "current": {
+        "text": [
+          "test",
+        ],
+        "value": [
+          "test",
+        ],
+      },
+      "datasource": {
+        "type": "fake-std",
+        "uid": "fake-std",
+      },
+      "definition": undefined,
+      "description": "test-desc",
+      "includeAll": true,
+      "label": "test-label",
+      "multi": true,
+      "name": "test",
+      "options": [
+        {
+          "selected": true,
+          "text": "test",
+          "value": "test",
+        },
+        {
+          "selected": false,
+          "text": "test1",
+          "value": "test1",
+        },
+        {
+          "selected": false,
+          "text": "test2",
+          "value": "test2",
+        },
+      ],
+      "query": "query",
+      "refresh": 1,
+      "regex": "",
+      "type": "query",
+    }
+    `);
+  });
+
   it('should handle DatasourceVariable', () => {
     const variable = new DataSourceVariable({
       name: 'test',
