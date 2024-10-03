@@ -1386,6 +1386,18 @@
     },
     {
       "metadata": {
+        "name": "grafanaAPIServerTestingWithExperimentalAPIs",
+        "resourceVersion": "1727945615419",
+        "creationTimestamp": "2024-10-03T08:53:35Z"
+      },
+      "spec": {
+        "description": "Facilitate integration testing of experimental APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerWithExperimentalAPIs",
         "resourceVersion": "1726731672938",
         "creationTimestamp": "2023-10-06T18:55:22Z",
@@ -2108,13 +2120,17 @@
     {
       "metadata": {
         "name": "notificationBanner",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-13T09:32:34Z"
+        "resourceVersion": "1727777007488",
+        "creationTimestamp": "2024-05-13T09:32:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-01 10:03:27.48823 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification banner UI and API",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "true"
       }
     },
     {
@@ -2264,13 +2280,17 @@
     {
       "metadata": {
         "name": "pinNavItems",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-10T11:40:03Z"
+        "resourceVersion": "1727948775526",
+        "creationTimestamp": "2024-06-10T11:40:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-03 09:46:15.526594 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables pinning of nav items",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "true"
       }
     },
     {
@@ -3001,6 +3021,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearch",
+        "resourceVersion": "1726771421439",
+        "creationTimestamp": "2024-09-19T18:43:41Z"
+      },
+      "spec": {
+        "description": "Enable unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "useSeessionStorageForRedirection",
         "resourceVersion": "1727082170583",
         "creationTimestamp": "2024-09-23T09:02:50Z",
@@ -3022,20 +3056,6 @@
         "description": "Use session storage for handling the redirection after login",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
-      }
-    },
-    {
-      "metadata": {
-        "name": "unifiedStorageSearch",
-        "resourceVersion": "1726771421439",
-        "creationTimestamp": "2024-09-19T18:43:41Z"
-      },
-      "spec": {
-        "description": "Enable unified storage search",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
       }
     },
     {

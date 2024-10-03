@@ -313,6 +313,11 @@ type GetSnapshotListParams struct {
 	// Session UID of a session
 	// in: path
 	UID string `json:"uid"`
+
+	// Sort with value latest to return results sorted in descending order.
+	// in:query
+	// required:false
+	Sort string `json:"sort"`
 }
 
 // swagger:response snapshotListResponse
