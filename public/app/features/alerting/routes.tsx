@@ -50,7 +50,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: importAlertingComponent(
         () =>
           import(
-            /* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/components/mute-timings/NewMuteTiming'
+            /* webpackChunkName: "NewMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/NewMuteTiming'
           )
       ),
     },
@@ -63,7 +63,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: importAlertingComponent(
         () =>
           import(
-            /* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTiming'
+            /* webpackChunkName: "EditMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTiming'
           )
       ),
     },
