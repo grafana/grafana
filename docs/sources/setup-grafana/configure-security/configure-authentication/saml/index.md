@@ -280,13 +280,13 @@ Grafana supports user authentication through Okta, which is useful when you want
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
    - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, for example, `https://grafana.example.com/saml/metadata`.
    - Leave the default values for **Name ID format** and **Application username**.
-   - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana, for example:
+   - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
-     | Attribute name (in Grafana) | Value (in Okta profile)                |
-     | --------------------------- | -------------------------------------- |
-     | Login                       | `user.login`                           |
-     | Email                       | `user.email`                           |
-     | DisplayName                 | `user.firstName + " " + user.lastName` |
+     | Attribute name (in Grafana) | Name and value (in Okta profile)                   |
+     | --------------------------- | -------------------------------------------------- |
+     | Login                       | Login `user.login`                                 |
+     | Email                       | Email `user.email`                                 |
+     | DisplayName                 | DisplayName `user.firstName + " " + user.lastName` |
 
    - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`) and set filter to `Matches regex .*` to return all user groups.
 
