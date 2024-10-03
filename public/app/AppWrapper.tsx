@@ -2,9 +2,9 @@ import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
 import { Switch, RouteComponentProps } from 'react-router-dom';
-import { CompatRoute, useLocation, Navigate } from 'react-router-dom-v5-compat';
+import { CompatRoute, Navigate } from 'react-router-dom-v5-compat';
 
-import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -55,13 +55,24 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   renderRoute = (route: RouteDescriptor) => {
+    const roles = route.roles ? route.roles() : [];
+    const location = locationService.getLocation();
     return (
       <CompatRoute
         exact={route.exact === undefined ? true : route.exact}
         sensitive={route.sensitive === undefined ? false : route.sensitive}
         path={route.path}
         key={route.path}
-        render={(props: RouteComponentProps) => <RouteComponent {...props} route={route} />}
+        render={(props: RouteComponentProps) => {
+          // TODO[Router]: test this logic
+          if (roles?.length) {
+            if (!roles.some((r: string) => contextSrv.hasRole(r))) {
+              return <Navigate replace to="/" />;
+            }
+          }
+
+          return <GrafanaRoute {...props} route={route} location={location} />;
+        }}
       />
     );
   };
@@ -119,19 +130,4 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       </Provider>
     );
   }
-}
-
-type Props = RouteComponentProps & { route: RouteDescriptor };
-
-function RouteComponent(props: Props) {
-  const location = useLocation();
-  const roles = props.route.roles ? props.route.roles() : [];
-  // TODO[Router]: test this logic
-  if (roles?.length) {
-    if (!roles.some((r: string) => contextSrv.hasRole(r))) {
-      return <Navigate replace to="/" />;
-    }
-  }
-
-  return <GrafanaRoute {...props} route={props.route} location={location} />;
 }
