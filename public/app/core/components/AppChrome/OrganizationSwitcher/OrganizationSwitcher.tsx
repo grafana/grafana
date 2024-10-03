@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Text, useTheme2 } from '@grafana/ui';
+import { Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
@@ -17,6 +18,7 @@ export function OrganizationSwitcher() {
   const theme = useTheme2();
   const dispatch = useDispatch();
   const orgs = useSelector((state) => state.organization.userOrgs);
+  const styles = useStyles2(getStyles);
   const onSelectChange = (option: SelectableValue<UserOrg>) => {
     if (option.value) {
       setUserOrganization(option.value.orgId);
@@ -46,7 +48,11 @@ export function OrganizationSwitcher() {
 
   if (orgs?.length <= 1) {
     if (config.featureToggles.singleTopNav) {
-      return <Text truncate>{Branding.AppTitle}</Text>;
+      return (
+        <span className={styles.brandTitle}>
+          <Text truncate>{Branding.AppTitle}</Text>
+        </span>
+      );
     } else {
       return null;
     }
@@ -56,3 +62,9 @@ export function OrganizationSwitcher() {
 
   return <Switcher orgs={orgs} onSelectChange={onSelectChange} />;
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  brandTitle: css({
+    paddingLeft: theme.spacing(1),
+  }),
+});
