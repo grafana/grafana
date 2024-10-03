@@ -14,7 +14,7 @@ weight: 300
 
 # Configure LDAP authentication using the Grafana user interface
 
-This page explains configuring LDAP authentication in Grafana using the Grafana user interface. For more detailed information about configuring LDAP authentication using the configuration file, refer to [LDAP authentication](../ldap/).
+This page explains configuring LDAP authentication in Grafana using the Grafana user interface. For more detailed information about configuring LDAP authentication using the configuration file, refer to [LDAP authentication]({{ < relref "../ldap"> }}).
 
 Benefits of using the Grafana user interface to configure LDAP authentication include:
 
@@ -36,7 +36,7 @@ Prerequisites:
 - Grafana instance v11.3.0 or later.
 - Permissions `settings:read` and `settings:write` with `settings:auth.ldap:*` scope.
 
-# Steps to configure LDAP authentication
+## Steps to configure LDAP authentication
 
 Sign in to Grafana and navigate to **Administration > Authentication > LDAP**.
 
