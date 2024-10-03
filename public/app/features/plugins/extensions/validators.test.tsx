@@ -197,6 +197,14 @@ describe('Plugin Extension Validators', () => {
       ['plugins/myorg-basic-app/start', undefined],
       ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
       ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/grafana-k8s-app/cluster/action', undefined],
+      ['plugins/grafana-k8s-app/cluster/action', 'grafana-k8s-app'],
+      ['plugins/grafana-oncall-app/alert-group/action', undefined],
+      ['plugins/grafana-oncall-app/alert-group/action', 'grafana-oncall-app'],
+      ['plugins/grafana-oncall-app/alert-group/action/v1', undefined],
+      ['plugins/grafana-oncall-app/alert-group/action/v1', 'grafana-oncall-app'],
+      ['plugins/grafana-oncall-app/alert-group/action/v1.0.0', undefined],
+      ['plugins/grafana-oncall-app/alert-group/action/v1.0.0', 'grafana-oncall-app'],
     ])('should return TRUE if the extension point id is valid ("%s", "%s")', (extensionPointId, pluginId) => {
       expect(
         isExtensionPointIdValid({
@@ -239,7 +247,7 @@ describe('Plugin Extension Validators', () => {
         'myorgs-extensions-app',
       ],
       [
-        // Missing prefix
+        // Missing plugin id prefix
         'extension-point/v1',
         'myorgs-extensions-app',
       ],

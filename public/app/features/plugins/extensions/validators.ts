@@ -65,7 +65,7 @@ export function isExtensionPointIdValid({
   // We don't enforce the "/{version}" suffix here, as it's not a hard requirement for the extension point ids yet.
   // (We do warn about it though.)
   const regex = new RegExp(
-    '^[0-9a-z]+-([0-9a-z]+-)?(app|panel|datasource|secretsmanager)\\/[a-zA-Z0-9_-]+(\\/v[0-9_.-])?$'
+    '^(?:plugins/)?[0-9a-z]+-([0-9a-z]+-)?(app|panel|datasource|secretsmanager)/[a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)*(?:/v[0-9_.-]+)?$'
   );
 
   // If a `pluginId` is provided, the extension point should be prefixed with the plugin id.
@@ -77,7 +77,7 @@ export function isExtensionPointIdValid({
     return true;
   }
 
-  return Boolean(extensionPointId.replace(/^plugins\//, '').match(regex));
+  return Boolean(extensionPointId.match(regex));
 }
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {
