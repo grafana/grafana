@@ -85,7 +85,8 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     if (error) {
       log.error(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`, {
-        error: error,
+        stack: error.stack ?? '',
+        message: error.message,
       });
       return null;
     }
@@ -350,7 +351,10 @@ export function getLinkExtensionOverrides(
     };
   } catch (error) {
     if (error instanceof Error) {
-      log.error(`Failed to configure link with title "${config.title}"`, { error });
+      log.error(`Failed to configure link with title "${config.title}"`, {
+        stack: error.stack ?? '',
+        message: error.message,
+      });
     }
 
     // If there is an error, we hide the extension
@@ -393,15 +397,18 @@ export function getLinkExtensionOnClick(
       const result = onClick(event, helpers);
 
       if (isPromise(result)) {
-        result.catch((e) => {
-          if (e instanceof Error) {
-            log.error(e.message, { error: e });
+        result.catch((error) => {
+          if (error instanceof Error) {
+            log.error(error.message, { error: error.stack ?? error.message });
           }
         });
       }
     } catch (error) {
       if (error instanceof Error) {
-        log.error(error.message, { error });
+        log.error(error.message, {
+          error: error.stack ?? '',
+          message: error.message,
+        });
       }
     }
   };

@@ -1,14 +1,14 @@
 import { isEmpty } from 'lodash';
 import { ReactElement, useMemo } from 'react';
 
-import { DataFrame, MatcherConfig, SelectableValue, ValueMatcherID } from '@grafana/data';
+import { DataFrame, MatcherConfig, SelectableValue } from '@grafana/data';
 import { SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
 
 export type LogFilter = {
-  pluginIds?: FilterConfig[];
-  extensionPointIds?: FilterConfig[];
-  severity?: FilterConfig[];
+  pluginIds?: Set<string>;
+  extensionPointIds?: Set<string>;
+  severity?: Set<string>;
   initial?: string;
 };
 
@@ -27,12 +27,12 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
       return onChange({
         ...filter,
         initial: isEmpty(values) ? undefined : 'pluginId',
-        pluginIds: mapToConfig('pluginId', values),
+        pluginIds: mapToSet(values),
       });
     }
     onChange({
       ...filter,
-      pluginIds: mapToConfig('pluginId', values),
+      pluginIds: mapToSet(values),
     });
   };
 
@@ -41,12 +41,12 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
       return onChange({
         ...filter,
         initial: isEmpty(values) ? undefined : 'extensionPointId',
-        extensionPointIds: mapToConfig('extensionPointId', values),
+        extensionPointIds: mapToSet(values),
       });
     }
     onChange({
       ...filter,
-      extensionPointIds: mapToConfig('extensionPointId', values),
+      extensionPointIds: mapToSet(values),
     });
   };
 
@@ -55,12 +55,12 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
       return onChange({
         ...filter,
         initial: isEmpty(values) ? undefined : 'severity',
-        severity: mapToConfig('severity', values),
+        severity: mapToSet(values),
       });
     }
     onChange({
       ...filter,
-      severity: mapToConfig('severity', values),
+      severity: mapToSet(values),
     });
   };
 
@@ -151,20 +151,17 @@ function useLogFilters(
   }, [data, filteredData, filter]);
 }
 
-function mapToConfig(fieldName: string, selected: Array<SelectableValue<string>>): FilterConfig[] | undefined {
+function mapToSet(selected: Array<SelectableValue<string>>): Set<string> | undefined {
   if (selected.length <= 0) {
     return undefined;
   }
 
-  return selected.map((selectable) => {
-    return {
-      fieldName: fieldName,
-      config: {
-        id: ValueMatcherID.equal,
-        options: { value: selectable.value },
-      },
-    };
-  });
+  return selected.reduce((set, selectable) => {
+    if (selectable.value) {
+      set.add(selectable.value);
+    }
+    return set;
+  }, new Set<string>());
 }
 
 function toSelectableArray(source: Set<string>): Array<SelectableValue<string>> {

@@ -2,12 +2,12 @@ import { isString } from 'lodash';
 import { nanoid } from 'nanoid';
 import { Observable, ReplaySubject } from 'rxjs';
 
-import { LogLevel } from '@grafana/data';
+import { Labels, LogLevel } from '@grafana/data';
 
 export type LogItem = {
   level: LogLevel;
   timestamp: number;
-  labels: Record<string | symbol, unknown>;
+  labels: Labels;
   message: string;
   id: string;
   pluginId?: string;
@@ -17,45 +17,41 @@ export type LogItem = {
 const channelName = 'ui-extension-logs';
 
 export class ExtensionsLog {
-  private baseLabels: Record<string | symbol, unknown> | undefined;
+  private baseLabels: Labels | undefined;
   private subject: ReplaySubject<LogItem> | undefined;
   private channel: BroadcastChannel;
 
-  constructor(
-    baseLabels?: Record<string | symbol, unknown>,
-    subject?: ReplaySubject<LogItem>,
-    channel?: BroadcastChannel
-  ) {
+  constructor(baseLabels?: Labels, subject?: ReplaySubject<LogItem>, channel?: BroadcastChannel) {
     this.baseLabels = baseLabels;
     this.channel = channel ?? new BroadcastChannel(channelName);
     this.subject = subject;
   }
 
-  info(message: string, labels?: LogItem['labels']): void {
+  info(message: string, labels?: Labels): void {
     this.log(LogLevel.info, message, labels);
   }
 
-  warning(message: string, labels?: LogItem['labels']): void {
+  warning(message: string, labels?: Labels): void {
     this.log(LogLevel.warning, message, labels);
   }
 
-  error(message: string, labels?: LogItem['labels']): void {
+  error(message: string, labels?: Labels): void {
     this.log(LogLevel.error, message, labels);
   }
 
-  debug(message: string, labels?: LogItem['labels']): void {
+  debug(message: string, labels?: Labels): void {
     this.log(LogLevel.debug, message, labels);
   }
 
-  trace(message: string, labels?: LogItem['labels']): void {
+  trace(message: string, labels?: Labels): void {
     this.log(LogLevel.trace, message, labels);
   }
 
-  fatal(message: string, labels?: LogItem['labels']): void {
+  fatal(message: string, labels?: Labels): void {
     this.log(LogLevel.fatal, message, labels);
   }
 
-  private log(level: LogLevel, message: string, labels?: LogItem['labels']): void {
+  private log(level: LogLevel, message: string, labels?: Labels): void {
     const combinedLabels = { ...labels, ...this.baseLabels };
     const { pluginId, extensionPointId } = combinedLabels;
 
@@ -83,7 +79,7 @@ export class ExtensionsLog {
     return this.subject.asObservable();
   }
 
-  child(labels: Record<string | symbol, unknown>): ExtensionsLog {
+  child(labels: Labels): ExtensionsLog {
     return new ExtensionsLog(
       {
         ...labels,

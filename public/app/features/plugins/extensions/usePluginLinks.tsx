@@ -53,7 +53,7 @@ export function usePluginLinks({
       const linkLog = log.child({
         pluginId,
         extensionPointId,
-        path: addedLink.path,
+        path: addedLink.path ?? '',
         title: addedLink.title,
         description: addedLink.description,
         onClick: typeof addedLink.onClick,

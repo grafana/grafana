@@ -44,7 +44,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
     for (const config of configs) {
       const { path, title, description, configure, onClick, targets } = config;
       const configLog = this.logger.child({
-        path,
+        path: path ?? '',
         description,
         title,
         pluginId,

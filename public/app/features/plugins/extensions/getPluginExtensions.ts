@@ -81,7 +81,7 @@ export const getPluginExtensions: GetExtensions = ({
       const linkLog = log.child({
         pluginId,
         extensionPointId,
-        path: addedLink.path,
+        path: addedLink.path ?? '',
         title: addedLink.title,
         description: addedLink.description,
         onClick: typeof addedLink.onClick,
@@ -113,7 +113,10 @@ export const getPluginExtensions: GetExtensions = ({
       extensionsByPlugin[pluginId] += 1;
     } catch (error) {
       if (error instanceof Error) {
-        log.error(error.message, { error });
+        log.error(error.message, {
+          stack: error.stack ?? '',
+          message: error.message,
+        });
       }
     }
   }

@@ -1,8 +1,6 @@
-import { isEmpty } from 'lodash';
 import { nanoid } from 'nanoid';
 import { ReactElement, useState } from 'react';
 
-import { DataTransformerConfig } from '@grafana/data';
 import { sceneUtils, VizConfigBuilders } from '@grafana/scenes';
 import {
   SceneContextProvider,
@@ -13,8 +11,9 @@ import {
 } from '@grafana/scenes-react';
 import { Page } from 'app/core/components/Page/Page';
 
-import { FilterConfig, LogFilter, LogViewFilters } from './LogViewFilters';
+import { LogFilter, LogViewFilters } from './LogViewFilters';
 import { ExtensionsLogDataSource } from './dataSource';
+import { createFilterTransformation } from './filterTransformation';
 import { log } from './log';
 
 const DATASOURCE_REF = {
@@ -47,7 +46,7 @@ function LogViewScene(): ReactElement | null {
   });
 
   const filteredData = useDataTransformer({
-    transformations: mapToTransformations(filter),
+    transformations: [createFilterTransformation(filter)],
     data: data,
   });
 
@@ -61,34 +60,4 @@ function LogViewScene(): ReactElement | null {
       </VizGridLayout>
     </Page>
   );
-}
-
-function mapToTransformations(filter: LogFilter): DataTransformerConfig[] {
-  if (isEmpty(filter.extensionPointIds) && isEmpty(filter.severity) && isEmpty(filter.pluginIds)) {
-    return [];
-  }
-
-  const filters: FilterConfig[] = [];
-
-  if (filter.extensionPointIds && !isEmpty(filter.extensionPointIds)) {
-    filters.push.apply(filters, filter.extensionPointIds);
-  }
-
-  if (filter.pluginIds && !isEmpty(filter.pluginIds)) {
-    filters.push.apply(filters, filter.pluginIds);
-  }
-
-  if (filter.severity && !isEmpty(filter.severity)) {
-    filters.push.apply(filters, filter.severity);
-  }
-
-  return [
-    {
-      id: 'filterByValue',
-      options: {
-        filters: filters,
-        match: 'all',
-      },
-    },
-  ];
 }
