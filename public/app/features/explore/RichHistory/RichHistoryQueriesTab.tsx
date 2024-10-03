@@ -7,17 +7,13 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import {
-  createDatasourcesList,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
   SortOrder,
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
-
-import { selectExploreDSMaps } from '../state/selectors';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
@@ -31,6 +27,8 @@ export interface RichHistoryQueriesTabProps {
   loadMoreRichHistory: () => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
+  activeDatasources: string[];
+  listOfDatasources: Array<{ name: string; uid: string }>;
   height: number;
 }
 
@@ -125,21 +123,18 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     loadMoreRichHistory,
     richHistorySettings,
     height,
+    listOfDatasources,
+    activeDatasources,
   } = props;
 
-  const exploreActiveDS = useSelector(selectExploreDSMaps);
   const styles = useStyles2(getStyles, height);
-
-  const listOfDatasources = createDatasourcesList();
 
   // on mount, set filter to either active datasource or all datasources
   useEffect(() => {
     const datasourceFilters =
       !richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
-        : exploreActiveDS.dsToExplore
-            .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
-            .filter((name): name is string => !!name);
+        : activeDatasources;
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
