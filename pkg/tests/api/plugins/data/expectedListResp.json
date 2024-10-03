@@ -18,6 +18,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -60,6 +61,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "alerts",
@@ -104,6 +106,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -163,6 +166,7 @@
           "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": [
         "azure",
@@ -206,6 +210,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -243,6 +248,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -280,6 +286,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "financial",
@@ -322,6 +329,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -359,6 +367,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "aws",
@@ -399,6 +408,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -436,6 +446,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -478,9 +489,15 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
-        "elasticsearch"
+        "elasticsearch",
+        "datasource",
+        "database",
+        "logs",
+        "nosql",
+        "traces"
       ]
     },
     "dependencies": {
@@ -517,6 +534,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -554,6 +572,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -591,6 +610,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -628,6 +648,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -665,6 +686,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -707,6 +729,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -752,6 +775,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -798,6 +822,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -835,6 +860,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -872,6 +898,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "distribution",
@@ -914,6 +941,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -960,6 +988,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -997,6 +1026,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1043,6 +1073,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1080,6 +1111,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1117,11 +1149,12 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": ">=10.4.0",
+      "grafanaDependency": "\u003e=10.4.0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1154,6 +1187,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1191,6 +1225,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1228,6 +1263,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1270,6 +1306,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1312,6 +1349,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1349,6 +1387,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1391,6 +1430,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1428,6 +1468,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1465,6 +1506,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1502,6 +1544,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1539,6 +1582,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1576,6 +1620,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1618,6 +1663,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1655,6 +1701,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1692,6 +1739,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1729,6 +1777,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1766,6 +1815,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1803,6 +1853,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1840,6 +1891,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1877,6 +1929,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "scatter",
@@ -1922,6 +1975,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.3.0-pre",
       "updated": "",
       "keywords": null
     },
