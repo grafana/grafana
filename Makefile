@@ -303,6 +303,14 @@ golangci-lint: $(GOLANGCI_LINT)
 .PHONY: lint-go
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
 
+.PHONY: lint-go-diff
+lint-go-diff: $(GOLANGCI_LINT)
+	git diff --name-only remotes/origin/main | \
+		xargs dirname | \
+		sort -u | \
+		sed 's,^,./,' | \
+		xargs $(GOLANGCI_LINT) run --config .golangci.toml
+
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
