@@ -329,6 +329,9 @@
       "moving": "Mővįŉģ...",
       "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
+    "actions": {
+      "button-to-recently-deleted": "Ŗęčęŉŧľy đęľęŧęđ"
+    },
     "counts": {
       "alertRule_one": "{{count}} äľęřŧ řūľę",
       "alertRule_other": "{{count}} äľęřŧ řūľęş",
