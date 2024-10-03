@@ -30,7 +30,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
           // @ts-expect-error
           text: variable.state.text,
         },
-        options: options,
+        options,
         query: variable.state.query,
         definition: variable.state.definition,
         datasource: variable.state.datasource,
