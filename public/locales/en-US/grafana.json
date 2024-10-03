@@ -1467,6 +1467,7 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "dashboard-load-error": "Unable to load dashboard",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
       "unknown-datasource-type": "Unknown data source"
     },

@@ -67,78 +67,69 @@ function DatasourceInfo({ data }: { data: ResourceTableItem }) {
   );
 }
 
+function getTitleFromDashboardJSON(dashboardData: object | undefined): string | undefined {
+  if (dashboardData && 'title' in dashboardData && typeof dashboardData.title === 'string') {
+    return dashboardData.title;
+  }
+
+  return undefined;
+}
+
 function DashboardInfo({ data }: { data: ResourceTableItem }) {
   const dashboardUID = data.refId;
-  let dashboardName = data.name;
-  let dashboardParentName = data.parentName;
+  const skipApiCall = !!data.name && !!data.parentName;
+  const {
+    data: dashboardData,
+    isLoading,
+    isError,
+  } = useGetDashboardByUidQuery({ uid: dashboardUID }, { skip: skipApiCall });
 
-  let skipApiCall = !!dashboardName && !!dashboardParentName;
+  const dashboardName = data.name || getTitleFromDashboardJSON(dashboardData?.dashboard) || dashboardUID;
+  const dashboardParentName = data.parentName || dashboardData?.meta?.folderTitle || 'Dashboards';
 
-  const { data: dashboardData, isError } = useGetDashboardByUidQuery(
-    {
-      uid: dashboardUID,
-    },
-    { skip: skipApiCall }
-  );
+  if (isError) {
+    return (
+      <>
+        <Text italic>
+          <Trans i18nKey="migrate-to-cloud.resource-table.dashboard-load-error">Unable to load dashboard</Trans>
+        </Text>
+        <Text color="secondary">Dashboard {dashboardUID}</Text>
+      </>
+    );
+  }
 
-  if (!skipApiCall) {
-    if (isError) {
-      // Not translated because this is only temporary until the data comes through in the MigrationRun API
-      return (
-        <>
-          <Text italic>Unable to load dashboard</Text>
-          <Text color="secondary">Dashboard {dashboardUID}</Text>
-        </>
-      );
-    }
-    if (!dashboardData) {
-      return <InfoSkeleton />;
-    }
-
-    if (
-      dashboardData?.dashboard &&
-      'title' in dashboardData?.dashboard &&
-      typeof dashboardData?.dashboard.title === 'string'
-    ) {
-      dashboardName = dashboardData?.dashboard?.title || dashboardUID;
-    } else {
-      dashboardName = dashboardUID;
-    }
-    dashboardParentName = dashboardData?.meta?.folderTitle;
+  if (isLoading) {
+    return <InfoSkeleton />;
   }
 
   return (
     <>
       <span>{dashboardName}</span>
-      <Text color="secondary">{dashboardParentName ?? 'Dashboards'}</Text>
+      <Text color="secondary">{dashboardParentName}</Text>
     </>
   );
 }
 
 function FolderInfo({ data }: { data: ResourceTableItem }) {
   const folderUID = data.refId;
-  let folderName = data.name;
-  let folderParentName = data.parentName;
-
-  let skipApiCall = !!folderName && !!folderParentName;
+  const skipApiCall = !!data.name && !!data.parentName;
 
   const { data: folderData, isLoading, isError } = useGetFolderQuery(folderUID, { skip: skipApiCall });
 
-  if (!skipApiCall) {
-    if (isLoading || !folderData) {
-      return <InfoSkeleton />;
-    }
-    if (isError) {
-      return (
-        <>
-          <Text italic>Unable to load dashboard</Text>
-          <Text color="secondary">Dashboard {data.refId}</Text>
-        </>
-      );
-    }
+  const folderName = data.name || folderData?.title;
+  const folderParentName = data.parentName || folderData?.parents?.[folderData.parents.length - 1]?.title;
 
-    folderName = folderData.title;
-    folderParentName = folderData.parents?.[folderData.parents.length - 1]?.title;
+  if (isError) {
+    return (
+      <>
+        <Text italic>Unable to load folder</Text>
+        <Text color="secondary">Folder {data.refId}</Text>
+      </>
+    );
+  }
+
+  if (isLoading) {
+    return <InfoSkeleton />;
   }
 
   return (
