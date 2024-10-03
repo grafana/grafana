@@ -246,10 +246,6 @@ export class AppChromeService {
 
     return null;
   }
-
-  public setHistory(history: HistoryEntryApp[]) {
-    this.update({ history });
-  }
 }
 
 /**
