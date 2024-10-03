@@ -56,6 +56,10 @@
     "pause": ""
   },
   "alerting": {
+    "annotations": {
+      "description": "",
+      "title": ""
+    },
     "central-alert-history": {
       "details": {
         "error": "",
@@ -108,7 +112,18 @@
     },
     "contact-point": "",
     "contact-points": {
+      "create": "",
+      "delete-reasons": {
+        "heading": "",
+        "no-permissions": "",
+        "policies": "",
+        "provisioned": "",
+        "rules": ""
+      },
       "delivery-duration": "",
+      "empty-state": {
+        "title": ""
+      },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-delivery-attempts": "",
@@ -119,7 +134,9 @@
         "parse-mode-warning-title": ""
       },
       "used-by_one": "",
-      "used-by_other": ""
+      "used-by_other": "",
+      "used-by-rules_one": "",
+      "used-by-rules_other": ""
     },
     "contactPointFilter": {
       "label": ""
@@ -141,6 +158,10 @@
           "title": ""
         }
       }
+    },
+    "manage-permissions": {
+      "button": "",
+      "title": ""
     },
     "mute_timings": {
       "error-loading": {
@@ -195,6 +216,13 @@
       "badge-tooltip-provenance": "",
       "badge-tooltip-standard": ""
     },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": ""
+      },
+      "preview": "",
+      "previewCondition": ""
+    },
     "rule-groups": {
       "delete": {
         "success": ""
@@ -214,6 +242,12 @@
       "deleting": "",
       "paused": "",
       "recording-rule": ""
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "",
+        "alert-title": ""
+      }
     },
     "rules": {
       "add-rule": {
@@ -244,6 +278,12 @@
         "state": ""
       },
       "save-query": ""
+    },
+    "simpleCondition": {
+      "alertCondition": "",
+      "ofQuery": {
+        "To": ""
+      }
     }
   },
   "annotations": {
@@ -462,23 +502,30 @@
     },
     "source-form": {
       "control-required": "Dieses Feld ist erforderlich.",
-      "description": "Sie haben folgende Variablen in der Zielabfrage verwendet: <1></1><2></2>Ein Datenpunkt muss Werte für alle Variablen als Felder oder als Transformationsausgabe bereitstellen, um die Korrelationsschaltfläche in der Visualisierung erscheinen zu lassen.<4></4>Hinweis: Nicht jede Variable muss unten explizit definiert werden. Eine Transformation wie <7>logfmt</7> erzeugt Variablen für jedes Schlüssel-/Wert-Paar.",
-      "heading": "In der Zielabfrage verwendete Variablen",
+      "description": "",
+      "description-external-pre": "",
+      "description-query-pre": "",
+      "external-title": "",
+      "heading-external": "",
+      "heading-query": "",
+      "query-title": "",
       "results-description": "Der Link wird neben dem Wert dieses Feldes angezeigt",
       "results-label": "Ergebnisfeld",
       "results-required": "Dieses Feld ist erforderlich.",
       "source-description": "Die Ergebnisse aus der ausgewählten Quelldatenquelle verfügen über Links, die im Fenster angezeigt werden",
       "source-label": "Quelle",
-      "sub-text": "<0>Definieren, welche Datenquelle die Korrelation anzeigt und welche Daten die zuvor definierten Variablen ersetzen sollen. </0>",
-      "title": "Konfigurieren Sie die Datenquelle, die auf {{dataSourceName}} verlinkt wird (Schritt 3 von 3)"
+      "sub-text": "<0>Definieren, welche Datenquelle die Korrelation anzeigt und welche Daten die zuvor definierten Variablen ersetzen sollen. </0>"
     },
     "sub-title": "Definieren, wie sich Daten in verschiedenen Datenquellen miteinander verbinden. Lesen Sie mehr in der <2>Dokumentation<1></1></2>",
     "target-form": {
       "control-rules": "Dieses Feld ist erforderlich.",
-      "sub-text": "<0>Definieren Sie, mit welcher Datenquelle die Korrelation verknüpft wird und welche Abfrage ausgeführt wird, wenn die Korrelation angeklickt wird.</0>",
-      "target-description": "Geben Sie an, welche Datenquelle beim Anklicken des Links abgefragt wird",
+      "sub-text": "",
+      "target-description-external": "",
+      "target-description-query": "",
       "target-label": "Ziel",
-      "title": "Ziel für die Korrelation einrichten (Schritt 2 von 3)"
+      "target-type-description": "",
+      "title": "Ziel für die Korrelation einrichten (Schritt 2 von 3)",
+      "type-label": ""
     },
     "trans-details": {
       "logfmt-description": "Das angegebene Feld mit logfmt analysieren, um Variablen zu erhalten",
@@ -704,6 +751,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "",
+      "angular-deprecation-description": "",
+      "angular-deprecation-heading": ""
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1077,9 +1129,9 @@
       "root-ca-cert-label": "",
       "root-ca-cert-placeholder": "",
       "root-ca-cert-value-label": "",
+      "root-ca-cert-value-placeholder": "",
       "start-tls-description": "",
       "start-tls-label": "",
-      "tls-ciphers-description": "",
       "tls-ciphers-label": "",
       "tls-ciphers-placeholder": "",
       "use-ssl-description": "",
@@ -1111,8 +1163,8 @@
         "button": ""
       },
       "description": "",
-      "group-search-base-dns-description": "",
       "group-search-base-dns-label": "",
+      "group-search-base-dns-placeholder": "",
       "group-search-filter-description": "",
       "group-search-filter-label": "",
       "group-search-filter-user-attribute-description": "",
@@ -1134,9 +1186,7 @@
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
-      "edit": {
-        "button": ""
-      },
+      "edit-button": "",
       "subtitle": "",
       "title": ""
     },
@@ -1157,15 +1207,10 @@
       "label": ""
     },
     "buttons-section": {
-      "discard": {
-        "button": ""
-      },
-      "save": {
-        "button": ""
-      },
-      "save-and-enable": {
-        "button": ""
-      }
+      "disable-button": "",
+      "discard-button": "",
+      "save-and-enable-button": "",
+      "save-button": ""
     },
     "documentation": "",
     "host": {
@@ -1184,7 +1229,8 @@
     },
     "search-base-dns": {
       "description": "",
-      "label": ""
+      "label": "",
+      "placeholder": ""
     },
     "subtitle": "",
     "title": ""
@@ -1349,7 +1395,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1421,6 +1468,8 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1428,6 +1477,7 @@
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
       "folder": "Ordner",
+      "library_element": "",
       "unknown": "Unbekannt"
     },
     "summary": {
@@ -1529,7 +1579,7 @@
     },
     "apps": {
       "subtitle": "App-Plug-ins, die das Grafana-Erlebnis erweitern",
-      "title": "Apps"
+      "title": ""
     },
     "authentication": {
       "title": "Authentifizierung"
@@ -1740,6 +1790,9 @@
       "subtitle": "Verwende Servicekonten, um automatisierte Arbeitsabläufe in Grafana auszuführen",
       "title": "Servicekonten"
     },
+    "setup-guide": {
+      "title": ""
+    },
     "shared-dashboard": {
       "subtitle": "",
       "title": ""
@@ -1831,6 +1884,9 @@
       "server-discovery-modal-close": "",
       "server-discovery-modal-loading": "",
       "server-discovery-modal-submit": ""
+    },
+    "login": {
+      "error": ""
     }
   },
   "panel": {
@@ -1855,6 +1911,9 @@
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
       "view": "Anzeigen"
     }
+  },
+  "panel-search": {
+    "unsupported-layout": ""
   },
   "playlist-edit": {
     "error-prefix": "Fehler beim Laden der Wiedergabeliste:",
@@ -1912,13 +1971,16 @@
         "button": "",
         "cloud-update-message": "",
         "error": "",
+        "error-status-text": "",
         "header": "",
         "installed-header": "",
         "modal-confirmation": "",
         "modal-dismiss": "",
+        "modal-in-progress": "",
         "modal-title": "",
         "name-header": "",
-        "update-header": ""
+        "update-header": "",
+        "update-status-text": ""
       }
     },
     "details": {
@@ -2140,7 +2202,10 @@
     }
   },
   "query-library": {
-    "delete-query-button": ""
+    "datasource-names": "",
+    "delete-query-button": "",
+    "query-template-get-error": "",
+    "search": ""
   },
   "query-operation": {
     "header": {

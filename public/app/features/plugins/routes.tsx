@@ -33,7 +33,7 @@ export function getAppPluginRoutes(): RouteDescriptor[] {
     {
       path: '/a/:pluginId',
       exact: false, // route everything under this path to the plugin, so it can define more routes under this path
-      component: ({ match }) => <AppRootPage pluginId={match.params.pluginId} pluginNavSection={navIndex.home} />,
+      component: () => <AppRootPage pluginNavSection={navIndex.home} />,
     },
   ];
 }

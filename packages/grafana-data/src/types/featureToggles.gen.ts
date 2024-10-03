@@ -117,6 +117,7 @@ export interface FeatureToggles {
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
   kubernetesFolders?: boolean;
+  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -193,7 +194,6 @@ export interface FeatureToggles {
   openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
-  databaseReadReplica?: boolean;
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
@@ -205,13 +205,18 @@ export interface FeatureToggles {
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
+  alertingPrometheusRulesPrimary?: boolean;
   singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
+  homeSetupGuide?: boolean;
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
+  alertingQueryAndExpressionsStepMode?: boolean;
   improvedExternalSessionHandling?: boolean;
   useSessionStorageForRedirection?: boolean;
+  rolePickerDrawer?: boolean;
+  unifiedStorageSearch?: boolean;
 }

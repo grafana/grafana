@@ -56,6 +56,10 @@
     "pause": ""
   },
   "alerting": {
+    "annotations": {
+      "description": "",
+      "title": ""
+    },
     "central-alert-history": {
       "details": {
         "error": "",
@@ -108,7 +112,18 @@
     },
     "contact-point": "",
     "contact-points": {
+      "create": "",
+      "delete-reasons": {
+        "heading": "",
+        "no-permissions": "",
+        "policies": "",
+        "provisioned": "",
+        "rules": ""
+      },
       "delivery-duration": "",
+      "empty-state": {
+        "title": ""
+      },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-delivery-attempts": "",
@@ -119,7 +134,9 @@
         "parse-mode-warning-title": ""
       },
       "used-by_one": "",
-      "used-by_other": ""
+      "used-by_other": "",
+      "used-by-rules_one": "",
+      "used-by-rules_other": ""
     },
     "contactPointFilter": {
       "label": ""
@@ -141,6 +158,10 @@
           "title": ""
         }
       }
+    },
+    "manage-permissions": {
+      "button": "",
+      "title": ""
     },
     "mute_timings": {
       "error-loading": {
@@ -195,6 +216,13 @@
       "badge-tooltip-provenance": "",
       "badge-tooltip-standard": ""
     },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": ""
+      },
+      "preview": "",
+      "previewCondition": ""
+    },
     "rule-groups": {
       "delete": {
         "success": ""
@@ -214,6 +242,12 @@
       "deleting": "",
       "paused": "",
       "recording-rule": ""
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "",
+        "alert-title": ""
+      }
     },
     "rules": {
       "add-rule": {
@@ -244,6 +278,12 @@
         "state": ""
       },
       "save-query": ""
+    },
+    "simpleCondition": {
+      "alertCondition": "",
+      "ofQuery": {
+        "To": ""
+      }
     }
   },
   "annotations": {
@@ -462,23 +502,30 @@
     },
     "source-form": {
       "control-required": "Este campo es obligatorio.",
-      "description": "Ha utilizado las siguientes variables en la consulta de destino: <1></1><2></2>Un punto de datos necesita proporcionar valores a todas las variables como campos o como salida de transformaciones para hacer que el botón de correlación aparezca en la visualización. 4></4>Nota: No todas las variables deben definirse explícitamente a continuación. Una transformación como <7>logfmt</7> creará variables para cada par clave/valor.",
-      "heading": "Variables utilizadas en la consulta de destino",
+      "description": "",
+      "description-external-pre": "",
+      "description-query-pre": "",
+      "external-title": "",
+      "heading-external": "",
+      "heading-query": "",
+      "query-title": "",
       "results-description": "El enlace se mostrará junto al valor de este campo",
       "results-label": "Campo de resultados",
       "results-required": "Este campo es obligatorio.",
       "source-description": "Los resultados de la fuente de datos seleccionada tienen enlaces que se muestran en el panel",
       "source-label": "Fuente",
-      "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>",
-      "title": "Configurar la fuente de datos que se vinculará a {{dataSourceName}} (paso 3 de 3)"
+      "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>"
     },
     "sub-title": "Defina cómo se relacionan los datos que se encuentran en diferentes fuentes de datos. Más información en la <2>documentación<1></1></2>",
     "target-form": {
       "control-rules": "Este campo es obligatorio.",
-      "sub-text": "<0>Defina a qué fuente de datos enlazará la correlación y qué consulta se ejecutará cuando se haga clic en la correlación.</0>",
-      "target-description": "Especifique qué fuente de datos se consulta cuando se hace clic en el enlace",
+      "sub-text": "",
+      "target-description-external": "",
+      "target-description-query": "",
       "target-label": "Destino",
-      "title": "Configurar el destino de la correlación (paso 2 de 3)"
+      "target-type-description": "",
+      "title": "Configurar el destino de la correlación (paso 2 de 3)",
+      "type-label": ""
     },
     "trans-details": {
       "logfmt-description": "Analice el campo proporcionado con logfmt para obtener variables",
@@ -704,6 +751,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "",
+      "angular-deprecation-description": "",
+      "angular-deprecation-heading": ""
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1077,9 +1129,9 @@
       "root-ca-cert-label": "",
       "root-ca-cert-placeholder": "",
       "root-ca-cert-value-label": "",
+      "root-ca-cert-value-placeholder": "",
       "start-tls-description": "",
       "start-tls-label": "",
-      "tls-ciphers-description": "",
       "tls-ciphers-label": "",
       "tls-ciphers-placeholder": "",
       "use-ssl-description": "",
@@ -1111,8 +1163,8 @@
         "button": ""
       },
       "description": "",
-      "group-search-base-dns-description": "",
       "group-search-base-dns-label": "",
+      "group-search-base-dns-placeholder": "",
       "group-search-filter-description": "",
       "group-search-filter-label": "",
       "group-search-filter-user-attribute-description": "",
@@ -1134,9 +1186,7 @@
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
-      "edit": {
-        "button": ""
-      },
+      "edit-button": "",
       "subtitle": "",
       "title": ""
     },
@@ -1157,15 +1207,10 @@
       "label": ""
     },
     "buttons-section": {
-      "discard": {
-        "button": ""
-      },
-      "save": {
-        "button": ""
-      },
-      "save-and-enable": {
-        "button": ""
-      }
+      "disable-button": "",
+      "discard-button": "",
+      "save-and-enable-button": "",
+      "save-button": ""
     },
     "documentation": "",
     "host": {
@@ -1184,7 +1229,8 @@
     },
     "search-base-dns": {
       "description": "",
-      "label": ""
+      "label": "",
+      "placeholder": ""
     },
     "subtitle": "",
     "title": ""
@@ -1349,7 +1395,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1421,6 +1468,8 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1428,6 +1477,7 @@
       "dashboard": "Panel de control",
       "datasource": "Fuente de datos",
       "folder": "",
+      "library_element": "",
       "unknown": "Desconocido"
     },
     "summary": {
@@ -1529,7 +1579,7 @@
     },
     "apps": {
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
-      "title": "Aplicaciones"
+      "title": ""
     },
     "authentication": {
       "title": "Autenticación"
@@ -1740,6 +1790,9 @@
       "subtitle": "Use cuentas de servicio para ejecutar cargas de trabajo automatizadas en Grafana",
       "title": "Cuentas de servicios"
     },
+    "setup-guide": {
+      "title": ""
+    },
     "shared-dashboard": {
       "subtitle": "",
       "title": ""
@@ -1831,6 +1884,9 @@
       "server-discovery-modal-close": "",
       "server-discovery-modal-loading": "",
       "server-discovery-modal-submit": ""
+    },
+    "login": {
+      "error": ""
     }
   },
   "panel": {
@@ -1855,6 +1911,9 @@
       "unlink-library-panel": "Desvincular panel de librería",
       "view": "Vista"
     }
+  },
+  "panel-search": {
+    "unsupported-layout": ""
   },
   "playlist-edit": {
     "error-prefix": "Error al cargar la lista de reproducción:",
@@ -1912,13 +1971,16 @@
         "button": "",
         "cloud-update-message": "",
         "error": "",
+        "error-status-text": "",
         "header": "",
         "installed-header": "",
         "modal-confirmation": "",
         "modal-dismiss": "",
+        "modal-in-progress": "",
         "modal-title": "",
         "name-header": "",
-        "update-header": ""
+        "update-header": "",
+        "update-status-text": ""
       }
     },
     "details": {
@@ -2140,7 +2202,10 @@
     }
   },
   "query-library": {
-    "delete-query-button": ""
+    "datasource-names": "",
+    "delete-query-button": "",
+    "query-template-get-error": "",
+    "search": ""
   },
   "query-operation": {
     "header": {

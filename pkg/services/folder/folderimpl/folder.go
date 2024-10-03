@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -29,23 +30,27 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const FULLPATH_SEPARATOR = "/"
 
 type Service struct {
-	store                store
+	store                folder.Store
 	db                   db.DB
 	log                  *slog.Logger
 	dashboardStore       dashboards.Store
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
+	cfg                  *setting.Cfg
+	folderPermissions    accesscontrol.FolderPermissionsService
 	accessControl        accesscontrol.AccessControl
 	// bus is currently used to publish event in case of folder full path change.
 	// For example when a folder is moved to another folder or when a folder is renamed.
@@ -58,23 +63,27 @@ type Service struct {
 }
 
 func ProvideService(
+	store *FolderStoreImpl,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 	dashboardStore dashboards.Store,
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	folderPermissions accesscontrol.FolderPermissionsService,
 	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
 ) folder.Service {
-	store := ProvideStore(db)
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
 		dashboardFolderStore: folderStore,
 		store:                store,
 		features:             features,
+		cfg:                  cfg,
+		folderPermissions:    folderPermissions,
 		accessControl:        ac,
 		bus:                  bus,
 		db:                   db,
@@ -86,9 +95,9 @@ func ProvideService(
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(store))
 	return srv
 }
 
@@ -143,10 +152,10 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	qry := NewGetFoldersQuery(q)
+	qry := folder.NewGetFoldersQuery(q)
 	permissions := q.SignedInUser.GetPermissions()
 	folderPermissions := permissions[dashboards.ActionFoldersRead]
-	qry.ancestorUIDs = make([]string, 0, len(folderPermissions))
+	qry.AncestorUIDs = make([]string, 0, len(folderPermissions))
 	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
 		return nil, nil
 	}
@@ -154,12 +163,12 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		if p == dashboards.ScopeFoldersAll {
 			// no need to query for folders with permissions
 			// the user has permission to access all folders
-			qry.ancestorUIDs = nil
+			qry.AncestorUIDs = nil
 			break
 		}
 		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
-			if !slices.Contains(qry.ancestorUIDs, folderUid) {
-				qry.ancestorUIDs = append(qry.ancestorUIDs, folderUid)
+			if !slices.Contains(qry.AncestorUIDs, folderUid) {
+				qry.AncestorUIDs = append(qry.AncestorUIDs, folderUid)
 			}
 		}
 	}
@@ -658,7 +667,41 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	if nestedFolder != nil && nestedFolder.ParentUID != "" {
 		f.ParentUID = nestedFolder.ParentUID
 	}
+	if err = s.setDefaultFolderPermissions(ctx, cmd.OrgID, user, f); err != nil {
+		return nil, err
+	}
+
 	return f, nil
+}
+
+func (s *Service) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
+	if !s.cfg.RBAC.PermissionsOnCreation("folder") {
+		return nil
+	}
+
+	var permissions []accesscontrol.SetResourcePermissionCommand
+
+	if user.IsIdentityType(claims.TypeUser) {
+		userID, err := user.GetInternalID()
+		if err != nil {
+			return err
+		}
+
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+		})
+	}
+
+	isNested := folder.ParentUID != ""
+	if !isNested || !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+		}...)
+	}
+
+	_, err := s.folderPermissions.SetPermissions(ctx, orgID, folder.UID, permissions...)
+	return err
 }
 
 func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {

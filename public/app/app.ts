@@ -62,7 +62,7 @@ import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
-import { contextSrv } from './core/services/context_srv';
+import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -195,6 +195,10 @@ export class GrafanaApp {
         importPanelPlugin,
         getPanelPluginFromCache: syncGetPanelPlugin,
       });
+
+      if (config.featureToggles.useSessionStorageForRedirection) {
+        handleRedirectTo();
+      }
 
       locationUtil.initialize({
         config,
@@ -379,6 +383,38 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
   if (metric) {
     const metricName = metric.name.replace(/-/g, '_');
     reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
+  }
+}
+
+function handleRedirectTo(): void {
+  const queryParams = locationService.getSearch();
+  const redirectToParamKey = 'redirectTo';
+
+  if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
+    const rawRedirectTo = queryParams.get(redirectToParamKey)!;
+    window.sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent(rawRedirectTo));
+    queryParams.delete(redirectToParamKey);
+    window.history.replaceState({}, '', `${window.location.pathname}${queryParams.size > 0 ? `?${queryParams}` : ''}`);
+    return;
+  }
+
+  if (!contextSrv.user.isSignedIn) {
+    locationService.replace('/login');
+    return;
+  }
+
+  const redirectTo = window.sessionStorage.getItem(RedirectToUrlKey);
+  if (!redirectTo) {
+    return;
+  }
+
+  window.sessionStorage.removeItem(RedirectToUrlKey);
+  const decodedRedirectTo = decodeURIComponent(redirectTo);
+  if (decodedRedirectTo.startsWith('/goto/')) {
+    // In this case there should be a request to the backend
+    window.location.replace(decodedRedirectTo);
+  } else {
+    locationService.replace(decodedRedirectTo);
   }
 }
 
