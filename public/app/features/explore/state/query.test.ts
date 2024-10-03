@@ -111,7 +111,7 @@ jest.mock('@grafana/runtime', () => ({
 function setupQueryResponse(state: StoreState) {
   const leftDatasourceInstance = assertIsDefined(state.explore.panes.left!.datasourceInstance);
 
-  jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(
+  jest.mocked(leftDatasourceInstance.query).mockReturnValue(
     of({
       error: { message: 'test error' },
       data: [
