@@ -33,19 +33,19 @@ type searchResult struct {
 
 func (dr *DashboardServiceImpl) FindDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if dr.cfg.Zanzana.ZanzanaOnlyEvaluation {
-		return dr.findDashboardsZanzanaOnly(ctx, query)
+		return dr.findDashboardsZanzanaOnly(ctx, *query)
 	}
-	return dr.findDashboardsZanzanaCompare(ctx, query)
+	return dr.findDashboardsZanzanaCompare(ctx, *query)
 }
 
-func (dr *DashboardServiceImpl) findDashboardsZanzanaOnly(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) findDashboardsZanzanaOnly(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	timer := prometheus.NewTimer(dr.metrics.searchRequestsDuration.WithLabelValues("zanzana"))
 	defer timer.ObserveDuration()
 
 	return dr.findDashboardsZanzana(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	result := make(chan searchResult, 2)
 
 	go func() {
@@ -53,8 +53,8 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 		defer timer.ObserveDuration()
 		start := time.Now()
 
-		queryZanzana := *query
-		res, err := dr.findDashboardsZanzana(ctx, &queryZanzana)
+		queryZanzana := query
+		res, err := dr.findDashboardsZanzana(ctx, queryZanzana)
 		result <- searchResult{"zanzana", res, err, time.Since(start)}
 	}()
 
@@ -63,7 +63,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 		defer timer.ObserveDuration()
 		start := time.Now()
 
-		res, err := dr.FindDashboards(ctx, query)
+		res, err := dr.FindDashboards(ctx, &query)
 		result <- searchResult{"grafana", res, err, time.Since(start)}
 	}()
 
@@ -94,15 +94,15 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 	return first.result, first.err
 }
 
-func (dr *DashboardServiceImpl) findDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) findDashboardsZanzana(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	findDashboards := dr.getFindDashboardsFn(query)
 	return findDashboards(ctx, query)
 }
 
-type findDashboardsFn func(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error)
+type findDashboardsFn func(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error)
 
 // getFindDashboardsFn makes a decision which search method should be used
-func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersistedDashboardsQuery) findDashboardsFn {
+func (dr *DashboardServiceImpl) getFindDashboardsFn(query dashboards.FindPersistedDashboardsQuery) findDashboardsFn {
 	if query.Limit > 0 && query.Limit < listQueryLimitThreshold && len(query.Title) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
@@ -120,7 +120,7 @@ func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersis
 
 // findDashboardsZanzanaCheck implements "Search, then check" strategy. It first performs search query, then filters out results
 // by checking access to each item.
-func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaCheck")
 	defer span.End()
 
@@ -131,13 +131,10 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	limit := query.Limit
 	// Set limit to default to prevent pagination issues
 	query.Limit = defaultQueryLimit
-	defer func() {
-		query.Limit = limit
-	}()
 
 	for len(result) < int(limit) {
 		query.Page = page
-		findRes, err := dr.dashboardStore.FindDashboards(ctx, query)
+		findRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
 		}
@@ -160,7 +157,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	return result, nil
 }
 
-func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.checkDashboards")
 	defer span.End()
 
@@ -231,7 +228,7 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 
 // findDashboardsZanzanaList implements "List, then search" strategy. It first retrieve a list of resources
 // with given type available to the user and then passes that list as a filter to the search query.
-func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	// Always use "search, then check" if dashboard or folder UIDs provided. Otherwise we should make intersection
 	// of user's resources and provided UIDs which might not be correct if ListObjects() request is limited by OpenFGA.
 	if len(query.DashboardUIDs) > 0 || len(query.DashboardIds) > 0 || len(query.FolderUIDs) > 0 {
@@ -251,10 +248,10 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 
 	query.DashboardUIDs = resourceUIDs
 	query.SkipAccessControlFilter = true
-	return dr.dashboardStore.FindDashboards(ctx, query)
+	return dr.dashboardStore.FindDashboards(ctx, &query)
 }
 
-func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]string, error) {
+func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]string, error) {
 	tasks := make([]func() ([]string, error), 0)
 	var resourceTypes []string
 
@@ -282,7 +279,7 @@ func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query *da
 	return uids, nil
 }
 
-func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
+func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
 	res, err := dr.ac.ListObjects(ctx, accesscontrol.ListObjectsRequest{
 		User:     query.SignedInUser.GetUID(),
 		Type:     resourceType,
