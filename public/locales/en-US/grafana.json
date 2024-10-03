@@ -1395,7 +1395,8 @@
     "migrated-counts": {
       "dashboards": "dashboards",
       "datasources": "data sources",
-      "folders": "folders"
+      "folders": "folders",
+      "library_elements": "library elements"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1467,6 +1468,8 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "error-library-element-sub": "Library Element {uid}",
+      "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
       "unknown-datasource-type": "Unknown data source"
     },
@@ -1474,6 +1477,7 @@
       "dashboard": "Dashboard",
       "datasource": "Data source",
       "folder": "Folder",
+      "library_element": "Library Element",
       "unknown": "Unknown"
     },
     "summary": {

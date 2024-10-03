@@ -1395,7 +1395,8 @@
     "migrated-counts": {
       "dashboards": "đäşĥþőäřđş",
       "datasources": "đäŧä şőūřčęş",
-      "folders": "ƒőľđęřş"
+      "folders": "ƒőľđęřş",
+      "library_elements": "ľįþřäřy ęľęmęŉŧş"
     },
     "migration-token": {
       "delete-button": "Đęľęŧę ŧőĸęŉ",
@@ -1467,6 +1468,8 @@
       "warning-details-button": "Đęŧäįľş"
     },
     "resource-table": {
+      "error-library-element-sub": "Ŀįþřäřy Ēľęmęŉŧ {ūįđ}",
+      "error-library-element-title": "Ůŉäþľę ŧő ľőäđ ľįþřäřy ęľęmęŉŧ",
       "unknown-datasource-title": "Đäŧä şőūřčę {{datasourceUID}}",
       "unknown-datasource-type": "Ůŉĸŉőŵŉ đäŧä şőūřčę"
     },
@@ -1474,6 +1477,7 @@
       "dashboard": "Đäşĥþőäřđ",
       "datasource": "Đäŧä şőūřčę",
       "folder": "Főľđęř",
+      "library_element": "Ŀįþřäřy Ēľęmęŉŧ",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {

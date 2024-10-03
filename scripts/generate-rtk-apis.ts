@@ -28,6 +28,7 @@ const config: ConfigFile = {
         'getCloudMigrationToken',
 
         'getDashboardByUid',
+        'getLibraryElementByUid',
       ],
     },
     '../public/app/features/preferences/api/user/endpoints.gen.ts': {

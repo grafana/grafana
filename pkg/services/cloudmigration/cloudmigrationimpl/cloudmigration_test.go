@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	libraryelementsfake "github.com/grafana/grafana/pkg/services/libraryelements/fake"
+	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -562,6 +564,36 @@ func TestReportEvent(t *testing.T) {
 	})
 }
 
+func TestGetLibraryElementsCommands(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	libraryElementService, ok := s.libraryElementsService.(*libraryelementsfake.LibraryElementService)
+	require.True(t, ok)
+	require.NotNil(t, libraryElementService)
+
+	folderUID := "folder-uid"
+	createLibraryElementCmd := libraryelements.CreateLibraryElementCommand{
+		FolderUID: &folderUID,
+		Name:      "library-element-1",
+		Model:     []byte{},
+		Kind:      int64(libraryelements.PanelElement),
+		UID:       "library-element-uid-1",
+	}
+
+	user := &user.SignedInUser{OrgID: 1}
+
+	_, err := libraryElementService.CreateElement(ctx, user, createLibraryElementCmd)
+	require.NoError(t, err)
+
+	cmds, err := s.getLibraryElementsCommands(ctx, user)
+	require.NoError(t, err)
+	require.Len(t, cmds, 1)
+	require.Equal(t, createLibraryElementCmd.UID, cmds[0].UID)
+}
+
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{OrgID: 1},
@@ -626,6 +658,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		mockFolder,
 		&pluginstore.FakePluginStore{},
 		kvstore.ProvideService(sqlStore),
+		&libraryelementsfake.LibraryElementService{},
 	)
 	require.NoError(t, err)
 
