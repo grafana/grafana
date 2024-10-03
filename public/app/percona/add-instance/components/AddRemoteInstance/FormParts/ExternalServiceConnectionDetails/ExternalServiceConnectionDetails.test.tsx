@@ -1,21 +1,26 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 import React from 'react';
 import { Form } from 'react-final-form';
+import { Provider } from 'react-redux';
+
+import { configureStore } from 'app/store/configureStore';
 
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails';
 
 describe('Add remote instance:: ', () => {
   it('should render correct for mysql and postgres and highlight empty mandatory fields on submit', async () => {
     render(
-      <Form
-        onSubmit={jest.fn()}
-        mutators={{
-          setValue: ([field, value], state, { changeValue }) => {
-            changeValue(state, field, () => value);
-          },
-        }}
-        render={({ form }) => <ExternalServiceConnectionDetails form={form} />}
-      />
+      <Provider store={configureStore()}>
+        <Form
+          onSubmit={jest.fn()}
+          mutators={{
+            setValue: ([field, value], state, { changeValue }) => {
+              changeValue(state, field, () => value);
+            },
+          }}
+          render={({ form }) => <ExternalServiceConnectionDetails form={form} />}
+        />
+      </Provider>
     );
 
     const metricsParametrsRadioState = screen.getByTestId('metricsParameters-radio-state');

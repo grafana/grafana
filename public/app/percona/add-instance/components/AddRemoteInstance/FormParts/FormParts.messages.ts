@@ -19,6 +19,10 @@ export const Messages = {
         username: 'Username',
         password: 'Password',
       },
+      nodesAgents: {
+        nodes: 'Nodes',
+        agents: 'Agents',
+      },
       mainDetails: {
         address: 'Hostname',
         serviceName: 'Service name',

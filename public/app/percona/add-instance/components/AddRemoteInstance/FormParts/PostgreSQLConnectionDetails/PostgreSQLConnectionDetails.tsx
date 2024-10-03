@@ -9,6 +9,7 @@ import { validators } from 'app/percona/shared/helpers/validatorsForm';
 import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
 import { MainDetailsFormPartProps } from '../FormParts.types';
+import { NodesAgents } from '../NodesAgents/NodesAgents';
 
 export const PostgreSQLConnectionDetails: FC<MainDetailsFormPartProps> = ({ form, remoteInstanceCredentials }) => {
   const styles = useStyles2(getStyles);
@@ -31,6 +32,7 @@ export const PostgreSQLConnectionDetails: FC<MainDetailsFormPartProps> = ({ form
         />
         <div />
       </div>
+      <NodesAgents form={form} />
       <div className={styles.group}>
         <TextInputField
           name="address"

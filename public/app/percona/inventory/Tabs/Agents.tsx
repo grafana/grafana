@@ -16,6 +16,7 @@ import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/comp
 import { FormElement } from 'app/percona/shared/components/Form';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { nodeFromDbMapper } from 'app/percona/shared/core/reducers/nodes';
 import { fetchNodesAction } from 'app/percona/shared/core/reducers/nodes/nodes';
 import { fetchServicesAction } from 'app/percona/shared/core/reducers/services';
 import { getNodes, getServices } from 'app/percona/shared/core/selectors';
@@ -51,8 +52,13 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
   const { isLoading: nodesLoading, nodes } = useSelector(getNodes);
   const styles = useStyles2(getStyles);
 
+  const mappedNodes = useMemo(
+    () => nodeFromDbMapper(nodes).sort((a, b) => a.nodeName.localeCompare(b.nodeName)),
+    [nodes]
+  );
+
   const service = services.find((s) => s.params.serviceId === match.params.serviceId);
-  const node = nodes.find((s) => s.nodeId === nodeId);
+  const node = mappedNodes.find((s) => s.nodeId === nodeId);
   const flattenAgents = useMemo(() => data.map((value) => ({ type: value.type, ...value.params })), [data]);
 
   const columns = useMemo(

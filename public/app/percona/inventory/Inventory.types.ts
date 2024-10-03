@@ -34,7 +34,7 @@ export enum AgentType {
   mysql = 'mysql',
   mysqldExporter = 'mysqldExporter',
   nodeExporter = 'nodeExporter',
-  pmmAgent = 'pmm_agent',
+  pmmAgent = 'pmm-agent',
   postgresExporter = 'postgresExporter',
   postgresql = 'postgresql',
   proxysql = 'proxysql',
@@ -176,3 +176,14 @@ export type FlattenService = DbService &
 export type FlattenNode = DbNode & {
   type: NodeType;
 };
+
+export interface NodesOption {
+  value: string;
+  label: string;
+  agents?: AgentsOption[];
+}
+
+export interface AgentsOption {
+  value: string;
+  label: string;
+}

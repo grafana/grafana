@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
-import { Node, NodeDB } from 'app/percona/inventory/Inventory.types';
+import { AgentsOption, AgentType, Node, NodeDB, NodesOption } from 'app/percona/inventory/Inventory.types';
 import { getAgentsMonitoringStatus } from 'app/percona/inventory/Tabs/Services.utils';
 import { DbAgent } from 'app/percona/shared/services/services/Services.types';
 
 const MAIN_COLUMNS = ['address', 'services', 'agents', 'node_type', 'node_id', 'node_name', 'status', 'custom_labels'];
 
-export const nodeFromDbMapper = (nodeFromDb: NodeDB[]) => {
+export const nodeFromDbMapper = (nodeFromDb: NodeDB[]): Node[] => {
   return nodeFromDb.map((node) => {
     const properties: Record<string, string> = {};
 
@@ -51,6 +51,19 @@ export const nodeFromDbMapper = (nodeFromDb: NodeDB[]) => {
       })),
       properties: properties,
       agentsStatus: getAgentsMonitoringStatus(agents ?? []),
-    } as Node;
+    };
   });
 };
+
+export const nodesOptionsMapper = (nodeFromDb: NodeDB[]): NodesOption[] =>
+  nodeFromDb.map((node) => {
+    const agents = (node.agents || [])
+      .filter((agent) => agent.agent_type === AgentType.pmmAgent)
+      .map<AgentsOption>((agent) => ({ value: agent.agent_id, label: agent.agent_id, key: agent.agent_type }));
+
+    return {
+      value: node.node_id,
+      label: node.node_name,
+      agents: agents,
+    };
+  });

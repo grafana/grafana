@@ -23,6 +23,7 @@ describe('Get instance data:: ', () => {
         port: '5432',
         metricsParameters: 'manually',
         schema: 'https',
+        pmm_agent_id: '',
       },
     };
 
@@ -77,6 +78,7 @@ describe('Get instance data:: ', () => {
         port: '27017',
         metricsParameters: 'manually',
         schema: 'https',
+        pmm_agent_id: '',
       },
     };
 
@@ -100,6 +102,7 @@ describe('Get instance data:: ', () => {
         port: '3306',
         metricsParameters: 'manually',
         schema: 'https',
+        pmm_agent_id: '',
       },
     };
 
@@ -123,6 +126,7 @@ describe('Get instance data:: ', () => {
         port: '6032',
         metricsParameters: 'manually',
         schema: 'https',
+        pmm_agent_id: '',
       },
     };
 

@@ -14,7 +14,7 @@ import { FormElement } from 'app/percona/shared/components/Form';
 import { TabbedPage, TabbedPageContents } from 'app/percona/shared/components/TabbedPage';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
-import { RemoveNodeParams } from 'app/percona/shared/core/reducers/nodes';
+import { nodeFromDbMapper, RemoveNodeParams } from 'app/percona/shared/core/reducers/nodes';
 import { fetchNodesAction, removeNodesAction } from 'app/percona/shared/core/reducers/nodes/nodes';
 import { getNodes } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
@@ -50,6 +50,11 @@ export const NodesTab = () => {
   const [generateToken] = useCancelToken();
   const styles = useStyles2(getStyles);
   const dispatch = useAppDispatch();
+
+  const mappedNodes = useMemo(
+    () => nodeFromDbMapper(nodes).sort((a, b) => a.nodeName.localeCompare(b.nodeName)),
+    [nodes]
+  );
 
   const getActions = useCallback(
     (row: Row<Node>): Action[] => [
@@ -350,8 +355,8 @@ export const NodesTab = () => {
           </Modal>
           <Table
             columns={columns}
-            data={nodes}
-            totalItems={nodes.length}
+            data={mappedNodes}
+            totalItems={mappedNodes.length}
             rowSelection
             autoResetSelectedRows={false}
             onRowSelection={handleSelectionChange}

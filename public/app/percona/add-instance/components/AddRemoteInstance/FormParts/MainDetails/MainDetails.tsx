@@ -1,6 +1,7 @@
 import React, { FC, useMemo } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
+import { NodesAgents } from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/NodesAgents/NodesAgents';
 import { PasswordInputField } from 'app/percona/shared/components/Form/PasswordInput';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import Validators from 'app/percona/shared/helpers/validators';
@@ -30,6 +31,7 @@ export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ form, remote
         />
         <div />
       </div>
+      <NodesAgents form={form} />
       <div className={styles.group}>
         <TextInputField
           name="address"

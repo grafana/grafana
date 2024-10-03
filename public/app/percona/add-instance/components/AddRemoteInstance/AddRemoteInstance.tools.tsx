@@ -117,6 +117,7 @@ export const getInstanceData = (instanceType: InstanceAvailableType, credentials
       remoteInstanceCredentials: {
         metricsParameters: MetricsParameters.manually,
         schema: Schema.HTTPS,
+        pmm_agent_id: '',
       },
     };
 

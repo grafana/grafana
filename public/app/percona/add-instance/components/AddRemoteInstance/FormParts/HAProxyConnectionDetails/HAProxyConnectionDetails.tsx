@@ -1,6 +1,7 @@
 import React, { FC, useCallback, useMemo } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
+import { NodesAgents } from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/NodesAgents/NodesAgents';
 import { PasswordInputField } from 'app/percona/shared/components/Form/PasswordInput';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import Validators from 'app/percona/shared/helpers/validators';
@@ -10,7 +11,7 @@ import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
 import { MainDetailsFormPartProps } from '../FormParts.types';
 
-export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteInstanceCredentials }) => {
+export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ form, remoteInstanceCredentials }) => {
   const styles = useStyles2(getStyles);
 
   const portValidators = useMemo(() => [validators.required, Validators.validatePort], []);
@@ -29,6 +30,7 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
         />
         <div />
       </div>
+      <NodesAgents form={form} />
       <div className={styles.group}>
         <TextInputField
           name="address"

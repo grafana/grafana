@@ -1,6 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
+import { NodesAgents } from 'app/percona/add-instance/components/AddRemoteInstance/FormParts/NodesAgents/NodesAgents';
 import { PasswordInputField } from 'app/percona/shared/components/Form/PasswordInput';
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
@@ -96,6 +97,7 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
             />
             <div />
           </div>
+          <NodesAgents form={form} />
           <div className={styles.group}>
             <TextInputField
               name="address"

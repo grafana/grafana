@@ -32,6 +32,12 @@ export const getStyles = ({ breakpoints, spacing, colors }: GrafanaTheme2) => ({
     width: 100%;
     margin-right: 5px;
   `,
+  selectFieldWrapper: css`
+    width: 100%;
+  `,
+  selectField: css`
+    height: 38px;
+  `,
   group: css`
     display: flex;
     flex-direction: row;

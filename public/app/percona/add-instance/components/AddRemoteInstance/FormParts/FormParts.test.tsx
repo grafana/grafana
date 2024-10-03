@@ -2,8 +2,10 @@ import { render, screen } from '@testing-library/react';
 import { FormApi, FormState } from 'final-form';
 import React from 'react';
 import { Form } from 'react-final-form';
+import { Provider } from 'react-redux';
 
 import { Databases } from 'app/percona/shared/core';
+import { configureStore } from 'app/store/configureStore';
 
 import { AdditionalOptionsFormPart, getAdditionalOptions } from './AdditionalOptions/AdditionalOptions';
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
@@ -20,14 +22,16 @@ const form: Partial<FormApi> = {
 describe('MainDetailsFormPart ::', () => {
   it('should disable fields with sat isRDS flag', async () => {
     const { container } = render(
-      <Form
-        onSubmit={jest.fn()}
-        render={({ form }) => <MainDetailsFormPart form={form} remoteInstanceCredentials={{ isRDS: true }} />}
-      />
+      <Provider store={configureStore()}>
+        <Form
+          onSubmit={jest.fn()}
+          render={({ form }) => <MainDetailsFormPart form={form} remoteInstanceCredentials={{ isRDS: true }} />}
+        />
+      </Provider>
     );
 
     const fields = container.querySelectorAll('input');
-    expect(fields.length).toBe(5);
+    expect(fields.length).toBe(8);
 
     expect(screen.getByTestId('address-text-input')).toBeDisabled();
     expect(screen.getByTestId('serviceName-text-input')).not.toBeDisabled();
@@ -38,14 +42,16 @@ describe('MainDetailsFormPart ::', () => {
 
   it('should disable fields with not sat isRDS flag', async () => {
     const { container } = render(
-      <Form
-        onSubmit={jest.fn()}
-        render={({ form }) => <MainDetailsFormPart form={form} remoteInstanceCredentials={{ isRDS: false }} />}
-      />
+      <Provider store={configureStore()}>
+        <Form
+          onSubmit={jest.fn()}
+          render={({ form }) => <MainDetailsFormPart form={form} remoteInstanceCredentials={{ isRDS: false }} />}
+        />
+      </Provider>
     );
 
     const fields = container.querySelectorAll('input');
-    expect(fields.length).toBe(5);
+    expect(fields.length).toBe(8);
 
     expect(screen.getByTestId('address-text-input')).not.toBeDisabled();
     expect(screen.getByTestId('serviceName-text-input')).not.toBeDisabled();
@@ -58,10 +64,12 @@ describe('MainDetailsFormPart ::', () => {
 describe('ExternalServiceConnectionDetails ::', () => {
   it('should render', async () => {
     const { container } = render(
-      <Form
-        onSubmit={jest.fn()}
-        render={() => <ExternalServiceConnectionDetails form={form as unknown as FormApi} />}
-      />
+      <Provider store={configureStore()}>
+        <Form
+          onSubmit={jest.fn()}
+          render={() => <ExternalServiceConnectionDetails form={form as unknown as FormApi} />}
+        />
+      </Provider>
     );
 
     const fields = container.querySelectorAll('input');
@@ -89,17 +97,19 @@ describe('AdditionalOptionsFormPart ::', () => {
     };
 
     render(
-      <Form
-        onSubmit={jest.fn()}
-        render={() => (
-          <AdditionalOptionsFormPart
-            instanceType={type}
-            remoteInstanceCredentials={remoteInstanceCredentials}
-            loading={false}
-            form={form as unknown as FormApi}
-          />
-        )}
-      />
+      <Provider store={configureStore()}>
+        <Form
+          onSubmit={jest.fn()}
+          render={() => (
+            <AdditionalOptionsFormPart
+              instanceType={type}
+              remoteInstanceCredentials={remoteInstanceCredentials}
+              loading={false}
+              form={form as unknown as FormApi}
+            />
+          )}
+        />
+      </Provider>
     );
 
     expect(screen.getByTestId('skip_connection_check-checkbox-input')).toBeInTheDocument();
