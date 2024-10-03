@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -631,7 +632,6 @@ type folderK8sHandler struct {
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	// #TODO check if it makes more sense to move this to FolderAPIBuilder
 	accesscontrolService accesscontrol.Service
-	features             featuremgmt.FeatureToggles
 	userService          user.Service
 }
 
@@ -645,7 +645,6 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 		accesscontrolService: hs.accesscontrolService,
-		features:             hs.Features,
 		userService:          hs.userService,
 	}
 }
@@ -734,7 +733,15 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 // 		return
 // 	}
 
-// 	c.JSON(http.StatusOK, f)
+// 	legacyFolder := internalfolders.UnstructuredToLegacyFolder(*out)
+
+// 	folderDTO, err := fk8s.newToFolderDto(c, legacyFolder, f)
+// 	if err != nil {
+// 		fk8s.writeError(c, err)
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, folderDTO)
 // }
 
 // func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
@@ -776,7 +783,15 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 // 		return
 // 	}
 
-// 	c.JSON(http.StatusOK, f)
+// 	legacyFolder := internalfolders.UnstructuredToLegacyFolder(*out)
+
+// 	folderDTO, err := fk8s.newToFolderDto(c, legacyFolder, f)
+// 	if err != nil {
+// 		fk8s.writeError(c, err)
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, folderDTO)
 // }
 
 //-----------------------------------------------------------------------------------------
@@ -824,7 +839,7 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, f *fold
 			updater = fk8s.getUserLogin(ctx, f.UpdatedBy)
 		}
 
-		// acMetadata, _ := fk8s.getFolderACMetadata(c, f)
+		acMetadata, _ := fk8s.getFolderACMetadata(c, f)
 
 		if checkCanView {
 			canView, _ := g.CanView()
@@ -843,6 +858,7 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, f *fold
 		fDTO.CanDelete = canDelete
 		fDTO.CreatedBy = creator
 		fDTO.UpdatedBy = updater
+		fDTO.AccessControl = acMetadata
 
 		return *fDTO, nil
 	}
@@ -853,17 +869,13 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, f *fold
 		return dtos.Folder{}, err
 	}
 
-	if !fk8s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
-		return folderDTO, nil
-	}
-
-	// TODO: Maicon: figure out what to do here
+	// TODO: handle parents
 	/*
-			parents, err := fk8s.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
-			if err != nil {
-				// log the error instead of failing
-				fk8s.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
-			}
+		parents, err := fk8s.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+		if err != nil {
+			// log the error instead of failing
+			fk8s.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
+		}
 
 		folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
 		for _, f := range parents {
@@ -889,4 +901,50 @@ func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userID int64) st
 		return anonString
 	}
 	return user.Login
+}
+
+func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
+	if !c.QueryBool("accesscontrol") {
+		return nil, nil
+	}
+
+	folderIDs := map[string]bool{f.UID: true}
+
+	// TODO: handle parents
+	/*
+		parents, err := fk8s.folderService.GetParents(c.Req.Context(), folder.GetParentsQuery{UID: f.UID, OrgID: c.SignedInUser.GetOrgID()})
+		if err != nil {
+			return nil, err
+		}
+
+		folderIDs := map[string]bool{f.UID: true}
+		for _, p := range parents {
+			folderIDs[p.UID] = true
+		}
+	*/
+
+	allMetadata := fk8s.getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
+	metadata := map[string]bool{}
+	// Flatten metadata - if any parent has a permission, the child folder inherits it
+	for _, md := range allMetadata {
+		for action := range md {
+			metadata[action] = true
+		}
+	}
+	return metadata, nil
+}
+
+// getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
+// Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
+func (fk8s *folderK8sHandler) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
+	prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
+	if !c.QueryBool("accesscontrol") {
+		return map[string]ac.Metadata{}
+	}
+
+	if len(c.SignedInUser.GetPermissions()) == 0 {
+		return map[string]ac.Metadata{}
+	}
+
+	return ac.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.GetPermissions(), prefix, resourceIDs)
 }
