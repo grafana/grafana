@@ -8,11 +8,12 @@ import (
 	"sort"
 	"time"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
-	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -73,7 +74,7 @@ func (r *LokiHistorianStore) Type() string {
 	return "loki"
 }
 
-func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	if query.Type == "annotation" {
 		return make([]*annotations.ItemDTO, 0), nil
 	}
@@ -96,7 +97,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		}
 	}
 
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID))
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(&query, accessResources.Dashboards, rule.UID))
 	if err != nil {
 		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to build loki query: %w", err)
 	}
@@ -178,7 +179,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 	return items
 }
 
-func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (r *LokiHistorianStore) GetTags(ctx context.Context, query annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, nil
 }
 

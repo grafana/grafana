@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,7 +30,6 @@ import (
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/stretchr/testify/require"
 )
@@ -100,7 +101,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -126,7 +127,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -150,7 +151,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -176,7 +177,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -206,7 +207,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -235,7 +236,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
@@ -269,7 +270,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 			res, err := store.Get(
 				context.Background(),
-				&query,
+				query,
 				&annotation_ac.AccessResources{
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
