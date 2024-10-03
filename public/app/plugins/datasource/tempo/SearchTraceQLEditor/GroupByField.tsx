@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { HorizontalGroup, InputActionMeta, Select, useStyles2 } from '@grafana/ui';
+import { Alert, HorizontalGroup, InputActionMeta, Select, useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -81,7 +81,7 @@ export const GroupByField = (props: Props) => {
   const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
 
   return (
-    <InlineSearchField label="Aggregate by" tooltip="Select one or more tags to see the metrics summary.">
+    <InlineSearchField label="Aggregate by" tooltip={`${notice} Select one or more tags to see the metrics summary.`}>
       <>
         {query.groupBy?.map((f, i) => {
           const tags = tagOptions(f)
@@ -146,13 +146,22 @@ export const GroupByField = (props: Props) => {
             </div>
           );
         })}
+        {query.groupBy && query.groupBy.length > 0 && query.groupBy[0].tag && (
+          <Alert title={notice} severity="warning" className={styles.notice}></Alert>
+        )}
       </>
     </InlineSearchField>
   );
 };
 
+export const notice = 'The aggregate by feature is deprecated and will be removed in the future.';
+
 const getStyles = (theme: GrafanaTheme2) => ({
   addTag: css({
     marginLeft: theme.spacing(1),
+  }),
+  notice: css({
+    width: '500px',
+    marginTop: theme.spacing(0.75),
   }),
 });
