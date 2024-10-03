@@ -1,25 +1,47 @@
-import { css } from '@emotion/css';
+import { isNumber } from 'lodash';
 import { ReactNode } from 'react';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { IconName, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Icon, Stack, Text, TextLink } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { PluginOriginBadge } from '../../../plugins/PluginOriginBadge';
+import { RulePluginOrigin } from '../../../utils/rules';
+import { MetaText } from '../../MetaText';
+import { ProvisioningBadge } from '../../Provisioning';
+
+import { ListItem } from './ListItem';
+
 interface AlertRuleListItemProps {
-  title: ReactNode;
-  description?: ReactNode;
+  name: string;
+  href: string;
+  isProvisioned?: boolean;
+  summary?: string;
   error?: string;
   state?: PromAlertingRuleState;
-  meta?: ReactNode;
-  metaRight?: ReactNode;
+  namespace?: CombinedRuleNamespace;
+  group?: string;
+  firstActiveAt?: Date;
+  instanceCount?: number;
+  origin?: RulePluginOrigin;
   actions?: ReactNode;
 }
 
-export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
-  const { title, description = null, state, error, meta = null, metaRight = null, actions = null } = props;
-  const styles = useStyles2(getStyles);
-
+export const AlertRuleListItem = ({
+  name,
+  href,
+  summary,
+  isProvisioned,
+  state,
+  error,
+  namespace,
+  group,
+  firstActiveAt,
+  instanceCount,
+  origin,
+  actions = null,
+}: AlertRuleListItemProps) => {
   const icons: Record<PromAlertingRuleState, IconName> = {
     [PromAlertingRuleState.Inactive]: 'check',
     [PromAlertingRuleState.Pending]: 'hourglass',
@@ -32,39 +54,86 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     [PromAlertingRuleState.Firing]: 'error',
   };
 
+  // assemble metadata
+  const metadata: ReactNode[] = [];
+  const metadataRight: ReactNode[] = [];
+
+  if (error) {
+    metadata.push(
+      <Text color="error" variant="bodySmall" truncate>
+        {error}
+      </Text>
+    );
+  } else {
+    if (namespace && group) {
+      metadata.push(
+        <Text color="secondary" variant="bodySmall">
+          <RuleLocation namespace={namespace} group={group} />
+        </Text>
+      );
+    }
+
+    if (state === PromAlertingRuleState.Firing && firstActiveAt) {
+      metadata.push(
+        <MetaText icon="clock-nine">
+          Firing for{' '}
+          <span title={firstActiveAt.toLocaleString()}>
+            {intervalToAbbreviatedDurationString({
+              start: firstActiveAt,
+              end: Date.now(),
+            })}
+          </span>
+        </MetaText>
+      );
+    }
+
+    if (state === PromAlertingRuleState.Pending && firstActiveAt) {
+      metadata.push(
+        <MetaText icon="clock-nine">
+          Pending for{' '}
+          {intervalToAbbreviatedDurationString({
+            start: firstActiveAt,
+            end: Date.now(),
+          })}
+        </MetaText>
+      );
+    }
+  }
+
+  if (origin) {
+    metadataRight.push(<PluginOriginBadge pluginId={origin.pluginId} size="sm" />);
+  }
+
+  if (isNumber(instanceCount) && isFinite(instanceCount)) {
+    metadataRight.push(<MetaText icon="layer-group">{instanceCount}</MetaText>);
+  }
+
   return (
-    <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
-      <Stack direction="row" alignItems="start" gap={1} wrap={false}>
-        {/* state */}
+    <ListItem
+      icon={
         <Text color={state ? color[state] : 'secondary'}>
           <Icon name={state ? icons[state] : 'circle'} size="lg" />
         </Text>
-
-        <Stack direction="column" gap={0} flex="1" minWidth={0}>
-          {/* title */}
-          <Stack direction="column" gap={0}>
-            <div className={styles.textOverflow}>{title}</div>
-            <div className={styles.textOverflow}>{description}</div>
-          </Stack>
-          {/* metadata */}
-          {error ? (
-            <Text truncate color="error" variant="bodySmall">
-              {error}
-            </Text>
-          ) : (
-            <Stack direction="row" gap={1}>
-              {meta}
-            </Stack>
-          )}
+      }
+      title={
+        <Stack direction="row" alignItems="center">
+          <TextLink href={href} inline={false}>
+            {name}
+          </TextLink>
+          {isProvisioned && <ProvisioningBadge />}
         </Stack>
-
-        {/* actions */}
-        <Stack direction="row" alignItems="center" gap={1} wrap={false}>
-          {metaRight}
-          {actions}
-        </Stack>
-      </Stack>
-    </li>
+      }
+      description={
+        summary ? (
+          <Text variant="bodySmall" color="secondary">
+            {summary}
+          </Text>
+        ) : null
+      }
+      meta={metadata}
+      metaRight={metadataRight}
+      actions={actions}
+    />
   );
 };
 
@@ -83,18 +152,3 @@ export const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
     </Stack>
   </Stack>
 );
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  alertListItemContainer: css({
-    position: 'relative',
-    listStyle: 'none',
-    background: theme.colors.background.primary,
-
-    borderBottom: `solid 1px ${theme.colors.border.weak}`,
-    padding: `${theme.spacing(1)} ${theme.spacing(1)}`,
-  }),
-  textOverflow: css({
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  }),
-});

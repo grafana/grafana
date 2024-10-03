@@ -1,21 +1,18 @@
-import { isNumber } from 'lodash';
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Counter, Pagination, Stack, Text, TextLink } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Counter, Pagination, Stack, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
-import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { createViewLink } from '../../utils/misc';
 import { hashRule } from '../../utils/rule-id';
 import { getFirstActiveAt, getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
-import { MetaText } from '../MetaText';
-import { ProvisioningBadge } from '../Provisioning';
-import { AlertRuleListItem, RuleLocation } from '../rule-list/components/AlertRuleListItem';
-import { Namespace } from '../rule-list/components/Namespace';
+import { AlertRuleListItem } from '../rule-list/components/AlertRuleListItem';
+import { ListSection } from '../rule-list/components/ListSection';
 import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
 
 import { RuleActionsButtons } from './RuleActionsButtons';
@@ -26,6 +23,8 @@ interface Props {
 type GroupedRules = Record<PromAlertingRuleState, CombinedRule[]>;
 
 export const RuleListStateView = ({ namespaces }: Props) => {
+  const styles = useStyles2(getStyles);
+
   const groupedRules = useMemo(() => {
     const result: GroupedRules = {
       [PromAlertingRuleState.Firing]: [],
@@ -52,11 +51,11 @@ export const RuleListStateView = ({ namespaces }: Props) => {
   }, [namespaces]);
 
   return (
-    <Stack direction="column">
+    <ul className={styles.columnStack} role="tree">
       {Object.entries(groupedRules).map(([state, rules]) => (
         <RulesByState key={state} state={state as PromAlertingRuleState} rules={rules} />
       ))}
-    </Stack>
+    </ul>
   );
 };
 
@@ -73,8 +72,8 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
   const hasRulesMatchingState = rules.length > 0;
 
   return (
-    <Namespace
-      name={
+    <ListSection
+      title={
         <Stack alignItems="center" gap={0}>
           {STATE_TITLES[state] ?? 'Unknown'}
           <Counter value={rules.length} />
@@ -95,7 +94,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
 
         const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
 
-        const numInstances = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : null;
+        const instanceCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
         const firstActiveAt = isAlertingRule(promRule) ? getFirstActiveAt(promRule) : null;
 
         if (!promRule) {
@@ -108,59 +107,28 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
           <AlertRuleListItem
             key={hashRule(promRule)}
             state={state as PromAlertingRuleState}
-            title={
-              <Stack direction="row" alignItems="center">
-                <TextLink href={createViewLink(rule.namespace.rulesSource, rule)} inline={false}>
-                  {rule.name}
-                </TextLink>
-                {isProvisioned && <ProvisioningBadge />}
-              </Stack>
-            }
+            name={rule.name}
+            href={createViewLink(rule.namespace.rulesSource, rule)}
+            isProvisioned={isProvisioned}
             error={rule.promRule?.lastError}
-            description={
-              <Text variant="bodySmall" color="secondary">
-                {rule.annotations.summary}
-              </Text>
-            }
+            summary={rule.annotations.summary}
             actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
-            metaRight={
-              <>
-                {originMeta && <PluginOriginBadge pluginId={originMeta.pluginId} size="sm" />}
-                {isNumber(numInstances) ? <MetaText icon="layer-group">{numInstances}</MetaText> : null}
-              </>
-            }
-            meta={
-              <>
-                {rule.namespace.name && rule.group.name && (
-                  <Text color="secondary" variant="bodySmall">
-                    <RuleLocation namespace={rule.namespace} group={rule.group.name} />
-                  </Text>
-                )}
-                {state === PromAlertingRuleState.Firing && firstActiveAt && (
-                  <MetaText icon="clock-nine">
-                    Firing for{' '}
-                    <span title={firstActiveAt.toLocaleString()}>
-                      {intervalToAbbreviatedDurationString({
-                        start: firstActiveAt,
-                        end: Date.now(),
-                      })}
-                    </span>
-                  </MetaText>
-                )}
-                {state === PromAlertingRuleState.Pending && firstActiveAt && (
-                  <MetaText icon="clock-nine">
-                    Pending for{' '}
-                    {intervalToAbbreviatedDurationString({
-                      start: firstActiveAt,
-                      end: Date.now(),
-                    })}
-                  </MetaText>
-                )}
-              </>
-            }
+            instanceCount={instanceCount}
+            origin={originMeta}
+            namespace={rule.namespace}
+            group={rule.group.name}
+            firstActiveAt={firstActiveAt ?? undefined}
           />
         );
       })}
-    </Namespace>
+    </ListSection>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  columnStack: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+  }),
+});
