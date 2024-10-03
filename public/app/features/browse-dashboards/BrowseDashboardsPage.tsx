@@ -7,6 +7,7 @@ import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { getConfig } from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
@@ -109,7 +110,7 @@ const BrowseDashboardsPage = memo(() => {
 
   const handleButtonClickToRecentlyDeleted = () => {
     reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
-      origin: window.location.pathname === '/dashboards' ? 'Dashboards' : 'Folder view',
+      origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
     });
   };
 
@@ -123,7 +124,7 @@ const BrowseDashboardsPage = memo(() => {
           {config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI && hasAdminRights && (
             <LinkButton
               variant="secondary"
-              href={'/dashboard/recently-deleted'}
+              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
               onClick={handleButtonClickToRecentlyDeleted}
             >
               <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
