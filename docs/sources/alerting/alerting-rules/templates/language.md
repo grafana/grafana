@@ -72,7 +72,7 @@ At the start of notification templates, dot (`.`) refers to [ExtendedData](ref:r
 
 In annotation and label templates, dot (`.`) is initialized with multiple data and should not be used. Instead, use the [`$labels` and `$values` variables](ref:alert-rule-template-reference-variables).
 
-Note that dot (`.`) might refer to something else when used in a [range](#range), a [with](#with), or when writing feature templates to be used in other templates.
+Note that dot (`.`) might refer to something else when used in a [range](#range), a [with](#with), or when writing [templates](#templates) used in other templates.
 
 [//]: <> (The above section is not included in the shared file because `refs` links are not supported in shared files.)
 
