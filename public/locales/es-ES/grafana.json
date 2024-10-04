@@ -329,6 +329,9 @@
       "moving": "Moviendo...",
       "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta."
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
       "alertRule_other": "{{count}} reglas de alerta",
@@ -1089,6 +1092,13 @@
       "zoom-out-time-range": "Reducir el intervalo de tiempo"
     },
     "title": "Accesos directos"
+  },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
   },
   "inspector": {
     "query": {
@@ -1855,6 +1865,7 @@
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
       "list-label": "Navegación",
+      "open": "",
       "undock": "Desanclar el menú"
     },
     "toolbar": {

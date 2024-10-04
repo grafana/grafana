@@ -329,6 +329,9 @@
       "moving": "Verschieben...",
       "new-folder-name-required-phrase": "Ordnername ist erforderlich."
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} Alarmierungsregel",
       "alertRule_other": "{{count}} Alarmierungsregeln",
@@ -1089,6 +1092,13 @@
       "zoom-out-time-range": "Zeitbereich verkleinern"
     },
     "title": "Shortcuts"
+  },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
   },
   "inspector": {
     "query": {
@@ -1855,6 +1865,7 @@
       "close": "Menü schließen",
       "dock": "Menü andocken",
       "list-label": "Navigation",
+      "open": "",
       "undock": "Menü abdocken"
     },
     "toolbar": {
