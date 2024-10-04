@@ -1,11 +1,11 @@
 import { AnnotationQuery, getDataSourceRef, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -133,6 +133,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
   const panels = dashboardSceneGraph.getVizPanels(dashboard);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
@@ -153,8 +154,13 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   }
 
   return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
+    <Page
+      navModel={navModel}
+      pageNav={pageNav}
+      layout={PageLayoutType.Standard}
+      toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
+    >
+      {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
       <AnnotationSettingsList
         annotations={annotations}
         onNew={model.onNew}
@@ -190,6 +196,7 @@ function AnnotationsSettingsEditView({
   onDelete,
 }: AnnotationsSettingsEditViewProps) {
   const { name, query } = annotationLayer.useState();
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const editAnnotationPageNav = {
     text: name,
@@ -197,8 +204,13 @@ function AnnotationsSettingsEditView({
   };
 
   return (
-    <Page navModel={navModel} pageNav={editAnnotationPageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
+    <Page
+      navModel={navModel}
+      pageNav={editAnnotationPageNav}
+      layout={PageLayoutType.Standard}
+      toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
+    >
+      {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
       <AnnotationSettingsEdit
         annotation={query}
         editIndex={editIndex}

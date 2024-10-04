@@ -561,6 +561,8 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Preload:         false,
 		Angular:         plugin.Angular,
 		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
+		Extensions:      plugin.Extensions,
+		Dependencies:    plugin.Dependencies,
 	}
 
 	if settings.Enabled {

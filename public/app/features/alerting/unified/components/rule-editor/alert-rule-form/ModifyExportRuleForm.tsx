@@ -2,7 +2,9 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
+import { config } from '@grafana/runtime';
 import { Button, CustomScrollbar, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { usePageToolbar } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -50,39 +52,47 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
   const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
-  const onInvalid = (): void => {
+  const onInvalid = useCallback((): void => {
     notifyApp.error('There are errors in the form. Please correct them and try again!');
-  };
+  }, [notifyApp]);
 
   const checkAlertCondition = (msg = '') => {
     setConditionErrorMsg(msg);
   };
 
-  const submit = (exportData: RuleFormValues | undefined) => {
-    if (conditionErrorMsg !== '') {
-      notifyApp.error(conditionErrorMsg);
-      return;
-    }
-    setExportData(exportData);
-  };
+  const submit = useCallback(
+    (exportData: RuleFormValues | undefined) => {
+      if (conditionErrorMsg !== '') {
+        notifyApp.error(conditionErrorMsg);
+        return;
+      }
+      setExportData(exportData);
+    },
+    [conditionErrorMsg, notifyApp]
+  );
 
   const onClose = useCallback(() => {
     setExportData(undefined);
   }, [setExportData]);
 
-  const actionButtons = [
-    <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
-      Cancel
-    </LinkButton>,
-    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
-      Export
-    </Button>,
-  ];
+  const actionButtons = useMemo(
+    () => [
+      <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
+        Cancel
+      </LinkButton>,
+      <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
+        Export
+      </Button>,
+    ],
+    [formAPI, onInvalid, returnTo, submit]
+  );
+
+  usePageToolbar(actionButtons);
 
   return (
     <>
       <FormProvider {...formAPI}>
-        <AppChromeUpdate actions={actionButtons} />
+        {!config.featureToggles.singleTopNav && <AppChromeUpdate actions={actionButtons} />}
         <form onSubmit={(e) => e.preventDefault()}>
           <div>
             <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
