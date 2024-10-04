@@ -329,6 +329,9 @@
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
     },
+    "actions": {
+      "button-to-recently-deleted": "Recently deleted"
+    },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
       "alertRule_other": "{{count}} alert rules",
@@ -1090,6 +1093,13 @@
     },
     "title": "Shortcuts"
   },
+  "help-wizard": {
+    "download-snapshot": "Download snapshot",
+    "github-comment": "Copy Github comment",
+    "preview-snapshot": "Preview snapshot",
+    "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
+    "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
+  },
   "inspector": {
     "query": {
       "collapse-all": "Collapse all",
@@ -1395,7 +1405,8 @@
     "migrated-counts": {
       "dashboards": "dashboards",
       "datasources": "data sources",
-      "folders": "folders"
+      "folders": "folders",
+      "library_elements": "library elements"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1467,6 +1478,8 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "error-library-element-sub": "Library Element {uid}",
+      "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
       "unknown-datasource-type": "Unknown data source"
     },
@@ -1474,6 +1487,7 @@
       "dashboard": "Dashboard",
       "datasource": "Data source",
       "folder": "Folder",
+      "library_element": "Library Element",
       "unknown": "Unknown"
     },
     "summary": {
@@ -1851,6 +1865,7 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "list-label": "Navigation",
+      "open": "Open menu",
       "undock": "Undock menu"
     },
     "toolbar": {

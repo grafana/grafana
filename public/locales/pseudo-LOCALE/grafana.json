@@ -329,6 +329,9 @@
       "moving": "Mővįŉģ...",
       "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
+    "actions": {
+      "button-to-recently-deleted": "Ŗęčęŉŧľy đęľęŧęđ"
+    },
     "counts": {
       "alertRule_one": "{{count}} äľęřŧ řūľę",
       "alertRule_other": "{{count}} äľęřŧ řūľęş",
@@ -1090,6 +1093,13 @@
     },
     "title": "Ŝĥőřŧčūŧş"
   },
+  "help-wizard": {
+    "download-snapshot": "Đőŵŉľőäđ şŉäpşĥőŧ",
+    "github-comment": "Cőpy Ğįŧĥūþ čőmmęŉŧ",
+    "preview-snapshot": "Přęvįęŵ şŉäpşĥőŧ",
+    "support-bundle": "Ÿőū čäŉ äľşő řęŧřįęvę ä şūppőřŧ þūŉđľę čőŉŧäįŉįŉģ įŉƒőřmäŧįőŉ čőŉčęřŉįŉģ yőūř Ğřäƒäŉä įŉşŧäŉčę äŉđ čőŉƒįģūřęđ đäŧäşőūřčęş įŉ ŧĥę <1>şūppőřŧ þūŉđľęş şęčŧįőŉ</1>.",
+    "troubleshooting-help": "Ŧő řęqūęşŧ ŧřőūþľęşĥőőŧįŉģ ĥęľp, şęŉđ ä şŉäpşĥőŧ őƒ ŧĥįş päŉęľ ŧő Ğřäƒäŉä Ŀäþş Ŧęčĥŉįčäľ Ŝūppőřŧ. Ŧĥę şŉäpşĥőŧ čőŉŧäįŉş qūęřy řęşpőŉşę đäŧä äŉđ päŉęľ şęŧŧįŉģş."
+  },
   "inspector": {
     "query": {
       "collapse-all": "Cőľľäpşę äľľ",
@@ -1395,7 +1405,8 @@
     "migrated-counts": {
       "dashboards": "đäşĥþőäřđş",
       "datasources": "đäŧä şőūřčęş",
-      "folders": "ƒőľđęřş"
+      "folders": "ƒőľđęřş",
+      "library_elements": "ľįþřäřy ęľęmęŉŧş"
     },
     "migration-token": {
       "delete-button": "Đęľęŧę ŧőĸęŉ",
@@ -1467,6 +1478,8 @@
       "warning-details-button": "Đęŧäįľş"
     },
     "resource-table": {
+      "error-library-element-sub": "Ŀįþřäřy Ēľęmęŉŧ {ūįđ}",
+      "error-library-element-title": "Ůŉäþľę ŧő ľőäđ ľįþřäřy ęľęmęŉŧ",
       "unknown-datasource-title": "Đäŧä şőūřčę {{datasourceUID}}",
       "unknown-datasource-type": "Ůŉĸŉőŵŉ đäŧä şőūřčę"
     },
@@ -1474,6 +1487,7 @@
       "dashboard": "Đäşĥþőäřđ",
       "datasource": "Đäŧä şőūřčę",
       "folder": "Főľđęř",
+      "library_element": "Ŀįþřäřy Ēľęmęŉŧ",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {
@@ -1851,6 +1865,7 @@
       "close": "Cľőşę męŉū",
       "dock": "Đőčĸ męŉū",
       "list-label": "Ńävįģäŧįőŉ",
+      "open": "Øpęŉ męŉū",
       "undock": "Ůŉđőčĸ męŉū"
     },
     "toolbar": {
