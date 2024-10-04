@@ -207,6 +207,7 @@ Experimental features might be changed or removed without prior notice.
 | `appSidecar`                                  | Enable the app sidecar feature that allows rendering 2 apps at the same time                                                                                                                                                                                                      |
 | `alertingQueryAndExpressionsStepMode`         | Enables step mode for alerting queries and expressions                                                                                                                                                                                                                            |
 | `rolePickerDrawer`                            | Enables the new role picker drawer design                                                                                                                                                                                                                                         |
+| `pluginsSriChecks`                            | Enables SRI checks for plugin assets                                                                                                                                                                                                                                              |
 
 ## Development feature toggles
 

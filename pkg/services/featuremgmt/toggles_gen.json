@@ -2369,6 +2369,18 @@
     },
     {
       "metadata": {
+        "name": "pluginsSriChecks",
+        "resourceVersion": "1727785264632",
+        "creationTimestamp": "2024-10-01T12:21:04Z"
+      },
+      "spec": {
+        "description": "Enables SRI checks for plugin assets",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-05-27T12:28:06Z"

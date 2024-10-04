@@ -145,6 +145,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			AliasIDs:        panel.AliasIDs,
 			Info:            panel.Info,
 			Module:          panel.Module,
+			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
 			HideFromList:    panel.HideFromList,
@@ -453,6 +454,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			JSONData:                  plugin.JSONData,
 			Signature:                 plugin.Signature,
 			Module:                    plugin.Module,
+			ModuleHash:                hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
 			BaseURL:                   plugin.BaseURL,
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
@@ -538,8 +540,9 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
 					Module:    ds.Module,
-					BaseURL:   ds.BaseURL,
-					Angular:   ds.Angular,
+					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
+					BaseURL: ds.BaseURL,
+					Angular: ds.Angular,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -563,6 +566,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
 		Extensions:      plugin.Extensions,
 		Dependencies:    plugin.Dependencies,
+		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
 	}
 
 	if settings.Enabled {
