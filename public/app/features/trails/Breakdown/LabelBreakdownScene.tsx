@@ -411,7 +411,11 @@ function buildNormalLayout(
         children: [
           new SceneFlexItem({
             minHeight: 300,
-            body: PanelBuilders.timeseries().setTitle('$metric').build(),
+            body: PanelBuilders.timeseries()
+              .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
+              .setOption('legend', { showLegend: false })
+              .setTitle('$metric')
+              .build(),
           }),
         ],
       }),
