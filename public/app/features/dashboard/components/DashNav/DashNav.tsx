@@ -305,7 +305,6 @@ export const DashNav = memo<Props>((props) => {
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
             <ToolbarButton
-              data-testid={e2eSelectors.components.NavToolbar.editDashboard.saveButton}
               tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
               icon="save"
               onClick={() => {
