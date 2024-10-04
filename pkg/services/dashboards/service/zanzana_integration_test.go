@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,14 +35,12 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagZanzana)
 
-		db := db.InitTestDB(t)
+		db, cfg := db.InitTestDBWithCfg(t)
 
-		cfg := setting.NewCfg()
 		// Enable zanzana and run in embedded mode (part of grafana server)
 		cfg.Zanzana.ZanzanaOnlyEvaluation = true
 		cfg.Zanzana.Mode = setting.ZanzanaModeEmbedded
 		cfg.Zanzana.ConcurrentChecks = 10
-		setDBConfig(t, cfg, db)
 
 		_, err := cfg.Raw.Section("rbac").NewKey("resources_with_managed_permissions_on_creation", "dashboard, folder")
 		require.NoError(t, err)
@@ -97,17 +94,6 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 0, len(res))
 	})
-}
-
-func setDBConfig(t *testing.T, cfg *setting.Cfg, db *sqlstore.SQLStore) {
-	_, err := cfg.Raw.Section("database").NewKey("type", string(db.GetDBType()))
-	require.NoError(t, err)
-	_, err = cfg.Raw.Section("database").NewKey("name", "grafana_tests")
-	require.NoError(t, err)
-	_, err = cfg.Raw.Section("database").NewKey("user", "grafana")
-	require.NoError(t, err)
-	_, err = cfg.Raw.Section("database").NewKey("password", "password")
-	require.NoError(t, err)
 }
 
 func createDashboard(t *testing.T, service dashboards.DashboardService, uid, title string) {
