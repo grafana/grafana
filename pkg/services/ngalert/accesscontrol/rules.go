@@ -204,7 +204,7 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 				return err
 			}
 
-			if err := r.authorizeReceivers(ctx, user, rule); err != nil {
+			if err := r.authorizeNotificationSettings(ctx, user, rule); err != nil {
 				return err
 			}
 		}
@@ -252,7 +252,7 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 		if !slices.EqualFunc(rule.Existing.NotificationSettings, rule.New.NotificationSettings, func(settings models.NotificationSettings, settings2 models.NotificationSettings) bool {
 			return settings.Equals(&settings2)
 		}) {
-			if err := r.authorizeReceivers(ctx, user, rule.New); err != nil {
+			if err := r.authorizeNotificationSettings(ctx, user, rule.New); err != nil {
 				return err
 			}
 		}
@@ -260,8 +260,8 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 	return nil
 }
 
-// authorizeReceivers checks if the user has access to all receivers that are used by the rule.
-func (r *RuleService) authorizeReceivers(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+// authorizeNotificationSettings checks if the user has access to all receivers that are used by the rule's notification settings.
+func (r *RuleService) authorizeNotificationSettings(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
 	for _, ns := range rule.NotificationSettings {
 		if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, &ns); err != nil {
 			return err
