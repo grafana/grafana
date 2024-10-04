@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -148,9 +149,20 @@ func (r *Resource) GetSuggestions(ctx context.Context, req *backend.CallResource
 
 	selectorList := []string{}
 	for _, query := range sugReq.Queries {
-		s, err := getSelectors(query)
+		// Since we are only extracting selectors from the metric name, we can use dummy
+		// time durations.
+		interpolatedQuery := models.InterpolateVariables(
+			query,
+			time.Minute,
+			time.Minute,
+			"1m",
+			"15s",
+			time.Minute,
+		)
+		s, err := getSelectors(interpolatedQuery)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing selectors: %v", err)
+			r.log.Warn("error parsing selectors", "error", err, "query", interpolatedQuery)
+			continue
 		}
 		selectorList = append(selectorList, s...)
 	}

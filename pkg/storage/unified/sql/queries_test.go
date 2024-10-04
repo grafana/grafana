@@ -104,18 +104,6 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlResourceHistoryPoll: {
-				{
-					Name: "single path",
-					Data: &sqlResourceHistoryPollRequest{
-						SQLTemplate:          mocks.NewTestingSQLTemplate(),
-						Resource:             "res",
-						Group:                "group",
-						SinceResourceVersion: 1234,
-						Response:             new(historyPollResponse),
-					},
-				},
-			},
 
 			sqlResourceUpdateRV: {
 				{
@@ -155,8 +143,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						WriteEvent: resource.WriteEvent{
-							Key:        &resource.ResourceKey{},
-							PreviousRV: 1234,
+							Key: &resource.ResourceKey{},
 						},
 					},
 				},

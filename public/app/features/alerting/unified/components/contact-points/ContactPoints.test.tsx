@@ -4,9 +4,9 @@ import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within }
 
 import { selectors } from '@grafana/e2e-selectors';
 import {
+  flushMicrotasks,
   testWithFeatureToggles,
   testWithLicenseFeatures,
-  flushMicrotasks,
 } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
@@ -45,7 +45,7 @@ import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } 
  */
 const server = setupMswServer();
 
-const renderWithProvider = (
+export const renderWithProvider = (
   children: ReactNode,
   historyOptions?: MemoryHistoryBuildOptions,
   providerProps?: Partial<ComponentProps<typeof AlertmanagerProvider>>
@@ -211,16 +211,6 @@ describe('contact points', () => {
       await attemptDeleteContactPoint('lotsa-emails');
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
-
-    it('should disable edit button', async () => {
-      renderWithProvider(<ContactPoint contactPoint={basicContactPoint} disabled={true} />);
-
-      const moreActions = screen.getByRole('button', { name: /More/ });
-      expect(moreActions).toBeEnabled();
-
-      const editAction = screen.getByTestId('edit-action');
-      expect(editAction).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('should show warning when no receivers are configured', async () => {

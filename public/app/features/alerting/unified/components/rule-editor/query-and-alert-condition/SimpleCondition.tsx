@@ -143,7 +143,7 @@ export const SimpleConditionEditor = ({
                   type="number"
                   width={10}
                   onChange={onEvaluateValueChange}
-                  value={simpleCondition.evaluator.params[0] || 0}
+                  value={simpleCondition.evaluator.params[0]}
                 />
               )}
             </Stack>
