@@ -57,7 +57,6 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       alignItems: 'center',
       justifyContent: 'space-between',
-      width: '100%',
       padding: '5px 0 5px 10px',
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.secondary,
@@ -98,6 +97,7 @@ const getActionListItemStyles = (theme: GrafanaTheme2) => {
     }),
     dragRow: css({
       position: 'relative',
+      margin: '8px',
     }),
     icons: css({
       display: 'flex',

@@ -98,6 +98,7 @@ export const ActionsInlineEditor = ({
           <span className={styles.oneClickSpan}>One-click link</span>
         </div>
       )}
+
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="sortable-actions" direction="vertical">
           {(provided) => (
@@ -109,6 +110,7 @@ export const ActionsInlineEditor = ({
             >
               {actionsSafe.map((action, idx) => {
                 const key = `${action.title}/${idx}`;
+
                 return (
                   <ActionListItem
                     key={key}
