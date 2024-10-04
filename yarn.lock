@@ -3485,7 +3485,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@lezer/common": "npm:1.2.1"
+    "@lezer/common": "npm:1.2.2"
     "@lezer/lr": "npm:1.3.3"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
@@ -3972,7 +3972,7 @@ __metadata:
     "@grafana/ui": "npm:11.3.0-pre"
     "@hello-pangea/dnd": "npm:16.6.0"
     "@leeoniya/ufuzzy": "npm:1.0.14"
-    "@lezer/common": "npm:1.2.1"
+    "@lezer/common": "npm:1.2.2"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
     "@prometheus-io/lezer-promql": "npm:0.54.1"
@@ -5017,10 +5017,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:1.2.1, @lezer/common@npm:^1.0.0":
-  version: 1.2.1
-  resolution: "@lezer/common@npm:1.2.1"
-  checksum: 10/b362ed2e97664e4b36b3dbff49b52d1bfc5accc0152b577fefd46e585d012ff685d1fd336d75d80066e01c0505b1135d4cf69be5e330b5bfec2e2650c437bcae
+"@lezer/common@npm:1.2.2, @lezer/common@npm:^1.0.0":
+  version: 1.2.2
+  resolution: "@lezer/common@npm:1.2.2"
+  checksum: 10/3894115f8c4ed7ee3f9a8160fb9a984ced272e13883c8f4e6a34c49e6fd50b6890201114417f9bc1e2fd08c8d575edec015c60ea9f8447fedf5909d8ce13327d
   languageName: node
   linkType: hard
 
@@ -18979,7 +18979,7 @@ __metadata:
     "@hello-pangea/dnd": "npm:16.6.0"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.14"
-    "@lezer/common": "npm:1.2.1"
+    "@lezer/common": "npm:1.2.2"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.3.3"
     "@locker/near-membrane-dom": "npm:0.13.6"
