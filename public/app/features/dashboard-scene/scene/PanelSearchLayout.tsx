@@ -44,15 +44,23 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
     }
   }
 
+  if (filteredPanels.length > 0) {
+    return (
+      <div
+        className={classNames(styles.grid, { [styles.perRow]: panelsPerRow !== undefined })}
+        style={{ [panelsPerRowCSSVar]: panelsPerRow } as Record<string, number>}
+      >
+        {filteredPanels.map((panel) => (
+          <PanelSearchHit key={panel.state.key} panel={panel} />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={classNames(styles.grid, { [styles.perRow]: panelsPerRow !== undefined })}
-      style={{ [panelsPerRowCSSVar]: panelsPerRow } as Record<string, number>}
-    >
-      {filteredPanels.map((panel) => (
-        <PanelSearchHit key={panel.state.key} panel={panel} />
-      ))}
-    </div>
+    <p className={styles.noHits}>
+      <Trans i18nKey="panel-search.no-matches">No matches found</Trans>
+    </p>
   );
 }
 
@@ -72,6 +80,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     perRow: css({
       gridTemplateColumns: `repeat(var(${panelsPerRowCSSVar}, 3), 1fr)`,
+    }),
+    noHits: css({
+      display: 'grid',
+      placeItems: 'center',
     }),
   };
 }

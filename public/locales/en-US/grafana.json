@@ -1924,6 +1924,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "No matches found",
     "unsupported-layout": "Unsupported layout"
   },
   "playlist-edit": {
