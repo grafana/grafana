@@ -98,6 +98,15 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Category:     "cloud",
 						Annotations:  true,
@@ -141,6 +150,15 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Executable: "test",
 						Backend:    true,
@@ -195,6 +213,9 @@ func TestLoader_Load(t *testing.T) {
 								{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
 								{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 							},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
 						},
 						Includes: []*plugins.Includes{
 							{
@@ -227,6 +248,12 @@ func TestLoader_Load(t *testing.T) {
 								Action: plugins.ActionAppAccess,
 								Slug:   "nginx-datasource",
 							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 					},
 					Class:         plugins.ClassExternal,
@@ -266,6 +293,15 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
@@ -318,6 +354,15 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
@@ -423,6 +468,15 @@ func TestLoader_Load(t *testing.T) {
 							GrafanaDependency: ">=8.0.0",
 							GrafanaVersion:    "*",
 							Plugins:           []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Includes: []*plugins.Includes{
 							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
@@ -497,6 +551,15 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "*",
 						Plugins:        []plugins.Dependency{},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:        []plugins.AddedLink{},
+						AddedComponents:   []plugins.AddedComponent{},
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
 					IAM: &pfs.IAM{
 						Permissions: []pfs.Permission{
@@ -599,6 +662,15 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 				Dependencies: plugins.Dependencies{
 					GrafanaVersion: "3.x.x",
 					Plugins:        []plugins.Dependency{},
+					Extensions: plugins.ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+				Extensions: plugins.Extensions{
+					AddedLinks:        []plugins.AddedLink{},
+					AddedComponents:   []plugins.AddedComponent{},
+					ExposedComponents: []plugins.ExposedComponent{},
+					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
 			},
 			FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
@@ -671,6 +743,15 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 							Dependencies: plugins.Dependencies{
 								GrafanaVersion: "*",
 								Plugins:        []plugins.Dependency{},
+								Extensions: plugins.ExtensionsDependencies{
+									ExposedComponents: []string{},
+								},
+							},
+							Extensions: plugins.Extensions{
+								AddedLinks:        []plugins.AddedLink{},
+								AddedComponents:   []plugins.AddedComponent{},
+								ExposedComponents: []plugins.ExposedComponent{},
+								ExtensionPoints:   []plugins.ExtensionPoint{},
 							},
 							Backend:    true,
 							Executable: "test",
@@ -767,6 +848,15 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 							GrafanaVersion:    "*",
 							GrafanaDependency: ">=8.0.0",
 							Plugins:           []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Includes: []*plugins.Includes{},
 						Roles: []plugins.RoleRegistration{
@@ -840,10 +930,18 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 						},
 						Version: "1.0.0",
 					},
-					State:        plugins.ReleaseStateAlpha,
-					Dependencies: plugins.Dependencies{GrafanaVersion: "*", Plugins: []plugins.Dependency{}},
-					Backend:      true,
-					Executable:   "test",
+					State: plugins.ReleaseStateAlpha,
+					Dependencies: plugins.Dependencies{GrafanaVersion: "*", Plugins: []plugins.Dependency{}, Extensions: plugins.ExtensionsDependencies{
+						ExposedComponents: []string{},
+					}},
+					Extensions: plugins.Extensions{
+						AddedLinks:        []plugins.AddedLink{},
+						AddedComponents:   []plugins.AddedComponent{},
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
+					},
+					Backend:    true,
+					Executable: "test",
 				},
 				FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri/plugin")),
 				Class:         plugins.ClassExternal,
@@ -913,6 +1011,15 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
 							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 						},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:        []plugins.AddedLink{},
+						AddedComponents:   []plugins.AddedComponent{},
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
 					Includes: []*plugins.Includes{
 						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-connections"},
@@ -994,12 +1101,21 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
 							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 						},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
 					},
 					Includes: []*plugins.Includes{
 						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-connections"},
 						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
 						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-panel"},
 						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:        []plugins.AddedLink{},
+						AddedComponents:   []plugins.AddedComponent{},
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
 					Backend: false,
 				},
@@ -1208,6 +1324,15 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			Dependencies: plugins.Dependencies{
 				GrafanaVersion: "*",
 				Plugins:        []plugins.Dependency{},
+				Extensions: plugins.ExtensionsDependencies{
+					ExposedComponents: []string{},
+				},
+			},
+			Extensions: plugins.Extensions{
+				AddedLinks:        []plugins.AddedLink{},
+				AddedComponents:   []plugins.AddedComponent{},
+				ExposedComponents: []plugins.ExposedComponent{},
+				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
 			Backend: true,
 		},
@@ -1241,6 +1366,15 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			Dependencies: plugins.Dependencies{
 				GrafanaVersion: "*",
 				Plugins:        []plugins.Dependency{},
+				Extensions: plugins.ExtensionsDependencies{
+					ExposedComponents: []string{},
+				},
+			},
+			Extensions: plugins.Extensions{
+				AddedLinks:        []plugins.AddedLink{},
+				AddedComponents:   []plugins.AddedComponent{},
+				ExposedComponents: []plugins.ExposedComponent{},
+				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
 		},
 		Module:        "public/plugins/test-datasource/nested/module.js",
@@ -1336,6 +1470,9 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					GrafanaVersion:    "7.0.0",
 					GrafanaDependency: ">=7.0.0",
 					Plugins:           []plugins.Dependency{},
+					Extensions: plugins.ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
 				},
 				Includes: []*plugins.Includes{
 					{
@@ -1382,6 +1519,12 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Slug:   "lots-of-stats",
 					},
 				},
+				Extensions: plugins.Extensions{
+					AddedLinks:        []plugins.AddedLink{},
+					AddedComponents:   []plugins.AddedComponent{},
+					ExposedComponents: []plugins.ExposedComponent{},
+					ExtensionPoints:   []plugins.ExtensionPoint{},
+				},
 				Backend: false,
 			},
 			Module:        "public/plugins/myorgid-simple-app/module.js",
@@ -1421,6 +1564,15 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					GrafanaDependency: ">=7.0.0",
 					GrafanaVersion:    "*",
 					Plugins:           []plugins.Dependency{},
+					Extensions: plugins.ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+				Extensions: plugins.Extensions{
+					AddedLinks:        []plugins.AddedLink{},
+					AddedComponents:   []plugins.AddedComponent{},
+					ExposedComponents: []plugins.ExposedComponent{},
+					ExtensionPoints:   []plugins.ExtensionPoint{},
 				},
 			},
 			Module:          "public/plugins/myorgid-simple-app/child/module.js",

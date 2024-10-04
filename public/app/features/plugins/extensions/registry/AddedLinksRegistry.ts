@@ -3,11 +3,10 @@ import { ReplaySubject } from 'rxjs';
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
-import { logWarning } from '../utils';
+import { isAddedLinkMetaInfoMissing, isGrafanaDevMode, logWarning } from '../utils';
 import {
   extensionPointEndsWithVersion,
   isConfigureFnValid,
-  isExtensionPointIdValid,
   isGrafanaCoreExtensionPoint,
   isLinkPathValid,
 } from '../validators';
@@ -73,18 +72,15 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         continue;
       }
 
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config)) {
+        continue;
+      }
+
       const extensionPointIds = Array.isArray(targets) ? targets : [targets];
       for (const extensionPointId of extensionPointIds) {
-        if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
-          logWarning(
-            `Could not register added link with id '${extensionPointId}'. Reason: Target extension point id must start with grafana, plugins or plugin id.`
-          );
-          continue;
-        }
-
         if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
           logWarning(
-            `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+            `Added link "${config.title}: it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
           );
         }
 

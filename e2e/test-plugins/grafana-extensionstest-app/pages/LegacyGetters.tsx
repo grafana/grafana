@@ -16,7 +16,7 @@ type ReusableComponentProps = {
 
 export function LegacyGetters() {
   const extensionPointId1 = 'plugins/grafana-extensionstest-app/actions';
-  const extensionPointId2 = 'plugins/grafana-extensionexample2-app/configure-extension-component/v1';
+  const extensionPointId2 = 'plugins/grafana-extensionstest-app/configure-extension-component/v1';
   const context: AppExtensionContext = {};
 
   const { extensions } = getPluginExtensions({

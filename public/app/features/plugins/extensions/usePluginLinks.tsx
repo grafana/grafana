@@ -2,7 +2,7 @@ import { isString } from 'lodash';
 import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@grafana/data';
 import {
   UsePluginLinksOptions,
   UsePluginLinksResult,
@@ -15,7 +15,11 @@ import {
   getLinkExtensionOverrides,
   getLinkExtensionPathWithTracking,
   getReadOnlyProxy,
+  isExtensionPointMetaInfoMissing,
+  isGrafanaDevMode,
+  logWarning,
 } from './utils';
+import { isExtensionPointIdValid } from './validators';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginLinks({
@@ -24,9 +28,34 @@ export function usePluginLinks({
   context,
 }: UsePluginLinksOptions): UsePluginLinksResult {
   const registry = useAddedLinksRegistry();
+  const pluginContext = usePluginContext();
   const registryState = useObservable(registry.asObservable());
 
   return useMemo(() => {
+    // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
+    const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
+    const pluginId = pluginContext?.meta.id ?? '';
+
+    if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
+      logWarning(
+        `Extension point usePluginLinks("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
+      );
+      return {
+        isLoading: false,
+        links: [],
+      };
+    }
+
+    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+      logWarning(
+        `Invalid extension point. Reason: The extension point is not declared in the "plugin.json" file. ExtensionPointId: "${extensionPointId}"`
+      );
+      return {
+        isLoading: false,
+        links: [],
+      };
+    }
+
     if (!registryState || !registryState[extensionPointId]) {
       return {
         isLoading: false,
@@ -80,5 +109,5 @@ export function usePluginLinks({
       isLoading: false,
       links: extensions,
     };
-  }, [context, extensionPointId, limitPerPlugin, registryState]);
+  }, [context, extensionPointId, limitPerPlugin, registryState, pluginContext]);
 }

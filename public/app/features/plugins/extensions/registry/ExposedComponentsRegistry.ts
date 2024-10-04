@@ -2,7 +2,7 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionExposedComponentConfig } from '@grafana/data';
 
-import { logWarning } from '../utils';
+import { isExposedComponentMetaInfoMissing, isGrafanaDevMode, logWarning } from '../utils';
 import { extensionPointEndsWithVersion } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
@@ -65,6 +65,10 @@ export class ExposedComponentsRegistry extends Registry<
 
       if (!description) {
         logWarning(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
+        continue;
+      }
+
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isExposedComponentMetaInfoMissing(pluginId, config)) {
         continue;
       }
 

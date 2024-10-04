@@ -1,14 +1,61 @@
 import { firstValueFrom } from 'rxjs';
 
+import { PluginLoadingStrategy } from '@grafana/data';
+import { config } from '@grafana/runtime';
+
+import { isGrafanaDevMode } from '../utils';
+
 import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
 
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+
+  // Manually set the dev mode to false
+  // (to make sure that by default we are testing a production scneario)
+  isGrafanaDevMode: jest.fn().mockReturnValue(false),
+}));
+
 describe('AddedLinksRegistry', () => {
+  const originalApps = config.apps;
   const consoleWarn = jest.fn();
+  const pluginId = 'grafana-basic-app';
+  const appPluginConfig = {
+    id: pluginId,
+    path: '',
+    version: '',
+    preload: false,
+    angular: {
+      detected: false,
+      hideDeprecation: false,
+    },
+    loadingStrategy: PluginLoadingStrategy.fetch,
+    dependencies: {
+      grafanaVersion: '8.0.0',
+      plugins: [],
+      extensions: {
+        exposedComponents: [],
+      },
+    },
+    extensions: {
+      addedLinks: [],
+      addedComponents: [],
+      exposedComponents: [],
+      extensionPoints: [],
+    },
+  };
 
   beforeEach(() => {
     global.console.warn = consoleWarn;
     consoleWarn.mockReset();
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+    config.apps = {
+      [pluginId]: appPluginConfig,
+    };
+  });
+
+  afterEach(() => {
+    config.apps = originalApps;
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -19,7 +66,6 @@ describe('AddedLinksRegistry', () => {
   });
 
   it('should be possible to register link extensions in the registry', async () => {
-    const pluginId = 'grafana-basic-app';
     const addedLinksRegistry = new AddedLinksRegistry();
 
     addedLinksRegistry.register({
@@ -579,5 +625,110 @@ describe('AddedLinksRegistry', () => {
 
     expect(subscribeCallback).toHaveBeenCalledTimes(2);
     expect(Object.keys(subscribeCallback.mock.calls[1][0])).toEqual(['plugins/myorg-basic-app/start']);
+  });
+
+  it('should not register a link added by a plugin in dev-mode if the meta-info is missing from the plugin.json', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new AddedLinksRegistry();
+    const linkConfig = {
+      title: 'Link 1',
+      description: 'Link 1 description',
+      path: `/a/${pluginId}/declare-incident`,
+      targets: 'grafana/dashboard/panel/menu',
+      configure: jest.fn().mockReturnValue({}),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.addedLinks = [];
+
+    registry.register({
+      pluginId,
+      configs: [linkConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(0);
+    expect(consoleWarn).toHaveBeenCalled();
+  });
+
+  it('should register a link added by core Grafana in dev-mode even if the meta-info is missing', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new AddedLinksRegistry();
+    const linkConfig = {
+      title: 'Link 1',
+      description: 'Link 1 description',
+      path: `/a/grafana/declare-incident`,
+      targets: 'grafana/dashboard/panel/menu',
+      configure: jest.fn().mockReturnValue({}),
+    };
+
+    registry.register({
+      pluginId: 'grafana',
+      configs: [linkConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
+  });
+
+  it('should register a link added by a plugin in production mode even if the meta-info is missing', async () => {
+    // Production mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+
+    const registry = new AddedLinksRegistry();
+    const linkConfig = {
+      title: 'Link 1',
+      description: 'Link 1 description',
+      path: `/a/${pluginId}/declare-incident`,
+      targets: 'grafana/dashboard/panel/menu',
+      configure: jest.fn().mockReturnValue({}),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.addedLinks = [];
+
+    registry.register({
+      pluginId,
+      configs: [linkConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
+  });
+
+  it('should register a link added by a plugin in dev-mode if the meta-info is present', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new AddedLinksRegistry();
+    const linkConfig = {
+      title: 'Link 1',
+      description: 'Link 1 description',
+      path: `/a/${pluginId}/declare-incident`,
+      targets: ['grafana/dashboard/panel/menu'],
+      configure: jest.fn().mockReturnValue({}),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.addedLinks = [linkConfig];
+
+    registry.register({
+      pluginId,
+      configs: [linkConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
   });
 });

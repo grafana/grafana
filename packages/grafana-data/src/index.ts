@@ -586,6 +586,7 @@ export {
   type AngularMeta,
   type PluginMeta,
   type PluginDependencies,
+  type PluginExtensions,
   type PluginInclude,
   type PluginBuildInfo,
   type ScreenshotInfo,
