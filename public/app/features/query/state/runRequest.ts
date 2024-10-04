@@ -18,7 +18,7 @@ import {
   PanelData,
   TimeRange,
 } from '@grafana/data';
-import { config, instanceOfMigrationHandler, migrateRequest, toDataQueryError } from '@grafana/runtime';
+import { config, isMigrationHandler, migrateRequest, toDataQueryError } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { queryIsEmpty } from 'app/core/utils/query';
@@ -191,7 +191,7 @@ function callQueryMethodWithMigration(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
-  if (instanceOfMigrationHandler(datasource)) {
+  if (isMigrationHandler(datasource)) {
     const migratedRequestPromise = migrateRequest(datasource, request);
     return from(migratedRequestPromise).pipe(
       mergeMap((migratedRequest) => callQueryMethod(datasource, migratedRequest, queryFunction))

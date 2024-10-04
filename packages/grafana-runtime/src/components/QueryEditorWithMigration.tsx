@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { DataSourceApi, DataSourceOptionsType, DataSourceQueryType, QueryEditorProps } from '@grafana/data';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
-import { instanceOfMigrationHandler, migrateQuery } from '../utils/migrationHandler';
+import { isMigrationHandler, migrateQuery } from '../utils/migrationHandler';
 
 // QueryEditorWithMigration is a higher order component that wraps the QueryEditor component
 // and ensures that the query is migrated before being passed to the QueryEditor.
@@ -18,14 +18,15 @@ export function QueryEditorWithMigration<
     const [query, setQuery] = useState(props.query);
 
     useEffect(() => {
-      if (props.query && instanceOfMigrationHandler(props.datasource)) {
+      if (props.query && isMigrationHandler(props.datasource)) {
         migrateQuery(props.datasource, props.query).then((migrated) => {
           props.onChange(migrated);
           setQuery(migrated);
           setMigrated(true);
         });
+      } else {
+        setMigrated(true);
       }
-      setMigrated(true);
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
@@ -33,7 +34,7 @@ export function QueryEditorWithMigration<
     }, [props.query]);
 
     if (!migrated) {
-      return <Skeleton />;
+      return <Skeleton containerTestId="react-loading-skeleton-testid" />;
     }
     return <QueryEditor {...props} query={query} />;
   };

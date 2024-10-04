@@ -55,9 +55,4 @@ export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chrome
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
-export {
-  type MigrationHandler,
-  instanceOfMigrationHandler,
-  migrateQuery,
-  migrateRequest,
-} from './utils/migrationHandler';
+export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';

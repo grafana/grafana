@@ -4,13 +4,15 @@ import { DataQuery } from '@grafana/schema';
 import { config } from '../config';
 import { getBackendSrv } from '../services';
 
+import { DataSourceWithBackend } from './DataSourceWithBackend';
+
 export interface MigrationHandler {
   hasBackendMigration: boolean;
   shouldMigrate(query: DataQuery): boolean;
 }
 
-export function instanceOfMigrationHandler(object: any): object is MigrationHandler {
-  return 'hasBackendMigration' in object && 'shouldMigrate' in object;
+export function isMigrationHandler(object: unknown): object is MigrationHandler {
+  return object instanceof DataSourceWithBackend && 'hasBackendMigration' in object && 'shouldMigrate' in object;
 }
 
 async function postMigrateRequest<TQuery extends DataQuery>(queries: TQuery[]): Promise<TQuery[]> {
@@ -59,12 +61,9 @@ export async function migrateRequest<TQuery extends DataQuery>(
   datasource: MigrationHandler,
   request: DataQueryRequest<TQuery>
 ): Promise<DataQueryRequest<TQuery>> {
-  const promises = request.targets.map((query) => {
-    if (!datasource.hasBackendMigration || !datasource.shouldMigrate(query)) {
-      return Promise.resolve(query);
-    }
-    return migrateQuery(datasource, query);
-  });
-  request.targets = await Promise.all(promises);
-  return request;
+  if (!datasource.hasBackendMigration || !request.targets.some((query) => datasource.shouldMigrate(query))) {
+    return request;
+  }
+  const res = await postMigrateRequest(request.targets);
+  return { ...request, targets: res };
 }

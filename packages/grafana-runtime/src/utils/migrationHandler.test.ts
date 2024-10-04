@@ -1,17 +1,22 @@
-import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
+import { BackendSrv, BackendSrvRequest } from 'src/services';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { config } from '../config';
 
 import { DataSourceWithBackend } from './DataSourceWithBackend';
-import { migrateQuery, MigrationHandler } from './migrationHandler';
+import { isMigrationHandler, migrateQuery, migrateRequest, MigrationHandler } from './migrationHandler';
 
 let mockDatasourcePost = jest.fn();
-const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
 
 interface MyQuery extends DataQuery {}
+
+class MyDataSourceWithoutMigration extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
+  constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
+    super(instanceSettings);
+  }
+}
 
 class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> implements MigrationHandler {
   hasBackendMigration: boolean;
@@ -46,22 +51,110 @@ describe('query migration', () => {
     config.featureToggles = originalFeatureToggles;
   });
 
-  test('check that migrateRequest migrates a request', async () => {
-    const { ds } = createMockDatasource({
-      apiVersion: 'v0alpha1',
+  describe('isMigrationHandler', () => {
+    it('returns true for a datasource with backend migration', () => {
+      const ds = createMockDatasource();
+      expect(isMigrationHandler(ds)).toBe(true);
     });
 
-    const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
-    const migratedQuery = { refId: 'A', datasource: { type: 'dummy' }, foobar: 'barfoo' };
-    mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
-      expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
-      expect(args.data).toMatchObject({ queries: [originalQuery] });
-      return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
+    it('returns false for a datasource without backend migration', () => {
+      const ds = new MyDataSourceWithoutMigration({} as DataSourceInstanceSettings<DataSourceJsonData>); // eslint-disable-line @typescript-eslint/no-explicit-any
+      expect(isMigrationHandler(ds)).toBe(false);
+    });
+  });
+
+  describe('migrateQuery', () => {
+    it('skips migration if the datasource does not support it', async () => {
+      const ds = createMockDatasource();
+      ds.hasBackendMigration = false;
+      const query = { refId: 'A', datasource: { type: 'dummy' } };
+
+      const result = await migrateQuery(ds, query);
+
+      expect(query).toEqual(result);
+      expect(mockDatasourcePost).not.toHaveBeenCalled();
     });
 
-    const result = await migrateQuery(ds, originalQuery);
+    it('skips migration if the query should not be migrated', async () => {
+      const ds = createMockDatasource();
+      ds.shouldMigrate = jest.fn().mockReturnValue(false);
+      const query = { refId: 'A', datasource: { type: 'dummy' } };
 
-    expect(migratedQuery).toBe(result);
+      const result = await migrateQuery(ds, query);
+
+      expect(query).toEqual(result);
+      expect(mockDatasourcePost).not.toHaveBeenCalled();
+    });
+
+    it('check that migrateQuery works', async () => {
+      const ds = createMockDatasource();
+
+      const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
+      const migratedQuery = { refId: 'A', datasource: { type: 'dummy' }, foobar: 'barfoo' };
+      mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
+        expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
+        expect(args.data).toMatchObject({ queries: [originalQuery] });
+        return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
+      });
+
+      const result = await migrateQuery(ds, originalQuery);
+
+      expect(migratedQuery).toEqual(result);
+    });
+  });
+
+  describe('migrateRequest', () => {
+    it('skips migration if the datasource does not support it', async () => {
+      const ds = createMockDatasource();
+      ds.hasBackendMigration = false;
+      const request = {
+        targets: [{ refId: 'A', datasource: { type: 'dummy' } }],
+      } as unknown as DataQueryRequest<MyQuery>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      const result = await migrateRequest(ds, request);
+
+      expect(request).toEqual(result);
+      expect(mockDatasourcePost).not.toHaveBeenCalled();
+    });
+
+    it('skips migration if none of the queries should be migrated', async () => {
+      const ds = createMockDatasource();
+      ds.shouldMigrate = jest.fn().mockReturnValue(false);
+      const request = {
+        targets: [{ refId: 'A', datasource: { type: 'dummy' } }],
+      } as unknown as DataQueryRequest<MyQuery>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      const result = await migrateRequest(ds, request);
+
+      expect(request).toEqual(result);
+      expect(mockDatasourcePost).not.toHaveBeenCalled();
+    });
+
+    it('check that migrateRequest migrates a request', async () => {
+      const ds = createMockDatasource();
+
+      const originalRequest = {
+        targets: [
+          { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' },
+          { refId: 'A', datasource: { type: 'dummy' }, bar: 'foo' },
+        ],
+      } as unknown as DataQueryRequest<MyQuery>; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const migratedRequest = {
+        targets: [
+          { refId: 'A', datasource: { type: 'dummy' }, foobar: 'foobar' },
+          { refId: 'A', datasource: { type: 'dummy' }, barfoo: 'barfoo' },
+        ],
+      };
+      mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
+        expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
+        expect(args.data).toMatchObject({ queries: originalRequest.targets });
+        return Promise.resolve({ queries: migratedRequest.targets.map((query) => ({ JSON: query })) });
+      });
+
+      const result = await migrateRequest(ds, originalRequest);
+
+      expect(migratedRequest).toEqual(result);
+    });
   });
 });
 
@@ -75,9 +168,7 @@ function createMockDatasource(otherSettings?: Partial<DataSourceInstanceSettings
     ...otherSettings,
   } as DataSourceInstanceSettings<DataSourceJsonData>;
 
-  mockDatasourceRequest.mockReset();
-  mockDatasourceRequest.mockReturnValue(Promise.resolve({} as FetchResponse));
+  mockDatasourcePost.mockReset();
 
-  const ds = new MyDataSource(settings);
-  return { ds, mock: mockDatasourceRequest.mock };
+  return new MyDataSource(settings);
 }

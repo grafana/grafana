@@ -1,12 +1,13 @@
-import { render, screen } from '@testing-library/react';
-import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { DataSourceInstanceSettings, QueryEditorProps } from '@grafana/data';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { config } from '../config';
-
+import { BackendSrv, BackendSrvRequest } from '../services';
 import { DataSourceWithBackend } from '../utils/DataSourceWithBackend';
+import { MigrationHandler } from '../utils/migrationHandler';
+
 import { QueryEditorWithMigration } from './QueryEditorWithMigration';
 
 const backendSrv = {
@@ -21,13 +22,19 @@ jest.mock('../services', () => ({
 }));
 
 let mockDatasourcePost = jest.fn();
-const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
 
 interface MyQuery extends DataQuery {}
 
-class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
+class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> implements MigrationHandler {
+  hasBackendMigration: boolean;
+
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
     super(instanceSettings);
+    this.hasBackendMigration = true;
+  }
+
+  shouldMigrate(query: DataQuery): boolean {
+    return true;
   }
 }
 
@@ -47,11 +54,7 @@ function createMockDatasource(otherSettings?: Partial<DataSourceInstanceSettings
     ...otherSettings,
   } as DataSourceInstanceSettings<DataSourceJsonData>;
 
-  mockDatasourceRequest.mockReset();
-  mockDatasourceRequest.mockReturnValue(Promise.resolve({} as FetchResponse));
-
-  const ds = new MyDataSource(settings);
-  return { ds, mock: mockDatasourceRequest.mock };
+  return new MyDataSource(settings);
 }
 
 describe('QueryEditorWithMigration', () => {
@@ -65,7 +68,7 @@ describe('QueryEditorWithMigration', () => {
 
   it('should migrate a query', async () => {
     const WithMigration = QueryEditorWithMigration(QueryEditor);
-    const { ds } = createMockDatasource();
+    const ds = createMockDatasource();
     const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
     const migratedQuery = { refId: 'A', datasource: { type: 'dummy' }, foobar: 'barfoo' };
 
@@ -76,6 +79,24 @@ describe('QueryEditorWithMigration', () => {
     });
 
     render(<WithMigration datasource={ds} query={originalQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />);
-    expect(screen.findByText(JSON.stringify(migratedQuery))).toBeTruthy();
+
+    await waitFor(() => {
+      // Check that migratedQuery is rendered
+      expect(screen.getByText(JSON.stringify(migratedQuery))).toBeInTheDocument();
+    });
+  });
+
+  it('should render a Skeleton while migrating', async () => {
+    const WithMigration = QueryEditorWithMigration(QueryEditor);
+    const ds = createMockDatasource();
+    const originalQuery = { refId: 'A', datasource: { type: 'dummy' }, foo: 'bar' };
+
+    mockDatasourcePost = jest.fn().mockImplementation(async (args: { url: string; data: unknown }) => {
+      await waitFor(() => {}, { timeout: 5000 });
+      return Promise.resolve({ queries: [{ JSON: originalQuery }] });
+    });
+
+    render(<WithMigration datasource={ds} query={originalQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />);
+    expect(screen.getByTestId('react-loading-skeleton-testid')).toBeInTheDocument();
   });
 });
