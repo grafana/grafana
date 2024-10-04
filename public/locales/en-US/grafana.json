@@ -1185,7 +1185,7 @@
     },
     "misc-section": {
       "allow-sign-up-descrition": "If not enabled, only existing Grafana users can log in using LDAP",
-      "allow-sign-up-label": "Allow sign up",
+      "allow-sign-up-label": "Allow sign-up",
       "label": "Misc",
       "port-description": "Default port is 389 without SSL or 636 with SSL",
       "port-label": "Port",
