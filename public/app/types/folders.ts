@@ -5,6 +5,8 @@ export interface FolderListItemDTO {
   title: string;
 }
 
+export type FolderParent = Pick<FolderDTO, 'title' | 'uid' | 'url'>;
+
 export interface FolderDTO extends WithAccessControlMetadata {
   canAdmin: boolean;
   canDelete: boolean;
@@ -17,7 +19,7 @@ export interface FolderDTO extends WithAccessControlMetadata {
   parentUid?: string;
 
   // The API does actually return a full FolderDTO here, but we want to restrict it to just a few properties
-  parents?: Array<Pick<FolderDTO, 'title' | 'uid' | 'url'>>;
+  parents?: FolderParent[];
   title: string;
   uid: string;
   updated: string;
