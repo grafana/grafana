@@ -25,6 +25,13 @@ import (
 	"golang.org/x/crypto/nacl/box"
 )
 
+var currentMirationDataTypes = []cloudmigration.MigrateDataType{
+	cloudmigration.DatasourceDataType,
+	cloudmigration.FolderDataType,
+	cloudmigration.LibraryElementDataType,
+	cloudmigration.DashboardDataType,
+}
+
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
 	// Data sources
 	dataSources, err := s.getDataSourceCommands(ctx)
@@ -310,12 +317,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		}
 	}
 
-	for _, resourceType := range []cloudmigration.MigrateDataType{
-		cloudmigration.DatasourceDataType,
-		cloudmigration.FolderDataType,
-		cloudmigration.LibraryElementDataType,
-		cloudmigration.DashboardDataType,
-	} {
+	for _, resourceType := range currentMirationDataTypes {
 		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
 			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
 				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
@@ -502,7 +504,6 @@ func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderComman
 
 // getFolderNamesForFolderUIDs queries the folders service to obtain folder names for a list of folderUIDs
 func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser *user.SignedInUser, folderUIDs []string) (map[string](string), error) {
-	folderUIDsToNames := make(map[string](string), 0)
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUIDs,
 		SignedInUser:     signedInUser,
@@ -513,6 +514,7 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 		return nil, err
 	}
 
+	folderUIDsToNames := make(map[string](string), len(folderUIDs))
 	for _, folderUID := range folderUIDs {
 		folderUIDsToNames[folderUID] = ""
 	}
@@ -526,16 +528,12 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 // for dashboards, folders and library elements - the parent is the parent folder
 func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand, libraryElements []libraryElement) (map[cloudmigration.MigrateDataType]map[string](string), error) {
 	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
-	for _, dataType := range []cloudmigration.MigrateDataType{
-		cloudmigration.FolderDataType,
-		cloudmigration.DashboardDataType,
-		cloudmigration.LibraryElementDataType,
-	} {
+	for _, dataType := range currentMirationDataTypes {
 		parentNamesByType[dataType] = make(map[string]string)
 	}
 
 	// Obtain list of unique folderUIDs
-	parentFolderUIDsSet := make(map[string]struct{})
+	parentFolderUIDsSet := make(map[string]struct{}, len(dashboards)+len(folders)+len(libraryElements))
 	for _, dashboard := range dashboards {
 		parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
 	}
@@ -545,7 +543,7 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	for _, libraryElement := range libraryElements {
 		parentFolderUIDsSet[*libraryElement.FolderUID] = struct{}{}
 	}
-	parentFolderUIDsSlice := make([]string, 0)
+	parentFolderUIDsSlice := make([]string, 0, len(parentFolderUIDsSet))
 	for parentFolderUID := range parentFolderUIDsSet {
 		parentFolderUIDsSlice = append(parentFolderUIDsSlice, parentFolderUID)
 	}

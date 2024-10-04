@@ -67,12 +67,12 @@ function DatasourceInfo({ data }: { data: ResourceTableItem }) {
   );
 }
 
-function getTitleFromDashboardJSON(dashboardData: object | undefined): string | undefined {
+function getTitleFromDashboardJSON(dashboardData: object | undefined): string | null {
   if (dashboardData && 'title' in dashboardData && typeof dashboardData.title === 'string') {
     return dashboardData.title;
   }
 
-  return undefined;
+  return null;
 }
 
 function DashboardInfo({ data }: { data: ResourceTableItem }) {
