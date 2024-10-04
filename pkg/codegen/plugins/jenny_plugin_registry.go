@@ -1,4 +1,4 @@
-package codegen
+package plugins
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/codegen/plugins/parser"
 )
 
 var registryPath = filepath.Join("pkg", "registry", "schemas")
@@ -28,7 +28,7 @@ func (jenny *PluginRegistryJenny) JennyName() string {
 	return "PluginRegistryJenny"
 }
 
-func (jenny *PluginRegistryJenny) Generate(decls ...*pfs.PluginDecl) (*codejen.File, error) {
+func (jenny *PluginRegistryJenny) Generate(decls ...*parser.PluginDecl) (*codejen.File, error) {
 	if len(decls) == 0 {
 		return nil, nil
 	}

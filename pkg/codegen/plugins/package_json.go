@@ -1,4 +1,4 @@
-package codegen
+package plugins
 
 import (
 	"encoding/json"

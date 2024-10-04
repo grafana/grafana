@@ -1,4 +1,4 @@
-package pfs
+package parser
 
 import "errors"
 
@@ -15,11 +15,6 @@ var ErrInvalidRootFile = errors.New("plugin.json is invalid")
 // grafanaplugin package files are invalid with respect to the GrafanaPlugin
 // spec.
 var ErrInvalidGrafanaPluginInstance = errors.New("grafanaplugin cue instance is invalid")
-
-// ErrInvalidLineage indicates that the plugin contains an invalid lineage
-// declaration, according to Thema's validation rules in
-// ["github.com/grafana/thema".BindLineage].
-var ErrInvalidLineage = errors.New("invalid lineage")
 
 // ErrDisallowedCUEImport indicates that a plugin's grafanaplugin cue package
 // contains that are not on the allowlist.

@@ -1,4 +1,4 @@
-package codegen
+package plugins
 
 import (
 	"fmt"
@@ -8,11 +8,11 @@ import (
 	copenapi "cuelang.org/go/encoding/openapi"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/codegen/generators"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/codegen/plugins/parser"
 )
 
 // TODO this is duplicative of other Go type jennies. Remove it in favor of a better-abstracted version in thema itself
-func PluginGoTypesJenny(root string) codejen.OneToOne[*pfs.PluginDecl] {
+func PluginGoTypesJenny(root string) codejen.OneToOne[*parser.PluginDecl] {
 	return &pgoJenny{
 		root: root,
 	}
@@ -26,7 +26,7 @@ func (j *pgoJenny) JennyName() string {
 	return "PluginGoTypesJenny"
 }
 
-func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
+func (j *pgoJenny) Generate(decl *parser.PluginDecl) (*codejen.File, error) {
 	hasBackend := decl.PluginMeta.Backend
 	// We skip elasticsearch since we have problems with the generated file.
 	// This is temporal until we migrate to the new system.

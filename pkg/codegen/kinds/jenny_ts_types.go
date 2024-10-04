@@ -1,4 +1,4 @@
-package codegen
+package kinds
 
 import (
 	"github.com/grafana/codejen"

@@ -1,7 +1,7 @@
 //go:build ignore
 // +build ignore
 
-//go:generate go run gen.go
+//go:generate go run plugins_gen.go
 
 package main
 
@@ -14,9 +14,9 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-	corecodegen "github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/plugins/codegen"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/codegen/kinds"
+	"github.com/grafana/grafana/pkg/codegen/plugins"
+	"github.com/grafana/grafana/pkg/codegen/plugins/parser"
 )
 
 var skipPlugins = map[string]bool{
@@ -27,6 +27,8 @@ var skipPlugins = map[string]bool{
 
 const sep = string(filepath.Separator)
 
+var PluginsPath = filepath.Join("public", "app", "plugins")
+
 func main() {
 	if len(os.Args) > 1 {
 		log.Fatal(fmt.Errorf("plugin thema code generator does not currently accept any arguments\n, got %q", os.Args))
@@ -36,22 +38,22 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not get working directory: %s", err))
 	}
-	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
+	groot := filepath.Clean(filepath.Join(cwd, "../.."))
 
-	pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
+	pluginKindGen := codejen.JennyListWithNamer(func(d *parser.PluginDecl) string {
 		return d.PluginMeta.Id
 	})
 
 	pluginKindGen.Append(
-		&codegen.PluginRegistryJenny{},
-		codegen.PluginGoTypesJenny("pkg/tsdb"),
-		codegen.PluginTSTypesJenny("public/app/plugins"),
+		&plugins.PluginRegistryJenny{},
+		plugins.PluginGoTypesJenny("pkg/tsdb"),
+		plugins.PluginTSTypesJenny(PluginsPath),
 	)
 
-	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer())
+	pluginKindGen.AddPostprocessors(kinds.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer())
 
-	declParser := pfs.NewDeclParser(skipPlugins)
-	decls, err := declParser.Parse(os.DirFS(cwd))
+	declParser := parser.NewDeclParser(skipPlugins)
+	decls, err := declParser.Parse(os.DirFS(filepath.Join(groot, PluginsPath)))
 	if err != nil {
 		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
 	}

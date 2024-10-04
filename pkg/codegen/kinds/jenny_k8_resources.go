@@ -1,4 +1,4 @@
-package codegen
+package kinds
 
 import (
 	"bytes"
@@ -66,7 +66,7 @@ func (jenny *K8ResourcesJenny) genResource(pkg string, val cue.Value) (codejen.F
 		return codejen.File{}, err
 	}
 
-	return *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", pkgName, pkgName), content, jenny), nil
+	return *codejen.NewFile(fmt.Sprintf("kinds/%s/%s_gen.go", pkgName, pkgName), content, jenny), nil
 }
 
 func (jenny *K8ResourcesJenny) genMetadata(pkg string) (codejen.File, error) {
@@ -79,7 +79,7 @@ func (jenny *K8ResourcesJenny) genMetadata(pkg string) (codejen.File, error) {
 		return codejen.File{}, fmt.Errorf("failed executing core resource template: %w", err)
 	}
 
-	return *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_metadata_gen.go", pkg, pkg), buf.Bytes(), jenny), nil
+	return *codejen.NewFile(fmt.Sprintf("kinds/%s/%s_metadata_gen.go", pkg, pkg), buf.Bytes(), jenny), nil
 }
 
 func (jenny *K8ResourcesJenny) genStatus(pkg string) (codejen.File, error) {
@@ -92,7 +92,7 @@ func (jenny *K8ResourcesJenny) genStatus(pkg string) (codejen.File, error) {
 		return codejen.File{}, fmt.Errorf("failed executing core resource template: %w", err)
 	}
 
-	return *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_status_gen.go", pkg, pkg), buf.Bytes(), jenny), nil
+	return *codejen.NewFile(fmt.Sprintf("kinds/%s/%s_status_gen.go", pkg, pkg), buf.Bytes(), jenny), nil
 }
 
 func getVersion(val cue.Value) (string, error) {

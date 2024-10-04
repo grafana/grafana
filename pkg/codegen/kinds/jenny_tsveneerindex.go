@@ -1,4 +1,4 @@
-package codegen
+package kinds
 
 import (
 	"fmt"
@@ -65,7 +65,7 @@ func (gen *genTSVeneerIndex) Generate(sfg ...SchemaForGen) (*codejen.File, error
 		tsf.Nodes = append(tsf.Nodes, elems...)
 	}
 
-	return codejen.NewFile(filepath.Join(gen.dir, "index.gen.ts"), []byte(tsf.String()), gen), nil
+	return codejen.NewFile(filepath.Join("..", gen.dir, "index.gen.ts"), []byte(tsf.String()), gen), nil
 }
 
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *ast.File) ([]ast.Decl, error) {
