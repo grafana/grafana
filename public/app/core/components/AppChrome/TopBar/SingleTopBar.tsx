@@ -23,7 +23,6 @@ import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-import { TopSearchBarSection } from './TopSearchBarSection';
 
 interface Props {
   sectionNav: NavModelItem;
@@ -52,7 +51,7 @@ export const SingleTopBar = memo(function SingleTopBar({
 
   return (
     <div className={styles.layout}>
-      <TopSearchBarSection>
+      <Stack minWidth={0} gap={0.5} alignItems="center">
         {!menuDockedAndOpen && (
           <ToolbarButton narrow onClick={onToggleMegaMenu} tooltip={t('navigation.megamenu.open', 'Open menu')}>
             <Stack gap={0} alignItems="center">
@@ -63,9 +62,9 @@ export const SingleTopBar = memo(function SingleTopBar({
         )}
         <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
         <ScopesSelector />
-      </TopSearchBarSection>
+      </Stack>
 
-      <TopSearchBarSection align="right">
+      <Stack gap={0.5} alignItems="center">
         <TopSearchBarCommandPaletteTrigger />
         <QuickAdd />
         {enrichedHelpNode && (
@@ -88,7 +87,7 @@ export const SingleTopBar = memo(function SingleTopBar({
         <ToolbarButton className={styles.kioskToggle} onClick={onToggleKioskMode} narrow aria-label="Enable kiosk mode">
           <Icon name="angle-up" size="xl" />
         </ToolbarButton>
-      </TopSearchBarSection>
+      </Stack>
     </div>
   );
 });
@@ -97,15 +96,15 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
   layout: css({
     height: TOP_BAR_LEVEL_HEIGHT,
     display: 'flex',
-    gap: theme.spacing(1),
+    gap: theme.spacing(2),
     alignItems: 'center',
     padding: theme.spacing(0, 1),
     paddingLeft: menuDockedAndOpen ? theme.spacing(3.5) : theme.spacing(0.75),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
 
-    [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '2fr minmax(240px, 1fr)', // TODO probably change these values
+    [theme.breakpoints.up('lg')]: {
+      gridTemplateColumns: '2fr minmax(440px, 1fr)',
       display: 'grid',
 
       justifyContent: 'flex-start',
@@ -115,7 +114,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     display: 'flex',
     overflow: 'hidden',
     [theme.breakpoints.down('sm')]: {
-      minWidth: '50%',
+      minWidth: '40%',
     },
   }),
   img: css({
