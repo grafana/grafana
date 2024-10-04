@@ -50,7 +50,7 @@ type GrpcServerConfig struct {
 	Mode             Mode
 }
 
-func ReadGprcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
+func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
 	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
 	mode := Mode(section.Key("mode").MustString(string(ModeOnPrem)))
