@@ -150,24 +150,29 @@ In addition, the following functions are also available for templating annotatio
 | [humanizeDuration](#humanizeduration)     | number or string | string  | Humanizes a duration in seconds.                                 |
 | [humanizePercentage](#humanizepercentage) | number or string | string  | Humanizes a ratio value to a percentage.                         |
 | [humanizeTimestamp](#humanizetimestamp)   | number or string | string  | Humanizes a Unix timestamp.                                      |
+| [toTime](#totime)                         | number or string | time    | Converts a Unix timestamp in seconds to time.                    |
 
 **Strings**
 
-| Name                          | Arguments                  | Returns | Description                                                                                   |
-| ----------------------------- | -------------------------- | ------- | --------------------------------------------------------------------------------------------- |
-| [title](#humanize)            | string                     | string  | Capitalizes the first character of each word.                                                 |
-| [toUpper](#toupper)           | string                     | string  | Returns all text in uppercase.                                                                |
-| [toLower](#tolower)           | string                     | string  | Returns all text in lowercase.                                                                |
-| [match](#match)               | pattern, text              | boolean | Matches the text against a regular expression pattern.                                        |
-| [reReplaceAll](#rereplaceall) | pattern, replacement, text | string  | Replaces text matching the regular expression.                                                |
-| [graphLink](#graphlink)       | expr                       | string  | Returns the path to the graphical view in `Explore` for the given expression and data source. |
-| [tableLink](#tablelink)       | expr                       | string  | Returns the path to the tabular view in `Explore` for the given expression and data source.   |
+| Name                            | Arguments                  | Returns | Description                                                                                   |
+| ------------------------------- | -------------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| [title](#humanize)              | string                     | string  | Capitalizes the first character of each word.                                                 |
+| [toUpper](#toupper)             | string                     | string  | Returns all text in uppercase.                                                                |
+| [toLower](#tolower)             | string                     | string  | Returns all text in lowercase.                                                                |
+| [stripPort](#stripport)         | string                     | string  | Returns only host.                                                                            |
+| [match](#match)                 | pattern, text              | boolean | Matches the text against a regular expression pattern.                                        |
+| [reReplaceAll](#rereplaceall)   | pattern, replacement, text | string  | Replaces text matching the regular expression.                                                |
+| [graphLink](#graphlink)         | expr                       | string  | Returns the path to the graphical view in `Explore` for the given expression and data source. |
+| [tableLink](#tablelink)         | expr                       | string  | Returns the path to the tabular view in `Explore` for the given expression and data source.   |
+| [parseDuration](#parseduration) | string                     | float   | Parses a duration string such as "1h" into the number of seconds it represents.               |
+| [stripDomain](#stripdomain)     | string                     | string  | Returns the result of removing the domain part of a FQDN.                                     |
 
 **Others**
 
 | Name                        | Arguments     | Returns                | Description                                                                      |
 | --------------------------- | ------------- | ---------------------- | -------------------------------------------------------------------------------- |
 | [args](#args)               | []interface{} | map[string]interface{} | Translates a list of objects to a map with keys arg0, arg1 etc.                  |
+| [safeHtml](#safehtml)       | string        | string                 | Marks string as HTML not requiring auto-escaping.                                |
 | [externalURL](#externalurl) | none          | string                 | Returns the external URL of the Grafana server as configured in the ini file(s). |
 | [pathPrefix](#pathprefix)   | none          | string                 | Returns the path of the Grafana server as configured in the ini file(s).         |
 
@@ -233,6 +238,18 @@ The `humanizeTimestamp` function humanizes a Unix timestamp:
 2020-01-01 00:00:00 +0000 UTC
 ```
 
+#### toTime
+
+The `toTime` function converts a Unix timestamp in seconds to time.:
+
+```
+{{ toTime 1727802106 }}
+```
+
+```
+2024-10-01 17:01:46 +0000 UTC
+```
+
 #### title
 
 The `title` function capitalizes the first character of each word:
@@ -267,6 +284,18 @@ The `toLower` function returns all text in lowercase:
 
 ```
 hello, world!
+```
+
+#### stripPort
+
+The `stripPort` splits string into host and port, then returns only host:
+
+```
+{{ stripPort "example.com:8080" }}
+```
+
+```
+example.com
 ```
 
 #### match
@@ -305,6 +334,30 @@ The `graphLink` function returns the path to the graphical view in [Explore](ref
 /explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]
 ```
 
+#### parseDuration
+
+The `parseDuration` function parses a duration string such as "1h" into the number of seconds it represents.
+
+```
+{{ parseDuration "1h" }}
+```
+
+```
+3600
+```
+
+#### stripDomain
+
+The `stripDomain` removes the domain part of a FQDN, leaving port untouched:
+
+```
+{{ stripDomain "example.com:8080" }}
+```
+
+```
+example:8080
+```
+
 #### tableLink
 
 The `tableLink` function returns the path to the tabular view in [Explore](ref:explore) for the given expression and data source:
@@ -327,6 +380,18 @@ The `args` function translates a list of objects to a map with keys arg0, arg1 e
 
 ```
 1 2
+```
+
+#### safeHtml
+
+The `safeHtml` function marks string as HTML not requiring auto-escaping:
+
+```
+{{ safeHtml "<b>Text</b>"}}
+```
+
+```
+<b>Text</b>
 ```
 
 #### externalURL
