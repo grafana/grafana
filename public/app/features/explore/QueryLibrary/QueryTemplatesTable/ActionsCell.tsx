@@ -82,6 +82,7 @@ function ActionsCell({ queryTemplate, rootDatasourceUid, queryUid }: ActionsCell
       <ExploreRunQueryButton
         queries={queryTemplate.query ? [queryTemplate.query] : []}
         rootDatasourceUid={rootDatasourceUid}
+        variant="primary"
         onClick={() => {
           setDrawerOpened(false);
           queryLibraryTrackRunQuery(queryTemplate.datasourceType || '');

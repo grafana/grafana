@@ -3,7 +3,7 @@ import { ConnectedProps, connect } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { Button, ButtonVariant, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { t } from '@grafana/ui/src/utils/i18n';
 import { useSelector } from 'app/types';
 
@@ -22,6 +22,7 @@ interface ExploreRunQueryButtonProps {
   queries: DataQuery[];
   rootDatasourceUid?: string;
   disabled?: boolean;
+  variant?: ButtonVariant;
   onClick?: () => void;
 }
 
@@ -36,6 +37,7 @@ export function ExploreRunQueryButton({
   rootDatasourceUid,
   queries,
   disabled = false,
+  variant = 'secondary',
   onClick,
   changeDatasource,
   setQueries,
@@ -82,7 +84,7 @@ export function ExploreRunQueryButton({
       const buttonText = runQueryText(exploreId, rootDatasourceUid);
       return (
         <Button
-          variant="secondary"
+          variant={variant}
           aria-label={buttonText.translation}
           onClick={() => {
             runQuery(exploreId);
