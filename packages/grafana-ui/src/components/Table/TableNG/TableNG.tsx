@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
-import React, { useState, useLayoutEffect } from 'react';
 import 'react-data-grid/lib/styles.css';
-import DataGrid, { Column, RenderRowProps, Row } from 'react-data-grid';
+import { css } from '@emotion/css';
+import React, { useMemo, useState, useLayoutEffect } from 'react';
+import DataGrid, { Column, RenderRowProps, Row, SortColumn } from 'react-data-grid';
 import { Cell } from 'react-table';
 
-import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -59,6 +59,8 @@ export function TableNG(props: TableNGProps) {
       removeEventListener('click', onClick);
     };
   }, [isContextMenuOpen]);
+
+  const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
 
   function rowHeight() {
     const bodyFontSize = theme.typography.fontSize;
@@ -141,6 +143,34 @@ export function TableNG(props: TableNGProps) {
   };
   const { columns, rows } = mapFrameToDataGrid(props.data);
 
+  const columnTypes = useMemo(() => {
+    return columns.reduce(
+      (acc, column) => {
+        acc[column.key] = column.field.type;
+        return acc;
+      },
+      {} as { [key: string]: string }
+    );
+  }, [columns]);
+
+  const sortedRows = useMemo((): ReadonlyArray<{ [key: string]: string }> => {
+    if (sortColumns.length === 0) {
+      return rows;
+    }
+
+    return [...rows].sort((a, b) => {
+      for (const sort of sortColumns) {
+        const { columnKey } = sort;
+        const comparator = getComparator(columnTypes[columnKey]);
+        const compResult = comparator(a[columnKey], b[columnKey]);
+        if (compResult !== 0) {
+          return sort.direction === 'ASC' ? compResult : -compResult;
+        }
+      }
+      return 0; // false
+    });
+  }, [rows, sortColumns, columnTypes]);
+
   const renderMenuItems = () => {
     return (
       <>
@@ -159,7 +189,7 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <DataGrid
-        rows={rows}
+        rows={sortedRows}
         columns={columns}
         defaultColumnOptions={{
           sortable: true,
@@ -182,6 +212,9 @@ export function TableNG(props: TableNGProps) {
           });
           setIsContextMenuOpen(true);
         }}
+        // sorting
+        sortColumns={sortColumns}
+        onSortColumnsChange={setSortColumns}
       />
 
       {isContextMenuOpen && (
@@ -211,6 +244,21 @@ function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
   // Let's render row level things here!
   // i.e. we can look at row styles and such here
   return <Row {...props} />;
+}
+
+type Comparator = (a: any, b: any) => number;
+
+function getComparator(sortColumnType: string): Comparator {
+  switch (sortColumnType) {
+    case FieldType.time:
+    case FieldType.number:
+    case FieldType.boolean:
+      return (a, b) => a - b;
+    case FieldType.string:
+    case FieldType.enum:
+    default:
+      return (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
+  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
