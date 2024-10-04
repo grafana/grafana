@@ -5,16 +5,23 @@ import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { config } from '../config';
 
-import { DataSourceWithBackendMigration } from './DataSourceWithBackendMigration';
+import { DataSourceWithBackend } from './DataSourceWithBackend';
+import { migrateQuery, MigrationHandler } from './migrationHandler';
 
 let mockDatasourcePost = jest.fn();
 const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
 
 interface MyQuery extends DataQuery {}
 
-class MyDataSource extends DataSourceWithBackendMigration<MyQuery, DataSourceJsonData> {
+class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> implements MigrationHandler {
+  hasBackendMigration: boolean;
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
     super(instanceSettings);
+    this.hasBackendMigration = true;
+  }
+
+  shouldMigrate(query: DataQuery): boolean {
+    return true;
   }
 }
 
@@ -39,7 +46,7 @@ describe('query migration', () => {
     config.featureToggles = originalFeatureToggles;
   });
 
-  test('check that postMigrateQuery is called when query is migrated', async () => {
+  test('check that migrateRequest migrates a request', async () => {
     const { ds } = createMockDatasource({
       apiVersion: 'v0alpha1',
     });
@@ -52,7 +59,7 @@ describe('query migration', () => {
       return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
     });
 
-    const result = await ds.migrateQuery!(originalQuery);
+    const result = await migrateQuery(ds, originalQuery);
 
     expect(migratedQuery).toBe(result);
   });

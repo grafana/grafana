@@ -54,5 +54,10 @@ export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPr
 export { setChromeHeaderHeightHook, useChromeHeaderHeight } from './utils/chromeHeaderHeight';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
-export { DataSourceWithBackendMigration } from './utils/DataSourceWithBackendMigration';
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
+export {
+  type MigrationHandler,
+  instanceOfMigrationHandler,
+  migrateQuery,
+  migrateRequest,
+} from './utils/migrationHandler';
