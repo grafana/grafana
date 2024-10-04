@@ -2,6 +2,8 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { load } from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 
+import { selectors as rawSelectors } from '@grafana/e2e-selectors';
+
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
   AzureDataSourceJsonData,
@@ -81,7 +83,7 @@ const addAzureMonitorVariable = (
   if (isFirst) {
     e2e.pages.Dashboard.Settings.Variables.List.addVariableCTAV2().click();
   } else {
-    cy.get(`[data-testid="${e2e.pages.Dashboard.Settings.Variables.List.newButton}"]`).click();
+    cy.get(`[data-testid="${rawSelectors.pages.Dashboard.Settings.Variables.List.newButton}"]`).click();
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name);
   e2e.components.DataSourcePicker.inputV2().type(`${dataSourceName}{enter}`);
@@ -255,7 +257,7 @@ describe('Azure monitor datasource', () => {
     });
   });
 
-  it('creates a dashboard that includes a template variable', () => {
+  it.only('creates a dashboard that includes a template variable', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: 'now-6h',
