@@ -1,12 +1,15 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useLayoutEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn } from 'react-data-grid';
 import { Cell } from 'react-table';
 
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes';
+import { ContextMenu } from '../../ContextMenu/ContextMenu';
+import { MenuItem } from '../../Menu/MenuItem';
+import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellDisplayMode, TableNGProps } from '../types';
 import { getCellColors } from '../utils';
 
@@ -30,6 +33,32 @@ interface TableColumn extends Column<TableRow> {
 export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight } = props;
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+
+  const [contextMenuProps, setContextMenuProps] = useState<{
+    rowIdx: number;
+    value: string;
+    top: number;
+    left: number;
+  } | null>(null);
+  const [isInspecting, setIsInspecting] = useState(false);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    if (!isContextMenuOpen) {
+      return;
+    }
+
+    function onClick(event: MouseEvent) {
+      setIsContextMenuOpen(false);
+    }
+
+    addEventListener('click', onClick);
+
+    return () => {
+      removeEventListener('click', onClick);
+    };
+  }, [isContextMenuOpen]);
 
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
 
@@ -142,25 +171,72 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, sortColumns, columnTypes]);
 
+  const renderMenuItems = () => {
+    return (
+      <>
+        <MenuItem
+          label="Inspect value"
+          onClick={() => {
+            setIsInspecting(true);
+          }}
+          className={styles.menuItem}
+        />
+      </>
+    );
+  };
+
   // Return the data grid
   return (
-    <DataGrid
-      // rows={rows}
-      rows={sortedRows}
-      columns={columns}
-      defaultColumnOptions={{
-        sortable: true,
-        resizable: true,
-        maxWidth: 200,
-      }}
-      rowHeight={rowHeightNumber}
-      // TODO: This doesn't follow current table behavior
-      style={{ width, height }}
-      renderers={{ renderRow: myRowRenderer }}
-      // sorting
-      sortColumns={sortColumns}
-      onSortColumnsChange={setSortColumns}
-    />
+    <>
+      <DataGrid
+        rows={sortedRows}
+        columns={columns}
+        defaultColumnOptions={{
+          sortable: true,
+          resizable: true,
+          maxWidth: 200,
+        }}
+        rowHeight={rowHeightNumber}
+        // TODO: This doesn't follow current table behavior
+        style={{ width, height }}
+        renderers={{ renderRow: myRowRenderer }}
+        onCellContextMenu={({ row, column }, event) => {
+          event.preventGridDefault();
+          // Do not show the default context menu
+          event.preventDefault();
+          setContextMenuProps({
+            rowIdx: rows.indexOf(row),
+            value: row[column.key],
+            top: event.clientY,
+            left: event.clientX,
+          });
+          setIsContextMenuOpen(true);
+        }}
+        // sorting
+        sortColumns={sortColumns}
+        onSortColumnsChange={setSortColumns}
+      />
+
+      {isContextMenuOpen && (
+        <ContextMenu
+          x={contextMenuProps?.left || 0}
+          y={contextMenuProps?.top || 0}
+          renderMenuItems={renderMenuItems}
+          focusOnOpen={false}
+        />
+      )}
+
+      {isInspecting && (
+        <TableCellInspector
+          mode={TableCellInspectorMode.text}
+          value={contextMenuProps?.value}
+          onDismiss={() => {
+            setIsInspecting(false);
+            setContextMenuProps(null);
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -184,3 +260,20 @@ function getComparator(sortColumnType: string): Comparator {
       return (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
   }
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  contextMenu: css({
+    position: 'absolute',
+    backgroundColor: '#ffffff',
+    border: '1px solid black',
+    padding: '16px',
+    listStyle: 'none',
+
+    '> li': {
+      padding: 8,
+    },
+  }),
+  menuItem: css({
+    maxWidth: '200px',
+  }),
+});
