@@ -93,20 +93,14 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 		// #TODO add back CreatedBy, UpdatedBy once we figure out how to access userService
 		// to translate user ID into user login. meta.GetCreatedBy() only stores user ID
 		// Could convert meta.GetCreatedBy() return value to a struct--id and name
-		// CreatedBy: meta.GetCreatedBy(),
-		// UpdatedBy: meta.GetCreatedBy(),
-		URL: getURL(meta, title),
+		CreatedBy: meta.GetCreatedBy(),
+		UpdatedBy: meta.GetCreatedBy(),
+		URL:       getURL(meta, title),
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
 		Created: createdTime,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
 		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
 		Updated: createdTime,
-		// #TODO figure out how to set these properly
-		CanSave:   false,
-		CanEdit:   false,
-		CanAdmin:  false,
-		CanDelete: false,
-		HasACL:    false,
 
 		// #TODO figure out about adding version, parents, orgID fields
 	}

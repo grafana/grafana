@@ -802,6 +802,19 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
+	toID := func(rawIdentifier string) int64 {
+		parts := strings.Split(rawIdentifier, ":")
+		if len(parts) < 2 {
+			return 0
+		}
+		// return parts[1]
+		userID, err := strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			return 0
+		}
+		return userID
+	}
+
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
 		g, err := guardian.NewByFolder(c.Req.Context(), f, c.SignedInUser.GetOrgID(), c.SignedInUser)
 		if err != nil {
@@ -815,11 +828,11 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 
 		// Finding creator and last updater of the folder
 		updater, creator := anonString, anonString
-		if f.CreatedBy > 0 {
-			creator = fk8s.getUserLogin(ctx, f.CreatedBy)
+		if len(fDTO.CreatedBy) > 0 {
+			creator = fk8s.getUserLogin(ctx, toID(fDTO.CreatedBy))
 		}
-		if f.UpdatedBy > 0 {
-			updater = fk8s.getUserLogin(ctx, f.UpdatedBy)
+		if len(fDTO.UpdatedBy) > 0 {
+			updater = fk8s.getUserLogin(ctx, toID(fDTO.UpdatedBy))
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, f)
