@@ -1234,14 +1234,18 @@
     {
       "metadata": {
         "name": "externalServiceAccounts",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-09-28T07:26:37Z"
+        "resourceVersion": "1726562284896",
+        "creationTimestamp": "2023-09-28T07:26:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-17 08:38:04.896869045 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Automatic service account and token setup for plugins",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true
+        "hideFromAdminPage": true,
+        "expression": "true"
       }
     },
     {
@@ -1382,6 +1386,18 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresDevMode": true,
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaAPIServerTestingWithExperimentalAPIs",
+        "resourceVersion": "1727945615419",
+        "creationTimestamp": "2024-10-03T08:53:35Z"
+      },
+      "spec": {
+        "description": "Facilitate integration testing of experimental APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -2268,13 +2284,17 @@
     {
       "metadata": {
         "name": "pinNavItems",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-10T11:40:03Z"
+        "resourceVersion": "1727948775526",
+        "creationTimestamp": "2024-06-10T11:40:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-03 09:46:15.526594 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables pinning of nav items",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "true"
       }
     },
     {
