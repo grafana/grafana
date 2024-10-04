@@ -277,13 +277,17 @@ describe('PanelEditor', () => {
 
   describe('PanelDataPane', () => {
     it('should not exist if panel is skipDataQuery', async () => {
-      const { panelEditor } = await setup({ pluginSkipDataQuery: true });
+      const { panelEditor, panel } = await setup({ pluginSkipDataQuery: true });
       expect(panelEditor.state.dataPane).toBeUndefined();
+
+      expect(panel.state.$data).toBeUndefined();
     });
 
     it('should exist if panel is supporting querying', async () => {
-      const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+      const { panelEditor, panel } = await setup({ pluginSkipDataQuery: false });
       expect(panelEditor.state.dataPane).toBeDefined();
+
+      expect(panel.state.$data).toBeDefined();
     });
   });
 });
