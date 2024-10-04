@@ -300,6 +300,7 @@ export function buildAllLayout(
     const unit = queryDef.unit;
 
     const vizPanel = PanelBuilders.timeseries()
+      .setOption('legend', { showLegend: false })
       .setTitle(option.label!)
       .setData(
         new SceneQueryRunner({
