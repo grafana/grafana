@@ -6,7 +6,7 @@ import { getBackendSrv } from '../services';
 
 export interface MigrationHandler {
   hasBackendMigration: boolean;
-  shouldMigrate?(query: DataQuery): boolean;
+  shouldMigrate(query: DataQuery): boolean;
 }
 
 export function instanceOfMigrationHandler(object: any): object is MigrationHandler {
@@ -45,7 +45,7 @@ export async function migrateQuery<TQuery extends DataQuery>(
   datasource: MigrationHandler,
   query: TQuery
 ): Promise<TQuery> {
-  if (datasource.shouldMigrate && !datasource.shouldMigrate(query)) {
+  if (!datasource.hasBackendMigration || !datasource.shouldMigrate(query)) {
     return query;
   }
   const res = await postMigrateRequest([query]);
@@ -60,7 +60,7 @@ export async function migrateRequest<TQuery extends DataQuery>(
   request: DataQueryRequest<TQuery>
 ): Promise<DataQueryRequest<TQuery>> {
   const promises = request.targets.map((query) => {
-    if (datasource.shouldMigrate && !datasource.shouldMigrate(query)) {
+    if (!datasource.hasBackendMigration || !datasource.shouldMigrate(query)) {
       return Promise.resolve(query);
     }
     return migrateQuery(datasource, query);
