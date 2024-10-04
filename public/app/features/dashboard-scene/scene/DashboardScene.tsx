@@ -10,7 +10,7 @@ import {
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridRow,
@@ -716,6 +716,9 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+      // Backwards compat with plugins that rely on the RefreshEvent when a
+      // variable changes. TODO: We should redirect plugin devs to use VariablesChanged event
+      this._dashboard.publishEvent(new RefreshEvent());
     }
 
     if (variable.state.name === PANEL_SEARCH_VAR) {

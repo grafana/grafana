@@ -4,7 +4,16 @@ import { VariableHide, VariableModel, VariableOption, VariableRefresh, VariableS
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-export function sceneVariablesSetToVariables(set: SceneVariables) {
+/**
+ * Converts a SceneVariables object into an array of VariableModel objects.
+ * @param set - The SceneVariables object containing the variables to convert.
+ * @param keepQueryOptions - (Optional) A boolean flag indicating whether to keep the options for query variables.
+ *                           This should be set to `false` when variables are saved in the dashboard model,
+ *                           but should be set to `true` when variables are used in the templateSrv to keep them in sync.
+ *                           If `true`, the options for query variables are kept.
+ *  */
+
+export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptions?: boolean) {
   const variables: VariableModel[] = [];
   for (const variable of set.state.variables) {
     const commonProperties = {
@@ -19,7 +28,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
       let options: VariableOption[] = [];
       // Not sure if we actually have to still support this option given
       // that it's not exposed in the UI
-      if (variable.state.refresh === VariableRefresh.never) {
+      if (variable.state.refresh === VariableRefresh.never || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       variables.push({
