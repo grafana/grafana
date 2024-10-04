@@ -60,6 +60,7 @@ export function runShardSplitQuery(datasource: LokiDatasource, request: DataQuer
   const queries = datasource
     .interpolateVariablesInQueries(request.targets, request.scopedVars)
     .filter((query) => query.expr)
+    .filter((query) => !query.hide)
     .map((target) => ({
       ...target,
       expr: addShardingPlaceholderSelector(target.expr),
@@ -108,7 +109,6 @@ function splitQueriesByStreamShard(
         done();
         return;
       }
-      debug(`Ran ${group} next group ${groups.indexOf(nextGroup)}`)
       groups[group].groupSize = nextGroupSize;
       runNextRequest(subscriber, groups.indexOf(nextGroup), groups);
     };
