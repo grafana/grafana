@@ -355,12 +355,10 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 
 ## Differences with notification templates
 
-Both notification templates and alert rule templates use the Go templating system. However, the functions and variables available in notification templates differ from those used in annotations and labels templates.
+Both notification templates and alert rule templates use the Go templating system. However, the [functions and variables available in notification templates](ref:notification-template-reference) differ from those used in annotations and labels templates, which are described in this documentation.
 
-Annotation and label templates operate in the context of an individual alert instance, while notification templates apply to the context of a notification for a group of alerts.
+Annotation and label templates operate in the context of an individual alert instance, while notification templates apply to a notification that includes a group of alert(s).
 
-For example, notification templates provide the `.Alerts` variable, which includes the list of all firing and resolved alerts in the notification. For more details, refer to the [list of variables and functions in notification templates](ref:notification-template-reference).
+For example, notification templates provide the `.Alerts` variable, which includes the list of all firing and resolved alerts in the notification. This variable is not available in alert rule templates, which operate within the context of a single alert instance.
 
-Additionally, you cannot use the `define` and `template` functions to share templates for labels and annotations as you can in notification templates.
-
-Instead, you need to write each template inline within the label or annotation fields and manually copy the templates wherever you want to reuse them.
+Additionally, you cannot use the `define` and `template` functions to share templates for labels and annotations, as you can with notification templates. Instead, you need to write each template inline within the label or annotation fields, and manually copy the templates wherever you want to reuse them.
