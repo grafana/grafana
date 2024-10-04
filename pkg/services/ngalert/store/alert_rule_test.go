@@ -1481,7 +1481,7 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second,
 	}
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,
