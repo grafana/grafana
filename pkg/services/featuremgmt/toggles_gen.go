@@ -810,4 +810,8 @@ const (
 	// FlagUnifiedStorageSearch
 	// Enable unified storage search
 	FlagUnifiedStorageSearch = "unifiedStorageSearch"
+
+	// FlagPluginsSriChecks
+	// Enables SRI checks for plugin assets
+	FlagPluginsSriChecks = "pluginsSriChecks"
 )

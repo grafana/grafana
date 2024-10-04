@@ -57,6 +57,7 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
       isAngular: config.angular.detected,
       pluginId,
       loadingStrategy,
+      moduleHash: config.moduleHash,
     });
     const { exposedComponentConfigs = [], addedComponentConfigs = [], addedLinkConfigs = [] } = plugin;
 
