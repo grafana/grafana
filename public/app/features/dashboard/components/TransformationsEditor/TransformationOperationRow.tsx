@@ -45,7 +45,7 @@ export const TransformationOperationRow = ({
   const disabled = !!configs[index].transformation.disabled;
   const topic = configs[index].transformation.topic;
   const showFilterEditor = configs[index].transformation.filter != null || topic != null;
-  const showFilterToggle = showFilterEditor || data.series.length > 1 || (data.annotations?.length ?? 0) > 0;
+  const showFilterToggle = showFilterEditor || data.series.length > 0 || (data.annotations?.length ?? 0) > 0;
 
   const onDisableToggle = useCallback(
     (index: number) => {
