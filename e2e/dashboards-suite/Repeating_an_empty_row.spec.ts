@@ -32,10 +32,15 @@ describe('Repeating empty rows', () => {
       e2e.components.DashboardRow.title(title).should('be.visible');
     });
 
-    // Change to only show rows 1 + 3
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('row').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('row')
+      .parent()
+      .within(() => {
+        cy.get('input').click();
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
+
     // blur the dropdown
     cy.get('body').click();
 

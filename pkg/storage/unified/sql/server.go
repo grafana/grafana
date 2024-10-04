@@ -9,13 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
-// Creates a ResourceServer
-func ProvideResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
+// Creates a new ResourceServer
+func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
 	}
 
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, features, tracer)
+	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -26,6 +26,10 @@ func ProvideResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt
 	opts.Backend = store
 	opts.Diagnostics = store
 	opts.Lifecycle = store
+
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+		opts.Index = resource.NewResourceIndexServer()
+	}
 
 	return resource.NewResourceServer(opts)
 }

@@ -26,8 +26,10 @@ type ScopeSpec struct {
 }
 
 type ScopeFilter struct {
-	Key      string         `json:"key"`
-	Value    string         `json:"value"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
+	// Values is used for operators that require multiple values (e.g. one-of and not-one-of).
+	Values   []string       `json:"values,omitempty"`
 	Operator FilterOperator `json:"operator"`
 }
 
@@ -41,6 +43,8 @@ const (
 	FilterOperatorNotEquals     FilterOperator = "not-equals"
 	FilterOperatorRegexMatch    FilterOperator = "regex-match"
 	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
+	FilterOperatorOneOf         FilterOperator = "one-of"
+	FilterOperatorNotOneOf      FilterOperator = "not-one-of"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

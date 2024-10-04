@@ -415,6 +415,20 @@ func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeInterva
 	return result, err
 }
 
+// AlertRuleEditorSettingsFromEditorSettings converts models.EditorSettings to definitions.AlertRuleEditorSettings
+func AlertRuleEditorSettingsFromModelEditorSettings(es models.EditorSettings) *definitions.AlertRuleEditorSettings {
+	return &definitions.AlertRuleEditorSettings{
+		SimplifiedQueryAndExpressionsSection: es.SimplifiedQueryAndExpressionsSection,
+	}
+}
+
+// AlertRuleMetadataFromMetadata converts models.AlertRuleMetadata to definitions.AlertRuleMetadata
+func AlertRuleMetadataFromModelMetadata(es models.AlertRuleMetadata) *definitions.AlertRuleMetadata {
+	return &definitions.AlertRuleMetadata{
+		EditorSettings: *AlertRuleEditorSettingsFromModelEditorSettings(es.EditorSettings),
+	}
+}
+
 // AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings
 func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
 	if len(ns) == 0 {

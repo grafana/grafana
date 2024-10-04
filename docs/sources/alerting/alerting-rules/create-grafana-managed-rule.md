@@ -83,15 +83,29 @@ Grafana-managed rules are the most flexible alert rule type. They allow you to c
 Multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
 
 {{% admonition type="note" %}}
-For Grafana Cloud, you can create 100 free Grafana-managed alert rules.
+For Grafana Cloud Free Forever, you can create up to 100 free Grafana-managed alert rules with each alert rule having a maximum of 1000 alert instances.
 {{% /admonition %}}
 
-Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
+Grafana-managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
 
-If you delete an alerting resource created in the UI, you can no longer retrieve it.
+If you delete an alert resource created in the UI, you can no longer retrieve it.
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
-In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
+## Before you begin
+
+You can use default or advanced options for Grafana-managed alert rule creation. The default options streamline rule creation with a cleaner header and a single query and condition. For more complex rules, use advanced options to add multiple queries and expressions.
+
+Default and advanced options are enabled by default for Grafana Cloud users and this feature is being rolled out progressively.
+
+For OSS users,enable the `alertingQueryAndExpressionsStepMode` feature toggle.
+
+{{% admonition type="note" %}}
+Once you have created an alert rule using one of the options, the system defaults to this option for the next alert rule you create.
+
+You can toggle between the two options. However, if you want to switch from advanced options to the default, it may be that your query and expressions cannot be converted. In this case, a warning message checks whether you want to continue to reset to default settings.
+{{% /admonition %}}
+
+## Steps
 
 To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps.
 
@@ -108,14 +122,26 @@ To get started quickly, refer to our [tutorial on getting started with Grafana a
 
 Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
+{{< collapse title="Default options" >}}
+
+1. Add a query.
+1. Add an alert condition.
+
+   The **When** input includes the reducer function and the last input is the threshold.
+
+1. Click **Preview** to verify.
+   {{< /collapse >}}
+
+{{< collapse title="Advanced options" >}}
+
 1. Select a data source.
 1. From the **Options** dropdown, specify a [time range](ref:time-units-and-relative-ranges).
 
-   **Note:**
+{{% admonition type="note" %}}
+Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
 
-   Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
-
-   It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+{{% /admonition %}}
 
 1. Add a query.
 
@@ -138,6 +164,7 @@ Define a query to get the data you want to measure and a condition that needs to
    You can only add one recovery threshold in a query and it must be the alert condition.
 
 1. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
+   {{< /collapse >}}
 
 ## Set alert evaluation behavior
 
@@ -251,7 +278,7 @@ You can configure the alert instance state when its evaluation returns no data:
 | No Data configuration | Description                                                                                                                                                                                                                               |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | No Data               | The default option. Sets alert instance state to `No data`. <br/> The alert rule also creates a new alert instance `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting              | Sets alert instance state to `Alerting`. It transitions from `Pending` to `Alerting` after the [pending period](ref:pending-period) has finished.                                                                                         |
+| Alerting              | Sets the alert instance state to `Pending` and then transitions to `Alerting` once the [pending period](ref:pending-period) ends. If you sent the pending period to 0, the alert instance state is immediately set to `Alerting`.         |
 | Normal                | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
 | Keep Last State       | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                                  |
 

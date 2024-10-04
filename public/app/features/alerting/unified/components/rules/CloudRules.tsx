@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -56,7 +57,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
           <Text element="h2" variant="h5">
-            Mimir / Cortex / Loki
+            <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
           </Text>
           {dataSourcesLoading.length ? (
             <LoadingPlaceholder

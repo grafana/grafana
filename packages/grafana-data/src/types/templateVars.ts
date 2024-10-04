@@ -53,6 +53,7 @@ export interface AdHocVariableFilter {
   key: string;
   operator: string;
   value: string;
+  values?: string[];
   /** @deprecated  */
   condition?: string;
 }

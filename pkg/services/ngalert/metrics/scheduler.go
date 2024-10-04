@@ -31,6 +31,7 @@ type Scheduler struct {
 	UpdateSchedulableAlertRulesDuration prometheus.Histogram
 	Ticker                              *ticker.Metrics
 	EvaluationMissed                    *prometheus.CounterVec
+	SimplifiedEditorRules               *prometheus.GaugeVec
 }
 
 func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
@@ -126,9 +127,9 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "rule_group_rules",
-				Help:      "The number of alert rules that are scheduled, both active and paused.",
+				Help:      "The number of alert rules that are scheduled, by type and state.",
 			},
-			[]string{"org", "state", "rule_group"},
+			[]string{"org", "type", "state", "rule_group"},
 		),
 		Groups: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -181,6 +182,15 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
 			},
 			[]string{"org", "name"},
+		),
+		SimplifiedEditorRules: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "simplified_editor_rules",
+				Help:      "The number of alert rules using simplified editor settings.",
+			},
+			[]string{"org", "setting"},
 		),
 	}
 }

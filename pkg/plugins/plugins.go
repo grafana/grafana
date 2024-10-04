@@ -109,21 +109,23 @@ type JSONData struct {
 	SkipDataQuery bool `json:"skipDataQuery"`
 
 	// App settings
-	AutoEnabled bool `json:"autoEnabled"`
+	AutoEnabled bool       `json:"autoEnabled"`
+	Extensions  Extensions `json:"extensions"`
 
 	// Datasource settings
-	Annotations  bool            `json:"annotations"`
-	Metrics      bool            `json:"metrics"`
-	Alerting     bool            `json:"alerting"`
-	Explore      bool            `json:"explore"`
-	Table        bool            `json:"tables"`
-	Logs         bool            `json:"logs"`
-	Tracing      bool            `json:"tracing"`
-	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
-	BuiltIn      bool            `json:"builtIn,omitempty"`
-	Mixed        bool            `json:"mixed,omitempty"`
-	Streaming    bool            `json:"streaming"`
-	SDK          bool            `json:"sdk,omitempty"`
+	Annotations               bool            `json:"annotations"`
+	Metrics                   bool            `json:"metrics"`
+	Alerting                  bool            `json:"alerting"`
+	Explore                   bool            `json:"explore"`
+	Table                     bool            `json:"tables"`
+	Logs                      bool            `json:"logs"`
+	Tracing                   bool            `json:"tracing"`
+	QueryOptions              map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn                   bool            `json:"builtIn,omitempty"`
+	Mixed                     bool            `json:"mixed,omitempty"`
+	Streaming                 bool            `json:"streaming"`
+	SDK                       bool            `json:"sdk,omitempty"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators,omitempty"`
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
@@ -170,6 +172,26 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 
 	if plugin.Dependencies.GrafanaVersion == "" {
 		plugin.Dependencies.GrafanaVersion = "*"
+	}
+
+	if len(plugin.Dependencies.Extensions.ExposedComponents) == 0 {
+		plugin.Dependencies.Extensions.ExposedComponents = make([]string, 0)
+	}
+
+	if plugin.Extensions.AddedLinks == nil {
+		plugin.Extensions.AddedLinks = []AddedLink{}
+	}
+
+	if plugin.Extensions.AddedComponents == nil {
+		plugin.Extensions.AddedComponents = []AddedComponent{}
+	}
+
+	if plugin.Extensions.ExposedComponents == nil {
+		plugin.Extensions.ExposedComponents = []ExposedComponent{}
+	}
+
+	if plugin.Extensions.ExtensionPoints == nil {
+		plugin.Extensions.ExtensionPoints = []ExtensionPoint{}
 	}
 
 	for _, include := range plugin.Includes {
