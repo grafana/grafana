@@ -167,7 +167,7 @@ This works because both `.Alerts` and `.Alerts.Firing` is a list of alerts.
 ```
 
 {{% admonition type="note" %}}
-You cannot create independent, reusable templates for labels and annotations as you can with notification templates. In alert rule templates, you need to write each template inline within the label or annotation fields.
+You cannot create independent, reusable templates for labels and annotations as you can with notification templates. In alert rule templates, you need to write each template inline within the label or annotation field.
 {{% /admonition %}}
 
 ## Comments

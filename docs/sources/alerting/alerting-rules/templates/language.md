@@ -70,9 +70,11 @@ At the start of notification templates, dot (`.`) refers to [ExtendedData](ref:r
 {{ .Alerts }}
 ```
 
-In annotation and label templates, dot (`.`) is initialized with multiple data and should not be used. Instead, use the [`$labels` and `$values` variables](ref:alert-rule-template-reference-variables).
+In annotation and label templates, dot (`.`) is initialized with all alert data. It’s recommended to use the [`$labels` and `$values` variables](ref:alert-rule-template-reference-variables) instead to directly access the alert labels and query values.
 
-Note that dot (`.`) might refer to something else when used in a [range](#range), a [with](#with), or when writing [templates](#templates) used in other templates.
+{{% admonition type="note" %}}
+Dot (`.`) might refer to something else when used in a [range](#range), a [with](#with), or when writing [templates](#templates) used in other templates.
+{{% /admonition %}}
 
 [//]: <> (The above section is not included in the shared file because `refs` links are not supported in shared files.)
 
