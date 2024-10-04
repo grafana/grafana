@@ -18,7 +18,6 @@ import {
   getSelectorForShardValues,
   interpolateShardingSelector,
   isLogsQuery,
-  isQueryWithLineFilter,
 } from './queryUtils';
 import { LokiQuery } from './types';
 
@@ -102,9 +101,10 @@ function splitQueriesByStreamShard(
 
     const nextRequest = () => {
       const nextGroup =
-        groups[group + 1] && groupHasPendingRequests(groups[group + 1])
+        groups[group + 1] && groupHasPendingRequests(groups[group + 1], mergedResponse)
           ? groups[group + 1]
-          : groups.find((shardGroup) => groupHasPendingRequests(shardGroup));
+          : groups.find((shardGroup) => groupHasPendingRequests(shardGroup, mergedResponse));
+
       if (nextGroup === undefined) {
         done();
         return;
@@ -123,7 +123,12 @@ function splitQueriesByStreamShard(
         return false;
       }
 
-      if (groupSize !== undefined && groupSize > 1) {
+      if (shards && cycle !== undefined && shards[cycle] === NO_SHARD_ATTEMPT) {
+        debug(`Regular query attempt timed out. Retrying with sharding`);
+        groups[group].cycle = cycle + 1;
+        runNextRequest(subscriber, group, groups);
+        return true;
+      } else if (groupSize !== undefined && groupSize > 1) {
         groups[group].groupSize = Math.floor(Math.sqrt(groupSize));
         debug(`Possible time out, new group size ${groups[group].groupSize}`);
         runNextRequest(subscriber, group, groups);
@@ -157,9 +162,7 @@ function splitQueriesByStreamShard(
     // Request may not have a request id
     if (request.requestId) {
       subRequest.requestId =
-        cycle !== undefined && groupSize
-          ? `${request.requestId}_shard_${group}_${cycle}_${groupSize}`
-          : request.requestId;
+        shardsToQuery.length > 0 ? `${request.requestId}_shard_${group}_${cycle}_${groupSize}` : request.requestId;
     }
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
@@ -180,10 +183,7 @@ function splitQueriesByStreamShard(
         mergedResponse = combineResponses(mergedResponse, partialResponse);
       },
       complete: () => {
-        // Prevent flashing "no data"
-        if (mergedResponse.data.length) {
-          subscriber.next(mergedResponse);
-        }
+        subscriber.next(ensureMaxLines(mergedResponse, subRequest.targets));
         nextRequest();
       },
       error: (error: unknown) => {
@@ -223,59 +223,65 @@ interface ShardedQueryGroup {
   cycle?: number;
 }
 
+/**
+ * To avoid running unnecessary queries, when it's a log query, before sharding the request we make an initial
+ * attempt with a regular query. If the query is fast enough, we will display its results and be done with it.
+ * If it timeouts, we can then begin splitting it by shards.
+ */
+const NO_SHARD_ATTEMPT = -2;
+
 async function groupTargetsByQueryType(
   targets: LokiQuery[],
   datasource: LokiDatasource,
   request: DataQueryRequest<LokiQuery>
 ) {
-  const [shardedQueries, otherQueries] = partition(targets, (query) => {
-    if (isLogsQuery(query.expr)) {
-      return isQueryWithLineFilter(query.expr);
-    }
-    return true;
-  });
+  const [logQueries, metricQueries] = partition(targets, (query) => isLogsQuery(query.expr));
 
   const groups: ShardedQueryGroup[] = [];
-  if (otherQueries.length) {
-    groups.push({
-      targets: otherQueries,
-    });
-  }
 
-  const selectorPartition = groupBy(shardedQueries, (query) => getSelectorForShardValues(query.expr));
-  for (const selector in selectorPartition) {
-    try {
-      const values = await datasource.languageProvider.fetchLabelValues('__stream_shard__', {
-        timeRange: request.range,
-        streamSelector: selector,
-      });
-      const shards = values.map((value) => parseInt(value, 10));
-      if (shards) {
-        shards.sort((a, b) => b - a);
-        debug(`Querying ${selector} with shards ${shards.join(', ')}`);
+  for (const queries of [logQueries, metricQueries]) {
+    const selectorPartition = groupBy(queries, (query) => getSelectorForShardValues(query.expr));
+    for (const selector in selectorPartition) {
+      try {
+        const values = await datasource.languageProvider.fetchLabelValues('__stream_shard__', {
+          timeRange: request.range,
+          streamSelector: selector,
+        });
+        const shards = values.map((value) => parseInt(value, 10));
+        if (shards) {
+          shards.sort((a, b) => b - a);
+          if (isLogsQuery(queries[0].expr)) {
+            shards.unshift(NO_SHARD_ATTEMPT);
+          }
+          debug(`Querying ${selector} with shards ${shards.join(', ')}`);
+        }
+        groups.push({
+          targets: selectorPartition[selector],
+          shards: shards.length ? shards : undefined,
+          groupSize: shards.length ? getInitialGroupSize(shards) : undefined,
+          cycle: 0,
+        });
+      } catch (error) {
+        console.error(error, { msg: 'failed to fetch label values for __stream_shard__' });
+        groups.push({
+          targets: selectorPartition[selector],
+        });
       }
-      groups.push({
-        targets: selectorPartition[selector],
-        shards: shards.length ? shards : undefined,
-        groupSize: shards.length ? getInitialGroupSize(shards) : undefined,
-        cycle: 0,
-      });
-    } catch (error) {
-      console.error(error, { msg: 'failed to fetch label values for __stream_shard__' });
-      groups.push({
-        targets: selectorPartition[selector],
-      });
     }
   }
 
   return groups;
 }
 
-function groupHasPendingRequests(group: ShardedQueryGroup) {
+function groupHasPendingRequests(group: ShardedQueryGroup, currentResponse: DataQueryResponse) {
   if (group.cycle === undefined || !group.groupSize || !group.shards) {
     return false;
   }
   const { cycle, groupSize, shards } = group;
+  if (cycle === 0 && shards[cycle] === NO_SHARD_ATTEMPT) {
+    // If the regular query succeeded, no need to continue querying.
+    return currentResponse.data.find((frame) => frame.refId === group.targets[0].refId) === undefined;
+  }
   const nextCycle = Math.min(cycle + groupSize, shards.length);
   group.cycle = nextCycle;
   return cycle < shards.length && nextCycle <= shards.length;
@@ -316,6 +322,9 @@ function updateGroupSizeFromResponse(response: DataQueryResponse, currentSize: n
 }
 
 function groupShardRequests(shards: number[], start: number, groupSize: number) {
+  if (shards[start] === NO_SHARD_ATTEMPT) {
+    return [];
+  }
   if (start === shards.length) {
     return [-1];
   }
@@ -335,14 +344,13 @@ function debug(message: string) {
   console.log(message);
 }
 
-function ensureMaxLines(response: DataQueryResponse, request: DataQueryRequest<LokiQuery>) {
-  const logQueries = request.targets.filter((target) => isLogsQuery(target.expr));
+function ensureMaxLines(response: DataQueryResponse, targets: LokiQuery[]) {
+  const logQueries = targets.filter((target) => isLogsQuery(target.expr));
   for (const query of logQueries) {
     const frame = response.data.find((frame: DataFrame) => frame.refId === query.refId);
     if (!frame) {
       continue;
     }
-    return response;
     frame.fields.forEach((field: Field) => {
       field.values.splice(query.maxLines || 1000);
     });

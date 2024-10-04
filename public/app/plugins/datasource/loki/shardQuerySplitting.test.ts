@@ -69,16 +69,6 @@ describe('runShardSplitQuery()', () => {
     });
   });
 
-  test('Does not report missing data while streaming', async () => {
-    // @ts-expect-error
-    jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ status: 200 }));
-    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
-      // 4 shard requests
-      expect(datasource.runQuery).toHaveBeenCalledTimes(4);
-      expect(response).toHaveLength(1);
-    });
-  });
-
   test('Interpolates queries before running', async () => {
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
       expect(datasource.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
@@ -174,19 +164,9 @@ describe('runShardSplitQuery()', () => {
       },
     });
 
-    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue([
-      '1',
-      '10',
-      '2',
-      '20',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-    ]);
+    jest
+      .mocked(datasource.languageProvider.fetchLabelValues)
+      .mockResolvedValue(['1', '10', '2', '20', '3', '4', '5', '6', '7', '8', '9']);
 
     // @ts-expect-error
     jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
