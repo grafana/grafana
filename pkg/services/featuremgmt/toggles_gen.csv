@@ -173,7 +173,7 @@ azureMonitorPrometheusExemplars,preview,@grafana/partner-datasources,false,false
 pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 openSearchBackendFlowEnabled,GA,@grafana/aws-datasources,false,false,false
-ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
+ssoSettingsLDAP,preview,@grafana/identity-access-team,false,true,false
 failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
@@ -200,3 +200,4 @@ improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false
 useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,false,false
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
+pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false

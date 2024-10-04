@@ -99,6 +99,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   angularDetected?: boolean;
   loadingStrategy?: PluginLoadingStrategy;
   extensions?: PluginExtensions;
+  moduleHash?: string;
 }
 
 interface PluginDependencyInfo {
