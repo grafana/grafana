@@ -329,6 +329,9 @@
       "moving": "Movendo...",
       "new-folder-name-required-phrase": "O nome da pasta é obrigatório."
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} regra de alerta",
       "alertRule_other": "{{count}} regras de alerta",
@@ -1089,6 +1092,13 @@
       "zoom-out-time-range": "Diminuir o intervalo de tempo"
     },
     "title": "Atalhos"
+  },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
   },
   "inspector": {
     "query": {
@@ -1855,6 +1865,7 @@
       "close": "Fechar menu",
       "dock": "Menu da dock",
       "list-label": "Navegação",
+      "open": "",
       "undock": "Desacoplar menu"
     },
     "toolbar": {
