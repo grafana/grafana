@@ -127,7 +127,7 @@ export const LdapDrawerComponent = ({
     <Drawer title={t('ldap-drawer.title', 'Advanced settings')} onClose={onClose}>
       <CollapsableSection label={t('ldap-drawer.misc-section.label', 'Misc')} isOpen={true}>
         <Field
-          label={t('ldap-drawer.misc-section.allow-sign-up-label', 'Allow sign up')}
+          label={t('ldap-drawer.misc-section.allow-sign-up-label', 'Allow sign-up')}
           description={t(
             'ldap-drawer.misc-section.allow-sign-up-descrition',
             'If not enabled, only existing Grafana users can log in using LDAP'
