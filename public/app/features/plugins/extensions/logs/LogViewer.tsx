@@ -55,7 +55,7 @@ function LogViewScene(): ReactElement | null {
       actions={<LogViewFilters provider={data} filteredProvider={filteredData} filter={filter} onChange={setFilter} />}
     >
       <VizGridLayout>
-        <VizPanel title="Logs" viz={logsViz} dataProvider={filteredData} />
+        <VizPanel title="" viz={logsViz} dataProvider={filteredData} />
       </VizGridLayout>
     </Page>
   );
