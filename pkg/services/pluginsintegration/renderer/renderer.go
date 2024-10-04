@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func ProvideService(cfg *config.PluginManagementCfg, pluginEnvProvider envvars.Provider,
@@ -106,7 +107,7 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 }
 
 func createLoader(cfg *config.PluginManagementCfg, pluginEnvProvider envvars.Provider,
-	pr registry.Service, tracer tracing.Tracer) (loader.Service, error) {
+	pr registry.Service, tracer trace.Tracer) (loader.Service, error) {
 	d := discovery.New(cfg, discovery.Opts{
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			discovery.NewPermittedPluginTypesFilterStep([]plugins.Type{plugins.TypeRenderer}),

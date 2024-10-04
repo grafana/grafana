@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel/trace/embedded"
 	"google.golang.org/grpc"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
@@ -44,7 +43,7 @@ var pluginSet = map[int]goplugin.PluginSet{
 }
 
 type clientTracerProvider struct {
-	tracer tracing.Tracer
+	tracer trace.Tracer
 	embedded.TracerProvider
 }
 
@@ -52,11 +51,11 @@ func (ctp *clientTracerProvider) Tracer(instrumentationName string, opts ...trac
 	return ctp.tracer
 }
 
-func newClientTracerProvider(tracer tracing.Tracer) trace.TracerProvider {
+func newClientTracerProvider(tracer trace.Tracer) trace.TracerProvider {
 	return &clientTracerProvider{tracer: tracer}
 }
 
-func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, logger log.Logger, tracer tracing.Tracer,
+func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, logger log.Logger, tracer trace.Tracer,
 	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec
@@ -71,6 +70,12 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 		Logger:           logWrapper{Logger: logger},
 		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
 		GRPCDialOptions: []grpc.DialOption{
+			// https://github.com/grafana/app-platform-wg/issues/140
+			// external plugins are loaded before k8s API server
+			// configures the tracing service thus failing to
+			// record trace span in the middleware.
+			// With code below we are passing the same tracer that k8s API server
+			// uses so that middleware is configured with tracer.
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler(otelgrpc.WithTracerProvider(newClientTracerProvider(tracer)))),
 		},
 	}

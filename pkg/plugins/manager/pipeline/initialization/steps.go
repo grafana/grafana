@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // BackendClientInit implements an InitializeFunc for initializing a backend plugin process.
@@ -22,17 +22,17 @@ type BackendClientInit struct {
 	envVarProvider  envvars.Provider
 	backendProvider plugins.BackendFactoryProvider
 	log             log.Logger
-	tracer          tracing.Tracer
+	tracer          trace.Tracer
 }
 
 // BackendClientInitStep returns a new InitializeFunc for registering a backend plugin process.
 func BackendClientInitStep(envVarProvider envvars.Provider,
-	backendProvider plugins.BackendFactoryProvider, tracer tracing.Tracer) InitializeFunc {
+	backendProvider plugins.BackendFactoryProvider, tracer trace.Tracer) InitializeFunc {
 	return newBackendProcessRegistration(envVarProvider, backendProvider, tracer).Initialize
 }
 
 func newBackendProcessRegistration(envVarProvider envvars.Provider,
-	backendProvider plugins.BackendFactoryProvider, tracer tracing.Tracer) *BackendClientInit {
+	backendProvider plugins.BackendFactoryProvider, tracer trace.Tracer) *BackendClientInit {
 	return &BackendClientInit{
 		backendProvider: backendProvider,
 		envVarProvider:  envVarProvider,

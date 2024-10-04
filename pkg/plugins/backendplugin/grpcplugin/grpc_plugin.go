@@ -7,9 +7,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/hashicorp/go-plugin"
+	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/process"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -38,12 +38,12 @@ const (
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, tracer tracing.Tracer, env func() []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, tracer trace.Tracer, env func() []string) (backendplugin.Plugin, error) {
 		return newGrpcPlugin(descriptor, logger, tracer, env), nil
 	}
 }
 
-func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer tracing.Tracer, env func() []string) *grpcPlugin {
+func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.Tracer, env func() []string) *grpcPlugin {
 	return &grpcPlugin{
 		descriptor: descriptor,
 		logger:     logger,
