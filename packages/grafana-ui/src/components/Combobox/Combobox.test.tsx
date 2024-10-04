@@ -132,4 +132,54 @@ describe('Combobox', () => {
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'number').toBeTruthy();
     });
   });
+
+  describe('async', () => {
+    // Assume that most apis only return with the value
+    const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
+
+    it('should allow async options', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      expect(asyncOptions).toHaveBeenCalled();
+      //expect(screen.getByText('Loading')).toBeInTheDocument();
+    });
+
+    it('should allow async options and select value', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const item = await screen.findByRole('option', { name: 'Option 3' });
+      await userEvent.click(item);
+
+      expect(onChangeHandler).toHaveBeenCalledWith(simpleAsyncOptions[2]);
+      expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
+    });
+
+    it('should ignore late responses', async () => {
+      const asyncOptions = jest
+        .fn()
+        .mockResolvedValue(new Promise((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 1000)))
+        .mockResolvedValueOnce(new Promise((resolve) => setTimeout(() => resolve([{ value: 'second' }]), 200)));
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input); // First request
+
+      await userEvent.keyboard('a'); // Second request
+      const firstItem = screen.queryByRole('option', { name: 'first' });
+      const item = await screen.findByRole('option', { name: 'second' });
+
+      await userEvent.click(item);
+      expect(firstItem).not.toBeInTheDocument();
+      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'second' });
+      expect(screen.getByDisplayValue('second')).toBeInTheDocument();
+    });
+  });
 });

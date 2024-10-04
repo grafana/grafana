@@ -78,7 +78,8 @@ export const Combobox = <T extends string | number>({
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
-  const isAsync = options instanceof Function;
+  const isAsync = typeof options === 'function';
+
   const [asyncLoading, setAsyncLoading] = useState(false);
   // Discard results from requests that do not match the latest request string
   const latestRequestString = useRef('');
@@ -157,9 +158,7 @@ export const Combobox = <T extends string | number>({
       if (isAsync) {
         latestRequestString.current = inputValue;
         setAsyncLoading(true);
-
         options(inputValue).then((opts) => {
-          console.log('request complete', inputValue, latestRequestString.current);
           if (latestRequestString.current !== inputValue) {
             return;
           }
