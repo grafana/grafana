@@ -249,15 +249,18 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'grid',
       gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns
       gap: '31px',
-      alignItems: 'center', // vertically center cards in their boxes
+      alignItems: 'stretch', // vertically center cards in their boxes
       justifyItems: 'center',
     }),
     trailCard: css({
       // flex: '1 1 32%', // unsure why 33% and over makes 2 columns, might need to come back to later
       boxSizing: 'border-box',
       maxWidth: '318px',
-      minHeight: '151px',
-      maxHeight: '151px',
+      width: '100%', // Make the card take up the full width of the grid cell
+      height: '100%', // Make the card take up the full height of the grid cell
+      backgroundColor: theme.colors.background.secondary, // Ensure the background color takes up the whole space
+      // minHeight: '151px',
+      // maxHeight: '151px',
       // display: 'flex',
       // height: '151px',
       // padding: '12px 16px 8px 16px',
