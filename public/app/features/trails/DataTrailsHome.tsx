@@ -139,7 +139,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               {/* have to add i18nKey */}
               <Trans>Start your metrics exploration!</Trans>
             </Text>
-            {/* <Box marginBottom={1} paddingX={4} > */}
             <Box>
               <Text element="p" textAlignment="center" color="secondary">
                 {/* have to add i18nKey */}
@@ -179,11 +178,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
                   <recent.Component model={recent} key={recent.state.key} />{' '}
                   {/* how we mount a scene inside of react */}
                 </div>
-                // <DataTrailCard
-                //   key={(resolvedTrail.state.key || '') + index}
-                //   trail={resolvedTrail}
-                //   onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
-                // />
               );
             })}
         </div>
@@ -253,20 +247,11 @@ function getStyles(theme: GrafanaTheme2) {
       justifyItems: 'center',
     }),
     trailCard: css({
-      // flex: '1 1 32%', // unsure why 33% and over makes 2 columns, might need to come back to later
       boxSizing: 'border-box',
       maxWidth: '318px',
       width: '100%', // Make the card take up the full width of the grid cell
       height: '100%', // Make the card take up the full height of the grid cell
       backgroundColor: theme.colors.background.secondary, // Ensure the background color takes up the whole space
-      // minHeight: '151px',
-      // maxHeight: '151px',
-      // display: 'flex',
-      // height: '151px',
-      // padding: '12px 16px 8px 16px',
-      // // flexDirection: 'columnOptionsTab',
-      // alignItems: 'flex-start',
-      // gap: 'var(--spacing-x0_5, 4px)',
     }),
     verticalLine: css({
       borderLeft: `1px solid ${theme.colors.border.weak}`,
