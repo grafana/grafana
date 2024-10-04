@@ -1234,18 +1234,14 @@
     {
       "metadata": {
         "name": "externalServiceAccounts",
-        "resourceVersion": "1726562284896",
-        "creationTimestamp": "2023-09-28T07:26:37Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-17 08:38:04.896869045 +0000 UTC"
-        }
+        "resourceVersion": "1718727528075",
+        "creationTimestamp": "2023-09-28T07:26:37Z"
       },
       "spec": {
         "description": "Automatic service account and token setup for plugins",
-        "stage": "GA",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "expression": "true"
+        "hideFromAdminPage": true
       }
     },
     {
