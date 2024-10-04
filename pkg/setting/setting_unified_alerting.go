@@ -462,7 +462,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
 	if uaCfg.RuleVersionRecordLimit < 0 {
-	     return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
+		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
 	}
 
 	cfg.UnifiedAlerting = uaCfg
