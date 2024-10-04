@@ -108,6 +108,7 @@ function splitQueriesByStreamShard(
         done();
         return;
       }
+      debug(`Ran ${group} next group ${groups.indexOf(nextGroup)}`)
       groups[group].groupSize = nextGroupSize;
       runNextRequest(subscriber, groups.indexOf(nextGroup), groups);
     };
@@ -152,7 +153,7 @@ function splitQueriesByStreamShard(
 
     const shardsToQuery =
       shards && cycle !== undefined && groupSize ? groupShardRequests(shards, cycle, groupSize) : [];
-    const subRequest = { ...request, targets: interpolateShardingSelector(splittingTargets, shardsToQuery) };
+    const subRequest = { ...request, targets: interpolateShardingSelector(groups[group].targets, shardsToQuery) };
     // Request may not have a request id
     if (request.requestId) {
       subRequest.requestId =
@@ -246,7 +247,7 @@ async function groupTargetsByQueryType(
     try {
       const values = await datasource.languageProvider.fetchLabelValues('__stream_shard__', {
         timeRange: request.range,
-        streamSelector: selector ? selector : undefined,
+        streamSelector: selector,
       });
       const shards = values.map((value) => parseInt(value, 10));
       if (shards) {
