@@ -703,6 +703,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
+  // Backwards compat with plugins that rely on the RefreshEvent when a
+  // variable changes. TODO: We should redirect plugin devs to VariablesChanged event
   private triggerRefreshEvent = ({ payload }: SceneObjectStateChangedEvent) => {
     const isAnnotationChange =
       payload.changedObject instanceof DashboardAnnotationsDataLayer &&

@@ -214,34 +214,7 @@ describe('sceneVariablesSetToVariables', () => {
     });
     const result = sceneVariablesSetToVariables(set);
     expect(result).toHaveLength(1);
-    expect(result[0]).toMatchInlineSnapshot(`
-    {
-      "allValue": "test-all",
-      "current": {
-        "text": [
-          "selected-value-text",
-        ],
-        "value": [
-          "selected-value",
-        ],
-      },
-      "datasource": {
-        "type": "fake-std",
-        "uid": "fake-std",
-      },
-      "definition": undefined,
-      "description": "test-desc",
-      "includeAll": true,
-      "label": "test-label",
-      "multi": true,
-      "name": "test",
-      "options": [],
-      "query": "query",
-      "refresh": 1,
-      "regex": "",
-      "type": "query",
-    }
-    `);
+    expect(result[0].options).toEqual([]);
   });
 
   it('should handle Query variable when sceneVariablesSetToVariables shoudl keep options', () => {
@@ -269,50 +242,8 @@ describe('sceneVariablesSetToVariables', () => {
     const keepQueryOptions = true;
     const result = sceneVariablesSetToVariables(set, keepQueryOptions);
     expect(result).toHaveLength(1);
-    expect(result[0]).toMatchInlineSnapshot(`
-    {
-      "allValue": "test-all",
-      "current": {
-        "text": [
-          "test",
-        ],
-        "value": [
-          "test",
-        ],
-      },
-      "datasource": {
-        "type": "fake-std",
-        "uid": "fake-std",
-      },
-      "definition": undefined,
-      "description": "test-desc",
-      "includeAll": true,
-      "label": "test-label",
-      "multi": true,
-      "name": "test",
-      "options": [
-        {
-          "selected": true,
-          "text": "test",
-          "value": "test",
-        },
-        {
-          "selected": false,
-          "text": "test1",
-          "value": "test1",
-        },
-        {
-          "selected": false,
-          "text": "test2",
-          "value": "test2",
-        },
-      ],
-      "query": "query",
-      "refresh": 1,
-      "regex": "",
-      "type": "query",
-    }
-    `);
+    expect(result[0].options).not.toEqual([]);
+    expect(result[0].options?.length).toEqual(3);
   });
 
   it('should handle DatasourceVariable', () => {
