@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
@@ -25,17 +24,17 @@ const (
 
 type RuleService struct {
 	genericService
-	receiverAuth receiverAuth
+	notificationSettingsAuth notificationSettingsAuth
 }
 
-type receiverAuth interface {
-	AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error
+type notificationSettingsAuth interface {
+	AuthorizeRead(context.Context, identity.Requester, *models.NotificationSettings) error
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
-		genericService: genericService{ac: ac},
-		receiverAuth:   NewReceiverAccess[*models.Receiver](ac, true),
+		genericService:           genericService{ac: ac},
+		notificationSettingsAuth: NewReceiverAccess[*models.NotificationSettings](ac, true),
 	}
 }
 
@@ -264,10 +263,8 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 // authorizeReceivers checks if the user has access to all receivers that are used by the rule.
 func (r *RuleService) authorizeReceivers(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
 	for _, ns := range rule.NotificationSettings {
-		if ns.Receiver != "" {
-			if err := r.receiverAuth.AuthorizeReadByUID(ctx, user, legacy_storage.NameToUid(ns.Receiver)); err != nil {
-				return err
-			}
+		if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, &ns); err != nil {
+			return err
 		}
 	}
 	return nil
