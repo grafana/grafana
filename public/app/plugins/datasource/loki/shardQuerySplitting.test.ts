@@ -147,7 +147,7 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Retries failed requests', async () => {
-    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue([1]);
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
     jest
       .spyOn(datasource, 'runQuery')
       .mockReturnValueOnce(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
