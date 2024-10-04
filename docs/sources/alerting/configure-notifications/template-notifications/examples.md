@@ -178,6 +178,127 @@ The web server web1 has been responding to 5% of HTTP requests with 5xx errors f
 - View on Grafana: https://example.com/grafana/alerting/grafana/view
 ```
 
+## Template logic examples
+
+### Iterate over alerts
+
+To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts in `ExtendedData`:
+
+```
+{{ range .Alerts }}
+{{ .Labels }}
+{{ end }}
+```
+
+Inside the range dot no longer refers to `ExtendedData`, but to an `Alert`. You can use `{{ .Labels }}` to print the labels of each alert. This works because `{{ range .Alerts }}` changes dot to refer to the current alert in the list of alerts. When the range is finished dot is reset to the value it had before the start of the range, which in this example is `ExtendedData`:
+
+```
+{{ range .Alerts }}
+{{ .Labels }}
+{{ end }}
+{{/* does not work, .Labels does not exist here */}}
+{{ .Labels }}
+{{/* works, cursor was reset */}}
+{{ .Status }}
+```
+
+### Iterate over annotations and labels
+
+Let's write a template to print the labels of each alert in the format `The name of the label is $name, and the value is $value`, where `$name` and `$value` contain the name and value of each label.
+
+Like in the previous example, use a range to iterate over the alerts in `.Alerts` such that dot refers to the current alert in the list of alerts, and then use a second range on the sorted labels so dot is updated a second time to refer to the current label. Inside the second range use `.Name` and `.Value` to print the name and value of each label:
+
+```
+{{ range .Alerts }}
+{{ range .Labels.SortedPairs }}
+The name of the label is {{ .Name }}, and the value is {{ .Value }}
+{{ end }}
+{{ range .Annotations.SortedPairs }}
+The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
+{{ end }}
+{{ end }}
+```
+
+### The index function
+
+To print a specific annotation or label use the `index` function.
+
+```
+{{ range .Alerts }}
+The name of the alert is {{ index .Labels "alertname" }}
+{{ end }}
+```
+
+### If statements
+
+You can use if statements in templates. For example, to print `There are no alerts` if there are no alerts in `.Alerts` you would write the following:
+
+```
+{{ if .Alerts }}
+There are alerts
+{{ else }}
+There are no alerts
+{{ end }}
+```
+
+### With
+
+With is similar to if statements, however unlike if statements, `with` updates dot to refer to the value of the with:
+
+```
+{{ with .Alerts }}
+There are {{ len . }} alert(s)
+{{ else }}
+There are no alerts
+{{ end }}
+```
+
+### Variables
+
+Variables in text/template must be created within the template. For example, to create a variable called `$variable` with the current value of dot you would write the following:
+
+```
+{{ $variable := . }}
+```
+
+You can use `$variable` inside a range or `with` and it will refer to the value of dot at the time the variable was defined, not the current value of dot.
+
+For example, you cannot write a template that use `{{ .Labels }}` in the second range because here dot refers to the current label, not the current alert:
+
+```
+{{ range .Alerts }}
+{{ range .Labels.SortedPairs }}
+{{ .Name }} = {{ .Value }}
+{{/* does not work because in the second range . is a label not an alert */}}
+There are {{ len .Labels }}
+{{ end }}
+{{ end }}
+```
+
+You can fix this by defining a variable called `$alert` in the first range and before the second range:
+
+```
+{{ range .Alerts }}
+{{ $alert := . }}
+{{ range .Labels.SortedPairs }}
+{{ .Name }} = {{ .Value }}
+{{/* works because $alert refers to the value of dot inside the first range */}}
+There are {{ len $alert.Labels }}
+{{ end }}
+{{ end }}
+```
+
+### Range with index
+
+You can get the index of each alert within a range by defining index and value variables at the start of the range:
+
+```
+{{ $num_alerts := len .Alerts }}
+{{ range $index, $alert := .Alerts }}
+This is alert {{ $index }} out of {{ $num_alerts }}
+{{ end }}
+```
+
 ### Conditional notification template
 
 Template alert notifications based on a label. In this example the label represents a namespace.
@@ -213,6 +334,8 @@ Template alert notifications based on a label. In this example the label represe
    This template alters the content of alert notifications depending on the namespace value.
 
 ## Templates for contact points
+
+### Email
 
 ### Template the subject of an email
 
@@ -335,6 +458,7 @@ Follow these steps to create a custom notification template that consolidates al
 
    This generates a neatly formatted table in the email, grouping information for all affected servers into a single notification.
 
+### Slack
 ### Template the title of a Slack message
 
 Template the title of a Slack message to contain the number of firing and resolved alerts:
