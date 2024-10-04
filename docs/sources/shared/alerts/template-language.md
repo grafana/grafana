@@ -82,7 +82,7 @@ For more details, refer to the official documentation on [functions in `text/tem
 
 ## Comparison operators
 
-Some boolean comparison operators are also available in `text/template`:
+Boolean comparison operators are also available in `text/template`:
 
 | Function | Description                               |
 | -------- | ----------------------------------------- |
