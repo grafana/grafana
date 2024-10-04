@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"fmt"
+	"slices"
 
 	"golang.org/x/net/context"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
@@ -23,11 +25,17 @@ const (
 
 type RuleService struct {
 	genericService
+	receiverAuth receiverAuth
+}
+
+type receiverAuth interface {
+	AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
-		genericService{ac: ac},
+		genericService: genericService{ac: ac},
+		receiverAuth:   NewReceiverAccess[*models.Receiver](ac, true),
 	}
 }
 
@@ -196,6 +204,10 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 			}); err != nil {
 				return err
 			}
+
+			if err := r.authorizeReceivers(ctx, user, rule); err != nil {
+				return err
+			}
 		}
 		if !existingGroup {
 			// create a new group, check that user has "read" access to that new group. Otherwise, it will not be able to read it back.
@@ -236,6 +248,26 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 				return err
 			}
 			updateAuthorized = true
+		}
+
+		if !slices.EqualFunc(rule.Existing.NotificationSettings, rule.New.NotificationSettings, func(settings models.NotificationSettings, settings2 models.NotificationSettings) bool {
+			return settings.Equals(&settings2)
+		}) {
+			if err := r.authorizeReceivers(ctx, user, rule.New); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// authorizeReceivers checks if the user has access to all receivers that are used by the rule.
+func (r *RuleService) authorizeReceivers(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	for _, ns := range rule.NotificationSettings {
+		if ns.Receiver != "" {
+			if err := r.receiverAuth.AuthorizeReadByUID(ctx, user, legacy_storage.NameToUid(ns.Receiver)); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

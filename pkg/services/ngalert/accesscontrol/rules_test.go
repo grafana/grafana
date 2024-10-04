@@ -325,9 +325,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				permissionCombinations = permissionCombinations[0 : len(permissionCombinations)-1] // exclude all permissions
 				for _, missing := range permissionCombinations {
 					ac := &recordingAccessControlFake{}
-					srv := RuleService{
-						genericService{ac: ac},
-					}
+					srv := NewRuleService(ac)
 					err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(missing), groupChanges)
 
 					assert.Errorf(t, err, "expected error because less permissions than expected were provided. Provided: %v; Expected: %v; Diff: %v", missing, permissions, cmp.Diff(permissions, missing))
@@ -342,9 +340,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					return response, nil
 				},
 			}
-			srv := RuleService{
-				genericService{ac: ac},
-			}
+			srv := NewRuleService(ac)
 			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)
 			require.NotEmptyf(t, ac.EvaluateRecordings, "evaluation function is expected to be called but it was not.")
@@ -387,9 +383,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 		}
 
 		ac := &recordingAccessControlFake{}
-		svc := RuleService{
-			genericService{ac: ac},
-		}
+		svc := NewRuleService(ac)
 
 		eval := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(permissions), rule)
 
@@ -403,9 +397,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 				return false, nil
 			},
 		}
-		svc := RuleService{
-			genericService{ac: ac},
-		}
+		svc := NewRuleService(ac)
 
 		result := svc.AuthorizeDatasourceAccessForRule(context.Background(), createUserWithPermissions(nil), rule)
 
@@ -426,9 +418,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 			dashboards.ActionFoldersRead: namespaceScopes,
 		}
 		ac := &recordingAccessControlFake{}
-		svc := RuleService{
-			genericService{ac: ac},
-		}
+		svc := NewRuleService(ac)
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
 
@@ -443,9 +433,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		rules := genWithFolder.GenerateManyRef(1, 5)
 
 		ac := &recordingAccessControlFake{}
-		svc := RuleService{
-			genericService{ac: ac},
-		}
+		svc := NewRuleService(ac)
 
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(map[string][]string{}), rules)
 
@@ -456,9 +444,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 
 func TestCanReadAllRules(t *testing.T) {
 	ac := &recordingAccessControlFake{}
-	svc := RuleService{
-		genericService{ac: ac},
-	}
+	svc := NewRuleService(ac)
 
 	testCases := []struct {
 		permissions map[string][]string
