@@ -697,6 +697,7 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		return
 	}
 
+	fk8s.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	folderDTO, err := fk8s.newToFolderDto(c, *out)
 	if err != nil {
 		fk8s.writeError(c, err)
