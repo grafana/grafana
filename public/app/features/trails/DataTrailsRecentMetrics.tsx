@@ -61,17 +61,6 @@ function RecentExploration({ model }: Props) {
             )}
           </Stack>
         </Card.Actions>
-        {onDelete && (
-          <Card.SecondaryActions>
-            <IconButton
-              key="delete"
-              name="trash-alt"
-              className={styles.secondary}
-              tooltip="Remove bookmark"
-              onClick={onDelete}
-            />
-          </Card.SecondaryActions>
-        )}
       </Card>
       {/* <div>
         Recent Exploration metric: {metric}, datasource: {datasource}, filters: {JSON.stringify(filters)}, createdAt:{' '}
