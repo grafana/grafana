@@ -9,7 +9,6 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { ScopesSelector } from 'app/features/scopes';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
@@ -61,7 +60,6 @@ export const SingleTopBar = memo(function SingleTopBar({
           </ToolbarButton>
         )}
         <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-        <ScopesSelector />
       </Stack>
 
       <Stack gap={0.5} alignItems="center">
