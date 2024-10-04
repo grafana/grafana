@@ -49,15 +49,15 @@ describe('runShardSplitQuery()', () => {
   beforeEach(() => {
     request = createRequest([{ expr: 'count_over_time($SELECTOR[1m])', refId: 'A' }]);
     datasource = createLokiDatasource();
-    jest.spyOn(datasource.languageProvider, 'fetchLabelValues').mockResolvedValue(['1', '10', '2', '20', '3']);
-    jest.spyOn(datasource, 'interpolateVariablesInQueries').mockImplementation((queries: LokiQuery[]) => {
+    datasource.languageProvider.fetchLabelValues = jest.fn();
+    datasource.interpolateVariablesInQueries = jest.fn().mockImplementation((queries: LokiQuery[]) => {
       return queries.map((query) => {
         query.expr = query.expr.replace('$SELECTOR', '{a="b"}');
         return query;
       });
     });
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1', '10', '2', '20', '3']);
     const { metricFrameA } = getMockFrames();
-    
     jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [metricFrameA] }));
     jest.spyOn(datasource, 'query').mockReturnValue(of({ data: [metricFrameA] }));
   });
@@ -86,28 +86,28 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"20|3"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_0_2',
+        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"20|10"}[1m])', refId: 'A' }],
       });
-      
+
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_1',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"10|2"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_2_2',
+        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])', refId: 'A' }],
       });
-      
+
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_2',
+        requestId: 'TEST_shard_4_2',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])', refId: 'A' }],
       });
-      
+
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_3',
+        requestId: 'TEST_shard_5_2',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A' }],
       });
     });
@@ -127,13 +127,12 @@ describe('runShardSplitQuery()', () => {
         timeRange: expect.anything(),
       });
 
-      
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0',
+        requestId: 'TEST_shard_0_2',
         targets: [
-          { expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|3"}[1m])', refId: 'A' },
+          { expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"}[1m])', refId: 'A' },
         ],
       });
     });
@@ -148,7 +147,7 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Retries failed requests', async () => {
-    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue([1]);
     jest
       .spyOn(datasource, 'runQuery')
       .mockReturnValueOnce(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
@@ -163,7 +162,7 @@ describe('runShardSplitQuery()', () => {
     });
   });
 
-  test('For time ranges over a day queries shards independently', async () => {
+  test('Adjusts the group size based on errors and execution time', async () => {
     const request = createRequest([{ expr: 'count_over_time($SELECTOR[1m])', refId: 'A' }], {
       range: {
         from: dateTime('2024-11-13T05:00:00.000Z'),
@@ -175,46 +174,189 @@ describe('runShardSplitQuery()', () => {
       },
     });
 
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue([
+      '1',
+      '10',
+      '2',
+      '20',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+    ]);
+
+    // @ts-expect-error
+    jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
+      callback();
+    });
+
+    const { metricFrameA } = getMockFrames();
+
+    jest.mocked(datasource.runQuery).mockReset();
+
+    // Doubles group size
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        data: [
+          {
+            ...metricFrameA,
+            meta: {
+              ...metricFrameA.meta,
+              stats: [
+                ...metricFrameA.meta!.stats!,
+                {
+                  displayName: 'Summary: exec time',
+                  unit: 's',
+                  value: 0.5,
+                },
+              ],
+            },
+          },
+        ],
+      })
+    );
+
+    // Decreases group size
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ state: LoadingState.Error, error: { refId: 'A', message: 'timeout' }, data: [] }));
+
+    // Increases group size by 2
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        data: [
+          {
+            ...metricFrameA,
+            meta: {
+              ...metricFrameA.meta,
+              stats: [
+                ...metricFrameA.meta!.stats!,
+                {
+                  displayName: 'Summary: exec time',
+                  unit: 's',
+                  value: 5,
+                },
+              ],
+            },
+          },
+        ],
+      })
+    );
+
+    // Increases group size by 1
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        data: [
+          {
+            ...metricFrameA,
+            meta: {
+              ...metricFrameA.meta,
+              stats: [
+                ...metricFrameA.meta!.stats!,
+                {
+                  displayName: 'Summary: exec time',
+                  unit: 's',
+                  value: 15,
+                },
+              ],
+            },
+          },
+        ],
+      })
+    );
+
+    // Decreases group size by 1
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        data: [
+          {
+            ...metricFrameA,
+            meta: {
+              ...metricFrameA.meta,
+              stats: [
+                ...metricFrameA.meta!.stats!,
+                {
+                  displayName: 'Summary: exec time',
+                  unit: 's',
+                  value: 19,
+                },
+              ],
+            },
+          },
+        ],
+      })
+    );
+
+    // Halves group size
+    jest.mocked(datasource.runQuery).mockReturnValueOnce(
+      of({
+        data: [
+          {
+            ...metricFrameA,
+            meta: {
+              ...metricFrameA.meta,
+              stats: [
+                ...metricFrameA.meta!.stats!,
+                {
+                  displayName: 'Summary: exec time',
+                  unit: 's',
+                  value: 21,
+                },
+              ],
+            },
+          },
+        ],
+      })
+    );
+
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__="20"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_0_3',
+        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"}[1m])', refId: 'A' }],
       });
-      
+
+      // Doubled
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_1',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__="3"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_3_6',
+        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5|4|3"}[1m])', refId: 'A' }],
       });
-      
+
+      // Error, decreased
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_2',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__="10"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_3_2',
+        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"8|7"}[1m])', refId: 'A' }],
       });
-      
+
+      // Increased by 2
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_3',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__="2"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_5_4',
+        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4|3"}[1m])', refId: 'A' }],
       });
-      
+
+      // Increased by 1
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_4',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_9_5',
+        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"2|1"}[1m])', refId: 'A' }],
       });
-      
+
+      // Decreased by 1
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_5',
+        requestId: 'TEST_shard_11_4',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A' }],
       });
     });
