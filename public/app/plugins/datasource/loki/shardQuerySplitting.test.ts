@@ -86,28 +86,28 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_2',
+        requestId: 'TEST_shard_0_0_2',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"20|10"}[1m])', refId: 'A' }],
       });
 
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_2_2',
+        requestId: 'TEST_shard_0_2_2',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])', refId: 'A' }],
       });
 
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_4_2',
+        requestId: 'TEST_shard_0_4_2',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])', refId: 'A' }],
       });
 
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_5_2',
+        requestId: 'TEST_shard_0_5_2',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A' }],
       });
     });
@@ -130,7 +130,7 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_2',
+        requestId: 'TEST_shard_0_0_2',
         targets: [
           { expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"}[1m])', refId: 'A' },
         ],
@@ -316,7 +316,7 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_3',
+        requestId: 'TEST_shard_0_0_3',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"}[1m])', refId: 'A' }],
       });
 
@@ -324,7 +324,7 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_3_6',
+        requestId: 'TEST_shard_0_3_6',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5|4|3"}[1m])', refId: 'A' }],
       });
 
@@ -332,7 +332,7 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_3_2',
+        requestId: 'TEST_shard_0_3_2',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"8|7"}[1m])', refId: 'A' }],
       });
 
@@ -340,7 +340,7 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_5_4',
+        requestId: 'TEST_shard_0_5_4',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4|3"}[1m])', refId: 'A' }],
       });
 
@@ -348,7 +348,7 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_9_5',
+        requestId: 'TEST_shard_0_9_5',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"2|1"}[1m])', refId: 'A' }],
       });
 
@@ -356,7 +356,7 @@ describe('runShardSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_11_4',
+        requestId: 'TEST_shard_0_11_4',
         targets: [{ expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A' }],
       });
     });

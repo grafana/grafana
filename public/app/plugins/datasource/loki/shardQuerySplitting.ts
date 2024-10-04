@@ -1,7 +1,15 @@
+import { groupBy, partition } from 'lodash';
 import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataQueryRequest, LoadingState, DataQueryResponse, DataFrame, Field, QueryResultMetaStat } from '@grafana/data';
+import {
+  DataQueryRequest,
+  LoadingState,
+  DataQueryResponse,
+  DataFrame,
+  Field,
+  QueryResultMetaStat,
+} from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
 import { combineResponses } from './mergeResponses';
@@ -10,6 +18,7 @@ import {
   getSelectorForShardValues,
   interpolateShardingSelector,
   isLogsQuery,
+  isQueryWithLineFilter,
 } from './queryUtils';
 import { LokiQuery } from './types';
 
@@ -64,16 +73,13 @@ function splitQueriesByStreamShard(
   let shouldStop = false;
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: uuidv4() };
   let subquerySubscription: Subscription | null = null;
-  let retriesMap = new Map<number, number>();
+  let retriesMap = new Map<string, number>();
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const runNextRequest = (
-    subscriber: Subscriber<DataQueryResponse>,
-    cycle: number,
-    shards: number[],
-    groupSize: number
-  ) => {
-    let nextGroupSize = groupSize;
+  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, group: number, groups: ShardedQueryGroup[]) => {
+    let nextGroupSize = groups[group].groupSize;
+    const { shards, groupSize, cycle } = groups[group];
+
     if (subquerySubscription != null) {
       subquerySubscription.unsubscribe();
       subquerySubscription = null;
@@ -91,12 +97,16 @@ function splitQueriesByStreamShard(
     };
 
     const nextRequest = () => {
-      const nextCycle = Math.min(cycle + groupSize, shards.length);
-      if (cycle < shards.length && nextCycle <= shards.length) {
-        runNextRequest(subscriber, nextCycle, shards, nextGroupSize);
+      const nextGroup =
+        groups[group + 1] && groupHasPendingRequests(groups[group + 1])
+          ? groups[group + 1]
+          : groups.find((shardGroup) => groupHasPendingRequests(shardGroup));
+      if (nextGroup === undefined) {
+        done();
         return;
       }
-      done();
+      groups[group].groupSize = nextGroupSize;
+      runNextRequest(subscriber, groups.indexOf(nextGroup), groups);
     };
 
     const retry = (errorResponse?: DataQueryResponse) => {
@@ -109,37 +119,46 @@ function splitQueriesByStreamShard(
         return false;
       }
 
-      if (groupSize > 1) {
-        groupSize = Math.floor(Math.sqrt(groupSize));
-        debug(`Possible time out, new group size ${groupSize}`);
-        runNextRequest(subscriber, cycle, shards, groupSize);
+      if (groupSize !== undefined && groupSize > 1) {
+        groups[group].groupSize = Math.floor(Math.sqrt(groupSize));
+        debug(`Possible time out, new group size ${groups[group].groupSize}`);
+        runNextRequest(subscriber, group, groups);
         return true;
       }
 
-      const retries = retriesMap.get(cycle) ?? 0;
+      const key = `${group}_${cycle}`;
+      const retries = retriesMap.get(key) ?? 0;
       if (retries > 3) {
         shouldStop = true;
         return false;
       }
 
-      retriesMap.set(cycle, retries + 1);
+      retriesMap.set(key, retries + 1);
 
-      retryTimer = setTimeout(() => {
-        console.warn(`Retrying ${cycle} (${retries + 1})`);
-        runNextRequest(subscriber, cycle, shards, groupSize);
-        retryTimer = null;
-      }, 1500 * Math.pow(2, retries)); // Exponential backoff
+      retryTimer = setTimeout(
+        () => {
+          console.warn(`Retrying ${group} ${cycle} (${retries + 1})`);
+          runNextRequest(subscriber, group, groups);
+          retryTimer = null;
+        },
+        1000 * Math.pow(2, retries)
+      ); // Exponential backoff
 
       return true;
     };
 
-    const shardsToQuery = groupShardRequests(shards, cycle, groupSize);
-    debug(`Querying ${shardsToQuery.join(', ')}`);
+    const shardsToQuery =
+      shards && cycle !== undefined && groupSize ? groupShardRequests(shards, cycle, groupSize) : [];
     const subRequest = { ...request, targets: interpolateShardingSelector(splittingTargets, shardsToQuery) };
     // Request may not have a request id
     if (request.requestId) {
-      subRequest.requestId = `${request.requestId}_shard_${cycle}_${groupSize}`;
+      subRequest.requestId =
+        cycle !== undefined && groupSize
+          ? `${request.requestId}_shard_${group}_${cycle}_${groupSize}`
+          : request.requestId;
     }
+
+    debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
     subquerySubscription = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse: DataQueryResponse) => {
@@ -148,9 +167,11 @@ function splitQueriesByStreamShard(
             return;
           }
         }
-        nextGroupSize = updateGroupSizeFromResponse(partialResponse, groupSize);
-        if (nextGroupSize !== groupSize) {
-          debug(`New group size ${nextGroupSize}`);
+        if (groupSize) {
+          nextGroupSize = updateGroupSizeFromResponse(partialResponse, groupSize);
+          if (nextGroupSize !== groupSize) {
+            debug(`New group size ${nextGroupSize}`);
+          }
         }
         mergedResponse = combineResponses(mergedResponse, partialResponse);
       },
@@ -172,44 +193,10 @@ function splitQueriesByStreamShard(
     });
   };
 
-  const runNonSplitRequest = (subscriber: Subscriber<DataQueryResponse>) => {
-    subquerySubscription = datasource.runQuery(request).subscribe({
-      next: (partialResponse: DataQueryResponse) => {
-        mergedResponse = partialResponse;
-      },
-      complete: () => {
-        subscriber.next(mergedResponse);
-      },
-      error: (error: unknown) => {
-        console.error(error, { msg: 'runNonSplitRequest subscription error' });
-        subscriber.error(mergedResponse);
-      },
-    });
-  };
-
   const response = new Observable<DataQueryResponse>((subscriber) => {
-    const selector = getSelectorForShardValues(splittingTargets[0].expr);
-    datasource.languageProvider
-      .fetchLabelValues('__stream_shard__', {
-        timeRange: request.range,
-        streamSelector: selector ? selector : undefined,
-      })
-      .then((values: string[]) => {
-        const shards = values.map((value) => parseInt(value, 10));
-        if (!shards || !shards.length) {
-          console.warn(`Shard splitting not supported. Issuing a regular query.`);
-          runNonSplitRequest(subscriber);
-        } else {
-          shards.sort((a, b) => b - a);
-          debug(`Querying ${shards.join(', ')} shards`);
-          runNextRequest(subscriber, 0, shards, getInitialGroupSize(shards));
-        }
-      })
-      .catch((e: unknown) => {
-        console.error(e, { msg: 'failed to fetch label values for __stream_shard__' });
-        shouldStop = true;
-        runNonSplitRequest(subscriber);
-      });
+    groupTargetsByQueryType(splittingTargets, datasource, request).then((groupedRequests) => {
+      runNextRequest(subscriber, 0, groupedRequests);
+    });
     return () => {
       shouldStop = true;
       if (retryTimer) {
@@ -223,6 +210,71 @@ function splitQueriesByStreamShard(
   });
 
   return response;
+}
+
+interface ShardedQueryGroup {
+  targets: LokiQuery[];
+  shards?: number[];
+  groupSize?: number;
+  cycle?: number;
+}
+
+async function groupTargetsByQueryType(
+  targets: LokiQuery[],
+  datasource: LokiDatasource,
+  request: DataQueryRequest<LokiQuery>
+) {
+  const [shardedQueries, otherQueries] = partition(targets, (query) => {
+    if (isLogsQuery(query.expr)) {
+      return isQueryWithLineFilter(query.expr);
+    }
+    return true;
+  });
+
+  const groups: ShardedQueryGroup[] = [];
+  if (otherQueries.length) {
+    groups.push({
+      targets: otherQueries,
+    });
+  }
+
+  const selectorPartition = groupBy(shardedQueries, (query) => getSelectorForShardValues(query.expr));
+  for (const selector in selectorPartition) {
+    try {
+      const values = await datasource.languageProvider.fetchLabelValues('__stream_shard__', {
+        timeRange: request.range,
+        streamSelector: selector ? selector : undefined,
+      });
+      const shards = values.map((value) => parseInt(value, 10));
+      if (shards) {
+        shards.sort((a, b) => b - a);
+        debug(`Querying ${selector} with shards ${shards.join(', ')}`);
+      }
+      groups.push({
+        targets: selectorPartition[selector],
+        shards: shards.length ? shards : undefined,
+        groupSize: shards.length ? getInitialGroupSize(shards) : undefined,
+        cycle: 0,
+      });
+    } catch (error) {
+      console.error(error, { msg: 'failed to fetch label values for __stream_shard__' });
+      groups.push({
+        targets: selectorPartition[selector],
+      });
+    }
+  }
+
+  return groups;
+}
+
+function groupHasPendingRequests(group: ShardedQueryGroup) {
+  if (group.cycle === undefined || !group.groupSize || !group.shards) {
+    return false;
+  }
+  const { cycle, groupSize, shards } = group;
+  const nextCycle = Math.min(cycle + groupSize, shards.length);
+  group.cycle = nextCycle;
+  return cycle < shards.length && nextCycle <= shards.length;
 }
 
 function updateGroupSizeFromResponse(response: DataQueryResponse, currentSize: number) {
