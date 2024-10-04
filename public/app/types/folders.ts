@@ -15,7 +15,9 @@ export interface FolderDTO extends WithAccessControlMetadata {
   hasAcl: boolean;
   id: number;
   parentUid?: string;
-  parents?: FolderDTO[];
+
+  // The API does actually return a full FolderDTO here, but we want to restrict it to just a few properties
+  parents?: Array<Pick<FolderDTO, 'title' | 'uid' | 'url'>>;
   title: string;
   uid: string;
   updated: string;
