@@ -101,7 +101,7 @@ Variables in text/template must be created within the template. For example, to 
 {{ $variable := . }}
 ```
 
-You can use `$variable` inside a range or `with` and it will refer to the value of dot at the time the variable was defined, not the current value of dot.
+You can use `$variable` inside a range or `with` and it will refer to the value of dot (`.`) at the time the variable was defined, not the current value of dot.
 
 ## Templates
 
