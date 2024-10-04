@@ -96,9 +96,7 @@ export function createFilterTransformation(filter: LogFilter): CustomTransformOp
               }
             }
 
-            if (!isEmpty(target.fields) && !isEmpty(target.fields[0].values)) {
-              filtered.push(createDataFrame(target));
-            }
+            filtered.push(createDataFrame(target));
           }
 
           return filtered;
