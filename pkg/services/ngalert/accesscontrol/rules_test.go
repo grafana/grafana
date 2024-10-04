@@ -13,10 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -75,6 +79,22 @@ func getDatasourceScopesForRules(rules models.RulesGroup) []string {
 	return result
 }
 
+func getReceiverScopesForRules(rules models.RulesGroup) []string {
+	scopesMap := map[string]struct{}{}
+	var result []string
+	for _, rule := range rules {
+		for _, ns := range rule.NotificationSettings {
+			scope := ScopeReceiversProvider.GetResourceScopeUID(legacy_storage.NameToUid(ns.Receiver))
+			if _, ok := scopesMap[scope]; ok {
+				continue
+			}
+			result = append(result, scope)
+			scopesMap[scope] = struct{}{}
+		}
+	}
+	return result
+}
+
 func mapUpdates(updates []store.RuleDelta, mapFunc func(store.RuleDelta) *models.AlertRule) models.RulesGroup {
 	result := make(models.RulesGroup, 0, len(updates))
 	for _, update := range updates {
@@ -111,12 +131,6 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				var scopes []string
-				for _, rule := range c.New {
-					for _, query := range rule.Data {
-						scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
-					}
-				}
 				return map[string][]string{
 					ruleCreate: {
 						namespaceIdScope,
@@ -127,7 +141,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					dashboards.ActionFoldersRead: {
 						namespaceIdScope,
 					},
-					datasources.ActionQuery: scopes,
+					datasources.ActionQuery:                   getDatasourceScopesForRules(c.New),
+					accesscontrol.ActionAlertingReceiversRead: getReceiverScopesForRules(c.New),
 				}
 			},
 		},
@@ -313,6 +328,86 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "if there are new rules that have notification settings it should check access to all receivers",
+			changes: func() *store.GroupDelta {
+				receiverName := "test-receiver"
+				genWithNotificationSettings := genWithGroupKey.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))))
+				return &store.GroupDelta{
+					GroupKey: groupKey,
+					New:      genWithNotificationSettings.GenerateManyRef(1, 5),
+					Update:   nil,
+					Delete:   nil,
+				}
+			},
+			permissions: func(c *store.GroupDelta) map[string][]string {
+				return map[string][]string{
+					ruleCreate: {
+						namespaceIdScope,
+					},
+					ruleRead: {
+						namespaceIdScope,
+					},
+					dashboards.ActionFoldersRead: {
+						namespaceIdScope,
+					},
+					datasources.ActionQuery:                   getDatasourceScopesForRules(c.New),
+					accesscontrol.ActionAlertingReceiversRead: getReceiverScopesForRules(c.New),
+				}
+			},
+		},
+		{
+			name: "if there are rules that modify notification settings it should check access to all receivers",
+			changes: func() *store.GroupDelta {
+
+				receiverName := "test-receiver"
+				genWithNotificationSettings := genWithGroupKey.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))))
+				rules1 := genWithNotificationSettings.GenerateManyRef(1, 5)
+				rules := genWithNotificationSettings.GenerateManyRef(1, 5)
+				updates := make([]store.RuleDelta, 0, len(rules))
+
+				for _, rule := range rules {
+					cp := models.CopyRule(rule)
+					for i := range cp.NotificationSettings {
+						cp.NotificationSettings[i].Receiver = "new-receiver"
+					}
+					updates = append(updates, store.RuleDelta{
+						Existing: rule,
+						New:      cp,
+						Diff:     nil,
+					})
+				}
+
+				return &store.GroupDelta{
+					GroupKey: groupKey,
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+						groupKey: append(rules, rules1...),
+					},
+					New:    nil,
+					Update: updates,
+					Delete: nil,
+				}
+			},
+			permissions: func(c *store.GroupDelta) map[string][]string {
+				return map[string][]string{
+					ruleRead: {
+						namespaceIdScope,
+					},
+					dashboards.ActionFoldersRead: {
+						namespaceIdScope,
+					},
+					ruleUpdate: {
+						namespaceIdScope,
+					},
+					datasources.ActionQuery: getDatasourceScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+						return update.New
+					})),
+					accesscontrol.ActionAlertingReceiversRead: getReceiverScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+						return update.New
+					})),
+				}
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -333,17 +428,10 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			})
 
-			ac := &recordingAccessControlFake{
-				Callback: func(user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-					response := evaluator.Evaluate(user.GetPermissions())
-					require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
-					return response, nil
-				},
-			}
+			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 			srv := NewRuleService(ac)
 			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)
-			require.NotEmptyf(t, ac.EvaluateRecordings, "evaluation function is expected to be called but it was not.")
 		})
 	}
 }
