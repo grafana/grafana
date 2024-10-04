@@ -3759,12 +3759,12 @@ __metadata:
   linkType: hard
 
 "@grafana/faro-core@npm:^1.10.1, @grafana/faro-core@npm:^1.3.6":
-  version: 1.10.1
-  resolution: "@grafana/faro-core@npm:1.10.1"
+  version: 1.10.2
+  resolution: "@grafana/faro-core@npm:1.10.2"
   dependencies:
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/otlp-transformer": "npm:^0.53.0"
-  checksum: 10/074397a6d886fd999d9aead5dc4c72ecec6e0aa995704582760b43a0cf8d89014769a7c432488549e3e8ae54151ade2c110e9cefabe0ec25c04c57764f374daa
+  checksum: 10/a326a40f3bc15bbf04992a0d45a8fd408b5ab5cc6b607871f010716c3944aa09bf4416ca0a302a9e6a167b2cf2eb4bc3573468c2c0a9e5ba183504490a66b289
   languageName: node
   linkType: hard
 
