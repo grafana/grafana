@@ -17,13 +17,12 @@ jobs:
         id: check
         shell: bash
         run: |
-          if [ -n "${{ (secrets.GRAFANA_PR_AUTOMATION_APP_ID != '' &&
+         if [ -n "${{ (secrets.GRAFANA_PR_AUTOMATION_APP_ID != '' &&
                         secrets.GRAFANA_PR_AUTOMATION_APP_PEM != '' &&
                         secrets.GRAFANA_MISC_STATS_API_KEY != ''
                         ) || '' }}" ]; then
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
-
   main:
     needs: config
     if: needs.config.outputs.has-secrets
