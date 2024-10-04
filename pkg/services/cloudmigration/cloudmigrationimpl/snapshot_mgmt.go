@@ -25,7 +25,7 @@ import (
 	"golang.org/x/crypto/nacl/box"
 )
 
-var currentMirationDataTypes = []cloudmigration.MigrateDataType{
+var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.DatasourceDataType,
 	cloudmigration.FolderDataType,
 	cloudmigration.LibraryElementDataType,
@@ -317,7 +317,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		}
 	}
 
-	for _, resourceType := range currentMirationDataTypes {
+	for _, resourceType := range currentMigrationTypes {
 		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
 			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
 				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
@@ -528,7 +528,7 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 // for dashboards, folders and library elements - the parent is the parent folder
 func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand, libraryElements []libraryElement) (map[cloudmigration.MigrateDataType]map[string](string), error) {
 	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
-	for _, dataType := range currentMirationDataTypes {
+	for _, dataType := range currentMigrationTypes {
 		parentNamesByType[dataType] = make(map[string]string)
 	}
 
