@@ -188,7 +188,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
       case VizOrientation.Vertical:
         repeaterStyle.flexDirection = 'row';
         repeaterStyle.justifyContent = 'space-between';
-        repeaterStyle.overflowY = `hidden`;
+        repeaterStyle.overflowY = 'hidden';
         itemStyles.marginRight = `${itemSpacing}px`;
         vizHeight = height;
         vizWidth = Math.max(width / values.length - itemSpacing + itemSpacing / values.length, minVizWidth ?? 0);
