@@ -7,6 +7,7 @@ import {
   PluginLoadingStrategy,
   PluginMeta,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
@@ -97,15 +98,19 @@ export async function importPluginModule({
   }
 
   const modulePath = resolveModulePath(path);
-  const resolvedModule = System.resolve(modulePath);
-  const integrityMap = System.getImportMap().integrity;
 
-  if (moduleHash && integrityMap && !integrityMap[resolvedModule]) {
-    SystemJS.addImportMap({
-      integrity: {
-        [resolvedModule]: moduleHash,
-      },
-    });
+  // inject integrity hash into SystemJS import map
+  if (config.featureToggles.pluginsSriChecks) {
+    const resolvedModule = System.resolve(modulePath);
+    const integrityMap = System.getImportMap().integrity;
+
+    if (moduleHash && integrityMap && !integrityMap[resolvedModule]) {
+      SystemJS.addImportMap({
+        integrity: {
+          [resolvedModule]: moduleHash,
+        },
+      });
+    }
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
