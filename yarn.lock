@@ -4150,9 +4150,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:5.16.2":
-  version: 5.16.2
-  resolution: "@grafana/scenes@npm:5.16.2"
+"@grafana/scenes@npm:5.17.0":
+  version: 5.17.0
+  resolution: "@grafana/scenes@npm:5.17.0"
   dependencies:
     "@floating-ui/react": "npm:0.26.16"
     "@grafana/e2e-selectors": "npm:^11.0.0"
@@ -4169,7 +4169,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/e7ed539277c9739b7d13be37f6704a3c1e1bc5facc0f86d2e9df8f046208e3ead93f68067058ea9c280d81b7afb705358aed2c9165f767fe5b4147df19bd8d43
+  checksum: 10/da18f6b27119cd3d8c7698d58f7f24c10d1531d3caaff0f1b48eb2a79a0cb5c9295078c89e06882b57840e5c2a22721205736243bbd7160d215f252582f9742b
   languageName: node
   linkType: hard
 
@@ -18947,7 +18947,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.16.2"
+    "@grafana/scenes": "npm:5.17.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
