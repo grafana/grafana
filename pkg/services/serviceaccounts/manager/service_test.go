@@ -119,7 +119,8 @@ func (f *SecretsCheckerFake) CheckTokens(ctx context.Context) error {
 func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	storeMock := newServiceAccountStoreFake()
 	acSvc := actest.FakeService{}
-	svc := ServiceAccountsService{acSvc, storeMock, log.New("test"), log.New("background.test"), &SecretsCheckerFake{}, false, 0}
+	pSvc := &actest.FakePermissionsService{}
+	svc := ServiceAccountsService{acSvc, pSvc, storeMock, log.NewNopLogger(), log.NewNopLogger(), &SecretsCheckerFake{}, false, 0}
 	testOrgId := 1
 
 	t.Run("should create service account", func(t *testing.T) {
