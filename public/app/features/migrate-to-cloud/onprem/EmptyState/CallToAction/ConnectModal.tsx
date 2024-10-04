@@ -101,9 +101,10 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
                 severity="error"
                 title={t('migrate-to-cloud.connect-modal.token-error-title', 'Error saving token')}
               >
-                <Trans i18nKey="migrate-to-cloud.connect-modal.token-error-description">
-                  There was an error saving the token. See the Grafana server logs for more details.
-                </Trans>
+                <Text element="p">
+                  {error?.data?.message ||
+                    'There was an error saving the token. See the Grafana server logs for more details.'}
+                </Text>
               </AlertWithTraceID>
             ) : undefined}
 

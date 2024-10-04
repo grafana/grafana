@@ -223,7 +223,7 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 		AuthToken: cmd.AuthToken,
 	})
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "session creation error", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, err.Error(), err)
 	}
 
 	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{
