@@ -33,7 +33,7 @@ Prerequisites:
 - Knowledge of LDAP authentication and how it works.
 - Grafana instance v11.3.0 or later.
 - Permissions `settings:read` and `settings:write` with `settings:auth.ldap:*` scope.
-- This feature requires the `ssoSettingsApi` feature toggle to be enabled.
+- This feature requires the `ssoSettingsLDAP` feature toggle to be enabled.
 
 ## Steps to configure LDAP authentication
 
