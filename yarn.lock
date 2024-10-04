@@ -2020,16 +2020,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/css@npm:11.13.0":
-  version: 11.13.0
-  resolution: "@emotion/css@npm:11.13.0"
+"@emotion/css@npm:11.13.4":
+  version: 11.13.4
+  resolution: "@emotion/css@npm:11.13.4"
   dependencies:
     "@emotion/babel-plugin": "npm:^11.12.0"
     "@emotion/cache": "npm:^11.13.0"
     "@emotion/serialize": "npm:^1.3.0"
     "@emotion/sheet": "npm:^1.4.0"
     "@emotion/utils": "npm:^1.4.0"
-  checksum: 10/a25ce47c3b412fa3dbdd2e4ec2de3e6946564c5f1f3953533fcc31d5b2b553b9fccdf5da4e030b81b230dad65eef38662c082c6d863fa924147a45b26ee6f3cf
+  checksum: 10/57565a8bd9b712b0ade1c8b972bf2f84d2026e4372b3b035fb9d93a85a8f36ca7f2fbe67ecf32cc3fd03956587ece56ab89dd5bd43a76d3aed542a76841c76e5
   languageName: node
   linkType: hard
 
@@ -3139,7 +3139,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:2.1.1"
@@ -3183,7 +3183,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-postgresql-datasource@workspace:public/app/plugins/datasource/grafana-postgresql-datasource"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:2.1.1"
@@ -3214,7 +3214,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/plugin-configs": "npm:11.3.0-pre"
     "@grafana/runtime": "npm:11.3.0-pre"
@@ -3255,7 +3255,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:2.1.1"
@@ -3296,7 +3296,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:2.1.1"
@@ -3338,7 +3338,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:2.1.1"
@@ -3369,7 +3369,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:2.1.1"
@@ -3400,7 +3400,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/parca@workspace:public/app/plugins/datasource/parca"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/plugin-configs": "npm:11.3.0-pre"
     "@grafana/runtime": "npm:11.3.0-pre"
@@ -3432,7 +3432,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/stackdriver@workspace:public/app/plugins/datasource/cloud-monitoring"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:2.1.1"
@@ -3480,7 +3480,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/tempo@workspace:public/app/plugins/datasource/tempo"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:2.1.1"
@@ -3540,7 +3540,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/zipkin@workspace:public/app/plugins/datasource/zipkin"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:2.1.1"
@@ -3813,7 +3813,7 @@ __metadata:
     "@babel/core": "npm:7.25.2"
     "@babel/preset-env": "npm:7.25.4"
     "@babel/preset-react": "npm:7.24.7"
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "npm:11.3.0-pre"
@@ -3897,7 +3897,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:2.1.1"
@@ -3966,7 +3966,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@floating-ui/react": "npm:0.26.24"
     "@grafana/data": "npm:11.3.0-pre"
@@ -4195,7 +4195,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/sql@workspace:packages/grafana-sql"
   dependencies:
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@grafana/data": "npm:11.3.0-pre"
     "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:2.1.1"
@@ -4256,7 +4256,7 @@ __metadata:
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
     "@babel/core": "npm:7.25.2"
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@emotion/react": "npm:11.13.3"
     "@emotion/serialize": "npm:1.3.2"
     "@faker-js/faker": "npm:^9.0.0"
@@ -18952,7 +18952,7 @@ __metadata:
     "@betterer/cli": "npm:5.4.0"
     "@betterer/eslint": "npm:5.4.0"
     "@cypress/webpack-preprocessor": "npm:6.0.2"
-    "@emotion/css": "npm:11.13.0"
+    "@emotion/css": "npm:11.13.4"
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.13.3"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
