@@ -329,6 +329,9 @@
       "moving": "Déplacement...",
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier."
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
       "alertRule_other": "{{count}} règles d'alerte",
@@ -1089,6 +1092,13 @@
       "zoom-out-time-range": "Dézoomer la plage de temps"
     },
     "title": "Raccourcis"
+  },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
   },
   "inspector": {
     "query": {
@@ -1855,6 +1865,7 @@
       "close": "Fermer le menu",
       "dock": "Ancrer le menu",
       "list-label": "Navigation",
+      "open": "",
       "undock": "Ancrer le menu"
     },
     "toolbar": {

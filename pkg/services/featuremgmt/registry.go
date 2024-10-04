@@ -675,8 +675,9 @@ var (
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
-			Stage:             FeatureStagePublicPreview,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             identityAccessTeam,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:         "panelMonitoring",

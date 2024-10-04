@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -42,9 +43,100 @@ func (e DuplicateError) Is(err error) bool {
 }
 
 type Dependencies struct {
-	GrafanaDependency string       `json:"grafanaDependency"`
-	GrafanaVersion    string       `json:"grafanaVersion"`
-	Plugins           []Dependency `json:"plugins"`
+	GrafanaDependency string                 `json:"grafanaDependency"`
+	GrafanaVersion    string                 `json:"grafanaVersion"`
+	Plugins           []Dependency           `json:"plugins"`
+	Extensions        ExtensionsDependencies `json:"extensions"`
+}
+
+// We need different versions for the Extensions struct because there is a now deprecated plugin.json schema out there, where the "extensions" prop
+// is in a different format (Extensions V1). In order to support those as well while reading the plugin.json, we need to add a custom unmarshaling logic for extensions.
+type ExtensionV1 struct {
+	ExtensionPointID string `json:"extensionPointId"`
+	Title            string `json:"title"`
+	Description      string `json:"description"`
+	Type             string `json:"type"`
+}
+
+type ExtensionsV2 struct {
+	AddedLinks        []AddedLink        `json:"addedLinks"`
+	AddedComponents   []AddedComponent   `json:"addedComponents"`
+	ExposedComponents []ExposedComponent `json:"exposedComponents"`
+	ExtensionPoints   []ExtensionPoint   `json:"extensionPoints"`
+}
+
+type Extensions ExtensionsV2
+
+func (e *Extensions) UnmarshalJSON(data []byte) error {
+	var err error
+	var extensionsV2 ExtensionsV2
+
+	if err = json.Unmarshal(data, &extensionsV2); err == nil {
+		e.AddedComponents = extensionsV2.AddedComponents
+		e.AddedLinks = extensionsV2.AddedLinks
+		e.ExposedComponents = extensionsV2.ExposedComponents
+		e.ExtensionPoints = extensionsV2.ExtensionPoints
+
+		return nil
+	}
+
+	// Fallback (V1)
+	var extensionsV1 []ExtensionV1
+	if err = json.Unmarshal(data, &extensionsV1); err == nil {
+		// Trying to process old format and add them to `AddedLinks` and `AddedComponents`
+		for _, extensionV1 := range extensionsV1 {
+			if extensionV1.Type == "link" {
+				extensionV2 := AddedLink{
+					Targets:     []string{extensionV1.ExtensionPointID},
+					Title:       extensionV1.Title,
+					Description: extensionV1.Description,
+				}
+				e.AddedLinks = append(e.AddedLinks, extensionV2)
+			}
+
+			if extensionV1.Type == "component" {
+				extensionV2 := AddedComponent{
+					Targets:     []string{extensionV1.ExtensionPointID},
+					Title:       extensionV1.Title,
+					Description: extensionV1.Description,
+				}
+
+				e.AddedComponents = append(e.AddedComponents, extensionV2)
+			}
+		}
+
+		return nil
+	}
+
+	return err
+}
+
+type AddedLink struct {
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+}
+
+type AddedComponent struct {
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+}
+
+type ExposedComponent struct {
+	Id          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+type ExtensionPoint struct {
+	Id          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+type ExtensionsDependencies struct {
+	ExposedComponents []string `json:"exposedComponents"`
 }
 
 type Includes struct {
@@ -231,6 +323,8 @@ type AppDTO struct {
 	Preload         bool            `json:"preload"`
 	Angular         AngularMeta     `json:"angular"`
 	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
+	Extensions      Extensions      `json:"extensions"`
+	Dependencies    Dependencies    `json:"dependencies"`
 }
 
 const (
