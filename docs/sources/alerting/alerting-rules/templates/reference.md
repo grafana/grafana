@@ -361,4 +361,4 @@ Annotation and label templates operate in the context of an individual alert ins
 
 For example, notification templates provide the `.Alerts` variable, which includes the list of all firing and resolved alerts in the notification. This variable is not available in alert rule templates, which operate within the context of a single alert instance.
 
-Additionally, you cannot use the `define` and `template` functions to share templates for labels and annotations, as you can with notification templates. Instead, you need to write each template inline within the label or annotation fields, and manually copy the templates wherever you want to reuse them.
+Additionally, you cannot reuse templates for labels and annotations as you can with notification templates. Instead, you need to write each template inline within the label or annotation fields and manually copy them wherever you want to reuse the templates.
