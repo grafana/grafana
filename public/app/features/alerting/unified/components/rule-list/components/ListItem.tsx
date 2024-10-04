@@ -35,11 +35,7 @@ export const ListItem = (props: ListItemProps) => {
           <Stack direction="row" gap={0.5} alignItems="center">
             {meta?.map((item, index) => (
               <React.Fragment key={index}>
-                {index > 0 && (
-                  <Text color="secondary" variant="bodySmall">
-                    ·
-                  </Text>
-                )}
+                {index > 0 && <Separator />}
                 {item}
               </React.Fragment>
             ))}
@@ -66,6 +62,12 @@ export const SkeletonListItem = () => {
     />
   );
 };
+
+const Separator = () => (
+  <Text color="secondary" variant="bodySmall">
+    {'·'}
+  </Text>
+);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({

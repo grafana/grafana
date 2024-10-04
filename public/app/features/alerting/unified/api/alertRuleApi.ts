@@ -25,9 +25,9 @@ import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rule
 import { alertingApi, WithNotificationOptions } from './alertingApi';
 import {
   FetchPromRulesFilter,
-  getRulesFilterSearchParams,
   groupRulesByFileName,
   paramsWithMatcherAndState,
+  getRulesFilterSearchParams,
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
