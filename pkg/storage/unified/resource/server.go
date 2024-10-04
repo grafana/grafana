@@ -136,6 +136,13 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}
 	}
 
+	opts.WriteAccess = WriteAccessHooks{
+		Folder: func(ctx context.Context, user claims.AuthInfo, uid string) bool {
+			// ???
+			return true
+		},
+	}
+
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
 		&identity.StaticRequester{
