@@ -18,7 +18,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		Tracer: tracer,
 	}
 
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, features, tracer)
+	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
