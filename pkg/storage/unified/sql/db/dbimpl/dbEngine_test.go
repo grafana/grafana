@@ -6,22 +6,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newValidMySQLGetter() *sectionGetter {
-	return newTestSectionGetter(map[string]string{
-		"db_type":     dbTypeMySQL,
-		"db_host":     "/var/run/mysql.socket",
-		"db_name":     "grafana",
-		"db_user":     "user",
-		"db_password": "password",
-	})
+func newValidMySQLGetter(withKeyPrefix bool) confGetter {
+	var prefix string
+	if withKeyPrefix {
+		prefix = "db_"
+	}
+	return newTestConfGetter(map[string]string{
+		prefix + "type":     dbTypeMySQL,
+		prefix + "host":     "/var/run/mysql.socket",
+		prefix + "name":     "grafana",
+		prefix + "user":     "user",
+		prefix + "password": "password",
+	}, prefix)
 }
 
 func TestGetEngineMySQLFromConfig(t *testing.T) {
 	t.Parallel()
 
-	t.Run("happy path", func(t *testing.T) {
+	t.Run("happy path - with key prefix", func(t *testing.T) {
 		t.Parallel()
-		engine, err := getEngineMySQL(newValidMySQLGetter(), nil)
+		engine, err := getEngineMySQL(newValidMySQLGetter(true), nil)
+		assert.NotNil(t, engine)
+		assert.NoError(t, err)
+	})
+
+	t.Run("happy path - without key prefix", func(t *testing.T) {
+		t.Parallel()
+		engine, err := getEngineMySQL(newValidMySQLGetter(false), nil)
 		assert.NotNil(t, engine)
 		assert.NoError(t, err)
 	})
@@ -29,13 +40,13 @@ func TestGetEngineMySQLFromConfig(t *testing.T) {
 	t.Run("invalid string", func(t *testing.T) {
 		t.Parallel()
 
-		getter := newTestSectionGetter(map[string]string{
+		getter := newTestConfGetter(map[string]string{
 			"db_type":     dbTypeMySQL,
 			"db_host":     "/var/run/mysql.socket",
 			"db_name":     string(invalidUTF8ByteSequence),
 			"db_user":     "user",
 			"db_password": "password",
-		})
+		}, "db_")
 		engine, err := getEngineMySQL(getter, nil)
 		assert.Nil(t, engine)
 		assert.Error(t, err)
@@ -43,35 +54,46 @@ func TestGetEngineMySQLFromConfig(t *testing.T) {
 	})
 }
 
-func newValidPostgresGetter() *sectionGetter {
-	return newTestSectionGetter(map[string]string{
-		"db_type":     dbTypePostgres,
-		"db_host":     "localhost",
-		"db_name":     "grafana",
-		"db_user":     "user",
-		"db_password": "password",
-	})
+func newValidPostgresGetter(withKeyPrefix bool) confGetter {
+	var prefix string
+	if withKeyPrefix {
+		prefix = "db_"
+	}
+	return newTestConfGetter(map[string]string{
+		prefix + "type":     dbTypePostgres,
+		prefix + "host":     "localhost",
+		prefix + "name":     "grafana",
+		prefix + "user":     "user",
+		prefix + "password": "password",
+	}, prefix)
 }
 
 func TestGetEnginePostgresFromConfig(t *testing.T) {
 	t.Parallel()
 
-	t.Run("happy path", func(t *testing.T) {
+	t.Run("happy path - with key prefix", func(t *testing.T) {
 		t.Parallel()
-		engine, err := getEnginePostgres(newValidPostgresGetter(), nil)
+		engine, err := getEnginePostgres(newValidPostgresGetter(true), nil)
+		assert.NotNil(t, engine)
+		assert.NoError(t, err)
+	})
+
+	t.Run("happy path - without key prefix", func(t *testing.T) {
+		t.Parallel()
+		engine, err := getEnginePostgres(newValidPostgresGetter(false), nil)
 		assert.NotNil(t, engine)
 		assert.NoError(t, err)
 	})
 
 	t.Run("invalid string", func(t *testing.T) {
 		t.Parallel()
-		getter := newTestSectionGetter(map[string]string{
+		getter := newTestConfGetter(map[string]string{
 			"db_type":     dbTypePostgres,
 			"db_host":     string(invalidUTF8ByteSequence),
 			"db_name":     "grafana",
 			"db_user":     "user",
 			"db_password": "password",
-		})
+		}, "db_")
 		engine, err := getEnginePostgres(getter, nil)
 
 		assert.Nil(t, engine)
@@ -81,13 +103,13 @@ func TestGetEnginePostgresFromConfig(t *testing.T) {
 
 	t.Run("invalid hostport", func(t *testing.T) {
 		t.Parallel()
-		getter := newTestSectionGetter(map[string]string{
+		getter := newTestConfGetter(map[string]string{
 			"db_type":     dbTypePostgres,
 			"db_host":     "1:1:1",
 			"db_name":     "grafana",
 			"db_user":     "user",
 			"db_password": "password",
-		})
+		}, "db_")
 		engine, err := getEnginePostgres(getter, nil)
 
 		assert.Nil(t, engine)
