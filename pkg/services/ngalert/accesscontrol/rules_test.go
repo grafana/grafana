@@ -359,7 +359,6 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules that modify notification settings it should check access to all receivers",
 			changes: func() *store.GroupDelta {
-
 				receiverName := "test-receiver"
 				genWithNotificationSettings := genWithGroupKey.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))))
 				rules1 := genWithNotificationSettings.GenerateManyRef(1, 5)
