@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
 import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
 
 import { OrgUsersTable } from './Users/OrgUsersTable';
@@ -16,10 +16,9 @@ interface OrgNameDTO {
   orgName: string;
 }
 
-interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
-
-const AdminEditOrgPage = ({ match }: Props) => {
-  const orgId = parseInt(match.params.id, 10);
+const AdminEditOrgPage = () => {
+  const { id = '' } = useParams();
+  const orgId = parseInt(id, 10);
   const canWriteOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
   const canReadUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
 

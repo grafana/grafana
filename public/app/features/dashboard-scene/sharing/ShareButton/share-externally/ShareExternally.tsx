@@ -31,30 +31,9 @@ import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
 import ShareAlerts from './ShareAlerts';
 import ShareTypeSelect from './ShareTypeSelect';
+import { getAnyOneWithTheLinkShareOption, getOnlySpecificPeopleShareOption } from './utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
-
-export const getAnyOneWithTheLinkShareOption = () => {
-  return {
-    label: t('public-dashboard.share-externally.public-share-type-option-label', 'Anyone with the link'),
-    description: t(
-      'public-dashboard.share-externally.public-share-type-option-description',
-      'Anyone with the link can access dashboard'
-    ),
-    value: PublicDashboardShareType.PUBLIC,
-    icon: 'globe',
-  };
-};
-
-const getOnlySpecificPeopleShareOption = () => ({
-  label: t('public-dashboard.share-externally.email-share-type-option-label', 'Only specific people'),
-  description: t(
-    'public-dashboard.share-externally.email-share-type-option-description',
-    'Only people with the link can access dashboard'
-  ),
-  value: PublicDashboardShareType.EMAIL,
-  icon: 'users-alt',
-});
 
 const getShareExternallyOptions = () => {
   return isEmailSharingEnabled()
@@ -190,7 +169,7 @@ function Actions({ publicDashboard, onRevokeClick }: { publicDashboard: PublicDa
       <div className={styles.actionsContainer}>
         <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
           <ClipboardButton
-            data-testid={selectors.copyUrlButton}
+            data-testid={selectors.Configuration.copyUrlButton}
             variant="primary"
             fill="outline"
             icon="link"
@@ -205,6 +184,7 @@ function Actions({ publicDashboard, onRevokeClick }: { publicDashboard: PublicDa
             fill="outline"
             disabled={isUpdateLoading || !hasWritePermissions}
             onClick={onRevokeClick}
+            data-testid={selectors.Configuration.revokeAccessButton}
           >
             <Trans i18nKey="public-dashboard.share-externally.revoke-access-button">Revoke access</Trans>
           </Button>
@@ -222,6 +202,7 @@ function Actions({ publicDashboard, onRevokeClick }: { publicDashboard: PublicDa
             }
             onClick={onPauseOrResumeClick}
             disabled={isUpdateLoading || !hasWritePermissions}
+            data-testid={selectors.Configuration.toggleAccessButton}
           >
             {publicDashboard.isEnabled ? (
               <Trans i18nKey="public-dashboard.share-externally.pause-access-button">Pause access</Trans>

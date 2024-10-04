@@ -1,6 +1,8 @@
-import { PluginExposedComponentConfig } from '@grafana/data';
+import { ReplaySubject } from 'rxjs';
 
-import { logWarning } from '../utils';
+import { PluginExtensionExposedComponentConfig } from '@grafana/data';
+
+import { isExposedComponentMetaInfoMissing, isGrafanaDevMode, logWarning } from '../utils';
 import { extensionPointEndsWithVersion } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
@@ -12,16 +14,22 @@ export type ExposedComponentRegistryItem<Props = {}> = {
   component: React.ComponentType<Props>;
 };
 
-export class ExposedComponentsRegistry extends Registry<ExposedComponentRegistryItem, PluginExposedComponentConfig> {
-  constructor(initialState: RegistryType<ExposedComponentRegistryItem> = {}) {
-    super({
-      initialState,
-    });
+export class ExposedComponentsRegistry extends Registry<
+  ExposedComponentRegistryItem,
+  PluginExtensionExposedComponentConfig
+> {
+  constructor(
+    options: {
+      registrySubject?: ReplaySubject<RegistryType<ExposedComponentRegistryItem>>;
+      initialState?: RegistryType<ExposedComponentRegistryItem>;
+    } = {}
+  ) {
+    super(options);
   }
 
   mapToRegistry(
     registry: RegistryType<ExposedComponentRegistryItem>,
-    { pluginId, configs }: PluginExtensionConfigs<PluginExposedComponentConfig>
+    { pluginId, configs }: PluginExtensionConfigs<PluginExtensionExposedComponentConfig>
   ): RegistryType<ExposedComponentRegistryItem> {
     if (!configs) {
       return registry;
@@ -60,9 +68,20 @@ export class ExposedComponentsRegistry extends Registry<ExposedComponentRegistry
         continue;
       }
 
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isExposedComponentMetaInfoMissing(pluginId, config)) {
+        continue;
+      }
+
       registry[id] = { ...config, pluginId };
     }
 
     return registry;
+  }
+
+  // Returns a read-only version of the registry.
+  readOnly() {
+    return new ExposedComponentsRegistry({
+      registrySubject: this.registrySubject,
+    });
   }
 }

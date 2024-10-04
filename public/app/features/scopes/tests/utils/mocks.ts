@@ -1,4 +1,6 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
 
 import * as api from '../../internal/api';
 
@@ -371,6 +373,7 @@ export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
 export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
 export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
 export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
+export const locationReloadSpy = jest.spyOn(locationService, 'reload');
 
 export const getMock = jest
   .fn()
@@ -448,3 +451,39 @@ export const dashboardWithRootFolderAndOtherFolder: ScopeDashboardBinding = gene
   'With root folder and other folder',
   ['', 'Folder 3']
 );
+
+export const getDatasource = async (ref: DataSourceRef) => {
+  if (ref.uid === '-- Grafana --') {
+    return {
+      id: 1,
+      uid: '-- Grafana --',
+      name: 'grafana',
+      type: 'grafana',
+      meta: {
+        id: 'grafana',
+      },
+    };
+  }
+
+  return {
+    meta: {
+      id: 'grafana-testdata-datasource',
+    },
+    name: 'grafana-testdata-datasource',
+    type: 'grafana-testdata-datasource',
+    uid: 'gdev-testdata',
+    getRef: () => {
+      return { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' };
+    },
+  };
+};
+
+export const getInstanceSettings = () => ({
+  id: 1,
+  uid: 'gdev-testdata',
+  name: 'testDs1',
+  type: 'grafana-testdata-datasource',
+  meta: {
+    id: 'grafana-testdata-datasource',
+  },
+});

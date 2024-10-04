@@ -11,6 +11,7 @@ type DatasourceGuardianProvider interface {
 
 type DatasourceGuardian interface {
 	CanQuery(datasourceID int64) (bool, error)
+	FilterDatasourcesByReadPermissions([]*datasources.DataSource) ([]*datasources.DataSource, error)
 	FilterDatasourcesByQueryPermissions([]*datasources.DataSource) ([]*datasources.DataSource, error)
 }
 

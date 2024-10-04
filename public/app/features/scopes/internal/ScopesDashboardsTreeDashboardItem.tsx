@@ -24,7 +24,7 @@ export function ScopesDashboardsTreeDashboardItem({ dashboard }: ScopesDashboard
       data-testid={`scopes-dashboards-${dashboard.dashboard}`}
       role="treeitem"
     >
-      <Icon name="apps" /> {dashboard.dashboardTitle}
+      <Icon name="apps" className={styles.icon} /> {dashboard.dashboardTitle}
     </Link>
   );
 }
@@ -33,13 +33,18 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0),
+      textAlign: 'left',
+      wordBreak: 'break-word',
 
       '&:last-child': css({
         paddingBottom: 0,
       }),
+    }),
+    icon: css({
+      marginTop: theme.spacing(0.25),
     }),
   };
 };

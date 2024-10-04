@@ -48,7 +48,7 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store  resource.ResourceStoreClient
+	store  resource.ResourceClient
 	getKey func(string) (*resource.ResourceKey, error)
 
 	watchSet  *WatchSet
@@ -64,7 +64,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
-	store resource.ResourceStoreClient,
+	store resource.ResourceClient,
 	keyFunc func(obj runtime.Object) (string, error),
 	keyParser func(key string) (*resource.ResourceKey, error),
 	newFunc func() runtime.Object,

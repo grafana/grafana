@@ -255,7 +255,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	}
 
 	var dataSource *datasources.DataSource
-	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -293,12 +293,18 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			if cmd.UserID != 0 {
 				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
 			}
-			_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
-			return err
+			if _, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
+				return err
+			}
 		}
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dataSource, nil
 }
 
 // This will valid validate the instance settings return a version that is safe to be saved
@@ -367,6 +373,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		rsp, err := s.pluginClient.ValidateAdmission(ctx, req)
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
+				if settings.APIVersion == "v0alpha1" {
+					// For v0alpha1 we don't require plugins to implement ValidateAdmission
+					return settings, nil
+				}
 				return nil, errutil.Internal("plugin.unimplemented").
 					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
 			}
@@ -388,6 +398,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			if settings.APIVersion == "v0alpha1" {
+				// For v0alpha1 we don't require plugins to implement MutateAdmission
+				return settings, nil
+			}
 			return nil, errutil.Internal("plugin.unimplemented").
 				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
 		}

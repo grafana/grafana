@@ -1,6 +1,6 @@
-import { PluginType } from '@grafana/data';
 import { PluginSignatureBadge, Stack } from '@grafana/ui';
 
+import { isPluginUpdateable } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 import {
@@ -18,15 +18,13 @@ type PluginBadgeType = {
 
 export function PluginListItemBadges({ plugin }: PluginBadgeType) {
   // Currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall.
-  const hasUpdate = plugin.hasUpdate && !plugin.isCore && plugin.type !== PluginType.renderer;
+  const canUpdate = isPluginUpdateable(plugin);
   if (plugin.isEnterprise) {
     return (
       <Stack height="auto" wrap="wrap">
         <PluginEnterpriseBadge plugin={plugin} />
         {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
-        {hasUpdate && !plugin.isManaged && !plugin.isPreinstalled.withVersion && (
-          <PluginUpdateAvailableBadge plugin={plugin} />
-        )}
+        {canUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
         {plugin.angularDetected && <PluginAngularBadge />}
       </Stack>
     );
@@ -38,9 +36,7 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
       {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
       {plugin.isDeprecated && <PluginDeprecatedBadge />}
       {plugin.isInstalled && <PluginInstalledBadge />}
-      {hasUpdate && !plugin.isManaged && !plugin.isPreinstalled.withVersion && (
-        <PluginUpdateAvailableBadge plugin={plugin} />
-      )}
+      {canUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
       {plugin.angularDetected && <PluginAngularBadge />}
     </Stack>
   );
