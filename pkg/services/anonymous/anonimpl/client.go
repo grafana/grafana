@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	errInvalidOrg = errutil.Unauthorized("anonymous.invalid-org")
-	errInvalidID  = errutil.Unauthorized("anonymous.invalid-id")
+	errInvalidOrg  = errutil.Unauthorized("anonymous.invalid-org")
+	errInvalidID   = errutil.Unauthorized("anonymous.invalid-id")
+	errDeviceLimit = errutil.Unauthorized("anonymous.device-limit-reached", errutil.WithPublicMessage("Anonymous device limit reached. Contact Administrator"))
 )
 
 var _ authn.ContextAwareClient = new(Anonymous)
@@ -51,7 +52,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 
 	if err := a.anonDeviceService.TagDevice(ctx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
 		if errors.Is(err, anonstore.ErrDeviceLimitReached) {
-			return nil, err
+			return nil, errDeviceLimit.Errorf("limit reached for anonymous devices: %w", err)
 		}
 
 		a.log.Warn("Failed to tag anonymous session", "error", err)
