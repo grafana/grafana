@@ -274,9 +274,64 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
+
+			for _, rule := range ruleVersions {
+				// delete old versions of alert rule
+				_, err = st.deleteOldAlertRuleVersions(ctx, rule.RuleUID, rule.RuleOrgID, st.Cfg.RuleVersionRecordLimit)
+				if err != nil {
+					st.Logger.Warn("Failed to delete old alert rule versions", "org", rule.RuleOrgID, "rule", rule.RuleUID, "error", err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID int64, limit int) (int64, error) {
+	if limit < 0 {
+		return 0, fmt.Errorf("failed to delete old alert rule versions: limit is set to '%d' but needs to be > 0", limit)
+	}
+
+	if limit < 1 {
+		return 0, nil
+	}
+
+	var affectedRows int64
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		highest := &alertRuleVersion{}
+		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).Limit(1, limit).Get(highest)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			// No alert rule versions past the limit exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
+		res, err := sess.Exec(`
+			DELETE FROM
+				alert_rule_version
+			WHERE
+				rule_org_id = ? AND rule_uid = ?
+			AND
+				id <= ?
+		`, orgID, ruleUID, highest.ID)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		affectedRows = rows
+		if affectedRows > 0 {
+			st.Logger.Info("Deleted old alert_rule_version(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
 		}
 		return nil
 	})
+	return affectedRows, err
 }
 
 // preventIntermediateUniqueConstraintViolations prevents unique constraint violations caused by an intermediate update.
@@ -352,7 +407,7 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
+func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, _ identity.Requester) (int64, error) {
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
