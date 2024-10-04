@@ -38,19 +38,22 @@ import { LokiQuery } from './types';
  * - Requests the __stream_shard__ values of the selected service:
  *   . If there are no shard values, it falls back to the standard querying approach of the data source in runNonSplitRequest()
  *   . If there are shards:
- *     - It groups the shard requests in an array of arrays of shard numbers in groupShardRequests()
- *     - It begins the querying loop with runNextRequest()
- * - runNextRequest() will send a query using the nth (cycle) shard group, and has the following internal structure:
- *   . adjustTargetsFromResponseState() will filter log queries targets that already received the requested maxLines
- *   . interpolateShardingSelector() will update the stream selector with the current shard numbers
+ *     - It sorts them by value, descending. Higher shard numbers correspond with the least volume.
+ *     - It defines an initial group size, roughly Math.sqrt(amountOfShards).
+ *     - It begins the querying loop with runNextRequest().
+ * - runNextRequest() will create a group of groupSize shards from the nth shard (cycle), and has the following internal structure:
+ *   . groupShardRequests() returns an array of shards from cycle to cycle + groupSize.
+ *   . interpolateShardingSelector() will update the stream selector with the shard numbers in the current group.
  *   . After query execution:
  *     - If the response is successful:
  *       . It will add new data to the response with combineResponses()
- *       . nextRequest() will use the current cycle and the total groups to determine the next request or complete execution with done()
+ *       . Using the data and meta data of the response, updateGroupSizeFromResponse() will increase or decrease the group size.
+ *       . nextRequest() will use the current cycle and group size to determine the next request or complete execution with done().
  *     - If the response is unsuccessful:
- *       . If there are retry attempts, it will retry the current cycle, or else continue with the next cycle
- *       . If the returned error is Maximum series reached, it will not retry
- * - Once all request groups have been executed, it will be done()
+ *       . If the response is not a query error, and the group size bigger than 1, it will decrease the group size.
+ *       . If the group size is already 1, it will retry the request up to 4 times.
+ *       . If there are retry attempts, it will retry the current cycle, or else stop querying.
+ * - Once all request groups have been executed, it will be done().
  */
 
 export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
