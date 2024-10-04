@@ -93,7 +93,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   }
 
   return (
-    <Stack gap={1}>
+    <Stack gap={1} alignItems="center" wrap="nowrap">
       {buttons}
       <AlertRuleMenu
         buttonSize={buttonSize}

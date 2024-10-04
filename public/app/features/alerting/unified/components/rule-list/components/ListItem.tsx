@@ -79,5 +79,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   textOverflow: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    color: 'inherit',
   }),
 });

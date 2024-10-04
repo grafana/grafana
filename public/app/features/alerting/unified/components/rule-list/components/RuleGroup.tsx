@@ -7,11 +7,10 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { usePagination } from '../../../hooks/usePagination';
-import { isAlertingRule, isGrafanaAlertingRule, isRecordingRule } from '../../../utils/rules';
-import { RecordingRuleListItem } from '../AlertRuleListItem';
+import { isAlertingRule } from '../../../utils/rules';
+import { AlertRuleListItem } from '../AlertRuleListItem';
 import EvaluationGroup from '../EvaluationGroup';
 
-import { AlertRuleListItem } from './AlertRuleListItem';
 import { SkeletonListItem } from './ListItem';
 
 interface EvaluationGroupLoaderProps {
@@ -59,32 +58,13 @@ export const EvaluationGroupLoader = ({
           <GroupLoadingIndicator />
         ) : (
           pageItems.map((rule, index) => {
-            if (isAlertingRule(rule)) {
-              return (
-                <AlertRuleListItem
-                  key={index}
-                  state={PromAlertingRuleState.Inactive}
-                  name={rule.name}
-                  href={'/'}
-                  summary={rule.annotations?.summary}
-                />
-              );
-            }
-
-            if (isRecordingRule(rule)) {
-              return <RecordingRuleListItem key={index} name={rule.name} href={'/'} />;
-            }
-
-            if (isGrafanaAlertingRule(rule)) {
-              return 'Grafana';
-              // <AlertRuleListItem
-              //   key={index}
-              //   name={rule.}
-              //   summary={rule.annotations?.summary}
-              //   href={''}
-              //   isProvisioned={Boolean(rule.grafana_alert.provenance)}
-              // />
-            }
+            <AlertRuleListItem
+              key={index}
+              state={PromAlertingRuleState.Inactive}
+              name={rule.name}
+              href={'/'}
+              summary={isAlertingRule(rule) ? rule.annotations?.summary : undefined}
+            />;
 
             return null;
           })

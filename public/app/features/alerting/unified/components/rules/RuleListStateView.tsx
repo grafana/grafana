@@ -10,12 +10,13 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { usePagination } from '../../hooks/usePagination';
 import { createViewLink } from '../../utils/misc';
 import { hashRule } from '../../utils/rule-id';
-import { getFirstActiveAt, getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
-import { AlertRuleListItem } from '../rule-list/components/AlertRuleListItem';
+import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { AlertRuleListItem } from '../rule-list/AlertRuleListItem';
 import { ListSection } from '../rule-list/components/ListSection';
 import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
 
 import { RuleActionsButtons } from './RuleActionsButtons';
+
 interface Props {
   namespaces: CombinedRuleNamespace[];
 }
@@ -93,9 +94,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
         const { rulerRule, promRule } = rule;
 
         const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
-
-        const instanceCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
-        const firstActiveAt = isAlertingRule(promRule) ? getFirstActiveAt(promRule) : null;
+        const instancesCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
 
         if (!promRule) {
           return null;
@@ -106,18 +105,19 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
         return (
           <AlertRuleListItem
             key={hashRule(promRule)}
-            state={state as PromAlertingRuleState}
             name={rule.name}
             href={createViewLink(rule.namespace.rulesSource, rule)}
-            isProvisioned={isProvisioned}
-            error={rule.promRule?.lastError}
             summary={rule.annotations.summary}
-            actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
-            instanceCount={instanceCount}
-            origin={originMeta}
+            state={state}
+            health={rule.promRule?.health}
+            error={rule.promRule?.lastError}
+            labels={rule.promRule?.labels}
+            isProvisioned={isProvisioned}
+            instancesCount={instancesCount}
             namespace={rule.namespace}
             group={rule.group.name}
-            firstActiveAt={firstActiveAt ?? undefined}
+            actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
+            origin={originMeta}
           />
         );
       })}

@@ -1,21 +1,24 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
+import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Dropdown, Menu, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { CombinedRule, RuleHealth } from 'app/types/unified-alerting';
+import { Alert, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { CombinedRule, CombinedRuleNamespace, RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
+import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointLink } from '../../utils/misc';
+import { RulePluginOrigin } from '../../utils/rules';
 import { MetaText } from '../MetaText';
-import MoreButton from '../MoreButton';
-import { Spacer } from '../Spacer';
+import { ProvisioningBadge } from '../Provisioning';
 
 import { RuleListIcon } from './RuleListIcon';
+import { ListItem } from './components/ListItem';
 import { calculateNextEvaluationEstimate } from './util';
 
 interface AlertRuleListItemProps {
@@ -31,8 +34,12 @@ interface AlertRuleListItemProps {
   evaluationInterval?: string;
   labels?: Labels;
   instancesCount?: number;
+  namespace?: CombinedRuleNamespace;
+  group?: string;
   // used for alert rules that use simplified routing
   contactPoint?: string;
+  actions?: ReactNode;
+  origin?: RulePluginOrigin;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -48,10 +55,88 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     evaluationInterval,
     isPaused = false,
     instancesCount = 0,
+    namespace,
+    group,
     contactPoint,
     labels,
+    origin,
+    actions = null,
   } = props;
   const styles = useStyles2(getStyles);
+
+  const metadata: ReactNode[] = [];
+  if (namespace && group) {
+    metadata.push(
+      <Text color="secondary" variant="bodySmall">
+        <RuleLocation namespace={namespace} group={group} />
+      </Text>
+    );
+  }
+
+  if (!isPaused) {
+    if (lastEvaluation && evaluationInterval) {
+      metadata.push(
+        <EvaluationMetadata lastEvaluation={lastEvaluation} evaluationInterval={evaluationInterval} state={state} />
+      );
+    }
+
+    if (instancesCount) {
+      metadata.push(
+        <MetaText icon="layers-alt">
+          <TextLink href={href + '?tab=instances'} variant="bodySmall" color="primary" inline={false}>
+            {pluralize('instance', instancesCount, true)}
+          </TextLink>
+        </MetaText>
+      );
+    }
+  }
+
+  if (!isEmpty(labels)) {
+    metadata.push(
+      <MetaText icon="tag-alt">
+        <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
+          {pluralize('label', labelsSize(labels), true)}
+        </TextLink>
+      </MetaText>
+    );
+  }
+
+  if (!isPaused && contactPoint) {
+    metadata.push(
+      <MetaText icon="at">
+        Delivered to{' '}
+        <TextLink
+          href={createContactPointLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
+          variant="bodySmall"
+          color="primary"
+          inline={false}
+        >
+          {contactPoint}
+        </TextLink>
+      </MetaText>
+    );
+  }
+
+  return (
+    <ListItem
+      title={
+        <Stack direction="row" alignItems="center">
+          <TextLink href={href} inline={false}>
+            {name}
+          </TextLink>
+          {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
+          {/* show provisioned badge only when it also doesn't have plugin origin */}
+          {isProvisioned && !origin && <ProvisioningBadge />}
+          {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
+          {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
+        </Stack>
+      }
+      description={<Summary content={summary} error={error} />}
+      icon={<RuleListIcon state={state} health={health} isPaused={isPaused} />}
+      actions={actions}
+      meta={metadata}
+    />
+  );
 
   return (
     <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
@@ -62,10 +147,13 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         {/* rule metadata */}
         <Stack direction="column" gap={0.5} flex="1">
           <Stack direction="column" gap={0}>
-            <Stack direction="row" alignItems="start">
+            <Stack direction="row" alignItems="center">
               <TextLink href={href} inline={false}>
                 {name}
               </TextLink>
+              {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
+              {/* show provisioned badge only when it also doesn't have plugin origin */}
+              {isProvisioned && !origin && <ProvisioningBadge />}
               {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
               {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
             </Stack>
@@ -73,6 +161,11 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
           </Stack>
 
           <Stack direction="row" gap={1}>
+            {namespace && group && (
+              <Text color="secondary" variant="bodySmall">
+                <RuleLocation namespace={namespace} group={group} />
+              </Text>
+            )}
             {/* show evaluation-related metadata if the rule isn't paused – paused rules don't have instances and shouldn't show evaluation timestamps */}
             {!isPaused && (
               <>
@@ -117,21 +210,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
 
         {/* rule actions */}
         <Stack direction="row" alignItems="center" gap={1} wrap="nowrap">
-          <Button variant="secondary" size="sm" icon="pen" type="button" disabled={isProvisioned}>
-            Edit
-          </Button>
-          <Dropdown
-            overlay={
-              <Menu>
-                <Menu.Item label="Silence" icon="bell-slash" />
-                <Menu.Divider />
-                <Menu.Item label="Export" disabled={isProvisioned} icon="download-alt" />
-                <Menu.Item label="Delete" disabled={isProvisioned} icon="trash-alt" destructive />
-              </Menu>
-            }
-          >
-            <MoreButton />
-          </Dropdown>
+          {actions}
         </Stack>
       </Stack>
     </li>
@@ -146,7 +225,7 @@ interface SummaryProps {
 function Summary({ content, error }: SummaryProps) {
   if (error) {
     return (
-      <Text variant="bodySmall" color="error" weight="light" truncate>
+      <Text variant="bodySmall" color="error" weight="light" truncate element="p">
         {error}
       </Text>
     );
@@ -161,92 +240,6 @@ function Summary({ content, error }: SummaryProps) {
 
   return null;
 }
-
-// @TODO use Pick<> or Omit<> here
-interface RecordingRuleListItemProps {
-  name: string;
-  href: string;
-  error?: string;
-  health?: RuleHealth;
-  state?: PromAlertingRuleState;
-  labels?: Labels;
-  isProvisioned?: boolean;
-  lastEvaluation?: string;
-  evaluationInterval?: string;
-}
-
-// @TODO split in to smaller re-usable bits
-export const RecordingRuleListItem = ({
-  name,
-  error,
-  state,
-  health,
-  isProvisioned,
-  href,
-  labels,
-  lastEvaluation,
-  evaluationInterval,
-}: RecordingRuleListItemProps) => {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
-      <Stack direction="row" alignItems="center" gap={1}>
-        <Stack direction="row" alignItems="start" gap={1} flex="1">
-          <RuleListIcon health={health} recording />
-          <Stack direction="column" gap={0.5}>
-            <Stack direction="column" gap={0}>
-              <Stack direction="row" alignItems="start">
-                <TextLink href={href} variant="body" weight="bold" inline={false}>
-                  {name}
-                </TextLink>
-                {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
-              </Stack>
-              <Summary error={error} />
-            </Stack>
-            <div>
-              <Stack direction="row" gap={1}>
-                <EvaluationMetadata
-                  lastEvaluation={lastEvaluation}
-                  evaluationInterval={evaluationInterval}
-                  state={state}
-                />
-                {!isEmpty(labels) && (
-                  <MetaText icon="tag-alt">
-                    <TextLink variant="bodySmall" color="primary" href={href} inline={false}>
-                      {pluralize('label', labelsSize(labels), true)}
-                    </TextLink>
-                  </MetaText>
-                )}
-              </Stack>
-            </div>
-          </Stack>
-          <Spacer />
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="pen"
-            type="button"
-            disabled={isProvisioned}
-            data-testid="edit-rule-action"
-          >
-            Edit
-          </Button>
-          <Dropdown
-            overlay={
-              <Menu>
-                <Menu.Item label="Export" disabled={isProvisioned} icon="download-alt" />
-                <Menu.Item label="Delete" disabled={isProvisioned} icon="trash-alt" destructive />
-              </Menu>
-            }
-          >
-            <MoreButton />
-          </Dropdown>
-        </Stack>
-      </Stack>
-    </li>
-  );
-};
 
 interface EvaluationMetadataProps {
   lastEvaluation?: string;
@@ -298,6 +291,22 @@ export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
     </Alert>
   );
 };
+
+interface RuleLocationProps {
+  namespace: CombinedRuleNamespace;
+  group: string;
+}
+
+export const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
+  <Stack direction="row" alignItems="center" gap={0.5}>
+    <Icon size="xs" name="folder" />
+    <Stack direction="row" alignItems="center" gap={0}>
+      {namespace.name}
+      <Icon size="sm" name="angle-right" />
+      {group}
+    </Stack>
+  </Stack>
+);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({
