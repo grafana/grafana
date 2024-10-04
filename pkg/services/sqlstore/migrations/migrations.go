@@ -121,6 +121,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddRuleNotificationSettingsColumns(mg)
 
 	accesscontrol.AddAlertingScopeRemovalMigration(mg)
+
+	accesscontrol.AddOrphanedMigrations(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
