@@ -123,6 +123,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddManagedFolderAlertingSilencesActionsMigrator(mg)
 
 	ualert.AddRecordingRuleColumns(mg)
+
+	accesscontrol.AddOrphanedMigrations(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
