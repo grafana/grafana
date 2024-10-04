@@ -6,11 +6,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-
-	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
@@ -32,6 +31,8 @@ type AccessControl interface {
 	// This is useful when we don't want to reuse any pre-configured resolvers
 	// for a authorization call.
 	WithoutResolvers() AccessControl
+	Check(ctx context.Context, req CheckRequest) (bool, error)
+	ListObjects(ctx context.Context, req ListObjectsRequest) ([]string, error)
 }
 
 type Service interface {

@@ -20,6 +20,11 @@ type ZanzanaSettings struct {
 	ListenHTTP bool
 	// OpenFGA http server address which allows to connect with fga cli
 	HttpAddr string
+	// Number of check requests running concurrently
+	ConcurrentChecks int64
+	// If enabled, authorization cheks will be only performed by zanzana.
+	// This bypasses the performance comparison with the legacy system.
+	ZanzanaOnlyEvaluation bool
 }
 
 func (cfg *Cfg) readZanzanaSettings() {
@@ -38,6 +43,8 @@ func (cfg *Cfg) readZanzanaSettings() {
 	s.Addr = sec.Key("address").MustString("")
 	s.ListenHTTP = sec.Key("listen_http").MustBool(false)
 	s.HttpAddr = sec.Key("http_addr").MustString("127.0.0.1:8080")
+	s.ConcurrentChecks = sec.Key("concurrent_checks").MustInt64(10)
+	s.ZanzanaOnlyEvaluation = sec.Key("zanzana_only_evaluation").MustBool(false)
 
 	cfg.Zanzana = s
 }

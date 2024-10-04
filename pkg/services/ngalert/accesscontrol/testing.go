@@ -36,4 +36,12 @@ func (a *recordingAccessControlFake) WithoutResolvers() accesscontrol.AccessCont
 	panic("unimplemented")
 }
 
+func (a *recordingAccessControlFake) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
+	return false, nil
+}
+
+func (a *recordingAccessControlFake) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
+	return nil, nil
+}
+
 var _ accesscontrol.AccessControl = &recordingAccessControlFake{}

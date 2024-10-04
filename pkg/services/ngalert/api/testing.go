@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -136,6 +135,14 @@ func (a *recordingAccessControlFake) WithoutResolvers() ac.AccessControl {
 
 func (a *recordingAccessControlFake) IsDisabled() bool {
 	return a.Disabled
+}
+
+func (a *recordingAccessControlFake) Check(ctx context.Context, in ac.CheckRequest) (bool, error) {
+	return false, nil
+}
+
+func (a *recordingAccessControlFake) ListObjects(ctx context.Context, in ac.ListObjectsRequest) ([]string, error) {
+	return nil, nil
 }
 
 var _ ac.AccessControl = &recordingAccessControlFake{}
