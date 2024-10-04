@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { VizPanel, sceneGraph } from '@grafana/scenes';
+import { SceneGridRow, VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -34,12 +34,11 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
 
   for (const gridItem of bodyGrid.state.children) {
     if (gridItem instanceof DashboardGridItem) {
-      const panels = gridItem.state.repeatedPanels ?? [gridItem.state.body];
-      for (const panel of panels) {
-        const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
-        const interpolatedSearchString = sceneGraph.interpolate(dashboard, panelSearch).toLowerCase();
-        if (interpolatedTitle.includes(interpolatedSearchString)) {
-          filteredPanels.push(panel);
+      filterPanels(gridItem, dashboard, panelSearch, filteredPanels);
+    } else if (gridItem instanceof SceneGridRow) {
+      for (const rowItem of gridItem.state.children) {
+        if (rowItem instanceof DashboardGridItem) {
+          filterPanels(rowItem, dashboard, panelSearch, filteredPanels);
         }
       }
     }
@@ -75,4 +74,32 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateColumns: `repeat(var(${panelsPerRowCSSVar}, 3), 1fr)`,
     }),
   };
+}
+
+function filterPanels(
+  gridItem: DashboardGridItem,
+  dashboard: DashboardScene,
+  searchString: string,
+  filteredPanels: VizPanel[]
+) {
+  const interpolatedSearchString = sceneGraph.interpolate(dashboard, searchString).toLowerCase();
+
+  // activate inactive repeat panel if one of its children will be matched
+  if (gridItem.state.variableName && !gridItem.isActive) {
+    const panel = gridItem.state.body;
+    const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
+    if (interpolatedTitle.includes(interpolatedSearchString)) {
+      gridItem.activate();
+    }
+  }
+
+  const panels = gridItem.state.repeatedPanels ?? [gridItem.state.body];
+  for (const panel of panels) {
+    const interpolatedTitle = panel.interpolate(panel.state.title, undefined, 'text').toLowerCase();
+    if (interpolatedTitle.includes(interpolatedSearchString)) {
+      filteredPanels.push(panel);
+    }
+  }
+
+  return filteredPanels;
 }
