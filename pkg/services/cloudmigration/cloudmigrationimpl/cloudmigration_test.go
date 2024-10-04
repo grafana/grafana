@@ -639,11 +639,12 @@ func TestGetParentNames(t *testing.T) {
 	t.Cleanup(cancel)
 
 	user := &user.SignedInUser{OrgID: 1}
-
+	libraryElementFolderUID := "folderUID-A"
 	testcases := []struct {
 		fakeFolders             []*folder.Folder
 		folders                 []folder.CreateFolderCommand
 		dashboards              []dashboards.Dashboard
+		libraryElements         []libraryElement
 		expectedDashParentNames []string
 		expectedFoldParentNames []string
 	}{
@@ -660,6 +661,9 @@ func TestGetParentNames(t *testing.T) {
 				{UID: "dashboardUID-1", OrgID: 1, FolderUID: "folderUID-A"},
 				{UID: "dashboardUID-2", OrgID: 1, FolderUID: "folderUID-B"},
 			},
+			libraryElements: []libraryElement{
+				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
+			},
 			expectedDashParentNames: []string{"", "Folder A", "Folder B"},
 			expectedFoldParentNames: []string{"Folder A"},
 		},
@@ -668,7 +672,7 @@ func TestGetParentNames(t *testing.T) {
 	for _, tc := range testcases {
 		s.folderService = &foldertest.FakeService{ExpectedFolders: tc.fakeFolders}
 
-		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders)
+		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders, tc.libraryElements)
 		require.NoError(t, err)
 
 		resDashParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.DashboardDataType]))

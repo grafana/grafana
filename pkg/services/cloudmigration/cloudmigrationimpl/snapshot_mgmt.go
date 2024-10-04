@@ -96,7 +96,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	}
 
 	// Obtain the names of parent elements for Dashboard and Folders data types
-	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders)
+	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements)
 	if err != nil {
 		s.log.Error("Failed to get parent folder names", "err", err)
 	}
@@ -524,11 +524,12 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 
 // getParentNames finds the parent names for resources and returns a map of data type: {data UID : parentName}
 // for dashboards, folders and library elements - the parent is the parent folder
-func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand) (map[cloudmigration.MigrateDataType]map[string](string), error) {
+func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand, libraryElements []libraryElement) (map[cloudmigration.MigrateDataType]map[string](string), error) {
 	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
 	for _, dataType := range []cloudmigration.MigrateDataType{
 		cloudmigration.FolderDataType,
 		cloudmigration.DashboardDataType,
+		cloudmigration.LibraryElementDataType,
 	} {
 		parentNamesByType[dataType] = make(map[string]string)
 	}
@@ -540,6 +541,9 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	}
 	for _, f := range folders {
 		parentFolderUIDsSet[f.ParentUID] = struct{}{}
+	}
+	for _, libraryElement := range libraryElements {
+		parentFolderUIDsSet[*libraryElement.FolderUID] = struct{}{}
 	}
 	parentFolderUIDsSlice := make([]string, 0)
 	for parentFolderUID := range parentFolderUIDsSet {
@@ -559,6 +563,9 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 	}
 	for _, f := range folders {
 		parentNamesByType[cloudmigration.FolderDataType][f.UID] = foldersUIDsToFolderName[f.ParentUID]
+	}
+	for _, libraryElement := range libraryElements {
+		parentNamesByType[cloudmigration.LibraryElementDataType][libraryElement.UID] = foldersUIDsToFolderName[*libraryElement.FolderUID]
 	}
 
 	return parentNamesByType, err

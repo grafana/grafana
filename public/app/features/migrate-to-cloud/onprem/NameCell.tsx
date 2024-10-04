@@ -142,11 +142,16 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
 
 function LibraryElementInfo({ data }: { data: ResourceTableItem }) {
   const uid = data.refId;
-  const { data: libraryElementData, isError, isLoading } = useGetLibraryElementByUidQuery({ libraryElementUid: uid });
+  const skipApiCall = !!data.name && !!data.parentName;
 
-  const name = useMemo(() => {
-    return data?.name || (libraryElementData?.result?.name ?? uid);
-  }, [data, libraryElementData, uid]);
+  const {
+    data: libraryElementData,
+    isError,
+    isLoading,
+  } = useGetLibraryElementByUidQuery({ libraryElementUid: uid }, { skip: skipApiCall });
+
+  const name = data.name || libraryElementData?.result?.name || uid;
+  const parentName = data.parentName || libraryElementData?.result?.meta?.folderName || 'General';
 
   if (isError) {
     return (
@@ -164,16 +169,14 @@ function LibraryElementInfo({ data }: { data: ResourceTableItem }) {
     );
   }
 
-  if (isLoading || !libraryElementData) {
+  if (isLoading) {
     return <InfoSkeleton />;
   }
-
-  const folderName = libraryElementData?.result?.meta?.folderName ?? 'General';
 
   return (
     <>
       <span>{name}</span>
-      <Text color="secondary">{folderName}</Text>
+      <Text color="secondary">{parentName}</Text>
     </>
   );
 }
