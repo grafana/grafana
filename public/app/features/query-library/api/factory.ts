@@ -5,12 +5,18 @@ import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, EditQueryTemplateC
 import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
 
+// Currently, we are loading all query templates
+// Organizations can have maximum of 1000 query templates
+const GET_LIMIT = 1000;
+
 export const queryLibraryApi = createApi({
   baseQuery,
   tagTypes: ['QueryTemplatesList'],
   endpoints: (builder) => ({
     allQueryTemplates: builder.query<QueryTemplate[], void>({
-      query: () => ({}),
+      query: () => ({
+        url: `?limit=${GET_LIMIT}`,
+      }),
       transformResponse: convertDataQueryResponseToQueryTemplates,
       providesTags: ['QueryTemplatesList'],
     }),
@@ -23,14 +29,14 @@ export const queryLibraryApi = createApi({
     }),
     deleteQueryTemplate: builder.mutation<void, DeleteQueryTemplateCommand>({
       query: ({ uid }) => ({
-        url: `${uid}`,
+        url: `/${uid}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),
     editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
       query: (editQueryTemplateCommand) => ({
-        url: `${editQueryTemplateCommand.uid}`,
+        url: `/${editQueryTemplateCommand.uid}`,
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/merge-patch+json',

@@ -3,9 +3,10 @@ import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { useChromeHeaderHeight } from '@grafana/runtime';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -14,7 +15,7 @@ import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
-import { NavToolbarActions } from './NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from './NavToolbarActions';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
@@ -22,7 +23,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, panelSearch, panelsPerRow } =
     model.useState();
   const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight);
+  const styles = useStyles2(getStyles, headerHeight ?? 0);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
@@ -30,6 +31,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const hasControls = controls?.hasControls();
   const isSettingsOpen = editview !== undefined;
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   // Remember scroll pos when going into view panel, edit panel or settings
   useMemo(() => {
@@ -79,12 +81,17 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page
+      navModel={navModel}
+      pageNav={pageNav}
+      layout={PageLayoutType.Custom}
+      toolbar={isSingleTopNav ? <ToolbarActions dashboard={model} /> : undefined}
+    >
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <NativeScrollbar divId="page-scrollbar" onSetScrollRef={model.onSetScrollRef}>
           <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
-            <NavToolbarActions dashboard={model} />
+            {!isSingleTopNav && <NavToolbarActions dashboard={model} />}
             {controls && (
               <div className={styles.controlsWrapper}>
                 <controls.Component model={controls} />
@@ -99,7 +106,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number) {
   return {
     pageContainer: css({
       display: 'grid',
@@ -133,7 +140,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
         position: 'sticky',
         zIndex: theme.zIndex.activePanel,
         background: theme.colors.background.canvas,
-        top: headerHeight,
+        top: config.featureToggles.singleTopNav ? headerHeight + TOP_BAR_LEVEL_HEIGHT : headerHeight,
       },
     }),
     canvasContent: css({
