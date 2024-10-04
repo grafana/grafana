@@ -24,8 +24,6 @@ Benefits of using the Grafana user interface to configure LDAP authentication in
 
 {{% admonition type="note" %}}
 Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. If you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file.
-
-For more information on how Grafana determines the order of precedence for its settings, please refer to the [Settings update at runtime]({{< relref "../../../configure-grafana/settings-updates-at-runtime" >}}).
 {{% /admonition %}}
 
 ## Before you begin
@@ -35,6 +33,7 @@ Prerequisites:
 - Knowledge of LDAP authentication and how it works.
 - Grafana instance v11.3.0 or later.
 - Permissions `settings:read` and `settings:write` with `settings:auth.ldap:*` scope.
+- This feature requires the `ssoSettingsApi` feature toggle to be enabled.
 
 ## Steps to configure LDAP authentication
 
