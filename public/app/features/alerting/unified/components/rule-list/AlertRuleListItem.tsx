@@ -62,7 +62,6 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     origin,
     actions = null,
   } = props;
-  const styles = useStyles2(getStyles);
 
   const metadata: ReactNode[] = [];
   if (namespace && group) {
@@ -136,84 +135,6 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       actions={actions}
       meta={metadata}
     />
-  );
-
-  return (
-    <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
-      <Stack direction="row" alignItems="start" gap={1} wrap="nowrap">
-        {/* rule state */}
-        <RuleListIcon state={state} health={health} isPaused={isPaused} />
-
-        {/* rule metadata */}
-        <Stack direction="column" gap={0.5} flex="1">
-          <Stack direction="column" gap={0}>
-            <Stack direction="row" alignItems="center">
-              <TextLink href={href} inline={false}>
-                {name}
-              </TextLink>
-              {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
-              {/* show provisioned badge only when it also doesn't have plugin origin */}
-              {isProvisioned && !origin && <ProvisioningBadge />}
-              {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
-              {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
-            </Stack>
-            <Summary content={summary} error={error} />
-          </Stack>
-
-          <Stack direction="row" gap={1}>
-            {namespace && group && (
-              <Text color="secondary" variant="bodySmall">
-                <RuleLocation namespace={namespace} group={group} />
-              </Text>
-            )}
-            {/* show evaluation-related metadata if the rule isn't paused – paused rules don't have instances and shouldn't show evaluation timestamps */}
-            {!isPaused && (
-              <>
-                <EvaluationMetadata
-                  lastEvaluation={lastEvaluation}
-                  evaluationInterval={evaluationInterval}
-                  state={state}
-                />
-                <MetaText icon="layers-alt">
-                  <TextLink href={href + '?tab=instances'} variant="bodySmall" color="primary" inline={false}>
-                    {pluralize('instance', instancesCount, true)}
-                  </TextLink>
-                </MetaText>
-              </>
-            )}
-
-            {/* show label count */}
-            {!isEmpty(labels) && (
-              <MetaText icon="tag-alt">
-                <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
-                  {pluralize('label', labelsSize(labels), true)}
-                </TextLink>
-              </MetaText>
-            )}
-
-            {/* show if the alert rule is using direct contact point or notification policy routing, not for paused rules or recording rules */}
-            {contactPoint && !isPaused && (
-              <MetaText icon="at">
-                Delivered to{' '}
-                <TextLink
-                  href={createContactPointLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
-                  variant="bodySmall"
-                  color="primary"
-                  inline={false}
-                >
-                  {contactPoint}
-                </TextLink>
-              </MetaText>
-            )}
-          </Stack>
-        </Stack>
-
-        {/* rule actions */}
-        <Stack direction="row" alignItems="center" gap={1} wrap="nowrap">
-          {actions}
-        </Stack>
-      </Stack>
-    </li>
   );
 };
 
