@@ -129,7 +129,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	enableTraceQLStreaming(mg, oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagTraceQLStreaming))
 
 	ualert.AddReceiverActionScopesMigration(mg)
-
 	accesscontrol.AddActionSetPermissionsMigrator(mg)
 }
 
