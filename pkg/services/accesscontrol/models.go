@@ -585,3 +585,15 @@ type QueryWithOrg struct {
 	OrgId  *int64 `json:"orgId"`
 	Global bool   `json:"global"`
 }
+
+type CheckRequest struct {
+	User     string
+	Relation string
+	Object   string
+}
+
+type ListObjectsRequest struct {
+	Type     string
+	Relation string
+	User     string
+}

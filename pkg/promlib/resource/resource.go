@@ -161,7 +161,8 @@ func (r *Resource) GetSuggestions(ctx context.Context, req *backend.CallResource
 		)
 		s, err := getSelectors(interpolatedQuery)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing selectors: %v", err)
+			r.log.Warn("error parsing selectors", "error", err, "query", interpolatedQuery)
+			continue
 		}
 		selectorList = append(selectorList, s...)
 	}
