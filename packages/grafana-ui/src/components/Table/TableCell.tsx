@@ -40,6 +40,7 @@ export const TableCell = ({
   }
 
   if (cellProps.style) {
+    cellProps.style.wordBreak = 'break-word';
     cellProps.style.minWidth = cellProps.style.width;
     const justifyContent = (cell.column as any).justifyContent;
 
