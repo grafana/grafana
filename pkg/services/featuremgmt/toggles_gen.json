@@ -2842,15 +2842,18 @@
     {
       "metadata": {
         "name": "ssoSettingsLDAP",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "resourceVersion": "1728034012257",
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-04 09:26:52.257203 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "requiresRestart": true,
+        "allowSelfServe": true
       }
     },
     {
