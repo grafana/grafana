@@ -111,7 +111,7 @@ require (
 	github.com/huandu/xstrings v1.3.3 // @grafana/partner-datasources
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0 // @grafana/observability-metrics
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // @grafana/grafana-app-platform-squad
-	github.com/jmespath/go-jmespath v0.4.0 // @grafana/grafana-backend-group
+	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
 	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
@@ -187,13 +187,13 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.31.0 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.31.0 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.31.0 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.31.0 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.31.0 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.31.1 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.31.1 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.31.1 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.31.1 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.31.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-aggregator v0.31.0 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.31.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // @grafana/partner-datasources
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // @grafana-app-platform-squad
@@ -447,7 +447,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/kms v0.31.0 // indirect
+	k8s.io/kms v0.31.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
 	modernc.org/libc v1.41.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
@@ -477,6 +477,8 @@ require (
 	github.com/getkin/kin-openapi v0.127.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/playlist v0.0.0-20240917082838-e2bce38a7990 // @grafana/grafana-app-platform-squad
 )
+
+require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 
 require (
 	cloud.google.com/go/longrunning v0.5.12 // indirect

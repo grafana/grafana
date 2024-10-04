@@ -36,10 +36,10 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@emotion/css": "11.13.0",
+    "@emotion/css": "11.13.4",
     "@floating-ui/react": "0.26.24",
     "@grafana/data": "11.3.0-pre",
-    "@grafana/experimental": "1.8.0",
+    "@grafana/experimental": "2.1.1",
     "@grafana/faro-web-sdk": "1.10.1",
     "@grafana/runtime": "11.3.0-pre",
     "@grafana/schema": "11.3.0-pre",

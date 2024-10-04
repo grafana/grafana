@@ -329,6 +329,9 @@
       "moving": "Moviendo...",
       "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta."
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
       "alertRule_other": "{{count}} reglas de alerta",
@@ -1090,6 +1093,13 @@
     },
     "title": "Accesos directos"
   },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
+  },
   "inspector": {
     "query": {
       "collapse-all": "Contraer todo",
@@ -1395,7 +1405,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1467,6 +1478,8 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1474,6 +1487,7 @@
       "dashboard": "Panel de control",
       "datasource": "Fuente de datos",
       "folder": "",
+      "library_element": "",
       "unknown": "Desconocido"
     },
     "summary": {
@@ -1851,6 +1865,7 @@
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
       "list-label": "Navegación",
+      "open": "",
       "undock": "Desanclar el menú"
     },
     "toolbar": {
@@ -1909,6 +1924,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "",
     "unsupported-layout": ""
   },
   "playlist-edit": {

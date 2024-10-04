@@ -325,6 +325,9 @@
       "moving": "正在移动...",
       "new-folder-name-required-phrase": "文件夹名称是必需项。"
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_other": "{{count}} 条警告规则",
       "dashboard_other": "{{count}} 个仪表板",
@@ -1081,6 +1084,13 @@
     },
     "title": "快捷键"
   },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
+  },
   "inspector": {
     "query": {
       "collapse-all": "折叠全部",
@@ -1385,7 +1395,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1457,6 +1468,8 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1464,6 +1477,7 @@
       "dashboard": "仪表板",
       "datasource": "数据源",
       "folder": "",
+      "library_element": "",
       "unknown": "未知"
     },
     "summary": {
@@ -1841,6 +1855,7 @@
       "close": "关闭菜单",
       "dock": "停靠菜单",
       "list-label": "导航",
+      "open": "",
       "undock": "取消停靠菜单"
     },
     "toolbar": {
@@ -1899,6 +1914,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "",
     "unsupported-layout": ""
   },
   "playlist-edit": {
