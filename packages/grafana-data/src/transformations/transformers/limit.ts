@@ -34,6 +34,10 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
             limit = options.limitField;
           }
         }
+        // Prevent negative limit
+        if (limit < 0) {
+          limit = 0;
+        }
         return data.map((frame) => {
           if (frame.length > limit) {
             return {
