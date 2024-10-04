@@ -418,7 +418,7 @@ func (s *UserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userId i
 			// Intentionally not returning error here, as the token has been revoked -> the backround job will clean up orphaned external sessions
 			ctxLogger.Warn("Failed to delete external sessions for user", "userID", userId, "err", err)
 		}
-		return err
+		return nil
 	})
 }
 
@@ -455,7 +455,6 @@ func (s *UserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, use
 		err = s.externalSessionStore.BatchDeleteExternalSessionsByUserIDs(ctx, userIds)
 		if err != nil {
 			ctxLogger.Warn("Failed to delete external sessions for users", "users", userIds, "err", err)
-			return err
 		}
 
 		ctxLogger.Debug("All user tokens for given users revoked", "usersCount", len(userIds), "count", affected)
