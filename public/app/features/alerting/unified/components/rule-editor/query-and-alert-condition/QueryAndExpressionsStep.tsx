@@ -173,6 +173,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const [showResetModeModal, setShowResetModal] = useState(false);
 
+  const removeReducer = useCallback(() => {
+    dispatch(removeFirstReducer());
+  }, [dispatch]);
+
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
     isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
       ? getSimpleConditionFromExpressions(expressionQueries)
@@ -293,15 +297,28 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
-      // In case we are in the state of having 1 query and 2 expressions,
-      // then,we want to remove the reducer expression if query is instant to simplify the process of creating a non complex alert
-      const shouldRemoveReducer =
-        updatedQueries.length === 1 &&
-        'instant' in updatedQueries[0].model &&
-        updatedQueries[0].model.instant &&
-        expressionQueries.length === 2;
-      if (shouldRemoveReducer) {
-        dispatch(removeFirstReducer());
+      // we only remove reducer when creating a new alert
+      if (!editingExistingRule) {
+        // In case we are in the state of having 1 query and 2 expressions,
+        // then,we want to remove the reducer expression if query is instant to simplify the process of creating a non complex alert
+        const firstQueryIsPromOrLoki =
+          updatedQueries[0].model.datasource?.type === 'prometheus' ||
+          updatedQueries[0].model.datasource?.type === 'loki';
+        const shouldRemoveReducer =
+          updatedQueries.length === 1 &&
+          'instant' in updatedQueries[0].model &&
+          (updatedQueries[0].model.instant === true ||
+            (firstQueryIsPromOrLoki && updatedQueries[0].model.instant === undefined)) &&
+          expressionQueries.length === 2;
+
+        // when changing the data source we need to reset the condition before checking if we should remove the reducer
+        // this is important when switching from prometheus or loki to another data source
+        if (updatedQueries.length === 1 && updatedQueries[0].datasourceUid !== previousQueries[0].datasourceUid) {
+          dispatch(resetToSimpleCondition());
+        }
+        if (shouldRemoveReducer) {
+          removeReducer();
+        }
       }
 
       dispatch(setDataQueries(updatedQueries));
@@ -313,7 +330,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue]
+    [queries, updateExpressionAndDatasource, getValues, setValue, removeReducer, editingExistingRule]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
