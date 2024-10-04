@@ -5,12 +5,12 @@ import { AccessControlAction } from 'app/types';
 
 import { SettingsPageProps } from '../DashboardSettings/types';
 
-export const AccessControlDashboardPermissions = ({ dashboard, sectionNav }: SettingsPageProps) => {
+export const AccessControlDashboardPermissions = ({ dashboard, sectionNav, toolbar }: SettingsPageProps) => {
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsWrite);
   const pageNav = sectionNav.node.parentItem;
 
   return (
-    <Page navModel={sectionNav} pageNav={pageNav}>
+    <Page navModel={sectionNav} pageNav={pageNav} toolbar={toolbar}>
       <Permissions resource={'dashboards'} resourceId={dashboard.uid} canSetPermissions={canSetPermissions} />
     </Page>
   );

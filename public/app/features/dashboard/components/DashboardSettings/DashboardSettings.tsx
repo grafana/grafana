@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
@@ -36,6 +36,7 @@ const onClose = () => locationService.partial({ editview: null, editIndex: null 
 
 export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: Props) {
   const [updateId, setUpdateId] = useState(0);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   useEffect(() => {
     dashboard.events.subscribe(DashboardMetaChangedEvent, () => setUpdateId((v) => v + 1));
   }, [dashboard]);
@@ -81,8 +82,15 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
 
   return (
     <>
-      <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{actions}</ToolbarButtonRow>} />
-      <currentPage.component sectionNav={subSectionNav} dashboard={dashboard} editIndex={editIndex} />
+      {!isSingleTopNav && (
+        <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{actions}</ToolbarButtonRow>} />
+      )}
+      <currentPage.component
+        toolbar={isSingleTopNav ? <ToolbarButtonRow alignment="right">{actions}</ToolbarButtonRow> : undefined}
+        sectionNav={subSectionNav}
+        dashboard={dashboard}
+        editIndex={editIndex}
+      />
     </>
   );
 }
@@ -209,9 +217,9 @@ function getSectionNav(
   };
 }
 
-function MakeEditable({ dashboard, sectionNav }: SettingsPageProps) {
+function MakeEditable({ dashboard, sectionNav, toolbar }: SettingsPageProps) {
   return (
-    <Page navModel={sectionNav}>
+    <Page navModel={sectionNav} toolbar={toolbar}>
       <Stack direction="column" gap={2} alignItems="flex-start">
         <Text variant="h3">Dashboard not editable</Text>
         <Button type="submit" onClick={() => dashboard.makeEditable()}>
