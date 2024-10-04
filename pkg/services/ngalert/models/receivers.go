@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -557,6 +558,10 @@ type Identified interface {
 
 func (r *Receiver) GetUID() string {
 	return r.UID
+}
+
+func NameToUid(name string) string {
+	return base64.RawURLEncoding.EncodeToString([]byte(name))
 }
 
 func (r *Receiver) Fingerprint() string {
