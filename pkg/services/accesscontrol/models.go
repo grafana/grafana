@@ -455,6 +455,7 @@ const (
 	ActionAlertingReceiversCreate           = "alert.notifications.receivers:create"
 	ActionAlertingReceiversUpdate           = "alert.notifications.receivers:write"
 	ActionAlertingReceiversDelete           = "alert.notifications.receivers:delete"
+	ActionAlertingReceiversTest             = "alert.notifications.receivers:test"
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
