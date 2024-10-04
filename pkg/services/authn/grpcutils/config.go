@@ -39,7 +39,7 @@ func ReadGrpcClientConfig(cfg *setting.Cfg) (*GrpcClientConfig, error) {
 	return &GrpcClientConfig{
 		Token:            section.Key("token").MustString(""),
 		TokenExchangeURL: section.Key("token_exchange_url").MustString(""),
-		TokenNamespace:   section.Key("token_namespace").MustString("stack-" + cfg.StackID),
+		TokenNamespace:   section.Key("token_namespace").MustString("stacks-" + cfg.StackID),
 		Mode:             mode,
 	}, nil
 }

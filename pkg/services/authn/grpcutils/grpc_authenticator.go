@@ -10,7 +10,7 @@ import (
 )
 
 func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error) {
-	authCfg, err := ReadGprcServerConfig(cfg)
+	authCfg, err := ReadGrpcServerConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
