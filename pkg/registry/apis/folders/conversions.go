@@ -82,7 +82,9 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 	// avoid panic
 	var createdTime time.Time
 	if created != nil {
-		createdTime = *created
+		// #TODO Fix this time format. The legacy time format seems to be along the lines of time.Now()
+		// which includes a part that represents a fraction of a second.
+		createdTime = created.Local()
 	}
 
 	dto := &dtos.Folder{
