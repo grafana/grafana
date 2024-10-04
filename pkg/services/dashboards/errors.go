@@ -130,6 +130,7 @@ var (
 	ErrFolderInvalidUID           = errors.New("invalid uid for folder provided")
 	ErrFolderSameNameExists       = errors.New("a folder with the same name already exists in the current location")
 	ErrFolderAccessDenied         = errors.New("access denied to folder")
+	ErrUserIsNotSignedInToOrg     = errors.New("user is not signed in to organization")
 	ErrMoveAccessDenied           = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
 	ErrFolderAccessEscalation     = errutil.Forbidden("folders.accessEscalation", errutil.WithPublicMessage("Cannot move a folder to a folder where you have higher permissions"))
 	ErrFolderCreationAccessDenied = errutil.Forbidden("folders.forbiddenCreation", errutil.WithPublicMessage("not enough permissions to create a folder in the selected location"))

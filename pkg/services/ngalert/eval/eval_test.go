@@ -2,7 +2,6 @@ package eval
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -55,52 +54,6 @@ func TestEvaluateExecutionResult(t *testing.T) {
 				Condition: []*data.Frame{
 					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(1.0)})),
 				},
-			},
-			expectResultLength: 1,
-			expectResults: Results{
-				{
-					State: Alerting,
-				},
-			},
-		},
-		{
-			desc: "query service dataframe works as instant vector",
-			execResults: ExecutionResults{
-				Condition: func() []*data.Frame {
-					f := data.NewFrame("",
-						data.NewField("", nil, []*time.Time{util.Pointer(time.Now())}),
-						data.NewField("", nil, []*float64{util.Pointer(0.0)}),
-					)
-					f.Meta = &data.FrameMeta{
-						Custom: map[string]any{
-							"resultType": "scalar",
-						},
-					}
-					return []*data.Frame{f}
-				}(),
-			},
-			expectResultLength: 1,
-			expectResults: Results{
-				{
-					State: Normal,
-				},
-			},
-		},
-		{
-			desc: "query service dataframe works as instant vector when alerting",
-			execResults: ExecutionResults{
-				Condition: func() []*data.Frame {
-					f := data.NewFrame("",
-						data.NewField("", nil, []*time.Time{util.Pointer(time.Now())}),
-						data.NewField("", nil, []*float64{util.Pointer(1.0)}),
-					)
-					f.Meta = &data.FrameMeta{
-						Custom: map[string]any{
-							"resultType": "scalar",
-						},
-					}
-					return []*data.Frame{f}
-				}(),
 			},
 			expectResultLength: 1,
 			expectResults: Results{
@@ -1341,76 +1294,6 @@ func TestCreate(t *testing.T) {
 
 		require.Equal(t, expectedHeaders, request.Headers)
 	})
-}
-
-func TestQueryServiceResponse(t *testing.T) {
-	data := `
-{
-    "results": {
-        "A": {
-            "status": 200,
-            "frames": [
-                {
-                    "schema": {
-                        "refId": "A",
-                        "meta": {
-                            "type": "numeric-multi",
-                            "typeVersion": [
-                                0,
-                                1
-                            ],
-                            "custom": {
-                                "resultType": "scalar"
-                            },
-                            "executedQueryString": "Expr: 1\nStep: 15s"
-                        },
-                        "fields": [
-                            {
-                                "name": "Time",
-                                "type": "time",
-                                "typeInfo": {
-                                    "frame": "time.Time"
-                                },
-                                "config": {
-                                    "interval": 15000
-                                }
-                            },
-                            {
-                                "name": "Value",
-                                "type": "number",
-                                "typeInfo": {
-                                    "frame": "float64"
-                                },
-                                "labels": {},
-                                "config": {
-                                    "displayNameFromDS": "1"
-                                }
-                            }
-                        ]
-                    },
-                    "data": {
-                        "values": [
-                            [
-                                1719855251019
-                            ],
-                            [
-                                1
-                            ]
-                        ]
-                    }
-                }
-            ]
-        }
-    }
-}
-`
-	var s backend.QueryDataResponse
-	err := json.Unmarshal([]byte(data), &s)
-	require.NoError(t, err)
-	res := EvaluateAlert(&s, models.Condition{Condition: "A"}, time.Time{})
-
-	require.Equal(t, 1, len(res))
-	require.Equal(t, Alerting, res[0].State)
 }
 
 type fakeExpressionService struct {

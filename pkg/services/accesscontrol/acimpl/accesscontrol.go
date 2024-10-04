@@ -119,26 +119,24 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
 		kind, _, identifier := accesscontrol.SplitScope(scope)
-		key, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
+		tupleKey, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
 		if !ok {
 			// unsupported translation
 			return false, errAccessNotImplemented
 		}
 
-		a.log.Debug("evaluating zanzana", "user", key.User, "relation", key.Relation, "object", key.Object)
-		res, err := a.zclient.Check(ctx, &openfgav1.CheckRequest{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     key.User,
-				Relation: key.Relation,
-				Object:   key.Object,
-			},
+		a.log.Debug("evaluating zanzana", "user", tupleKey.User, "relation", tupleKey.Relation, "object", tupleKey.Object)
+		allowed, err := a.Check(ctx, accesscontrol.CheckRequest{
+			User:     tupleKey.User,
+			Relation: tupleKey.Relation,
+			Object:   tupleKey.Object,
 		})
 
 		if err != nil {
 			return false, err
 		}
 
-		return res.Allowed, nil
+		return allowed, nil
 	})
 }
 
@@ -205,9 +203,46 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
 }
 
+func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
+	return &AccessControl{
+		features:  a.features,
+		log:       a.log,
+		zclient:   a.zclient,
+		metrics:   a.metrics,
+		resolvers: accesscontrol.NewResolvers(a.log),
+	}
+}
+
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.debug")
 	defer span.End()
 
 	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
+}
+
+func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckRequest) (bool, error) {
+	key := &openfgav1.CheckRequestTupleKey{
+		User:     req.User,
+		Relation: req.Relation,
+		Object:   req.Object,
+	}
+	in := &openfgav1.CheckRequest{TupleKey: key}
+	res, err := a.zclient.Check(ctx, in)
+	if err != nil {
+		return false, err
+	}
+	return res.Allowed, err
+}
+
+func (a *AccessControl) ListObjects(ctx context.Context, req accesscontrol.ListObjectsRequest) ([]string, error) {
+	in := &openfgav1.ListObjectsRequest{
+		Type:     req.Type,
+		User:     req.User,
+		Relation: req.Relation,
+	}
+	res, err := a.zclient.ListObjects(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	return res.Objects, err
 }
