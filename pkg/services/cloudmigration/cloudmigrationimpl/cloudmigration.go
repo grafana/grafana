@@ -384,10 +384,12 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	// validate token against GMS before saving
 	if err := s.ValidateToken(ctx, migration); err != nil {
 		// handle GMS errors
-		if strings.Contains(err.Error(), api.GMSErrorInstanceUnreachable) {
+		if strings.Contains(err.Error(), api.GMSErrorMessageInstanceUnreachable) {
 			return nil, fmt.Errorf(api.ErrorMessageInstanceUnreachable)
-		} else if strings.Contains(err.Error(), api.GMSErrorInstanceNotFound) {
+		} else if strings.Contains(err.Error(), api.GMSErrorMessageInstanceNotFound) {
 			return nil, fmt.Errorf(api.ErrorMessageCreateSessionFailed)
+		} else if strings.Contains(err.Error(), api.GMSErrorMessageInstanceUnreachable) {
+			return nil, fmt.Errorf(api.GMSErrorMessageHttpRequestError)
 		}
 		return nil, fmt.Errorf(api.ErrorMessageInstanceNotReached)
 	}

@@ -2,8 +2,9 @@ package api
 
 // Error messages returned from GMS
 var (
-	GMSErrorInstanceUnreachable = "instance is unreachable"
-	GMSErrorInstanceNotFound    = "instance not found"
+	GMSErrorMessageInstanceUnreachable = "instance is unreachable"
+	GMSErrorMessageInstanceNotFound    = "instance not found"
+	GMSErrorMessageHttpRequestError    = "validate key http request error"
 )
 
 // Human-friendly error messages that are returned by cloud migration API backend and are displayed in the on-prem instance.
