@@ -18,7 +18,6 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
-  SceneObjectStateChangedEvent,
   SceneTimeRange,
   sceneUtils,
   SceneVariable,
@@ -46,7 +45,6 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
-import { isSceneVariableInstance } from '../settings/variables/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -62,7 +60,6 @@ import {
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
-import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -223,8 +220,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
-
-    this.subscribeToEvent(SceneObjectStateChangedEvent, this.triggerRefreshEvent);
 
     // Deactivation logic
     return () => {
@@ -702,21 +697,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
   }
-
-  // Backwards compat with plugins that rely on the RefreshEvent when a
-  // variable changes. TODO: We should redirect plugin devs to VariablesChanged event
-  private triggerRefreshEvent = ({ payload }: SceneObjectStateChangedEvent) => {
-    const isAnnotationChange =
-      payload.changedObject instanceof DashboardAnnotationsDataLayer &&
-      !Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data');
-    const isSceneVariableChange = isSceneVariableInstance(payload.changedObject);
-
-    if (isAnnotationChange || isSceneVariableChange) {
-      // DashboardModel triggers RefreshEvent when variables change
-      // To avoid compatibility issues in plugins we need to trigger the same event
-      this.publishEvent(new RefreshEvent());
-    }
-  };
 }
 
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
@@ -736,6 +716,9 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+      // Backwards compat with plugins that rely on the RefreshEvent when a
+      // variable changes. TODO: We should redirect plugin devs to use VariablesChanged event
+      this._dashboard.publishEvent(new RefreshEvent());
     }
 
     if (variable.state.name === PANEL_SEARCH_VAR) {
