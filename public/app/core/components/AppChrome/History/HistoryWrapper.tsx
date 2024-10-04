@@ -3,21 +3,29 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
-import { Card, IconButton, Space, Stack, Text, useStyles2 } from '@grafana/ui';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntryApp } from '../types';
 
 export function HistoryWrapper() {
   const history = store.getObject<HistoryEntryApp[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+  const [numItemsToShow, setNumItemsToShow] = useState(5);
 
   return (
-    <div>
-      {history.map((entry, index) => (
-        <HistoryEntryAppView key={index} entry={entry} isFirst={index === 0} />
-      ))}
-    </div>
+    <Stack direction="column" alignItems="flex-start">
+      <Box width="100%">
+        {history.slice(0, numItemsToShow).map((entry, index) => (
+          <HistoryEntryAppView key={index} entry={entry} isFirst={index === 0} />
+        ))}
+      </Box>
+      {history.length > numItemsToShow && (
+        <Button variant="secondary" fill="text" onClick={() => setNumItemsToShow(numItemsToShow + 5)}>
+          {t('nav.history.show-more', 'Show more')}
+        </Button>
+      )}
+    </Stack>
   );
 }
 interface ItemProps {
@@ -28,7 +36,7 @@ interface ItemProps {
 function HistoryEntryAppView({ entry, isFirst }: ItemProps) {
   const styles = useStyles2(getStyles);
   const [isExpanded, setIsExpanded] = useState(isFirst && entry.views.length > 0);
-  const { breadcrumbs, views, time } = entry;
+  const { breadcrumbs, views, time, url } = entry;
 
   return (
     <Stack direction="column" gap={1}>
@@ -44,17 +52,18 @@ function HistoryEntryAppView({ entry, isFirst }: ItemProps) {
           <Space h={2} />
         )}
 
-        {breadcrumbs.map((breadcrumb, index) => {
-          if (breadcrumb.id === HOME_NAV_ID) {
-            return null;
-          }
-          return (
-            <Text key={index}>
-              {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
-            </Text>
-          );
-        })}
-        <Text color="secondary">{moment(time).format('h:mm A')}</Text>
+        <Card href={url} isCompact={true} className={url === window.location.href ? undefined : styles.card}>
+          <Stack direction="column">
+            <div>
+              {breadcrumbs.map((breadcrumb, index) => (
+                <Text key={index}>
+                  {breadcrumb.text} {index !== breadcrumbs.length - 1 ? '> ' : ''}
+                </Text>
+              ))}
+            </div>
+            <Text color="secondary">{moment(time).format('h:mm A')}</Text>
+          </Stack>
+        </Card>
       </Stack>
       {isExpanded && (
         <div className={styles.expanded}>

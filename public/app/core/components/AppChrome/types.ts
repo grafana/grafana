@@ -16,5 +16,6 @@ export interface HistoryEntryApp {
   name: string;
   time: number;
   breadcrumbs: NavModelItem[];
+  url: string;
   views: HistoryEntryAppView[];
 }

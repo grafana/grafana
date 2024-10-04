@@ -128,7 +128,7 @@ export class AppChromeService {
 
     let lastEntry = entries[0];
     if (!lastEntry || lastEntry.name !== newPageNav.text) {
-      lastEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now() };
+      lastEntry = { name: newPageNav.text, views: [], breadcrumbs, time: Date.now(), url: window.location.href };
     }
     if (lastEntry !== entries[0]) {
       entries = [lastEntry, ...entries];
