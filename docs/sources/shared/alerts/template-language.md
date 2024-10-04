@@ -95,13 +95,19 @@ Boolean comparison operators are also available in `text/template`:
 
 ## Variables
 
-Variables in text/template must be created within the template. For example, to create a variable called `$variable` with the current value of dot (`.`) you would write the following:
+Variables in `text/template` must be created within the template. For example, you can create a variable with the current value of dot (`.`) and assign a string or another object to the variable like this:
 
 ```
 {{ $variable := . }}
+{{ $variable := "This is a test" }}
+{{ $variable }}
 ```
 
-You can use `$variable` inside a range or `with` and it will refer to the value of dot (`.`) at the time the variable was defined, not the current value of dot.
+This template outputs:
+
+```
+This is a test
+```
 
 ## Templates
 
