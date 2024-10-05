@@ -32,11 +32,6 @@ var (
 		Reason:     "A dashboard with the same uid already exists",
 		StatusCode: 400,
 	}
-	ErrDashboardWithSameNameInFolderExists = DashboardErr{
-		Reason:     "A dashboard with the same name in the folder already exists",
-		StatusCode: 412,
-		Status:     "name-exists",
-	}
 	ErrDashboardVersionMismatch = DashboardErr{
 		Reason:     "The dashboard has been changed by someone else",
 		StatusCode: 412,
@@ -58,15 +53,6 @@ var (
 	ErrDashboardTypeMismatch = DashboardErr{
 		Reason:     "Dashboard cannot be changed to a folder",
 		StatusCode: 400,
-	}
-	ErrDashboardFolderWithSameNameAsDashboard = DashboardErr{
-		Reason:     "Folder name cannot be the same as one of its dashboards",
-		StatusCode: 400,
-	}
-	ErrDashboardWithSameNameAsFolder = DashboardErr{
-		Reason:     "Dashboard name cannot be the same as folder",
-		StatusCode: 400,
-		Status:     "name-match",
 	}
 	ErrDashboardFolderNameExists = DashboardErr{
 		Reason:     "A folder with that name already exists",
@@ -128,7 +114,6 @@ var (
 	ErrFolderTitleEmpty           = errors.New("folder title cannot be empty")
 	ErrFolderWithSameUIDExists    = errors.New("a folder/dashboard with the same uid already exists")
 	ErrFolderInvalidUID           = errors.New("invalid uid for folder provided")
-	ErrFolderSameNameExists       = errors.New("a folder with the same name already exists in the current location")
 	ErrFolderAccessDenied         = errors.New("access denied to folder")
 	ErrUserIsNotSignedInToOrg     = errors.New("user is not signed in to organization")
 	ErrMoveAccessDenied           = errutil.Forbidden("folders.forbiddenMove", errutil.WithPublicMessage("Access denied to the destination folder"))
