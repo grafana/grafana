@@ -2676,6 +2676,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "Use the Explore metrics bookmark feature to save your explorations as bookmarks."
+    },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",
@@ -2692,9 +2695,6 @@
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
       "show-previews-of-metric-graphs": "Show previews of metric graphs"
-    },
-    "bookmarks": {
-      "empty-state": "Use the Explore metrics bookmark feature to save your explorations as bookmarks."
     }
   },
   "transformations": {
