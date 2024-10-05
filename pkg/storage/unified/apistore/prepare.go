@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Called on create
@@ -49,7 +50,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err != nil {
 		return nil, err
 	}
-	return buf.Bytes(), nil
+	return s.handleLargeResources(ctx, obj, buf)
 }
 
 // Called on update
@@ -88,6 +89,28 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	err = s.codec.Encode(updateObject, &buf)
 	if err != nil {
 		return nil, err
+	}
+	return s.handleLargeResources(ctx, obj, buf)
+}
+
+func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {
+	if buf.Len() > 1000 {
+		// !!! Currently just write the whole thing
+		// in reality we may only want to write the spec....
+		rsp, err := s.store.PutBlob(ctx, &resource.PutBlobRequest{
+			ContentType: "application/json",
+			Value:       buf.Bytes(),
+			Resource: &resource.ResourceKey{
+				Group:     s.gr.Group,
+				Resource:  s.gr.Resource,
+				Namespace: obj.GetNamespace(),
+				Name:      obj.GetName(),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("WROTE: %+v\n", rsp)
 	}
 	return buf.Bytes(), nil
 }
