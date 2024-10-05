@@ -13,6 +13,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -170,8 +171,10 @@ async function buildTestSceneWithLibraryPanel() {
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [gridItem],
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [gridItem],
+      }),
     }),
   });
 

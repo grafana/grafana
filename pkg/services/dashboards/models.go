@@ -423,4 +423,8 @@ type FindPersistedDashboardsQuery struct {
 	IsDeleted  bool
 
 	Filters []any
+
+	// Skip access control checks. This field is used by OpenFGA search implementation.
+	// Should not be used anywhere else.
+	SkipAccessControlFilter bool
 }

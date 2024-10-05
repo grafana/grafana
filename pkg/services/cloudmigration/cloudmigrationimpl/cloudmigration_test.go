@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	libraryelementsfake "github.com/grafana/grafana/pkg/services/libraryelements/fake"
+	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -58,7 +60,7 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = s.GetToken(context.Background())
-	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
+	assert.ErrorIs(t, err, cloudmigration.ErrTokenNotFound)
 
 	cm := cloudmigration.CloudMigrationSession{}
 	err = s.ValidateToken(context.Background(), cm)
@@ -213,6 +215,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
+					Name:   "A name",
 					Type:   cloudmigration.DatasourceDataType,
 					RefID:  "A",
 					Status: cloudmigration.ItemStatusError,
@@ -387,18 +390,21 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
+					Name:        "1 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "1", // this will be core
 					Status:      cloudmigration.ItemStatusOK,
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "2 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "2", // this will be non-core
 					Status:      cloudmigration.ItemStatusOK,
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "3 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "3", // this will be non-core with an error
 					Status:      cloudmigration.ItemStatusError,
@@ -406,6 +412,7 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 					SnapshotUID: snapshotUid,
 				},
 				{
+					Name:        "4 name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "4", // this will be deleted
 					Status:      cloudmigration.ItemStatusOK,
@@ -557,6 +564,36 @@ func TestReportEvent(t *testing.T) {
 	})
 }
 
+func TestGetLibraryElementsCommands(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	libraryElementService, ok := s.libraryElementsService.(*libraryelementsfake.LibraryElementService)
+	require.True(t, ok)
+	require.NotNil(t, libraryElementService)
+
+	folderUID := "folder-uid"
+	createLibraryElementCmd := libraryelements.CreateLibraryElementCommand{
+		FolderUID: &folderUID,
+		Name:      "library-element-1",
+		Model:     []byte{},
+		Kind:      int64(libraryelements.PanelElement),
+		UID:       "library-element-uid-1",
+	}
+
+	user := &user.SignedInUser{OrgID: 1}
+
+	_, err := libraryElementService.CreateElement(ctx, user, createLibraryElementCmd)
+	require.NoError(t, err)
+
+	cmds, err := s.getLibraryElementsCommands(ctx, user)
+	require.NoError(t, err)
+	require.Len(t, cmds, 1)
+	require.Equal(t, createLibraryElementCmd.UID, cmds[0].UID)
+}
+
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{OrgID: 1},
@@ -612,7 +649,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 			featuremgmt.FlagDashboardRestore),
 		sqlStore,
 		dsService,
-		secretskv.NewFakeSQLSecretsKVStore(t),
+		secretskv.NewFakeSQLSecretsKVStore(t, sqlStore),
 		secretsService,
 		rr,
 		prometheus.DefaultRegisterer,
@@ -621,6 +658,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		mockFolder,
 		&pluginstore.FakePluginStore{},
 		kvstore.ProvideService(sqlStore),
+		&libraryelementsfake.LibraryElementService{},
 	)
 	require.NoError(t, err)
 

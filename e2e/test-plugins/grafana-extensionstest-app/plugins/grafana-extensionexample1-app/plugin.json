@@ -28,6 +28,30 @@
       "defaultNav": false
     }
   ],
+  "extensions": {
+    "exposedComponents": [
+      {
+        "id": "grafana-extensionexample1-app/reusable-component/v1",
+        "title": "Exposed component",
+        "description": "A component that can be reused by other app plugins."
+      }
+    ],
+    "addedLinks": [
+      {
+        "targets": [
+          "plugins/grafana-extensionstest-app/actions",
+          "plugins/grafana-extensionstest-app/use-plugin-links/v1"
+        ],
+        "title": "Go to A",
+        "description": "Navigating to pluging A"
+      },
+      {
+        "targets": ["plugins/grafana-extensionstest-app/use-plugin-links/v1"],
+        "title": "Basic link",
+        "description": "..."
+      }
+    ]
+  },
   "dependencies": {
     "grafanaDependency": ">=10.3.3",
     "plugins": []

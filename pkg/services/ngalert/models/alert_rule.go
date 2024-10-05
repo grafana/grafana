@@ -795,6 +795,13 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
+
+	// Currently metadata contains only editor settings, so we can just copy it.
+	// If we add more fields to metadata, we might need to handle them separately,
+	// and/or merge or update their values.
+	if ruleToPatch.Metadata == (AlertRuleMetadata{}) {
+		ruleToPatch.Metadata = existingRule.Metadata
+	}
 }
 
 func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
@@ -878,4 +885,12 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 func hasAnyCondition(rule *AlertRuleWithOptionals) bool {
 	return rule.Condition != "" || (rule.Record != nil && rule.Record.From != "")
+}
+
+// RuleStatus contains info about a rule's current evaluation state.
+type RuleStatus struct {
+	Health              string
+	LastError           error
+	EvaluationTimestamp time.Time
+	EvaluationDuration  time.Duration
 }

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -24,14 +25,15 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -191,7 +193,7 @@ func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 // remove the meta keys that are expected to change each time
 func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured, replaceMeta ...string) string {
 	c.t.Helper()
-	copy := c.sanitizeObject(v)
+	copy := c.sanitizeObject(v, replaceMeta...)
 
 	out, err := json.MarshalIndent(copy, "", "  ")
 	// fmt.Printf("%s", out)
@@ -204,20 +206,8 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 	c.t.Helper()
 
 	deep := v.DeepCopy()
-	anno := deep.GetAnnotations()
-	if anno["grafana.app/originPath"] != "" {
-		anno["grafana.app/originPath"] = "${originPath}"
-	}
-	if anno["grafana.app/originHash"] != "" {
-		anno["grafana.app/originHash"] = "${originHash}"
-	}
-	// Remove annotations that are not added by legacy storage
-	delete(anno, utils.AnnoKeyOriginTimestamp)
-	delete(anno, utils.AnnoKeyCreatedBy)
-	delete(anno, utils.AnnoKeyUpdatedBy)
-	delete(anno, utils.AnnoKeyUpdatedTimestamp)
-
-	deep.SetAnnotations(anno)
+	deep.SetAnnotations(nil)
+	deep.SetManagedFields(nil)
 	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)
 	require.True(c.t, ok)
@@ -230,6 +220,7 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 			meta[key] = fmt.Sprintf("${%s}", key)
 		}
 	}
+	deep.Object["metadata"] = meta
 	return deep
 }
 
@@ -441,7 +432,11 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}
 	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.Admin.Identity.GetOrgID())
-	// TODO add admin and editor to staff
+
+	// Add Admin and Editor to Staff team as Admin and Member, respectively.
+	c.AddOrUpdateTeamMember(users.Admin, users.Staff.ID, team.PermissionTypeAdmin)
+	c.AddOrUpdateTeamMember(users.Editor, users.Staff.ID, team.PermissionTypeMember)
+
 	return users
 }
 
@@ -449,13 +444,12 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	c.t.Helper()
 
 	store := c.env.SQLStore
-	replStore := c.env.ReadReplStore
 	defer func() {
 		c.env.Cfg.AutoAssignOrg = false
 		c.env.Cfg.AutoAssignOrgId = 1 // the default
 	}()
 
-	quotaService := quotaimpl.ProvideService(replStore, c.env.Cfg)
+	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
 
 	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
@@ -476,7 +470,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	c.env.Cfg.AutoAssignOrg = true
 	c.env.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc, err := teamimpl.ProvideService(replStore, c.env.Cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg, tracing.InitializeTracerForTest())
 	require.NoError(c.t, err)
 
 	cache := localcache.ProvideService()
@@ -510,6 +504,11 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.Equal(c.t, orgId, s.OrgID)
 	require.Equal(c.t, basicRole, s.OrgRole) // make sure the role was set properly
 
+	idToken, idClaims, err := idtest.CreateInternalToken(s, []byte("secret"))
+	require.NoError(c.t, err)
+	s.IDToken = idToken
+	s.IDTokenClaims = idClaims
+
 	usr := User{
 		Identity: s,
 		password: name,
@@ -537,6 +536,42 @@ func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissi
 			permission, nil)
 		require.NoError(c.t, err)
 	}
+}
+
+func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permission team.PermissionType) {
+	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.Cfg, tracing.InitializeTracerForTest())
+	require.NoError(c.t, err)
+
+	orgService, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, c.env.Server.HTTPServer.QuotaService)
+	require.NoError(c.t, err)
+
+	cache := localcache.ProvideService()
+	userSvc, err := userimpl.ProvideService(
+		c.env.SQLStore, orgService, c.env.Cfg, teamSvc,
+		cache, tracing.InitializeTracerForTest(), c.env.Server.HTTPServer.QuotaService,
+		supportbundlestest.NewFakeBundleService())
+	require.NoError(c.t, err)
+
+	teampermissionSvc, err := ossaccesscontrol.ProvideTeamPermissions(
+		c.env.Cfg,
+		c.env.FeatureToggles,
+		c.env.Server.HTTPServer.RouteRegister,
+		c.env.SQLStore,
+		c.env.Server.HTTPServer.AccessControl,
+		c.env.Server.HTTPServer.License,
+		c.env.Server.HTTPServer.AlertNG.AccesscontrolService,
+		teamSvc,
+		userSvc,
+		resourcepermissions.NewActionSetService(c.env.FeatureToggles),
+	)
+	require.NoError(c.t, err)
+
+	id, err := user.Identity.GetInternalID()
+	require.NoError(c.t, err)
+
+	teamIDString := strconv.FormatInt(teamID, 10)
+	_, err = teampermissionSvc.SetUserPermission(context.Background(), user.Identity.GetOrgID(), accesscontrol.User{ID: id}, teamIDString, permission.String())
+	require.NoError(c.t, err)
 }
 
 func (c *K8sTestHelper) NewDiscoveryClient() *discovery.DiscoveryClient {
