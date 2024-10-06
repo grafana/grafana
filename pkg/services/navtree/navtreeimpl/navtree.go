@@ -151,9 +151,11 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 	}
 
-	if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
-		treeRoot.AddSection(connectionsSection)
-	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-45139 - hide datasources menu
+	//if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
+	//	treeRoot.AddSection(connectionsSection)
+	//}
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	orgAdminNode, err := s.getAdminNode(c)
 
@@ -485,7 +487,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	if false && hasAccess(datasources.ConfigurationPageAccess) { // LOGZ.IO GRAFANA CHANGE :: hide datasources menu, should be done by altering permissions
+	if hasAccess(datasources.ConfigurationPageAccess) {
 		// Add new connection
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-add-new-connection",

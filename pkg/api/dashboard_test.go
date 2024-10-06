@@ -736,7 +736,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				},
 			}
 			getHS(&usertest.FakeUserService{
-				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
+				ExpectedUser: &user.User{ID: 1, Name: "test-user"}, // LOGZ.IO GRAFANA CHANGE :: DEV-43349 - user.Login to usr.Name as login field
 			}).callGetDashboardVersions(sc)
 
 			assert.Equal(t, http.StatusOK, sc.resp.Code)

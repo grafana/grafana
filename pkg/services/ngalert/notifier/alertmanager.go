@@ -122,9 +122,18 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		},
 	}
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
+	externalUrl := ""
+	if cfg.ParsedAppURL != nil {
+		externalUrl = cfg.ParsedAppURL.String()
+	} else {
+		externalUrl = cfg.AppURL
+	}
+	// LOGZ.IO GRAFANA CHANGE :: End
+
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
 		WorkingDirectory:   filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID))),
-		ExternalURL:        cfg.ParsedAppURL.String(), // LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
+		ExternalURL:        externalUrl, // LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
 		Silences:           silencesOptions,

@@ -1175,7 +1175,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/news/",
     "category": "",
-    "state": "beta",
+    "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",

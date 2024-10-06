@@ -124,9 +124,10 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
 				Name: "slack.title",
-				Text: fmt.Sprintf("http://localhost:9093/d/%s?orgId=%s",
-					DefaultAnnotations[alertingModels.DashboardUIDAnnotation],
-					DefaultAnnotations[alertingModels.OrgIDAnnotation]),
+				// LOGZ.IO GRAFANA CHANGE :: DEV-45707: remove org id query param from notification urls
+				Text: fmt.Sprintf("http://localhost:9093/d/%s",
+					DefaultAnnotations[alertingModels.DashboardUIDAnnotation]),
+				// LOGZ.IO GRAFANA CHANGE :: End
 			}},
 			Errors: nil,
 		},
@@ -140,10 +141,11 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
 				Name: "slack.title",
-				Text: fmt.Sprintf("http://localhost:9093/d/%s?orgId=%s&viewPanel=%s",
+				// LOGZ.IO GRAFANA CHANGE :: DEV-45707: remove org id query param from notification urls
+				Text: fmt.Sprintf("http://localhost:9093/d/%s?viewPanel=%s",
 					DefaultAnnotations[alertingModels.DashboardUIDAnnotation],
-					DefaultAnnotations[alertingModels.OrgIDAnnotation],
 					DefaultAnnotations[alertingModels.PanelIDAnnotation]),
+				// LOGZ.IO GRAFANA CHANGE :: End
 			}},
 			Errors: nil,
 		},
@@ -157,7 +159,7 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
 				Name: "slack.title",
-				Text: fmt.Sprintf("http://localhost:3000?orgId=%s", DefaultAnnotations[alertingModels.OrgIDAnnotation]),
+				Text: "http://localhost:3000", // LOGZ.IO GRAFANA CHANGE :: DEV-45707: remove org id query param from notification urls
 			}},
 			Errors: nil,
 		},

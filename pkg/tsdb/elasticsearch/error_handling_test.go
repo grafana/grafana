@@ -41,7 +41,14 @@ func TestErrorAvgMissingField(t *testing.T) {
 	require.NoError(t, err)
 
 	// FIXME: we should return the received error message
-	require.Len(t, result.response.Responses, 0)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43744 - Add error msg
+	require.Len(t, result.response.Responses, 1)
+	dataResponse, ok := result.response.Responses["A"]
+
+	require.True(t, ok)
+	require.Len(t, dataResponse.Frames, 0)
+	require.ErrorContains(t, dataResponse.Error, "got bad response status from datasource. StatusCode: 400")
+	// LOGZ.IO GRAFANA CHANGE :: End
 }
 
 func TestErrorAvgMissingFieldNoDetailedErrors(t *testing.T) {
@@ -69,7 +76,14 @@ func TestErrorAvgMissingFieldNoDetailedErrors(t *testing.T) {
 	require.NoError(t, err)
 
 	// FIXME: we should return the received error message
-	require.Len(t, result.response.Responses, 0)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43744 - Add error msg
+	require.Len(t, result.response.Responses, 1)
+	dataResponse, ok := result.response.Responses["A"]
+
+	require.True(t, ok)
+	require.Len(t, dataResponse.Frames, 0)
+	require.ErrorContains(t, dataResponse.Error, "got bad response status from datasource. StatusCode: 400")
+	// LOGZ.IO GRAFANA CHANGE :: End
 }
 
 func TestErrorTooManyDateHistogramBuckets(t *testing.T) {
