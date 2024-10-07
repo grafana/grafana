@@ -68,7 +68,10 @@ refs:
 
 # Table
 
-Tables are a highly flexible visualization designed to display data in columns and rows. They support various data types, including tables, time series, annotations, and raw JSON data. The table visualization can even take multiple data sets and provide the option to switch between them. With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
+Tables are a highly flexible visualization designed to display data in columns and rows.
+They support various data types, including tables, time series, annotations, and raw JSON data.
+The table visualization can even take multiple datasets and provide the option to switch between them.
+With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" alt="Table visualization" >}}
 
@@ -81,25 +84,32 @@ You can use a table visualization to show datasets such as:
 
 Any information you might want to put in a spreadsheet can often be best visualized in a table.
 
-Tables also provide different styles to visualize data inside the table cells such as colored text and cell backgrounds, gauges, sparklines, data links, JSON code, and images.
-
-## Configure a table visualization
-
-The following video provides a visual walkthrough of the options you can set in a table visualization. If you want to see a configuration in action, check out the video:
-
-{{< youtube id="PCY7O8EJeJY" >}}
-
-{{< docs/play title="Table Visualizations in Grafana" url="https://play.grafana.org/d/OhR1ID6Mk/" >}}
+Tables also provide different styles to visualize data inside the table cells, such as colored text and cell backgrounds, gauges, sparklines, data links, JSON code, and images.
 
 {{< admonition type="note" >}}
 Annotations and alerts are not currently supported for tables.
 {{< /admonition >}}
 
+## Configure a table visualization
+
+The following video provides a visual walkthrough of the options you can set in a table visualization.
+If you want to see a configuration in action, check out the video:
+
+{{< youtube id="PCY7O8EJeJY" >}}
+
+{{< docs/play title="Table Visualizations in Grafana" url="https://play.grafana.org/d/OhR1ID6Mk/" >}}
+
 ## Supported data formats
 
 The table visualization supports any data that has a column-row structure.
 
+{{< admonition type="note" >}}
+If you’re using a cell type such as sparkline or JSON, the data requirements may differ in a way that’s specific to that type. For more info refer to [Cell type](#cell-type).
+{{< /admonition >}}
+
 ### Example
+
+This example shows a basic dataset in which there's data for every table cell:
 
 ```
 Column1, Column2, Column3
@@ -108,7 +118,7 @@ value4 , value5 , value6
 value7 , value8 , value9
 ```
 
-If a cell is missing or the table cell-row structure is not complete, the table visualization won’t display any of the data:
+If a cell is missing or the table column-row structure is not complete, as in the following example, the table visualization won’t display any of the data:
 
 ```
 Column1, Column2, Column3
@@ -119,52 +129,64 @@ value4 , value5 , value6
 
 If you need to hide columns, you can do so using [data transformations](ref:data-transformation), [field overrides](#field-overrides), or by [building a query](ref:build-query) that returns only the needed columns.
 
-If you’re using a cell type such as sparkline or JSON, the data requirements may differ in a way that’s specific to that type. For more info refer to [Cell type](#cell-type).
-
 ## Debugging in tables
 
-The table visualization helps with debugging when you need to know exactly what results your query is returning and why other visualizations might not be working. This functionality is also accessible in most visualizations by toggling on the **Table view** switch at the top of the panel:
+The table visualization can help with debugging when you need to know exactly what results your query is returning and why other visualizations might not be working. This functionality is also accessible in most visualizations by toggling on the **Table view** switch at the top of the panel:
 
 ![The Table view switch](/media/docs/grafana/panels-visualizations/screenshot-table-view-on-11.2.png)
 
-## Turn on column filtering
+## Column filtering
+
+You can temporarily change how column data is displayed using column filtering.
+For example, you can show or hide specific values.
+
+### Turn on column filtering
+
+To turn on column filtering, follow these steps:
 
 1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
-1. On the table panel you want to filter, open the panel editor.
-1. Expand the the **Table** options section.
+1. Hover over any part of the panel to which you want to add the link to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. In the panel editor pane, expand the **Table** options section.
 1. Toggle on the [**Column filter** switch](#table-options).
 
-A filter icon appears next to each column title.
+A filter icon (funnel) appears next to each column title.
 
 {{< figure src="/static/img/docs/tables/column-filter-with-icon.png" max-width="350px" alt="Column filtering turned on" class="docs-image--no-shadow" >}}
 
 ### Filter column values
 
-To filter column values, click the filter (funnel) icon next to a column title. Grafana displays the filter options for that column.
+To filter column values, follow these steps:
 
-{{< figure src="/static/img/docs/tables/filter-column-values.png" max-width="300px" alt="Filter column values" class="docs-image--no-shadow" >}}
+1. Click the filter icon (funnel) next to a column title.
 
-Click the check box next to the values that you want to display. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
+   Grafana displays the filter options for that column.
 
-Choose from several operators to display column values:
+   {{< figure src="/static/img/docs/tables/filter-column-values.png" max-width="300px" alt="Filter column values" class="docs-image--no-shadow" >}}
 
-- **Contains** - Matches a regex pattern (operator by default).
-- **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
-- The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
+1. Click the checkbox next to the values that you want to display or click **Select all**.
+1. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
+1. Choose from several operators to display column values:
 
-Click the check box above the **Ok** and **Cancel** buttons to add or remove all displayed values to/from the filter.
+   - **Contains** - Matches a regex pattern (operator by default).
+   - **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
+   - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
+
+1. Click the checkbox above the **Ok** and **Cancel** buttons to add or remove all displayed values to and from the filter.
 
 ### Clear column filters
 
-Columns with filters applied have a blue funnel displayed next to the title.
+Columns with filters applied have a blue filter displayed next to the title.
 
 {{< figure src="/static/img/docs/tables/filtered-column.png" max-width="100px" alt="Filtered column" class="docs-image--no-shadow" >}}
 
-To remove the filter, click the blue funnel icon and then click **Clear filter**.
+To remove the filter, click the blue filter icon and then click **Clear filter**.
 
 ## Sort columns
 
-Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can sort multiple columns by holding the `shift` key and clicking the column name.
+Click a column title to change the sort order from default to descending to ascending.
+Each time you click, the sort order changes to the next option in the cycle.
+You can sort multiple columns by holding the `Shift` key and clicking the column name.
 
 {{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
@@ -173,6 +195,8 @@ Click a column title to change the sort order from default to descending to asce
 If the data queried contains multiple datasets, a table displays a drop-down list at the bottom, so you can select the dataset you want to visualize.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png" max-width="650px" alt="Table visualization with multiple datasets" class="docs-image--no-shadow" >}}
+
+<!-- is this only in edit mode? -->
 
 ## Configuration options
 
@@ -264,7 +288,7 @@ Toggle the **Apply to entire row** switch, to apply the background color that's 
 Cells can be displayed as a graphical gauge, with several different presentation types controlled by the gauge display mode and the value display.
 
 {{< admonition type="note" >}}
-The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole data set. If you don't want the max/min values to be pulled from the whole data set, you can configure them for each column with field overrides.
+The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole dataset. If you don't want the max/min values to be pulled from the whole dataset, you can configure them for each column with field overrides.
 {{< /admonition >}}
 
 ###### Gauge display mode
