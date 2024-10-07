@@ -101,9 +101,10 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
                   );
                 })
               ) : (
-                <EmptyState variant="call-to-action" message="You haven't created any bookmarks yet" image={false}>
+                <EmptyState variant="call-to-action" message="" image={false}>
                   <Trans i18nKey="trails.bookmarks.empty-state">
-                    Use the Explore Metrics bookmarks feature to save your panels as bookmarks
+                    You haven&apos;t created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your
+                    panels as bookmarks.
                   </Trans>
                 </EmptyState>
               )}
