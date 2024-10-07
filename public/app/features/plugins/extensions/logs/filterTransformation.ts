@@ -44,56 +44,19 @@ export function createFilterTransformation(filter: LogFilter): CustomTransformOp
               const extensionPointId = frame.fields[extensionPointIdIndex].values[index];
               const severity = frame.fields[severityIndex].values[index];
 
-              if (!isEmpty(filter.pluginIds) && filter.pluginIds?.has(pluginId)) {
-                if (!isEmpty(filter.extensionPointIds)) {
-                  if (!filter.extensionPointIds?.has(extensionPointId)) {
-                    continue;
-                  }
-                }
-
-                if (!isEmpty(filter.severity)) {
-                  if (!filter.severity?.has(severity)) {
-                    continue;
-                  }
-                }
-
-                copyRow(frame, target, index);
+              if (!isEmpty(filter.pluginIds) && !filter.pluginIds?.has(pluginId)) {
                 continue;
               }
 
-              if (!isEmpty(filter.extensionPointIds) && filter.extensionPointIds?.has(extensionPointId)) {
-                if (!isEmpty(filter.pluginIds)) {
-                  if (!filter.pluginIds?.has(pluginId)) {
-                    continue;
-                  }
-                }
-
-                if (!isEmpty(filter.severity)) {
-                  if (!filter.severity?.has(severity)) {
-                    continue;
-                  }
-                }
-
-                copyRow(frame, target, index);
+              if (!isEmpty(filter.extensionPointIds) && !filter.extensionPointIds?.has(extensionPointId)) {
                 continue;
               }
 
-              if (!isEmpty(filter.severity) && filter.severity?.has(severity)) {
-                if (!isEmpty(filter.pluginIds)) {
-                  if (!filter.pluginIds?.has(pluginId)) {
-                    continue;
-                  }
-                }
-
-                if (!isEmpty(filter.extensionPointIds)) {
-                  if (!filter.extensionPointIds?.has(extensionPointId)) {
-                    continue;
-                  }
-                }
-
-                copyRow(frame, target, index);
+              if (!isEmpty(filter.severity) && !filter.severity?.has(severity)) {
                 continue;
               }
+
+              copyRow(frame, target, index);
             }
 
             filtered.push(createDataFrame(target));
