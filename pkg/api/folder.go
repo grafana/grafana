@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -697,6 +699,7 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		return
 	}
 
+	fk8s.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	folderDTO, err := fk8s.newToFolderDto(c, *out)
 	if err != nil {
 		fk8s.writeError(c, err)
@@ -802,6 +805,18 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
+	toID := func(rawIdentifier string) (int64, error) {
+		parts := strings.Split(rawIdentifier, ":")
+		if len(parts) < 2 {
+			return 0, fmt.Errorf("invalid user identifier")
+		}
+		userID, err := strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("faild to parse user identifier")
+		}
+		return userID, nil
+	}
+
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
 		g, err := guardian.NewByFolder(c.Req.Context(), f, c.SignedInUser.GetOrgID(), c.SignedInUser)
 		if err != nil {
@@ -815,11 +830,19 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 
 		// Finding creator and last updater of the folder
 		updater, creator := anonString, anonString
-		if f.CreatedBy > 0 {
-			creator = fk8s.getUserLogin(ctx, f.CreatedBy)
+		if len(fDTO.CreatedBy) > 0 {
+			id, err := toID(fDTO.CreatedBy)
+			if err != nil {
+				return dtos.Folder{}, err
+			}
+			creator = fk8s.getUserLogin(ctx, id)
 		}
-		if f.UpdatedBy > 0 {
-			updater = fk8s.getUserLogin(ctx, f.UpdatedBy)
+		if len(fDTO.UpdatedBy) > 0 {
+			id, err := toID(fDTO.UpdatedBy)
+			if err != nil {
+				return dtos.Folder{}, err
+			}
+			updater = fk8s.getUserLogin(ctx, id)
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, f)
