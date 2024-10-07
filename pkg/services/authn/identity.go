@@ -74,10 +74,15 @@ type Identity struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken       string
 	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
+
+	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
 }
 
 // Access implements claims.AuthInfo.
 func (i *Identity) GetAccess() claims.AccessClaims {
+	if i.AccessTokenClaims != nil {
+		return authn.NewAccessClaims(*i.AccessTokenClaims)
+	}
 	return &identity.IDClaimsWrapper{Source: i}
 }
 

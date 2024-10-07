@@ -17,6 +17,10 @@ export interface AppEventEmitter {
 }
 
 export interface AppEventConsumer {
-  onAppEvent(name: string, callback: (event: IAngularEvent, ...args: any[]) => void, localScope?: any): void;
-  onAppEvent<T>(event: AppEvent<T>, callback: (event: IAngularEvent, ...args: any[]) => void, localScope?: any): void;
+  onAppEvent(name: string, callback: (event: IAngularEvent, ...args: unknown[]) => void, localScope?: any): void;
+  onAppEvent<T>(
+    event: AppEvent<T>,
+    callback: (event: IAngularEvent, ...args: unknown[]) => void,
+    localScope?: any
+  ): void;
 }

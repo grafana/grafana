@@ -11,7 +11,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
     return migrateOptions(panel);
   }
 
-  return panel.options as Options;
+  return panel.options;
 };
 
 function migrateOptions(panel: PanelModel): Options {

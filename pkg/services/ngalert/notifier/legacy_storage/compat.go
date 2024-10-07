@@ -11,9 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func NameToUid(name string) string {
-	return base64.RawURLEncoding.EncodeToString([]byte(name))
-}
+var NameToUid = models.NameToUid
 
 func UidToName(uid string) (string, error) {
 	data, err := base64.RawURLEncoding.DecodeString(uid)
@@ -32,13 +30,17 @@ func IntegrationToPostableGrafanaReceiver(integration *models.Integration) (*api
 		SecureSettings:        maps.Clone(integration.SecureSettings),
 	}
 
-	if len(integration.Settings) > 0 {
-		jsonBytes, err := json.Marshal(integration.Settings)
-		if err != nil {
-			return nil, err
-		}
-		postable.Settings = jsonBytes
+	// Alertmanager will fail validation with nil Settings , so ensure we always have at least an empty map.
+	settings := integration.Settings
+	if settings == nil {
+		settings = make(map[string]any)
 	}
+
+	jsonBytes, err := json.Marshal(settings)
+	if err != nil {
+		return nil, err
+	}
+	postable.Settings = jsonBytes
 	return postable, nil
 }
 

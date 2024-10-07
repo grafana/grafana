@@ -18,11 +18,11 @@ import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
 import { getAllRulesSourceNames, getRulesSourceUniqueKey, getApplicationFromRulesSource } from '../../utils/datasource';
 import { makeFolderAlertsLink } from '../../utils/misc';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import RulesFilter from '../rules/Filter/RulesFilter';
 import { NoRulesSplash } from '../rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../rules/RuleDetails';
 import { RuleListErrors } from '../rules/RuleListErrors';
 import { RuleStats } from '../rules/RuleStats';
-import RulesFilter from '../rules/RulesFilter';
 
 import { EvaluationGroupWithRules } from './EvaluationGroupWithRules';
 import Namespace from './Namespace';
@@ -101,7 +101,7 @@ const RuleList = withErrorBoundary(
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
         <RuleListErrors />
-        <RulesFilter onFilterCleared={onFilterCleared} />
+        <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (
           <>
             <div className={styles.break} />

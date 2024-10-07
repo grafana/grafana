@@ -906,7 +906,7 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
+	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

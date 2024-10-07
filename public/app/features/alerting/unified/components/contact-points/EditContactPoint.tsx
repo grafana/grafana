@@ -1,9 +1,9 @@
 import { RouteChildrenProps } from 'react-router-dom';
 
-import { Alert } from '@grafana/ui';
-import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { useGetContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { EditReceiverView } from '../receivers/EditReceiverView';
 
@@ -11,36 +11,35 @@ type Props = RouteChildrenProps<{ name: string }>;
 
 const EditContactPoint = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
-  const contactPointName = match?.params.name;
-  if (!contactPointName) {
-    return <EntityNotFound entity="Contact point" />;
-  }
+  const contactPointName = decodeURIComponent(match?.params.name!);
+  const {
+    isLoading,
+    error,
+    data: contactPoint,
+  } = useGetContactPoint({ name: contactPointName, alertmanager: selectedAlertmanager! });
 
-  if (isLoading && !data) {
-    return 'loading...';
+  if (isLoading) {
+    return <LoadingPlaceholder text="Loading..." />;
   }
 
   if (error) {
     return (
       <Alert severity="error" title="Failed to fetch contact point">
-        {String(error)}
+        {stringifyErrorLike(error)}
       </Alert>
     );
   }
 
-  if (!data) {
-    return null;
+  if (!contactPoint) {
+    return (
+      <Alert severity="error" title="Receiver not found">
+        {'Sorry, this contact point does not seem to exist.'}
+      </Alert>
+    );
   }
 
-  return (
-    <EditReceiverView
-      alertManagerSourceName={selectedAlertmanager!}
-      config={data}
-      receiverName={decodeURIComponent(contactPointName)}
-    />
-  );
+  return <EditReceiverView alertmanagerName={selectedAlertmanager!} contactPoint={contactPoint} />;
 };
 
 export default EditContactPoint;

@@ -62,8 +62,12 @@ For kubectl to work, grafana needs to run over https.  To simplify development, 
 app_mode = development
 
 [feature_toggles]
-grafanaAPIServerEnsureKubectlAccess = true 
+grafanaAPIServerEnsureKubectlAccess = true
 kubernetesPlaylists = true
+
+[unified_storage.playlists.playlist.grafana.app]
+dualWriterMode = 2
+dualWriterPeriodicDataSyncJobEnabled = true
 ```
 
 This will create a development kubeconfig and start a parallel ssl listener.  It can be registered by

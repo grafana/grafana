@@ -3,7 +3,7 @@ package util
 import (
 	"encoding/json"
 
-	"github.com/jmespath/go-jmespath"
+	"github.com/jmespath-community/go-jmespath"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
@@ -86,7 +86,7 @@ func searchJSONForAttr(attributePath string, data any) (any, error) {
 	}
 
 	// Copy the data to a new variable
-	var jsonData = data
+	jsonData := data
 
 	// If the data is a byte slice, try to unmarshal it into a JSON object
 	if dataBytes, ok := data.([]byte); ok {

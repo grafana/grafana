@@ -1,18 +1,25 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/authlib/claims"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/api/routing"
+	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -20,13 +27,43 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 const REDACTED = "redacted"
+
+func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authorize func(accesscontrol.Evaluator) web.Handler) {
+	// #TODO add back auth part
+	apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
+		idScope := dashboards.ScopeFoldersProvider.GetResourceScope(accesscontrol.Parameter(":id"))
+		uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
+		folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
+
+		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+			folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
+			folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
+			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
+			folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
+			folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
+
+			folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
+				folderPermissionRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
+				folderPermissionRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
+			})
+		})
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
+			// Use k8s client to implement legacy API
+			handler := newFolderK8sHandler(hs)
+			folderRoute.Post("/", handler.createFolder)
+		} else {
+			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
+		}
+	})
+}
 
 // swagger:route GET /folders folders getFolders
 //
@@ -171,10 +208,6 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	if err := hs.setDefaultFolderPermissions(c.Req.Context(), cmd.OrgID, cmd.SignedInUser, folder); err != nil {
-		hs.log.Error("Could not set the default folder permissions", "folder", folder.Title, "user", cmd.SignedInUser, "error", err)
-	}
-
 	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
 	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
@@ -186,36 +219,6 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 
 	// TODO set ParentUID if nested folders are enabled
 	return response.JSON(http.StatusOK, folderDTO)
-}
-
-func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
-	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
-		return nil
-	}
-
-	var permissions []accesscontrol.SetResourcePermissionCommand
-
-	if user.IsIdentityType(claims.TypeUser) {
-		userID, err := user.GetInternalID()
-		if err != nil {
-			return err
-		}
-
-		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-			UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
-		})
-	}
-
-	isNested := folder.ParentUID != ""
-	if !isNested || !hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-		}...)
-	}
-
-	_, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
-	return err
 }
 
 // swagger:route POST /folders/{folder_uid}/move folders moveFolder
@@ -618,4 +621,168 @@ type GetFolderDescendantCountsResponse struct {
 	// The response message
 	// in: body
 	Body folder.DescendantCounts `json:"body"`
+}
+
+type folderK8sHandler struct {
+	namespacer           request.NamespaceMapper
+	gvr                  schema.GroupVersionResource
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	// #TODO check if it makes more sense to move this to FolderAPIBuilder
+	accesscontrolService accesscontrol.Service
+}
+
+//-----------------------------------------------------------------------------------------
+// Folder k8s wrapper functions
+//-----------------------------------------------------------------------------------------
+
+func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
+	return &folderK8sHandler{
+		gvr:                  folderalpha1.FolderResourceInfo.GroupVersionResource(),
+		namespacer:           request.GetNamespaceMapper(hs.Cfg),
+		clientConfigProvider: hs.clientConfigProvider,
+		accesscontrolService: hs.accesscontrolService,
+	}
+}
+
+// #TODO uncomment when we reinstate their corresponding routes
+// func (fk8s *folderK8sHandler) searchFolders(c *contextmodel.ReqContext) {
+// 	client, ok := fk8s.getClient(c)
+// 	if !ok {
+// 		return // error is already sent
+// 	}
+// 	out, err := client.List(c.Req.Context(), v1.ListOptions{})
+// 	if err != nil {
+// 		fk8s.writeError(c, err)
+// 		return
+// 	}
+
+// 	query := strings.ToUpper(c.Query("query"))
+// 	folders := []folder.Folder{}
+// 	for _, item := range out.Items {
+// 		p := internalfolders.UnstructuredToLegacyFolder(item)
+// 		if p == nil {
+// 			continue
+// 		}
+// 		if query != "" && !strings.Contains(strings.ToUpper(p.Title), query) {
+// 			continue // query filter
+// 		}
+// 		folders = append(folders, *p)
+// 	}
+// 	c.JSON(http.StatusOK, folders)
+// }
+
+func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	cmd := folder.CreateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+	obj, err := internalfolders.LegacyCreateCommandToUnstructured(cmd)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	fk8s.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, f)
+}
+
+// func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
+// 	client, ok := fk8s.getClient(c)
+// 	if !ok {
+// 		return // error is already sent
+// 	}
+// 	uid := web.Params(c.Req)[":uid"]
+// 	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+// 	if err != nil {
+// 		fk8s.writeError(c, err)
+// 		return
+// 	}
+
+// 	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
+// 	if err != nil {
+// 		fk8s.writeError(c, err)
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, f)
+// }
+
+// func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
+// 	client, ok := fk8s.getClient(c)
+// 	if !ok {
+// 		return // error is already sent
+// 	}
+// 	uid := web.Params(c.Req)[":uid"]
+// 	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
+// 	if err != nil {
+// 		fk8s.writeError(c, err)
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, "")
+// }
+
+// func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
+// 	client, ok := fk8s.getClient(c)
+// 	if !ok {
+// 		return // error is already sent
+// 	}
+// 	uid := web.Params(c.Req)[":uid"]
+// 	cmd := folder.UpdateFolderCommand{}
+// 	if err := web.Bind(c.Req, &cmd); err != nil {
+// 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+// 		return
+// 	}
+// 	obj := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
+// 	obj.SetName(uid)
+// 	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
+// 	if err != nil {
+// 		fk8s.writeError(c, err)
+// 		return
+// 	}
+
+// 	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
+// 	if err != nil {
+// 		fk8s.writeError(c, err)
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, f)
+// }
+
+//-----------------------------------------------------------------------------------------
+// Utility functions
+//-----------------------------------------------------------------------------------------
+
+func (fk8s *folderK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	dyn, err := dynamic.NewForConfig(fk8s.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		c.JsonApiErr(500, "client", err)
+		return nil, false
+	}
+	return dyn.Resource(fk8s.gvr).Namespace(fk8s.namespacer(c.OrgID)), true
+}
+
+func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
+	//nolint:errorlint
+	statusError, ok := err.(*k8sErrors.StatusError)
+	if ok {
+		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
+		return
+	}
+	errhttp.Write(c.Req.Context(), err, c.Resp)
 }

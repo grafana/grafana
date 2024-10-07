@@ -37,7 +37,7 @@ import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames, getRulesDataSource } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
-import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo } from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
@@ -150,18 +150,6 @@ export function fetchPromAndRulerRulesAction({
     await dispatch(fetchPromRulesAction({ rulesSourceName, identifier, filter, limitAlerts, matcher, state }));
     if (dsConfig.rulerConfig) {
       await dispatch(fetchRulerRulesAction({ rulesSourceName }));
-    }
-  };
-}
-
-// this will only trigger ruler rules fetch if rules are not loaded yet and request is not in flight
-export function fetchRulerRulesIfNotFetchedYet(rulesSourceName: string): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const { rulerRules } = getStore().unifiedAlerting;
-    const resp = rulerRules[rulesSourceName];
-    const emptyResults = isEmpty(resp?.result);
-    if (emptyResults && !(resp && isRulerNotSupportedResponse(resp)) && !resp?.loading) {
-      dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
   };
 }
@@ -280,12 +268,15 @@ export function fetchAllPromAndRulerRulesAction(
   };
 }
 
-export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
+export function fetchAllPromRulesAction(
+  force = false,
+  options: FetchPromRulesRulesActionProps = {}
+): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const { promRules } = getStore().unifiedAlerting;
     getAllRulesSourceNames().map((rulesSourceName) => {
       if (force || !promRules[rulesSourceName]?.loading) {
-        dispatch(fetchPromRulesAction({ rulesSourceName }));
+        dispatch(fetchPromRulesAction({ rulesSourceName, ...options }));
       }
     });
   };
@@ -331,7 +322,14 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             );
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
-          thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
+          thunkAPI.dispatch(
+            alertmanagerApi.util.invalidateTags([
+              'AlertmanagerConfiguration',
+              'ContactPoint',
+              'ContactPointsStatus',
+              'Receiver',
+            ])
+          );
           if (redirectPath) {
             const options = new URLSearchParams(redirectSearch ?? '');
             locationService.push(makeAMLink(redirectPath, alertManagerSourceName, options));
@@ -343,36 +341,6 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
       }
     )
 );
-
-export const deleteReceiverAction = (receiverName: string, alertManagerSourceName: string): ThunkResult<void> => {
-  return async (dispatch) => {
-    const config = await dispatch(
-      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
-    ).unwrap();
-
-    if (!config) {
-      throw new Error(`Config for ${alertManagerSourceName} not found`);
-    }
-    if (!config.alertmanager_config.receivers?.find((receiver) => receiver.name === receiverName)) {
-      throw new Error(`Cannot delete receiver ${receiverName}: not found in config.`);
-    }
-    const newConfig: AlertManagerCortexConfig = {
-      ...config,
-      alertmanager_config: {
-        ...config.alertmanager_config,
-        receivers: config.alertmanager_config.receivers.filter((receiver) => receiver.name !== receiverName),
-      },
-    };
-    return dispatch(
-      updateAlertManagerConfigAction({
-        newConfig,
-        oldConfig: config,
-        alertManagerSourceName,
-        successMessage: 'Contact point deleted.',
-      })
-    );
-  };
-};
 
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',

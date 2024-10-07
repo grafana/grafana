@@ -32,8 +32,8 @@ func TestNamespaceMapper(t *testing.T) {
 		{
 			name:     "with stackId",
 			cfg:      "abc",
-			orgId:    123,       // ignored
-			expected: "stack-0", // we parse to int and default to 0
+			orgId:    123,        // ignored
+			expected: "stacks-0", // we parse to int and default to 0
 		},
 	}
 

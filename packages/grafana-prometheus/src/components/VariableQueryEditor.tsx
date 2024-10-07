@@ -2,7 +2,7 @@
 import debounce from 'debounce-promise';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect, InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 
@@ -286,7 +286,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
               <AsyncSelect
                 aria-label="label-select"
                 onChange={onLabelChange}
-                value={label}
+                value={label ? toOption(label) : null}
                 defaultOptions={truncatedLabelOptions}
                 width={25}
                 allowCustomValue
