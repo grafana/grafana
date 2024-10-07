@@ -18,6 +18,7 @@ export interface Props<T = string> extends Omit<FieldProps, 'children'> {
   saveErrorMessage?: string;
   /** Input that will save its value on change  */
   children: (onChange: (newValue: T) => void) => React.ReactElement;
+  mandatory?: boolean;
 }
 export function AutoSaveField<T = string>(props: Props<T>) {
   const {
