@@ -25,19 +25,19 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 	case "create":
 		fallthrough
 	case "update":
-		action = accesscontrol.EvalAny(
-			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite),
-		)
+		fallthrough
 	case "deletecollection":
 		fallthrough
 	case "delete":
 		action = accesscontrol.EvalAny(
 			accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsWrite),
+			accesscontrol.EvalPermission(accesscontrol.ActionAlertingRoutesWrite),
 		)
 	}
 
 	eval := accesscontrol.EvalAny(
 		accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsRead),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingRoutesRead),
 	)
 	if action != nil {
 		eval = accesscontrol.EvalAll(eval, action)
