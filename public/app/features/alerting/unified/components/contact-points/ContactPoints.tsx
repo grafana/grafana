@@ -12,6 +12,7 @@ import {
   TabContent,
   TabsBar,
   Text,
+  withErrorBoundary,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
@@ -243,10 +244,12 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
   );
 };
 
-export default function ContactPointsPage() {
+function ContactPointsPage() {
   return (
     <AlertmanagerPageWrapper navId="receivers" accessType="notification">
       <ContactPointsPageContents />
     </AlertmanagerPageWrapper>
   );
 }
+
+export default withErrorBoundary(ContactPointsPage, { style: 'page' });

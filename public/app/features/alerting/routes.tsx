@@ -136,7 +136,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: importAlertingComponent(
         () =>
           import(
-            /* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/components/contact-points/EditContactPoint'
+            /* webpackChunkName: "EditContactPoint" */ 'app/features/alerting/unified/components/contact-points/EditContactPoint'
           )
       ),
     },
@@ -159,7 +159,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: importAlertingComponent(
         () =>
           import(
-            /* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/components/contact-points/components/GlobalConfig'
+            /* webpackChunkName: "GlobalConfig" */ 'app/features/alerting/unified/components/contact-points/components/GlobalConfig'
           )
       ),
     },
