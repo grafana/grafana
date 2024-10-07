@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/timeinterval"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,274 +15,304 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestNotificationPolicyService(t *testing.T) {
-	t.Run("service gets policy tree from org's AM config", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
+func TestGetPolicyTree(t *testing.T) {
+	orgID := int64(1)
+	rev := getDefaultConfigRevision()
+	expectedVersion := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
 
-		tree, err := sut.GetPolicyTree(context.Background(), 1)
-		require.NoError(t, err)
+	sut, store, prov := createNotificationPolicyServiceSut()
+	store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+		return &rev, nil
+	}
+	expectedProvenance := models.ProvenanceAPI
+	prov.GetProvenanceFunc = func(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error) {
+		return models.ProvenanceAPI, nil
+	}
 
-		require.Equal(t, "grafana-default-email", tree.Receiver)
-	})
+	tree, version, err := sut.GetPolicyTree(context.Background(), orgID)
+	require.NoError(t, err)
 
-	t.Run("error if referenced mute time interval is not existing", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-		mockStore := &legacy_storage.MockAMConfigStore{}
-		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(mockStore)
-		cfg := createTestAlertingConfig()
-		cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
+	expectedRoute := *rev.Config.AlertmanagerConfig.Route
+	expectedRoute.Provenance = definitions.Provenance(models.ProvenanceAPI)
+	assert.Equal(t, expectedRoute, tree)
+	assert.Equal(t, expectedVersion, version)
+	assert.Equal(t, expectedProvenance, models.Provenance(tree.Provenance))
+
+	assert.Len(t, store.Calls, 1)
+	assert.Equal(t, "Get", store.Calls[0].Method)
+	assert.Equal(t, orgID, store.Calls[0].Args[1])
+
+	assert.Len(t, prov.Calls, 1)
+	assert.Equal(t, "GetProvenance", prov.Calls[0].MethodName)
+	assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
+	assert.Equal(t, orgID, prov.Calls[0].Arguments[2])
+}
+
+func TestUpdatePolicyTree(t *testing.T) {
+	orgID := int64(1)
+	rev := getDefaultConfigRevision()
+
+	defaultVersion := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
+
+	newRoute := definitions.Route{
+		Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+		Routes: []*definitions.Route{
 			{
-				Name:          "not-the-one-we-need",
-				TimeIntervals: []timeinterval.TimeInterval{},
+				Receiver: "",
+				MuteTimeIntervals: []string{
+					rev.Config.AlertmanagerConfig.TimeIntervals[0].Name,
+				},
+			},
+			{
+				Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			},
+		},
+	}
+
+	t.Run("ErrValidation if referenced mute time interval does not exist", func(t *testing.T) {
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+		newRoute := definitions.Route{
+			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			MuteTimeIntervals: []string{
+				"not-existing",
 			},
 		}
-		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
-		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
-			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		mockStore.EXPECT().
-			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
-			Return(nil)
-		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver:          "slack receiver",
-			MuteTimeIntervals: []string{"not-existing"},
-		})
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
-		require.Error(t, err)
-	})
-
-	t.Run("pass if referenced mute time interval is existing", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-		mockStore := &legacy_storage.MockAMConfigStore{}
-		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(mockStore)
-		cfg := createTestAlertingConfig()
-		cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
-			{
-				Name:          "existing",
-				TimeIntervals: []timeinterval.TimeInterval{},
-			},
-		}
-		cfg.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{
-			{
-				Name:          "existing-ti",
-				TimeIntervals: []timeinterval.TimeInterval{},
-			},
-		}
-		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
-		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
-			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		mockStore.EXPECT().
-			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
-			Return(nil)
-		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver:          "slack receiver",
-			MuteTimeIntervals: []string{"existing", "existing-ti"},
-		})
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
-		require.NoError(t, err)
-	})
-
-	t.Run("service stitches policy tree into org's AM config", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-
-		newRoute := createTestRoutingTree()
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
-		require.NoError(t, err)
-
-		updated, err := sut.GetPolicyTree(context.Background(), 1)
-		require.NoError(t, err)
-		require.Equal(t, "slack receiver", updated.Receiver)
-	})
-
-	t.Run("no root receiver will error", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-
-		newRoute := createTestRoutingTree()
-		newRoute.Receiver = ""
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver: "",
-		})
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
-		require.EqualError(t, err, "invalid object specification: root route must specify a default receiver")
-	})
-
-	t.Run("allow receiver inheritance", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-
-		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver: "",
-		})
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
-		require.NoError(t, err)
-	})
-
-	t.Run("not existing receiver reference will error", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-
-		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver: "not-existing",
-		})
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
-		require.Error(t, err)
-	})
-
-	t.Run("existing receiver reference will pass", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-		mockStore := &legacy_storage.MockAMConfigStore{}
-		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(mockStore)
-		cfg := createTestAlertingConfig()
-		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
-		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
-			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		mockStore.EXPECT().
-			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
-			Return(nil)
-		newRoute := createTestRoutingTree()
-		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
-			Receiver: "existing",
-		})
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
-		require.NoError(t, err)
-	})
-
-	t.Run("default provenance of records is none", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-
-		tree, err := sut.GetPolicyTree(context.Background(), 1)
-		require.NoError(t, err)
-
-		require.Equal(t, models.ProvenanceNone, models.Provenance(tree.Provenance))
-	})
-
-	t.Run("service returns upgraded provenance value", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-		newRoute := createTestRoutingTree()
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
-		require.NoError(t, err)
-
-		updated, err := sut.GetPolicyTree(context.Background(), 1)
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceAPI, models.Provenance(updated.Provenance))
-	})
-
-	t.Run("service respects concurrency token when updating", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-		fake := fakes.NewFakeAlertmanagerConfigStore(defaultAlertmanagerConfigJSON)
-		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(fake)
-		newRoute := createTestRoutingTree()
-		config, err := sut.configStore.Get(context.Background(), 1)
-		require.NoError(t, err)
-		expectedConcurrencyToken := config.ConcurrencyToken
-
-		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
-		require.NoError(t, err)
-
-		intercepted := fake.LastSaveCommand
-		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
-	})
-
-	t.Run("updating invalid route returns ValidationError", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-		invalid := createTestRoutingTree()
-		repeat := model.Duration(0)
-		invalid.RepeatInterval = &repeat
-
-		err := sut.UpdatePolicyTree(context.Background(), 1, invalid, models.ProvenanceNone)
-
-		require.Error(t, err)
+		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
 		require.ErrorIs(t, err, ErrValidation)
 	})
 
-	t.Run("deleting route replaces with default", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-
-		tree, err := sut.ResetPolicyTree(context.Background(), 1)
-
-		require.NoError(t, err)
-		require.Equal(t, "grafana-default-email", tree.Receiver)
-		require.Nil(t, tree.Routes)
-		require.Equal(t, []model.LabelName{models.FolderTitleLabel, model.AlertNameLabel}, tree.GroupBy)
+	t.Run("ErrValidation if root route has no receiver", func(t *testing.T) {
+		rev := getDefaultConfigRevision()
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+		newRoute := definitions.Route{
+			Receiver: "",
+		}
+		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		require.ErrorIs(t, err, ErrValidation)
 	})
 
-	t.Run("deleting route with missing default receiver restores receiver", func(t *testing.T) {
-		sut := createNotificationPolicyServiceSut()
-		mockStore := &legacy_storage.MockAMConfigStore{}
-		sut.configStore = legacy_storage.NewAlertmanagerConfigStore(mockStore)
-		cfg := createTestAlertingConfig()
-		cfg.AlertmanagerConfig.Route = &definitions.Route{
-			Receiver: "slack receiver",
+	t.Run("ErrValidation if referenced receiver does not exist", func(t *testing.T) {
+		rev := getDefaultConfigRevision()
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
 		}
-		cfg.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
-			{
-				Receiver: config.Receiver{
-					Name: "slack receiver",
+		newRoute := definitions.Route{
+			Receiver: "unknown",
+		}
+		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		require.ErrorIs(t, err, ErrValidation)
+
+		t.Run("including sub-routes", func(t *testing.T) {
+			newRoute := definitions.Route{
+				Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+				Routes: []*definitions.Route{
+					{Receiver: "unknown"},
 				},
-			},
-			// No default receiver! Only our custom one.
+			}
+			err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+			require.ErrorIs(t, err, ErrValidation)
+		})
+	})
+
+	t.Run("ErrVersionConflict if provided version does not match current", func(t *testing.T) {
+		rev := getDefaultConfigRevision()
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
 		}
-		data, _ := legacy_storage.SerializeAlertmanagerConfig(*cfg)
-		mockStore.On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
-			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
-		var interceptedSave = models.SaveAlertmanagerConfigurationCmd{}
-		mockStore.EXPECT().SaveSucceedsIntercept(&interceptedSave)
+		newRoute := definitions.Route{
+			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+		}
+		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, "wrong-version")
+		require.ErrorIs(t, err, ErrVersionConflict)
+	})
 
-		tree, err := sut.ResetPolicyTree(context.Background(), 1)
+	t.Run("updates Route and sets provenance in transaction if route is valid and version matches", func(t *testing.T) {
+		sut, store, prov := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+		expectedRev := getDefaultConfigRevision()
+		route := newRoute
+		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
+		expectedRev.Config.AlertmanagerConfig.Route = &route
 
+		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, defaultVersion)
 		require.NoError(t, err)
-		require.Equal(t, "grafana-default-email", tree.Receiver)
-		require.NotEmpty(t, interceptedSave.AlertmanagerConfiguration)
-		// Deserializing with no error asserts that the saved configStore is semantically valid.
-		newCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(interceptedSave.AlertmanagerConfiguration))
+
+		assert.Len(t, store.Calls, 2)
+		assert.Equal(t, "Save", store.Calls[1].Method)
+		assertInTransaction(t, store.Calls[1].Args[0].(context.Context))
+		assert.Equal(t, &expectedRev, store.Calls[1].Args[1])
+
+		assert.Len(t, prov.Calls, 1)
+		assert.Equal(t, "SetProvenance", prov.Calls[0].MethodName)
+		assertInTransaction(t, prov.Calls[0].Arguments[0].(context.Context))
+		assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
+		assert.Equal(t, orgID, prov.Calls[0].Arguments[2].(int64))
+		assert.Equal(t, models.ProvenanceAPI, prov.Calls[0].Arguments[3].(models.Provenance))
+	})
+
+	t.Run("bypasses optimistic concurrency if provided version is empty", func(t *testing.T) {
+		sut, store, prov := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+
+		expectedRev := getDefaultConfigRevision()
+		expectedRev.Config.AlertmanagerConfig.Route = &newRoute
+		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
+
+		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, "")
 		require.NoError(t, err)
-		require.Len(t, newCfg.AlertmanagerConfig.Receivers, 2)
+
+		assert.Len(t, store.Calls, 2)
+		assert.Equal(t, "Save", store.Calls[1].Method)
+		assertInTransaction(t, store.Calls[1].Args[0].(context.Context))
+		assert.Equal(t, &expectedRev, store.Calls[1].Args[1])
+
+		assert.Len(t, prov.Calls, 1)
+		assert.Equal(t, "SetProvenance", prov.Calls[0].MethodName)
+		assertInTransaction(t, prov.Calls[0].Arguments[0].(context.Context))
+		assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
+		assert.Equal(t, orgID, prov.Calls[0].Arguments[2].(int64))
+		assert.Equal(t, models.ProvenanceAPI, prov.Calls[0].Arguments[3].(models.Provenance))
 	})
 }
 
-func createNotificationPolicyServiceSut() *NotificationPolicyService {
+func TestResetPolicyTree(t *testing.T) {
+	orgID := int64(1)
+
+	currentRevision := getDefaultConfigRevision()
+	currentRevision.Config.AlertmanagerConfig.Route = &definitions.Route{
+		Receiver: "receiver",
+	}
+	currentRevision.Config.TemplateFiles = map[string]string{
+		"test": "test",
+	}
+	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []config.TimeInterval{
+		{
+			Name: "test",
+		},
+	}
+	currentRevision.Config.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
+		{
+			Receiver: config.Receiver{Name: "receiver"},
+			PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+				GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+					{
+						UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("Error if default config is invalid", func(t *testing.T) {
+		sut, _, _ := createNotificationPolicyServiceSut()
+		sut.settings = setting.UnifiedAlertingSettings{
+			DefaultConfiguration: "{",
+		}
+		_, err := sut.ResetPolicyTree(context.Background(), orgID)
+		require.ErrorContains(t, err, "failed to parse default alertmanager config")
+	})
+
+	t.Run("replaces route with one from the default config and copies receivers if do not exist", func(t *testing.T) {
+		defaultConfig := getDefaultConfigRevision().Config
+		data, err := legacy_storage.SerializeAlertmanagerConfig(*defaultConfig)
+		require.NoError(t, err)
+
+		sut, store, prov := createNotificationPolicyServiceSut()
+		sut.settings = setting.UnifiedAlertingSettings{
+			DefaultConfiguration: string(data),
+		}
+
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			data, err := legacy_storage.SerializeAlertmanagerConfig(*currentRevision.Config)
+			require.NoError(t, err)
+			cfg, err := legacy_storage.DeserializeAlertmanagerConfig(data)
+			require.NoError(t, err)
+			return &legacy_storage.ConfigRevision{
+				Config:           cfg,
+				ConcurrencyToken: util.GenerateShortUID(),
+			}, nil
+		}
+
+		expectedRev := currentRevision
+		expectedRev.Config.AlertmanagerConfig.Route = getDefaultConfigRevision().Config.AlertmanagerConfig.Route
+		expectedRev.Config.AlertmanagerConfig.Receivers = append(expectedRev.Config.AlertmanagerConfig.Receivers, getDefaultConfigRevision().Config.AlertmanagerConfig.Receivers[0])
+
+		tree, err := sut.ResetPolicyTree(context.Background(), orgID)
+		require.NoError(t, err)
+		assert.Equal(t, *defaultConfig.AlertmanagerConfig.Route, tree)
+
+		assert.Len(t, store.Calls, 2)
+		assert.Equal(t, "Save", store.Calls[1].Method)
+		assertInTransaction(t, store.Calls[1].Args[0].(context.Context))
+		resetRev := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
+		assert.Equal(t, expectedRev.Config.AlertmanagerConfig, resetRev.Config.AlertmanagerConfig)
+
+		assert.Len(t, prov.Calls, 1)
+		assert.Equal(t, "DeleteProvenance", prov.Calls[0].MethodName)
+		assertInTransaction(t, prov.Calls[0].Arguments[0].(context.Context))
+		assert.IsType(t, &definitions.Route{}, prov.Calls[0].Arguments[1])
+		assert.Equal(t, orgID, prov.Calls[0].Arguments[2])
+	})
+}
+
+func createNotificationPolicyServiceSut() (*NotificationPolicyService, *legacy_storage.AlertmanagerConfigStoreFake, *fakes.FakeProvisioningStore) {
+	prov := fakes.NewFakeProvisioningStore()
+	configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+		GetFn: func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			rev := getDefaultConfigRevision()
+			return &rev, nil
+		},
+	}
 	return &NotificationPolicyService{
-		configStore:     legacy_storage.NewAlertmanagerConfigStore(fakes.NewFakeAlertmanagerConfigStore(defaultAlertmanagerConfigJSON)),
-		provenanceStore: fakes.NewFakeProvisioningStore(),
+		configStore:     configStore,
+		provenanceStore: prov,
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
 		settings: setting.UnifiedAlertingSettings{
 			DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
 		},
-	}
+	}, configStore, prov
 }
 
-func createTestRoutingTree() definitions.Route {
-	return definitions.Route{
-		Receiver: "slack receiver",
+func getDefaultConfigRevision() legacy_storage.ConfigRevision {
+	return legacy_storage.ConfigRevision{
+		Config: &definitions.PostableUserConfig{
+			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+				Config: definition.Config{
+					Route: &definitions.Route{
+						Receiver: "test-receiver",
+					},
+					InhibitRules: nil,
+					TimeIntervals: []config.TimeInterval{
+						{
+							Name: "test-mute-interval",
+						},
+					},
+				},
+				Receivers: []*definitions.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "test-receiver",
+						},
+					},
+				},
+			},
+		},
+		ConcurrencyToken: util.GenerateShortUID(),
 	}
-}
-
-func createTestAlertingConfig() *definitions.PostableUserConfig {
-	cfg, _ := legacy_storage.DeserializeAlertmanagerConfig([]byte(setting.GetAlertmanagerDefaultConfiguration()))
-	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
-		&definitions.PostableApiReceiver{
-			Receiver: config.Receiver{
-				// default one from createTestRoutingTree()
-				Name: "slack receiver",
-			},
-		})
-	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers,
-		&definitions.PostableApiReceiver{
-			Receiver: config.Receiver{
-				Name: "existing",
-			},
-		})
-	return cfg
 }
