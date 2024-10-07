@@ -50,13 +50,47 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructu
 	return obj
 }
 
-func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
+func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *folder.Folder {
+	// #TODO reduce duplication of the different conversion functions
 	spec := item.Object["spec"].(map[string]any)
-	return &folder.Folder{
-		UID:   item.GetName(),
-		Title: spec["title"].(string),
-		// #TODO add other fields
+	uid := item.GetName()
+	title := spec["title"].(string)
+
+	meta, err := utils.MetaAccessor(&item)
+	if err != nil {
+		return nil
 	}
+
+	id, err := getLegacyID(meta)
+	if err != nil {
+		return nil
+	}
+
+	created, err := getCreated(meta)
+	if err != nil {
+		return nil
+	}
+
+	// avoid panic
+	var createdTime time.Time
+	if created != nil {
+		createdTime = created.Local()
+	}
+
+	f := &folder.Folder{
+		UID:       uid,
+		Title:     title,
+		ID:        id,
+		ParentUID: meta.GetFolder(),
+		// #TODO add created by field if necessary
+		// CreatedBy: meta.GetCreatedBy(),
+		// UpdatedBy: meta.GetCreatedBy(),
+		URL:     getURL(meta, title),
+		Created: createdTime,
+		Updated: createdTime,
+		OrgID:   orgID,
+	}
+	return f
 }
 
 func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder, error) {
