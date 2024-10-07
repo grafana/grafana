@@ -9,6 +9,7 @@ export interface LoadingBarProps {
   width: number;
   delay?: number;
   ariaLabel?: string;
+  newProp: boolean;
 }
 
 const BAR_WIDTH = 28;
