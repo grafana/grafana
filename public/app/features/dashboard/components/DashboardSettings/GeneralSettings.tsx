@@ -39,6 +39,7 @@ export function GeneralSettingsUnconnected({
   updateTimeZone,
   updateWeekStart,
   sectionNav,
+  toolbar,
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
@@ -119,7 +120,7 @@ export function GeneralSettingsUnconnected({
   ];
 
   return (
-    <Page navModel={sectionNav} pageNav={pageNav}>
+    <Page navModel={sectionNav} pageNav={pageNav} toolbar={toolbar}>
       <div style={{ maxWidth: '600px' }}>
         <Box marginBottom={5}>
           <Field

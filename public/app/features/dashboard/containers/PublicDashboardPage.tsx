@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
@@ -27,7 +27,10 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
 
-export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;
+export type Props = Omit<
+  GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>,
+  'match' | 'history'
+>;
 
 const selectors = e2eSelectors.pages.PublicDashboard;
 
@@ -53,11 +56,12 @@ const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
 };
 
 const PublicDashboardPage = (props: Props) => {
-  const { route, location } = props;
+  const { route } = props;
+  const location = useLocation();
   const { accessToken } = useParams();
   const dispatch = useDispatch();
   const context = useGrafana();
-  const prevProps = usePrevious(props);
+  const prevProps = usePrevious({ ...props, location });
   const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel();

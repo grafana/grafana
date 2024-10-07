@@ -3,6 +3,7 @@ package cloudmigrationimpl
 import (
 	"context"
 	cryptoRand "crypto/rand"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/crypto/nacl/box"
@@ -38,9 +40,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	libraryElements, err := s.getLibraryElementsCommands(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get library elements", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashs)+len(folders),
+		len(dataSources)+len(dashs)+len(folders)+len(libraryElements),
 	)
 
 	for _, ds := range dataSources {
@@ -75,6 +83,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: f.UID,
 			Name:  f.Title,
 			Data:  f,
+		})
+	}
+
+	for _, libraryElement := range libraryElements {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.LibraryElementDataType,
+			RefID: libraryElement.UID,
+			Name:  libraryElement.Name,
+			Data:  libraryElement,
 		})
 	}
 
@@ -169,6 +186,60 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	return dashboardCmds, folderCmds, nil
 }
 
+type libraryElement struct {
+	FolderUID *string         `json:"folderUid"`
+	Name      string          `json:"name"`
+	UID       string          `json:"uid"`
+	Model     json.RawMessage `json:"model"`
+	Kind      int64           `json:"kind"`
+}
+
+// getLibraryElementsCommands returns the json payloads required by the library elements creation API
+func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]libraryElement, error) {
+	const perPage = 100
+
+	cmds := make([]libraryElement, 0)
+
+	page := 1
+	count := 0
+
+	for {
+		query := libraryelements.SearchLibraryElementsQuery{
+			PerPage: perPage,
+			Page:    page,
+		}
+
+		libraryElements, err := s.libraryElementsService.GetAllElements(ctx, signedInUser, query)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get all library elements: %w", err)
+		}
+
+		for _, element := range libraryElements.Elements {
+			var folderUID *string
+			if len(element.FolderUID) > 0 {
+				folderUID = &element.FolderUID
+			}
+
+			cmds = append(cmds, libraryElement{
+				FolderUID: folderUID,
+				Name:      element.Name,
+				Model:     element.Model,
+				Kind:      element.Kind,
+				UID:       element.UID,
+			})
+		}
+
+		page += 1
+		count += libraryElements.PerPage
+
+		if len(libraryElements.Elements) == 0 || count >= int(libraryElements.TotalCount) {
+			break
+		}
+	}
+
+	return cmds, nil
+}
+
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
 func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedInUser, maxItemsPerPartition uint32, metadata []byte, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
 	// TODO -- make sure we can only build one snapshot at a time
@@ -229,6 +300,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	for _, resourceType := range []cloudmigration.MigrateDataType{
 		cloudmigration.DatasourceDataType,
 		cloudmigration.FolderDataType,
+		cloudmigration.LibraryElementDataType,
 		cloudmigration.DashboardDataType,
 	} {
 		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {

@@ -1,21 +1,17 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { useEffectOnce } from 'react-use';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { locationService } from '@grafana/runtime';
 import { Dashboard, DashboardCursorSync, FieldConfigSource, ThresholdsMode, Panel } from '@grafana/schema/src';
 import config from 'app/core/config';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import * as appTypes from 'app/types';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
-import { SafeDynamicImport } from '../../../core/components/DynamicImports/SafeDynamicImport';
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardModel } from '../state';
@@ -55,53 +51,38 @@ jest.mock('app/types', () => ({
   useDispatch: () => jest.fn(),
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useParams: jest.fn().mockReturnValue({ accessToken: 'an-access-token' }),
-}));
-
 const setup = (propOverrides?: Partial<Props>, initialState?: Partial<appTypes.StoreState>) => {
-  const context = getGrafanaContextMock();
   const store = configureStore(initialState);
   const props: Props = {
     ...getRouteComponentProps({
       route: {
         routeName: DashboardRoutes.Public,
         path: '/public-dashboards/:accessToken',
-        component: SafeDynamicImport(
-          () =>
-            import(/* webpackChunkName: "PublicDashboardPage"*/ 'app/features/dashboard/containers/PublicDashboardPage')
-        ),
+        component: () => null,
       },
     }),
   };
 
   Object.assign(props, propOverrides);
 
-  const { unmount, rerender } = render(
-    <GrafanaContext.Provider value={context}>
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <PublicDashboardPage {...props} />
-        </Router>
-      </Provider>
-    </GrafanaContext.Provider>
+  render(
+    <Routes>
+      <Route path="/public-dashboards/:accessToken" element={<PublicDashboardPage {...props} />} />
+    </Routes>,
+    { store, historyOptions: { initialEntries: [`/public-dashboards/an-access-token`] } }
   );
 
   const wrappedRerender = (newProps: Partial<Props>) => {
     Object.assign(props, newProps);
-    return rerender(
-      <GrafanaContext.Provider value={context}>
-        <Provider store={store}>
-          <Router history={locationService.getHistory()}>
-            <PublicDashboardPage {...props} />
-          </Router>
-        </Provider>
-      </GrafanaContext.Provider>
+    return render(
+      <Routes>
+        <Route path="/public-dashboards/:accessToken" element={<PublicDashboardPage {...props} />} />
+      </Routes>,
+      { store, historyOptions: { initialEntries: [`/public-dashboards/an-access-token`] } }
     );
   };
 
-  return { rerender: wrappedRerender, unmount };
+  return { rerender: wrappedRerender };
 };
 
 const selectors = e2eSelectors.components;
