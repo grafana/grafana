@@ -74,16 +74,28 @@ func (d *DualWriterMode3) Create(ctx context.Context, in runtime.Object, createV
 	createdCopy := storageObj.DeepCopyObject()
 
 	//nolint:errcheck
-	go d.createOnLegacyStorage(ctx, createdCopy, createValidation, options)
+	go d.createOnLegacyStorage(ctx, in, createdCopy, createValidation, options)
 
 	return storageObj, errObjectSt
 }
 
-func (d *DualWriterMode3) createOnLegacyStorage(ctx context.Context, storageObj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) error {
+func (d *DualWriterMode3) createOnLegacyStorage(ctx context.Context, in, storageObj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) error {
 	var method = "create"
 	log := d.Log.WithValues("method", method)
 	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("legacy create timeout"))
 	defer cancel()
+
+	accStorage, err := meta.Accessor(storageObj)
+	if err != nil {
+		return err
+	}
+
+	accIn, err := meta.Accessor(in)
+	if err != nil {
+		return err
+	}
+
+	accIn.SetUID(accStorage.GetUID())
 
 	startLegacy := time.Now()
 	legacyObj, err := d.Legacy.Create(ctx, storageObj, createValidation, options)
