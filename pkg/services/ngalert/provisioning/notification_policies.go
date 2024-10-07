@@ -213,10 +213,12 @@ func writeToHash(sum hash.Hash, r *definitions.Route) error {
 		}
 	}
 	writeDuration := func(d *model.Duration) {
-		if d != nil {
-			writeInt(int64(*d))
+		if d == nil {
+			_, _ = sum.Write([]byte{255})
 		} else {
-			writeInt(0)
+			binary.LittleEndian.PutUint64(tmp, uint64(*d))
+			_, _ = sum.Write(tmp)
+			_, _ = sum.Write([]byte{255})
 		}
 	}
 
