@@ -1478,6 +1478,7 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "dashboard-load-error": "Unable to load dashboard",
       "error-library-element-sub": "Library Element {uid}",
       "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
