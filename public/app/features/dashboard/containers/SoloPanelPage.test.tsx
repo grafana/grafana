@@ -72,12 +72,6 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
           ...getRouteComponentProps({
-            match: {
-              params: { slug: 'my-dash', uid: '11' },
-              isExact: false,
-              path: '',
-              url: '',
-            },
             queryParams: {
               panelId: '1',
             },
