@@ -9452,6 +9452,9 @@
           "orientation": {
             "type": "string"
           },
+          "pdfShowTemplateVariables": {
+            "type": "boolean"
+          },
           "timeRange": {
             "$ref": "#/components/schemas/ReportTimeRange"
           }
