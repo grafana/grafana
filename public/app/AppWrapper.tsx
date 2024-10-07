@@ -56,7 +56,6 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
 
   renderRoute = (route: RouteDescriptor) => {
     const roles = route.roles ? route.roles() : [];
-    const location = locationService.getLocation();
     return (
       <CompatRoute
         exact={route.exact === undefined ? true : route.exact}
@@ -64,6 +63,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         path={route.path}
         key={route.path}
         render={(props: RouteComponentProps) => {
+          const location = locationService.getLocation();
           // TODO[Router]: test this logic
           if (roles?.length) {
             if (!roles.some((r: string) => contextSrv.hasRole(r))) {
