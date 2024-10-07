@@ -34,7 +34,6 @@ func (s *searchHTTPService) RegisterHTTPRoutes(storageRoute routing.RouteRegiste
 func (s *searchHTTPService) doQuery(c *contextmodel.ReqContext) response.Response {
 	searchReadinessCheckResp := s.search.IsReady(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if !searchReadinessCheckResp.IsReady {
-
 		return response.JSON(http.StatusOK, &backend.DataResponse{
 			Frames: []*data.Frame{{
 				Name: "Loading",
