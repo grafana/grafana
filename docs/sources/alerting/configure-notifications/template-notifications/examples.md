@@ -337,9 +337,9 @@ Template alert notifications based on a label. In this example the label represe
 
 Though the way alerts are processed remains largely uniform across contact points, the templates are tailored to suit the unique characteristics of each platform. Each contact point has its own formatting standards, interaction methods, and message presentation styles. These templates are customized to ensure that alerts are displayed effectively and aligned with the communication model of each platform, delivering a cohesive user experience across different channels.
 
-#### Email
+### Email
 
-### Template the subject of an email
+#### Template the subject of an email
 
 Template the subject of an email to contain the number of firing and resolved alerts:
 
@@ -361,7 +361,7 @@ Template the subject of an email to contain the number of firing and resolved al
    {{ template "email.subject" . }}
    ```
 
-### Template the message of an email
+#### Template the message of an email
 
 Template the message of an email to contain a summary of all firing and resolved alerts:
 
@@ -414,7 +414,7 @@ Resolved alerts:
    {{ template "email.message" . }}
    ```
 
-### Group multiple alert instances into one email notification
+#### Group multiple alert instances into one email notification
 
 To make alerts more concise, you can group multiple instances of a firing alert into a single email notification in a table format. This way, you avoid long, repetitive emails and make alerts easier to digest.
 
@@ -460,8 +460,8 @@ Follow these steps to create a custom notification template that consolidates al
 
    This generates a neatly formatted table in the email, grouping information for all affected servers into a single notification.
 
-#### Slack
-### Template the title of a Slack message
+### Slack
+#### Template the title of a Slack message
 
 Template the title of a Slack message to contain the number of firing and resolved alerts:
 
@@ -483,7 +483,7 @@ Template the title of a Slack message to contain the number of firing and resolv
    {{ template "slack.title" . }}
    ```
 
-### Template the content of a Slack message
+#### Template the content of a Slack message
 
 Template the content of a Slack message to contain a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL.
 
