@@ -50,7 +50,7 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructu
 	return obj
 }
 
-func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
+func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *folder.Folder {
 	// #TODO reduce duplication of the different conversion functions
 	spec := item.Object["spec"].(map[string]any)
 	uid := item.GetName()
@@ -88,6 +88,7 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
 		URL:     getURL(meta, title),
 		Created: createdTime,
 		Updated: createdTime,
+		OrgID:   orgID,
 	}
 	return f
 }
