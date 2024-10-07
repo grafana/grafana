@@ -1,12 +1,13 @@
 import * as React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -188,6 +189,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const showButtons = model.versions.length > 1;
   const hasMore = model.versions.length >= model.limit;
   const isLastPage = model.versions.find((rev) => rev.version === 1);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const viewModeCompare = (
     <>
@@ -237,8 +239,13 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   );
 
   return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
+    <Page
+      navModel={navModel}
+      pageNav={pageNav}
+      layout={PageLayoutType.Standard}
+      toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
+    >
+      {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
       {viewMode === 'compare' ? viewModeCompare : viewModeList}
     </Page>
   );

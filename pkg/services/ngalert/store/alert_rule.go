@@ -274,9 +274,64 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
+
+			for _, rule := range ruleVersions {
+				// delete old versions of alert rule
+				_, err = st.deleteOldAlertRuleVersions(ctx, rule.RuleUID, rule.RuleOrgID, st.Cfg.RuleVersionRecordLimit)
+				if err != nil {
+					st.Logger.Warn("Failed to delete old alert rule versions", "org", rule.RuleOrgID, "rule", rule.RuleUID, "error", err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID int64, limit int) (int64, error) {
+	if limit < 0 {
+		return 0, fmt.Errorf("failed to delete old alert rule versions: limit is set to '%d' but needs to be > 0", limit)
+	}
+
+	if limit < 1 {
+		return 0, nil
+	}
+
+	var affectedRows int64
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		highest := &alertRuleVersion{}
+		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).Limit(1, limit).Get(highest)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			// No alert rule versions past the limit exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
+		res, err := sess.Exec(`
+			DELETE FROM
+				alert_rule_version
+			WHERE
+				rule_org_id = ? AND rule_uid = ?
+			AND
+				id <= ?
+		`, orgID, ruleUID, highest.ID)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		affectedRows = rows
+		if affectedRows > 0 {
+			st.Logger.Info("Deleted old alert_rule_version(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
 		}
 		return nil
 	})
+	return affectedRows, err
 }
 
 // preventIntermediateUniqueConstraintViolations prevents unique constraint violations caused by an intermediate update.
@@ -352,7 +407,7 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
+func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, _ identity.Requester) (int64, error) {
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
@@ -824,21 +879,45 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 	return sess.And(fmt.Sprintf("notification_settings %s ?", st.SQLStore.GetDialect().LikeStr()), "%"+search+"%"), nil
 }
 
-func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
+func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(ngmodels.Provenance) bool, dryRun bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
 	// fetch entire rules because Update method requires it because it copies rules to version table
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:        orgID,
 		ReceiverName: oldReceiver,
 	})
 	if err != nil {
-		return 0, err
+		return nil, nil, err
 	}
 	if len(rules) == 0 {
-		return 0, nil
+		return nil, nil, nil
 	}
 
+	provenances, err := st.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var invalidProvenance []ngmodels.AlertRuleKey
+	result := make([]ngmodels.AlertRuleKey, 0, len(rules))
 	updates := make([]ngmodels.UpdateRule, 0, len(rules))
 	for _, rule := range rules {
+		provenance, ok := provenances[rule.UID]
+		if !ok {
+			provenance = ngmodels.ProvenanceNone
+		}
+		if !validateProvenance(provenance) {
+			invalidProvenance = append(invalidProvenance, rule.GetKey())
+		}
+		if len(invalidProvenance) > 0 { // do not do any fixes if there is at least one rule with not allowed provenance
+			continue
+		}
+
+		result = append(result, rule.GetKey())
+
+		if dryRun {
+			continue
+		}
+
 		r := ngmodels.CopyRule(rule)
 		for idx := range r.NotificationSettings {
 			if r.NotificationSettings[idx].Receiver == oldReceiver {
@@ -851,7 +930,13 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 			New:      *r,
 		})
 	}
-	return len(updates), st.UpdateAlertRules(ctx, updates)
+	if len(invalidProvenance) > 0 {
+		return nil, invalidProvenance, nil
+	}
+	if dryRun {
+		return result, nil, nil
+	}
+	return result, nil, st.UpdateAlertRules(ctx, updates)
 }
 
 // RenameTimeIntervalInNotificationSettings renames all rules that use old time interval name to the new name.

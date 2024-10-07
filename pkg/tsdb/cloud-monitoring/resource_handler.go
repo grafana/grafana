@@ -386,7 +386,7 @@ func writeResponseBytes(rw http.ResponseWriter, code int, msg []byte) {
 	rw.WriteHeader(code)
 	_, err := rw.Write(msg)
 	if err != nil {
-		backend.Logger.Error("Unable to write HTTP response", "error", err)
+		backend.Logger.Error("Unable to write HTTP response", "error", err, "statusSource", backend.ErrorSourceDownstream)
 	}
 }
 

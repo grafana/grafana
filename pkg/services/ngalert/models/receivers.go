@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,6 +39,12 @@ type ListReceiversQuery struct {
 	Names  []string
 	Limit  int
 	Offset int
+}
+
+// ReceiverMetadata contains metadata about a receiver's usage in routes and rules.
+type ReceiverMetadata struct {
+	InUseByRules  []AlertRuleKey
+	InUseByRoutes int
 }
 
 // Receiver is the domain model representation of a receiver / contact point.
@@ -551,6 +558,10 @@ type Identified interface {
 
 func (r *Receiver) GetUID() string {
 	return r.UID
+}
+
+func NameToUid(name string) string {
+	return base64.RawURLEncoding.EncodeToString([]byte(name))
 }
 
 func (r *Receiver) Fingerprint() string {

@@ -1,6 +1,7 @@
 [run]
 timeout = "20m"
 concurrency = 10
+allow-parallel-runners = true
 
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
@@ -151,6 +152,17 @@ deny = [
 files = [
   "./pkg/storage/unified/apistore/*",
   "./pkg/storage/unified/apistore/**/*"
+]
+
+[linters-settings.depguard.rules.apps-playlist]
+list-mode = "lax"
+allow = []
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apps/playlist is not allowed to import grafana core" }
+]
+files = [
+  "./apps/playlist/*",
+  "./apps/playlist/**/*"
 ]
 
 [linters-settings.gocritic]

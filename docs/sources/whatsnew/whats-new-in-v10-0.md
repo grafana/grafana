@@ -225,7 +225,7 @@ With this update, we've made the following improvements:
 
 To try it out, enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
-To learn more, refer to our [public dashboards documentation]({{< relref "../dashboards/dashboard-public" >}}).
+To learn more, refer to our [public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
 
 ### Public dashboards insights
 
@@ -255,7 +255,7 @@ This feature will have a cost by active users after being promoted into general 
 
 {{% /admonition %}}
 
-To learn more, refer to our [public dashboards documentation]({{< relref "../dashboards/dashboard-public" >}}).
+To learn more, refer to our [public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
 
 ## Authentication and authorization
 

@@ -14,17 +14,35 @@ import (
 
 var errInvalidUTF8Sequence = errors.New("invalid UTF-8 sequence")
 
+type confGetter interface {
+	Err() error
+	Bool(key string) bool
+	String(key string) string
+}
+
+func newConfGetter(ds *setting.DynamicSection, keyPrefix string) confGetter {
+	return &sectionGetter{
+		ds:        ds,
+		keyPrefix: keyPrefix,
+	}
+}
+
 type sectionGetter struct {
-	*setting.DynamicSection
-	err error
+	ds        *setting.DynamicSection
+	keyPrefix string
+	err       error
 }
 
 func (g *sectionGetter) Err() error {
 	return g.err
 }
 
+func (g *sectionGetter) Bool(key string) bool {
+	return g.ds.Key(g.keyPrefix + key).MustBool(false)
+}
+
 func (g *sectionGetter) String(key string) string {
-	v := g.DynamicSection.Key(key).MustString("")
+	v := g.ds.Key(g.keyPrefix + key).MustString("")
 	if !utf8.ValidString(v) {
 		g.err = fmt.Errorf("value for key %q: %w", key, errInvalidUTF8Sequence)
 
