@@ -7,7 +7,7 @@ import { ComboboxOption } from './Combobox';
 import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from './getComboboxStyles';
 
 // Only consider the first n items when calculating the width of the popover.
-const WIDTH_CALCULATION_LIMIT_ITEMS = 1000;
+const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 
 /**
  * Used with Downshift to get the height of each item
