@@ -16,11 +16,11 @@ interface GroupProps extends PropsWithChildren {
   onToggle: () => void;
 }
 
-export const Group = ({
+export const ListGroup = ({
   name,
   description,
   onToggle,
-  isOpen = false,
+  isOpen = true,
   metaRight = null,
   actions = null,
   children,
@@ -76,7 +76,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   headerWrapper: css({
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
 
     background: theme.colors.background.secondary,
 

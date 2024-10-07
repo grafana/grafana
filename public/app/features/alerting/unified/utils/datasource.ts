@@ -55,6 +55,10 @@ export function getRulesDataSource(rulesSourceName: string) {
   return getRulesDataSources().find((x) => x.name === rulesSourceName);
 }
 
+export function getRulesDataSourceByUID(uid: string) {
+  return getRulesDataSources().find((x) => x.uid === uid);
+}
+
 export function getAlertManagerDataSources() {
   return getAllDataSources()
     .filter(isAlertmanagerDataSourceInstance)
@@ -207,6 +211,20 @@ export function getAllRulesSources(): RulesSource[] {
   return availableRulesSources;
 }
 
+interface RulesSourceIdentifier {
+  uid: string;
+}
+
+export function getAllRulesSourcesIdentifiers(): RulesSourceIdentifier[] {
+  return getAllRulesSources().map((r) => {
+    if (isGrafanaRulesSource(r)) {
+      return { uid: 'grafana' };
+    } else {
+      return { uid: r.uid };
+    }
+  });
+}
+
 export function getRulesSourceName(rulesSource: RulesSource): string {
   return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
 }
@@ -295,13 +313,13 @@ export function getApplicationFromRulesSource(rulesSource: RulesSource): RulesSo
     return 'grafana';
   }
 
+  if (rulesSource.type === 'loki') {
+    return 'loki';
+  }
+
   // @TODO use buildinfo
   if ('prometheusType' in rulesSource.jsonData) {
     return rulesSource.jsonData?.prometheusType ?? PromApplication.Prometheus;
-  }
-
-  if (rulesSource.type === 'loki') {
-    return 'loki';
   }
 
   return PromApplication.Prometheus; // assume Prometheus if nothing matches

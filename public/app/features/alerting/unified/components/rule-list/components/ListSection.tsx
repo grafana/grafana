@@ -65,18 +65,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `solid 1px ${theme.colors.border.weak}`,
     borderBottom: 'none',
 
-    marginLeft: theme.spacing(3),
+    marginLeft: theme.spacing(2),
 
-    '&:before': {
-      content: "''",
-      position: 'absolute',
-      height: '100%',
+    // '&:before': {
+    //   content: "''",
+    //   position: 'absolute',
+    //   height: '100%',
 
-      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    //   borderLeft: `solid 1px ${theme.colors.border.weak}`,
 
-      marginTop: 0,
-      marginLeft: `-${theme.spacing(2.5)}`,
-    },
+    //   marginTop: 0,
+    //   marginLeft: `-${theme.spacing(1.5)}`,
+    // },
   }),
   wrapper: css({
     display: 'flex',
@@ -85,11 +85,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
   }),
   sectionTitle: css({
-    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
-
-    background: theme.colors.background.secondary,
-
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    padding: `${theme.spacing(0)} ${theme.spacing(1)}`,
+    // background: theme.colors.background.secondary,
+    // border: `solid 1px ${theme.colors.border.weak}`,
+    // borderRadius: theme.shape.radius.default,
   }),
 });

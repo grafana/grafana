@@ -1,8 +1,8 @@
+import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 
-import { AlertmanagerApiFeatures, PromApplication } from '../../../../types/unified-alerting-dto';
-import { withPerformanceLogging } from '../Analytics';
-import { getRulesDataSource, isGrafanaRulesSource } from '../utils/datasource';
+import { AlertmanagerApiFeatures, PromApiFeatures, PromApplication } from '../../../../types/unified-alerting-dto';
+import { getRulesDataSource, getRulesDataSourceByUID, isGrafanaRulesSource } from '../utils/datasource';
 
 import { alertingApi } from './alertingApi';
 import { discoverAlertmanagerFeatures, discoverFeatures } from './buildInfo';
@@ -25,36 +25,57 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
       },
     }),
 
-    discoverDsFeatures: build.query<{ rulerConfig?: RulerDataSourceConfig }, { rulesSourceName: string }>({
-      queryFn: async ({ rulesSourceName }) => {
-        if (isGrafanaRulesSource(rulesSourceName)) {
-          return { data: { rulerConfig: GRAFANA_RULER_CONFIG } };
+    discoverDsFeatures: build.query<
+      {
+        rulerConfig?: RulerDataSourceConfig;
+        features: PromApiFeatures;
+        dataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>;
+      },
+      { rulesSourceName: string } | { uid: string }
+    >({
+      queryFn: async (rulesSourceIdentifier) => {
+        const stringID =
+          'uid' in rulesSourceIdentifier ? rulesSourceIdentifier.uid : rulesSourceIdentifier.rulesSourceName;
+
+        if (isGrafanaRulesSource(stringID)) {
+          return {
+            data: {
+              rulerConfig: GRAFANA_RULER_CONFIG,
+              features: {
+                features: {
+                  rulerApiEnabled: true,
+                },
+              },
+              dataSourceSettings: {
+                name: 'Grafana',
+              },
+            },
+          };
         }
 
-        const dsSettings = getRulesDataSource(rulesSourceName);
-        if (!dsSettings) {
-          return { error: new Error(`Missing data source configuration for ${rulesSourceName}`) };
+        const dataSourceSettings =
+          'uid' in rulesSourceIdentifier
+            ? getRulesDataSourceByUID(rulesSourceIdentifier.uid)
+            : getRulesDataSource(rulesSourceIdentifier.rulesSourceName);
+        if (!dataSourceSettings) {
+          return { error: new Error(`Missing data source configuration for ${rulesSourceIdentifier}`) };
         }
 
-        const discoverFeaturesWithLogging = withPerformanceLogging(
-          'unifiedalerting/featureDiscoveryApi/discoverDsFeatures',
-          discoverFeatures,
-          {
-            dataSourceName: rulesSourceName,
-            endpoint: 'unifiedalerting/featureDiscoveryApi/discoverDsFeatures',
-          }
-        );
-
-        const dsFeatures = await discoverFeaturesWithLogging(dsSettings.name);
-
-        const rulerConfig: RulerDataSourceConfig | undefined = dsFeatures.features.rulerApiEnabled
-          ? {
-              dataSourceName: dsSettings.name,
-              apiVersion: dsFeatures.application === PromApplication.Cortex ? 'legacy' : 'config',
-            }
+        const features = await discoverFeatures(dataSourceSettings.name);
+        const rulerConfig = features.features.rulerApiEnabled
+          ? ({
+              dataSourceName: dataSourceSettings.name,
+              apiVersion: features.application === PromApplication.Mimir ? 'config' : 'legacy',
+            } satisfies RulerDataSourceConfig)
           : undefined;
 
-        return { data: { rulerConfig } };
+        return {
+          data: {
+            rulerConfig,
+            features,
+            dataSourceSettings,
+          },
+        };
       },
     }),
   }),

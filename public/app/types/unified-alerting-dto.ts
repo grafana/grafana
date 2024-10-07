@@ -72,7 +72,7 @@ export enum PromRuleType {
 
 export enum PromApplication {
   Cortex = 'Cortex',
-  Mimir = 'Mimir',
+  Mimir = 'Grafana Mimir',
   Prometheus = 'Prometheus',
   Thanos = 'Thanos',
 }
