@@ -186,7 +186,7 @@ export function runRequest(
   return merge(timer(200).pipe(mapTo(state.panelData), takeUntil(dataObservable)), dataObservable);
 }
 
-function callQueryMethodWithMigration(
+export function callQueryMethodWithMigration(
   datasource: DataSourceApi,
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
