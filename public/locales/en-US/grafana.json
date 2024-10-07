@@ -2677,7 +2677,7 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": "Use the Explore metrics bookmark feature to save your explorations as bookmarks."
+      "empty-state": "Use the Explore Metrics bookmarks feature to save your panels as bookmarks"
     },
     "metric-overview": {
       "description-label": "Description",
