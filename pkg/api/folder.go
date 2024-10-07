@@ -635,6 +635,8 @@ type folderK8sHandler struct {
 	// #TODO check if it makes more sense to move this to FolderAPIBuilder
 	accesscontrolService accesscontrol.Service
 	userService          user.Service
+	// #TODO remove after we handle the nested folder case
+	folderService folder.Service
 }
 
 //-----------------------------------------------------------------------------------------
@@ -648,6 +650,7 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 		clientConfigProvider: hs.clientConfigProvider,
 		accesscontrolService: hs.accesscontrolService,
 		userService:          hs.userService,
+		folderService:        hs.folderService,
 	}
 }
 
@@ -875,24 +878,29 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
-	// TODO: handle parents
-	/*
-		parents, err := fk8s.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+	parents := []*folder.Folder{}
+	if f.ParentUID != "" {
+		parents, err = fk8s.folderService.GetParents(
+			c.Req.Context(),
+			folder.GetParentsQuery{
+				UID:   f.UID,
+				OrgID: f.OrgID,
+			})
 		if err != nil {
-			// log the error instead of failing
-			fk8s.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
+			return dtos.Folder{}, err
 		}
+	}
 
-		folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
-		for _, f := range parents {
-			DTO, err := toDTO(f, true)
-			if err != nil {
-				// fk8s.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
-				continue
-			}
-			folderDTO.Parents = append(folderDTO.Parents, DTO)
+	folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
+	for _, f := range parents {
+		DTO, err := toDTO(f, true)
+		if err != nil {
+			// #TODO add logging
+			// fk8s.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
+			continue
 		}
-	*/
+		folderDTO.Parents = append(folderDTO.Parents, DTO)
+	}
 
 	return folderDTO, nil
 }
@@ -914,20 +922,24 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		return nil, nil
 	}
 
-	folderIDs := map[string]bool{f.UID: true}
-
-	// TODO: handle parents
-	/*
-		parents, err := fk8s.folderService.GetParents(c.Req.Context(), folder.GetParentsQuery{UID: f.UID, OrgID: c.SignedInUser.GetOrgID()})
+	var err error
+	parents := []*folder.Folder{}
+	if f.ParentUID != "" {
+		parents, err = fk8s.folderService.GetParents(
+			c.Req.Context(),
+			folder.GetParentsQuery{
+				UID:   f.UID,
+				OrgID: c.SignedInUser.GetOrgID(),
+			})
 		if err != nil {
 			return nil, err
 		}
+	}
 
-		folderIDs := map[string]bool{f.UID: true}
-		for _, p := range parents {
-			folderIDs[p.UID] = true
-		}
-	*/
+	folderIDs := map[string]bool{f.UID: true}
+	for _, p := range parents {
+		folderIDs[p.UID] = true
+	}
 
 	allMetadata := getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
 	metadata := map[string]bool{}
