@@ -1,6 +1,7 @@
 package gmsclient
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,7 +17,9 @@ func Test_buildBasePath(t *testing.T) {
 		CloudMigration: setting.CloudMigrationSettings{
 			GMSDomain: "",
 		},
-	})
+	},
+		http.DefaultClient,
+	)
 	require.Error(t, err)
 
 	// Domain is required
@@ -24,7 +27,9 @@ func Test_buildBasePath(t *testing.T) {
 		CloudMigration: setting.CloudMigrationSettings{
 			GMSDomain: "non-empty",
 		},
-	})
+	},
+		http.DefaultClient,
+	)
 	require.NoError(t, err)
 	client := c.(*gmsClientImpl)
 
