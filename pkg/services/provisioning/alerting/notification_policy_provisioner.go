@@ -45,7 +45,7 @@ func (c *defaultNotificationPolicyProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, orgID := range file.ResetPolicies {
-			_, _, err := c.notificationPolicyService.ResetPolicyTree(ctx, int64(orgID))
+			_, err := c.notificationPolicyService.ResetPolicyTree(ctx, int64(orgID))
 			if err != nil {
 				return fmt.Errorf("%s: %w", file.Filename, err)
 			}
