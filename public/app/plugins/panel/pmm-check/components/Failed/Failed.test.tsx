@@ -2,15 +2,21 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import { config } from '@grafana/runtime';
 import { CheckService } from 'app/percona/check/Check.service';
 import { configureStore } from 'app/store/configureStore';
-import { StoreState } from 'app/types';
+import { OrgRole, StoreState } from 'app/types';
 
 import { Failed } from './Failed';
 
 jest.mock('app/percona/check/Check.service');
 
 describe('Failed::', () => {
+  beforeEach(() => {
+    config.bootData.user.isGrafanaAdmin = true;
+    config.bootData.user.orgRole = OrgRole.Admin;
+  });
+
   it('should render a sum of total failed checks with severity details', async () => {
     jest.spyOn(CheckService, 'getAllFailedChecks').mockImplementationOnce(async () => [
       {
@@ -55,6 +61,8 @@ describe('Failed::', () => {
         <Failed />
       </Provider>
     );
+
+    await waitFor(() => expect(CheckService.getAllFailedChecks).toHaveBeenCalled());
 
     await waitFor(() => expect(screen.getByTestId('db-check-panel-critical').textContent).toEqual('3'));
     await waitFor(() => expect(screen.getByTestId('db-check-panel-error').textContent).toEqual('0'));

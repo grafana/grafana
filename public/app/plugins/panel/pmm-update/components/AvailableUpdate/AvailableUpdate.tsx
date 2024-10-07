@@ -1,18 +1,17 @@
 import React, { FC } from 'react';
 
-import { useStyles, Icon, LinkButton, Tooltip } from '@grafana/ui';
+import { Icon, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { formatDateWithYear } from '../../UpdatePanel.utils';
 import { useToggleOnAltClick } from '../../hooks';
-import { AvailableUpdateProps } from '../../types';
 
 import { Messages } from './AvailableUpdate.messages';
 import { getStyles } from './AvailableUpdate.styles';
+import { AvailableUpdateProps } from './AvailableUpdate.types';
 
-export const AvailableUpdate: FC<AvailableUpdateProps> = ({ nextVersionDetails }) => {
-  const styles = useStyles(getStyles);
+export const AvailableUpdate: FC<AvailableUpdateProps> = ({ nextVersion, newsLink }) => {
+  const styles = useStyles2(getStyles);
   const [showFullVersion, handleToggleShowFullVersion] = useToggleOnAltClick(false);
-
-  const { nextVersionDate, nextVersion, nextFullVersion, newsLink } = nextVersionDetails;
 
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
@@ -25,10 +24,10 @@ export const AvailableUpdate: FC<AvailableUpdateProps> = ({ nextVersionDetails }
         {Messages.availableVersion}
         :&nbsp;
         <span data-testid="update-latest-version" className={styles.latestVersion}>
-          {showFullVersion ? nextFullVersion : nextVersion}
+          {showFullVersion ? nextVersion?.tag : nextVersion?.version}
         </span>
         <span data-testid="update-latest-release-date" className={styles.releaseDate}>
-          ({nextVersionDate})
+          {!!nextVersion?.timestamp && `(${formatDateWithYear(nextVersion?.timestamp)})`}
           <Tooltip content={Messages.tooltip} data-testid="update-published-date-info">
             <Icon name="info-circle" className={styles.infoIcon} />
           </Tooltip>

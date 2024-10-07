@@ -1,17 +1,17 @@
 import React, { FC } from 'react';
 
-import { Icon, Tooltip, useStyles } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { formatDateWithYear } from '../../UpdatePanel.utils';
 import { useToggleOnAltClick } from '../../hooks';
-import { CurrentVersionProps } from '../../types';
 
 import { Messages } from './CurrentVersion.messages';
 import { getStyles } from './CurrentVersion.styles';
+import { CurrentVersionProps } from './CurrentVersion.types';
 
-export const CurrentVersion: FC<CurrentVersionProps> = ({ installedVersionDetails }) => {
-  const styles = useStyles(getStyles);
+export const CurrentVersion: FC<CurrentVersionProps> = ({ currentVersion }) => {
+  const styles = useStyles2(getStyles);
   const [showFullVersion, handleToggleShowFullVersion] = useToggleOnAltClick(false);
-  const { installedVersionDate, installedVersion, installedFullVersion } = installedVersionDetails;
 
   return (
     <section className={styles.currentVersion}>
@@ -20,13 +20,13 @@ export const CurrentVersion: FC<CurrentVersionProps> = ({ installedVersionDetail
         {Messages.currentVersion}:&nbsp;
         <span>
           <span data-testid="update-installed-version">
-            {showFullVersion ? installedFullVersion : installedVersion}
+            {showFullVersion ? currentVersion.fullVersion : currentVersion.version}
           </span>
           &nbsp;
           <span data-testid="update-installed-release-date" className={styles.releaseDate}>
-            {!!installedVersionDate && (
+            {!!currentVersion.timestamp && (
               <>
-                ({installedVersionDate})
+                ({formatDateWithYear(currentVersion.timestamp)})
                 <Tooltip content={Messages.tooltip} data-testid="update-built-date-info">
                   <Icon name="info-circle" className={styles.infoIcon} />
                 </Tooltip>

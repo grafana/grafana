@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
 
-export const lastCheck = css`
-  bottom: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  font-size: 12px;
-  height: 1em;
-
-  button {
+export const styles = {
+  container: css`
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    font-size: 12px;
+    height: 1em;
+  `,
+  button: css`
     position: relative;
     display: flex;
     align-items: center;
@@ -18,5 +19,5 @@ export const lastCheck = css`
     border-radius: 50%;
     background-color: transparent;
     border: none;
-  }
-`;
+  `,
+};

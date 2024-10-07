@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ colors, spacing }: GrafanaTheme) => ({
+export const getStyles = ({ colors, spacing }: GrafanaTheme2) => ({
   infoBox: css`
     margin: 10px 0;
     display: flex;
@@ -13,12 +13,13 @@ export const getStyles = ({ colors, spacing }: GrafanaTheme) => ({
     box-sizing: border-box;
     border: 1px solid #292929;
     text-align: center;
-    padding: ${spacing.xs};
+    padding: ${spacing(0.5)};
   `,
   link: css`
-    color: ${colors.linkExternal};
+    color: ${colors.text.link};
+
     &:hover {
-      color: ${colors.textBlue};
+      color: ${colors.primary.text};
     }
   `,
 });

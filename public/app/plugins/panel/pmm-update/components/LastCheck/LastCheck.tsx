@@ -1,26 +1,24 @@
 import React, { FC } from 'react';
 
-import { Button, IconName } from '@grafana/ui';
-
-import { LastCheckProps } from '../../types';
+import { IconButton } from '@grafana/ui';
 
 import { Messages } from './LastCheck.messages';
-import * as styles from './LastCheck.styles';
+import { styles } from './LastCheck.styles';
+import { LastCheckProps } from './LastCheck.types';
 
 export const LastCheck: FC<LastCheckProps> = ({ lastCheckDate, onCheckForUpdates, disabled = false }) => (
-  <div className={styles.lastCheck}>
+  <div className={styles.container}>
     <p>
       {Messages.lastCheck}
       <span data-testid="update-last-check">{lastCheckDate}</span>
     </p>
-    <Button
+    <IconButton
+      name="sync"
+      variant="primary"
       data-testid="update-last-check-button"
-      fill="text"
-      size="sm"
-      onClick={onCheckForUpdates}
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      icon={'fa fa-refresh' as IconName}
+      aria-label={Messages.checkAriaLabel}
       disabled={disabled}
+      onClick={onCheckForUpdates}
     />
   </div>
 );

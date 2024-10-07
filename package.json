@@ -32,7 +32,7 @@
     "lint:fix": "yarn lint:ts --fix",
     "jest": "jest --notify --watch",
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
-    "jest-percona-ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%} --roots public/app/percona",
+    "jest-percona-ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%} --config jest.percona.config.js",
     "packages:build": "nx run-many -t build --projects='@grafana/*'",
     "packages:clean": "rimraf ./npm-artifacts && lerna run clean --parallel",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",

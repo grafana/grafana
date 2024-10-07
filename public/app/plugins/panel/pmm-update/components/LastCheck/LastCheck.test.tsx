@@ -7,6 +7,10 @@ describe('LastCheck::', () => {
   const lastCheckDate = '12345';
   const fakeHandleClick = jest.fn();
 
+  beforeEach(() => {
+    fakeHandleClick.mockClear();
+  });
+
   it('should show the passed last check date', () => {
     const container = render(<LastCheck onCheckForUpdates={fakeHandleClick} lastCheckDate={lastCheckDate} />);
 
@@ -18,6 +22,6 @@ describe('LastCheck::', () => {
 
     fireEvent.click(screen.getByTestId('update-last-check-button'));
 
-    expect(fakeHandleClick).toBeCalledTimes(1);
+    expect(fakeHandleClick).toHaveBeenCalledTimes(1);
   });
 });

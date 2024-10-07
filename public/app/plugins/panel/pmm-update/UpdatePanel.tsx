@@ -1,29 +1,32 @@
-import React, { FC, MouseEvent, useEffect, useState } from 'react';
+import React, { FC, MouseEvent, useState } from 'react';
 
-import { Button, IconName, Spinner } from '@grafana/ui';
-import { getPerconaUser, getPerconaSettings } from 'app/percona/shared/core/selectors';
+import { Button, Spinner } from '@grafana/ui';
+import { PMM_UPDATES_LINK } from 'app/percona/shared/components/PerconaBootstrapper/PerconaNavigation';
+import { checkUpdatesAction } from 'app/percona/shared/core/reducers/updates';
+import { getPerconaUser, getPerconaSettings, getUpdatesInfo } from 'app/percona/shared/core/selectors';
+import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
 import { Messages } from './UpdatePanel.messages';
-import * as styles from './UpdatePanel.styles';
-import { AvailableUpdate, CurrentVersion, InfoBox, LastCheck, ProgressModal } from './components';
-import { usePerformUpdate, useVersionDetails } from './hooks';
+import { styles } from './UpdatePanel.styles';
+import { formatDateWithTime } from './UpdatePanel.utils';
+import { AvailableUpdate, CurrentVersion, InfoBox, LastCheck } from './components';
 
-export const UpdatePanel: FC<{}> = () => {
+export const UpdatePanel: FC = () => {
   const isOnline = navigator.onLine;
-  const [forceUpdate, setForceUpdate] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const { isAuthorized } = useSelector(getPerconaUser);
+  const {
+    isLoading: isLoadingVersionDetails,
+    installed,
+    latest,
+    latestNewsUrl,
+    updateAvailable,
+    lastChecked,
+  } = useSelector(getUpdatesInfo);
   const { result: settings, loading: isLoadingSettings } = useSelector(getPerconaSettings);
-  const [
-    { installedVersionDetails, lastCheckDate, nextVersionDetails, isUpdateAvailable },
-    fetchVersionErrorMessage,
-    isLoadingVersionDetails,
-    isDefaultView,
-    getCurrentVersionDetails,
-  ] = useVersionDetails();
-  const [output, updateErrorMessage, isUpdated, updateFailed, launchUpdate] = usePerformUpdate();
+  const dispatch = useAppDispatch();
+  const [forceUpdate, setForceUpdate] = useState(false);
+  const { isAuthorized } = useSelector(getPerconaUser);
+  const isDefaultView = !latest;
   const isLoading = isLoadingVersionDetails || isLoadingSettings;
 
   const handleCheckForUpdates = (e: MouseEvent) => {
@@ -31,32 +34,19 @@ export const UpdatePanel: FC<{}> = () => {
       setForceUpdate(true);
     }
 
-    getCurrentVersionDetails({ force: true });
+    dispatch(checkUpdatesAction());
   };
 
-  useEffect(() => {
-    setErrorMessage(fetchVersionErrorMessage || updateErrorMessage);
-
-    const timeout = setTimeout(() => {
-      setErrorMessage('');
-    }, 5000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [fetchVersionErrorMessage, updateErrorMessage]);
-
-  const handleUpdate = () => {
-    setShowModal(true);
-    launchUpdate();
+  const handleOpenUpdates = () => {
+    window.location.assign(PMM_UPDATES_LINK.url!);
   };
 
   return (
     <>
       <div className={styles.panel}>
-        <CurrentVersion installedVersionDetails={installedVersionDetails} />
-        {isUpdateAvailable && !isDefaultView && settings?.updatesEnabled && isAuthorized && !isLoading && isOnline ? (
-          <AvailableUpdate nextVersionDetails={nextVersionDetails} />
+        {!!installed && <CurrentVersion currentVersion={installed} />}
+        {updateAvailable && !isDefaultView && settings?.updatesEnabled && isAuthorized && !isLoading && isOnline ? (
+          <AvailableUpdate nextVersion={latest} newsLink={latestNewsUrl} />
         ) : null}
         {isLoading ? (
           <div className={styles.middleSectionWrapper}>
@@ -64,11 +54,10 @@ export const UpdatePanel: FC<{}> = () => {
           </div>
         ) : (
           <>
-            {(isUpdateAvailable || forceUpdate) && settings?.updatesEnabled && isAuthorized && isOnline ? (
+            {(updateAvailable || forceUpdate) && settings?.updatesEnabled && isAuthorized && isOnline ? (
               <div className={styles.middleSectionWrapper}>
-                {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
-                <Button onClick={handleUpdate} icon={'fa fa-download' as IconName} variant="secondary">
-                  {Messages.upgradeTo(nextVersionDetails?.nextVersion)}
+                <Button onClick={handleOpenUpdates} icon="download-alt" variant="secondary">
+                  {!!latest?.version ? Messages.upgradeTo(latest.version) : Messages.upgrade}
                 </Button>
               </div>
             ) : (
@@ -84,17 +73,9 @@ export const UpdatePanel: FC<{}> = () => {
         <LastCheck
           disabled={isLoading || !settings?.updatesEnabled || !isOnline}
           onCheckForUpdates={handleCheckForUpdates}
-          lastCheckDate={lastCheckDate}
+          lastCheckDate={lastChecked ? formatDateWithTime(lastChecked) : ''}
         />
       </div>
-      <ProgressModal
-        errorMessage={errorMessage}
-        isOpen={showModal}
-        isUpdated={isUpdated}
-        output={output}
-        updateFailed={updateFailed}
-        version={nextVersionDetails?.nextVersion}
-      />
     </>
   );
 };

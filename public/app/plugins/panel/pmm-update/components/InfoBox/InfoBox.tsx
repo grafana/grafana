@@ -1,15 +1,15 @@
 import React, { FC, PropsWithChildren } from 'react';
+import { Link } from 'react-router-dom';
 
-import { useStyles } from '@grafana/ui';
-
-import { InfoBoxProps } from '../../types';
+import { useStyles2 } from '@grafana/ui';
 
 import { PMM_ADVANCED_SETTINGS_URL } from './InfoBox.constants';
 import { Messages } from './InfoBox.messages';
 import { getStyles } from './InfoBox.styles';
+import { InfoBoxProps } from './InfoBoxProps.types';
 
 const UpdateInfo: FC<PropsWithChildren> = ({ children }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <section data-testid="updates-info" className={styles.infoBox}>
@@ -19,7 +19,7 @@ const UpdateInfo: FC<PropsWithChildren> = ({ children }) => {
 };
 
 export const InfoBox: FC<InfoBoxProps> = ({ upToDate = false, hasNoAccess, updatesDisabled, isOnline = true }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   if (hasNoAccess) {
     return (
@@ -42,9 +42,9 @@ export const InfoBox: FC<InfoBoxProps> = ({ upToDate = false, hasNoAccess, updat
       <UpdateInfo>
         <p data-testid="updates-disabled">
           {Messages.updatesDisabled}
-          <a className={styles.link} href={PMM_ADVANCED_SETTINGS_URL}>
+          <Link className={styles.link} to={PMM_ADVANCED_SETTINGS_URL}>
             {Messages.pmmSettings}
-          </a>
+          </Link>
         </p>
       </UpdateInfo>
     );

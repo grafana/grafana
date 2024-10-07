@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ spacing, typography }: GrafanaTheme) => ({
+export const getStyles = ({ spacing, typography }: GrafanaTheme2) => ({
   availableUpdate: css`
     align-items: flex-start;
     display: flex;
-    font-weight: ${typography.weight.bold};
+    font-weight: ${typography.fontWeightBold};
     justify-content: flex-start;
-    line-height: ${typography.lineHeight.sm};
-    margin-top: ${spacing.xs};
+    line-height: ${typography.bodySmall.lineHeight};
+    margin-top: ${spacing(0.5)};
 
     > div {
       display: flex;
@@ -21,18 +21,18 @@ export const getStyles = ({ spacing, typography }: GrafanaTheme) => ({
   `,
   whatsNewLink: css`
     height: 1em;
-    margin-top: ${spacing.xs};
+    margin-top: ${spacing(0.5)};
     padding: 0;
   `,
   releaseDate: css`
     font-size: ${typography.size.sm};
-    font-weight: ${typography.weight.regular};
+    font-weight: ${typography.fontWeightRegular};
   `,
   latestVersion: css`
-    margin-right: ${spacing.xs};
+    margin-right: ${spacing(0.5)};
   `,
   infoIcon: css`
-    margin-left: ${spacing.xs};
-    margin-right: ${spacing.sm};
+    margin-left: ${spacing(0.5)};
+    margin-right: ${spacing(1)};
   `,
 });
