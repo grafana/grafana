@@ -399,7 +399,6 @@ function handleRedirectTo(): void {
   }
 
   if (!contextSrv.user.isSignedIn) {
-    locationService.replace('/login');
     return;
   }
 

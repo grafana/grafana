@@ -5420,6 +5420,9 @@
         "name": {
           "type": "string"
         },
+        "parentName": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },

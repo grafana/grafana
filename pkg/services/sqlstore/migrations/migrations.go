@@ -135,6 +135,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	accesscontrol.AddOrphanedMigrations(mg)
 
+	accesscontrol.AddActionSetPermissionsMigrator(mg)
+
 	externalsession.AddMigration(mg)
 }
 
