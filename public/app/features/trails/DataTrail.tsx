@@ -58,7 +58,7 @@ import {
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
-import { getTrailFor } from './utils';
+import { getTrailFor, limitAdhocProviders } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -574,21 +574,27 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
         const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, model);
         const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, model);
-        const filtersvariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
+        const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
 
         if (
           otelResourcesVariable instanceof AdHocFiltersVariable &&
           otelDepEnvVariable instanceof CustomVariable &&
           otelJoinQueryVariable instanceof ConstantVariable &&
-          filtersvariable instanceof AdHocFiltersVariable
+          filtersVariable instanceof AdHocFiltersVariable
         ) {
-          model.resetOtelExperience(otelResourcesVariable, otelDepEnvVariable, otelJoinQueryVariable, filtersvariable);
+          model.resetOtelExperience(otelResourcesVariable, otelDepEnvVariable, otelJoinQueryVariable, filtersVariable);
         }
       } else {
         // if experience is enabled, check standardization and update the otel variables
         model.checkDataSourceForOTelResources();
       }
     }, [model, hasOtelResources, useOtelExperience]);
+
+    useEffect(() => {
+      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
+      const datasourceHelper = model.datasourceHelper;
+      limitAdhocProviders(filtersVariable, datasourceHelper);
+    }, [model]);
 
     return (
       <div className={styles.container}>
