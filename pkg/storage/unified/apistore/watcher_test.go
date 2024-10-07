@@ -30,7 +30,6 @@ import (
 
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -134,9 +133,8 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		}
 		dbstore := infraDB.InitTestDB(t)
 		cfg := setting.NewCfg()
-		features := featuremgmt.WithFeatures()
 
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, nil)
+		eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
 		require.NoError(t, err)
 		require.NotNil(t, eDB)
 
