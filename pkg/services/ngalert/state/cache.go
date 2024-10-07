@@ -94,26 +94,28 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 	return states.getOrAdd(stateCandidate, log)
 }
 
-func (rs *ruleStates) getOrAdd(stateCandidate State, log log.Logger) *State {
+func (rs *ruleStates) getOrAdd(stateCandidate *State, log log.Logger) *State {
 	state, ok := rs.states[stateCandidate.CacheID]
 	// Check if the state with this ID already exists.
 	if !ok {
-		rs.states[stateCandidate.CacheID] = &stateCandidate
-		return &stateCandidate
+		rs.states[stateCandidate.CacheID] = stateCandidate
+		return stateCandidate
 	}
 
 	// Annotations can change over time, however we also want to maintain
 	// certain annotations across evaluations
-	for k, v := range state.Annotations {
+	state.Annotations.Range(func(k, v string) bool {
 		if _, ok := ngModels.InternalAnnotationNameSet[k]; ok {
 			// If the annotation is not present then it should be copied from the
 			// previous state to the next state
-			if _, ok := stateCandidate.Annotations[k]; !ok {
-				stateCandidate.Annotations[k] = v
+			if _, ok := stateCandidate.Annotations.Get(k); !ok {
+				stateCandidate.Annotations.Set(k, v)
 			}
 		}
-	}
-	state.Annotations = stateCandidate.Annotations
+
+		return true
+	})
+	state.Annotations.SetAll(stateCandidate.Annotations.GetAll())
 	state.Values = stateCandidate.Values
 	if state.ResultFingerprint != stateCandidate.ResultFingerprint {
 		log.Info("Result fingerprint has changed", "oldFingerprint", state.ResultFingerprint, "newFingerprint", stateCandidate.ResultFingerprint, "cacheID", state.CacheID, "stateLabels", state.Labels.String())
@@ -123,7 +125,7 @@ func (rs *ruleStates) getOrAdd(stateCandidate State, log log.Logger) *State {
 	return state
 }
 
-func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) State {
+func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	var reserved []string
 	resultLabels := result.Instance
 	if len(resultLabels) > 0 {
@@ -197,12 +199,12 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 
 	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
 	// expected value for a Normal state during state transition.
-	newState := State{
+	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
 		CacheID:            cacheID,
 		Labels:             lbs,
-		Annotations:        annotations,
+		Annotations:        NewSyncLabels(annotations),
 		EvaluationDuration: result.EvaluationDuration,
 		StartsAt:           result.EvaluatedAt,
 		EndsAt:             result.EvaluatedAt,
