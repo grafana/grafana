@@ -1,5 +1,9 @@
 import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
 
+function generateShortUid(): string {
+  return Math.random().toString(36).substring(2, 8); // Generate a short UID
+}
+
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];
   for (let i = 1; i <= numberOfTeams; i++) {
@@ -9,13 +13,14 @@ export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   return teams;
 };
 
-export const getMockTeam = (i = 1, overrides = {}): Team => {
+export const getMockTeam = (i = 1, uid= "aaaaaa", overrides = {}): Team => {
+  uid = uid || generateShortUid();
   return {
     id: i,
-    uid: '',
-    name: `test-${i}`,
+    uid: uid,
+    name: `test-${uid}`,
     avatarUrl: 'some/url/',
-    email: `test-${i}@test.com`,
+    email: `test-${uid}@test.com`,
     memberCount: i,
     permission: TeamPermissionLevel.Member,
     accessControl: { isEditor: false },
