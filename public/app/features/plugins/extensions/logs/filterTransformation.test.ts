@@ -98,6 +98,104 @@ describe('Transform data frames by filtering', () => {
     ]);
   });
 
+  it('should exclude all rows not matching severity', async () => {
+    const filter = {
+      severity: new Set<string>(['debug']),
+    };
+    const [a, b] = await runTransformationWithFilter(filter, data);
+
+    expect(a.fields).toStrictEqual([
+      {
+        config: {},
+        name: 'pluginId',
+        type: FieldType.string,
+        values: [],
+      },
+      {
+        config: {},
+        name: 'extensionPointId',
+        type: FieldType.string,
+        values: [],
+      },
+      {
+        config: {},
+        name: 'severity',
+        type: FieldType.string,
+        values: [],
+      },
+    ]);
+
+    expect(b.fields).toStrictEqual([
+      {
+        config: {},
+        name: 'pluginId',
+        type: FieldType.string,
+        values: ['grafana-k8s-app'],
+      },
+      {
+        config: {},
+        name: 'extensionPointId',
+        type: FieldType.string,
+        values: ['grafana-k8s-app/clusters/view/v1'],
+      },
+      {
+        config: {},
+        name: 'severity',
+        type: FieldType.string,
+        values: ['debug'],
+      },
+    ]);
+  });
+
+  it('should exclude all rows not matching extensionPointId', async () => {
+    const filter = {
+      extensionPointIds: new Set<string>(['grafana/dashboards/panel/menu/v1']),
+    };
+    const [a, b] = await runTransformationWithFilter(filter, data);
+
+    expect(a.fields).toStrictEqual([
+      {
+        config: {},
+        name: 'pluginId',
+        type: FieldType.string,
+        values: ['mckn-funnel-panel'],
+      },
+      {
+        config: {},
+        name: 'extensionPointId',
+        type: FieldType.string,
+        values: ['grafana/dashboards/panel/menu/v1'],
+      },
+      {
+        config: {},
+        name: 'severity',
+        type: FieldType.string,
+        values: ['info'],
+      },
+    ]);
+
+    expect(b.fields).toStrictEqual([
+      {
+        config: {},
+        name: 'pluginId',
+        type: FieldType.string,
+        values: ['grafana'],
+      },
+      {
+        config: {},
+        name: 'extensionPointId',
+        type: FieldType.string,
+        values: ['grafana/dashboards/panel/menu/v1'],
+      },
+      {
+        config: {},
+        name: 'severity',
+        type: FieldType.string,
+        values: ['warning'],
+      },
+    ]);
+  });
+
   it('should exclude all rows not matching pluginId and severity', async () => {
     const filter = {
       pluginIds: new Set<string>(['grafana-k8s-app']),
