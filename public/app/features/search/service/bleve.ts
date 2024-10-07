@@ -12,7 +12,7 @@ import {
   
   import { replaceCurrentFolderQuery } from './utils';
   
-  import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
+  import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
   
   // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
   // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
@@ -142,7 +142,7 @@ import {
         };
       }
   
-      const meta = first.meta.custom as SearchResultMeta;
+      const meta = first.meta.custom || {};
       if (!meta.locationInfo) {
         meta.locationInfo = {}; // always set it so we can append
       }
@@ -190,7 +190,7 @@ import {
           view.dataFrame.length = length;
   
           // Add all the location lookup info
-          const submeta = frame.meta?.custom as SearchResultMeta;
+          const submeta = frame.meta?.custom;
           if (submeta?.locationInfo && meta) {
             for (const [key, value] of Object.entries(submeta.locationInfo)) {
               meta.locationInfo[key] = value;
