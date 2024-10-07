@@ -329,6 +329,9 @@
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
     },
+    "actions": {
+      "button-to-recently-deleted": "Recently deleted"
+    },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
       "alertRule_other": "{{count}} alert rules",
@@ -1090,6 +1093,13 @@
     },
     "title": "Shortcuts"
   },
+  "help-wizard": {
+    "download-snapshot": "Download snapshot",
+    "github-comment": "Copy Github comment",
+    "preview-snapshot": "Preview snapshot",
+    "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
+    "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
+  },
   "inspector": {
     "query": {
       "collapse-all": "Collapse all",
@@ -1175,7 +1185,7 @@
     },
     "misc-section": {
       "allow-sign-up-descrition": "If not enabled, only existing Grafana users can log in using LDAP",
-      "allow-sign-up-label": "Allow sign up",
+      "allow-sign-up-label": "Allow sign-up",
       "label": "Misc",
       "port-description": "Default port is 389 without SSL or 636 with SSL",
       "port-label": "Port",
@@ -1855,6 +1865,7 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "list-label": "Navigation",
+      "open": "Open menu",
       "undock": "Undock menu"
     },
     "toolbar": {
@@ -1913,6 +1924,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "No matches found",
     "unsupported-layout": "Unsupported layout"
   },
   "playlist-edit": {

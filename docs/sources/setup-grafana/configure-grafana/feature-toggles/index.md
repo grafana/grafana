@@ -111,6 +111,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
 | `accessActionSets`                     | Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.                           |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                 |
+| `ssoSettingsLDAP`                      | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
 | `cloudwatchMetricInsightsCrossAccount` | Enables cross account observability for Cloudwatch Metric Insights query builder                                                                                                             |
 | `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                                                                                 |
 
@@ -206,6 +207,7 @@ Experimental features might be changed or removed without prior notice.
 | `appSidecar`                                  | Enable the app sidecar feature that allows rendering 2 apps at the same time                                                                                                                                                                                                      |
 | `alertingQueryAndExpressionsStepMode`         | Enables step mode for alerting queries and expressions                                                                                                                                                                                                                            |
 | `rolePickerDrawer`                            | Enables the new role picker drawer design                                                                                                                                                                                                                                         |
+| `pluginsSriChecks`                            | Enables SRI checks for plugin assets                                                                                                                                                                                                                                              |
 
 ## Development feature toggles
 

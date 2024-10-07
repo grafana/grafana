@@ -455,6 +455,7 @@ const (
 	ActionAlertingReceiversCreate           = "alert.notifications.receivers:create"
 	ActionAlertingReceiversUpdate           = "alert.notifications.receivers:write"
 	ActionAlertingReceiversDelete           = "alert.notifications.receivers:delete"
+	ActionAlertingReceiversTest             = "alert.notifications.receivers:test"
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
@@ -584,4 +585,16 @@ var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)
 type QueryWithOrg struct {
 	OrgId  *int64 `json:"orgId"`
 	Global bool   `json:"global"`
+}
+
+type CheckRequest struct {
+	User     string
+	Relation string
+	Object   string
+}
+
+type ListObjectsRequest struct {
+	Type     string
+	Relation string
+	User     string
 }
