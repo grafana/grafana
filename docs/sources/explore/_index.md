@@ -47,9 +47,9 @@ cards:
       href: ./correlations-editor-in-explore/
       description: Learn how to create and use Correlations.
       height: 24
-    - title: "NEW: Explore Apps"
+    - title: "Explore Apps"
       href: ./simplified-exploration/
-      description: Try our new suite of queryless apps built for experts and non-experts alike.
+      description: Try our suite of queryless apps built for experts and non-experts alike.
 ---
 
 {{< docs/hero-simple key="hero" >}}
@@ -61,7 +61,7 @@ cards:
 Explore is your starting point for querying, analyzing, and aggregating data in Grafana. You can quickly begin creating queries to start analyzing data without having to create a dashboard or customize a visualization.
 
 {{% admonition type="note" %}}
-If you're using Mimir, Loki, Tempo or Pyroscope, be sure to try our new [simplified queryless Explore experiences]({{< relref "simplified-exploration" >}}).
+If you're using Mimir, Loki, Tempo or Pyroscope, be sure to try our [simplified queryless Explore experiences]({{< relref "simplified-exploration" >}}).
 {{% /admonition %}}
 
 ## Explore

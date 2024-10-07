@@ -161,4 +161,4 @@ For details, see the [template variables documentation]({{< relref "./template-v
 
 ## Try Explore Logs
 
-Try our new [simplified queryless Explore experiences]({{< relref "../../explore/simplified-exploration/logs" >}}) for Loki.
+Try our [simplified queryless Explore experiences]({{< relref "../../explore/simplified-exploration/logs" >}}) for Loki.
