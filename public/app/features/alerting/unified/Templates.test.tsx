@@ -1,4 +1,6 @@
+import { InitialEntry } from 'history/createMemoryHistory';
 import * as React from 'react';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
@@ -54,23 +56,31 @@ beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
 });
 
+const setup = (initialEntries: InitialEntry[]) => {
+  render(
+    <Routes>
+      <Route path="/alerting/notifications/templates/*" element={<Templates />} />
+    </Routes>,
+    {
+      historyOptions: { initialEntries },
+    }
+  );
+};
 describe('Templates routes', () => {
   it('allows duplication of template with spaces in name', async () => {
-    render(<Templates />, {
-      historyOptions: { initialEntries: [navUrl.duplicate('template%20with%20spaces')] },
-    });
+    setup([navUrl.duplicate('template%20with%20spaces')]);
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
 
   it('allows editing of template with spaces in name', async () => {
-    render(<Templates />, { historyOptions: { initialEntries: [navUrl.edit('template%20with%20spaces')] } });
+    setup([navUrl.edit('template%20with%20spaces')]);
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
 
   it('renders empty template form', async () => {
-    render(<Templates />, { historyOptions: { initialEntries: [navUrl.new] } });
+    setup([navUrl.new]);
 
     const form = await ui.templateForm.find();
 
@@ -83,9 +93,7 @@ describe('Templates K8s API', () => {
   testWithFeatureToggles(['alertingApiServer']);
 
   it('form edit renders with correct form values', async () => {
-    render(<Templates />, {
-      historyOptions: { initialEntries: [navUrl.edit('k8s-custom-email-resource-name')] },
-    });
+    setup([navUrl.edit('k8s-custom-email-resource-name')]);
 
     const form = await ui.templateForm.find();
 
@@ -97,9 +105,7 @@ describe('Templates K8s API', () => {
   });
 
   it('renders duplicate template form with correct values', async () => {
-    render(<Templates />, {
-      historyOptions: { initialEntries: [navUrl.duplicate('k8s-custom-email-resource-name')] },
-    });
+    setup([navUrl.duplicate('k8s-custom-email-resource-name')]);
 
     const form = await ui.templateForm.find();
 
@@ -112,10 +118,17 @@ describe('Templates K8s API', () => {
 
   it('updates a template', async () => {
     const { user } = render(
-      <>
-        <Templates />
-        <AppNotificationList />
-      </>,
+      <Routes>
+        <Route
+          path="/alerting/notifications/templates/*"
+          element={
+            <>
+              <Templates />
+              <AppNotificationList />
+            </>
+          }
+        />
+      </Routes>,
       {
         historyOptions: { initialEntries: [navUrl.edit('k8s-custom-email-resource-name')] },
       }
