@@ -830,7 +830,7 @@ func TestRevokeToken(t *testing.T) {
 			extSession := args.Get(1).(*auth.ExternalSession)
 			extSession.ID = 2
 		}).Return(nil)
-		mockExternalSessionStore.On("DeleteExternalSession", mock.Anything, int64(2)).Return(errors.New("some error"))
+		mockExternalSessionStore.On("Delete", mock.Anything, int64(2)).Return(errors.New("some error"))
 		ctx.tokenService.externalSessionStore = mockExternalSessionStore
 
 		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
