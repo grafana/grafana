@@ -207,6 +207,9 @@ type libraryElement struct {
 
 // getLibraryElementsCommands returns the json payloads required by the library elements creation API
 func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]libraryElement, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getLibraryElementsCommands")
+	defer span.End()
+
 	const perPage = 100
 
 	cmds := make([]libraryElement, 0)
