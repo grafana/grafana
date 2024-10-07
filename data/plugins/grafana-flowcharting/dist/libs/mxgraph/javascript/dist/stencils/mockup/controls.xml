@@ -1,0 +1,648 @@
+<shapes name="mxgraph.mockup.controls">
+    <shape name="Horizontal Slidebar" h="23" w="219" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#818181"/>
+            <path>
+                <move x="31" y="0"/>
+                <line x="31" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="57" y="0"/>
+                <line x="57" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="84" y="0"/>
+                <line x="84" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="109" y="0.4000000000000057"/>
+                <line x="109" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="135" y="0"/>
+                <line x="135" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="161" y="0"/>
+                <line x="161" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="188" y="0"/>
+                <line x="188" y="23"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#f2f2f2"/>
+            <roundrect x="0" y="9" w="219" h="9" arcsize="26.141552511415522"/>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#7f7f7f"/>
+            <path>
+                <move x="109" y="5"/>
+                <line x="114" y="9"/>
+                <line x="114" y="23"/>
+                <line x="104" y="23"/>
+                <line x="104" y="9"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="On-Off Button 4" h="31" w="130" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#4342a9"/>
+            <roundrect x="0" y="0" w="130" h="31" arcsize="5.992555831265508"/>
+            <fillstroke/>
+            <fillcolor color="#c7c7c7"/>
+            <roundrect x="65" y="0" w="65" h="31" arcsize="7.1464019851116625"/>
+            <fillstroke/>
+            <fontsize size="16"/>
+            <fontstyle style="1"/>
+            <fontcolor color="#ffffff"/>
+            <text str="ON" x="32.5" y="15.5" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Knob 1" h="110" w="105" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <path>
+                <move x="52.5" y="52.83"/>
+                <line x="19.33" y="74.17"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="53.5" y="52.67"/>
+                <line x="17.67" y="34.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="52.33" y="52.83"/>
+                <line x="87.17" y="73"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="53.17" y="53"/>
+                <line x="87.5" y="34.17"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="52.5" y="52.5"/>
+                <line x="52.5" y="14.5"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#bbbbbb"/>
+            <ellipse x="18.5" y="19" w="68" h="68"/>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="#404040"/>
+            <path>
+                <move x="24.46" y="41.09"/>
+                <line x="51.55" y="54.55"/>
+                <arc rx="2" ry="2" x-axis-rotation="-63.57" large-arc-flag="0" sweep-flag="0" x="54.23" y="53.65"/>
+                <line x="54.31" y="53.49"/>
+                <arc rx="2" ry="2" x-axis-rotation="-63.57" large-arc-flag="0" sweep-flag="0" x="53.41" y="50.81"/>
+                <line x="26.32" y="37.35"/>
+                <arc rx="2" ry="2" x-axis-rotation="-63.57198" large-arc-flag="0" sweep-flag="0" x="23.64" y="38.25"/>
+                <line x="23.56" y="38.41"/>
+                <arc rx="2" ry="2" x-axis-rotation="-63.57" large-arc-flag="0" sweep-flag="0" x="24.46" y="41.09"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokewidth width="1.5"/>
+            <fillcolor color="none"/>
+            <ellipse x="17.5" y="18" w="70.5" h="70"/>
+            <stroke/>
+            <fontsize size="12"/>
+            <fontstyle style="1"/>
+            <text str="Knob Label" x="52.5" y="100" align="center" valign="middle"/>
+            <fontsize size="8"/>
+            <text str="0" x="15" y="75" align="center" valign="middle"/>
+            <text str="50" x="12" y="33" align="center" valign="middle"/>
+            <text str="50" x="52.5" y="10" align="center" valign="middle"/>
+            <text str="75" x="93" y="33" align="center" valign="middle"/>
+            <text str="100" x="95" y="75" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Knob 2" h="110" w="104.69" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#bbbbbb"/>
+            <ellipse x="19.09" y="20.42" w="68" h="68"/>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="#404040"/>
+            <path>
+                <move x="25.05" y="42.51"/>
+                <line x="52.13" y="55.97"/>
+                <arc rx="2" ry="2" x-axis-rotation="-63.57" large-arc-flag="0" sweep-flag="0" x="54.82" y="55.07"/>
+                <line x="54.9" y="54.91"/>
+                <arc rx="2" ry="2" x-axis-rotation="-63.57" large-arc-flag="0" sweep-flag="0" x="53.99" y="52.23"/>
+                <line x="26.91" y="38.76"/>
+                <arc rx="2" ry="2" x-axis-rotation="-63.57" large-arc-flag="0" sweep-flag="0" x="24.23" y="39.67"/>
+                <line x="24.15" y="39.83"/>
+                <arc rx="2" ry="2" x-axis-rotation="-63.57" large-arc-flag="0" sweep-flag="0" x="25.05" y="42.51"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#b50c0b"/>
+            <path>
+                <move x="86.09" y="87.92"/>
+                <line x="79.09" y="80.42"/>
+                <arc rx="37.7" ry="37.7" x-axis-rotation="0" large-arc-flag="0" sweep-flag="0" x="30.09" y="23.42"/>
+                <arc rx="47" ry="47" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="80.09" y="13.42"/>
+                <arc rx="48" ry="48" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="86.09" y="87.92"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fillcolor color="#13008f"/>
+            <path>
+                <move x="26.09" y="79.42"/>
+                <line x="18.09" y="87.42"/>
+                <arc rx="48.5" ry="48.5" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="76.09" y="11.22"/>
+                <arc rx="46.6" ry="46.6" x-axis-rotation="0" large-arc-flag="0" sweep-flag="0" x="29.42" y="22.42"/>
+                <arc rx="40" ry="40" x-axis-rotation="0" large-arc-flag="0" sweep-flag="0" x="25.75" y="79.08"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <strokewidth width="2"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="26.59" y="79.42"/>
+                <line x="18.09" y="87.92"/>
+                <arc rx="48.5" ry="48.5" x-axis-rotation="0" large-arc-flag="1" sweep-flag="1" x="86.09" y="88.42"/>
+                <line x="78.59" y="80.42"/>
+                <arc rx="37" ry="37" x-axis-rotation="0" large-arc-flag="1" sweep-flag="0" x="26.59" y="79.42"/>
+                <close/>
+            </path>
+            <stroke/>
+            <linecap cap="round"/>
+            <path>
+                <move x="76.09" y="11.42"/>
+                <arc rx="48" ry="48" x-axis-rotation="0" large-arc-flag="0" sweep-flag="0" x="27.09" y="25.42"/>
+                <arc rx="39" ry="39" x-axis-rotation="0" large-arc-flag="0" sweep-flag="0" x="26.69" y="79.42"/>
+            </path>
+            <stroke/>
+            <fontsize size="12"/>
+            <fontstyle style="1"/>
+            <text str="Knob Label" x="52.5" y="100" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Horizontal Interval Bar 1" h="23" w="219" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#818181"/>
+            <path>
+                <move x="31" y="0"/>
+                <line x="31" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="57" y="0"/>
+                <line x="57" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="84" y="0"/>
+                <line x="84" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="109" y="0.4000000000000057"/>
+                <line x="109" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="135" y="0"/>
+                <line x="135" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="161" y="0"/>
+                <line x="161" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="188" y="0"/>
+                <line x="188" y="23"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#f2f2f2"/>
+            <roundrect x="0" y="9" w="219" h="9" arcsize="26.141552511415522"/>
+            <fillstroke/>
+            <fillcolor color="#4a3ca7"/>
+            <rect x="60" y="9" w="100" h="9"/>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#7f7f7f"/>
+            <path>
+                <move x="57" y="5"/>
+                <line x="62" y="9"/>
+                <line x="62" y="23"/>
+                <line x="52" y="23"/>
+                <line x="52" y="9"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="161.2" y="5"/>
+                <line x="166.2" y="9"/>
+                <line x="166.2" y="23"/>
+                <line x="156.2" y="23"/>
+                <line x="156.2" y="9"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Horizontal Interval Bar 2" h="23" w="219" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#818181"/>
+            <path>
+                <move x="31" y="0"/>
+                <line x="31" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="57" y="0"/>
+                <line x="57" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="84" y="0"/>
+                <line x="84" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="109" y="0.4000000000000057"/>
+                <line x="109" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="135" y="0"/>
+                <line x="135" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="161" y="0"/>
+                <line x="161" y="23"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="188" y="0"/>
+                <line x="188" y="23"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#f2f2f2"/>
+            <roundrect x="0" y="9" w="219" h="9" arcsize="26.141552511415522"/>
+            <fillstroke/>
+            <fillcolor color="#4a3ca7"/>
+            <rect x="60" y="9" w="49.199997" h="9"/>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#7f7f7f"/>
+            <path>
+                <move x="57" y="5"/>
+                <line x="62" y="9"/>
+                <line x="62" y="23"/>
+                <line x="52" y="23"/>
+                <line x="52" y="9"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#818181"/>
+            <fillcolor color="#6ba745"/>
+            <rect x="109" y="9" w="50" h="9"/>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#7f7f7f"/>
+            <path>
+                <move x="161.2" y="5"/>
+                <line x="166.2" y="9"/>
+                <line x="166.2" y="23"/>
+                <line x="156.2" y="23"/>
+                <line x="156.2" y="9"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="109" y="5"/>
+                <line x="114" y="9"/>
+                <line x="114" y="23"/>
+                <line x="104" y="23"/>
+                <line x="104" y="9"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Interval Bar 2" h="219" w="23" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#818181"/>
+            <path>
+                <move x="23" y="31"/>
+                <line x="0" y="31"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="57"/>
+                <line x="0" y="57"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="84"/>
+                <line x="0" y="84"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="22.6" y="109"/>
+                <line x="0" y="109"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="135"/>
+                <line x="0" y="135"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="161"/>
+                <line x="0" y="161"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="188"/>
+                <line x="0" y="188"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#f2f2f2"/>
+            <path>
+                <move x="9" y="0"/>
+                <line x="10" y="0"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="5" y="5"/>
+                <line x="5" y="214"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="10" y="219"/>
+                <line x="9" y="219"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="14" y="214"/>
+                <line x="14" y="5"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="9" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fillcolor color="#4a3ca7"/>
+            <path>
+                <move x="14" y="60"/>
+                <line x="5" y="60"/>
+                <line x="5" y="109.2"/>
+                <line x="14" y="109.2"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#7f7f7f"/>
+            <path>
+                <move x="18" y="57"/>
+                <line x="14" y="62"/>
+                <line x="0" y="62"/>
+                <line x="0" y="52"/>
+                <line x="14" y="52"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#818181"/>
+            <fillcolor color="#6ba745"/>
+            <path>
+                <move x="14" y="109"/>
+                <line x="5" y="109"/>
+                <line x="5" y="159"/>
+                <line x="14" y="159"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#7f7f7f"/>
+            <path>
+                <move x="18" y="161.2"/>
+                <line x="14" y="166.2"/>
+                <line x="0" y="166.2"/>
+                <line x="0" y="156.2"/>
+                <line x="14" y="156.2"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="18" y="109"/>
+                <line x="14" y="114"/>
+                <line x="0" y="114"/>
+                <line x="0" y="104"/>
+                <line x="14" y="104"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Interval Bar 1" h="219" w="23" aspect="1">
+        <foreground>
+            <strokecolor color="#818181"/>
+            <path>
+                <move x="23" y="31"/>
+                <line x="0" y="31"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="57"/>
+                <line x="0" y="57"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="84"/>
+                <line x="0" y="84"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="22.6" y="109"/>
+                <line x="0" y="109"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="135"/>
+                <line x="0" y="135"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="161"/>
+                <line x="0" y="161"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="188"/>
+                <line x="0" y="188"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#f2f2f2"/>
+            <path>
+                <move x="9" y="0"/>
+                <line x="10" y="0"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="5" y="5"/>
+                <line x="5" y="214"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="10" y="219"/>
+                <line x="9" y="219"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="14" y="214"/>
+                <line x="14" y="5"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="9" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fillcolor color="#4a3ca7"/>
+            <path>
+                <move x="14" y="60"/>
+                <line x="5" y="60"/>
+                <line x="5" y="160"/>
+                <line x="14" y="160"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#7f7f7f"/>
+            <path>
+                <move x="18" y="57"/>
+                <line x="14" y="62"/>
+                <line x="0" y="62"/>
+                <line x="0" y="52"/>
+                <line x="14" y="52"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="18" y="161.2"/>
+                <line x="14" y="166.2"/>
+                <line x="0" y="166.2"/>
+                <line x="0" y="156.2"/>
+                <line x="14" y="156.2"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Slidebar" h="219" w="23" aspect="1">
+        <foreground>
+            <strokecolor color="#818181"/>
+            <path>
+                <move x="23" y="31"/>
+                <line x="0" y="31"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="57"/>
+                <line x="0" y="57"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="84"/>
+                <line x="0" y="84"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="22.6" y="109"/>
+                <line x="0" y="109"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="135"/>
+                <line x="0" y="135"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="161"/>
+                <line x="0" y="161"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="23" y="188"/>
+                <line x="0" y="188"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#f2f2f2"/>
+            <path>
+                <move x="9" y="0"/>
+                <line x="10" y="0"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="5" y="5"/>
+                <line x="5" y="214"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="10" y="219"/>
+                <line x="9" y="219"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="14" y="214"/>
+                <line x="14" y="5"/>
+                <arc rx="5" ry="5" x-axis-rotation="90" large-arc-flag="0" sweep-flag="0" x="9" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#7f7f7f"/>
+            <path>
+                <move x="18" y="109"/>
+                <line x="14" y="114"/>
+                <line x="0" y="114"/>
+                <line x="0" y="104"/>
+                <line x="14" y="104"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="On-Off Button 1" h="31" w="130" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#ffffff"/>
+            <roundrect x="0" y="0" w="130" h="31" arcsize="5.992555831265508"/>
+            <fillstroke/>
+            <fillcolor color="#c7c7c7"/>
+            <roundrect x="0" y="0" w="65" h="31" arcsize="7.1464019851116625"/>
+            <fillstroke/>
+            <fontsize size="16"/>
+            <fontstyle style="1"/>
+            <text str="OFF" x="97.5" y="15.5" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="On-Off Button 2" h="31" w="130" aspect="1">
+        <foreground>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#772222"/>
+            <roundrect x="0" y="0" w="130" h="31" arcsize="5.992555831265508"/>
+            <fillstroke/>
+            <fillcolor color="#c7c7c7"/>
+            <roundrect x="0" y="0" w="65" h="31" arcsize="7.1464019851116625"/>
+            <fillstroke/>
+            <fontsize size="16"/>
+            <fontstyle style="1"/>
+            <fontcolor color="#ffffff"/>
+            <text str="OFF" x="97.5" y="15.5" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="On-Off Button 3" h="31" w="130" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#ffffff"/>
+            <roundrect x="0" y="0" w="130" h="31" arcsize="5.992555831265508"/>
+            <fillstroke/>
+            <fillcolor color="#c7c7c7"/>
+            <roundrect x="65" y="0" w="65" h="31" arcsize="7.1464019851116625"/>
+            <fillstroke/>
+            <fontsize size="16"/>
+            <fontstyle style="1"/>
+            <text str="ON" x="32.5" y="15.5" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+</shapes>

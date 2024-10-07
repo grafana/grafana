@@ -1,0 +1,306 @@
+<shapes name="mxgraph.aws.deployment_management">
+<shape name="AWS CloudFormation" h="54.06" w="48.17" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0" perimeter="0" name="NW"/>
+<constraint x="0" y="1" perimeter="0" name="SW"/>
+<constraint x="1" y="0" perimeter="0" name="NE"/>
+<constraint x="1" y="1" perimeter="0" name="SE"/>
+</connections>
+<background>
+<path>
+<move x="0" y="0"/>
+<line x="0" y="54.05"/>
+<line x="48.17" y="54.05"/>
+<line x="48.17" y="0"/>
+<line x="0" y="0"/>
+<close/>
+<move x="14.79" y="46.41"/>
+<line x="5.88" y="46.41"/>
+<line x="5.88" y="37.49"/>
+<line x="14.79" y="37.49"/>
+<line x="14.79" y="46.41"/>
+<close/>
+<move x="14.79" y="31.87"/>
+<line x="5.88" y="31.87"/>
+<line x="5.88" y="22.95"/>
+<line x="14.79" y="22.95"/>
+<line x="14.79" y="31.87"/>
+<close/>
+<move x="14.79" y="17.02"/>
+<line x="5.88" y="17.02"/>
+<line x="5.88" y="8.11"/>
+<line x="14.79" y="8.11"/>
+<line x="14.79" y="17.02"/>
+<close/>
+<move x="40.83" y="46.14"/>
+<line x="18.59" y="46.14"/>
+<line x="18.59" y="43.64"/>
+<line x="40.83" y="43.64"/>
+<line x="40.83" y="46.14"/>
+<close/>
+<move x="40.83" y="31.66"/>
+<line x="18.59" y="31.66"/>
+<line x="18.59" y="29.16"/>
+<line x="40.83" y="29.16"/>
+<line x="40.83" y="31.66"/>
+<close/>
+<move x="40.83" y="16.82"/>
+<line x="18.59" y="16.82"/>
+<line x="18.59" y="14.32"/>
+<line x="40.83" y="14.32"/>
+<line x="40.83" y="16.82"/>
+<close/>
+</path>
+</background>
+<foreground>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="AWS CloudFormation Stack" h="41.77" w="61.06" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0" perimeter="0" name="NW"/>
+<constraint x="0" y="1" perimeter="0" name="SW"/>
+<constraint x="1" y="0" perimeter="0" name="NE"/>
+<constraint x="1" y="1" perimeter="0" name="SE"/>
+</connections>
+<foreground>
+<rect x="21.67" y="27.98" w="18.71" h="13.8"/>
+<fillstroke/>
+<rect x="43.33" y="27.98" w="17.73" h="13.8"/>
+<fillstroke/>
+<path>
+<move x="0" y="27.97"/>
+<line x="0" y="25.01"/>
+<line x="29.56" y="25.01"/>
+<line x="29.56" y="14.17"/>
+<line x="0" y="14.17"/>
+<line x="0" y="11.22"/>
+<line x="61.06" y="11.22"/>
+<line x="61.06" y="0"/>
+<line x="0" y="0"/>
+<line x="0" y="41.77"/>
+<line x="18.71" y="41.77"/>
+<line x="18.71" y="27.97"/>
+<close/>
+</path>
+<fillstroke/>
+<rect x="32.51" y="14.18" w="28.55" h="10.84"/>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="AWS CloudFormation Template" h="54.06" w="48.17" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0" perimeter="0" name="NW"/>
+<constraint x="0" y="1" perimeter="0" name="SW"/>
+<constraint x="1" y="0" perimeter="0" name="NE"/>
+<constraint x="1" y="1" perimeter="0" name="SE"/>
+</connections>
+<background>
+<path>
+<move x="0" y="0"/>
+<line x="0" y="54.05"/>
+<line x="48.17" y="54.05"/>
+<line x="48.17" y="0"/>
+<line x="0" y="0"/>
+<close/>
+<move x="14.79" y="46.41"/>
+<line x="5.88" y="46.41"/>
+<line x="5.88" y="37.49"/>
+<line x="14.79" y="37.49"/>
+<line x="14.79" y="46.41"/>
+<close/>
+<move x="14.79" y="31.87"/>
+<line x="5.88" y="31.87"/>
+<line x="5.88" y="22.95"/>
+<line x="14.79" y="22.95"/>
+<line x="14.79" y="31.87"/>
+<close/>
+<move x="14.79" y="17.02"/>
+<line x="5.88" y="17.02"/>
+<line x="5.88" y="8.11"/>
+<line x="14.79" y="8.11"/>
+<line x="14.79" y="17.02"/>
+<close/>
+<move x="40.83" y="46.14"/>
+<line x="18.59" y="46.14"/>
+<line x="18.59" y="43.64"/>
+<line x="40.83" y="43.64"/>
+<line x="40.83" y="46.14"/>
+<close/>
+<move x="40.83" y="31.66"/>
+<line x="18.59" y="31.66"/>
+<line x="18.59" y="29.16"/>
+<line x="40.83" y="29.16"/>
+<line x="40.83" y="31.66"/>
+<close/>
+<move x="40.83" y="16.82"/>
+<line x="18.59" y="16.82"/>
+<line x="18.59" y="14.32"/>
+<line x="40.83" y="14.32"/>
+<line x="40.83" y="16.82"/>
+<close/>
+</path>
+</background>
+<foreground>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="AWS Elastic BeanStalk" h="50.85" w="63.95" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0.26" y="0.5" perimeter="0" name="W"/>
+<constraint x="0.7" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0.08" perimeter="0" name="NW"/>
+<constraint x="0.26" y="1" perimeter="0" name="SW"/>
+<constraint x="0.7" y="0" perimeter="0" name="NE"/>
+<constraint x="1" y="0.635" perimeter="0" name="SE"/>
+</connections>
+<foreground>
+<path>
+<move x="4.91" y="17.99"/>
+<curve x1="6.12" y1="19.21" x2="8.62" y2="19.9" x3="11.23" y3="20.3"/>
+<curve x1="8.52" y1="19.72" x2="5.95" y2="18.89" x3="4.67" y3="17.7"/>
+<curve x1="4.75" y1="17.8" x2="4.82" y2="17.91" x3="4.91" y3="17.99"/>
+<close/>
+</path>
+<stroke/>
+<path>
+<move x="2.33" y="7.42"/>
+<line x="2.37" y="6.52"/>
+<line x="3.47" y="6.69"/>
+<curve x1="4.4" y1="6.83" x2="11.4" y2="7.95" x3="15.44" y3="10.01"/>
+<curve x1="12.04" y1="7.1" x2="2.06" y2="6.28" x3="2.06" y3="6.28"/>
+<curve x1="2.06" y1="6.28" x2="2.11" y2="7.72" x3="2.32" y3="9.61"/>
+<curve x1="2.28" y1="8.5" x2="2.31" y2="7.67" x3="2.33" y3="7.42"/>
+<close/>
+</path>
+<stroke/>
+<path>
+<move x="59.98" y="32.8"/>
+<line x="60.88" y="33.23"/>
+<line x="60.34" y="34.06"/>
+<curve x1="60.12" y1="34.4" x2="54.92" y2="42.32" x3="50.82" y3="43.56"/>
+<curve x1="50.85" y1="43.55" x2="50.89" y2="43.55" x3="50.93" y3="43.54"/>
+<curve x1="55.23" y1="42.22" x2="61.05" y2="33.13" x3="61.05" y3="33.13"/>
+<curve x1="61.05" y1="33.13" x2="55.15" y2="30.22" x3="51.15" y3="29.93"/>
+<curve x1="54.83" y1="30.32" x2="59.76" y2="32.69" x3="59.98" y3="32.8"/>
+<close/>
+</path>
+<stroke/>
+<path>
+<move x="61.94" y="31.34"/>
+<curve x1="61.23" y1="30.99" x2="54.85" y2="27.9" x3="50.54" y3="27.9"/>
+<curve x1="49.79" y1="27.9" x2="49.12" y2="27.99" x3="48.53" y3="28.17"/>
+<curve x1="47.3" y1="28.55" x2="46.06" y2="29.45" x3="44.87" y3="30.61"/>
+<line x="44.87" y="0"/>
+<line x="16.73" y="0"/>
+<line x="16.73" y="8.5"/>
+<curve x1="12.9" y1="5.26" x2="3.34" y2="4.38" x3="2.23" y3="4.28"/>
+<line x="0" y="4.1"/>
+<line x="0.07" y="6.34"/>
+<curve x1="0.11" y1="7.99" x2="0.51" y2="16.42" x3="3.49" y3="19.41"/>
+<curve x1="6.03" y1="21.94" x2="12.18" y2="22.65" x3="16.73" y3="22.8"/>
+<line x="16.73" y="50.85"/>
+<line x="44.87" y="50.85"/>
+<line x="44.87" y="45.43"/>
+<curve x1="46.16" y1="45.65" x2="47.5" y2="45.81" x3="48.73" y3="45.81"/>
+<curve x1="49.82" y1="45.81" x2="50.73" y2="45.69" x3="51.51" y3="45.45"/>
+<curve x1="56.38" y1="43.96" x2="62.1" y2="35.21" x3="62.74" y3="34.21"/>
+<line x="63.95" y="32.33"/>
+<line x="61.94" y="31.34"/>
+<close/>
+<move x="19.86" y="21.48"/>
+<curve x1="19.86" y1="21.48" x2="19.59" y2="21.46" x3="19.12" y3="21.42"/>
+<curve x1="17.31" y1="21.27" x2="14.19" y2="20.94" x3="11.23" y3="20.3"/>
+<curve x1="8.62" y1="19.9" x2="6.12" y2="19.2" x3="4.91" y3="17.99"/>
+<curve x1="4.82" y1="17.91" x2="4.75" y2="17.8" x3="4.67" y3="17.7"/>
+<curve x1="4.65" y1="17.68" x2="4.63" y2="17.67" x3="4.61" y3="17.66"/>
+<curve x1="2.83" y1="15.95" x2="2.4" y2="12.09" x3="2.32" y3="9.61"/>
+<curve x1="2.11" y1="7.72" x2="2.06" y2="6.28" x3="2.06" y3="6.28"/>
+<curve x1="2.06" y1="6.28" x2="12.04" y2="7.1" x3="15.44" y3="10.01"/>
+<curve x1="16.22" y1="10.41" x2="16.91" y2="10.85" x3="17.4" y3="11.32"/>
+<curve x1="19.97" y1="13.78" x2="20.86" y2="20.34" x3="20.89" y3="20.62"/>
+<line x="21.01" y="21.55"/>
+<line x="19.86" y="21.48"/>
+<close/>
+<move x="50.93" y="43.54"/>
+<curve x1="50.89" y1="43.55" x2="50.85" y2="43.55" x3="50.82" y3="43.56"/>
+<curve x1="50.81" y1="43.56" x2="50.81" y2="43.56" x3="50.81" y3="43.56"/>
+<curve x1="50.2" y1="43.75" x2="49.45" y2="43.84" x3="48.58" y3="43.84"/>
+<curve x1="45.02" y1="43.84" x2="40.25" y2="42.33" x3="40.05" y3="42.26"/>
+<line x="39.06" y="41.95"/>
+<line x="39.52" y="41.03"/>
+<curve x1="40.03" y1="40.04" x2="44.58" y2="31.3" x3="48.67" y3="30.07"/>
+<curve x1="49.11" y1="29.94" x2="49.62" y2="29.87" x3="50.19" y3="29.87"/>
+<curve x1="50.5" y1="29.87" x2="50.82" y2="29.9" x3="51.15" y3="29.93"/>
+<curve x1="55.15" y1="30.22" x2="61.05" y2="33.13" x3="61.05" y3="33.13"/>
+<curve x1="61.05" y1="33.13" x2="55.23" y2="42.22" x3="50.93" y3="43.54"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="AWS Elastic BeanStalk Applicaton" h="53.89" w="31.1" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0.07" perimeter="0" name="N"/>
+<constraint x="0.13" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="0.265" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.11" y="0.22" perimeter="0" name="NW"/>
+<constraint x="0" y="1" perimeter="0" name="SW"/>
+<constraint x="0.99" y="0.01" perimeter="0" name="NE"/>
+<constraint x="0.265" y="1" perimeter="0" name="SE"/>
+</connections>
+<background>
+<path>
+<move x="4.45" y="23.97"/>
+<curve x1="4.34" y1="24.01" x2="4.23" y2="24.03" x3="4.12" y3="24.03"/>
+<curve x1="3.71" y1="24.03" x2="3.32" y2="23.76" x3="3.18" y3="23.35"/>
+<curve x1="3" y1="22.83" x2="3.28" y2="22.26" x3="3.8" y3="22.08"/>
+<curve x1="3.96" y1="22.02" x2="20.2" y2="16.29" x3="28.72" y3="1.29"/>
+<curve x1="21.94" y1="2.18" x2="10.78" y2="4.51" x3="6.77" y3="8.12"/>
+<curve x1="1.09" y1="13.22" x2="0.63" y2="18.56" x3="0.03" y3="25.14"/>
+<line x="0" y="25.14"/>
+<line x="0" y="53.89"/>
+<line x="8.25" y="53.89"/>
+<line x="8.25" y="25.11"/>
+<curve x1="15.64" y1="24.5" x2="22.49" y2="23.09" x3="25.09" y3="20.49"/>
+<curve x1="27.91" y1="17.68" x2="29.25" y2="9.32" x3="29.78" y3="3.44"/>
+<curve x1="20.75" y1="18.23" x2="5.13" y2="23.74" x3="4.45" y3="23.97"/>
+<close/>
+</path>
+</background>
+<foreground>
+<fillstroke/>
+
+<fillcolor color="#FFFFFF"/>
+<path>
+<move x="30.44" y="0.27"/>
+<curve x1="29.95" y1="0" x2="29.34" y2="0.18" x3="29.08" y3="0.66"/>
+<curve x1="28.97" y1="0.88" x2="28.84" y2="1.08" x3="28.72" y3="1.29"/>
+<curve x1="20.2" y1="16.29" x2="3.96" y2="22.02" x3="3.8" y3="22.08"/>
+<curve x1="3.28" y1="22.26" x2="3" y2="22.83" x3="3.18" y3="23.35"/>
+<curve x1="3.32" y1="23.76" x2="3.71" y2="24.03" x3="4.12" y3="24.03"/>
+<curve x1="4.23" y1="24.03" x2="4.34" y2="24.01" x3="4.45" y3="23.97"/>
+<curve x1="5.13" y1="23.74" x2="20.75" y2="18.23" x3="29.78" y3="3.44"/>
+<curve x1="30.14" y1="2.85" x2="30.5" y2="2.25" x3="30.84" y3="1.62"/>
+<curve x1="31.1" y1="1.14" x2="30.92" y2="0.53" x3="30.44" y3="0.27"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+</shapes>

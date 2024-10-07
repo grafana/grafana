@@ -1,0 +1,602 @@
+<shapes name="mxGraph.pid.pumps">
+<shape aspect="variable" h="35" name="Cavity Pump" strokewidth="inherit" w="123.77">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0.12" y="1"/>
+        <constraint name="SE" perimeter="0" x="0.485" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="87" y="0"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="0" x="87" x-axis-rotation="0" y="30"/>
+            <line x="117" y="30"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="0" x="117" x-axis-rotation="0" y="0"/>
+            <close/>
+            <move x="75" y="15"/>
+            <line x="80" y="15"/>
+            <move x="15" y="25"/>
+            <line x="15" y="35"/>
+            <move x="60" y="25"/>
+            <line x="60" y="35"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="20" w="75" x="0" y="5"/>
+        <fillstroke/>
+        <path>
+            <move x="4.5" y="15"/>
+            <arc large-arc-flag="0" rx="6" ry="10" sweep-flag="1" x="15.5" x-axis-rotation="0" y="15"/>
+            <arc large-arc-flag="0" rx="6" ry="10" sweep-flag="0" x="26.5" x-axis-rotation="0" y="15"/>
+            <arc large-arc-flag="0" rx="6" ry="10" sweep-flag="1" x="37.5" x-axis-rotation="0" y="15"/>
+            <arc large-arc-flag="0" rx="6" ry="10" sweep-flag="0" x="48.5" x-axis-rotation="0" y="15"/>
+            <arc large-arc-flag="0" rx="6" ry="10" sweep-flag="1" x="59.5" x-axis-rotation="0" y="15"/>
+            <arc large-arc-flag="0" rx="6" ry="10" sweep-flag="0" x="70.5" x-axis-rotation="0" y="15"/>
+            <move x="87" y="0"/>
+            <line x="87" y="30"/>
+            <move x="117" y="0"/>
+            <line x="117" y="30"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="67" name="Centrifugal Pump 1" strokewidth="inherit" w="70">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.43" y="0"/>
+        <constraint name="S" perimeter="0" x="0.43" y="1"/>
+        <constraint name="W" perimeter="0" x="0.01" y="0.5"/>
+        <constraint name="E" perimeter="0" x="0.86" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0.125" y="0.125"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="0.855" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="12" y="54"/>
+            <line x="0" y="67"/>
+            <line x="60" y="67"/>
+            <line x="48" y="54"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="0.6" y="25"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="30" x-axis-rotation="0" y="0"/>
+            <line x="70" y="0"/>
+            <line x="70" y="20"/>
+            <line x="58.45" y="20"/>
+            <arc large-arc-flag="1" rx="30" ry="30" sweep-flag="1" x="0.6" x-axis-rotation="0" y="35"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="21.4" y="25"/>
+            <arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="21.4" x-axis-rotation="0" y="35"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="77" name="Centrifugal Pump 2" strokewidth="inherit" w="62.09">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.485" y="0.13"/>
+        <constraint name="S" perimeter="0" x="0.485" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.52"/>
+        <constraint name="E" perimeter="0" x="0.97" y="0.52"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="0.79" y="0.21"/>
+        <constraint name="SE" perimeter="0" x="0.97" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="12" y="64"/>
+            <line x="0" y="77"/>
+            <line x="60" y="77"/>
+            <line x="48" y="64"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="25" y="69.4"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="0" x-axis-rotation="0" y="40"/>
+            <line x="0" y="0"/>
+            <line x="20" y="0"/>
+            <line x="20" y="11.55"/>
+            <arc large-arc-flag="1" rx="30" ry="30" sweep-flag="1" x="35" x-axis-rotation="0" y="69.4"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="25" y="48.6"/>
+            <arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="35" x-axis-rotation="0" y="48.6"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="67" name="Centrifugal Pump 3" strokewidth="inherit" w="70">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.57" y="0"/>
+        <constraint name="S" perimeter="0" x="0.57" y="1"/>
+        <constraint name="E" perimeter="0" x="0.99" y="0.5"/>
+        <constraint name="W" perimeter="0" x="0.14" y="0.5"/>
+        <constraint name="NE" perimeter="0" x="0.875" y="0.125"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0.145" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="22" y="54"/>
+            <line x="10" y="67"/>
+            <line x="70" y="67"/>
+            <line x="58" y="54"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="69.4" y="25"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="0" x="40" x-axis-rotation="0" y="0"/>
+            <line x="0" y="0"/>
+            <line x="0" y="20"/>
+            <line x="11.55" y="20"/>
+            <arc large-arc-flag="1" rx="30" ry="30" sweep-flag="0" x="69.4" x-axis-rotation="0" y="35"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="48.6" y="25"/>
+            <arc large-arc-flag="1" rx="10" ry="10" sweep-flag="0" x="48.6" x-axis-rotation="0" y="35"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Feed Pump" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="0"/>
+            <line x="65" y="0"/>
+            <line x="65" y="10"/>
+            <line x="100" y="10"/>
+            <line x="100" y="30"/>
+            <line x="65" y="30"/>
+            <line x="65" y="40"/>
+            <line x="0" y="40"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="67" name="Gas Blower" strokewidth="inherit" w="72.31">
+    <connections>
+        <constraint name="S" perimeter="0" x="0.55" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="22" y="54"/>
+            <line x="10" y="67"/>
+            <line x="70" y="67"/>
+            <line x="58" y="54"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="40" y="0"/>
+            <arc large-arc-flag="1" rx="30" ry="30" sweep-flag="1" x="11.5" x-axis-rotation="0" y="20"/>
+            <line x="0" y="19.75"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="30" y="20"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="55" name="Gas Compressor" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="S" perimeter="0" x="0.55" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="30"/>
+            <line x="100" y="0"/>
+            <line x="100" y="55"/>
+            <line x="0" y="55"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="91" name="Gear Pump" strokewidth="inherit" w="57">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0.215" y="0.1"/>
+        <constraint name="SW" perimeter="0" x="0.2" y="1"/>
+        <constraint name="NE" perimeter="0" x="0.785" y="0.1"/>
+        <constraint name="SE" perimeter="0" x="0.8" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="15" y="82"/>
+            <line x="7.5" y="91"/>
+            <line x="49.5" y="91"/>
+            <line x="41.9" y="82"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="48.5" y="10"/>
+            <line x="48.5" y="75"/>
+            <arc large-arc-flag="0" rx="20" ry="10" sweep-flag="1" x="8.5" x-axis-rotation="0" y="75"/>
+            <line x="8.5" y="10"/>
+            <arc large-arc-flag="0" rx="20" ry="10" sweep-flag="1" x="48.5" x-axis-rotation="0" y="10"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <ellipse h="32" w="32" x="12.5" y="7"/>
+        <stroke/>
+        <ellipse h="32" w="32" x="12.5" y="44"/>
+        <stroke/>
+        <path>
+            <move x="57" y="31.5"/>
+            <line x="57" y="51.5"/>
+            <move x="48.5" y="41.5"/>
+            <line x="57" y="41.5"/>
+            <move x="0" y="32"/>
+            <line x="0" y="52"/>
+            <move x="0" y="41.5"/>
+            <line x="8.5" y="41.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="111.77" name="Horizontal Pump" strokewidth="inherit" w="155.27">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.15" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.54"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="8.5" y="15"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="38.5" x-axis-rotation="0" y="15"/>
+            <line x="38.5" y="105"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="8.5" x-axis-rotation="0" y="105"/>
+            <close/>
+            <move x="148.5" y="45"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="148.5" x-axis-rotation="0" y="75"/>
+            <line x="58.5" y="75"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="58.5" x-axis-rotation="0" y="45"/>
+            <close/>
+            <move x="58.5" y="45"/>
+            <line x="58.5" y="75"/>
+            <move x="148.5" y="45"/>
+            <line x="148.5" y="75"/>
+            <move x="23.5" y="8.5"/>
+            <line x="23.5" y="0"/>
+            <move x="13.5" y="0"/>
+            <line x="33.5" y="0"/>
+            <move x="0" y="60"/>
+            <line x="8.5" y="60"/>
+            <move x="0" y="50"/>
+            <line x="0" y="70"/>
+        </path>
+        <fillstroke/>
+        <rect h="4" w="13.5" x="38.5" y="58"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Injector" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="S" perimeter="0" x="0.25" y="1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <rect h="40" w="40" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="40" y="10"/>
+            <line x="80" y="0"/>
+            <line x="80" y="40"/>
+            <line x="40" y="30"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="69" name="Peristaltic" strokewidth="inherit" w="60">
+    <connections>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="12" y="56"/>
+            <line x="0" y="69"/>
+            <line x="60" y="69"/>
+            <line x="48" y="56"/>
+        </path>
+        <fillstroke/>
+        <ellipse h="60" w="60" x="0" y="2"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="20" y="2"/>
+        <stroke/>
+        <ellipse h="20" w="20" x="3.6" y="33.5"/>
+        <stroke/>
+        <ellipse h="20" w="20" x="36.4" y="33.5"/>
+        <stroke/>
+        <path>
+            <move x="21.3" y="7.2"/>
+            <line x="4.6" y="39"/>
+            <move x="38.7" y="7.2"/>
+            <line x="55.4" y="39"/>
+            <move x="13.6" y="53.5"/>
+            <line x="46.4" y="53.5"/>
+            <move x="20" y="0"/>
+            <line x="20" y="12"/>
+            <move x="40" y="0"/>
+            <line x="40" y="12"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="66.97" name="Screw Pump" strokewidth="inherit" w="70">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.43" y="0"/>
+        <constraint name="S" perimeter="0" x="0.43" y="1"/>
+        <constraint name="W" perimeter="0" x="0.01" y="0.45"/>
+        <constraint name="E" perimeter="0" x="1" y="0.45"/>
+        <constraint name="NW" perimeter="0" x="0.126" y="0.125"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="0.731" y="0.125"/>
+        <constraint name="SE" perimeter="0" x="0.86" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="12" y="53.97"/>
+            <line x="0" y="66.97"/>
+            <line x="60" y="66.97"/>
+            <line x="48" y="53.97"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="0.6" y="24.97"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="59.75" x-axis-rotation="0" y="24.97"/>
+            <line x="70" y="24.97"/>
+            <line x="70" y="34.97"/>
+            <line x="59.75" y="34.97"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="0.6" x-axis-rotation="0" y="34.97"/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="7.7" y="40.77"/>
+            <arc large-arc-flag="0" rx="13" ry="13" sweep-flag="0" x="30" x-axis-rotation="0" y="29.97"/>
+            <arc large-arc-flag="0" rx="13" ry="13" sweep-flag="1" x="52.4" x-axis-rotation="0" y="18.97"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Screw Pump 2" strokewidth="inherit" w="123.77">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.12" y="0"/>
+        <constraint name="S" perimeter="0" x="0.485" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="75" y="20"/>
+            <line x="80" y="20"/>
+            <move x="15" y="10"/>
+            <line x="15" y="0"/>
+            <move x="60" y="30"/>
+            <line x="60" y="40"/>
+            <move x="87" y="5"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="0" x="87" x-axis-rotation="0" y="35"/>
+            <line x="117" y="35"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="0" x="117" x-axis-rotation="0" y="5"/>
+            <close/>
+            <move x="87" y="5"/>
+            <line x="87" y="35"/>
+            <move x="117" y="5"/>
+            <line x="117" y="35"/>
+        </path>
+        <fillstroke/>
+        <rect h="20" w="75" x="0" y="10"/>
+        <fillstroke/>
+        <path>
+            <move x="4.5" y="20"/>
+            <line x="10" y="14"/>
+            <line x="21" y="26"/>
+            <line x="32" y="14"/>
+            <line x="43" y="26"/>
+            <line x="54" y="14"/>
+            <line x="65" y="26"/>
+            <line x="70.5" y="20"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="74" name="Submersible Pump" strokewidth="inherit" w="103.54">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="96.77" y="40"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="96.77" x-axis-rotation="0" y="70"/>
+            <line x="6.77" y="70"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="6.77" x-axis-rotation="0" y="40"/>
+            <close/>
+            <move x="76.77" y="31.5"/>
+            <line x="96.77" y="31.5"/>
+            <move x="86.77" y="31.5"/>
+            <line x="86.77" y="40"/>
+        </path>
+        <fillstroke/>
+        <rect h="4" w="70" x="16.77" y="70"/>
+        <fillstroke/>
+        <rect h="35" w="40" x="31.77" y="5"/>
+        <fillstroke/>
+        <rect h="5" w="14" x="44.77" y="0"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="186.77" name="Sump Pump" strokewidth="inherit" w="103.54">
+    <connections>
+        <constraint name="E" perimeter="0" x="0.84" y="0.79"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="96.77" y="156.77"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="96.77" x-axis-rotation="0" y="186.77"/>
+            <line x="6.77" y="186.77"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="6.77" x-axis-rotation="0" y="156.77"/>
+            <close/>
+            <move x="36.77" y="6.77"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="66.77" x-axis-rotation="0" y="6.77"/>
+            <line x="66.77" y="36.77"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="36.77" x-axis-rotation="0" y="36.77"/>
+            <close/>
+            <move x="76.77" y="148.27"/>
+            <line x="96.77" y="148.27"/>
+            <move x="86.77" y="148.27"/>
+            <line x="86.77" y="156.77"/>
+            <move x="36.77" y="36.77"/>
+            <line x="66.77" y="36.77"/>
+            <move x="36.77" y="6.77"/>
+            <line x="66.77" y="6.77"/>
+        </path>
+        <fillstroke/>
+        <rect h="113.5" w="4" x="49.77" y="43.27"/>
+        <fillstroke/>
+        <rect h="14" w="70" x="16.77" y="75.77"/>
+        <fillstroke/>
+        <path>
+            <move x="16.77" y="82.77"/>
+            <line x="86.77" y="82.77"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Turbine" strokewidth="inherit" w="98">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0.12"/>
+        <constraint name="S" perimeter="0" x="0.5" y="0.88"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0.09" y="0.25"/>
+        <constraint name="SW" perimeter="0" x="0.09" y="0.75"/>
+        <constraint name="NE" perimeter="0" x="0.91" y="0"/>
+        <constraint name="SE" perimeter="0" x="0.91" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="22"/>
+            <line x="9" y="22"/>
+            <line x="9" y="15"/>
+            <line x="89" y="0"/>
+            <line x="89" y="22"/>
+            <line x="98" y="22"/>
+            <line x="98" y="38"/>
+            <line x="89" y="38"/>
+            <line x="89" y="60"/>
+            <line x="9" y="45"/>
+            <line x="9" y="38"/>
+            <line x="0" y="38"/>
+            <close/>
+            <move x="9" y="22"/>
+            <line x="9" y="38"/>
+            <move x="89" y="22"/>
+            <line x="89" y="38"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="49.94" name="Vacuum Pump" strokewidth="inherit" w="99">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0.145" y="0.3"/>
+        <constraint name="SW" perimeter="0" x="0.145" y="0.7"/>
+        <constraint name="NE" perimeter="0" x="0.855" y="0.3"/>
+        <constraint name="SE" perimeter="0" x="0.855" y="0.7"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="22.97"/>
+            <line x="14.5" y="22.97"/>
+            <line x="14.5" y="14.97"/>
+            <line x="26.6" y="14.97"/>
+            <arc large-arc-flag="0" rx="25" ry="25" sweep-flag="1" x="72.4" x-axis-rotation="0" y="14.97"/>
+            <line x="84.5" y="14.97"/>
+            <line x="84.5" y="22.97"/>
+            <line x="99" y="22.97"/>
+            <line x="99" y="26.97"/>
+            <line x="84.5" y="26.97"/>
+            <line x="84.5" y="34.97"/>
+            <line x="72.4" y="34.97"/>
+            <arc large-arc-flag="0" rx="25" ry="25" sweep-flag="1" x="26.6" x-axis-rotation="0" y="34.97"/>
+            <line x="14.5" y="34.97"/>
+            <line x="14.5" y="26.97"/>
+            <line x="0" y="26.97"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="14.5" y="22.97"/>
+            <line x="14.5" y="26.97"/>
+            <move x="84.5" y="22.97"/>
+            <line x="84.5" y="26.97"/>
+            <move x="26.6" y="34.97"/>
+            <arc large-arc-flag="0" rx="25" ry="25" sweep-flag="1" x="26.6" x-axis-rotation="0" y="14.97"/>
+            <move x="72.4" y="14.97"/>
+            <arc large-arc-flag="0" rx="25" ry="25" sweep-flag="1" x="72.4" x-axis-rotation="0" y="34.97"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="146.77" name="Vertical Pump" strokewidth="inherit" w="120">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.9"/>
+        <constraint name="E" perimeter="0" x="1" y="0.9"/>
+    </connections>
+    <background>
+        <path>
+            <move x="45" y="6.77"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="75" x-axis-rotation="0" y="6.77"/>
+            <line x="75" y="96.77"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="45" x-axis-rotation="0" y="96.77"/>
+            <close/>
+            <move x="105" y="116.77"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="105" x-axis-rotation="0" y="146.77"/>
+            <line x="15" y="146.77"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="15" x-axis-rotation="0" y="116.77"/>
+            <close/>
+            <move x="111.5" y="131.77"/>
+            <line x="120" y="131.77"/>
+            <move x="120" y="121.77"/>
+            <line x="120" y="141.77"/>
+            <move x="0" y="131.77"/>
+            <line x="8.5" y="131.77"/>
+            <move x="0" y="121.77"/>
+            <line x="0" y="141.77"/>
+            <move x="45" y="96.77"/>
+            <line x="75" y="96.77"/>
+            <move x="45" y="6.77"/>
+            <line x="75" y="6.77"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+        </path>
+        <stroke/>
+        <rect h="13.5" w="4" x="58" y="103.27"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

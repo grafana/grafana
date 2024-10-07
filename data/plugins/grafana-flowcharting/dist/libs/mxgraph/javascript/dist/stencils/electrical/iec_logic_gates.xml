@@ -1,0 +1,120 @@
+<shapes name="mxgraph.electrical.iec_logic_gates">
+	<shape aspect="variable" h="80" name="AND" strokewidth="inherit" w="60">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<fontsize size="12"/>
+			<fontstyle style="0"/>
+			<fontstyle style="0"/>
+			<text align="center" str="AND" valign="bottom" x="30" y="46"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="NAND" strokewidth="inherit" w="66">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<fontsize size="12"/>
+			<fontstyle style="0"/>
+			<fontstyle style="0"/>
+			<text align="center" str="NAND" valign="bottom" x="30" y="46"/>
+			<ellipse h="6" w="6" x="60" y="37"/>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="NOR" strokewidth="inherit" w="66">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<ellipse h="6" w="6" x="60" y="37"/>
+			<fillstroke/>
+			<fontsize size="12"/>
+			<fontstyle style="0"/>
+			<fontstyle style="0"/>
+			<text align="center" str="1" valign="bottom" x="35" y="46"/>
+			<path>
+				<move x="24.25" y="36"/>
+				<line x="28.75" y="40"/>
+				<line x="24.25" y="44"/>
+				<move x="30" y="40.75"/>
+				<line x="25.12" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="NOT" strokewidth="inherit" w="66">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<fontsize size="12"/>
+			<fontstyle style="0"/>
+			<fontstyle style="0"/>
+			<text align="center" str="=1" valign="bottom" x="30" y="46"/>
+			<ellipse h="6" w="6" x="60" y="37"/>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="OR" strokewidth="inherit" w="60">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<fontsize size="12"/>
+			<fontstyle style="0"/>
+			<fontstyle style="0"/>
+			<text align="center" str="1" valign="bottom" x="35" y="46"/>
+			<path>
+				<move x="24.25" y="36"/>
+				<line x="28.75" y="40"/>
+				<line x="24.25" y="44"/>
+				<move x="30" y="40.75"/>
+				<line x="25.12" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="XOR" strokewidth="inherit" w="60">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<fontsize size="12"/>
+			<fontstyle style="0"/>
+			<fontstyle style="0"/>
+			<text align="center" str="=1" valign="bottom" x="30" y="46"/>
+		</foreground>
+	</shape>
+</shapes>

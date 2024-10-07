@@ -1,0 +1,2003 @@
+<shapes name="mxgraph.eip">
+<shape aspect="variable" h="90" name="Aggregator" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="50" y="45"/>
+            <line x="95" y="45"/>
+        </path>
+        <stroke/>
+        <strokewidth width="1"/>
+        <fillcolor color="#e6e6e6"/>
+        <rect h="16" w="16" x="10" y="16"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="10" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="10" y="60"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="87" y="39"/>
+            <line x="87" y="51"/>
+            <line x="100" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Channel Adapter" strokewidth="inherit" w="45">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0.07"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0.14"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0.21"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="0.93"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="0.86"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="0.79"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.28"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.72"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="45" y="25"/>
+            <line x="45" y="65"/>
+            <line x="0" y="90"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Channel Purger" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokewidth width="1"/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#e6e6e6"/>
+        <path>
+            <move x="50" y="20"/>
+            <line x="100" y="20"/>
+            <line x="85" y="70"/>
+            <line x="65" y="70"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#a0a0a0"/>
+        <path>
+            <move x="65" y="70"/>
+            <line x="50" y="20"/>
+            <line x="85" y="20"/>
+            <line x="78" y="70"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#808080"/>
+        <path>
+            <move x="65" y="70"/>
+            <line x="50" y="20"/>
+            <line x="65" y="20"/>
+            <line x="72" y="70"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokecolor color="#000000"/>
+        <path>
+            <move x="50" y="20"/>
+            <line x="100" y="20"/>
+            <line x="85" y="70"/>
+            <line x="65" y="70"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Claim Check" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokewidth width="2"/>
+        <strokecolor color="#000000"/>
+        <path>
+            <move x="50" y="45"/>
+            <line x="95" y="45"/>
+        </path>
+        <stroke/>
+        <strokewidth width="1"/>
+        <fillcolor color="#e6e6e6"/>
+        <rect h="25" w="25" x="10" y="28"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="87" y="39"/>
+            <line x="87" y="51"/>
+            <line x="100" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffe040"/>
+        <path>
+            <move x="126" y="73"/>
+            <arc large-arc-flag="1" rx="8.5" ry="8.5" sweep-flag="1" x="126" x-axis-rotation="0" y="64"/>
+            <line x="142" y="64"/>
+            <line x="146" y="68"/>
+            <line x="142" y="72"/>
+            <line x="140" y="70"/>
+            <line x="138" y="72"/>
+            <line x="136" y="70"/>
+            <line x="134" y="72"/>
+            <line x="132" y="70"/>
+            <line x="129" y="73"/>
+            <close/>
+            <move x="113" y="70"/>
+            <arc large-arc-flag="0" rx="3" ry="3" sweep-flag="0" x="118" x-axis-rotation="0" y="70"/>
+            <arc large-arc-flag="1" rx="3" ry="3" sweep-flag="0" x="113" x-axis-rotation="0" y="70"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Competing Consumers" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="65" y="45"/>
+            <line x="110" y="45"/>
+            <move x="62.75" y="32.52"/>
+            <line x="105.05" y="17.19"/>
+            <move x="63.23" y="58.75"/>
+            <line x="106.02" y="72.7"/>
+        </path>
+        <stroke/>
+        <path>
+            <move x="102" y="39"/>
+            <line x="102" y="51"/>
+            <line x="115" y="45"/>
+            <close/>
+            <move x="132" y="37"/>
+            <line x="140" y="45"/>
+            <line x="132" y="53"/>
+            <line x="124" y="45"/>
+            <close/>
+            <move x="121.25" y="6.75"/>
+            <line x="129.25" y="14.75"/>
+            <line x="121.25" y="22.75"/>
+            <line x="113.25" y="14.75"/>
+            <close/>
+            <move x="121.5" y="68"/>
+            <line x="129.5" y="76"/>
+            <line x="121.5" y="84"/>
+            <line x="113.5" y="76"/>
+            <close/>
+            <move x="95.49" y="14.27"/>
+            <line x="99.58" y="25.55"/>
+            <line x="109.75" y="15.48"/>
+            <close/>
+            <move x="100.27" y="64.51"/>
+            <line x="96.55" y="75.92"/>
+            <line x="110.77" y="74.25"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#808080"/>
+        <strokecolor color="#808080"/>
+        <path>
+            <move x="46" y="38"/>
+            <line x="46" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <path>
+            <move x="11" y="45.25"/>
+            <line x="56" y="45.25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Composed Message Processor" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="35" y="45"/>
+            <line x="55" y="45"/>
+            <move x="90" y="45"/>
+            <line x="110" y="45"/>
+        </path>
+        <stroke/>
+        <strokewidth width="1"/>
+        <path>
+            <move x="47" y="39"/>
+            <line x="47" y="51"/>
+            <line x="60" y="45"/>
+            <close/>
+            <move x="102" y="39"/>
+            <line x="102" y="51"/>
+            <line x="115" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#e6e6e6"/>
+        <rect h="16" w="16" x="67" y="16"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="10" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="67" y="60"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="67" y="37"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Content Based Router" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="10" y="45"/>
+            <line x="45" y="45"/>
+            <move x="105" y="24"/>
+            <line x="140" y="24"/>
+            <move x="105" y="45"/>
+            <line x="140" y="45"/>
+            <move x="105" y="66"/>
+            <line x="140" y="66"/>
+            <move x="105" y="24"/>
+            <line x="45" y="45"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <ellipse h="8" w="8" x="41" y="41"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="20"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="41"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="62"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Content Enricher" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#e6e6e6"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="50" y="45"/>
+            <line x="95" y="45"/>
+        </path>
+        <stroke/>
+        <strokewidth width="1"/>
+        <rect h="25" w="25" x="115" y="28"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="10" y="37"/>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="87" y="39"/>
+            <line x="87" y="51"/>
+            <line x="100" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Content Filter" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#e6e6e6"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="50" y="45"/>
+            <line x="95" y="45"/>
+        </path>
+        <stroke/>
+        <strokewidth width="1"/>
+        <rect h="25" w="25" x="10" y="28"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="87" y="39"/>
+            <line x="87" y="51"/>
+            <line x="100" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Control Bus" strokewidth="inherit" w="60">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0.02" y="0.02"/>
+        <constraint name="SW" perimeter="0" x="0.02" y="0.98"/>
+        <constraint name="NE" perimeter="0" x="0.98" y="0.02"/>
+        <constraint name="SE" perimeter="0" x="0.98" y="0.98"/>
+    </connections>
+    <background>
+        <roundrect arcsize="7.5" h="40" w="60" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#e6e6e6"/>
+        <strokewidth width="2"/>
+        <fillstroke/>
+        <fillcolor color="#808080"/>
+        <roundrect arcsize="9.18" h="32.67" w="44.67" x="4.33" y="3"/>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <ellipse h="4" w="4" x="52" y="26"/>
+        <fill/>
+        <ellipse h="4" w="4" x="52" y="32"/>
+        <fill/>
+        <strokecolor color="#00ff00"/>
+        <path>
+            <move x="12" y="23"/>
+            <curve x1="12" x2="22" x3="22" y1="23" y2="18" y3="11"/>
+            <curve x1="22" x2="23.33" x3="27.33" y1="4" y2="31" y3="28.33"/>
+            <curve x1="31.33" x2="31.33" x3="34" y1="25.67" y2="20.33" y3="20.33"/>
+            <curve x1="36.67" x2="39.67" x3="39.67" y1="20.33" y2="12.67" y3="10"/>
+            <curve x1="39.67" x2="39" x3="40.67" y1="7.33" y2="35.33" y3="29"/>
+            <curve x1="42.33" x2="43" x3="43" y1="22.67" y2="25" y3="25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Detour" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="10" y="66"/>
+            <line x="140" y="66"/>
+            <move x="105" y="24"/>
+            <line x="140" y="24"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="5 5"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="105" y="24"/>
+            <line x="45" y="66"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <ellipse h="8" w="8" x="41" y="62"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="20"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="62"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="35" name="Durable Subscriber" strokewidth="inherit" w="30">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.4"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.68"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.4"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.68"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="14"/>
+            <line x="30" y="14"/>
+            <line x="30" y="23"/>
+            <arc large-arc-flag="0" rx="15" ry="12" sweep-flag="1" x="0" x-axis-rotation="0" y="23"/>
+            <close/>
+            <move x="6" y="14"/>
+            <line x="6" y="7"/>
+            <arc large-arc-flag="0" rx="9" ry="7" sweep-flag="1" x="24" x-axis-rotation="0" y="7"/>
+            <line x="24" y="14"/>
+            <line x="20" y="14"/>
+            <line x="20" y="7"/>
+            <arc large-arc-flag="1" rx="5" ry="3" sweep-flag="0" x="10" x-axis-rotation="0" y="7"/>
+            <line x="10" y="14"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="13" y="20"/>
+            <arc large-arc-flag="0" rx="2" ry="2" sweep-flag="1" x="17" x-axis-rotation="0" y="20"/>
+            <line x="17" y="27"/>
+            <arc large-arc-flag="0" rx="2" ry="2" sweep-flag="1" x="13" x-axis-rotation="0" y="27"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Dynamic Router" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="10" y="45"/>
+            <line x="45" y="45"/>
+            <move x="105" y="24"/>
+            <line x="140" y="24"/>
+            <move x="105" y="45"/>
+            <line x="140" y="45"/>
+            <move x="105" y="66"/>
+            <line x="141.33" y="66"/>
+            <move x="105" y="24"/>
+            <line x="45" y="45"/>
+        </path>
+        <stroke/>
+        <ellipse h="8" w="8" x="41" y="41"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="20"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="41"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="62"/>
+        <fill/>
+        <dashpattern pattern="5 5"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="75" y="35"/>
+            <line x="75" y="90"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Envelope Wrapper" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="1"/>
+        <fillcolor color="#ffe040"/>
+        <rect h="46" w="76" x="37" y="22"/>
+        <fillstroke/>
+        <path>
+            <move x="37" y="22"/>
+            <line x="75" y="45"/>
+            <line x="113" y="22"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Event Driven Consumer" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="65" y="45"/>
+            <line x="110" y="45"/>
+        </path>
+        <stroke/>
+        <path>
+            <move x="102" y="39"/>
+            <line x="102" y="51"/>
+            <line x="115" y="45"/>
+            <close/>
+            <move x="132" y="37"/>
+            <line x="140" y="45"/>
+            <line x="132" y="53"/>
+            <line x="124" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#808080"/>
+        <strokecolor color="#808080"/>
+        <path>
+            <move x="46" y="38"/>
+            <line x="46" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <path>
+            <move x="11" y="45.25"/>
+            <line x="56" y="45.25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="12" name="Message 1" strokewidth="inherit" w="12">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="12" w="12" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#ffff00"/>
+        <path>
+            <move x="10" y="0"/>
+            <line x="12" y="2"/>
+            <line x="12" y="0"/>
+            <close/>
+            <move x="6" y="0"/>
+            <line x="12" y="6"/>
+            <line x="12" y="10"/>
+            <line x="2" y="0"/>
+            <close/>
+            <move x="0" y="2"/>
+            <line x="10" y="12"/>
+            <line x="6" y="12"/>
+            <line x="0" y="6"/>
+            <close/>
+            <move x="0" y="12"/>
+            <line x="0" y="10"/>
+            <line x="2" y="12"/>
+            <close/>
+        </path>
+        <fill/>
+        <rect h="12" w="12" x="0" y="0"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="12" name="Message 2" strokewidth="inherit" w="12">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="12" w="12" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#ffff00"/>
+        <path>
+            <move x="2" y="0"/>
+            <line x="0" y="2"/>
+            <line x="0" y="0"/>
+            <close/>
+            <move x="6" y="0"/>
+            <line x="0" y="6"/>
+            <line x="0" y="10"/>
+            <line x="10" y="0"/>
+            <close/>
+            <move x="12" y="2"/>
+            <line x="2" y="12"/>
+            <line x="6" y="12"/>
+            <line x="12" y="6"/>
+            <close/>
+            <move x="12" y="12"/>
+            <line x="12" y="10"/>
+            <line x="10" y="12"/>
+            <close/>
+        </path>
+        <fill/>
+        <rect h="12" w="12" x="0" y="0"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Message Dispatcher" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="65" y="45"/>
+            <line x="110" y="45"/>
+            <move x="69.52" y="41.59"/>
+            <line x="107.66" y="17.7"/>
+            <move x="69.85" y="48.29"/>
+            <line x="107.65" y="72.7"/>
+        </path>
+        <stroke/>
+        <path>
+            <move x="102" y="39"/>
+            <line x="102" y="51"/>
+            <line x="115" y="45"/>
+            <close/>
+            <move x="132" y="37"/>
+            <line x="140" y="45"/>
+            <line x="132" y="53"/>
+            <line x="124" y="45"/>
+            <close/>
+            <move x="121.25" y="6.75"/>
+            <line x="129.25" y="14.75"/>
+            <line x="121.25" y="22.75"/>
+            <line x="113.25" y="14.75"/>
+            <close/>
+            <move x="121.5" y="68"/>
+            <line x="129.5" y="76"/>
+            <line x="121.5" y="84"/>
+            <line x="113.5" y="76"/>
+            <close/>
+            <move x="97.7" y="16.86"/>
+            <line x="104.07" y="27.03"/>
+            <line x="111.9" y="15.05"/>
+            <close/>
+            <move x="104.18" y="63.32"/>
+            <line x="97.67" y="73.4"/>
+            <line x="111.85" y="75.42"/>
+            <close/>
+            <move x="69" y="37"/>
+            <line x="77" y="45"/>
+            <line x="69" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#808080"/>
+        <strokecolor color="#808080"/>
+        <path>
+            <move x="46" y="38"/>
+            <line x="46" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <path>
+            <move x="11" y="45.25"/>
+            <line x="56" y="45.25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Message Filter" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#e6e6e6"/>
+        <path>
+            <move x="50" y="20"/>
+            <line x="100" y="20"/>
+            <line x="86" y="45"/>
+            <line x="86" y="70"/>
+            <line x="64" y="70"/>
+            <line x="64" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#a0a0a0"/>
+        <path>
+            <move x="80" y="70"/>
+            <line x="64" y="70"/>
+            <line x="64" y="45"/>
+            <line x="50" y="20"/>
+            <line x="84" y="20"/>
+            <line x="80" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#808080"/>
+        <path>
+            <move x="71" y="70"/>
+            <line x="64" y="70"/>
+            <line x="64" y="45"/>
+            <line x="50" y="20"/>
+            <line x="66" y="20"/>
+            <line x="71" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="1"/>
+        <path>
+            <move x="50" y="20"/>
+            <line x="100" y="20"/>
+            <line x="86" y="45"/>
+            <line x="86" y="70"/>
+            <line x="64" y="70"/>
+            <line x="64" y="45"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Message Store" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="1"/>
+        <fillcolor color="#e6e6e6"/>
+        <path>
+            <move x="40" y="25"/>
+            <arc large-arc-flag="1" rx="35" ry="5" sweep-flag="1" x="110" x-axis-rotation="0" y="25"/>
+            <line x="110" y="70"/>
+            <arc large-arc-flag="1" rx="35" ry="5" sweep-flag="1" x="40" x-axis-rotation="0" y="70"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="40" y="25"/>
+            <arc large-arc-flag="1" rx="35" ry="5" sweep-flag="0" x="110" x-axis-rotation="0" y="25"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#a0a0a0"/>
+        <path>
+            <move x="40" y="25"/>
+            <arc large-arc-flag="0" rx="35" ry="5" sweep-flag="0" x="85" x-axis-rotation="0" y="30"/>
+            <line x="85" y="75"/>
+            <arc large-arc-flag="0" rx="35" ry="5" sweep-flag="1" x="40" x-axis-rotation="0" y="70"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#808080"/>
+        <path>
+            <move x="40" y="25"/>
+            <arc large-arc-flag="0" rx="35" ry="5" sweep-flag="0" x="60" x-axis-rotation="0" y="29.5"/>
+            <line x="60" y="74.5"/>
+            <arc large-arc-flag="0" rx="35" ry="5" sweep-flag="1" x="40" x-axis-rotation="0" y="70"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokecolor color="#000000"/>
+        <path>
+            <move x="40" y="25"/>
+            <arc large-arc-flag="1" rx="35" ry="5" sweep-flag="0" x="110" x-axis-rotation="0" y="25"/>
+            <line x="110" y="70"/>
+            <arc large-arc-flag="1" rx="35" ry="5" sweep-flag="1" x="40" x-axis-rotation="0" y="70"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Message Translator" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#e6e6e6"/>
+        <strokewidth width="2"/>
+        <rect h="60" w="40" x="15" y="15"/>
+        <fillstroke/>
+        <rect h="60" w="40" x="95" y="15"/>
+        <fillstroke/>
+        <path>
+            <move x="48" y="70"/>
+            <line x="102" y="20"/>
+            <move x="48" y="20"/>
+            <line x="102" y="70"/>
+        </path>
+        <stroke/>
+        <strokecolor color="#808080"/>
+        <path>
+            <move x="20" y="25"/>
+            <line x="50" y="25"/>
+            <move x="20" y="35"/>
+            <line x="50" y="35"/>
+            <move x="20" y="45"/>
+            <line x="50" y="45"/>
+            <move x="20" y="55"/>
+            <line x="50" y="55"/>
+            <move x="20" y="65"/>
+            <line x="50" y="65"/>
+            <move x="100" y="25"/>
+            <line x="130" y="25"/>
+            <move x="100" y="35"/>
+            <line x="130" y="35"/>
+            <move x="100" y="45"/>
+            <line x="130" y="45"/>
+            <move x="100" y="55"/>
+            <line x="130" y="55"/>
+            <move x="100" y="65"/>
+            <line x="130" y="65"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Messaging Bridge" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="1"/>
+        <path>
+            <move x="12" y="65"/>
+            <line x="138" y="65"/>
+            <move x="20" y="77"/>
+            <arc large-arc-flag="0" rx="64" ry="120" sweep-flag="1" x="130" x-axis-rotation="0" y="77"/>
+            <move x="75" y="18"/>
+            <line x="75" y="65"/>
+            <move x="95" y="25"/>
+            <line x="95" y="65"/>
+            <move x="55" y="25"/>
+            <line x="55" y="65"/>
+            <move x="35" y="45"/>
+            <line x="35" y="65"/>
+            <move x="115" y="45"/>
+            <line x="115" y="65"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Messaging Gateway" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#808080"/>
+        <strokecolor color="#808080"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="46" y="38"/>
+            <line x="46" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <path>
+            <move x="11" y="45.25"/>
+            <line x="56" y="45.25"/>
+        </path>
+        <stroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#9ddbef"/>
+        <strokewidth width="1"/>
+        <rect h="74" w="27" x="109" y="8"/>
+        <fillstroke/>
+        <path>
+            <move x="100" y="8"/>
+            <line x="100" y="82"/>
+            <line x="72" y="62"/>
+            <line x="72" y="28"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Normalizer" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="50" y="45"/>
+            <line x="95" y="45"/>
+        </path>
+        <stroke/>
+        <strokewidth width="1"/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="87" y="39"/>
+            <line x="87" y="51"/>
+            <line x="100" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#e6e6e6"/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <ellipse h="16" w="16" x="10" y="19"/>
+        <fillstroke/>
+        <path>
+            <move x="33" y="37"/>
+            <line x="41" y="45"/>
+            <line x="33" y="53"/>
+            <line x="25" y="45"/>
+            <close/>
+            <move x="18" y="55"/>
+            <line x="26" y="71"/>
+            <line x="10" y="71"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Polling Consumer" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokewidth width="2"/>
+        <fillcolor color="#000000"/>
+        <strokecolor color="#000000"/>
+        <path>
+            <move x="132" y="37"/>
+            <line x="140" y="45"/>
+            <line x="132" y="53"/>
+            <line x="124" y="45"/>
+            <close/>
+            <move x="64.92" y="30.48"/>
+            <line x="54.71" y="24.17"/>
+            <line x="52.98" y="38.38"/>
+            <close/>
+        </path>
+        <fill/>
+        <path>
+            <move x="55" y="54"/>
+            <arc large-arc-flag="1" rx="35" ry="35" sweep-flag="0" x="55" x-axis-rotation="0" y="36"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#808080"/>
+        <strokecolor color="#808080"/>
+        <path>
+            <move x="46" y="38"/>
+            <line x="46" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <path>
+            <move x="11" y="45"/>
+            <line x="56" y="45"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Process Manager" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="35" y="60"/>
+            <line x="35" y="42"/>
+            <line x="115" y="42"/>
+            <line x="115" y="60"/>
+            <move x="75" y="23"/>
+            <line x="75" y="60"/>
+        </path>
+        <stroke/>
+        <strokewidth width="1"/>
+        <fillcolor color="#e6e6e6"/>
+        <ellipse h="16" w="16" x="67" y="7"/>
+        <fillstroke/>
+        <rect h="20" w="30" x="20" y="60"/>
+        <fillstroke/>
+        <rect h="20" w="30" x="60" y="60"/>
+        <fillstroke/>
+        <rect h="20" w="30" x="100" y="60"/>
+        <fillstroke/>
+        <path>
+            <move x="75" y="32"/>
+            <line x="85" y="42"/>
+            <line x="75" y="52"/>
+            <line x="65" y="42"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Recipient List" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="10" y="45"/>
+            <line x="140" y="45"/>
+            <move x="105" y="24"/>
+            <line x="140" y="24"/>
+            <move x="105" y="66"/>
+            <line x="141.33" y="66"/>
+            <move x="105" y="24"/>
+            <line x="45" y="45"/>
+            <move x="105" y="66"/>
+            <line x="45" y="45"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <ellipse h="8" w="8" x="41" y="41"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="20"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="41"/>
+        <fill/>
+        <ellipse h="8" w="8" x="101" y="62"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Resequencer" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#e6e6e6"/>
+        <strokewidth width="1"/>
+        <rect h="16" w="16" x="22" y="16"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="10" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="22" y="60"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="100" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="76" y="37"/>
+        <fillstroke/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="35" y="45"/>
+            <line x="65" y="45"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="55.5" y="39"/>
+            <line x="55.5" y="51"/>
+            <line x="68.5" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Routing Slip" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="26" y="45"/>
+            <line x="124" y="45"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#e6e6e6"/>
+        <strokewidth width="1"/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="86" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="48" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="10" y="37"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Selective Consumer" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#808080"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="46" y="38"/>
+            <line x="46" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokecolor color="#808080"/>
+        <path>
+            <move x="11" y="45"/>
+            <line x="56" y="45"/>
+        </path>
+        <stroke/>
+        <strokecolor color="#000000"/>
+        <path>
+            <move x="80" y="45"/>
+            <line x="130" y="45"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#9ddbef"/>
+        <strokewidth width="1"/>
+        <ellipse h="40" w="40" x="60" y="25"/>
+        <fillstroke/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="72" y="36"/>
+            <arc large-arc-flag="0" rx="9" ry="8" sweep-flag="1" x="88" x-axis-rotation="0" y="35"/>
+            <arc large-arc-flag="0" rx="8" ry="7" sweep-flag="1" x="85" x-axis-rotation="0" y="44"/>
+            <arc large-arc-flag="0" rx="10" ry="10" sweep-flag="0" x="80" x-axis-rotation="0" y="53"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="132" y="37"/>
+            <line x="140" y="45"/>
+            <line x="132" y="53"/>
+            <line x="124" y="45"/>
+            <close/>
+            <move x="108" y="40"/>
+            <line x="118" y="45"/>
+            <line x="108" y="50"/>
+            <close/>
+        </path>
+        <fill/>
+        <rect h="2" w="2" x="79" y="56"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Service Activator" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="65" y="45"/>
+            <line x="110" y="45"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="107" y="39"/>
+            <line x="107" y="51"/>
+            <line x="120" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#808080"/>
+        <path>
+            <move x="46" y="38"/>
+            <line x="46" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokecolor color="#808080"/>
+        <path>
+            <move x="11" y="45.25"/>
+            <line x="56" y="45.25"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="69" y="37"/>
+            <line x="77" y="45"/>
+            <line x="69" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="1"/>
+        <path>
+            <move x="132" y="37"/>
+            <line x="140" y="45"/>
+            <line x="132" y="53"/>
+            <line x="124" y="45"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Smart Proxy" strokewidth="inherit" w="70">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="70" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <ellipse h="8" w="8" x="21" y="76"/>
+        <fill/>
+        <ellipse h="8" w="8" x="21" y="65"/>
+        <fill/>
+        <ellipse h="8" w="8" x="21" y="54"/>
+        <fill/>
+        <ellipse h="8" w="8" x="41" y="65"/>
+        <fill/>
+        <ellipse h="8" w="8" x="31" y="21"/>
+        <fill/>
+        <path>
+            <move x="8" y="25"/>
+            <line x="62" y="25"/>
+            <move x="8" y="58"/>
+            <line x="25" y="58"/>
+            <move x="8" y="69"/>
+            <line x="25" y="69"/>
+            <move x="8" y="80"/>
+            <line x="25" y="80"/>
+            <move x="24.5" y="58"/>
+            <line x="43.25" y="69.25"/>
+            <move x="45" y="69"/>
+            <line x="62" y="69"/>
+            <move x="35" y="25"/>
+            <line x="35" y="33"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="35" y="39"/>
+            <line x="35" y="63"/>
+        </path>
+        <stroke/>
+        <path>
+            <move x="31" y="33"/>
+            <line x="39" y="33"/>
+            <line x="35" y="39"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Splitter" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#e6e6e6"/>
+        <strokewidth width="1"/>
+        <rect h="16" w="16" x="124" y="16"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="10" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="124" y="60"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <strokewidth width="2"/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="50" y="45"/>
+            <line x="95" y="45"/>
+        </path>
+        <stroke/>
+        <path>
+            <move x="87" y="39"/>
+            <line x="87" y="51"/>
+            <line x="100" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Test Message" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#e6e6e6"/>
+        <strokewidth width="1"/>
+        <rect h="16" w="16" x="124" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="100" y="37"/>
+        <fillstroke/>
+        <rect h="16" w="16" x="76" y="37"/>
+        <fillstroke/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="24" y="45"/>
+            <line x="63" y="45"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="55.5" y="39"/>
+            <line x="55.5" y="51"/>
+            <line x="68.5" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <ellipse h="16" w="16" x="10" y="37"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Transactional Client" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#9ddbef"/>
+        <strokewidth width="1"/>
+        <ellipse h="66" w="110" x="30" y="12"/>
+        <fillstroke/>
+        <fillcolor color="#ffffff"/>
+        <rect h="26" w="26" x="88" y="32"/>
+        <fillstroke/>
+        <fillcolor color="#808080"/>
+        <path>
+            <move x="46" y="38"/>
+            <line x="46" y="53"/>
+            <line x="61" y="45"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokecolor color="#808080"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="11" y="45"/>
+            <line x="56" y="45"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Wire Tap" strokewidth="inherit" w="150">
+    <connections>
+        <constraint name="N1" perimeter="0" x="0.25" y="0"/>
+        <constraint name="N2" perimeter="0" x="0.5" y="0"/>
+        <constraint name="N3" perimeter="0" x="0.75" y="0"/>
+        <constraint name="S1" perimeter="0" x="0.25" y="1"/>
+        <constraint name="S2" perimeter="0" x="0.5" y="1"/>
+        <constraint name="S3" perimeter="0" x="0.75" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.25"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.25"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.75"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="90" w="150" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <strokecolor color="#000000"/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="20" y="45"/>
+            <line x="130" y="45"/>
+            <move x="75" y="45"/>
+            <line x="75" y="70"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="69" y="69"/>
+            <line x="81" y="69"/>
+            <line x="75" y="81"/>
+            <close/>
+        </path>
+        <fill/>
+        <ellipse h="8" w="8" x="71" y="41"/>
+        <fill/>
+    </foreground>
+</shape>
+</shapes>

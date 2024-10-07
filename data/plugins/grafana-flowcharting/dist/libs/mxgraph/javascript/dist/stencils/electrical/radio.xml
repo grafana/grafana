@@ -1,0 +1,268 @@
+<shapes name="mxgraph.electrical.radio">
+<shape aspect="variable" h="100" name="Aerial - Antenna 1" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="0"/>
+            <line x="40" y="40"/>
+            <line x="80" y="0"/>
+            <move x="40" y="0"/>
+            <line x="40" y="100"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Aerial - Antenna 2" strokewidth="inherit" w="79">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0.5"/>
+            <line x="39.5" y="40"/>
+            <line x="79" y="0.5"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="39.5" y="0"/>
+            <line x="39.5" y="100"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Buzzer" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+    </connections>
+    <foreground>
+        <rect h="50" w="50" x="15" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="15" y="25"/>
+            <move x="65" y="0"/>
+            <line x="80" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Chassis" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <rect h="20" w="100" x="0" y="20"/>
+    </background>
+    <foreground>
+        <fill/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="5" y="20"/>
+            <move x="0" y="30"/>
+            <line x="10" y="20"/>
+            <move x="0" y="35"/>
+            <line x="15" y="20"/>
+            <move x="0" y="40"/>
+            <line x="20" y="20"/>
+            <move x="5" y="40"/>
+            <line x="25" y="20"/>
+            <move x="10" y="40"/>
+            <line x="30" y="20"/>
+            <move x="15" y="40"/>
+            <line x="35" y="20"/>
+            <move x="20" y="40"/>
+            <line x="40" y="20"/>
+            <move x="25" y="40"/>
+            <line x="45" y="20"/>
+            <move x="30" y="40"/>
+            <line x="50" y="20"/>
+            <move x="35" y="40"/>
+            <line x="55" y="20"/>
+            <move x="40" y="40"/>
+            <line x="60" y="20"/>
+            <move x="45" y="40"/>
+            <line x="65" y="20"/>
+            <move x="50" y="40"/>
+            <line x="70" y="20"/>
+            <move x="55" y="40"/>
+            <line x="75" y="20"/>
+            <move x="60" y="40"/>
+            <line x="80" y="20"/>
+            <move x="65" y="40"/>
+            <line x="85" y="20"/>
+            <move x="70" y="40"/>
+            <line x="90" y="20"/>
+            <move x="75" y="40"/>
+            <line x="95" y="20"/>
+            <move x="80" y="40"/>
+            <line x="100" y="20"/>
+            <move x="85" y="40"/>
+            <line x="100" y="25"/>
+            <move x="90" y="40"/>
+            <line x="100" y="30"/>
+            <move x="95" y="40"/>
+            <line x="100" y="35"/>
+        </path>
+        <stroke/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="50" y="0"/>
+            <line x="50" y="20"/>
+            <move x="0" y="20"/>
+            <line x="100" y="20"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Dipole" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0"/>
+        <constraint name="out" perimeter="0" x="1" y="0"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="0"/>
+            <line x="35" y="0"/>
+            <line x="35" y="40"/>
+            <move x="65" y="40"/>
+            <line x="65" y="0"/>
+            <line x="100" y="0"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Earth" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="10"/>
+            <line x="50" y="10"/>
+            <move x="4" y="15"/>
+            <line x="46" y="15"/>
+            <move x="8" y="20"/>
+            <line x="42" y="20"/>
+            <move x="16.5" y="30"/>
+            <line x="33.5" y="30"/>
+            <move x="20.5" y="35"/>
+            <line x="29.5" y="35"/>
+            <move x="12.5" y="25"/>
+            <line x="37.5" y="25"/>
+            <move x="24.5" y="40"/>
+            <line x="25.5" y="40"/>
+        </path>
+        <stroke/>
+        <strokewidth width="2"/>
+        <path>
+            <move x="25" y="0"/>
+            <line x="25" y="10"/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="70" name="Electret Microphone" strokewidth="inherit" w="70">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="70" w="70" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="70"/>
+            <move x="35" y="0"/>
+            <line x="35" y="30"/>
+            <move x="20" y="30"/>
+            <line x="50" y="30"/>
+            <move x="20" y="40"/>
+            <line x="50" y="40"/>
+            <move x="35" y="40"/>
+            <line x="35" y="70"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="56" name="Headphones" strokewidth="inherit" w="66">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E" perimeter="0" x="1" y="0.75"/>
+    </connections>
+    <foreground>
+        <ellipse h="30" w="16" x="0" y="26"/>
+        <fillstroke/>
+        <ellipse h="30" w="16" x="50" y="26"/>
+        <fillstroke/>
+        <path>
+            <move x="2" y="31"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="64" x-axis-rotation="0" y="31"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="69.78" name="Loop Antenna" strokewidth="inherit" w="64.08">
+    <connections>
+        <constraint name="in" perimeter="0" x="0.342" y="1"/>
+        <constraint name="out" perimeter="0" x="0.658" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="22.04" y="69.78"/>
+            <line x="22.04" y="58.28"/>
+            <arc large-arc-flag="1" rx="30" ry="30" sweep-flag="1" x="42.04" x-axis-rotation="0" y="58.28"/>
+            <line x="42.04" y="69.78"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="70" name="Microphone 1" strokewidth="inherit" w="70">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="70" w="70" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="70"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="70" name="Microphone 2" strokewidth="inherit" w="42">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="0.835" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <arc large-arc-flag="0" rx="35" ry="35" sweep-flag="1" x="0" x-axis-rotation="0" y="70"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="33.5" y="25"/>
+            <line x="42" y="25"/>
+            <move x="33.5" y="45"/>
+            <line x="42" y="45"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

@@ -1,0 +1,433 @@
+<shapes name="mxgraph.mockup.form_elements">
+    <shape name="Alert Textbox" h="70" w="713" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#b00c0b"/>
+            <fillcolor color="#b00c0b"/>
+            <path>
+                <move x="537" y="0"/>
+                <line x="708" y="0"/>
+                <arc rx="5" ry="5" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="713" y="5"/>
+                <line x="713" y="65"/>
+                <arc rx="5" ry="5" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="708" y="70"/>
+                <line x="537" y="70"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#efccbd"/>
+            <fillcolor color="#efccbd"/>
+            <path>
+                <move x="537" y="0"/>
+                <line x="5" y="0"/>
+                <arc rx="5" ry="5" x-axis-rotation="0" large-arc-flag="0" sweep-flag="0" x="0" y="5"/>
+                <line x="0" y="65"/>
+                <arc rx="5" ry="5" x-axis-rotation="0" large-arc-flag="0" sweep-flag="0" x="5" y="70"/>
+                <line x="537" y="70"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#b00c0b"/>
+            <strokewidth width="5"/>
+            <fillcolor color="#b00c0b"/>
+            <linejoin join="round"/>
+            <path>
+                <move x="55" y="17"/>
+                <line x="63" y="34"/>
+                <line x="47" y="34"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <strokewidth width="3"/>
+            <fillcolor color="none"/>
+            <linejoin join="miter"/>
+            <linecap cap="round"/>
+            <path>
+                <move x="55" y="28"/>
+                <line x="55" y="20"/>
+            </path>
+            <stroke/>
+            <strokecolor color="none"/>
+            <strokewidth width="1"/>
+            <fillcolor color="#ffffff"/>
+            <linecap cap="butt"/>
+            <ellipse x="53.5" y="30.5" w="3" h="3"/>
+            <fillstroke/>
+            <strokecolor color="#666666"/>
+            <rect x="157" y="15" w="299" h="21"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="City State Postal Code" h="23" w="375" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#fbfbfb"/>
+            <roundrect x="0" y="0" w="180" h="22.67" arcsize="7.45"/>
+            <fillstroke/>
+            <fillcolor color="#e9eaeb"/>
+            <roundrect x="184.67" y="0" w="75" h="23" arcsize="8.52"/>
+            <fillstroke/>
+            <fillcolor color="#fbfbfb"/>
+            <roundrect x="263.67" y="0" w="111" h="23" arcsize="7.87"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <linejoin join="round"/>
+            <path>
+                <move x="248.67" y="11"/>
+                <line x="253.67" y="11"/>
+                <line x="251.17" y="15"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fontsize size="12"/>
+            <text str="- State -" x="214" y="11.5" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Date" h="25" w="135.5" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#fbfbfb"/>
+            <roundrect x="0" y="0" w="91" h="25" arcsize="7.648351648351648"/>
+            <fillstroke/>
+            <fillcolor color="#e9eaeb"/>
+            <roundrect x="97.5" y="0" w="38" h="25" arcsize="9.947368421052632"/>
+            <fillstroke/>
+            <strokecolor color="#0033ff"/>
+            <strokewidth width="1.5"/>
+            <fillcolor color="#ecf5fc"/>
+            <rect x="106" y="4" w="21" h="17"/>
+            <fillstroke/>
+            <strokecolor color="#5a6ec4"/>
+            <strokewidth width="1"/>
+            <rect x="109.5" y="7.5" w="14" h="11"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="110" y="8" w="13" h="2"/>
+            <fillstroke/>
+            <strokecolor color="#5a6ec4"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="109.5" y="10.5"/>
+                <line x="123.5" y="10.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="109.5" y="12.5"/>
+                <line x="123.5" y="12.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="109.5" y="14.5"/>
+                <line x="123.5" y="14.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="109.5" y="16.5"/>
+                <line x="123.5" y="16.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="111.5" y="18.5"/>
+                <line x="111.5" y="10.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="113.5" y="18.5"/>
+                <line x="113.5" y="10.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="115.5" y="18.5"/>
+                <line x="115.5" y="10.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="117.5" y="18.5"/>
+                <line x="117.5" y="10.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="119.5" y="18.5"/>
+                <line x="119.5" y="10.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="121.5" y="18.5"/>
+                <line x="121.5" y="10.5"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#ff3300"/>
+            <rect x="117.5" y="12.5" w="2" h="2"/>
+            <stroke/>
+        </foreground>
+    </shape>
+    <shape name="Spinner" h="24" w="47" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#cccccc"/>
+            <path>
+                <move x="37" y="0"/>
+                <line x="44" y="0"/>
+                <arc rx="3" ry="3" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="47" y="3"/>
+                <line x="47" y="21"/>
+                <arc rx="3" ry="3" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="44" y="24"/>
+                <line x="37" y="24"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="37" y="0"/>
+                <line x="37" y="24"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="37" y="12"/>
+                <line x="47" y="12"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <linejoin join="round"/>
+            <path>
+                <move x="40" y="8"/>
+                <line x="44" y="8"/>
+                <line x="42" y="5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="40" y="17"/>
+                <line x="44" y="17"/>
+                <line x="42" y="20"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#ebebeb"/>
+            <linejoin join="miter"/>
+            <rect x="0" y="0" w="37" h="24"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Select Field" h="24" w="185.5" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#ebebeb"/>
+            <roundrect x="0" y="0" w="185.5" h="24" arcsize="7.058625336927224"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <linejoin join="round"/>
+            <path>
+                <move x="175" y="10.666663999999997"/>
+                <line x="179" y="10.666663999999997"/>
+                <line x="177" y="13.666663999999997"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Combo Box" h="24" w="298" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#ebebeb"/>
+            <roundrect x="0" y="0" w="297.69998" h="24" arcsize="6.753862983128181"/>
+            <fillstroke/>
+            <fillcolor color="#cccccc"/>
+            <roundrect x="277" y="0" w="21" h="24" arcsize="13.392857142857142"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <linejoin join="round"/>
+            <path>
+                <move x="285.5" y="10.5"/>
+                <line x="289.5" y="10.5"/>
+                <line x="287.5" y="13.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="none"/>
+            <linejoin join="miter"/>
+            <path>
+                <move x="277" y="0"/>
+                <line x="277" y="24"/>
+            </path>
+            <stroke/>
+        </foreground>
+    </shape>
+    <shape name="Multi-select" h="101" w="467" aspect="1">
+        <foreground>
+            <fillcolor color="#ffffff"/>
+            <strokecolor color="#404040"/>
+            <rect x="264" y="23" w="203" h="78"/>
+            <fillstroke/>
+            <rect x="0" y="23" w="203" h="78"/>
+            <fillstroke/>
+            <strokecolor color="#8a8a8a"/>
+            <fillcolor color="#f3f3f3"/>
+            <roundrect x="217.5" y="65" w="32" h="23" arcsize="11.209239130434783"/>
+            <fillstroke/>
+            <strokecolor color="#404040"/>
+            <fillcolor color="#404040"/>
+            <rect x="0" y="0" w="203" h="23"/>
+            <fillstroke/>
+            <rect x="264" y="0" w="203" h="23"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <linejoin join="round"/>
+            <path>
+                <move x="193" y="34"/>
+                <line x="198" y="34"/>
+                <line x="195.5" y="29"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="192.66665999999998" y="91"/>
+                <line x="197.66665999999998" y="91"/>
+                <line x="195.16665999999998" y="96"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#404040"/>
+            <fillcolor color="none"/>
+            <linejoin join="miter"/>
+            <path>
+                <move x="187.5" y="23"/>
+                <line x="187.5" y="101"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="187.5" y="39.5"/>
+                <line x="203" y="39.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="187.5" y="85.5"/>
+                <line x="203" y="85.5"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#999999"/>
+            <fillcolor color="#cccccc"/>
+            <roundrect x="188.5" y="40.5" w="14" h="25" arcsize="16.714285714285715"/>
+            <fillstroke/>
+            <strokecolor color="#8a8a8a"/>
+            <fillcolor color="#f3f3f3"/>
+            <roundrect x="217.5" y="34.5" w="32" h="23" arcsize="11.209239130434783"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <strokewidth width="2"/>
+            <fillcolor color="none"/>
+            <linejoin join="round"/>
+            <linecap cap="round"/>
+            <path>
+                <move x="230.5" y="43"/>
+                <line x="236" y="45.5"/>
+                <line x="230.5" y="48"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="236" y="74"/>
+                <line x="230" y="76.5"/>
+                <line x="236" y="79"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#808080"/>
+            <strokewidth width="1"/>
+            <fillcolor color="#808080"/>
+            <linecap cap="butt"/>
+            <path>
+                <move x="457" y="34"/>
+                <line x="462" y="34"/>
+                <line x="459.5" y="29"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="456.6666" y="91"/>
+                <line x="461.6666" y="91"/>
+                <line x="459.1666" y="96"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fillcolor color="none"/>
+            <linejoin join="miter"/>
+            <path>
+                <move x="451.5" y="23"/>
+                <line x="451.5" y="101"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="451.5" y="39.5"/>
+                <line x="467" y="39.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="451.5" y="85.5"/>
+                <line x="467" y="85.5"/>
+            </path>
+            <stroke/>
+        </foreground>
+    </shape>
+    <shape name="Radio Button Off" h="12" w="12" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#eeeeef"/>
+            <ellipse x="0" y="0" w="12" h="12"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Radio Button On" h="12" w="12" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#eeeeef"/>
+            <ellipse x="0" y="0" w="12" h="12"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#000000"/>
+            <ellipse x="2" y="2" w="8" h="8"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Checkbox Off" h="13" w="13" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#eeeeef"/>
+            <rect x="0" y="0" w="13" h="13"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Checkbox On" h="13" w="13" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#eeeeef"/>
+            <rect x="0" y="0" w="13" h="13"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <strokewidth width="2"/>
+            <fillcolor color="none"/>
+            <linejoin join="round"/>
+            <linecap cap="round"/>
+            <path>
+                <move x="3.1666799999999995" y="5.833336000000003"/>
+                <line x="4.000010000000003" y="9.666663999999997"/>
+                <line x="10.333336000000003" y="3.3333360000000027"/>
+            </path>
+            <stroke/>
+        </foreground>
+    </shape>
+</shapes>

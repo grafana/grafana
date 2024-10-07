@@ -1,0 +1,99 @@
+<shapes name="mxgraph.bootstrap">
+<shape aspect="variable" h="60.0" name="check" strokewidth="inherit" w="70.0">
+    <background>
+        <path>
+            <move x="0.0" y="35.0"/>
+            <line x="20.0" y="60.0"/>
+            <line x="70.0" y="0.0"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="55" name="Mail" strokewidth="inherit" w="100">
+    <connections/>
+    <foreground>
+        <rect h="55" w="100" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="50" y="45"/>
+            <line x="100" y="0"/>
+            <move x="0" y="55"/>
+            <line x="31" y="27.5"/>
+            <move x="100" y="55"/>
+            <line x="69" y="27.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="password" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <path>
+            <move x="50" y="0"/>
+            <line x="50" y="100"/>
+            <move x="0" y="50"/>
+            <line x="100" y="50"/>
+            <move x="14.5" y="14.5"/>
+            <line x="85.5" y="85.5"/>
+            <move x="85.5" y="14.5"/>
+            <line x="14.5" y="85.5"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="rect" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90.96" name="user" strokewidth="inherit" w="99.29">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="90.96"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="1.7" x-axis-rotation="0" y="82.76"/>
+            <arc large-arc-flag="0" rx="10" ry="10" sweep-flag="1" x="7.7" x-axis-rotation="0" y="76.96"/>
+            <arc large-arc-flag="0" rx="300" ry="300" sweep-flag="1" x="28.7" x-axis-rotation="0" y="68.96"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="0" x="38.2" x-axis-rotation="0" y="56.46"/>
+            <arc large-arc-flag="0" rx="11" ry="11" sweep-flag="0" x="35.2" x-axis-rotation="0" y="48.76"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="30.2" x-axis-rotation="0" y="39.76"/>
+            <arc large-arc-flag="0" rx="33" ry="38" sweep-flag="1" x="30.9" x-axis-rotation="0" y="10.76"/>
+            <arc large-arc-flag="0" rx="21.8" ry="21.8" sweep-flag="1" x="68.5" x-axis-rotation="0" y="10.76"/>
+            <arc large-arc-flag="0" rx="33" ry="38" sweep-flag="1" x="69" x-axis-rotation="0" y="39.76"/>
+            <arc large-arc-flag="0" rx="25" ry="25" sweep-flag="1" x="64.2" x-axis-rotation="0" y="48.76"/>
+            <arc large-arc-flag="0" rx="10" ry="10" sweep-flag="0" x="60.9" x-axis-rotation="0" y="55.76"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="0" x="69.7" x-axis-rotation="0" y="68.36"/>
+            <arc large-arc-flag="0" rx="300" ry="300" sweep-flag="1" x="91.7" x-axis-rotation="0" y="76.96"/>
+            <arc large-arc-flag="0" rx="10" ry="10" sweep-flag="1" x="97.5" x-axis-rotation="0" y="82.26"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="99.2" x-axis-rotation="0" y="90.96"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="x" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="100"/>
+            <move x="0" y="100"/>
+            <line x="100" y="0"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

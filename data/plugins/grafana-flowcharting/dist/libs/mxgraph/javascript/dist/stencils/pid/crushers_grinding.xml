@@ -1,0 +1,385 @@
+<shapes name="mxGraph.pid.crushers_grinding">
+<shape aspect="variable" h="60" name="Crusher" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="20" y="0"/>
+            <line x="20" y="60"/>
+            <move x="80" y="0"/>
+            <line x="80" y="60"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Crusher (Cone)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="20" y="0"/>
+            <line x="20" y="60"/>
+            <move x="80" y="0"/>
+            <line x="80" y="60"/>
+            <move x="30" y="45"/>
+            <line x="40" y="10"/>
+            <line x="60" y="10"/>
+            <line x="70" y="45"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Crusher (Hammer)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="20" y="0"/>
+            <line x="20" y="60"/>
+            <move x="80" y="0"/>
+            <line x="80" y="60"/>
+            <move x="40" y="40"/>
+            <line x="60" y="20"/>
+            <move x="40" y="20"/>
+            <line x="60" y="40"/>
+            <move x="43" y="17"/>
+            <line x="37" y="23"/>
+            <move x="37" y="37"/>
+            <line x="43" y="43"/>
+            <move x="63" y="37"/>
+            <line x="57" y="43"/>
+            <move x="57" y="17"/>
+            <line x="63" y="23"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Crusher (Impact)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="20" y="0"/>
+            <line x="20" y="60"/>
+            <move x="80" y="0"/>
+            <line x="80" y="60"/>
+            <move x="30" y="10"/>
+            <line x="43" y="23"/>
+            <move x="70" y="10"/>
+            <line x="57" y="23"/>
+            <move x="43" y="37"/>
+            <line x="30" y="50"/>
+            <move x="57" y="37"/>
+            <line x="70" y="50"/>
+        </path>
+        <stroke/>
+        <ellipse h="20" w="20" x="40" y="20"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Crusher (Jaw)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="20" y="0"/>
+            <line x="20" y="60"/>
+            <move x="80" y="0"/>
+            <line x="80" y="60"/>
+            <move x="50" y="30"/>
+            <line x="20" y="30"/>
+        </path>
+        <stroke/>
+        <ellipse h="20" w="20" x="50" y="20"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Crusher (Roller)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="20" y="0"/>
+            <line x="20" y="60"/>
+            <move x="80" y="0"/>
+            <line x="80" y="60"/>
+        </path>
+        <stroke/>
+        <ellipse h="20" w="20" x="50" y="20"/>
+        <stroke/>
+        <ellipse h="20" w="20" x="30" y="20"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Crushing, Grinding Machine" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="30" y="10"/>
+            <line x="70" y="50"/>
+            <move x="70" y="10"/>
+            <line x="30" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Mill, Pulverizer" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="0"/>
+            <line x="8" y="25"/>
+            <move x="75" y="0"/>
+            <line x="92" y="25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Mill, Pulverizer (Hammer)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="0"/>
+            <line x="8" y="25"/>
+            <move x="75" y="0"/>
+            <line x="92" y="25"/>
+            <move x="40" y="40"/>
+            <line x="60" y="20"/>
+            <move x="40" y="20"/>
+            <line x="60" y="40"/>
+            <move x="43" y="17"/>
+            <line x="37" y="23"/>
+            <move x="37" y="37"/>
+            <line x="43" y="43"/>
+            <move x="63" y="37"/>
+            <line x="57" y="43"/>
+            <move x="57" y="17"/>
+            <line x="63" y="23"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Mill, Pulverizer (Impact)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="0"/>
+            <line x="8" y="25"/>
+            <move x="75" y="0"/>
+            <line x="92" y="25"/>
+            <move x="30" y="10"/>
+            <line x="43" y="23"/>
+            <move x="70" y="10"/>
+            <line x="57" y="23"/>
+            <move x="43" y="37"/>
+            <line x="30" y="50"/>
+            <move x="57" y="37"/>
+            <line x="70" y="50"/>
+        </path>
+        <stroke/>
+        <ellipse h="20" w="20" x="40" y="20"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Mill (Roller)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="0"/>
+            <line x="8" y="25"/>
+            <move x="75" y="0"/>
+            <line x="92" y="25"/>
+        </path>
+        <stroke/>
+        <fillcolor color="none"/>
+        <ellipse h="20" w="20" x="50" y="20"/>
+        <stroke/>
+        <ellipse h="20" w="20" x="30" y="20"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Mill (Vibration)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="80" y="60"/>
+            <line x="20" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="0"/>
+            <line x="8" y="25"/>
+            <move x="75" y="0"/>
+            <line x="92" y="25"/>
+        </path>
+        <stroke/>
+        <ellipse h="40" w="40" x="30" y="10"/>
+        <stroke/>
+        <path>
+            <move x="50" y="25"/>
+            <line x="60" y="25"/>
+            <move x="40" y="35"/>
+            <line x="50" y="35"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="50" y="22.5"/>
+            <line x="50" y="27.5"/>
+            <line x="42" y="25"/>
+            <close/>
+            <move x="50" y="32.5"/>
+            <line x="50" y="37.5"/>
+            <line x="58" y="35"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

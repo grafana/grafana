@@ -1,0 +1,11 @@
+alreadyConnected=Knoten schon verbunden
+containsValidationErrors=Enthält Validierungsfehler
+updatingDocument=Aktualisiere Dokument. Bitte warten...
+updatingSelection=Aktualisiere Markierung. Bitte warten...
+collapse-expand=Einklappen/Ausklappen
+doubleClickOrientation=Doppelklicken um Orientierung zu ändern
+close=Schliessen
+error=Fehler
+done=Fertig
+cancel=Abbrechen
+ok=OK

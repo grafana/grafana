@@ -1,0 +1,367 @@
+<shapes name="mxgraph.electrical.rot_mech">
+<shape aspect="variable" h="100" name="Armature" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="100"/>
+            <line x="20" y="80"/>
+            <move x="80" y="20"/>
+            <line x="100" y="0"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="12" name="Automatic Return" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="6"/>
+            <line x="100" y="6"/>
+        </path>
+    </background>
+    <foreground>
+        <fillcolor color="none"/>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <stroke/>
+        <restore/>
+        <path>
+            <move x="58" y="0"/>
+            <line x="58" y="12"/>
+            <line x="42" y="6"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15" name="Blocking Device" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="15"/>
+            <line x="100" y="15"/>
+        </path>
+    </background>
+    <foreground>
+        <fillcolor color="none"/>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <stroke/>
+        <restore/>
+        <rect h="15" w="36" x="33" y="0"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Clutch" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="35" y="20"/>
+            <line x="35" y="5"/>
+            <move x="100" y="20"/>
+            <line x="65" y="20"/>
+            <line x="65" y="5"/>
+        </path>
+    </background>
+    <foreground>
+        <fillcolor color="none"/>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <stroke/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <path>
+            <move x="25" y="10"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="75" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Clutch 2" strokewidth="inherit" w="90">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="20" y="0"/>
+            <line x="30" y="10"/>
+            <line x="30" y="50"/>
+            <line x="20" y="60"/>
+            <move x="50" y="0"/>
+            <line x="60" y="10"/>
+            <line x="60" y="50"/>
+            <line x="50" y="60"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="30" y="30"/>
+            <move x="60" y="30"/>
+            <line x="90" y="30"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Delayed Action" strokewidth="inherit" w="71.7">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.04" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="11.7" y="0"/>
+            <arc large-arc-flag="0" rx="40" ry="40" sweep-flag="0" x="11.7" x-axis-rotation="0" y="50"/>
+            <move x="3.7" y="20"/>
+            <line x="71.7" y="20"/>
+            <move x="3.7" y="30"/>
+            <line x="71.7" y="30"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="8" name="Detent" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="46.2" y="0"/>
+            <move x="100" y="0"/>
+            <line x="53.8" y="0"/>
+            <move x="46.2" y="0"/>
+            <line x="50" y="8"/>
+            <line x="53.8" y="0"/>
+        </path>
+    </background>
+    <foreground>
+        <linecap cap="round"/>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15" name="Field" strokewidth="inherit" w="90">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="15"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="30" x-axis-rotation="0" y="15"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="60" x-axis-rotation="0" y="15"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="90" x-axis-rotation="0" y="15"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="64" name="Gearing" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.81"/>
+        <constraint name="E" perimeter="0" x="1" y="0.31"/>
+    </connections>
+    <background>
+        <ellipse h="40" w="40" x="30" y="0"/>
+    </background>
+    <foreground>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <fillstroke/>
+        <ellipse h="24" w="24" x="38" y="40"/>
+        <fillstroke/>
+        <fillcolor color="none"/>
+        <path>
+            <move x="0" y="52"/>
+            <line x="38" y="52"/>
+            <move x="70" y="20"/>
+            <line x="100" y="20"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="22" name="Latching Device" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="22"/>
+            <line x="100" y="22"/>
+        </path>
+    </background>
+    <foreground>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <stroke/>
+        <restore/>
+        <path>
+            <move x="50" y="0"/>
+            <line x="50" y="17"/>
+        </path>
+        <stroke/>
+        <path>
+            <move x="45" y="22"/>
+            <line x="25" y="22"/>
+            <line x="25" y="12"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Manual Control" strokewidth="inherit" w="68">
+    <connections>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="50"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="68" y="25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="Mechanical Interlock" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.73"/>
+        <constraint name="E" perimeter="0" x="1" y="0.73"/>
+    </connections>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="22"/>
+            <line x="100" y="22"/>
+        </path>
+    </background>
+    <foreground>
+        <dashpattern pattern="5 2"/>
+        <dashed dashed="1"/>
+        <stroke/>
+        <restore/>
+        <path>
+            <move x="50" y="0"/>
+            <line x="50" y="17"/>
+        </path>
+        <stroke/>
+        <path>
+            <move x="42" y="13"/>
+            <line x="58" y="13"/>
+            <line x="50" y="30"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="53.61" name="Rotation" strokewidth="inherit" w="68.43">
+    <connections/>
+    <background>
+        <path>
+            <move x="8.31" y="4.56"/>
+            <arc large-arc-flag="1" rx="30" ry="30" sweep-flag="0" x="58.31" x-axis-rotation="0" y="4.56"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+        <path>
+            <move x="56.2" y="0"/>
+            <line x="56.14" y="16.06"/>
+            <line x="68.43" y="11.43"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Synchro" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="80" w="80" x="0" y="10"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="70" w="70" x="5" y="15"/>
+        <stroke/>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="10"/>
+            <move x="40" y="85"/>
+            <line x="40" y="100"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Winding Connection" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0.145" y="0.145"/>
+        <constraint name="SW" perimeter="0" x="0.145" y="0.855"/>
+        <constraint name="NE" perimeter="0" x="0.855" y="0.145"/>
+        <constraint name="SE" perimeter="0" x="0.855" y="0.855"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <linejoin join="round"/>
+        <path>
+            <move x="50" y="0"/>
+            <line x="92" y="77"/>
+            <line x="8" y="77"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

@@ -1,0 +1,106 @@
+<shapes name="mxgraph.gcp.product_cards">
+<shape aspect="variable" h="122.19" name="Close" strokewidth="inherit" w="121.43">
+    <connections/>
+    <foreground>
+        <path>
+            <move x="74.62" y="122.19"/>
+            <line x="74.62" y="109.96"/>
+            <line x="100.43" y="109.96"/>
+            <line x="32.44" y="41.96"/>
+            <line x="41.36" y="32.88"/>
+            <line x="109.06" y="101.18"/>
+            <line x="109.06" y="75.88"/>
+            <line x="121.43" y="75.88"/>
+            <line x="121.43" y="122.19"/>
+            <close/>
+            <move x="60.26" y="122.19"/>
+            <line x="11.61" y="122.19"/>
+            <curve x1="6.31" x2="0" x3="0" y1="122.19" y2="117.2" y3="111.44"/>
+            <line x="0" y="12.8"/>
+            <curve x1="0" x2="4.61" x3="13.39" y1="7.15" y2="0" y3="0"/>
+            <line x="109.29" y="0"/>
+            <curve x1="114.53" x2="121.43" x3="121.43" y1="0" y2="5.14" y3="11.46"/>
+            <line x="121.43" y="60.11"/>
+            <line x="109.06" y="60.11"/>
+            <line x="109.06" y="13.4"/>
+            <line x="12.05" y="13.4"/>
+            <line x="12.05" y="109.96"/>
+            <line x="60.26" y="109.96"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="98.49" name="Disk" strokewidth="inherit" w="121.9">
+    <connections/>
+    <foreground>
+        <path>
+            <move x="11.64" y="18.28"/>
+            <line x="24.19" y="18.28"/>
+            <line x="24.19" y="6.02"/>
+            <line x="11.64" y="6.02"/>
+            <close/>
+            <move x="0" y="24.01"/>
+            <line x="0" y="0"/>
+            <line x="121.9" y="0"/>
+            <line x="121.9" y="24.01"/>
+            <close/>
+            <move x="11.64" y="55.6"/>
+            <line x="24.19" y="55.6"/>
+            <line x="24.19" y="42.71"/>
+            <line x="11.64" y="42.71"/>
+            <close/>
+            <move x="0" y="61.18"/>
+            <line x="0" y="37.59"/>
+            <line x="121.9" y="37.59"/>
+            <line x="121.9" y="61.18"/>
+            <close/>
+            <move x="11.64" y="93.04"/>
+            <line x="24.19" y="93.04"/>
+            <line x="24.19" y="79.44"/>
+            <line x="11.64" y="79.44"/>
+            <close/>
+            <move x="0" y="98.49"/>
+            <line x="0" y="73.77"/>
+            <line x="121.9" y="73.77"/>
+            <line x="121.9" y="98.49"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="123.25" name="Standard Machine" strokewidth="inherit" w="122.48">
+    <connections/>
+    <foreground>
+        <path>
+            <move x="87.91" y="96.71"/>
+            <line x="102.86" y="96.71"/>
+            <line x="102.86" y="26.7"/>
+            <line x="74.15" y="26.7"/>
+            <line x="74.15" y="41.73"/>
+            <line x="87.91" y="41.73"/>
+            <close/>
+            <move x="19.32" y="96.71"/>
+            <line x="34.79" y="96.71"/>
+            <line x="34.79" y="41.73"/>
+            <line x="46.4" y="41.73"/>
+            <line x="46.4" y="96.71"/>
+            <line x="61.72" y="96.71"/>
+            <line x="61.72" y="42.48"/>
+            <curve x1="61.72" x2="56.68" x3="49.22" y1="33.67" y2="26.7" y3="26.7"/>
+            <line x="19.32" y="26.7"/>
+            <close/>
+            <move x="11.92" y="123.25"/>
+            <curve x1="5.49" x2="0" x3="0" y1="123.25" y2="116.63" y3="109.42"/>
+            <line x="0" y="11.66"/>
+            <curve x1="0" x2="7.14" x3="13.14" y1="6.98" y2="0" y3="0"/>
+            <line x="109.64" y="0"/>
+            <curve x1="115.46" x2="122.48" x3="122.48" y1="0" y2="5.16" y3="13.92"/>
+            <line x="122.48" y="111.66"/>
+            <curve x1="122.48" x2="116.9" x3="110.6" y1="117.33" y2="123.25" y3="123.25"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

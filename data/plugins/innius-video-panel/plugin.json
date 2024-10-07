@@ -1,0 +1,44 @@
+{
+  "type": "panel",
+  "name": "Video",
+  "id": "innius-video-panel",
+  "info": {
+    "description": "Display video from a URL, YouTube ID, or an iFrame.",
+    "author": {
+      "name": "Innius",
+      "url": "https://innius.com"
+    },
+    "keywords": [
+      "video"
+    ],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Project site",
+        "url": "https://github.com/innius/grafana-video-panel"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/innius/grafana-video-panel/blob/master/LICENSE"
+      }
+    ],
+    "screenshots": [
+      {
+        "name": "Examples",
+        "path": "img/examples.png"
+      }
+    ],
+    "version": "1.0.7",
+    "updated": "2023-04-07"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=7.1.5",
+    "plugins": []
+  },
+  "skipDataQuery": true
+}
+
+

@@ -1,0 +1,89 @@
+<div class="editor-row">
+  <div class="section gf-form-group">
+    <h5 class="section-heading">General</h5>
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Type</span>
+      <div class="gf-form-select-wrapper max-width-10">
+        <select class="gf-form-input" ng-model="ctrl.panel.pieType" ng-options="t for t in ['pie', 'donut']" ng-change="ctrl.render()"></select>
+      </div>
+    </div>
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Unit</span>
+      <div class="gf-form-dropdown-typeahead width-10" ng-model="ctrl.panel.format" dropdown-typeahead="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)">
+      </div>
+    </div>
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Value</span>
+      <div class="gf-form-select-wrapper max-width-10">
+        <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="v for v in ['min','max','avg', 'current', 'total']"
+          ng-change="ctrl.render()"></select>
+      </div>
+    </div>
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Divider width</span>
+      <input type="text" class="gf-form-input max-width-10" ng-model="ctrl.panel.strokeWidth" ng-change="ctrl.render()">
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Legend</h5>
+    <gf-form-switch class="gf-form" label="Show Legend" label-class="width-11" checked="ctrl.panel.legend.show" on-change="ctrl.refresh()"></gf-form-switch>
+    <div class="gf-form">
+      <span class="gf-form-label width-11">Position</span>
+      <div class="gf-form-select-wrapper width-9">
+        <select class="gf-form-input" ng-model="ctrl.panel.legendType" ng-options="t for t in ['On graph', 'Under graph', 'Right side']"
+          ng-change="ctrl.onLegendTypeChanged()"></select>
+      </div>
+    </div>
+    <div ng-if="ctrl.panel.legendType == 'Right side'" class="gf-form">
+      <label class="gf-form-label width-11">Width</label>
+      <input type="number" class="gf-form-input max-width-5" placeholder="150" bs-tooltip="'Set a min-width for the legend side table/block'"
+        data-placement="right" ng-model="ctrl.panel.legend.sideWidth" ng-change="ctrl.render()" ng-model-onblur>
+    </div>
+    <div ng-if="ctrl.panel.legendType == 'Under graph'" class="gf-form">
+      <span class="gf-form-label width-11">Legend Breakpoint</span>
+      <div class="gf-form-select-wrapper width-9">
+        <select class="gf-form-input" ng-model="ctrl.panel.breakPoint" ng-options="t for t in ['25%', '50%', '75%', '100%']"
+          ng-change="ctrl.render()"></select>
+      </div>
+    </div>
+    <div class="gf-form" ng-if="ctrl.panel.legendType === 'On graph'">
+      <span class="gf-form-label width-11">Font size</span>
+      <div class="gf-form-select-wrapper width-9">
+        <select class="gf-form-input" ng-model="ctrl.panel.fontSize" ng-options="s for s in ['50%', '60%', '70%', '80%', '100%', '110%', '120%', '150%', '175%']"
+          ng-change="ctrl.render()"></select>
+      </div>
+    </div>
+    <gf-form-switch class="gf-form" label="Legend Values" label-class="width-11" checked="ctrl.panel.legend.values" on-change="ctrl.refresh()"></gf-form-switch>
+    <div class="gf-form" ng-show="ctrl.panel.legend.values">
+      <span class="gf-form-label width-11">Values Header</span>
+      <input type="text" class="gf-form-input width-9" ng-model="ctrl.panel.legend.header" ng-change="ctrl.render()" ng-model-onblur
+        placeholder="override">
+    </div>
+    <div class="gf-form" ng-show="ctrl.panel.legend.values">
+      <span class="gf-form-label width-11">Values Decimals</span>
+      <input type="number" class="gf-form-input width-9" ng-model="ctrl.panel.decimals" ng-change="ctrl.render()" ng-model-onblur
+        placeholder="auto">
+    </div>
+    <gf-form-switch class="gf-form" label="Show Percentage" label-class="width-11" checked="ctrl.panel.legend.percentage" on-change="ctrl.refresh()"></gf-form-switch>
+    <div class="gf-form" ng-show="ctrl.panel.legend.percentage">
+      <span class="gf-form-label width-11">Percentage Decimals</span>
+      <input type="number" class="gf-form-input width-9" ng-model="ctrl.panel.legend.percentageDecimals" ng-change="ctrl.render()" ng-model-onblur placeholder="0">
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Combine (only for percentages)</h5>
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Threshold:</span>
+      <input type="text" class="gf-form-input max-width-10" ng-model="ctrl.panel.combine.threshold" ng-change="ctrl.render()">
+      <info-popover mode="right-absolute">Combines all slices that are smaller than the specified percentage (ranging from 0 to 1) i.e. a value of '0.03' will
+        combine all slices 3% or less into one slice).</info-popover>
+    </div>
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Label</span>
+      <input type="text" class="gf-form-input max-width-10" ng-model="ctrl.panel.combine.label" ng-change="ctrl.render()">
+      <info-popover mode="right-absolute">Label text for the combined slice.</info-popover>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,599 @@
+<shapes name="mxgraph.mockup.carousel">
+    <shape name="Carousel 1" h="185" w="479" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#999999"/>
+            <fillcolor color="#999999"/>
+            <rect x="450" y="40" w="28" h="85"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#ffffff"/>
+            <roundrect x="0" y="0" w="479" h="185" arcsize="1.8732720194098065"/>
+            <fillstroke/>
+            <rect x="0" y="170" w="15" h="15"/>
+            <fillstroke/>
+            <rect x="15" y="170" w="449" h="15"/>
+            <fillstroke/>
+            <rect x="464" y="170" w="15" h="15"/>
+            <fillstroke/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="11" y="173"/>
+                <line x="11" y="182"/>
+                <line x="4" y="177.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="468" y="173"/>
+                <line x="468" y="182"/>
+                <line x="475" y="177.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#cccccc"/>
+            <roundrect x="16" y="171" w="64" h="12" arcsize="9.254807692307693"/>
+            <fillstroke/>
+            <strokecolor color="#999999"/>
+            <fillcolor color="#999999"/>
+            <rect x="15" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <rect x="160" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <rect x="305" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <rect x="450" y="40" w="28" h="85"/>
+            <fillstroke/>
+            <fontcolor color="#000000"/>
+            <fontsize size="16"/>
+            <fontstyle style="0"/>
+            <text str="Container Title Goes Here" x="15" y="20" align="left" valign="middle"/>
+            <fontstyle style="1"/>
+            <fontsize size="50"/>
+            <fontcolor color="#ffffff"/>
+            <text str="1" x="65" y="80" align="center" valign="middle"/>
+            <text str="2" x="210" y="80" align="center" valign="middle"/>
+            <text str="3" x="355" y="80" align="center" valign="middle"/>
+            <fontsize size="10"/>
+            <fontcolor color="#000000"/>
+            <text str="Item Title 1" x="15" y="138" align="left" valign="middle"/>
+            <text str="Item Title 2" x="160" y="138" align="left" valign="middle"/>
+            <text str="Item Title 3" x="305" y="138" align="left" valign="middle"/>
+            <text str="Item" x="450" y="138" align="left" valign="middle"/>
+            <fontstyle style="0"/>
+            <text str="Subtitle 1" x="15" y="155" align="left" valign="middle"/>
+            <text str="Subtitle 2" x="160" y="155" align="left" valign="middle"/>
+            <text str="Subtitle 3" x="305" y="155" align="left" valign="middle"/>
+            <text str="Subtitl" x="450" y="155" align="left" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Status Display 1" h="10" w="67" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#333333"/>
+            <rect x="0" y="0" w="10" h="10"/>
+            <fillstroke/>
+            <fillcolor color="#cccccc"/>
+            <rect x="19" y="0" w="10" h="10"/>
+            <fillstroke/>
+            <rect x="38" y="0" w="10" h="10"/>
+            <fillstroke/>
+            <rect x="57" y="0" w="10" h="10"/>
+            <fillstroke/>
+            <fontstyle style="0"/>
+            <fontcolor color="#cccccc"/>
+            <fontsize size="7"/>
+            <text str="1" x="5" y="5" align="center" valign="middle"/>
+            <fontcolor color="#333333"/>
+            <text str="2" x="24" y="5" align="center" valign="middle"/>
+            <text str="3" x="43" y="5" align="center" valign="middle"/>
+            <text str="4" x="62" y="5" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Next-Prev" h="15" w="40" aspect="1">
+        <foreground>
+            <strokecolor color="#999999"/>
+            <strokewidth width="2"/>
+            <fillcolor color="#ffffff"/>
+            <roundrect x="0" y="0" w="40" h="15" arcsize="13.750000000000002"/>
+            <fillstroke/>
+            <path>
+                <move x="20" y="0"/>
+                <line x="20" y="15"/>
+            </path>
+            <fillstroke/>
+            <linejoin join="round" />
+            <strokewidth width="1"/>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="14" y="3"/>
+                <line x="14" y="12"/>
+                <line x="7" y="7.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="26" y="3"/>
+                <line x="26" y="12"/>
+                <line x="33" y="7.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Next" h="15" w="20" aspect="1">
+        <foreground>
+            <strokecolor color="#999999"/>
+            <strokewidth width="2"/>
+            <fillcolor color="#ffffff"/>
+            <path>
+                <move x="0" y="15"/>
+                <line x="17" y="15"/>
+                <arc rx="3" ry="3" x-axis-rotation="180" large-arc-flag="0" sweep-flag="0" x="20" y="12"/>
+                <line x="20" y="3"/>
+                <arc rx="3" ry="3" x-axis-rotation="180" large-arc-flag="0" sweep-flag="0" x="17" y="0"/>
+                <line x="0" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <linejoin join="round" />
+            <strokewidth width="1"/>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="6" y="3"/>
+                <line x="6" y="12"/>
+                <line x="13" y="7.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Carousel 2" h="200" w="479" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#ffffff"/>
+            <roundrect x="0" y="0" w="479" h="200" arcsize="1.7719206680584552"/>
+            <fillstroke/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="13" y="83"/>
+                <line x="13" y="92"/>
+                <line x="6" y="87.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="466" y="83"/>
+                <line x="466" y="92"/>
+                <line x="473" y="87.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#999999"/>
+            <fillcolor color="#999999"/>
+            <rect x="45" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <rect x="190" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <rect x="335" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="20" y="0"/>
+                <line x="20" y="175"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="459" y="0"/>
+                <line x="459" y="175"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="0" y="175"/>
+                <line x="479" y="175"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#cccccc"/>
+            <fillcolor color="#cccccc"/>
+            <ellipse x="225" y="182.5" w="10" h="10"/>
+            <fillstroke/>
+            <ellipse x="244" y="182.5" w="10" h="10"/>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#333333"/>
+            <ellipse x="206" y="182.5" w="10" h="10"/>
+            <fillstroke/>
+            <strokecolor color="#cccccc"/>
+            <fillcolor color="#cccccc"/>
+            <ellipse x="263" y="182.5" w="10" h="10"/>
+            <fillstroke/>
+            <fontcolor color="#000000"/>
+            <fontsize size="16"/>
+            <fontstyle style="0"/>
+            <text str="Container Title Goes Here" x="45" y="20" align="left" valign="middle"/>
+            <fontstyle style="1"/>
+            <fontsize size="50"/>
+            <fontcolor color="#ffffff"/>
+            <text str="1" x="90" y="80" align="center" valign="middle"/>
+            <text str="2" x="240" y="80" align="center" valign="middle"/>
+            <text str="3" x="385" y="80" align="center" valign="middle"/>
+            <fontsize size="10"/>
+            <fontcolor color="#000000"/>
+            <text str="Item Title 1" x="45" y="138" align="left" valign="middle"/>
+            <text str="Item Title 2" x="190" y="138" align="left" valign="middle"/>
+            <text str="Item Title 3" x="335" y="138" align="left" valign="middle"/>
+            <fontstyle style="0"/>
+            <text str="Subtitle 1" x="45" y="155" align="left" valign="middle"/>
+            <text str="Subtitle 2" x="190" y="155" align="left" valign="middle"/>
+            <text str="Subtitle 3" x="335" y="155" align="left" valign="middle"/>
+            <fontstyle style="1"/>
+            <fontsize size="9"/>
+            <text str=">>  View All" x="10" y="187.5" align="left" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Carousel 3" h="200" w="439" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#ffffff"/>
+            <roundrect x="0" y="0" w="439" h="200" arcsize="1.819476082004556"/>
+            <fillstroke/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="404" y="183"/>
+                <line x="404" y="192"/>
+                <line x="397" y="187.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="416" y="183"/>
+                <line x="416" y="192"/>
+                <line x="423" y="187.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#999999"/>
+            <fillcolor color="#999999"/>
+            <rect x="25" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <rect x="170" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <rect x="315" y="40" w="100" h="85"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="0" y="175"/>
+                <line x="439" y="175"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#cccccc"/>
+            <fillcolor color="#cccccc"/>
+            <ellipse x="325" y="182.5" w="10" h="10"/>
+            <fillstroke/>
+            <ellipse x="344" y="182.5" w="10" h="10"/>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#333333"/>
+            <ellipse x="306" y="182.5" w="10" h="10"/>
+            <fillstroke/>
+            <strokecolor color="#cccccc"/>
+            <fillcolor color="#cccccc"/>
+            <ellipse x="363" y="182.5" w="10" h="10"/>
+            <fillstroke/>
+            <strokecolor color="#999999"/>
+            <strokewidth width="2"/>
+            <fillcolor color="none"/>
+            <roundrect x="390" y="180" w="40" h="15" arcsize="13.750000000000002"/>
+            <stroke/>
+            <path>
+                <move x="410" y="180"/>
+                <line x="410" y="195"/>
+            </path>
+            <stroke/>
+            <fontcolor color="#000000"/>
+            <fontsize size="16"/>
+            <fontstyle style="0"/>
+            <text str="Container Title Goes Here" x="25" y="20" align="left" valign="middle"/>
+            <fontstyle style="1"/>
+            <fontsize size="50"/>
+            <fontcolor color="#ffffff"/>
+            <text str="1" x="70" y="80" align="center" valign="middle"/>
+            <text str="2" x="220" y="80" align="center" valign="middle"/>
+            <text str="3" x="365" y="80" align="center" valign="middle"/>
+            <fontsize size="10"/>
+            <fontcolor color="#000000"/>
+            <text str="Item Title 1" x="25" y="138" align="left" valign="middle"/>
+            <text str="Item Title 2" x="170" y="138" align="left" valign="middle"/>
+            <text str="Item Title 3" x="315" y="138" align="left" valign="middle"/>
+            <fontstyle style="0"/>
+            <text str="Subtitle 1" x="25" y="155" align="left" valign="middle"/>
+            <text str="Subtitle 2" x="170" y="155" align="left" valign="middle"/>
+            <text str="Subtitle 3" x="315" y="155" align="left" valign="middle"/>
+            <fontstyle style="1"/>
+            <fontsize size="9"/>
+            <text str=">>  View All" x="10" y="187.5" align="left" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Carousel 4" h="114" w="241" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="#cccccc"/>
+            <linejoin join="round"/>
+            <fontstyle style="1"/>
+            <fontsize size="40"/>
+            <fontcolor color="#ffffff"/>
+            <rect x="187" y="0" w="54" h="59"/>
+            <fillstroke/>
+            <text str="4" x="214" y="27" align="center" valign="middle"/>
+            <rect x="135" y="5" w="68" h="73"/>
+            <fillstroke/>
+            <rect x="71" y="10" w="82" h="88"/>
+            <fillstroke/>
+            <strokewidth width="2"/>
+            <fillcolor color="#666666"/>
+            <rect x="0" y="14" w="90" h="100"/>
+            <fillstroke/>
+            <text str="1" x="45" y="65" align="center" valign="middle"/>
+            <text str="2" x="115" y="50" align="center" valign="middle"/>
+            <text str="3" x="170" y="40" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Carousel 5" h="114" w="391" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="#cccccc"/>
+            <linejoin join="round"/>
+            <fontstyle style="1"/>
+            <fontcolor color="#ffffff"/>
+            <path>
+                <move x="54" y="0"/>
+                <line x="54" y="59"/>
+                <line x="0" y="59"/>
+                <line x="0" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fontsize size="25"/>
+            <text str="n-3" x="25" y="30" align="center" valign="middle"/>
+            <path>
+                <move x="106" y="5"/>
+                <line x="106" y="78"/>
+                <line x="38" y="78"/>
+                <line x="38" y="5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fontsize size="30"/>
+            <text str="n-2" x="70" y="40" align="center" valign="middle"/>
+            <path>
+                <move x="170" y="10"/>
+                <line x="170" y="98"/>
+                <line x="88" y="98"/>
+                <line x="88" y="10"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fontsize size="35"/>
+            <text str="n-1" x="130" y="55" align="center" valign="middle"/>
+            <rect x="337" y="0" w="54" h="59"/>
+            <fillstroke/>
+            <fontsize size="25"/>
+            <text str="n+3" x="365" y="30" align="center" valign="middle"/>
+            <rect x="285" y="5" w="68" h="73"/>
+            <fillstroke/>
+            <fontsize size="30"/>
+            <text str="n+2" x="320" y="40" align="center" valign="middle"/>
+            <rect x="221" y="10" w="82" h="88"/>
+            <fillstroke/>
+            <fontsize size="35"/>
+            <text str="n+1" x="265" y="55" align="center" valign="middle"/>
+            <strokewidth width="2"/>
+            <fillcolor color="#666666"/>
+            <rect x="150" y="14" w="90" h="100"/>
+            <fillstroke/>
+            <fontsize size="40"/>
+            <text str="n" x="195" y="65" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Carousel 6" h="114" w="240" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="#cccccc"/>
+            <linejoin join="round"/>
+            <fontstyle style="1"/>
+            <fontcolor color="#ffffff"/>
+            <path>
+                <move x="54" y="0"/>
+                <line x="54" y="59"/>
+                <line x="0" y="59"/>
+                <line x="0" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fontsize size="25"/>
+            <text str="n-3" x="25" y="30" align="center" valign="middle"/>
+            <path>
+                <move x="106" y="5"/>
+                <line x="106" y="78"/>
+                <line x="38" y="78"/>
+                <line x="38" y="5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fontsize size="30"/>
+            <text str="n-2" x="70" y="40" align="center" valign="middle"/>
+            <path>
+                <move x="170" y="10"/>
+                <line x="170" y="98"/>
+                <line x="88" y="98"/>
+                <line x="88" y="10"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fontsize size="35"/>
+            <text str="n-1" x="130" y="55" align="center" valign="middle"/>
+            <strokewidth width="2"/>
+            <fillcolor color="#666666"/>
+            <rect x="150" y="14" w="90" h="100"/>
+            <fillstroke/>
+            <fontsize size="40"/>
+            <text str="n" x="195" y="65" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Carousel 7" h="174" w="321" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#ffffff"/>
+            <fontstyle style="1"/>
+            <fontcolor color="#ffffff"/>
+            <fontsize size="35"/>
+            <fillcolor color="#cccccc"/>
+            <linejoin join="round"/>
+            <path>
+                <move x="189" y="0"/>
+                <line x="189" y="59"/>
+                <line x="135" y="59"/>
+                <line x="135" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="9" x="160" y="30" align="center" valign="middle"/>
+            <path>
+                <move x="140" y="13"/>
+                <line x="140" y="72"/>
+                <line x="85" y="72"/>
+                <line x="85" y="13"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="10" x="113" y="45" align="center" valign="middle"/>
+            <path>
+                <move x="236" y="14"/>
+                <line x="236" y="73"/>
+                <line x="182" y="73"/>
+                <line x="182" y="14"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="8" x="208" y="45" align="center" valign="middle"/>
+            <path>
+                <move x="96" y="33"/>
+                <line x="96" y="92"/>
+                <line x="42" y="92"/>
+                <line x="42" y="33"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="1" x="70" y="60" align="center" valign="middle"/>
+            <path>
+                <move x="281" y="33"/>
+                <line x="281" y="92"/>
+                <line x="227" y="92"/>
+                <line x="227" y="33"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="7" x="255" y="60" align="center" valign="middle"/>
+            <path>
+                <move x="67" y="55"/>
+                <line x="67" y="127"/>
+                <line x="0" y="127"/>
+                <line x="0" y="55"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="2" x="35" y="90" align="center" valign="middle"/>
+            <path>
+                <move x="321" y="55"/>
+                <line x="321" y="127"/>
+                <line x="254" y="127"/>
+                <line x="254" y="55"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="6" x="290" y="90" align="center" valign="middle"/>
+            <path>
+                <move x="132" y="65"/>
+                <line x="132" y="150"/>
+                <line x="51" y="150"/>
+                <line x="51" y="65"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="3" x="90" y="105" align="center" valign="middle"/>
+            <path>
+                <move x="271" y="65"/>
+                <line x="271" y="151"/>
+                <line x="190" y="151"/>
+                <line x="190" y="65"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <text str="5" x="230" y="105" align="center" valign="middle"/>
+            <strokewidth width="2"/>
+            <fillcolor color="#666666"/>
+            <rect x="116" y="74" w="90" h="100"/>
+            <fillstroke/>
+            <text str="4" x="160" y="120" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Prev" h="15" w="20" aspect="1">
+        <foreground>
+            <strokecolor color="#999999"/>
+            <strokewidth width="2"/>
+            <fillcolor color="#ffffff"/>
+            <path>
+                <move x="20" y="15"/>
+                <line x="3" y="15"/>
+                <arc rx="3" ry="3" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="0" y="12"/>
+                <line x="0" y="3"/>
+                <arc rx="3" ry="3" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="3" y="0"/>
+                <line x="20" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokewidth width="1"/>
+            <linejoin join="round"/>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="14" y="3"/>
+                <line x="14" y="12"/>
+                <line x="7" y="7.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Status Display 2" h="10" w="67" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#cccccc"/>
+            <fillcolor color="#cccccc"/>
+            <ellipse x="19" y="0" w="10" h="10"/>
+            <fillstroke/>
+            <ellipse x="38" y="0" w="10" h="10"/>
+            <fillstroke/>
+            <strokecolor color="#333333"/>
+            <fillcolor color="#333333"/>
+            <ellipse x="0" y="0" w="10" h="10"/>
+            <fillstroke/>
+            <strokecolor color="#cccccc"/>
+            <fillcolor color="#cccccc"/>
+            <ellipse x="57" y="0" w="10" h="10"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+</shapes>

@@ -1,0 +1,297 @@
+<shapes name="mxgraph.electrical.transmission">
+<shape aspect="variable" h="25" name="2 Line Bus" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="0"/>
+            <line x="130" y="0"/>
+            <move x="0" y="25"/>
+            <line x="130" y="25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="3 Line Bus" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="0"/>
+            <line x="130" y="0"/>
+            <move x="0" y="30"/>
+            <line x="130" y="30"/>
+            <move x="0" y="15"/>
+            <line x="130" y="15"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="75" name="4 Line Bus" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.33"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.33"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.67"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.67"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="0"/>
+            <line x="130" y="0"/>
+            <move x="0" y="75"/>
+            <line x="130" y="75"/>
+            <move x="0" y="25"/>
+            <line x="130" y="25"/>
+            <move x="0" y="50"/>
+            <line x="130" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="224" name="8 Line Bus" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="1"/>
+        <constraint name="SW" perimeter="0" x="0" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.145"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.285"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.43"/>
+        <constraint name="W4" perimeter="0" x="0" y="0.57"/>
+        <constraint name="W5" perimeter="0" x="0" y="0.715"/>
+        <constraint name="W6" perimeter="0" x="0" y="0.855"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.145"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.285"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.43"/>
+        <constraint name="E4" perimeter="0" x="1" y="0.57"/>
+        <constraint name="E5" perimeter="0" x="1" y="0.715"/>
+        <constraint name="E6" perimeter="0" x="1" y="0.855"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="0"/>
+            <line x="130" y="0"/>
+            <move x="0" y="32"/>
+            <line x="130" y="32"/>
+            <move x="0" y="64"/>
+            <line x="130" y="64"/>
+            <move x="0" y="96"/>
+            <line x="130" y="96"/>
+            <move x="0" y="128"/>
+            <line x="130" y="128"/>
+            <move x="0" y="160"/>
+            <line x="130" y="160"/>
+            <move x="0" y="192"/>
+            <line x="130" y="192"/>
+            <move x="0" y="224"/>
+            <line x="130" y="224"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="88" name="Anticreepage Device" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="44"/>
+            <line x="130" y="44"/>
+            <move x="26" y="18"/>
+            <line x="26" y="70"/>
+            <move x="110" y="0"/>
+            <arc large-arc-flag="0" rx="59" ry="59" sweep-flag="1" x="110" x-axis-rotation="0" y="88"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="156" name="Bus Width" strokewidth="inherit" w="130">
+    <connections/>
+    <foreground>
+        <path>
+            <move x="0" y="156"/>
+            <line x="130" y="0"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="130" name="Cable Group" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W1" perimeter="0" x="0" y="0.16"/>
+        <constraint name="W2" perimeter="0" x="0" y="0.33"/>
+        <constraint name="W3" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W4" perimeter="0" x="0" y="0.67"/>
+        <constraint name="W5" perimeter="0" x="0" y="0.84"/>
+        <constraint name="E1" perimeter="0" x="1" y="0.16"/>
+        <constraint name="E2" perimeter="0" x="1" y="0.33"/>
+        <constraint name="E3" perimeter="0" x="1" y="0.5"/>
+        <constraint name="E4" perimeter="0" x="1" y="0.67"/>
+        <constraint name="E5" perimeter="0" x="1" y="0.84"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="50" y="15"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="65" x-axis-rotation="0" y="0"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="80" x-axis-rotation="0" y="15"/>
+            <line x="80" y="115"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="65" x-axis-rotation="0" y="130"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="50" x-axis-rotation="0" y="115"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="0" y="21"/>
+            <line x="50" y="21"/>
+            <move x="0" y="43"/>
+            <line x="50" y="43"/>
+            <move x="0" y="65"/>
+            <line x="50" y="65"/>
+            <move x="0" y="87"/>
+            <line x="50" y="87"/>
+            <move x="0" y="109"/>
+            <line x="50" y="109"/>
+            <move x="80" y="21"/>
+            <line x="130" y="21"/>
+            <move x="80" y="43"/>
+            <line x="130" y="43"/>
+            <move x="80" y="65"/>
+            <line x="130" y="65"/>
+            <move x="80" y="87"/>
+            <line x="130" y="87"/>
+            <move x="80" y="109"/>
+            <line x="130" y="109"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Line Cable" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="30"/>
+            <line x="130" y="30"/>
+        </path>
+        <stroke/>
+        <ellipse h="60" w="60" x="35" y="0"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="130" name="Line Concentrator" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <ellipse h="130" w="130" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="65" y="12"/>
+            <line x="65" y="118"/>
+            <move x="35" y="65"/>
+            <line x="65" y="65"/>
+            <move x="65" y="25"/>
+            <line x="95" y="25"/>
+            <move x="65" y="105"/>
+            <line x="95" y="105"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Optical Fiber" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="40"/>
+            <line x="25" y="40"/>
+            <move x="105" y="40"/>
+            <line x="130" y="40"/>
+        </path>
+        <stroke/>
+        <ellipse h="80" w="80" x="25" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="35" y="50"/>
+            <line x="65" y="20"/>
+            <move x="55" y="68.88"/>
+            <line x="85" y="38.88"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="59.5" y="15.5"/>
+            <line x="76" y="9"/>
+            <line x="70" y="25"/>
+            <close/>
+            <move x="79.5" y="34.38"/>
+            <line x="96" y="27.88"/>
+            <line x="90" y="43.88"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="136.29" name="Overground Enclosure" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0.05"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0.215" y="0.5"/>
+        <constraint name="E" perimeter="0" x="0.785" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="26.29"/>
+            <arc large-arc-flag="0" rx="117" ry="117" sweep-flag="1" x="130" x-axis-rotation="0" y="26.29"/>
+            <move x="28" y="12.79"/>
+            <line x="28" y="136.29"/>
+            <line x="102" y="136.29"/>
+            <line x="102" y="12.79"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="Terminal 3 Phase" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="NW" perimeter="0" x="0.12" y="0"/>
+        <constraint name="NE" perimeter="0" x="0.88" y="0"/>
+        <constraint name="SW" perimeter="0" x="0.12" y="1"/>
+        <constraint name="SE" perimeter="0" x="0.88" y="1"/>
+    </connections>
+    <foreground>
+        <ellipse h="30" w="30" x="0" y="0"/>
+        <fillstroke/>
+        <ellipse h="30" w="30" x="50" y="0"/>
+        <fillstroke/>
+        <ellipse h="30" w="30" x="100" y="0"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

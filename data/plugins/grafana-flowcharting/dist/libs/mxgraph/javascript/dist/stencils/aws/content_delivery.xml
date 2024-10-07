@@ -1,0 +1,445 @@
+<shapes name="mxgraph.aws.content_delivery">
+<shape name="CloudFront" h="57.34" w="57.36" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<foreground>
+<path>
+<move x="5.09" y="27.56"/>
+<line x="5.09" y="21.81"/>
+<line x="7.39" y="21.81"/>
+<line x="8.51" y="8.3"/>
+<curve x1="3.26" y1="13.49" x2="0" y2="20.71" x3="0" y3="28.68"/>
+<curve x1="0" y1="32.14" x2="0.61" y2="35.46" x3="1.74" y3="38.53"/>
+<line x="5.97" y="27.56"/>
+<line x="5.09" y="27.56"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="13.59" y="48.39"/>
+<line x="13.59" y="45.22"/>
+<line x="2.87" y="41.19"/>
+<curve x1="7.39" y1="50.5" x2="16.79" y2="56.98" x3="27.74" y3="57.34"/>
+<line x="18.7" y="48.39"/>
+<line x="13.59" y="48.39"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="51.22" y="21.81"/>
+<line x="51.22" y="27.56"/>
+<line x="50.56" y="27.56"/>
+<line x="55.59" y="38.61"/>
+<curve x1="56.74" y1="35.52" x2="57.36" y2="32.17" x3="57.36" y3="28.68"/>
+<curve x1="57.36" y1="20.68" x2="54.08" y2="13.44" x3="48.79" y3="8.23"/>
+<line x="49.09" y="21.81"/>
+<line x="51.22" y="21.81"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="25.62" y="6.89"/>
+<line x="31.74" y="6.89"/>
+<line x="31.74" y="8.31"/>
+<line x="46.73" y="6.4"/>
+<curve x1="41.8" y1="2.4" x2="35.52" y2="0" x3="28.68" y3="0"/>
+<curve x1="21.83" y1="0" x2="15.55" y2="2.4" x3="10.62" y3="6.4"/>
+<line x="25.62" y="8.4"/>
+<line x="25.62" y="6.89"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="44.22" y="48.39"/>
+<line x="39.67" y="48.39"/>
+<line x="30.68" y="57.28"/>
+<curve x1="41.17" y1="56.56" x2="50.1" y2="50.21" x3="54.48" y3="41.22"/>
+<line x="44.21" y="45.36"/>
+<line x="44.21" y="48.39"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="9.39" y="21.81"/>
+<line x="10.41" y="21.81"/>
+<line x="25.62" y="10.75"/>
+<line x="25.62" y="10.42"/>
+<line x="10.51" y="8.4"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="47.09" y="21.81"/>
+<line x="46.79" y="8.41"/>
+<line x="31.74" y="10.33"/>
+<line x="31.74" y="10.85"/>
+<line x="46.04" y="21.81"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="19.72" y="46.58"/>
+<line x="29.18" y="55.95"/>
+<line x="38.09" y="47.14"/>
+<line x="38.09" y="46.52"/>
+<line x="19.72" y="46.52"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="27.75" y="32.56"/>
+<line x="19.72" y="43.14"/>
+<line x="19.72" y="44.52"/>
+<line x="38.09" y="44.52"/>
+<line x="38.09" y="43.24"/>
+<line x="29.67" y="32.56"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="45.09" y="27.56"/>
+<line x="45.09" y="26.5"/>
+<line x="31.74" y="29.93"/>
+<line x="31.74" y="31.95"/>
+<line x="40.16" y="42.64"/>
+<line x="41.06" y="42.64"/>
+<line x="46.13" y="27.56"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="48.24" y="27.56"/>
+<line x="43.17" y="42.64"/>
+<line x="44.22" y="42.64"/>
+<line x="44.22" y="43.2"/>
+<line x="53.74" y="39.37"/>
+<line x="48.36" y="27.56"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="31.74" y="27.86"/>
+<line x="45.09" y="24.43"/>
+<line x="45.09" y="23.6"/>
+<line x="30.79" y="12.64"/>
+<line x="29.68" y="12.64"/>
+<line x="29.68" y="26.81"/>
+<line x="31.74" y="26.81"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="8.11" y="27.56"/>
+<line x="3.58" y="39.32"/>
+<line x="13.59" y="43.08"/>
+<line x="13.59" y="42.64"/>
+<line x="14.87" y="42.64"/>
+<line x="8.31" y="27.56"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="25.62" y="29.96"/>
+<line x="11.22" y="26.46"/>
+<line x="11.22" y="27.56"/>
+<line x="10.49" y="27.56"/>
+<line x="17.06" y="42.64"/>
+<line x="17.58" y="42.64"/>
+<line x="25.62" y="32.06"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="11.22" y="24.4"/>
+<line x="25.62" y="27.91"/>
+<line x="25.62" y="26.81"/>
+<line x="27.68" y="26.81"/>
+<line x="27.68" y="12.64"/>
+<line x="26.43" y="12.64"/>
+<line x="11.22" y="23.69"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="CloudFront Download Distribution" h="58.01" w="58.01" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<path>
+<move x="29.01" y="0"/>
+<curve x1="12.99" y1="0" x2="0" y2="12.99" x3="0" y3="29.01"/>
+<curve x1="0" y1="45.03" x2="12.99" y2="58.02" x3="29.01" y3="58.02"/>
+<curve x1="45.03" y1="58.02" x2="58.01" y2="45.03" x3="58.01" y3="29.01"/>
+<curve x1="58.01" y1="12.99" x2="45.03" y2="0" x3="29.01" y3="0"/>
+<close/>
+<move x="39.81" y="34.48"/>
+<line x="42.21" y="34.48"/>
+<line x="42.21" y="36.48"/>
+<line x="39.81" y="36.48"/>
+<line x="39.81" y="34.48"/>
+<close/>
+<move x="34.01" y="6.72"/>
+<line x="37.01" y="6.72"/>
+<line x="37.01" y="9.72"/>
+<line x="35.01" y="9.72"/>
+<line x="35.01" y="8.72"/>
+<line x="34.01" y="8.72"/>
+<line x="34.01" y="6.72"/>
+<close/>
+<move x="35.01" y="23.58"/>
+<line x="35.01" y="19.62"/>
+<line x="37.01" y="19.62"/>
+<line x="37.01" y="23.58"/>
+<line x="35.01" y="23.58"/>
+<close/>
+<move x="37.01" y="26.55"/>
+<line x="37.01" y="30.51"/>
+<line x="35.01" y="30.51"/>
+<line x="35.01" y="26.55"/>
+<line x="37.01" y="26.55"/>
+<close/>
+<move x="35.01" y="16.65"/>
+<line x="35.01" y="12.69"/>
+<line x="37.01" y="12.69"/>
+<line x="37.01" y="16.65"/>
+<line x="35.01" y="16.65"/>
+<close/>
+<move x="27" y="6.72"/>
+<line x="31.01" y="6.72"/>
+<line x="31.01" y="8.72"/>
+<line x="27" y="8.72"/>
+<line x="27" y="6.72"/>
+<close/>
+<move x="21" y="6.72"/>
+<line x="24" y="6.72"/>
+<line x="24" y="8.72"/>
+<line x="23" y="8.72"/>
+<line x="23" y="9.72"/>
+<line x="21" y="9.72"/>
+<line x="21" y="6.72"/>
+<close/>
+<move x="21" y="12.7"/>
+<line x="23" y="12.7"/>
+<line x="23" y="16.68"/>
+<line x="21" y="16.68"/>
+<line x="21" y="12.7"/>
+<close/>
+<move x="21" y="19.66"/>
+<line x="23" y="19.66"/>
+<line x="23" y="23.63"/>
+<line x="21" y="23.63"/>
+<line x="21" y="19.66"/>
+<close/>
+<move x="21" y="26.61"/>
+<line x="23" y="26.61"/>
+<line x="23" y="30.59"/>
+<line x="21" y="30.59"/>
+<line x="21" y="26.61"/>
+<close/>
+<move x="15.8" y="34.57"/>
+<line x="18.2" y="34.57"/>
+<line x="18.2" y="36.57"/>
+<line x="15.8" y="36.57"/>
+<line x="15.8" y="34.57"/>
+<close/>
+<move x="14" y="36.39"/>
+<line x="14" y="36.57"/>
+<line x="13.82" y="36.57"/>
+<line x="12.72" y="37.68"/>
+<line x="9.56" y="34.57"/>
+<line x="14" y="34.57"/>
+<line x="14" y="36.13"/>
+<line x="14.13" y="36.26"/>
+<line x="14" y="36.39"/>
+<close/>
+<move x="18.55" y="43.41"/>
+<line x="15.22" y="40.14"/>
+<line x="16.62" y="38.71"/>
+<line x="19.95" y="41.99"/>
+<line x="18.55" y="43.41"/>
+<close/>
+<move x="20" y="34.57"/>
+<line x="21" y="34.57"/>
+<line x="21" y="33.57"/>
+<line x="23" y="33.57"/>
+<line x="23" y="36.57"/>
+<line x="20" y="36.57"/>
+<line x="20" y="34.57"/>
+<close/>
+<move x="24.38" y="49.15"/>
+<line x="21.05" y="45.87"/>
+<line x="22.45" y="44.45"/>
+<line x="25.78" y="47.72"/>
+<line x="24.38" y="49.15"/>
+<close/>
+<move x="29" y="53.7"/>
+<line x="26.87" y="51.6"/>
+<line x="28.27" y="50.18"/>
+<line x="29" y="50.89"/>
+<line x="29.72" y="50.17"/>
+<line x="31.13" y="51.6"/>
+<line x="29" y="53.7"/>
+<close/>
+<move x="33.62" y="49.13"/>
+<line x="32.22" y="47.71"/>
+<line x="35.55" y="44.41"/>
+<line x="36.96" y="45.84"/>
+<line x="33.62" y="49.13"/>
+<close/>
+<move x="38.01" y="36.48"/>
+<line x="35.01" y="36.48"/>
+<line x="35.01" y="33.48"/>
+<line x="37.01" y="33.48"/>
+<line x="37.01" y="34.48"/>
+<line x="38.01" y="34.48"/>
+<line x="38.01" y="36.48"/>
+<close/>
+<move x="39.46" y="43.37"/>
+<line x="38.05" y="41.94"/>
+<line x="41.38" y="38.65"/>
+<line x="42.79" y="40.07"/>
+<line x="39.46" y="43.37"/>
+<close/>
+<move x="45.29" y="37.6"/>
+<line x="44.18" y="36.48"/>
+<line x="44.01" y="36.48"/>
+<line x="44.01" y="36.3"/>
+<line x="43.88" y="36.18"/>
+<line x="44.01" y="36.05"/>
+<line x="44.01" y="34.48"/>
+<line x="48.44" y="34.48"/>
+<line x="45.29" y="37.6"/>
+<close/>
+</path>
+</background>
+<foreground>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="CloudFront Edge Location" h="47.09" w="47.1" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0" perimeter="0" name="NW"/>
+<constraint x="0" y="1" perimeter="0" name="SW"/>
+<constraint x="1" y="0" perimeter="0" name="NE"/>
+<constraint x="1" y="1" perimeter="0" name="SE"/>
+</connections>
+<foreground>
+<path>
+<move x="16.24" y="15.28"/>
+<line x="30.2" y="15.28"/>
+<line x="30.2" y="19.92"/>
+<curve x1="37.35" y1="20.54" x2="42.95" y2="22.32" x3="47.09" y3="24.23"/>
+<line x="47.09" y="25.87"/>
+<line x="47.09" y="0"/>
+<line x="0" y="0"/>
+<line x="0" y="25.85"/>
+<curve x1="3.96" y1="23.76" x2="9.49" y2="21.49" x3="16.24" y3="20.38"/>
+<line x="16.24" y="15.28"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="30.2" y="29.25"/>
+<line x="16.24" y="29.25"/>
+<line x="16.24" y="23.54"/>
+<curve x1="9.39" y1="24.61" x2="3.9" y2="26.83" x3="0" y3="28.9"/>
+<line x="0" y="47.09"/>
+<line x="47.1" y="47.09"/>
+<line x="47.1" y="27.51"/>
+<curve x1="42.92" y1="25.58" x2="37.28" y2="23.79" x3="30.2" y3="23.14"/>
+<line x="30.2" y="29.25"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="CloudFront Streaming Distribution" h="58.01" w="58.01" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<path>
+<move x="29.01" y="0"/>
+<curve x1="12.99" y1="0" x2="0" y2="12.99" x3="0" y3="29.01"/>
+<curve x1="0" y1="45.03" x2="12.99" y2="58.01" x3="29.01" y3="58.01"/>
+<curve x1="45.03" y1="58.01" x2="58.01" y2="45.03" x3="58.01" y3="29.01"/>
+<curve x1="58.01" y1="12.99" x2="45.03" y2="0" x3="29.01" y3="0"/>
+<close/>
+<move x="28.88" y="51.8"/>
+<line x="11.26" y="34.47"/>
+<line x="21.62" y="34.47"/>
+<line x="21.62" y="6.62"/>
+<line x="36.14" y="6.62"/>
+<line x="36.13" y="34.39"/>
+<line x="46.49" y="34.39"/>
+<line x="28.88" y="51.8"/>
+<close/>
+</path>
+</background>
+<foreground>
+<fillstroke/>
+<path>
+<move x="34.14" y="8.62"/>
+<line x="23.62" y="8.62"/>
+<line x="23.62" y="36.47"/>
+<line x="16.15" y="36.47"/>
+<line x="28.87" y="48.99"/>
+<line x="41.62" y="36.39"/>
+<line x="34.13" y="36.39"/>
+<close/>
+</path>
+<fillstroke/>
+
+<fillcolor color="#FFFFFF"/>
+<path>
+<move x="36.14" y="6.62"/>
+<line x="21.62" y="6.62"/>
+<line x="21.62" y="34.47"/>
+<line x="11.26" y="34.47"/>
+<line x="28.88" y="51.8"/>
+<line x="46.49" y="34.39"/>
+<line x="36.13" y="34.39"/>
+<line x="36.14" y="6.62"/>
+<close/>
+<move x="41.62" y="36.39"/>
+<line x="28.87" y="48.99"/>
+<line x="16.15" y="36.47"/>
+<line x="23.62" y="36.47"/>
+<line x="23.62" y="8.62"/>
+<line x="34.14" y="8.62"/>
+<line x="34.13" y="36.39"/>
+<line x="41.62" y="36.39"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+</shapes>

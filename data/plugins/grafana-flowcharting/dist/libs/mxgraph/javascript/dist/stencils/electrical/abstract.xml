@@ -1,0 +1,667 @@
+<shapes name="mxgraph.electrical.abstract">
+	<shape aspect="variable" h="90" name="Amplifier" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="5" y="0"/>
+				<line x="95" y="45"/>
+				<line x="5" y="90"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="45"/>
+				<line x="5" y="45"/>
+				<move x="95" y="45"/>
+				<line x="100" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Controlled Amplifier" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="control" perimeter="0" x="0.6" y="0.95"/>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="5" y="0"/>
+				<line x="95" y="45"/>
+				<line x="5" y="90"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="45"/>
+				<line x="5" y="45"/>
+				<move x="95" y="45"/>
+				<line x="100" y="45"/>
+				<move x="60" y="85"/>
+				<line x="60" y="68"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="57" y="68"/>
+				<line x="60" y="63"/>
+				<line x="63" y="68"/>
+				<close/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="46" name="DAC" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="0" y="0"/>
+				<line x="45" y="0"/>
+				<line x="70" y="23"/>
+				<line x="45" y="46"/>
+				<line x="0" y="46"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Delta" strokewidth="inherit" w="50">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S" perimeter="0" x="0.5" y="1"/>
+			<constraint name="W" perimeter="0" x="0" y="0.5"/>
+			<constraint name="E" perimeter="0" x="1" y="0.5"/>
+			<constraint name="NW" perimeter="0" x="0.145" y="0.145"/>
+			<constraint name="SW" perimeter="0" x="0.145" y="0.855"/>
+			<constraint name="NE" perimeter="0" x="0.855" y="0.145"/>
+			<constraint name="SE" perimeter="0" x="0.855" y="0.855"/>
+		</connections>
+		<background>
+			<ellipse h="50" w="50" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="15" y="35"/>
+				<line x="25" y="15"/>
+				<line x="35" y="35"/>
+				<close/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Demux" strokewidth="inherit" w="60">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.333"/>
+			<constraint name="out2" perimeter="0" x="1" y="0.445"/>
+			<constraint name="out3" perimeter="0" x="1" y="0.555"/>
+			<constraint name="out4" perimeter="0" x="1" y="0.667"/>
+			<constraint name="control1" perimeter="0" x="0.415" y="1"/>
+			<constraint name="control2" perimeter="0" x="0.585" y="1"/>
+		</connections>
+		<background>
+			<path>
+				<move x="10" y="0"/>
+				<line x="50" y="20"/>
+				<line x="50" y="70"/>
+				<line x="10" y="90"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="25" y="82.5"/>
+				<line x="25" y="90"/>
+				<move x="50" y="50"/>
+				<line x="60" y="50"/>
+				<move x="50" y="60"/>
+				<line x="60" y="60"/>
+				<move x="0" y="45"/>
+				<line x="10" y="45"/>
+				<move x="50" y="40"/>
+				<line x="60" y="40"/>
+				<move x="50" y="30"/>
+				<line x="60" y="30"/>
+				<move x="35" y="77.5"/>
+				<line x="35" y="90"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="46" name="Filter" strokewidth="inherit" w="52">
+		<connections>
+			<constraint name="in2" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+			<constraint name="in1" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="46" w="52" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="6" y="23"/>
+				<arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="26" x-axis-rotation="0" y="23"/>
+				<arc large-arc-flag="0" rx="15" ry="15" sweep-flag="0" x="46" x-axis-rotation="0" y="23"/>
+				<move x="6" y="13"/>
+				<arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="26" x-axis-rotation="0" y="13"/>
+				<arc large-arc-flag="0" rx="15" ry="15" sweep-flag="0" x="46" x-axis-rotation="0" y="13"/>
+				<move x="6" y="33"/>
+				<arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="26" x-axis-rotation="0" y="33"/>
+				<arc large-arc-flag="0" rx="15" ry="15" sweep-flag="0" x="46" x-axis-rotation="0" y="33"/>
+				<move x="22" y="35"/>
+				<line x="28" y="29"/>
+				<move x="22" y="15"/>
+				<line x="28" y="9"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Function" strokewidth="inherit" w="50">
+		<connections>
+			<constraint name="in2" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+			<constraint name="in1" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="50" w="50" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Integrator" strokewidth="inherit" w="50">
+		<connections>
+			<constraint name="in2" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+			<constraint name="in1" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="50" w="50" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="20" y="35"/>
+				<arc large-arc-flag="0" rx="2.5" ry="2.5" sweep-flag="0" x="25" x-axis-rotation="0" y="35"/>
+				<line x="25" y="15"/>
+				<arc large-arc-flag="0" rx="2.5" ry="2.5" sweep-flag="1" x="30" x-axis-rotation="0" y="15"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Multiplier" strokewidth="inherit" w="50">
+		<connections>
+			<constraint name="in2" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+			<constraint name="in1" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="50" w="50" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="7.2" y="7.2"/>
+				<line x="42.8" y="42.8"/>
+				<move x="42.8" y="7.2"/>
+				<line x="7.2" y="42.8"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Mux-Demux" strokewidth="inherit" w="60">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.055"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in3" perimeter="0" x="0" y="0.275"/>
+			<constraint name="in4" perimeter="0" x="0" y="0.39"/>
+			<constraint name="in5" perimeter="0" x="0" y="0.5"/>
+			<constraint name="in6" perimeter="0" x="0" y="0.61"/>
+			<constraint name="in7" perimeter="0" x="0" y="0.72"/>
+			<constraint name="in8" perimeter="0" x="0" y="0.835"/>
+			<constraint name="in9" perimeter="0" x="0" y="0.945"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+			<constraint name="control" perimeter="0" x="0.5" y="1"/>
+		</connections>
+		<background>
+			<path>
+				<move x="10" y="0"/>
+				<line x="50" y="20"/>
+				<line x="50" y="70"/>
+				<line x="10" y="90"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="30" y="80"/>
+				<line x="30" y="90"/>
+				<move x="50" y="45"/>
+				<line x="60" y="45"/>
+				<move x="0" y="85"/>
+				<line x="10" y="85"/>
+				<move x="0" y="75"/>
+				<line x="10" y="75"/>
+				<move x="0" y="65"/>
+				<line x="10" y="65"/>
+				<move x="0" y="55"/>
+				<line x="10" y="55"/>
+				<move x="0" y="45"/>
+				<line x="10" y="45"/>
+				<move x="0" y="35"/>
+				<line x="10" y="35"/>
+				<move x="0" y="25"/>
+				<line x="10" y="25"/>
+				<move x="0" y="15"/>
+				<line x="10" y="15"/>
+				<move x="0" y="5"/>
+				<line x="10" y="5"/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Mux" strokewidth="inherit" w="60">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.055"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in3" perimeter="0" x="0" y="0.275"/>
+			<constraint name="in4" perimeter="0" x="0" y="0.39"/>
+			<constraint name="in5" perimeter="0" x="0" y="0.5"/>
+			<constraint name="in6" perimeter="0" x="0" y="0.61"/>
+			<constraint name="in7" perimeter="0" x="0" y="0.72"/>
+			<constraint name="in8" perimeter="0" x="0" y="0.835"/>
+			<constraint name="in9" perimeter="0" x="0" y="0.945"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+			<constraint name="control1" perimeter="0" x="0.415" y="1"/>
+			<constraint name="control2" perimeter="0" x="0.585" y="1"/>
+		</connections>
+		<background>
+			<path>
+				<move x="10" y="0"/>
+				<line x="50" y="20"/>
+				<line x="50" y="70"/>
+				<line x="10" y="90"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="25" y="82.5"/>
+				<line x="25" y="90"/>
+				<move x="50" y="45"/>
+				<line x="60" y="45"/>
+				<move x="0" y="85"/>
+				<line x="10" y="85"/>
+				<move x="0" y="75"/>
+				<line x="10" y="75"/>
+				<move x="0" y="65"/>
+				<line x="10" y="65"/>
+				<move x="0" y="55"/>
+				<line x="10" y="55"/>
+				<move x="0" y="45"/>
+				<line x="10" y="45"/>
+				<move x="0" y="35"/>
+				<line x="10" y="35"/>
+				<move x="0" y="25"/>
+				<line x="10" y="25"/>
+				<move x="0" y="15"/>
+				<line x="10" y="15"/>
+				<move x="0" y="5"/>
+				<line x="10" y="5"/>
+				<move x="35" y="77.5"/>
+				<line x="35" y="90"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Operational Amp 1" strokewidth="inherit" w="98">
+		<connections>
+			<constraint name="in-" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in+" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+			<constraint name="control1" perimeter="0" x="0.612" y="0.11"/>
+			<constraint name="control2" perimeter="0" x="0.612" y="0.89"/>
+		</connections>
+		<background>
+			<path>
+				<move x="5" y="0"/>
+				<line x="98" y="45"/>
+				<line x="5" y="90"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="15"/>
+				<line x="5" y="15"/>
+				<move x="0" y="75"/>
+				<line x="5" y="75"/>
+				<move x="60" y="10"/>
+				<line x="60" y="26.5"/>
+				<move x="60" y="63.5"/>
+				<line x="60" y="80"/>
+				<move x="8" y="15"/>
+				<line x="14" y="15"/>
+				<move x="8" y="75"/>
+				<line x="14" y="75"/>
+				<move x="11" y="72"/>
+				<line x="11" y="78"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Operational Amp 2" strokewidth="inherit" w="98">
+		<connections>
+			<constraint name="in-" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in+" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+			<constraint name="control1" perimeter="0" x="0.408" y="0.05"/>
+			<constraint name="control2" perimeter="0" x="0.408" y="0.95"/>
+			<constraint name="out+" perimeter="0" x="0.815" y="0.292"/>
+			<constraint name="out-" perimeter="0" x="0.815" y="0.708"/>
+		</connections>
+		<background>
+			<path>
+				<move x="5" y="0"/>
+				<line x="98" y="45"/>
+				<line x="5" y="90"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="15"/>
+				<line x="5" y="15"/>
+				<move x="0" y="75"/>
+				<line x="5" y="75"/>
+				<move x="80" y="26.5"/>
+				<line x="60" y="26.5"/>
+				<move x="60" y="63.5"/>
+				<line x="80" y="63.5"/>
+				<move x="8" y="15"/>
+				<line x="14" y="15"/>
+				<move x="8" y="75"/>
+				<line x="14" y="75"/>
+				<move x="11" y="72"/>
+				<line x="11" y="78"/>
+				<move x="40" y="5"/>
+				<line x="40" y="17"/>
+				<move x="40" y="73"/>
+				<line x="40" y="85"/>
+				<move x="45" y="28"/>
+				<line x="51" y="28"/>
+				<move x="48" y="25"/>
+				<line x="48" y="31"/>
+				<move x="45" y="62"/>
+				<line x="51" y="62"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="OTA 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in-" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in+" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+			<constraint name="control1" perimeter="0" x="0.4" y="0.05"/>
+			<constraint name="control2" perimeter="0" x="0.4" y="0.95"/>
+		</connections>
+		<background>
+			<path>
+				<move x="5" y="90"/>
+				<line x="5" y="0"/>
+				<line x="68" y="30.5"/>
+				<line x="68" y="59.5"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="15"/>
+				<line x="5" y="15"/>
+				<move x="68" y="45"/>
+				<line x="100" y="45"/>
+				<move x="8" y="15"/>
+				<line x="14" y="15"/>
+				<move x="8" y="75"/>
+				<line x="14" y="75"/>
+				<move x="11" y="72"/>
+				<line x="11" y="78"/>
+				<move x="0" y="75"/>
+				<line x="5" y="75"/>
+				<move x="40" y="73"/>
+				<line x="40" y="85"/>
+				<move x="40" y="5"/>
+				<line x="40" y="17"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="OTA 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in-" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in+" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+			<constraint name="control1" perimeter="0" x="0.4" y="0.05"/>
+			<constraint name="control2" perimeter="0" x="0.4" y="0.95"/>
+			<constraint name="out+" perimeter="0" x="0.8" y="0.292"/>
+			<constraint name="out-" perimeter="0" x="0.8" y="0.708"/>
+		</connections>
+		<background>
+			<path>
+				<move x="5" y="90"/>
+				<line x="5" y="0"/>
+				<line x="68" y="30.5"/>
+				<line x="68" y="59.5"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="15"/>
+				<line x="5" y="15"/>
+				<move x="68" y="45"/>
+				<line x="100" y="45"/>
+				<move x="8" y="15"/>
+				<line x="14" y="15"/>
+				<move x="8" y="75"/>
+				<line x="14" y="75"/>
+				<move x="11" y="72"/>
+				<line x="11" y="78"/>
+				<move x="0" y="75"/>
+				<line x="5" y="75"/>
+				<move x="45" y="62"/>
+				<line x="51" y="62"/>
+				<move x="45" y="28"/>
+				<line x="51" y="28"/>
+				<move x="48" y="25"/>
+				<line x="48" y="31"/>
+				<move x="60" y="63.5"/>
+				<line x="80" y="63.5"/>
+				<move x="80" y="26.5"/>
+				<line x="60" y="26.5"/>
+				<move x="40" y="73"/>
+				<line x="40" y="85"/>
+				<move x="40" y="5"/>
+				<line x="40" y="17"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="OTA 3" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="5" y="90"/>
+				<line x="5" y="0"/>
+				<line x="68" y="30.5"/>
+				<line x="68" y="59.5"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="45"/>
+				<line x="5" y="45"/>
+				<move x="68" y="45"/>
+				<line x="100" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="46" name="Quantizer" strokewidth="inherit" w="52">
+		<connections>
+			<constraint name="in2" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+			<constraint name="in1" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="46" w="52" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="21" y="33"/>
+				<line x="26" y="33"/>
+				<line x="26" y="13"/>
+				<line x="31" y="13"/>
+				<move x="21" y="23"/>
+				<line x="31" y="23"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Sum" strokewidth="inherit" w="50">
+		<connections>
+			<constraint name="in2" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+			<constraint name="in1" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="50" w="50" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="32" y="35"/>
+				<line x="18" y="35"/>
+				<line x="28" y="25"/>
+				<line x="18" y="15"/>
+				<line x="32" y="15"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Summation Point" strokewidth="inherit" w="50">
+		<connections>
+			<constraint name="in2" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+			<constraint name="in1" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="50" w="50" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="25" y="10"/>
+				<line x="25" y="40"/>
+				<move x="10" y="25"/>
+				<line x="40" y="25"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="94.25" name="Thermistor With Independent Integral Heater" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.48"/>
+			<constraint name="out" perimeter="0" x="1" y="0.48"/>
+			<constraint name="v-" perimeter="0" x="0.435" y="1"/>
+			<constraint name="v+" perimeter="0" x="0.625" y="1"/>
+		</connections>
+		<background>
+			<ellipse h="80" w="80" x="10" y="5"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="45"/>
+				<line x="18" y="45"/>
+				<line x="22" y="35"/>
+				<line x="30" y="55"/>
+				<line x="38" y="35"/>
+				<line x="46" y="55"/>
+				<line x="54" y="35"/>
+				<line x="62" y="55"/>
+				<line x="70" y="35"/>
+				<line x="78" y="55"/>
+				<line x="82" y="45"/>
+				<line x="100" y="45"/>
+				<move x="0" y="85"/>
+				<line x="15" y="85"/>
+				<line x="23.5" y="75"/>
+				<move x="43.5" y="93.5"/>
+				<line x="44" y="84.75"/>
+				<line x="53.75" y="73"/>
+				<line x="62.5" y="82.75"/>
+				<line x="62.75" y="94.25"/>
+				<move x="87" y="0"/>
+				<line x="75.3" y="14"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="58" name="Voltage Regulator" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="control" perimeter="0" x="0.5" y="1"/>
+			<constraint name="in" perimeter="0" x="0" y="0.395"/>
+			<constraint name="out" perimeter="0" x="1" y="0.395"/>
+		</connections>
+		<background>
+			<rect h="46" w="52" x="9" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="23"/>
+				<line x="9" y="23"/>
+				<move x="35" y="58"/>
+				<line x="35" y="46"/>
+				<move x="61" y="23"/>
+				<line x="70" y="23"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+</shapes>

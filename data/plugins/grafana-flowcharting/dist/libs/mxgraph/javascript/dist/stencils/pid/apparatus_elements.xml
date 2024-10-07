@@ -1,0 +1,94 @@
+<shapes name="mxGraph.pid.apparatus_elements">
+<shape aspect="variable" h="100" name="Manhole" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <path>
+            <move x="100" y="0"/>
+            <line x="100" y="100"/>
+            <move x="80" y="0"/>
+            <line x="80" y="20"/>
+            <line x="0" y="20"/>
+            <move x="80" y="100"/>
+            <line x="80" y="80"/>
+            <line x="0" y="80"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Socket, Connection Nozzle" strokewidth="inherit" w="30">
+    <connections>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="20"/>
+            <line x="30" y="20"/>
+            <move x="30" y="0"/>
+            <line x="30" y="40"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="10" name="Support Bracket" strokewidth="inherit" w="10">
+    <connections/>
+    <background>
+        <path>
+            <move x="10" y="0"/>
+            <line x="0" y="10"/>
+            <line x="10" y="10"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Support Leg" strokewidth="inherit" w="25">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="100"/>
+            <line x="25" y="100"/>
+            <line x="25" y="0"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="25" name="Support Ring" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <path>
+            <move x="100" y="0"/>
+            <line x="0" y="0"/>
+            <line x="0" y="25"/>
+            <line x="100" y="25"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Support Skirt" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="100"/>
+            <line x="20" y="100"/>
+            <move x="100" y="0"/>
+            <line x="100" y="100"/>
+            <line x="80" y="100"/>
+        </path>
+    </background>
+    <foreground>
+        <fillcolor color="none"/>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

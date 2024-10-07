@@ -1,0 +1,2057 @@
+<shapes name="mxgraph.rack.HP">
+<shape aspect="variable" h="121" name="HP 6125G Ethernet Blade Switch" strokewidth="inherit" w="19">
+    <connections/>
+    <background>
+        <path>
+            <move x="4" y="0"/>
+            <line x="4" y="4"/>
+            <line x="0" y="4"/>
+            <curve x1="0" x2="0" x3="0" y1="41.67" y2="79.33" y3="117"/>
+            <line x="4" y="117"/>
+            <line x="4" y="121"/>
+            <line x="19" y="121"/>
+            <line x="19" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="4" y="0"/>
+            <line x="4" y="4"/>
+            <line x="0" y="4"/>
+            <line x="0" y="117"/>
+            <line x="4" y="117"/>
+            <line x="4" y="121"/>
+            <line x="19" y="121"/>
+            <line x="19" y="0"/>
+            <close/>
+            <move x="5" y="1"/>
+            <line x="18" y="1"/>
+            <line x="18" y="120"/>
+            <line x="5" y="120"/>
+            <line x="5" y="116"/>
+            <line x="1" y="116"/>
+            <line x="1" y="5"/>
+            <line x="5" y="5"/>
+            <close/>
+            <move x="5" y="13"/>
+            <line x="5" y="54"/>
+            <line x="14" y="54"/>
+            <line x="14" y="13"/>
+            <close/>
+            <move x="6" y="14"/>
+            <line x="13" y="14"/>
+            <line x="13" y="53"/>
+            <line x="6" y="53"/>
+            <close/>
+            <move x="5" y="62"/>
+            <line x="5" y="71"/>
+            <line x="14" y="71"/>
+            <line x="14" y="62"/>
+            <close/>
+            <move x="6" y="63"/>
+            <line x="13" y="63"/>
+            <line x="13" y="70"/>
+            <line x="6" y="70"/>
+            <close/>
+            <move x="8" y="74"/>
+            <line x="8" y="90"/>
+            <line x="14" y="90"/>
+            <line x="14" y="74"/>
+            <close/>
+            <move x="9" y="75"/>
+            <line x="13" y="75"/>
+            <line x="13" y="89"/>
+            <line x="9" y="89"/>
+            <close/>
+            <move x="8" y="92"/>
+            <line x="8" y="108"/>
+            <line x="14" y="108"/>
+            <line x="14" y="92"/>
+            <close/>
+            <move x="9" y="93"/>
+            <line x="13" y="93"/>
+            <line x="13" y="107"/>
+            <line x="9" y="107"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="89.89" name="HP BladeSystem c3000 Enclosure" strokewidth="inherit" w="161.93">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="89.89"/>
+            <line x="161.93" y="89.89"/>
+            <line x="161.93" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="29.96" y2="59.93" y3="89.89"/>
+            <line x="161.93" y="89.89"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="88.89"/>
+            <line x="1" y="88.89"/>
+            <close/>
+            <move x="20.5" y="4"/>
+            <curve x1="20.5" x2="20.5" x3="20.5" y1="28.33" y2="52.67" y3="77"/>
+            <line x="141.5" y="77"/>
+            <line x="141.5" y="4"/>
+            <close/>
+            <move x="21.5" y="5"/>
+            <line x="80.51" y="5"/>
+            <line x="80.51" y="22"/>
+            <line x="21.5" y="22"/>
+            <close/>
+            <move x="81.49" y="5"/>
+            <line x="140.5" y="5"/>
+            <line x="140.5" y="22"/>
+            <line x="81.49" y="22"/>
+            <close/>
+            <move x="21.5" y="23"/>
+            <line x="80.51" y="23"/>
+            <line x="80.51" y="40"/>
+            <line x="21.5" y="40"/>
+            <close/>
+            <move x="81.49" y="23"/>
+            <line x="140.5" y="23"/>
+            <line x="140.5" y="40"/>
+            <line x="81.49" y="40"/>
+            <close/>
+            <move x="21.5" y="41"/>
+            <line x="80.51" y="41"/>
+            <line x="80.51" y="58"/>
+            <line x="21.5" y="58"/>
+            <close/>
+            <move x="81.49" y="41"/>
+            <line x="140.5" y="41"/>
+            <line x="140.5" y="58"/>
+            <line x="81.49" y="58"/>
+            <close/>
+            <move x="21.5" y="59"/>
+            <line x="80.51" y="59"/>
+            <line x="80.51" y="76"/>
+            <line x="21.5" y="76"/>
+            <close/>
+            <move x="81.49" y="59"/>
+            <line x="140.5" y="59"/>
+            <line x="140.5" y="76"/>
+            <line x="81.49" y="76"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="20.5" y="4"/>
+            <curve x1="20.5" x2="20.5" x3="20.5" y1="28.33" y2="52.67" y3="77"/>
+            <line x="141.5" y="77"/>
+            <line x="141.5" y="4"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="88.89"/>
+            <line x="1" y="88.89"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="141.81" name="HP BladeSystem c7000 Enclosure" strokewidth="inherit" w="161.93">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="141.81"/>
+            <line x="161.93" y="141.81"/>
+            <line x="161.93" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="141.81"/>
+            <line x="161.93" y="141.81"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="140.81"/>
+            <line x="1" y="140.81"/>
+            <close/>
+            <move x="8" y="3"/>
+            <line x="8" y="3.5"/>
+            <line x="8" y="124"/>
+            <line x="153" y="124"/>
+            <line x="153" y="3"/>
+            <close/>
+            <move x="9" y="4"/>
+            <line x="26" y="4"/>
+            <line x="26" y="63"/>
+            <line x="9" y="63"/>
+            <close/>
+            <move x="27" y="4"/>
+            <line x="44" y="4"/>
+            <line x="44" y="63"/>
+            <line x="27" y="63"/>
+            <close/>
+            <move x="45" y="4"/>
+            <line x="62" y="4"/>
+            <line x="62" y="63"/>
+            <line x="45" y="63"/>
+            <close/>
+            <move x="63" y="4"/>
+            <line x="80" y="4"/>
+            <line x="80" y="63"/>
+            <line x="63" y="63"/>
+            <close/>
+            <move x="81" y="4"/>
+            <line x="98" y="4"/>
+            <line x="98" y="63"/>
+            <line x="81" y="63"/>
+            <close/>
+            <move x="99" y="4"/>
+            <line x="116" y="4"/>
+            <line x="116" y="63"/>
+            <line x="99" y="63"/>
+            <close/>
+            <move x="117" y="4"/>
+            <line x="134" y="4"/>
+            <line x="134" y="63"/>
+            <line x="117" y="63"/>
+            <close/>
+            <move x="135" y="4"/>
+            <line x="152" y="4"/>
+            <line x="152" y="63"/>
+            <line x="135" y="63"/>
+            <close/>
+            <move x="9" y="64"/>
+            <line x="26" y="64"/>
+            <line x="26" y="123"/>
+            <line x="9" y="123"/>
+            <close/>
+            <move x="27" y="64"/>
+            <line x="44" y="64"/>
+            <line x="44" y="123"/>
+            <line x="27" y="123"/>
+            <close/>
+            <move x="45" y="64"/>
+            <line x="62" y="64"/>
+            <line x="62" y="123"/>
+            <line x="45" y="123"/>
+            <close/>
+            <move x="63" y="64"/>
+            <line x="80" y="64"/>
+            <line x="80" y="123"/>
+            <line x="63" y="123"/>
+            <close/>
+            <move x="81" y="64"/>
+            <line x="98" y="64"/>
+            <line x="98" y="123"/>
+            <line x="81" y="123"/>
+            <close/>
+            <move x="99" y="64"/>
+            <line x="116" y="64"/>
+            <line x="116" y="123"/>
+            <line x="99" y="123"/>
+            <close/>
+            <move x="117" y="64"/>
+            <line x="134" y="64"/>
+            <line x="134" y="123"/>
+            <line x="117" y="123"/>
+            <close/>
+            <move x="135" y="64"/>
+            <line x="152" y="64"/>
+            <line x="152" y="123"/>
+            <line x="135" y="123"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="8" y="3"/>
+            <curve x1="8" x2="8" x3="8" y1="43.33" y2="83.67" y3="124"/>
+            <line x="153" y="124"/>
+            <line x="153" y="3"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="140.81"/>
+            <line x="1" y="140.81"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60.2" name="HP BladeSystem s6500 Enclosure" strokewidth="inherit" w="161.93">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="60.2"/>
+            <line x="161.93" y="60.2"/>
+            <line x="161.93" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.2"/>
+            <line x="161.93" y="60.2"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="80.5" y="1"/>
+            <line x="80.5" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="81.5" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="14.8"/>
+            <line x="81.5" y="14.8"/>
+            <close/>
+            <move x="1" y="15.8"/>
+            <line x="80.5" y="15.8"/>
+            <line x="80.5" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="81.5" y="15.8"/>
+            <line x="160.93" y="15.8"/>
+            <line x="160.93" y="29.6"/>
+            <line x="81.5" y="29.6"/>
+            <close/>
+            <move x="1" y="30.6"/>
+            <line x="80.5" y="30.6"/>
+            <line x="80.5" y="44.4"/>
+            <line x="1" y="44.4"/>
+            <close/>
+            <move x="81.5" y="30.6"/>
+            <line x="160.93" y="30.6"/>
+            <line x="160.93" y="44.4"/>
+            <line x="81.5" y="44.4"/>
+            <close/>
+            <move x="1" y="45.4"/>
+            <line x="80.5" y="45.4"/>
+            <line x="80.5" y="59.2"/>
+            <line x="1" y="59.2"/>
+            <close/>
+            <move x="81.5" y="45.4"/>
+            <line x="160.93" y="45.4"/>
+            <line x="160.93" y="59.2"/>
+            <line x="81.5" y="59.2"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="1" y="1"/>
+            <line x="1" y="14.8"/>
+            <line x="80.5" y="14.8"/>
+            <line x="80.5" y="1"/>
+            <close/>
+            <move x="81.5" y="1"/>
+            <line x="81.5" y="14.8"/>
+            <line x="160.93" y="14.8"/>
+            <line x="160.93" y="1"/>
+            <close/>
+            <move x="1" y="15.8"/>
+            <line x="1" y="29.6"/>
+            <line x="80.5" y="29.6"/>
+            <line x="80.5" y="15.8"/>
+            <close/>
+            <move x="81.5" y="15.8"/>
+            <line x="81.5" y="29.6"/>
+            <line x="160.93" y="29.6"/>
+            <line x="160.93" y="15.8"/>
+            <close/>
+            <move x="1" y="30.6"/>
+            <line x="1" y="44.4"/>
+            <line x="80.5" y="44.4"/>
+            <line x="80.5" y="30.6"/>
+            <close/>
+            <move x="81.5" y="30.6"/>
+            <line x="81.5" y="44.4"/>
+            <line x="160.93" y="44.4"/>
+            <line x="160.93" y="30.6"/>
+            <close/>
+            <move x="1" y="45.4"/>
+            <line x="1" y="59.2"/>
+            <line x="80.5" y="59.2"/>
+            <line x="80.5" y="45.4"/>
+            <close/>
+            <move x="81.5" y="45.4"/>
+            <line x="81.5" y="59.2"/>
+            <line x="160.93" y="59.2"/>
+            <line x="160.93" y="45.4"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="241" name="HP InfiniBand FDR Switch" strokewidth="inherit" w="19">
+    <connections/>
+    <background>
+        <path>
+            <move x="4" y="0"/>
+            <line x="4" y="4"/>
+            <line x="0" y="4"/>
+            <line x="0" y="4.5"/>
+            <line x="0" y="117"/>
+            <line x="4" y="117"/>
+            <line x="4" y="124"/>
+            <line x="0" y="124"/>
+            <line x="0" y="237"/>
+            <line x="4" y="237"/>
+            <line x="4" y="241"/>
+            <line x="19" y="241"/>
+            <line x="19" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="4" y="0"/>
+            <line x="4" y="4"/>
+            <line x="0" y="4"/>
+            <line x="0" y="117"/>
+            <line x="4" y="117"/>
+            <line x="4" y="124"/>
+            <line x="0" y="124"/>
+            <line x="0" y="237"/>
+            <line x="4" y="237"/>
+            <line x="4" y="241"/>
+            <line x="19" y="241"/>
+            <line x="19" y="0"/>
+            <close/>
+            <move x="5" y="1"/>
+            <line x="18" y="1"/>
+            <line x="18" y="240"/>
+            <line x="5" y="240"/>
+            <line x="5" y="236"/>
+            <line x="1" y="236"/>
+            <line x="1" y="125"/>
+            <line x="5" y="125"/>
+            <line x="5" y="116"/>
+            <line x="1" y="116"/>
+            <line x="1" y="5"/>
+            <line x="5" y="5"/>
+            <close/>
+            <move x="8" y="4"/>
+            <line x="8" y="117"/>
+            <line x="14" y="117"/>
+            <line x="14" y="4"/>
+            <close/>
+            <move x="9" y="5"/>
+            <line x="13" y="5"/>
+            <line x="13" y="116"/>
+            <line x="9" y="116"/>
+            <close/>
+            <move x="8" y="124"/>
+            <line x="8" y="237"/>
+            <line x="14" y="237"/>
+            <line x="14" y="124"/>
+            <close/>
+            <move x="9" y="125"/>
+            <line x="13" y="125"/>
+            <line x="13" y="236"/>
+            <line x="9" y="236"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="121" name="HP ProLiant BL620c Server Blade" strokewidth="inherit" w="19">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="121"/>
+            <line x="19" y="121"/>
+            <line x="19" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="121"/>
+            <line x="19" y="121"/>
+            <line x="19" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="18" y="1"/>
+            <line x="18" y="120"/>
+            <line x="1" y="120"/>
+            <close/>
+            <move x="12" y="36.49"/>
+            <line x="12" y="57.76"/>
+            <line x="17" y="57.76"/>
+            <line x="17" y="36.49"/>
+            <close/>
+            <move x="13" y="37.49"/>
+            <line x="16" y="37.49"/>
+            <line x="16" y="56.76"/>
+            <line x="13" y="56.76"/>
+            <close/>
+            <move x="12" y="63.24"/>
+            <line x="12" y="84.51"/>
+            <line x="17" y="84.51"/>
+            <line x="17" y="63.24"/>
+            <close/>
+            <move x="13" y="64.24"/>
+            <line x="16" y="64.24"/>
+            <line x="16" y="83.51"/>
+            <line x="13" y="83.51"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="121" name="HP ProLiant BL660c Server Blade" strokewidth="inherit" w="19">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="121"/>
+            <line x="19" y="121"/>
+            <line x="19" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="121"/>
+            <line x="19" y="121"/>
+            <line x="19" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="18" y="1"/>
+            <line x="18" y="108.65"/>
+            <line x="1" y="108.65"/>
+            <close/>
+            <move x="12" y="9.73"/>
+            <line x="12" y="31"/>
+            <line x="17" y="31"/>
+            <line x="17" y="9.73"/>
+            <close/>
+            <move x="13" y="10.73"/>
+            <line x="16" y="10.73"/>
+            <line x="16" y="30"/>
+            <line x="13" y="30"/>
+            <close/>
+            <move x="12" y="85.13"/>
+            <line x="12" y="106.41"/>
+            <line x="17" y="106.41"/>
+            <line x="17" y="85.13"/>
+            <close/>
+            <move x="13" y="86.13"/>
+            <line x="16" y="86.13"/>
+            <line x="16" y="105.41"/>
+            <line x="13" y="105.41"/>
+            <close/>
+            <move x="1" y="109.65"/>
+            <line x="18" y="109.65"/>
+            <line x="18" y="120"/>
+            <line x="1" y="120"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="121" name="HP ProLiant BL685c Server Blade" strokewidth="inherit" w="37">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="121"/>
+            <line x="37" y="121"/>
+            <line x="37" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="121"/>
+            <line x="37" y="121"/>
+            <line x="37" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="18" y="1"/>
+            <line x="18" y="120"/>
+            <line x="1" y="120"/>
+            <close/>
+            <move x="19" y="1"/>
+            <line x="36" y="1"/>
+            <line x="36" y="120"/>
+            <line x="19" y="120"/>
+            <close/>
+            <move x="2" y="36.5"/>
+            <line x="2" y="57.78"/>
+            <line x="7" y="57.78"/>
+            <line x="7" y="36.5"/>
+            <close/>
+            <move x="30" y="36.5"/>
+            <line x="30" y="57.78"/>
+            <line x="35" y="57.78"/>
+            <line x="35" y="36.5"/>
+            <close/>
+            <move x="3" y="37.5"/>
+            <line x="6" y="37.5"/>
+            <line x="6" y="56.78"/>
+            <line x="3" y="56.78"/>
+            <close/>
+            <move x="31" y="37.5"/>
+            <line x="34" y="37.5"/>
+            <line x="34" y="56.78"/>
+            <line x="31" y="56.78"/>
+            <close/>
+            <move x="2" y="63.27"/>
+            <line x="2" y="84.54"/>
+            <line x="7" y="84.54"/>
+            <line x="7" y="63.27"/>
+            <close/>
+            <move x="30" y="63.27"/>
+            <line x="30" y="84.54"/>
+            <line x="35" y="84.54"/>
+            <line x="35" y="63.27"/>
+            <close/>
+            <move x="3" y="64.27"/>
+            <line x="6" y="64.27"/>
+            <line x="6" y="83.54"/>
+            <line x="3" y="83.54"/>
+            <close/>
+            <move x="31" y="64.27"/>
+            <line x="34" y="64.27"/>
+            <line x="34" y="83.54"/>
+            <line x="31" y="83.54"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.8" name="HP ProLiant DL160 G8" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="7" y="1"/>
+            <line x="7" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="14.8"/>
+            <line x="8" y="14.8"/>
+            <close/>
+            <move x="155" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="155" y="14.8"/>
+            <close/>
+            <move x="9" y="5"/>
+            <line x="9" y="14"/>
+            <line x="45" y="14"/>
+            <line x="45" y="5"/>
+            <close/>
+            <move x="10" y="6"/>
+            <line x="44" y="6"/>
+            <line x="44" y="13"/>
+            <line x="10" y="13"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.38823529"/>
+        <path>
+            <move x="8" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="14.8"/>
+            <line x="8" y="14.8"/>
+            <close/>
+            <move x="9" y="5"/>
+            <line x="9" y="14"/>
+            <line x="45" y="14"/>
+            <line x="45" y="5"/>
+            <close/>
+            <move x="10" y="6"/>
+            <line x="44" y="6"/>
+            <line x="44" y="13"/>
+            <line x="10" y="13"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.8" name="HP ProLiant DL320e G8" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="5.27" y2="10.53" y3="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="7" y="1"/>
+            <line x="7" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="20.45" y="1"/>
+            <line x="20.27" y="1.34"/>
+            <line x="28.38" y="5.6"/>
+            <line x="135.62" y="5.38"/>
+            <line x="143.72" y="1.35"/>
+            <line x="143.55" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="14.8"/>
+            <line x="143.61" y="14.8"/>
+            <line x="135.61" y="11.2"/>
+            <line x="28.39" y="11"/>
+            <line x="20.38" y="14.8"/>
+            <line x="8" y="14.8"/>
+            <close/>
+            <move x="21.77" y="1"/>
+            <line x="142.18" y="1"/>
+            <line x="135.38" y="4.38"/>
+            <line x="28.62" y="4.6"/>
+            <close/>
+            <move x="155" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="155" y="14.8"/>
+            <close/>
+            <move x="11" y="4"/>
+            <curve x1="11" x2="11" x3="11" y1="6.67" y2="9.33" y3="12"/>
+            <line x="15.6" y="12"/>
+            <line x="21" y="9.84"/>
+            <line x="21" y="6.16"/>
+            <line x="15.6" y="4"/>
+            <close/>
+            <move x="147.18" y="4.2"/>
+            <line x="142" y="6.37"/>
+            <line x="142" y="10.03"/>
+            <line x="147.18" y="12.2"/>
+            <line x="151.6" y="12.2"/>
+            <line x="151.6" y="4.2"/>
+            <curve x1="150.13" x2="148.65" x3="147.18" y1="4.2" y2="4.2" y3="4.2"/>
+            <close/>
+            <move x="12" y="5"/>
+            <line x="15.4" y="5"/>
+            <line x="20" y="6.84"/>
+            <line x="20" y="9.16"/>
+            <line x="15.4" y="11"/>
+            <line x="12" y="11"/>
+            <close/>
+            <move x="147.38" y="5.2"/>
+            <line x="150.6" y="5.2"/>
+            <line x="150.6" y="11.2"/>
+            <line x="147.38" y="11.2"/>
+            <line x="143" y="9.37"/>
+            <line x="143" y="7.03"/>
+            <close/>
+            <move x="28.61" y="12"/>
+            <line x="135.39" y="12.2"/>
+            <line x="141.17" y="14.8"/>
+            <line x="22.72" y="14.8"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.38823529"/>
+        <path>
+            <move x="147.38" y="5.2"/>
+            <line x="150.6" y="5.2"/>
+            <line x="150.6" y="11.2"/>
+            <line x="147.38" y="11.2"/>
+            <line x="143" y="9.37"/>
+            <line x="143" y="7.03"/>
+            <close/>
+            <move x="12" y="5"/>
+            <line x="15.4" y="5"/>
+            <line x="20" y="6.84"/>
+            <line x="20" y="9.16"/>
+            <line x="15.4" y="11"/>
+            <line x="12" y="11"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="28.61" y="12"/>
+            <line x="135.39" y="12.2"/>
+            <line x="141.17" y="14.8"/>
+            <line x="22.72" y="14.8"/>
+            <close/>
+            <move x="21.77" y="1"/>
+            <line x="142.18" y="1"/>
+            <line x="135.38" y="4.38"/>
+            <line x="28.62" y="4.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.8" name="HP ProLiant DL360e G8" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="7" y="1"/>
+            <line x="7" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="20.45" y="1"/>
+            <line x="20.27" y="1.34"/>
+            <line x="28.38" y="5.6"/>
+            <line x="135.62" y="5.38"/>
+            <line x="143.72" y="1.35"/>
+            <line x="143.55" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="14.8"/>
+            <line x="143.61" y="14.8"/>
+            <line x="135.61" y="11.2"/>
+            <line x="28.39" y="11"/>
+            <line x="20.38" y="14.8"/>
+            <line x="8" y="14.8"/>
+            <close/>
+            <move x="21.77" y="1"/>
+            <line x="142.18" y="1"/>
+            <line x="135.38" y="4.38"/>
+            <line x="28.62" y="4.6"/>
+            <close/>
+            <move x="155" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="155" y="14.8"/>
+            <close/>
+            <move x="11" y="4"/>
+            <line x="11" y="12"/>
+            <line x="15.6" y="12"/>
+            <line x="21" y="9.84"/>
+            <line x="21" y="6.16"/>
+            <line x="15.6" y="4"/>
+            <close/>
+            <move x="147.18" y="4.2"/>
+            <line x="142" y="6.37"/>
+            <line x="142" y="10.03"/>
+            <line x="147.18" y="12.2"/>
+            <line x="151.6" y="12.2"/>
+            <line x="151.6" y="4.2"/>
+            <close/>
+            <move x="12" y="5"/>
+            <line x="15.4" y="5"/>
+            <line x="20" y="6.84"/>
+            <line x="20" y="9.16"/>
+            <line x="15.4" y="11"/>
+            <line x="12" y="11"/>
+            <close/>
+            <move x="147.38" y="5.2"/>
+            <line x="150.6" y="5.2"/>
+            <line x="150.6" y="11.2"/>
+            <line x="147.38" y="11.2"/>
+            <line x="143" y="9.37"/>
+            <line x="143" y="7.03"/>
+            <close/>
+            <move x="28.61" y="12"/>
+            <line x="135.39" y="12.2"/>
+            <line x="141.17" y="14.8"/>
+            <line x="22.72" y="14.8"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="28.61" y="12"/>
+            <line x="135.39" y="12.2"/>
+            <line x="141.17" y="14.8"/>
+            <line x="22.72" y="14.8"/>
+            <close/>
+            <move x="21.77" y="1"/>
+            <line x="142.18" y="1"/>
+            <line x="135.38" y="4.38"/>
+            <line x="28.62" y="4.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="1"/>
+        <fillalpha alpha="0.38823529"/>
+        <path>
+            <move x="147.38" y="5.2"/>
+            <line x="150.6" y="5.2"/>
+            <line x="150.6" y="11.2"/>
+            <line x="147.38" y="11.2"/>
+            <line x="143" y="9.37"/>
+            <line x="143" y="7.03"/>
+            <close/>
+            <move x="12" y="5"/>
+            <line x="15.4" y="5"/>
+            <line x="20" y="6.84"/>
+            <line x="20" y="9.16"/>
+            <line x="15.4" y="11"/>
+            <line x="12" y="11"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.8" name="HP ProLiant DL360p G8" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="7" y="1"/>
+            <line x="7" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="9" y="1"/>
+            <line x="9" y="14"/>
+            <line x="145" y="14"/>
+            <line x="145" y="7"/>
+            <line x="91" y="7"/>
+            <line x="91" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="14.8"/>
+            <line x="8" y="14.8"/>
+            <close/>
+            <move x="155" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="155" y="14.8"/>
+            <close/>
+            <move x="10" y="2"/>
+            <line x="36" y="2"/>
+            <line x="36" y="7"/>
+            <line x="10" y="7"/>
+            <close/>
+            <move x="37" y="2"/>
+            <line x="63" y="2"/>
+            <line x="63" y="7"/>
+            <line x="37" y="7"/>
+            <close/>
+            <move x="64" y="2"/>
+            <line x="90" y="2"/>
+            <line x="90" y="7"/>
+            <line x="64" y="7"/>
+            <close/>
+            <move x="10" y="8"/>
+            <line x="36" y="8"/>
+            <line x="36" y="13"/>
+            <line x="10" y="13"/>
+            <close/>
+            <move x="37" y="8"/>
+            <line x="63" y="8"/>
+            <line x="63" y="13"/>
+            <line x="37" y="13"/>
+            <close/>
+            <move x="64" y="8"/>
+            <line x="90" y="8"/>
+            <line x="90" y="13"/>
+            <line x="64" y="13"/>
+            <close/>
+            <move x="91" y="8"/>
+            <line x="117" y="8"/>
+            <line x="117" y="13"/>
+            <line x="91" y="13"/>
+            <close/>
+            <move x="118" y="8"/>
+            <line x="144" y="8"/>
+            <line x="144" y="13"/>
+            <line x="118" y="13"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.38823529"/>
+        <path>
+            <move x="8" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="14.8"/>
+            <line x="8" y="14.8"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.63" name="HP ProLiant DL380e G8" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="7" y="30.6"/>
+            <line x="155" y="30.63"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="7" y="30.6"/>
+            <line x="155" y="30.63"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="7" y="1"/>
+            <line x="7" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="20.36" y="1"/>
+            <line x="28.36" y="6"/>
+            <line x="135.64" y="6"/>
+            <line x="143.64" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="29.6"/>
+            <line x="143.64" y="29.6"/>
+            <line x="135.64" y="24.6"/>
+            <line x="28.36" y="24.6"/>
+            <line x="20.36" y="29.6"/>
+            <line x="8" y="29.6"/>
+            <close/>
+            <move x="22.24" y="1"/>
+            <line x="141.76" y="1"/>
+            <line x="135.36" y="5"/>
+            <line x="28.64" y="5"/>
+            <close/>
+            <move x="155" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="155" y="29.6"/>
+            <close/>
+            <move x="11" y="3"/>
+            <line x="11" y="27.6"/>
+            <line x="15.68" y="27.6"/>
+            <line x="21" y="23.34"/>
+            <line x="21" y="7.26"/>
+            <line x="15.68" y="3"/>
+            <close/>
+            <move x="147.32" y="3"/>
+            <line x="142" y="7.26"/>
+            <line x="142" y="23.34"/>
+            <line x="147.32" y="27.6"/>
+            <line x="152" y="27.6"/>
+            <line x="152" y="3"/>
+            <close/>
+            <move x="12" y="4"/>
+            <line x="15.32" y="4"/>
+            <line x="20" y="7.74"/>
+            <line x="20" y="22.86"/>
+            <line x="15.32" y="26.6"/>
+            <line x="12" y="26.6"/>
+            <close/>
+            <move x="147.68" y="4"/>
+            <line x="151" y="4"/>
+            <line x="151" y="26.6"/>
+            <line x="147.68" y="26.6"/>
+            <line x="143" y="22.86"/>
+            <line x="143" y="7.74"/>
+            <close/>
+            <move x="28.64" y="25.6"/>
+            <line x="135.36" y="25.6"/>
+            <line x="141.76" y="29.6"/>
+            <line x="22.24" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.38823529"/>
+        <path>
+            <move x="147.68" y="4"/>
+            <line x="151" y="4"/>
+            <line x="151" y="26.6"/>
+            <line x="147.68" y="26.6"/>
+            <line x="143" y="22.86"/>
+            <line x="143" y="7.74"/>
+            <close/>
+            <move x="12" y="4"/>
+            <line x="15.32" y="4"/>
+            <line x="20" y="7.74"/>
+            <line x="20" y="22.86"/>
+            <line x="15.32" y="26.6"/>
+            <line x="12" y="26.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="28.64" y="25.6"/>
+            <line x="135.36" y="25.6"/>
+            <line x="141.76" y="29.6"/>
+            <line x="22.24" y="29.6"/>
+            <close/>
+            <move x="22.24" y="1"/>
+            <line x="141.76" y="1"/>
+            <line x="135.36" y="5"/>
+            <line x="28.64" y="5"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="HP ProLiant DL380p G8" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="7" y="1"/>
+            <line x="7" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="29.6"/>
+            <line x="8" y="29.6"/>
+            <close/>
+            <move x="155" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="155" y="29.6"/>
+            <close/>
+            <move x="9" y="2"/>
+            <line x="9" y="27"/>
+            <line x="118" y="27"/>
+            <line x="118" y="2"/>
+            <close/>
+            <move x="10" y="3"/>
+            <line x="36" y="3"/>
+            <line x="36" y="8"/>
+            <line x="10" y="8"/>
+            <close/>
+            <move x="37" y="3"/>
+            <line x="63" y="3"/>
+            <line x="63" y="8"/>
+            <line x="37" y="8"/>
+            <close/>
+            <move x="64" y="3"/>
+            <line x="90" y="3"/>
+            <line x="90" y="8"/>
+            <line x="64" y="8"/>
+            <close/>
+            <move x="91" y="3"/>
+            <line x="117" y="3"/>
+            <line x="117" y="8"/>
+            <line x="91" y="8"/>
+            <close/>
+            <move x="10" y="9"/>
+            <line x="36" y="9"/>
+            <line x="36" y="14"/>
+            <line x="10" y="14"/>
+            <close/>
+            <move x="37" y="9"/>
+            <line x="63" y="9"/>
+            <line x="63" y="14"/>
+            <line x="37" y="14"/>
+            <close/>
+            <move x="64" y="9"/>
+            <line x="90" y="9"/>
+            <line x="90" y="14"/>
+            <line x="64" y="14"/>
+            <close/>
+            <move x="91" y="9"/>
+            <line x="117" y="9"/>
+            <line x="117" y="14"/>
+            <line x="91" y="14"/>
+            <close/>
+            <move x="10" y="15"/>
+            <line x="36" y="15"/>
+            <line x="36" y="20"/>
+            <line x="10" y="20"/>
+            <close/>
+            <move x="37" y="15"/>
+            <line x="63" y="15"/>
+            <line x="63" y="20"/>
+            <line x="37" y="20"/>
+            <close/>
+            <move x="64" y="15"/>
+            <line x="90" y="15"/>
+            <line x="90" y="20"/>
+            <line x="64" y="20"/>
+            <close/>
+            <move x="91" y="15"/>
+            <line x="117" y="15"/>
+            <line x="117" y="20"/>
+            <line x="91" y="20"/>
+            <close/>
+            <move x="10" y="21"/>
+            <line x="36" y="21"/>
+            <line x="36" y="26"/>
+            <line x="10" y="26"/>
+            <close/>
+            <move x="37" y="21"/>
+            <line x="63" y="21"/>
+            <line x="63" y="26"/>
+            <line x="37" y="26"/>
+            <close/>
+            <move x="64" y="21"/>
+            <line x="90" y="21"/>
+            <line x="90" y="26"/>
+            <line x="64" y="26"/>
+            <close/>
+            <move x="91" y="21"/>
+            <line x="117" y="21"/>
+            <line x="117" y="26"/>
+            <line x="91" y="26"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.38823529"/>
+        <path>
+            <move x="91" y="21"/>
+            <line x="117" y="21"/>
+            <line x="117" y="26"/>
+            <line x="91" y="26"/>
+            <close/>
+            <move x="64" y="21"/>
+            <line x="90" y="21"/>
+            <line x="90" y="26"/>
+            <line x="64" y="26"/>
+            <close/>
+            <move x="37" y="21"/>
+            <line x="63" y="21"/>
+            <line x="63" y="26"/>
+            <line x="37" y="26"/>
+            <close/>
+            <move x="10" y="21"/>
+            <line x="36" y="21"/>
+            <line x="36" y="26"/>
+            <line x="10" y="26"/>
+            <close/>
+            <move x="91" y="15"/>
+            <line x="117" y="15"/>
+            <line x="117" y="20"/>
+            <line x="91" y="20"/>
+            <close/>
+            <move x="64" y="15"/>
+            <line x="90" y="15"/>
+            <line x="90" y="20"/>
+            <line x="64" y="20"/>
+            <close/>
+            <move x="37" y="15"/>
+            <line x="63" y="15"/>
+            <line x="63" y="20"/>
+            <line x="37" y="20"/>
+            <close/>
+            <move x="10" y="15"/>
+            <line x="36" y="15"/>
+            <line x="36" y="20"/>
+            <line x="10" y="20"/>
+            <close/>
+            <move x="91" y="9"/>
+            <line x="117" y="9"/>
+            <line x="117" y="14"/>
+            <line x="91" y="14"/>
+            <close/>
+            <move x="64" y="9"/>
+            <line x="90" y="9"/>
+            <line x="90" y="14"/>
+            <line x="64" y="14"/>
+            <close/>
+            <move x="37" y="9"/>
+            <line x="63" y="9"/>
+            <line x="63" y="14"/>
+            <line x="37" y="14"/>
+            <close/>
+            <move x="10" y="9"/>
+            <line x="36" y="9"/>
+            <line x="36" y="14"/>
+            <line x="10" y="14"/>
+            <close/>
+            <move x="91" y="3"/>
+            <line x="117" y="3"/>
+            <line x="117" y="8"/>
+            <line x="91" y="8"/>
+            <close/>
+            <move x="64" y="3"/>
+            <line x="90" y="3"/>
+            <line x="90" y="8"/>
+            <line x="64" y="8"/>
+            <close/>
+            <move x="37" y="3"/>
+            <line x="63" y="3"/>
+            <line x="63" y="8"/>
+            <line x="37" y="8"/>
+            <close/>
+            <move x="10" y="3"/>
+            <line x="36" y="3"/>
+            <line x="36" y="8"/>
+            <line x="10" y="8"/>
+            <close/>
+            <move x="9" y="2"/>
+            <line x="9" y="27"/>
+            <line x="118" y="27"/>
+            <line x="118" y="2"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="29.6"/>
+            <line x="8" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="HP ProLiant DL385p G8" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="7" y="1"/>
+            <line x="7" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="20.36" y="1"/>
+            <line x="28.36" y="6"/>
+            <line x="135.64" y="6"/>
+            <line x="143.64" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="29.6"/>
+            <line x="143.64" y="29.6"/>
+            <line x="135.64" y="24.6"/>
+            <line x="28.36" y="24.6"/>
+            <line x="20.36" y="29.6"/>
+            <line x="8" y="29.6"/>
+            <close/>
+            <move x="22.24" y="1"/>
+            <line x="141.76" y="1"/>
+            <line x="135.36" y="5"/>
+            <line x="28.64" y="5"/>
+            <close/>
+            <move x="155" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="155" y="29.6"/>
+            <close/>
+            <move x="11" y="3"/>
+            <line x="11" y="27.6"/>
+            <line x="15.68" y="27.6"/>
+            <line x="21" y="23.34"/>
+            <line x="21" y="7.26"/>
+            <line x="15.68" y="3"/>
+            <close/>
+            <move x="147.32" y="3"/>
+            <line x="142" y="7.26"/>
+            <line x="142" y="23.34"/>
+            <line x="147.32" y="27.6"/>
+            <line x="152" y="27.6"/>
+            <line x="152" y="3"/>
+            <close/>
+            <move x="12" y="4"/>
+            <line x="15.32" y="4"/>
+            <line x="20" y="7.74"/>
+            <line x="20" y="22.86"/>
+            <line x="15.32" y="26.6"/>
+            <line x="12" y="26.6"/>
+            <close/>
+            <move x="147.68" y="4"/>
+            <line x="151" y="4"/>
+            <line x="151" y="26.6"/>
+            <line x="147.68" y="26.6"/>
+            <line x="143" y="22.86"/>
+            <line x="143" y="7.74"/>
+            <close/>
+            <move x="28.64" y="25.6"/>
+            <line x="135.36" y="25.6"/>
+            <line x="141.76" y="29.6"/>
+            <line x="22.24" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.38823529"/>
+        <path>
+            <move x="147.68" y="4"/>
+            <line x="151" y="4"/>
+            <line x="151" y="26.6"/>
+            <line x="147.68" y="26.6"/>
+            <line x="143" y="22.86"/>
+            <line x="143" y="7.74"/>
+            <close/>
+            <move x="12" y="4"/>
+            <line x="15.32" y="4"/>
+            <line x="20" y="7.74"/>
+            <line x="20" y="22.86"/>
+            <line x="15.32" y="26.6"/>
+            <line x="12" y="26.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="28.64" y="25.6"/>
+            <line x="135.36" y="25.6"/>
+            <line x="141.76" y="29.6"/>
+            <line x="22.24" y="29.6"/>
+            <close/>
+            <move x="22.24" y="1"/>
+            <line x="141.76" y="1"/>
+            <line x="135.36" y="5"/>
+            <line x="28.64" y="5"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="HP ProLiant DL560 G8" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="7" y="1"/>
+            <line x="7" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="8" y="1"/>
+            <line x="20.36" y="1"/>
+            <line x="28.36" y="6"/>
+            <line x="135.64" y="6"/>
+            <line x="143.64" y="1"/>
+            <line x="154" y="1"/>
+            <line x="154" y="29.6"/>
+            <line x="143.64" y="29.6"/>
+            <line x="135.64" y="24.6"/>
+            <line x="28.36" y="24.6"/>
+            <line x="20.36" y="29.6"/>
+            <line x="8" y="29.6"/>
+            <close/>
+            <move x="22.24" y="1"/>
+            <line x="141.76" y="1"/>
+            <line x="135.36" y="5"/>
+            <line x="28.64" y="5"/>
+            <close/>
+            <move x="155" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="155" y="29.6"/>
+            <close/>
+            <move x="11" y="3"/>
+            <line x="11" y="27.6"/>
+            <line x="15.68" y="27.6"/>
+            <line x="21" y="23.34"/>
+            <line x="21" y="7.26"/>
+            <line x="15.68" y="3"/>
+            <close/>
+            <move x="147.32" y="3"/>
+            <line x="142" y="7.26"/>
+            <line x="142" y="23.34"/>
+            <line x="147.32" y="27.6"/>
+            <line x="152" y="27.6"/>
+            <line x="152" y="3"/>
+            <close/>
+            <move x="12" y="4"/>
+            <line x="15.32" y="4"/>
+            <line x="20" y="7.74"/>
+            <line x="20" y="22.86"/>
+            <line x="15.32" y="26.6"/>
+            <line x="12" y="26.6"/>
+            <close/>
+            <move x="147.68" y="4"/>
+            <line x="151" y="4"/>
+            <line x="151" y="26.6"/>
+            <line x="147.68" y="26.6"/>
+            <line x="143" y="22.86"/>
+            <line x="143" y="7.74"/>
+            <close/>
+            <move x="28.64" y="25.6"/>
+            <line x="135.36" y="25.6"/>
+            <line x="141.76" y="29.6"/>
+            <line x="22.24" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.38823529"/>
+        <path>
+            <move x="147.68" y="4"/>
+            <line x="151" y="4"/>
+            <line x="151" y="26.6"/>
+            <line x="147.68" y="26.6"/>
+            <line x="143" y="22.86"/>
+            <line x="143" y="7.74"/>
+            <close/>
+            <move x="12" y="4"/>
+            <line x="15.32" y="4"/>
+            <line x="20" y="7.74"/>
+            <line x="20" y="22.86"/>
+            <line x="15.32" y="26.6"/>
+            <line x="12" y="26.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="28.64" y="25.6"/>
+            <line x="135.36" y="25.6"/>
+            <line x="141.76" y="29.6"/>
+            <line x="22.24" y="29.6"/>
+            <close/>
+            <move x="22.24" y="1"/>
+            <line x="141.76" y="1"/>
+            <line x="135.36" y="5"/>
+            <line x="28.64" y="5"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.8" name="HP ProLiant SL230s G8" strokewidth="inherit" w="81.5">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="15.8"/>
+            <line x="81.5" y="15.8"/>
+            <line x="81.5" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="81.5" y="15.8"/>
+            <line x="81.5" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="80.5" y="1"/>
+            <line x="80.5" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="2.5" y="1.5"/>
+            <line x="2.5" y="7.5"/>
+            <line x="28.5" y="7.5"/>
+            <line x="28.5" y="1.5"/>
+            <close/>
+            <move x="40" y="1.5"/>
+            <line x="40" y="10.5"/>
+            <line x="71" y="10.5"/>
+            <line x="71" y="1.5"/>
+            <close/>
+            <move x="3.5" y="2.5"/>
+            <line x="27.5" y="2.5"/>
+            <line x="27.5" y="6.5"/>
+            <line x="3.5" y="6.5"/>
+            <close/>
+            <move x="41" y="2.5"/>
+            <line x="70" y="2.5"/>
+            <line x="70" y="9.5"/>
+            <line x="41" y="9.5"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="HP ProLiant SL250s G8" strokewidth="inherit" w="81.5">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="10.2" y2="20.4" y3="30.6"/>
+            <line x="81.5" y="30.6"/>
+            <line x="81.5" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="81.5" y="30.6"/>
+            <line x="81.5" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="80.5" y="1"/>
+            <line x="80.5" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="8" y="1.5"/>
+            <line x="8" y="6.5"/>
+            <line x="39" y="6.5"/>
+            <line x="39" y="1.5"/>
+            <close/>
+            <move x="41" y="1.5"/>
+            <line x="41" y="6.5"/>
+            <line x="72" y="6.5"/>
+            <line x="72" y="1.5"/>
+            <close/>
+            <move x="9" y="2.5"/>
+            <line x="38" y="2.5"/>
+            <line x="38" y="5.5"/>
+            <line x="9" y="5.5"/>
+            <close/>
+            <move x="42" y="2.5"/>
+            <line x="71" y="2.5"/>
+            <line x="71" y="5.5"/>
+            <line x="42" y="5.5"/>
+            <close/>
+            <move x="8" y="7"/>
+            <line x="8" y="12"/>
+            <line x="39" y="12"/>
+            <line x="39" y="7"/>
+            <close/>
+            <move x="41" y="7"/>
+            <line x="41" y="12"/>
+            <line x="72" y="12"/>
+            <line x="72" y="7"/>
+            <close/>
+            <move x="9" y="8"/>
+            <line x="38" y="8"/>
+            <line x="38" y="11"/>
+            <line x="9" y="11"/>
+            <close/>
+            <move x="42" y="8"/>
+            <line x="71" y="8"/>
+            <line x="71" y="11"/>
+            <line x="42" y="11"/>
+            <close/>
+            <move x="2.5" y="16.3"/>
+            <line x="2.5" y="22.3"/>
+            <line x="28.5" y="22.3"/>
+            <line x="28.5" y="16.3"/>
+            <close/>
+            <move x="40" y="16.3"/>
+            <line x="40" y="25.3"/>
+            <line x="71" y="25.3"/>
+            <line x="71" y="16.3"/>
+            <close/>
+            <move x="3.5" y="17.3"/>
+            <line x="27.5" y="17.3"/>
+            <line x="27.5" y="21.3"/>
+            <line x="3.5" y="21.3"/>
+            <close/>
+            <move x="41" y="17.3"/>
+            <line x="70" y="17.3"/>
+            <line x="70" y="24.3"/>
+            <line x="41" y="24.3"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="121" name="HP Virtual Connect Flex-10-10D" strokewidth="inherit" w="19">
+    <connections/>
+    <background>
+        <path>
+            <move x="4" y="0"/>
+            <line x="4" y="4"/>
+            <line x="0" y="4"/>
+            <line x="0" y="117"/>
+            <line x="4" y="117"/>
+            <line x="4" y="121"/>
+            <line x="19" y="121"/>
+            <line x="19" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="4" y="0"/>
+            <line x="4" y="4"/>
+            <line x="0" y="4"/>
+            <line x="0" y="117"/>
+            <line x="4" y="117"/>
+            <line x="4" y="121"/>
+            <line x="19" y="121"/>
+            <line x="19" y="0"/>
+            <close/>
+            <move x="5" y="1"/>
+            <line x="18" y="1"/>
+            <line x="18" y="120"/>
+            <line x="5" y="120"/>
+            <line x="5" y="116"/>
+            <line x="1" y="116"/>
+            <line x="1" y="5"/>
+            <line x="5" y="5"/>
+            <close/>
+            <move x="8" y="4"/>
+            <line x="8" y="40"/>
+            <line x="14" y="40"/>
+            <line x="14" y="4"/>
+            <close/>
+            <move x="9" y="5"/>
+            <line x="13" y="5"/>
+            <line x="13" y="39"/>
+            <line x="9" y="39"/>
+            <close/>
+            <move x="8" y="55"/>
+            <line x="8" y="106"/>
+            <line x="14" y="106"/>
+            <line x="14" y="55"/>
+            <close/>
+            <move x="9" y="56"/>
+            <line x="13" y="56"/>
+            <line x="13" y="105"/>
+            <line x="9" y="105"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+</shapes>

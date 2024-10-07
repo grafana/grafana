@@ -1,0 +1,122 @@
+<shapes name="mxgraph.electrical.plc_ladder">
+	<shape aspect="variable" h="50" name="Contact" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="25"/>
+				<line x="30" y="25"/>
+				<move x="100" y="25"/>
+				<line x="70" y="25"/>
+				<move x="30" y="0"/>
+				<line x="30" y="50"/>
+				<move x="70" y="0"/>
+				<line x="70" y="50"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Not Contact" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="25"/>
+				<line x="30" y="25"/>
+				<move x="100" y="25"/>
+				<line x="70" y="25"/>
+				<move x="30" y="0"/>
+				<line x="30" y="50"/>
+				<move x="70" y="0"/>
+				<line x="70" y="50"/>
+				<move x="30" y="50"/>
+				<line x="70" y="0"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Not Output 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="35" y="0"/>
+				<arc large-arc-flag="0" rx="50" ry="50" sweep-flag="0" x="35" x-axis-rotation="0" y="50"/>
+				<move x="0" y="25"/>
+				<line x="28" y="25"/>
+				<move x="100" y="25"/>
+				<line x="72" y="25"/>
+				<move x="65" y="0"/>
+				<arc large-arc-flag="0" rx="50" ry="50" sweep-flag="1" x="65" x-axis-rotation="0" y="50"/>
+				<move x="30" y="50"/>
+				<line x="70" y="0"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Not Output 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="50" w="50" x="25" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="25"/>
+				<line x="25" y="25"/>
+				<move x="100" y="25"/>
+				<line x="75" y="25"/>
+				<move x="30" y="50"/>
+				<line x="70" y="0"/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Output 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="35" y="0"/>
+				<arc large-arc-flag="0" rx="50" ry="50" sweep-flag="0" x="35" x-axis-rotation="0" y="50"/>
+				<move x="0" y="25"/>
+				<line x="28" y="25"/>
+				<move x="100" y="25"/>
+				<line x="72" y="25"/>
+				<move x="65" y="0"/>
+				<arc large-arc-flag="0" rx="50" ry="50" sweep-flag="1" x="65" x-axis-rotation="0" y="50"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="50" name="Output 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="50" w="50" x="25" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="25"/>
+				<line x="25" y="25"/>
+				<move x="100" y="25"/>
+				<line x="75" y="25"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+</shapes>

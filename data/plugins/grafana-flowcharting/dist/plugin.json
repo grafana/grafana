@@ -1,0 +1,48 @@
+{
+  "type": "panel",
+  "name": "FlowCharting",
+  "id": "agenty-flowcharting-panel",
+  "info": {
+    "description": "Flowcharting is a plugin for grafana. It aims to display complexe diagram draws with draw.io like Visio",
+    "author": {
+      "name": "Arnaud GENTY",
+      "url": "https://github.com/algenty/grafana-flowcharting"
+    },
+    "keywords": [
+      "flowchart",
+      "panel",
+      "diagram",
+      "workflow",
+      "floorplan",
+      "map",
+      "organigram",
+      "draw.io",
+      "visio",
+      "mxgraph"
+    ],
+    "links": [
+      {
+        "name": "Project site",
+        "url": "https://github.com/algenty/grafana-flowcharting"
+      },
+      {
+        "name": "Apache License",
+        "url": "https://github.com/algenty/grafana-flowcharting/blob/master/LICENSE"
+      },
+      {
+        "name": "Documentation",
+        "url": "https://algenty.github.io/flowcharting-repository/"
+      }
+    ],
+    "version": "0.5.0",
+    "updated": "2019-09-26",
+    "logos": {
+      "small": "img/agenty-flowcharting.svg",
+      "large": "img/agenty-flowcharting.svg"
+    }
+  },
+  "dependencies": {
+    "grafanaVersion": "5.x.x",
+    "plugins": []
+  }
+}

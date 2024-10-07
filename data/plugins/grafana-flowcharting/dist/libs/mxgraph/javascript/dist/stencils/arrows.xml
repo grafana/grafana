@@ -1,0 +1,846 @@
+<shapes name="mxgraph.arrows">
+<shape aspect="variable" h="97.5" name="Arrow Down" strokewidth="inherit" w="70">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="20" y="0"/>
+            <line x="20" y="59"/>
+            <line x="0" y="59"/>
+            <line x="35" y="97.5"/>
+            <line x="70" y="59"/>
+            <line x="50" y="59"/>
+            <line x="50" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="70" name="Arrow Left" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="97.5" y="20"/>
+            <line x="38.5" y="20"/>
+            <line x="38.5" y="0"/>
+            <line x="0" y="35"/>
+            <line x="38.5" y="70"/>
+            <line x="38.5" y="50"/>
+            <line x="97.5" y="50"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="70" name="Arrow Right" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="20"/>
+            <line x="59" y="20"/>
+            <line x="59" y="0"/>
+            <line x="97.5" y="35"/>
+            <line x="59" y="70"/>
+            <line x="59" y="50"/>
+            <line x="0" y="50"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="97.5" name="Arrow Up" strokewidth="inherit" w="70">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="20" y="97.5"/>
+            <line x="20" y="38.5"/>
+            <line x="0" y="38.5"/>
+            <line x="35" y="0"/>
+            <line x="70" y="38.5"/>
+            <line x="50" y="38.5"/>
+            <line x="50" y="97.5"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="97" name="Bent Left Arrow" strokewidth="inherit" w="97.01">
+    <connections>
+        <constraint name="S" perimeter="0" x="0.85" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.29"/>
+    </connections>
+    <background>
+        <path>
+            <move x="68" y="97"/>
+            <line x="68" y="48"/>
+            <arc large-arc-flag="0" rx="5" ry="5" sweep-flag="0" x="63" x-axis-rotation="0" y="43"/>
+            <line x="38" y="43"/>
+            <line x="38" y="56"/>
+            <line x="0" y="28"/>
+            <line x="38" y="0"/>
+            <line x="38" y="13"/>
+            <line x="63" y="13"/>
+            <arc large-arc-flag="0" rx="35" ry="35" sweep-flag="1" x="97" x-axis-rotation="0" y="48"/>
+            <line x="97" y="97"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="97" name="Bent Right Arrow" strokewidth="inherit" w="97.01">
+    <connections>
+        <constraint name="S" perimeter="0" x="0.15" y="1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.29"/>
+    </connections>
+    <background>
+        <path>
+            <move x="29.01" y="97"/>
+            <line x="29.01" y="48"/>
+            <arc large-arc-flag="0" rx="5" ry="5" sweep-flag="1" x="34.01" x-axis-rotation="0" y="43"/>
+            <line x="59.01" y="43"/>
+            <line x="59.01" y="56"/>
+            <line x="97.01" y="28"/>
+            <line x="59.01" y="0"/>
+            <line x="59.01" y="13"/>
+            <line x="34.01" y="13"/>
+            <arc large-arc-flag="0" rx="35" ry="35" sweep-flag="0" x="0.01" x-axis-rotation="0" y="48"/>
+            <line x="0.01" y="97"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="83.5" name="Bent Up Arrow" strokewidth="inherit" w="97">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.71" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.82"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="53.5"/>
+            <line x="54" y="53.5"/>
+            <line x="54" y="23.5"/>
+            <line x="42" y="23.5"/>
+            <line x="69" y="0"/>
+            <line x="97" y="23.5"/>
+            <line x="84" y="23.5"/>
+            <line x="84" y="83.5"/>
+            <line x="0" y="83.5"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="97.5" name="Callout Double Arrow" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="15" y="24"/>
+            <line x="15" y="19"/>
+            <line x="6" y="19"/>
+            <line x="25" y="0"/>
+            <line x="44" y="19"/>
+            <line x="35" y="19"/>
+            <line x="35" y="24"/>
+            <line x="50" y="24"/>
+            <line x="50" y="74"/>
+            <line x="35" y="74"/>
+            <line x="35" y="79"/>
+            <line x="44" y="79"/>
+            <line x="25" y="97.5"/>
+            <line x="6" y="79"/>
+            <line x="15" y="79"/>
+            <line x="15" y="74"/>
+            <line x="0" y="74"/>
+            <line x="0" y="24"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="97" name="Callout Quad Arrow" strokewidth="inherit" w="97">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="38.5" y="23.5"/>
+            <line x="38.5" y="18.5"/>
+            <line x="29.5" y="18.5"/>
+            <line x="48.5" y="0"/>
+            <line x="67.5" y="18.5"/>
+            <line x="58.5" y="18.5"/>
+            <line x="58.5" y="23.5"/>
+            <line x="73.5" y="23.5"/>
+            <line x="73.5" y="38.5"/>
+            <line x="78.5" y="38.5"/>
+            <line x="78.5" y="29.5"/>
+            <line x="97" y="48.5"/>
+            <line x="78.5" y="67.5"/>
+            <line x="78.5" y="58.5"/>
+            <line x="73.5" y="58.5"/>
+            <line x="73.5" y="73.5"/>
+            <line x="58.5" y="73.5"/>
+            <line x="58.5" y="78.5"/>
+            <line x="67.5" y="78.5"/>
+            <line x="48.5" y="97"/>
+            <line x="29.5" y="78.5"/>
+            <line x="38.5" y="78.5"/>
+            <line x="38.5" y="73.5"/>
+            <line x="23.5" y="73.5"/>
+            <line x="23.5" y="58.5"/>
+            <line x="18.5" y="58.5"/>
+            <line x="18.5" y="67.5"/>
+            <line x="0" y="48.5"/>
+            <line x="18.5" y="29.5"/>
+            <line x="18.5" y="38.5"/>
+            <line x="23.5" y="38.5"/>
+            <line x="23.5" y="23.5"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="98" name="Callout Up Arrow" strokewidth="inherit" w="60">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="20" y="39"/>
+            <line x="20" y="19"/>
+            <line x="11" y="19"/>
+            <line x="30" y="0"/>
+            <line x="49" y="19"/>
+            <line x="40" y="19"/>
+            <line x="40" y="39"/>
+            <line x="60" y="39"/>
+            <line x="60" y="98"/>
+            <line x="0" y="98"/>
+            <line x="0" y="39"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Chevron Arrow" strokewidth="inherit" w="96">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.31" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="30" y="30"/>
+            <line x="0" y="0"/>
+            <line x="66" y="0"/>
+            <line x="96" y="30"/>
+            <line x="66" y="60"/>
+            <line x="0" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="69.5" name="Circular Arrow" strokewidth="inherit" w="97">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0.12" y="0.64"/>
+        <constraint name="SE" perimeter="0" x="0.794" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="44.5"/>
+            <arc large-arc-flag="0" rx="44.5" ry="44.5" sweep-flag="1" x="89" x-axis-rotation="0" y="44.5"/>
+            <line x="97" y="44.5"/>
+            <line x="77" y="69.5"/>
+            <line x="57" y="44.5"/>
+            <line x="65" y="44.5"/>
+            <arc large-arc-flag="0" rx="20.5" ry="20.5" sweep-flag="0" x="24" x-axis-rotation="0" y="44.5"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="99.41" name="Jump-in Arrow 1" strokewidth="inherit" w="96">
+    <connections>
+        <constraint name="NW" perimeter="0" x="0" y="0.024"/>
+        <constraint name="S" perimeter="0" x="0.657" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="30" y="60.41"/>
+            <line x="48" y="60.41"/>
+            <arc large-arc-flag="0" rx="60" ry="60" sweep-flag="0" x="0" x-axis-rotation="0" y="2.41"/>
+            <arc large-arc-flag="0" rx="75" ry="75" sweep-flag="1" x="78" x-axis-rotation="0" y="60.41"/>
+            <line x="96" y="60.41"/>
+            <line x="63" y="99.41"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <linejoin join="round"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="99.41" name="Jump-in Arrow 2" strokewidth="inherit" w="96">
+    <connections>
+        <constraint name="NE" perimeter="0" x="1" y="0.024"/>
+        <constraint name="S" perimeter="0" x="0.343" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="66" y="60.41"/>
+            <line x="48" y="60.41"/>
+            <arc large-arc-flag="0" rx="60" ry="60" sweep-flag="1" x="96" x-axis-rotation="0" y="2.41"/>
+            <arc large-arc-flag="0" rx="75" ry="75" sweep-flag="0" x="18" x-axis-rotation="0" y="60.41"/>
+            <line x="0" y="60.41"/>
+            <line x="33" y="99.41"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <linejoin join="round"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="96.5" name="Left and Up Arrow" strokewidth="inherit" w="96.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.71"/>
+        <constraint name="N" perimeter="0" x="0.71" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="23.5" y="53.5"/>
+            <line x="53.5" y="53.5"/>
+            <line x="53.5" y="23.5"/>
+            <line x="41.5" y="23.5"/>
+            <line x="68.5" y="0"/>
+            <line x="96.5" y="23.5"/>
+            <line x="83.5" y="23.5"/>
+            <line x="83.5" y="83.5"/>
+            <line x="23.5" y="83.5"/>
+            <line x="23.5" y="96.5"/>
+            <line x="0" y="68.5"/>
+            <line x="23.5" y="41.5"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Left Sharp Edged Head Arrow" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="97.5" y="20"/>
+            <line x="18.5" y="20"/>
+            <line x="30.5" y="0"/>
+            <line x="18.5" y="0"/>
+            <line x="0" y="30"/>
+            <line x="18.5" y="60"/>
+            <line x="30.5" y="60"/>
+            <line x="18.5" y="40"/>
+            <line x="97.5" y="40"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="Notched Signal-in Arrow" strokewidth="inherit" w="96.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.13" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="83" y="0"/>
+            <line x="96.5" y="15"/>
+            <line x="83" y="30"/>
+            <line x="0" y="30"/>
+            <line x="13" y="15"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="97.5" name="Quad Arrow" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="39" y="39"/>
+            <line x="39" y="19"/>
+            <line x="30" y="19"/>
+            <line x="49" y="0"/>
+            <line x="68" y="19"/>
+            <line x="59" y="19"/>
+            <line x="59" y="39"/>
+            <line x="79" y="39"/>
+            <line x="79" y="30"/>
+            <line x="97.5" y="49"/>
+            <line x="79" y="68"/>
+            <line x="79" y="59"/>
+            <line x="59" y="59"/>
+            <line x="59" y="79"/>
+            <line x="68" y="79"/>
+            <line x="49" y="97.5"/>
+            <line x="30" y="79"/>
+            <line x="39" y="79"/>
+            <line x="39" y="59"/>
+            <line x="19" y="59"/>
+            <line x="19" y="68"/>
+            <line x="0" y="49"/>
+            <line x="19" y="30"/>
+            <line x="19" y="39"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="70" name="Right Notched Arrow" strokewidth="inherit" w="96.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.13" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="20"/>
+            <line x="58" y="20"/>
+            <line x="58" y="0"/>
+            <line x="96.5" y="35"/>
+            <line x="58" y="70"/>
+            <line x="58" y="50"/>
+            <line x="0" y="50"/>
+            <line x="13" y="35"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Sharp Edged Arrow" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="97.5" y="20"/>
+            <line x="18.5" y="20"/>
+            <line x="27.5" y="5"/>
+            <line x="18.5" y="0"/>
+            <line x="0" y="30"/>
+            <line x="18.5" y="60"/>
+            <line x="27.5" y="55"/>
+            <line x="18.5" y="40"/>
+            <line x="97.5" y="40"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="Signal-in Arrow" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="84" y="0"/>
+            <line x="97.5" y="15"/>
+            <line x="84" y="30"/>
+            <line x="0" y="30"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Slender Left Arrow" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="97.5" y="20"/>
+            <line x="18.5" y="20"/>
+            <line x="18.5" y="0"/>
+            <line x="0" y="30"/>
+            <line x="18.5" y="60"/>
+            <line x="18.5" y="40"/>
+            <line x="97.5" y="40"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Slender Two Way Arrow" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="78.5" y="20"/>
+            <line x="18.5" y="20"/>
+            <line x="18.5" y="0"/>
+            <line x="0" y="30"/>
+            <line x="18.5" y="60"/>
+            <line x="18.5" y="40"/>
+            <line x="78.5" y="40"/>
+            <line x="78.5" y="60"/>
+            <line x="97.5" y="30"/>
+            <line x="78.5" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Slender Wide Tailed Arrow" strokewidth="inherit" w="96.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="0.8" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="58.5" y="20"/>
+            <line x="18.5" y="20"/>
+            <line x="18.5" y="0"/>
+            <line x="0" y="30"/>
+            <line x="18.5" y="60"/>
+            <line x="18.5" y="40"/>
+            <line x="58.5" y="40"/>
+            <line x="73.5" y="60"/>
+            <line x="96.5" y="60"/>
+            <line x="76.5" y="30"/>
+            <line x="96.5" y="0"/>
+            <line x="73.5" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="70" name="Striped Arrow" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="24" y="20"/>
+            <line x="59" y="20"/>
+            <line x="59" y="0"/>
+            <line x="97.5" y="35"/>
+            <line x="59" y="70"/>
+            <line x="59" y="50"/>
+            <line x="24" y="50"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="30" w="12" x="8" y="20"/>
+        <fillstroke/>
+        <rect h="30" w="4" x="0" y="20"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Stylised Notched Arrow" strokewidth="inherit" w="96.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.13" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="5"/>
+            <line x="68" y="20"/>
+            <line x="58" y="0"/>
+            <line x="96.5" y="30"/>
+            <line x="58" y="60"/>
+            <line x="68" y="45"/>
+            <line x="0" y="55"/>
+            <line x="13" y="30"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <miterlimit limit="8"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="68" name="Triad Arrow" strokewidth="inherit" w="97.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.72"/>
+        <constraint name="E" perimeter="0" x="1" y="0.72"/>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="39" y="39"/>
+            <line x="39" y="19"/>
+            <line x="30" y="19"/>
+            <line x="49" y="0"/>
+            <line x="68" y="19"/>
+            <line x="59" y="19"/>
+            <line x="59" y="39"/>
+            <line x="79" y="39"/>
+            <line x="79" y="30"/>
+            <line x="97.5" y="49"/>
+            <line x="79" y="68"/>
+            <line x="79" y="59"/>
+            <line x="39" y="59"/>
+            <line x="19" y="59"/>
+            <line x="19" y="68"/>
+            <line x="0" y="49"/>
+            <line x="19" y="30"/>
+            <line x="19" y="39"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Two Way Arrow Horizontal" strokewidth="inherit" w="96">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="63" y="15"/>
+            <line x="63" y="0"/>
+            <line x="96" y="30"/>
+            <line x="63" y="60"/>
+            <line x="63" y="45"/>
+            <line x="33" y="45"/>
+            <line x="33" y="60"/>
+            <line x="0" y="30"/>
+            <line x="33" y="0"/>
+            <line x="33" y="15"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="96" name="Two Way Arrow Vertical" strokewidth="inherit" w="60">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="15" y="63"/>
+            <line x="0" y="63"/>
+            <line x="30" y="96"/>
+            <line x="60" y="63"/>
+            <line x="45" y="63"/>
+            <line x="45" y="33"/>
+            <line x="60" y="33"/>
+            <line x="30" y="0"/>
+            <line x="0" y="33"/>
+            <line x="15" y="33"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="98" name="U Turn Arrow" strokewidth="inherit" w="97">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0.12" y="1"/>
+        <constraint name="SE" perimeter="0" x="0.792" y="0.71"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="44.5"/>
+            <arc large-arc-flag="0" rx="44.5" ry="44.5" sweep-flag="1" x="89" x-axis-rotation="0" y="44.5"/>
+            <line x="97" y="44.5"/>
+            <line x="77" y="69.5"/>
+            <line x="57" y="44.5"/>
+            <line x="65" y="44.5"/>
+            <arc large-arc-flag="0" rx="20.5" ry="20.5" sweep-flag="0" x="24" x-axis-rotation="0" y="44.83"/>
+            <line x="24" y="98"/>
+            <line x="0" y="98"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="62" name="U Turn Down Arrow" strokewidth="inherit" w="97">
+    <connections>
+        <constraint name="SE" perimeter="0" x="0.91" y="1"/>
+        <constraint name="SW" perimeter="0" x="0.237" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="97" y="62"/>
+            <line x="97" y="32"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="0" x="33" x-axis-rotation="0" y="32"/>
+            <line x="46" y="32"/>
+            <line x="23" y="62"/>
+            <line x="0" y="32"/>
+            <line x="13" y="32"/>
+            <arc large-arc-flag="0" rx="32" ry="32" sweep-flag="1" x="45" x-axis-rotation="0" y="0"/>
+            <line x="65" y="0"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="0" x="53" x-axis-rotation="0" y="3"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="78" x-axis-rotation="0" y="32"/>
+            <line x="78" y="62"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="97" name="U Turn Left Arrow" strokewidth="inherit" w="62">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0" y="0.76"/>
+        <constraint name="NW" perimeter="0" x="0" y="0.1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="30" y="0"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="30" x-axis-rotation="0" y="64"/>
+            <line x="30" y="51"/>
+            <line x="0" y="74"/>
+            <line x="30" y="97"/>
+            <line x="30" y="84"/>
+            <arc large-arc-flag="0" rx="32" ry="32" sweep-flag="0" x="62" x-axis-rotation="0" y="52"/>
+            <line x="62" y="32"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="59" x-axis-rotation="0" y="44"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="0" x="30" x-axis-rotation="0" y="19"/>
+            <line x="0" y="19"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="97" name="U Turn Right Arrow" strokewidth="inherit" w="62">
+    <connections>
+        <constraint name="SW" perimeter="0" x="1" y="0.76"/>
+        <constraint name="NW" perimeter="0" x="1" y="0.1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="62" y="0"/>
+            <line x="32" y="0"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="0" x="32" x-axis-rotation="0" y="64"/>
+            <line x="32" y="51"/>
+            <line x="62" y="74"/>
+            <line x="32" y="97"/>
+            <line x="32" y="84"/>
+            <arc large-arc-flag="0" rx="32" ry="32" sweep-flag="1" x="0" x-axis-rotation="0" y="52"/>
+            <line x="0" y="32"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="0" x="3" x-axis-rotation="0" y="44"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="32" x-axis-rotation="0" y="19"/>
+            <line x="62" y="19"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="62" name="U Turn Up Arrow" strokewidth="inherit" w="97">
+    <connections>
+        <constraint name="NE" perimeter="0" x="0.91" y="0"/>
+        <constraint name="NW" perimeter="0" x="0.237" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="97" y="0"/>
+            <line x="97" y="30"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="33" x-axis-rotation="0" y="30"/>
+            <line x="46" y="30"/>
+            <line x="23" y="0"/>
+            <line x="0" y="30"/>
+            <line x="13" y="30"/>
+            <arc large-arc-flag="0" rx="32" ry="32" sweep-flag="0" x="45" x-axis-rotation="0" y="62"/>
+            <line x="65" y="62"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="53" x-axis-rotation="0" y="59"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="0" x="78" x-axis-rotation="0" y="30"/>
+            <line x="78" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

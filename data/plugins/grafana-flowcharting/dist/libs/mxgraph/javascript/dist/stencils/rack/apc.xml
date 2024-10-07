@@ -1,0 +1,277 @@
+<shapes name="mxgraph.rack.APC">
+<shape aspect="variable" h="30.75" name="APC Smart UPS 1000-3000 VA 2U" strokewidth="inherit" w="161.85">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.75"/>
+            <line x="161.85" y="30.75"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="8.83" y="1"/>
+            <line x="152.65" y="1"/>
+            <line x="152.65" y="12.07"/>
+            <curve x1="151.81" x2="151.08" x3="150.6" y1="12.19" y2="12.51" y3="13.05"/>
+            <curve x1="150.03" x2="149.75" x3="149.75" y1="13.7" y2="14.54" y3="15.38"/>
+            <curve x1="149.75" x2="150.03" x3="150.6" y1="16.21" y2="17.05" y3="17.7"/>
+            <curve x1="151.08" x2="151.81" x3="152.65" y1="18.24" y2="18.56" y3="18.68"/>
+            <line x="152.65" y="29.75"/>
+            <line x="8.83" y="29.75"/>
+            <line x="8.83" y="18.68"/>
+            <curve x1="9.68" x2="10.4" x3="10.88" y1="18.56" y2="18.24" y3="17.7"/>
+            <curve x1="11.46" x2="11.73" x3="11.73" y1="17.05" y2="16.21" y3="15.38"/>
+            <curve x1="11.73" x2="11.46" x3="10.88" y1="14.54" y2="13.7" y3="13.05"/>
+            <curve x1="10.4" x2="9.68" x3="8.83" y1="12.51" y2="12.19" y3="12.07"/>
+            <close/>
+            <move x="0" y="0"/>
+            <line x="0" y="30.75"/>
+            <line x="161.85" y="30.75"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="#000000"/>
+        <rect h="25.21" w="53.99" x="91.82" y="2.95"/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="16.83" y="25.93"/>
+            <line x="89.16" y="25.93"/>
+            <line x="89.16" y="28.16"/>
+            <line x="16.83" y="28.16"/>
+            <close/>
+            <move x="16.83" y="22.59"/>
+            <line x="89.16" y="22.59"/>
+            <line x="89.16" y="24.82"/>
+            <line x="16.83" y="24.82"/>
+            <close/>
+            <move x="16.83" y="19.24"/>
+            <line x="89.16" y="19.24"/>
+            <line x="89.16" y="21.47"/>
+            <line x="16.83" y="21.47"/>
+            <close/>
+            <move x="16.83" y="16.12"/>
+            <line x="89.16" y="16.12"/>
+            <line x="89.16" y="18.35"/>
+            <line x="16.83" y="18.35"/>
+            <close/>
+            <move x="16.83" y="12.77"/>
+            <line x="89.16" y="12.77"/>
+            <line x="89.16" y="15"/>
+            <line x="16.83" y="15"/>
+            <close/>
+            <move x="16.83" y="9.42"/>
+            <line x="89.16" y="9.42"/>
+            <line x="89.16" y="11.65"/>
+            <line x="16.83" y="11.65"/>
+            <close/>
+            <move x="16.83" y="6.3"/>
+            <line x="89.16" y="6.3"/>
+            <line x="89.16" y="8.53"/>
+            <line x="16.83" y="8.53"/>
+            <close/>
+            <move x="16.83" y="2.95"/>
+            <line x="89.16" y="2.95"/>
+            <line x="89.16" y="5.19"/>
+            <line x="16.83" y="5.19"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="74.75" name="APC Smart UPS 5000 VA 5U" strokewidth="inherit" w="161.85">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="74.75"/>
+            <line x="161.85" y="74.75"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313728"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="8.83" y="1"/>
+            <line x="152.65" y="1"/>
+            <line x="152.65" y="29.93"/>
+            <curve x1="146.74" x2="146.74" x3="152.65" y1="33.11" y2="41.64" y3="44.82"/>
+            <line x="152.65" y="73.75"/>
+            <line x="8.83" y="73.75"/>
+            <line x="8.83" y="44.82"/>
+            <curve x1="14.75" x2="14.75" x3="8.83" y1="41.65" y2="33.1" y3="29.93"/>
+            <close/>
+            <move x="0" y="0"/>
+            <line x="0" y="74.75"/>
+            <line x="161.85" y="74.75"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="#000000"/>
+        <rect h="38" w="43" x="100.5" y="18.5"/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="16.83" y="63.55"/>
+            <line x="143.83" y="63.55"/>
+            <line x="143.83" y="69.08"/>
+            <line x="16.83" y="69.08"/>
+            <close/>
+            <move x="16.83" y="55.25"/>
+            <line x="89.16" y="55.25"/>
+            <line x="89.16" y="60.78"/>
+            <line x="16.83" y="60.78"/>
+            <close/>
+            <move x="16.83" y="46.96"/>
+            <line x="89.16" y="46.96"/>
+            <line x="89.16" y="52.49"/>
+            <line x="16.83" y="52.49"/>
+            <close/>
+            <move x="16.83" y="39.21"/>
+            <line x="89.16" y="39.21"/>
+            <line x="89.16" y="44.74"/>
+            <line x="16.83" y="44.74"/>
+            <close/>
+            <move x="16.83" y="30.92"/>
+            <line x="89.16" y="30.92"/>
+            <line x="89.16" y="36.45"/>
+            <line x="16.83" y="36.45"/>
+            <close/>
+            <move x="16.83" y="22.62"/>
+            <line x="89.16" y="22.62"/>
+            <line x="89.16" y="28.15"/>
+            <line x="16.83" y="28.15"/>
+            <close/>
+            <move x="16.83" y="14.88"/>
+            <line x="89.16" y="14.88"/>
+            <line x="89.16" y="20.41"/>
+            <line x="16.83" y="20.41"/>
+            <close/>
+            <move x="16.83" y="6.58"/>
+            <line x="143.83" y="6.58"/>
+            <line x="143.83" y="12.11"/>
+            <line x="16.83" y="12.11"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.95" name="APC Smart UPS 750 VA 1U" strokewidth="inherit" w="161.85">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.95"/>
+            <line x="161.85" y="15.95"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.23232326"/>
+        <path>
+            <move x="116.82" y="9.24"/>
+            <line x="144.49" y="9.24"/>
+            <line x="144.49" y="12.27"/>
+            <line x="116.82" y="12.27"/>
+            <close/>
+            <move x="116.82" y="3.53"/>
+            <line x="144.49" y="3.53"/>
+            <line x="144.49" y="6.55"/>
+            <line x="116.82" y="6.55"/>
+            <close/>
+            <move x="16.5" y="9.24"/>
+            <line x="88.82" y="9.24"/>
+            <line x="88.82" y="12.27"/>
+            <line x="16.5" y="12.27"/>
+            <close/>
+            <move x="16.5" y="3.53"/>
+            <line x="88.82" y="3.53"/>
+            <line x="88.82" y="6.55"/>
+            <line x="16.5" y="6.55"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="#000000"/>
+        <strokealpha alpha="0.64313728"/>
+        <rect h="8.41" w="23" x="91.82" y="3.86"/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64141415"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="15.95"/>
+            <line x="161.85" y="15.95"/>
+            <line x="161.85" y="0"/>
+            <close/>
+            <move x="9.33" y="1.5"/>
+            <line x="152.15" y="1.5"/>
+            <line x="152.15" y="2.74"/>
+            <curve x1="150.93" x2="149.85" x3="149.12" y1="2.94" y2="3.41" y3="4.23"/>
+            <curve x1="148.21" x2="147.78" x3="147.78" y1="5.25" y2="6.58" y3="7.9"/>
+            <curve x1="147.78" x2="148.21" x3="149.12" y1="9.21" y2="10.54" y3="11.57"/>
+            <curve x1="149.85" x2="150.93" x3="152.15" y1="12.39" y2="12.85" y3="13.05"/>
+            <line x="152.15" y="14.45"/>
+            <line x="9.33" y="14.45"/>
+            <line x="9.33" y="13.05"/>
+            <curve x1="10.55" x2="11.63" x3="12.36" y1="12.85" y2="12.39" y3="11.57"/>
+            <curve x1="13.27" x2="13.71" x3="13.71" y1="10.54" y2="9.21" y3="7.9"/>
+            <curve x1="13.71" x2="13.27" x3="12.36" y1="6.58" y2="5.25" y3="4.23"/>
+            <curve x1="11.63" x2="10.55" x3="9.33" y1="3.41" y2="2.94" y3="2.74"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+</shapes>

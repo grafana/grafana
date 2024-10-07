@@ -1,0 +1,5 @@
+askZoom=进入缩放(%25)
+properties=属性
+outline=轮廓
+tasks=任务
+help=帮助

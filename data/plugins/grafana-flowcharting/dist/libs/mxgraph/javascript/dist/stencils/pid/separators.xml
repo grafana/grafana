@@ -1,0 +1,423 @@
+<shapes name="mxGraph.pid.separators">
+<shape aspect="variable" h="120" name="Gravity Separator, Settling Chamber" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+            <move x="40" y="10"/>
+            <line x="40" y="65"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="38" y="65"/>
+            <line x="42" y="65"/>
+            <line x="40" y="70"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Impact Separator" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+            <move x="40" y="0"/>
+            <line x="40" y="80"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Separator, Sifter" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+            <move x="25" y="8"/>
+            <line x="55" y="8"/>
+            <move x="42.83" y="7.95"/>
+            <line x="49.23" y="11.82"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="55" y="6"/>
+            <line x="55" y="10"/>
+            <line x="60" y="8"/>
+            <close/>
+            <move x="50.32" y="10.14"/>
+            <line x="48.13" y="13.5"/>
+            <line x="53.42" y="14.55"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Separator (Cyclone)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="35" y="15"/>
+            <arc large-arc-flag="0" rx="30" ry="15" sweep-flag="1" x="35" x-axis-rotation="0" y="45"/>
+            <arc large-arc-flag="1" rx="10" ry="5" sweep-flag="1" x="35" x-axis-rotation="0" y="35.01"/>
+            <arc large-arc-flag="1" rx="30" ry="15" sweep-flag="1" x="35" x-axis-rotation="0" y="65"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="35" y="63"/>
+            <line x="35" y="67"/>
+            <line x="30" y="65"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Separator (Electromagnetic)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="10" y="65"/>
+            <line x="19" y="65"/>
+            <arc large-arc-flag="0" rx="7" ry="7" sweep-flag="1" x="33" x-axis-rotation="0" y="65"/>
+            <arc large-arc-flag="1" rx="7" ry="7" sweep-flag="1" x="47" x-axis-rotation="0" y="65"/>
+            <arc large-arc-flag="1" rx="7" ry="7" sweep-flag="1" x="61" x-axis-rotation="0" y="65"/>
+            <line x="70" y="65"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Separator (Electrostatic Precipitator)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="15" y="70"/>
+            <line x="35" y="70"/>
+            <move x="35" y="60"/>
+            <line x="35" y="80"/>
+            <move x="45" y="60"/>
+            <line x="45" y="80"/>
+            <move x="45" y="70"/>
+            <line x="60" y="70"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Separator (Electrostatic Precipitator, Wet)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="15" y="70"/>
+            <line x="35" y="70"/>
+            <move x="35" y="60"/>
+            <line x="35" y="80"/>
+            <move x="45" y="60"/>
+            <line x="45" y="80"/>
+            <move x="45" y="70"/>
+            <line x="60" y="70"/>
+            <move x="30" y="10"/>
+            <line x="40" y="0.5"/>
+            <line x="50" y="10"/>
+            <move x="40" y="0.5"/>
+            <line x="40" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Separator (Permanent Magnet)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="25" y="50"/>
+            <line x="30" y="50"/>
+            <line x="30" y="60"/>
+            <line x="50" y="60"/>
+            <line x="50" y="50"/>
+            <line x="55" y="50"/>
+            <line x="55" y="65"/>
+            <line x="25" y="65"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Separator (Venturi Scrubber)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="30" y="10"/>
+            <line x="40" y="0.5"/>
+            <line x="50" y="10"/>
+            <move x="40" y="0.5"/>
+            <line x="40" y="10"/>
+            <move x="15" y="80"/>
+            <line x="25" y="65"/>
+            <line x="40" y="65"/>
+            <line x="60" y="80"/>
+            <move x="15" y="40"/>
+            <line x="25" y="55"/>
+            <line x="40" y="55"/>
+            <line x="60" y="40"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Separator (Wet Scrubber)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="40" y="10"/>
+            <line x="40" y="65"/>
+            <move x="50" y="10"/>
+            <arc large-arc-flag="1" rx="5" ry="5" sweep-flag="0" x="60" x-axis-rotation="0" y="10"/>
+            <move x="60" y="10"/>
+            <arc large-arc-flag="1" rx="5" ry="5" sweep-flag="0" x="70" x-axis-rotation="0" y="10"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="38" y="65"/>
+            <line x="42" y="65"/>
+            <line x="40" y="70"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Solidifier (Closed)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="10"/>
+            <line x="0" y="80"/>
+            <line x="40" y="120"/>
+            <line x="80" y="80"/>
+            <line x="80" y="10"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="10" y="30"/>
+            <line x="10" y="20"/>
+            <move x="70" y="20"/>
+            <line x="70" y="30"/>
+            <line x="80" y="30"/>
+            <move x="10" y="70"/>
+            <line x="40" y="100"/>
+            <line x="70" y="70"/>
+            <move x="40" y="0"/>
+            <line x="40" y="100"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Solidifier (Open)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="10"/>
+            <line x="0" y="80"/>
+            <line x="40" y="120"/>
+            <line x="80" y="80"/>
+            <line x="80" y="10"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="10" y="30"/>
+            <line x="10" y="20"/>
+            <move x="70" y="20"/>
+            <line x="70" y="30"/>
+            <line x="80" y="30"/>
+            <move x="10" y="70"/>
+            <line x="40" y="100"/>
+            <line x="70" y="70"/>
+            <move x="40" y="0"/>
+            <line x="40" y="100"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Spray Scrubber" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="E" perimeter="0" x="1" y="0.1"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="30" y="10"/>
+            <line x="40" y="0.5"/>
+            <line x="50" y="10"/>
+            <move x="40" y="0.5"/>
+            <line x="40" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

@@ -1,0 +1,223 @@
+<shapes name="mxgraph.mockup.advertising">
+    <shape name="3-1 Rec" h="100.0" w="300.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="300.0" h="100.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="3:1 RECTANGLE" x="150" y="40" align="center" valign="middle"/>
+            <text str="300 x 100" x="150" y="60" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Banner 468x60" h="60.0" w="468.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="468.0" h="60.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="BANNER 468 x 60" x="234" y="30" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Button 120x90" h="90.0" w="120.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="120.0" h="90.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="BUTTON 1" x="60" y="35" align="center" valign="middle"/>
+            <text str="120 x 90" x="60" y="55" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Button 120x60" h="60.0" w="120.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="120.0" h="60.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="BUTTON 2" x="60" y="20" align="center" valign="middle"/>
+            <text str="120 x 60" x="60" y="40" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Half Banner 234x60" h="60.0" w="234.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="234.0" h="60.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="HALF BANNER 120 x 60" x="117" y="30" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Half Page 300x600" h="600.0" w="300.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="300.0" h="600.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="HALF PAGE" x="150" y="290" align="center" valign="middle"/>
+            <text str="300 x 600" x="150" y="310" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Leaderboard 728x90" h="90.0" w="728.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="728.0" h="90.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="LEADERBOARD" x="364" y="35" align="center" valign="middle"/>
+            <text str="728 x 90" x="364" y="55" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Large Rec 336x280" h="280.0" w="336.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="336.0" h="280.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="LREC" x="168" y="130" align="center" valign="middle"/>
+            <text str="336 x 280" x="168" y="150" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Micro Bar 88x31" h="31.0" w="88.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="88.0" h="31.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="12"/>
+            <fontstyle style="1"/>
+            <text str="MICRO BAR" x="44" y="8" align="center" valign="middle"/>
+            <text str="88 x 31" x="44" y="22" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Medium Rec 300x250" h="250.0" w="300.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="300.0" h="250.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="MREC" x="150" y="115" align="center" valign="middle"/>
+            <text str="300 x 250" x="150" y="135" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Rec 180x150" h="150.0" w="180.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="180.0" h="150.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="REC" x="90" y="65" align="center" valign="middle"/>
+            <text str="180 x 150" x="90" y="85" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Sky 120x600" h="600.0" w="120.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="120.0" h="600.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="SKY" x="60" y="290" align="center" valign="middle"/>
+            <text str="120 x 600" x="60" y="310" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Square Button 125x125" h="125.0" w="125.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="125.0" h="125.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="SQUARE" x="62.5" y="42.5" align="center" valign="middle"/>
+            <text str="BUTTON" x="62.5" y="62.5" align="center" valign="middle"/>
+            <text str="125 x 125" x="62.5" y="82.5" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Square Pop-up 250x250" h="250.0" w="250.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="250.0" h="250.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="SQUARE POP-UP" x="125" y="115" align="center" valign="middle"/>
+            <text str="250 x 250" x="125" y="135" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Banner 120x240" h="240.0" w="120.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="120.0" h="240.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="VERTICAL" x="60" y="100" align="center" valign="middle"/>
+            <text str="BANNER" x="60" y="120" align="center" valign="middle"/>
+            <text str="120 x 240" x="60" y="140" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Rec 240x400" h="400.0" w="240.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="240.0" h="400.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="VREC" x="120" y="190" align="center" valign="middle"/>
+            <text str="240 x 400" x="120" y="210" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Wide Sky 160x600" h="600.0" w="160.0" aspect="1">
+        <foreground>
+            <strokecolor color="none"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0.0" y="0.0" w="160.0" h="600.0"/>
+            <fillstroke/>
+            <fontcolor color="#5F6060"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="WIDE SKY" x="80" y="290" align="center" valign="middle"/>
+            <text str="160 x 600" x="80" y="310" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+</shapes>

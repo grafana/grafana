@@ -1,0 +1,626 @@
+<shapes name="mxgraph.mockup.charts_and_tables">
+    <shape name="Bar Chart" h="252" w="448" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#f2f2f2"/>
+            <roundrect x="0" y="0" w="448" h="252" arcsize="0.9300595238095238"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="58" y="55" w="377" h="147"/>
+            <fillstroke/>
+            <strokecolor color="#808080"/>
+            <strokewidth width="2"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="58" y="55"/>
+                <line x="58" y="203"/>
+                <line x="436" y="203"/>
+            </path>
+            <stroke/>
+            <strokewidth width="1"/>
+            <path>
+                <move x="120" y="55"/>
+                <line x="120" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="180" y="55"/>
+                <line x="180" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="240" y="55"/>
+                <line x="240" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="298" y="55"/>
+                <line x="298" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="358" y="55"/>
+                <line x="358" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="418" y="55"/>
+                <line x="418" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="57.33332999999999" y="70"/>
+                <line x="435.3333" y="70"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="59.33332999999999" y="96.66667000000001"/>
+                <line x="434.6667" y="96"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58" y="124"/>
+                <line x="435.3333" y="123.33332999999999"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58" y="150"/>
+                <line x="436.6667" y="150"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58.66667000000001" y="177.33334000000002"/>
+                <line x="436" y="177.33334000000002"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#2c457e"/>
+            <fillcolor color="#2c457e"/>
+            <rect x="59" y="70" w="307" h="8"/>
+            <fillstroke/>
+            <strokecolor color="#3a5ba6"/>
+            <fillcolor color="#3a5ba6"/>
+            <rect x="59" y="79" w="291" h="8"/>
+            <fillstroke/>
+            <strokecolor color="#4c77d9"/>
+            <fillcolor color="#4c77d9"/>
+            <rect x="59" y="88" w="230" h="8"/>
+            <fillstroke/>
+            <strokecolor color="#2c457e"/>
+            <fillcolor color="#2c457e"/>
+            <rect x="59" y="110" w="341" h="8"/>
+            <fillstroke/>
+            <strokecolor color="#3a5ba6"/>
+            <fillcolor color="#3a5ba6"/>
+            <rect x="59" y="119" w="349" h="8"/>
+            <fillstroke/>
+            <strokecolor color="#4c77d9"/>
+            <fillcolor color="#4c77d9"/>
+            <rect x="59" y="128" w="330" h="8"/>
+            <fillstroke/>
+            <strokecolor color="#2c457e"/>
+            <fillcolor color="#2c457e"/>
+            <rect x="59" y="160" w="201" h="8"/>
+            <fillstroke/>
+            <strokecolor color="#3a5ba6"/>
+            <fillcolor color="#3a5ba6"/>
+            <rect x="59" y="169" w="252" h="8"/>
+            <fillstroke/>
+            <strokecolor color="#4c77d9"/>
+            <fillcolor color="#4c77d9"/>
+            <rect x="59" y="178" w="243" h="8"/>
+            <fillstroke/>
+            <fontcolor color="#2c457e"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="Graph Title" x="20" y="15" align="left" valign="middle"/>
+            <fontcolor color="#000000"/>
+            <fontsize size="12"/>
+            <fontstyle style="0"/>
+            <text str="Graph subtitle" x="20" y="35" align="left" valign="middle"/>
+            <fontstyle style="1"/>
+            <text str="Value 3" x="50" y="83" align="right" valign="middle"/>
+            <text str="Value 2" x="50" y="123" align="right" valign="middle"/>
+            <text str="Value 1" x="50" y="175" align="right" valign="middle"/>
+            <text str="0" x="60" y="215" align="right" valign="middle"/>
+            <text str="5" x="120" y="215" align="right" valign="middle"/>
+            <text str="10" x="180" y="215" align="right" valign="middle"/>
+            <text str="15" x="240" y="215" align="right" valign="middle"/>
+            <text str="20" x="300" y="215" align="right" valign="middle"/>
+            <text str="25" x="360" y="215" align="right" valign="middle"/>
+            <text str="30" x="420" y="215" align="right" valign="middle"/>
+            <text str="[y]" x="50" y="50" align="right" valign="middle"/>
+            <text str="[x]" x="440" y="215" align="right" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Table" h="161" w="609" aspect="1">
+        <foreground>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="#cccccc"/>
+            <rect x="0" y="0" w="610" h="23"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="23" w="609" h="23"/>
+            <fillstroke/>
+            <fillcolor color="#edf5ff"/>
+            <rect x="0" y="46" w="609" h="23"/>
+            <fillstroke/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="69" w="609" h="23"/>
+            <fillstroke/>
+            <fillcolor color="#edf5ff"/>
+            <rect x="0" y="92" w="609" h="23"/>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="115" w="609" h="23"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#edf5ff"/>
+            <rect x="0" y="138" w="609" h="23"/>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="110" y="0"/>
+                <line x="110" y="161"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="196" y="0"/>
+                <line x="196" y="161"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="296" y="0"/>
+                <line x="296" y="161"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="478" y="0"/>
+                <line x="478" y="161"/>
+            </path>
+            <stroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#666666"/>
+            <rect x="196" y="0" w="100" h="23"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="289.80685" y="9.31044"/>
+                <line x="283.97348" y="9.31044"/>
+                <line x="286.89014" y="13.477109999999996"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="594" y="0"/>
+                <line x="594" y="23"/>
+            </path>
+            <stroke/>
+            <rect x="0" y="0" w="610" h="161"/>
+            <stroke/>
+            <fillcolor color="#ffffff"/>
+            <rect x="594" y="23" w="15" h="138"/>
+            <fillstroke/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#cccccc"/>
+            <roundrect x="595" y="40" w="13" h="64" arcsize="9.254807692307693"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="594" y="23" w="15" h="15"/>
+            <fillstroke/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="605.6818" y="33.68549999999999"/>
+                <line x="596.6818" y="33.68549999999999"/>
+                <line x="601.1818" y="26.685500000000005"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fillcolor color="#ffffff"/>
+            <rect x="594" y="146" w="15" h="15"/>
+            <fillstroke/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="605.6818" y="149.68544"/>
+                <line x="596.6818" y="149.68544"/>
+                <line x="601.1818" y="156.68542000000002"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#edf5ff"/>
+            <rect x="196" y="23" w="100" h="23"/>
+            <fillstroke/>
+            <fillcolor color="#dce9ff"/>
+            <rect x="196" y="46" w="100" h="23"/>
+            <fillstroke/>
+            <fillcolor color="#edf5ff"/>
+            <rect x="196" y="69" w="100" h="23"/>
+            <fillstroke/>
+            <fillcolor color="#dce9ff"/>
+            <rect x="196" y="92" w="100" h="23"/>
+            <fillstroke/>
+            <fillcolor color="#edf5ff"/>
+            <rect x="196" y="115" w="100" h="23"/>
+            <fillstroke/>
+            <fillcolor color="#dce9ff"/>
+            <rect x="196" y="138" w="100" h="23"/>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="0" y="46"/>
+                <line x="594" y="46"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="0" y="69"/>
+                <line x="594" y="69"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="0" y="92"/>
+                <line x="594" y="92"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="0" y="115"/>
+                <line x="594" y="115"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="0" y="138"/>
+                <line x="594" y="138"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="0" y="23"/>
+                <line x="594" y="23"/>
+            </path>
+            <stroke/>
+            <fontcolor color="#000000"/>
+            <fontsize size="12"/>
+            <fontstyle style="0"/>
+            <text str="Column 1" x="10" y="11" align="left" valign="middle"/>
+            <text str="Column 2" x="120" y="11" align="left" valign="middle"/>
+            <text str="Column 3" x="210" y="11" align="left" valign="middle"/>
+            <text str="Column 4" x="310" y="11" align="left" valign="middle"/>
+            <text str="Column 5" x="490" y="11" align="left" valign="middle"/>
+            <text str="1-A" x="10" y="34" align="left" valign="middle"/>
+            <text str="2-A" x="120" y="34" align="left" valign="middle"/>
+            <text str="3-A" x="210" y="34" align="left" valign="middle"/>
+            <text str="4-A" x="310" y="34" align="left" valign="middle"/>
+            <text str="5-A" x="490" y="34" align="left" valign="middle"/>
+            <text str="1-B" x="10" y="57" align="left" valign="middle"/>
+            <text str="2-B" x="120" y="57" align="left" valign="middle"/>
+            <text str="3-B" x="210" y="57" align="left" valign="middle"/>
+            <text str="4-B" x="310" y="57" align="left" valign="middle"/>
+            <text str="5-B" x="490" y="57" align="left" valign="middle"/>
+            <text str="1-C" x="10" y="80" align="left" valign="middle"/>
+            <text str="2-C" x="120" y="80" align="left" valign="middle"/>
+            <text str="3-C" x="210" y="80" align="left" valign="middle"/>
+            <text str="4-C" x="310" y="80" align="left" valign="middle"/>
+            <text str="5-C" x="490" y="80" align="left" valign="middle"/>
+            <text str="1-D" x="10" y="103" align="left" valign="middle"/>
+            <text str="2-D" x="120" y="103" align="left" valign="middle"/>
+            <text str="3-D" x="210" y="103" align="left" valign="middle"/>
+            <text str="4-D" x="310" y="103" align="left" valign="middle"/>
+            <text str="5-D" x="490" y="103" align="left" valign="middle"/>
+            <text str="1-E" x="10" y="126" align="left" valign="middle"/>
+            <text str="2-E" x="120" y="126" align="left" valign="middle"/>
+            <text str="3-E" x="210" y="126" align="left" valign="middle"/>
+            <text str="4-E" x="310" y="126" align="left" valign="middle"/>
+            <text str="5-E" x="490" y="126" align="left" valign="middle"/>
+            <text str="1-F" x="10" y="149" align="left" valign="middle"/>
+            <text str="2-F" x="120" y="149" align="left" valign="middle"/>
+            <text str="3-F" x="210" y="149" align="left" valign="middle"/>
+            <text str="4-F" x="310" y="149" align="left" valign="middle"/>
+            <text str="5-F" x="490" y="149" align="left" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Graph" h="232" w="448" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#f2f2f2"/>
+            <roundrect x="0" y="0" w="448" h="232" arcsize="0.9300595238095238"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="58" y="55" w="377" h="147"/>
+            <fillstroke/>
+            <strokecolor color="#808080"/>
+            <strokewidth width="2"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="58" y="55"/>
+                <line x="58" y="203"/>
+                <line x="436" y="203"/>
+            </path>
+            <stroke/>
+            <strokewidth width="1"/>
+            <path>
+                <move x="120" y="55"/>
+                <line x="120" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="180" y="55"/>
+                <line x="180" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="240" y="55"/>
+                <line x="240" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="298" y="55"/>
+                <line x="298" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="358" y="55"/>
+                <line x="358" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="418" y="55"/>
+                <line x="418" y="203"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="57.33" y="70"/>
+                <line x="435.3333" y="70"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="59.33" y="96.67"/>
+                <line x="434.6667" y="96"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58" y="124"/>
+                <line x="435.33" y="123.33"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58" y="150"/>
+                <line x="436.67" y="150"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58.67" y="177.33"/>
+                <line x="436" y="177.33"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#2c457e"/>
+            <strokewidth width="3"/>
+            <path>
+                <move x="58" y="96"/>
+                <line x="120" y="96"/>
+                <line x="180" y="90"/>
+                <line x="240" y="90"/>
+                <line x="298" y="130"/>
+                <line x="358" y="103"/>
+                <line x="418" y="89"/>
+            </path>
+            <stroke/>
+            <strokewidth width="1"/>
+            <fillcolor color="#2c457e"/>
+            <ellipse x="55" y="92" w="8" h="8"/>
+            <fillstroke/>
+            <ellipse x="116" y="92" w="8" h="8"/>
+            <fillstroke/>
+            <ellipse x="177" y="86" w="8" h="8"/>
+            <fillstroke/>
+            <ellipse x="236" y="86" w="8" h="8"/>
+            <fillstroke/>
+            <ellipse x="294" y="126" w="8" h="8"/>
+            <fillstroke/>
+            <ellipse x="354" y="100" w="8" h="8"/>
+            <fillstroke/>
+            <ellipse x="414" y="85" w="8" h="8"/>
+            <fillstroke/>
+            <fontcolor color="#2c457e"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="Graph Title" x="20" y="15" align="left" valign="middle"/>
+            <fontcolor color="#000000"/>
+            <fontsize size="12"/>
+            <fontstyle style="0"/>
+            <text str="Graph subtitle" x="20" y="35" align="left" valign="middle"/>
+            <fontstyle style="1"/>
+            <text str="25" x="50" y="70" align="right" valign="middle"/>
+            <text str="20" x="50" y="97" align="right" valign="middle"/>
+            <text str="15" x="50" y="124" align="right" valign="middle"/>
+            <text str="10" x="50" y="151" align="right" valign="middle"/>
+            <text str="5" x="50" y="178" align="right" valign="middle"/>
+            <text str="0" x="60" y="215" align="right" valign="middle"/>
+            <text str="5" x="120" y="215" align="right" valign="middle"/>
+            <text str="10" x="180" y="215" align="right" valign="middle"/>
+            <text str="15" x="240" y="215" align="right" valign="middle"/>
+            <text str="20" x="300" y="215" align="right" valign="middle"/>
+            <text str="25" x="360" y="215" align="right" valign="middle"/>
+            <text str="30" x="420" y="215" align="right" valign="middle"/>
+            <text str="[y]" x="50" y="50" align="right" valign="middle"/>
+            <text str="[x]" x="440" y="215" align="right" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Bar Graph" h="232" w="448" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#f2f2f2"/>
+            <roundrect x="0" y="0" w="448" h="232" arcsize="0.9300595238095238"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="58" y="55" w="377" h="147"/>
+            <fillstroke/>
+            <strokecolor color="#808080"/>
+            <strokewidth width="2"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="58" y="55"/>
+                <line x="58" y="203"/>
+                <line x="436" y="203"/>
+            </path>
+            <stroke/>
+            <strokewidth width="1"/>
+            <path>
+                <move x="57.33332999999999" y="70"/>
+                <line x="435.3333" y="70"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="59.33332999999999" y="96.66667000000001"/>
+                <line x="434.6667" y="96"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58" y="124"/>
+                <line x="435.3333" y="123.33332999999999"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58" y="150"/>
+                <line x="436.6667" y="150"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="58.66667000000001" y="177.33334000000002"/>
+                <line x="436" y="177.33334000000002"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#2c457e"/>
+            <fillcolor color="#2c457e"/>
+            <rect x="80" y="82" w="35" h="120"/>
+            <fillstroke/>
+            <rect x="179" y="146" w="35" h="56"/>
+            <fillstroke/>
+            <rect x="275" y="182" w="35" h="20"/>
+            <fillstroke/>
+            <rect x="367" y="110" w="35" h="92"/>
+            <fillstroke/>
+            <fontcolor color="#2c457e"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="Graph Title" x="20" y="15" align="left" valign="middle"/>
+            <fontcolor color="#000000"/>
+            <fontsize size="12"/>
+            <fontstyle style="0"/>
+            <text str="Graph subtitle" x="20" y="35" align="left" valign="middle"/>
+            <fontstyle style="1"/>
+            <text str="25" x="50" y="70" align="right" valign="middle"/>
+            <text str="20" x="50" y="97" align="right" valign="middle"/>
+            <text str="15" x="50" y="124" align="right" valign="middle"/>
+            <text str="10" x="50" y="151" align="right" valign="middle"/>
+            <text str="5" x="50" y="178" align="right" valign="middle"/>
+            <text str="0" x="50" y="215" align="right" valign="middle"/>
+            <text str="Column A" x="100" y="215" align="center" valign="middle"/>
+            <text str="Column B" x="195" y="215" align="center" valign="middle"/>
+            <text str="Column C" x="292" y="215" align="center" valign="middle"/>
+            <text str="Column D" x="385" y="215" align="center" valign="middle"/>
+            <text str="[y]" x="50" y="50" align="right" valign="middle"/>
+            <text str="[x]" x="440" y="215" align="right" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Piechart" h="253" w="346" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#f2f2f2"/>
+            <roundrect x="0" y="0" w="346" h="253" arcsize="1.0264113870547646"/>
+            <fillstroke/>
+            <strokecolor color="#66ff66"/>
+            <fillcolor color="#66ff66"/>
+            <path>
+                <move x="104" y="147"/>
+                <line x="104" y="234"/>
+                <arc rx="87" ry="87" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="17" y="147"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#ff3300"/>
+            <fillcolor color="#ff3300"/>
+            <path>
+                <move x="104" y="147"/>
+                <line x="17" y="147"/>
+                <arc rx="87" ry="87" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="42.5" y="85.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#006666"/>
+            <fillcolor color="#006666"/>
+            <path>
+                <move x="104" y="147"/>
+                <line x="43" y="85"/>
+                <arc rx="87" ry="87" x-axis-rotation="0" large-arc-flag="0" sweep-flag="1" x="104" y="60"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#ffcc00"/>
+            <fillcolor color="#ffcc00"/>
+            <path>
+                <move x="104" y="234"/>
+                <line x="104" y="60"/>
+                <arc rx="87" ry="87" x-axis-rotation="0" large-arc-flag="1" sweep-flag="1" x="104" y="234"/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#ffffff"/>
+            <rect x="227" y="82" w="19" h="19"/>
+            <fillstroke/>
+            <fillcolor color="#006666"/>
+            <rect x="227" y="118" w="19" h="19"/>
+            <fillstroke/>
+            <fillcolor color="#ff3300"/>
+            <rect x="227" y="154" w="19" h="19"/>
+            <fillstroke/>
+            <fillcolor color="#66ff66"/>
+            <rect x="227" y="192" w="19" h="19"/>
+            <fillstroke/>
+            <strokewidth width="3"/>
+            <fillcolor color="none"/>
+            <ellipse x="17" y="60" w="178" h="174"/>
+            <stroke/>
+            <path>
+                <move x="104" y="59.5"/>
+                <line x="104" y="233.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="42.5" y="85.5"/>
+                <line x="104" y="147"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="17" y="147"/>
+                <line x="104" y="147"/>
+            </path>
+            <stroke/>
+            <fontcolor color="#000000"/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="Graph Title" x="20" y="15" align="left" valign="middle"/>
+            <fontsize size="12"/>
+            <fontstyle style="0"/>
+            <text str="Graph subtitle" x="20" y="35" align="left" valign="middle"/>
+            <text str="Category A" x="255" y="88" align="left" valign="middle"/>
+            <text str="50%" x="255" y="100" align="left" valign="middle"/>
+            <text str="Category B" x="255" y="123" align="left" valign="middle"/>
+            <text str="13%" x="255" y="135" align="left" valign="middle"/>
+            <text str="Category C" x="255" y="158" align="left" valign="middle"/>
+            <text str="12%" x="255" y="170" align="left" valign="middle"/>
+            <text str="Category D" x="255" y="196" align="left" valign="middle"/>
+            <text str="25%" x="255" y="208" align="left" valign="middle"/>
+        </foreground>
+    </shape>
+</shapes>

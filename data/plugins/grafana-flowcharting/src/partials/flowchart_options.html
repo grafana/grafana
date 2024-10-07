@@ -1,0 +1,278 @@
+<div class="edit-tab-content">
+  <div class="editor-row" ng-repeat="flowchart in editor.getFlowcharts()">
+    <div class="editor-row">
+      <h5 class="section-heading">
+        mxGraph Edition
+        <info-popover mode="right-normal"
+          ><span ng-bind-html="GF_PLUGIN.popover('Define you flowchart', 'README')"></span
+        ></info-popover>
+      </h5>
+      <!-- Definition -->
+      <div class="section gf-form-group" style="width:100%;">
+        <h5 class="section-heading">
+          Definition
+          <info-popover mode="right-normal"
+            ><span
+              ng-bind-html="GF_PLUGIN.popover('Definition of graph', 'DEFINITION_XML#Type')"
+            ></span
+          ></info-popover>
+        </h5>
+        <!-- Flowchart Definition -->
+        <div class="gf-form">
+          <gf-form-switch
+            class="gf-form"
+            label="Download source"
+            label-class="width-12"
+            checked="flowchart.data.download"
+            on-change="editor.onSourceChange()"
+          >
+          </gf-form-switch>
+        </div>
+        <div class="gf-form"  ng-if="!flowchart.data.download">
+          <label class="gf-form-label width-12">Editor Url & Theme
+            <info-popover mode="right-normal"><span
+                ng-bind-html="GF_PLUGIN.popover('Address and theme of editor when click on button edit draw', 'FLOWCHART#address')"></span>
+            </info-popover>
+          </label>
+          <input type="text" class="gf-form-input width-30" ng-model="flowchart.data.editorUrl"
+            placeholder="https://draw.io" />
+          <div class="gf-form-select-wrapper width-8">
+            <select
+              class="gf-form-input"
+              ng-model="flowchart.data.editorTheme"
+              ng-options="c.value as c.text for c in editor.themes"
+            ></select>
+          </div>
+        </div>
+        <div class="gf-form">
+          <span class="gf-form-label width-12">
+            Source Type
+            <info-popover mode="right-normal"
+              ><span
+                ng-bind-html="GF_PLUGIN.popover('Source of mxgraph definition (Xml definition, Url with xml result)', 'DEFINITION_XML#Type','DEFINITION_XML')"
+              ></span>
+            </info-popover>
+          </span>
+          <div class="gf-form-select-wrapper width-12">
+            <select
+              class="gf-form-input"
+              ng-model="flowchart.data.type"
+              ng-options="c.value as c.text for c in editor.sourceTypes"
+              ng-change="editor.onSourceChange()"
+            ></select>
+          </div>
+        </div>
+        <!-- URL -->
+        <div class="gf-form" ng-if="flowchart.data.download">
+          <div class="gf-form">
+            <span class="gf-form-label width-12">
+              URL
+              <info-popover mode="right-normal">
+                This service should respond with a xml/plain response containing mxgraph syntax
+              </info-popover>
+            </span>
+            <input
+              type="text"
+              ng-model="flowchart.data.url"
+              class="gf-form-input ng-pristine ng-untouched ng-valid ng-empty"
+              style="width: 300px"
+              ng-change="editor.onSourceChange()"
+              ng-model-onblur
+            />
+          </div>
+        </div>
+        <!-- XML/CSV -->
+        <div class="gf-form gf-form--v-stretch" ng-if="!flowchart.data.download">
+          <span class="gf-form-label width-12">
+            Source Content
+            <info-popover mode="right-normal"
+              ><span
+                ng-bind-html="GF_PLUGIN.popover('mxgraph model, edit on draw.io and select Extra menu > Edit Diagram', 'DEFINITION_XML#Type','DEFINITION_XML')"
+              ></span>
+            </info-popover>
+          </span>
+          <textarea
+            name="options.source.xml.input"
+            class="gf-form-input width:95% ng-pristine ng-valid ng-empty ng-touched"
+            rows="10"
+            placeholder="This text should respect xml/plain mxgraph syntax"
+            style="margin-top: 0px; margin-bottom: 0px; height: 145px; width: 95%;"
+            ng-change="editor.onSourceChange()"
+            ng-model="flowchart.data.xml"
+            ng-model-onBlur
+          >
+          </textarea>
+        </div>
+        <!-- <div class="section gf-form" ng-if="flowchart.data.type == 'xml'">
+					<a href="https://draw.io?client=1" target="_blank">Open mxGraph Editor like draw.io and copy/paste model via
+						menu in Extra > Edit diagram...</a>
+				</div> -->
+        <!-- BUTTONS RULES -->
+        <div
+          class="gf-form-inline"
+          ng-if=" flowchart.data.type == 'xml' && !flowchart.data.download "
+        >
+          <div class="gf-form" style="margin-right: 5px;">
+            <button class="btn btn-secondary btn-small" ng-click="editor.edit($index)">
+              <i class="fa fa-edit pointer"></i> Edit Draw
+              <info-popover mode="right-normal"
+                ><span
+                  ng-bind-html="GF_PLUGIN.popover('Open Graph in draw.io', 'DEFINITION_XML#Buttons','EDIT_EXAMPLE')"
+                ></span>
+              </info-popover>
+            </button>
+          </div>
+          <div class="gf-form" style="margin-right: 5px;">
+            <button class="btn btn-secondary btn-small" ng-click="flowchart.prettify()">
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAxklEQVQokZWQMUpDURREzzw+kiKIlaWksnIPWttaCkFXkDWI63AFVtmApXswiFjY2IpIIOEdi7xC0PfBud29M3OZiUgXMgH21JpkTdiWEfIA3KhLYAmctf3I6Lm6cYcrm8vfD6oz5DrJC3AAVKAvAG6THAEX6n6SD4D8Ci3HwLQ5fhKef56HRjpRp0m+1LskK8JlpwxR5+q7+qTe11pnvSIGALUkOWzhFil57QUrAEne1AfgUT0day8iVkuSSTPYEtajgv/gG3TbgAtdLpuZAAAAAElFTkSuQmCC"
+              />
+              Prettify
+              <info-popover mode="right-normal"
+                ><span
+                  ng-bind-html="GF_PLUGIN.popover('Format XML code to display or modify', 'DEFINITION_XML#Buttons')"
+                ></span>
+              </info-popover>
+            </button>
+          </div>
+          <div class="gf-form" style="margin-right: 5px;">
+            <button class="btn btn-secondary btn-small" ng-click="flowchart.minify()">
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAzElEQVQokYWSvUoDYRREzywfS9jCInYWeTILSytRH0CwshUtbHwD38xCQSGIP/dYZINBN2Zu8RV3+Dgz3Ij8K2nAnPAI0O0wd8AhcIUcALRJX3mSZB94Bc7U+yQv4ycToxdV9aE+q7fqsN5NIqkkacAesATe1ru2EewUGEYzwPWY8XN86wdJO/VO/XKlS7Wvqr6q+k3cdeimPiVZAgMA4T3kD25DZsAxcKTeJJmP7WypWhfqg3qu9iNem2wPVxmqaqHOtpk2JztP45e+AdC7pvsVKoFjAAAAAElFTkSuQmCC"
+              />
+              Minify
+            </button>
+          </div>
+          <div class="gf-form" style="margin-right: 5px;">
+            <button class="btn btn-secondary btn-small" ng-click="flowchart.encode()">
+              <i class="fas fa-compress-arrows-alt pointer"></i> Compress/Encode
+              <info-popover mode="right-normal"
+                ><span
+                  ng-bind-html="GF_PLUGIN.popover('Zip XML definition for big XML', 'DEFINITION_XML#Buttons')"
+                ></span>
+              </info-popover>
+            </button>
+          </div>
+          <div class="gf-form" style="margin-right: 5px;">
+            <button class="btn btn-secondary btn-small" ng-click="flowchart.decode()">
+              <i class="fas expand-arrows-alt pointer"></i> Extract/Decode
+              <info-popover mode="right-normal"
+                ><span
+                  ng-bind-html="GF_PLUGIN.popover('Extract xml from content when compressed', 'DEFINITION_XML#Buttons')"
+                ></span>
+              </info-popover>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Option Section -->
+    <div class="editor-row">
+      <h5 class="section-heading">Advanced</h5>
+      <div class="section gf-form-group">
+        <h5 class="section-heading">
+          Display
+          <info-popover mode="right-normal"
+            ><span
+              ng-bind-html="GF_PLUGIN.popover('Change display graph options', 'ADVANCED_XML#Buttons','ADVANCED_XML2')"
+            ></span>
+          </info-popover>
+        </h5>
+        <gf-form-switch
+          class="gf-form"
+          label="Scale"
+          label-class="width-12"
+          checked="flowchart.data.scale"
+          on-change="editor.onOptionChange()"
+        >
+        </gf-form-switch>
+        <gf-form-switch
+          class="gf-form"
+          label="Center"
+          label-class="width-12"
+          checked="flowchart.data.center"
+          on-change="editor.onOptionChange()"
+        >
+        </gf-form-switch>
+        <gf-form-switch
+          class="gf-form"
+          label="Grid"
+          label-class="width-12"
+          checked="flowchart.data.grid"
+          on-change="editor.onOptionChange()"
+        >
+        </gf-form-switch>
+        <div class="gf-form">
+          <label class="gf-form-label width-12">Bg Color</label>
+          <span class="width-10">
+            <spectrum-picker
+              class="gf-form-input"
+              ng-model="flowchart.data.bgColor"
+              ng-change="editor.onOptionChange()"
+            >
+            </spectrum-picker>
+          </span>
+        </div>
+        <!--zoom-->
+        <div class="gf-form" ng-if="!flowchart.data.scale">
+          <span class="gf-form-label width-12">
+            Zoom
+            <info-popover mode="right-normal"
+              ><span
+                ng-bind-html="GF_PLUGIN.popover('Zoom graph, if scale is unchecked. if < 100% : reduce graph, >100% increase graph', 'DEFINITION_XML#Buttons','ADVANCED_XML2')"
+              ></span>
+            </info-popover>
+          </span>
+          <input
+            type="text"
+            name="valueDisplayRegex"
+            ng-model="flowchart.data.zoom"
+            style="text-align: right"
+            placeholder="100%"
+            class="gf-form-input max-width-10"
+            ng-blur="editor.onOptionChange()"
+          />
+        </div>
+      </div>
+      <div class="section gf-form-group">
+        <h5 class="section-heading">
+          Others options
+          <info-popover mode="right-normal"
+            ><span
+              ng-bind-html="GF_PLUGIN.popover('Change options in graph', 'ADVANCED_XML#Buttons','ADVANCED_XML2')"
+            ></span>
+          </info-popover>
+        </h5>
+        <!-- Lock -->
+        <gf-form-switch
+          class="gf-form"
+          label="Lock"
+          label-class="width-12"
+          checked="flowchart.data.lock"
+          on-change="editor.onOptionChange()"
+        >
+        </gf-form-switch>
+        <!-- Draw.io source -->
+        <gf-form-switch
+          class="gf-form"
+          label="Allow draw.io source"
+					label-class="width-12"
+					tooltip="allow downloads images from draw.io"
+          checked="flowchart.data.allowDrawio"
+          on-change="editor.onSourceChange()"
+        >
+        </gf-form-switch>
+        <!-- Tooltip -->
+        <gf-form-switch
+          class="gf-form"
+					label="Tooltip"
+					tooltip="Enable tooltip"
+          label-class="width-12"
+          checked="flowchart.data.tooltip"
+          on-change="editor.onOptionChange()"
+        >
+        </gf-form-switch>
+      </div>
+    </div>
+  </div>
+</div>

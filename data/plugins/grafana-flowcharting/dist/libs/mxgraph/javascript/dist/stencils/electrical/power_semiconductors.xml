@@ -1,0 +1,743 @@
+<shapes name="mxgraph.electrical.power_semiconductors">
+	<shape aspect="variable" h="90" name="Bridge Rectifier 1" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="+" perimeter="0" x="0" y="0.5"/>
+			<constraint name="-" perimeter="0" x="1" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+		</connections>
+		<background>
+			<path>
+				<move x="45" y="0"/>
+				<line x="90" y="45"/>
+				<line x="45" y="90"/>
+				<line x="0" y="45"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="40" y="10"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="1" x="45" x-axis-rotation="0" y="10"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="0" x="50" x-axis-rotation="0" y="10"/>
+				<move x="40" y="80"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="1" x="45" x-axis-rotation="0" y="80"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="0" x="50" x-axis-rotation="0" y="80"/>
+				<move x="7" y="45"/>
+				<line x="13" y="45"/>
+				<move x="10" y="42"/>
+				<line x="10" y="48"/>
+				<move x="83" y="45"/>
+				<line x="77" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Bridge Rectifier 2" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="+" perimeter="0" x="0" y="0.5"/>
+			<constraint name="-" perimeter="0" x="1" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="0.5" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.5" y="1"/>
+		</connections>
+		<background>
+			<path>
+				<move x="45" y="0"/>
+				<line x="90" y="45"/>
+				<line x="45" y="90"/>
+				<line x="0" y="45"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="40" y="10"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="1" x="45" x-axis-rotation="0" y="10"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="0" x="50" x-axis-rotation="0" y="10"/>
+				<move x="40" y="80"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="1" x="45" x-axis-rotation="0" y="80"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="0" x="50" x-axis-rotation="0" y="80"/>
+				<move x="7" y="45"/>
+				<line x="13" y="45"/>
+				<move x="10" y="42"/>
+				<line x="10" y="48"/>
+				<move x="83" y="45"/>
+				<line x="77" y="45"/>
+				<move x="17.5" y="22.5"/>
+				<line x="22.5" y="27.5"/>
+				<move x="22.5" y="62.5"/>
+				<line x="17.5" y="67.5"/>
+				<move x="62.5" y="67.5"/>
+				<line x="67.5" y="72.5"/>
+				<move x="67.5" y="17.5"/>
+				<line x="62.5" y="22.5"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="25" y="25"/>
+				<line x="20" y="25"/>
+				<line x="20" y="20"/>
+				<close/>
+				<move x="20.25" y="70"/>
+				<line x="20" y="65"/>
+				<line x="25" y="65"/>
+				<close/>
+				<move x="65" y="25"/>
+				<line x="65" y="20"/>
+				<line x="70" y="20"/>
+				<close/>
+				<move x="65" y="65"/>
+				<line x="65" y="70"/>
+				<line x="70" y="70"/>
+				<close/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Bridge Rectifier 3" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="+" perimeter="0" x="1" y="0.165"/>
+			<constraint name="-" perimeter="0" x="1" y="0.835"/>
+			<constraint name="var1" perimeter="0" x="0" y="0.165"/>
+			<constraint name="var2" perimeter="0" x="0" y="0.835"/>
+		</connections>
+		<background>
+			<rect h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="5" y="15"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="1" x="10" x-axis-rotation="0" y="15"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="0" x="15" x-axis-rotation="0" y="15"/>
+				<move x="5" y="75"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="1" x="10" x-axis-rotation="0" y="75"/>
+				<arc large-arc-flag="0" rx="3" ry="3" sweep-flag="0" x="15" x-axis-rotation="0" y="75"/>
+				<move x="79" y="15"/>
+				<line x="85" y="15"/>
+				<move x="82" y="12"/>
+				<line x="82" y="18"/>
+				<move x="85" y="75"/>
+				<line x="79" y="75"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Diac 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="5" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="45"/>
+				<line x="40" y="45"/>
+				<move x="60" y="15"/>
+				<line x="60" y="75"/>
+				<move x="40" y="15"/>
+				<line x="59" y="30"/>
+				<line x="40" y="45"/>
+				<close/>
+				<move x="60" y="45"/>
+				<line x="41" y="60"/>
+				<line x="60" y="75"/>
+				<close/>
+				<move x="60" y="45"/>
+				<line x="100" y="45"/>
+				<move x="40" y="15"/>
+				<line x="40" y="75"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Diac 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="40" y="30"/>
+				<move x="60" y="0"/>
+				<line x="60" y="60"/>
+				<move x="40" y="0"/>
+				<line x="59" y="15"/>
+				<line x="40" y="30"/>
+				<close/>
+				<move x="60" y="30"/>
+				<line x="41" y="45"/>
+				<line x="60" y="60"/>
+				<close/>
+				<move x="60" y="30"/>
+				<line x="100" y="30"/>
+				<move x="40" y="0"/>
+				<line x="40" y="60"/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="67" name="GTO SCR" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.55"/>
+			<constraint name="out" perimeter="0" x="1" y="0.55"/>
+		</connections>
+		<background>
+			<path>
+				<move x="30" y="7"/>
+				<line x="70" y="37"/>
+				<line x="30" y="67"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="37"/>
+				<line x="30" y="37"/>
+				<move x="70" y="7"/>
+				<line x="70" y="67"/>
+				<move x="70" y="32"/>
+				<line x="80" y="17"/>
+				<line x="80" y="0"/>
+				<move x="70" y="17"/>
+				<line x="80" y="2"/>
+				<line x="80" y="3.5"/>
+				<move x="79.5" y="21.5"/>
+				<line x="76" y="23"/>
+				<line x="76" y="19.3"/>
+				<move x="77" y="10.5"/>
+				<line x="77" y="6.5"/>
+				<line x="73.5" y="8"/>
+				<move x="70" y="37"/>
+				<line x="100" y="37"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="63.5" name="IGCT 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.525"/>
+			<constraint name="out" perimeter="0" x="1" y="0.525"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="33.5"/>
+				<line x="100" y="33.5"/>
+				<move x="70" y="3.5"/>
+				<line x="70" y="63.5"/>
+				<move x="70" y="28.5"/>
+				<line x="80" y="13.5"/>
+				<line x="80" y="0"/>
+				<move x="75" y="5.5"/>
+				<line x="85" y="5.5"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="30" y="3.5"/>
+				<line x="70" y="33.5"/>
+				<line x="30" y="63.5"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<path>
+				<move x="70" y="3.5"/>
+				<line x="50" y="18.5"/>
+				<line x="70" y="33.5"/>
+				<close/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="63.5" name="IGCT 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.525"/>
+			<constraint name="out" perimeter="0" x="1" y="0.525"/>
+		</connections>
+		<background>
+			<path>
+				<move x="30" y="3.5"/>
+				<line x="70" y="33.5"/>
+				<line x="30" y="63.5"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="33.5"/>
+				<line x="30" y="33.5"/>
+				<move x="70" y="3.5"/>
+				<line x="70" y="63.5"/>
+				<move x="70" y="28.5"/>
+				<line x="80" y="13.5"/>
+				<line x="80" y="0"/>
+				<move x="70" y="3.5"/>
+				<line x="50" y="18.5"/>
+				<line x="70" y="33.5"/>
+				<close/>
+				<move x="75" y="5.5"/>
+				<line x="85" y="5.5"/>
+				<move x="70" y="33.5"/>
+				<line x="100" y="33.5"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="NPN IGBT 1" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="in" perimeter="0" x="0.13" y="0.835"/>
+			<constraint name="out1" perimeter="0" x="0.81" y="0.11"/>
+			<constraint name="out2" perimeter="0" x="0.81" y="0.89"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="20" y="30"/>
+				<line x="73" y="10"/>
+				<move x="20" y="60"/>
+				<line x="73" y="80"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="68.75" y="75.5"/>
+				<line x="72.75" y="80"/>
+				<line x="66.75" y="81"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="20" y="15"/>
+				<line x="20" y="75"/>
+				<move x="15" y="15"/>
+				<line x="15" y="75"/>
+				<line x="11.5" y="75"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="71" name="NPN IGBT 2" strokewidth="inherit" w="61.5">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.915"/>
+			<constraint name="out1" perimeter="0" x="1" y="0"/>
+			<constraint name="out2" perimeter="0" x="1" y="0.99"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="8.5" y="20"/>
+				<line x="61.5" y="0"/>
+				<move x="8.5" y="50"/>
+				<line x="61.5" y="70"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="57.25" y="65.5"/>
+				<line x="61.25" y="70"/>
+				<line x="55.25" y="71"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="8.5" y="5"/>
+				<line x="8.5" y="65"/>
+				<move x="3.5" y="5"/>
+				<line x="3.5" y="65"/>
+				<line x="0" y="65"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="NPN IGBT 3" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="in" perimeter="0" x="0.13" y="0.835"/>
+			<constraint name="out1" perimeter="0" x="0.81" y="0.11"/>
+			<constraint name="out2" perimeter="0" x="0.81" y="0.89"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="20" y="30"/>
+				<line x="73" y="10"/>
+				<move x="20" y="60"/>
+				<line x="73" y="80"/>
+				<move x="73" y="10"/>
+				<line x="73" y="80"/>
+				<move x="68" y="42"/>
+				<line x="78" y="42"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="68.75" y="75.5"/>
+				<line x="72.75" y="80"/>
+				<line x="66.75" y="81"/>
+				<close/>
+				<move x="77.5" y="48"/>
+				<line x="73" y="43"/>
+				<line x="68.5" y="48"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="20" y="15"/>
+				<line x="20" y="75"/>
+				<move x="15" y="15"/>
+				<line x="15" y="75"/>
+				<line x="11.5" y="75"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="71" name="NPN IGBT 4" strokewidth="inherit" w="66.5">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.915"/>
+			<constraint name="out1" perimeter="0" x="0.925" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.925" y="0.99"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="8.5" y="20"/>
+				<line x="61.5" y="0"/>
+				<move x="8.5" y="50"/>
+				<line x="61.5" y="70"/>
+				<move x="61.5" y="0"/>
+				<line x="61.5" y="70"/>
+				<move x="56.5" y="32"/>
+				<line x="66.5" y="32"/>
+			</path>
+			<fillstroke/>
+			<path>
+				<move x="57.25" y="65.5"/>
+				<line x="61.25" y="70"/>
+				<line x="55.25" y="71"/>
+				<close/>
+				<move x="66" y="38"/>
+				<line x="61.5" y="33"/>
+				<line x="57" y="38"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="8.5" y="5"/>
+				<line x="8.5" y="65"/>
+				<move x="3.5" y="5"/>
+				<line x="3.5" y="65"/>
+				<line x="0" y="65"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="PNP IGBT 1" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="in" perimeter="0" x="0.13" y="0.835"/>
+			<constraint name="out1" perimeter="0" x="0.81" y="0.11"/>
+			<constraint name="out2" perimeter="0" x="0.81" y="0.89"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="25" y="65"/>
+				<line x="21" y="60.5"/>
+				<line x="27" y="59.5"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<path>
+				<move x="20" y="30"/>
+				<line x="73" y="10"/>
+				<move x="25.89" y="62.22"/>
+				<line x="73" y="80"/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="20" y="15"/>
+				<line x="20" y="75"/>
+				<move x="15" y="15"/>
+				<line x="15" y="75"/>
+				<line x="11.5" y="75"/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="70" name="PNP IGBT 2" strokewidth="inherit" w="61.5">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.93"/>
+			<constraint name="out1" perimeter="0" x="1" y="0"/>
+			<constraint name="out2" perimeter="0" x="1" y="1"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="8.5" y="20"/>
+				<line x="61.5" y="0"/>
+				<move x="8.5" y="50"/>
+				<line x="61.5" y="70"/>
+			</path>
+			<fillstroke/>
+			<path>
+				<move x="13.5" y="55"/>
+				<line x="9.5" y="50.5"/>
+				<line x="15.5" y="49.5"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="8.5" y="5"/>
+				<line x="8.5" y="65"/>
+				<move x="3.5" y="5"/>
+				<line x="3.5" y="65"/>
+				<line x="0" y="65"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="PNP IGBT 3" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="in" perimeter="0" x="0.13" y="0.835"/>
+			<constraint name="out1" perimeter="0" x="0.81" y="0.11"/>
+			<constraint name="out2" perimeter="0" x="0.81" y="0.89"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="20" y="30"/>
+				<line x="73" y="10"/>
+				<move x="20" y="60"/>
+				<line x="73" y="80"/>
+				<move x="73" y="10"/>
+				<line x="73" y="80"/>
+				<move x="68" y="48"/>
+				<line x="78" y="48"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="25" y="65"/>
+				<line x="21" y="60.5"/>
+				<line x="27" y="59.5"/>
+				<close/>
+				<move x="77.5" y="42"/>
+				<line x="73" y="47"/>
+				<line x="68.5" y="42"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="20" y="15"/>
+				<line x="20" y="75"/>
+				<move x="15" y="15"/>
+				<line x="15" y="75"/>
+				<line x="11.5" y="75"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="70" name="PNP IGBT 4" strokewidth="inherit" w="66.5">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.93"/>
+			<constraint name="out1" perimeter="0" x="0.925" y="0"/>
+			<constraint name="out2" perimeter="0" x="0.925" y="1"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="8.5" y="20"/>
+				<line x="61.5" y="0"/>
+				<move x="8.5" y="50"/>
+				<line x="61.5" y="70"/>
+				<move x="61.5" y="0"/>
+				<line x="61.5" y="70"/>
+				<move x="56.5" y="38"/>
+				<line x="66.5" y="38"/>
+			</path>
+			<fillstroke/>
+			<path>
+				<move x="13.5" y="55"/>
+				<line x="9.5" y="50.5"/>
+				<line x="15.5" y="49.5"/>
+				<close/>
+				<move x="66" y="32"/>
+				<line x="61.5" y="37"/>
+				<line x="57" y="32"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="8.5" y="5"/>
+				<line x="8.5" y="65"/>
+				<move x="3.5" y="5"/>
+				<line x="3.5" y="65"/>
+				<line x="0" y="65"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="63.5" name="SCR 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.525"/>
+			<constraint name="out" perimeter="0" x="1" y="0.525"/>
+		</connections>
+		<background>
+			<path>
+				<move x="30" y="3.5"/>
+				<line x="70" y="33.5"/>
+				<line x="30" y="63.5"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="33.5"/>
+				<line x="30" y="33.5"/>
+				<move x="70" y="3.5"/>
+				<line x="70" y="63.5"/>
+				<move x="70" y="28.5"/>
+				<line x="80" y="13.5"/>
+				<line x="80" y="0"/>
+				<move x="70" y="33.5"/>
+				<line x="100" y="33.5"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="SCR 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="5" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="45"/>
+				<line x="100" y="45"/>
+				<move x="70" y="15"/>
+				<line x="70" y="75"/>
+				<move x="70" y="40"/>
+				<line x="80" y="25"/>
+				<line x="80" y="11.5"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="30" y="15"/>
+				<line x="70" y="45"/>
+				<line x="30" y="75"/>
+				<close/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="SIDAC" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="5" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="45"/>
+				<line x="25" y="45"/>
+				<move x="50" y="15"/>
+				<line x="50" y="75"/>
+				<move x="25" y="75"/>
+				<line x="25" y="15"/>
+				<line x="75" y="75"/>
+				<line x="75" y="15"/>
+				<move x="75" y="45"/>
+				<line x="100" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="Triac 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="5" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="45"/>
+				<line x="40" y="45"/>
+				<move x="40" y="15"/>
+				<line x="40" y="75"/>
+				<line x="30" y="85"/>
+				<move x="60" y="15"/>
+				<line x="60" y="75"/>
+				<move x="40" y="15"/>
+				<line x="59" y="30"/>
+				<line x="40" y="45"/>
+				<close/>
+				<move x="60" y="45"/>
+				<line x="41" y="60"/>
+				<line x="60" y="75"/>
+				<close/>
+				<move x="60" y="45"/>
+				<line x="100" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="70" name="Triac 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.43"/>
+			<constraint name="out" perimeter="0" x="1" y="0.43"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="40" y="30"/>
+				<move x="40" y="0"/>
+				<line x="40" y="60"/>
+				<line x="30" y="70"/>
+				<move x="60" y="0"/>
+				<line x="60" y="60"/>
+				<move x="60" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="40" y="0"/>
+				<line x="59" y="15"/>
+				<line x="40" y="30"/>
+				<close/>
+				<move x="60" y="30"/>
+				<line x="41" y="45"/>
+				<line x="60" y="60"/>
+				<close/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+</shapes>

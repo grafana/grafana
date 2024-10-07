@@ -1,0 +1,193 @@
+<shapes name="mxgraph.pid.agitators">
+<shape aspect="variable" h="120" name="Agitator, Stirrer" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="100"/>
+            <move x="0" y="120"/>
+            <line x="0" y="80"/>
+            <line x="80" y="120"/>
+            <line x="80" y="80"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Agitator (Anchor)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="120"/>
+            <move x="0" y="80"/>
+            <line x="0" y="108"/>
+            <arc large-arc-flag="0" rx="50" ry="30" sweep-flag="0" x="80" x-axis-rotation="0" y="108"/>
+            <line x="80" y="80"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Agitator (Cross-Beam)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="120"/>
+            <move x="0" y="80"/>
+            <line x="80" y="80"/>
+            <move x="80" y="120"/>
+            <line x="0" y="120"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+   </foreground>
+</shape>
+<shape aspect="variable" h="135" name="Agitator (Disc)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="120"/>
+            <move x="20" y="120"/>
+            <line x="60" y="120"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+        <rect h="30" w="20" x="0" y="105"/>
+        <fillstroke/>
+        <rect h="30" w="20" x="60" y="104.5"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Agitator (Flate-Blade Paddle)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="60"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+        <rect h="80" w="80" x="0" y="60"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Agitator (Gat Paddle)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <rect h="40" w="80" x="0" y="80"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+        </path>
+        <stroke/>
+        <fillcolor color="none"/>
+        <linejoin join="round"/>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="80"/>
+            <move x="0" y="120"/>
+            <line x="40" y="80"/>
+            <line x="40" y="120"/>
+            <line x="80" y="80"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="130" name="Agitator (Helical)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="120"/>
+            <move x="0" y="70"/>
+            <line x="80" y="90"/>
+            <line x="0" y="110"/>
+            <line x="80" y="130"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="130" name="Agitator (Impeller)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="120"/>
+            <move x="0" y="120"/>
+            <arc large-arc-flag="0" rx="25" ry="25" sweep-flag="0" x="40" x-axis-rotation="0" y="120"/>
+            <arc large-arc-flag="0" rx="25" ry="25" sweep-flag="1" x="80" x-axis-rotation="0" y="120"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="132.12" name="Agitator (Propeller)" strokewidth="inherit" w="92.74">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="46.37" y="0"/>
+            <line x="46.37" y="120"/>
+            <move x="76.37" y="110"/>
+            <arc large-arc-flag="1" rx="11" ry="11" sweep-flag="1" x="76.37" x-axis-rotation="0" y="130"/>
+            <line x="16.37" y="110"/>
+            <arc large-arc-flag="1" rx="11" ry="11" sweep-flag="0" x="16.37" x-axis-rotation="0" y="130"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="135" name="Agitator (Turbine)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="40" y="0"/>
+            <line x="40" y="105"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+        <rect h="30" w="20" x="0" y="105"/>
+        <fillstroke/>
+        <rect h="30" w="20" x="60" y="105"/>
+        <fillstroke/>
+        <rect h="30" w="20" x="20" y="105"/>
+        <fillstroke/>
+        <rect h="30" w="20" x="40" y="105"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

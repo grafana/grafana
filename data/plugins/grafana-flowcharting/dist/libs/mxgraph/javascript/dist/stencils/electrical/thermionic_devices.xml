@@ -1,0 +1,295 @@
+<shapes name="mxgraph.electrical.thermionic_devices">
+	<shape aspect="variable" h="77" name="Diode" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S1" perimeter="0" x="0.36" y="1"/>
+			<constraint name="S2" perimeter="0" x="0.64" y="1"/>
+		</connections>
+		<background>
+			<ellipse h="70" w="70" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="35" y="0"/>
+				<line x="35" y="10"/>
+				<move x="25" y="77"/>
+				<line x="25" y="68"/>
+				<arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="45" x-axis-rotation="0" y="68"/>
+				<line x="45" y="77"/>
+			</path>
+			<stroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="25" y="10"/>
+				<line x="45" y="10"/>
+				<move x="22.5" y="60"/>
+				<line x="27.5" y="55"/>
+				<line x="42.5" y="55"/>
+				<line x="47.5" y="60"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="77" name="Double Diode" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="NW" perimeter="0" x="0.285" y="0"/>
+			<constraint name="NE" perimeter="0" x="0.715" y="0"/>
+			<constraint name="S1" perimeter="0" x="0.36" y="1"/>
+			<constraint name="S2" perimeter="0" x="0.64" y="1"/>
+		</connections>
+		<background>
+			<roundrect arcsize="21.43" h="70" w="70" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="20" y="0"/>
+				<line x="20" y="10"/>
+				<move x="50" y="0"/>
+				<line x="50" y="10"/>
+				<move x="25" y="77"/>
+				<line x="25" y="68"/>
+				<arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="45" x-axis-rotation="0" y="68"/>
+				<line x="45" y="77"/>
+			</path>
+			<stroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="10" y="10"/>
+				<line x="30" y="10"/>
+				<move x="40" y="10"/>
+				<line x="60" y="10"/>
+				<move x="10" y="60"/>
+				<line x="15" y="55"/>
+				<line x="55" y="55"/>
+				<line x="60" y="60"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="77" name="Double Triode" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="NW" perimeter="0" x="0.285" y="0"/>
+			<constraint name="NE" perimeter="0" x="0.715" y="0"/>
+			<constraint name="S1" perimeter="0" x="0.36" y="1"/>
+			<constraint name="S2" perimeter="0" x="0.64" y="1"/>
+		</connections>
+		<background>
+			<roundrect arcsize="21.43" h="70" w="70" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="20" y="0"/>
+				<line x="20" y="10"/>
+				<move x="50" y="0"/>
+				<line x="50" y="10"/>
+				<move x="0" y="35"/>
+				<line x="10" y="35"/>
+				<move x="20" y="35"/>
+				<line x="30" y="35"/>
+				<move x="40" y="35"/>
+				<line x="50" y="35"/>
+				<move x="60" y="35"/>
+				<line x="70" y="35"/>
+				<move x="25" y="77"/>
+				<line x="25" y="68"/>
+				<arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="45" x-axis-rotation="0" y="68"/>
+				<line x="45" y="77"/>
+			</path>
+			<stroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="10" y="60"/>
+				<line x="15" y="55"/>
+				<line x="55" y="55"/>
+				<line x="60" y="60"/>
+				<move x="10" y="10"/>
+				<line x="30" y="10"/>
+				<move x="40" y="10"/>
+				<line x="60" y="10"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="77" name="Pentode" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S1" perimeter="0" x="0.36" y="1"/>
+			<constraint name="S2" perimeter="0" x="0.64" y="1"/>
+		</connections>
+		<background>
+			<ellipse h="70" w="70" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="35" y="0"/>
+				<line x="35" y="10"/>
+				<move x="25" y="77"/>
+				<line x="25" y="68"/>
+				<arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="45" x-axis-rotation="0" y="68"/>
+				<line x="45" y="77"/>
+			</path>
+			<stroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="25" y="10"/>
+				<line x="45" y="10"/>
+				<move x="10" y="35"/>
+				<line x="20" y="35"/>
+				<move x="30" y="35"/>
+				<line x="40" y="35"/>
+				<move x="50" y="35"/>
+				<line x="60" y="35"/>
+				<move x="10" y="25"/>
+				<line x="20" y="25"/>
+				<move x="30" y="25"/>
+				<line x="40" y="25"/>
+				<move x="50" y="25"/>
+				<line x="60" y="25"/>
+				<move x="10" y="45"/>
+				<line x="20" y="45"/>
+				<move x="30" y="45"/>
+				<line x="40" y="45"/>
+				<move x="50" y="45"/>
+				<line x="60" y="45"/>
+				<move x="22.5" y="60"/>
+				<line x="27.5" y="55"/>
+				<line x="42.5" y="55"/>
+				<line x="47.5" y="60"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="87" name="Photocell" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0.11"/>
+			<constraint name="S1" perimeter="0" x="0.36" y="1"/>
+			<constraint name="S2" perimeter="0" x="0.64" y="1"/>
+		</connections>
+		<background>
+			<ellipse h="70" w="70" x="0" y="10"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="35" y="10"/>
+				<line x="35" y="20"/>
+				<move x="60" y="0"/>
+				<line x="50" y="10"/>
+				<move x="70" y="8"/>
+				<line x="60" y="18"/>
+				<move x="25" y="87"/>
+				<line x="25" y="78"/>
+				<arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="45" x-axis-rotation="0" y="78"/>
+				<line x="45" y="87"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="50" y="7"/>
+				<line x="50" y="10"/>
+				<line x="53" y="10"/>
+				<close/>
+				<move x="60" y="15"/>
+				<line x="60" y="18"/>
+				<line x="63" y="18"/>
+				<close/>
+			</path>
+			<fillstroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="25" y="20"/>
+				<line x="45" y="20"/>
+				<move x="22.5" y="70"/>
+				<line x="27.5" y="65"/>
+				<line x="42.5" y="65"/>
+				<line x="47.5" y="70"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="77" name="Tetrode" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S1" perimeter="0" x="0.36" y="1"/>
+			<constraint name="S2" perimeter="0" x="0.64" y="1"/>
+		</connections>
+		<background>
+			<ellipse h="70" w="70" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="35" y="0"/>
+				<line x="35" y="10"/>
+				<move x="25" y="77"/>
+				<line x="25" y="68"/>
+				<arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="45" x-axis-rotation="0" y="68"/>
+				<line x="45" y="77"/>
+			</path>
+			<stroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="25" y="10"/>
+				<line x="45" y="10"/>
+				<move x="10" y="40"/>
+				<line x="20" y="40"/>
+				<move x="30" y="40"/>
+				<line x="40" y="40"/>
+				<move x="50" y="40"/>
+				<line x="60" y="40"/>
+				<move x="10" y="30"/>
+				<line x="20" y="30"/>
+				<move x="30" y="30"/>
+				<line x="40" y="30"/>
+				<move x="50" y="30"/>
+				<line x="60" y="30"/>
+				<move x="22.5" y="60"/>
+				<line x="27.5" y="55"/>
+				<line x="42.5" y="55"/>
+				<line x="47.5" y="60"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="77" name="Triode" strokewidth="inherit" w="70">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S1" perimeter="0" x="0.36" y="1"/>
+			<constraint name="S2" perimeter="0" x="0.64" y="1"/>
+		</connections>
+		<background>
+			<ellipse h="70" w="70" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="35" y="0"/>
+				<line x="35" y="10"/>
+				<move x="25" y="77"/>
+				<line x="25" y="68"/>
+				<arc large-arc-flag="1" rx="10" ry="10" sweep-flag="1" x="45" x-axis-rotation="0" y="68"/>
+				<line x="45" y="77"/>
+			</path>
+			<stroke/>
+			<strokewidth width="2"/>
+			<path>
+				<move x="25" y="10"/>
+				<line x="45" y="10"/>
+				<move x="10" y="35"/>
+				<line x="20" y="35"/>
+				<move x="30" y="35"/>
+				<line x="40" y="35"/>
+				<move x="50" y="35"/>
+				<line x="60" y="35"/>
+				<move x="22.5" y="60"/>
+				<line x="27.5" y="55"/>
+				<line x="42.5" y="55"/>
+				<line x="47.5" y="60"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+</shapes>

@@ -1,0 +1,672 @@
+<shapes name="mxgraph.electrical.logic_gates">
+	<shape aspect="variable" h="60" name="AND" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="20" y="0"/>
+				<line x="50" y="0"/>
+				<arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="50" x-axis-rotation="0" y="60"/>
+				<line x="20" y="60"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="10"/>
+				<line x="20" y="10"/>
+				<move x="0" y="50"/>
+				<line x="20" y="50"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="46" name="Bandpass Filter" strokewidth="inherit" w="52">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="46" w="52" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="6" y="33"/>
+				<line x="16" y="13"/>
+				<line x="36" y="13"/>
+				<line x="46" y="33"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Buffer" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="20" y="0"/>
+				<line x="80" y="30"/>
+				<line x="20" y="60"/>
+				<close/>
+				<move x="0" y="30"/>
+				<line x="20" y="30"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="D Type Flip-Flop" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="D" perimeter="0" x="0" y="0.25"/>
+			<constraint name="E" perimeter="0" x="0" y="0.75"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.25"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.75"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="20"/>
+				<line x="20" y="20"/>
+				<move x="0" y="60"/>
+				<line x="20" y="60"/>
+				<move x="80" y="20"/>
+				<line x="100" y="20"/>
+				<move x="71" y="55"/>
+				<line x="79" y="55"/>
+				<move x="20" y="55"/>
+				<line x="30" y="60"/>
+				<line x="20" y="65"/>
+				<move x="80" y="60"/>
+				<line x="100" y="60"/>
+			</path>
+			<stroke/>
+			<text align="center" str="D" valign="bottom" x="25" y="25"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="25"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="65"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="D Type Flip-Flop With Clear" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="D" perimeter="0" x="0" y="0.335"/>
+			<constraint name="E" perimeter="0" x="0" y="0.78"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.335"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.78"/>
+			<constraint name="clear" perimeter="0" x="0.5" y="0"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="10"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="30"/>
+				<line x="20" y="30"/>
+				<move x="0" y="70"/>
+				<line x="20" y="70"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+				<move x="80" y="70"/>
+				<line x="100" y="70"/>
+				<move x="71" y="65"/>
+				<line x="79" y="65"/>
+				<move x="20" y="65"/>
+				<line x="30" y="70"/>
+				<line x="20" y="75"/>
+				<move x="50" y="0"/>
+				<line x="50" y="6"/>
+			</path>
+			<stroke/>
+			<text align="center" str="D" valign="bottom" x="25" y="35"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="35"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="75"/>
+			<ellipse h="4" w="4" x="48" y="6"/>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="100" name="D Type RS Flip-Flop" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="D" perimeter="0" x="0" y="0.3"/>
+			<constraint name="E" perimeter="0" x="0" y="0.7"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.3"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.7"/>
+			<constraint name="S" perimeter="0" x="0.5" y="0"/>
+			<constraint name="R" perimeter="0" x="0.5" y="1"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="10"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="30"/>
+				<line x="20" y="30"/>
+				<move x="0" y="70"/>
+				<line x="20" y="70"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+				<move x="80" y="70"/>
+				<line x="100" y="70"/>
+				<move x="71" y="65"/>
+				<line x="79" y="65"/>
+				<move x="20" y="65"/>
+				<line x="30" y="70"/>
+				<line x="20" y="75"/>
+				<move x="50" y="0"/>
+				<line x="50" y="10"/>
+				<move x="50" y="90"/>
+				<line x="50" y="100"/>
+			</path>
+			<stroke/>
+			<text align="center" str="D" valign="bottom" x="25" y="35"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="35"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="75"/>
+			<text align="center" str="S" valign="bottom" x="50" y="20"/>
+			<text align="center" str="R" valign="bottom" x="50" y="89"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="46" name="Highpass Filter" strokewidth="inherit" w="52">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="46" w="52" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="6" y="33"/>
+				<line x="16" y="13"/>
+				<line x="46" y="13"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Inverter" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="20" y="0"/>
+				<line x="80" y="30"/>
+				<line x="20" y="60"/>
+				<close/>
+				<move x="0" y="30"/>
+				<line x="20" y="30"/>
+				<move x="84" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<ellipse h="4" w="4" x="80" y="28"/>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="5" name="Inverting Contact" strokewidth="inherit" w="5">
+		<connections>
+			<constraint name="W" perimeter="0" x="0.1" y="0.5"/>
+			<constraint name="E" perimeter="0" x="0.9" y="0.5"/>
+		</connections>
+		<background>
+			<ellipse h="4" w="4" x="0.5" y="0.5"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="JK Flip-Flop" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="J" perimeter="0" x="0" y="0.25"/>
+			<constraint name="E" perimeter="0" x="0" y="0.5"/>
+			<constraint name="K" perimeter="0" x="0" y="0.75"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.25"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.75"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="20"/>
+				<line x="20" y="20"/>
+				<move x="0" y="60"/>
+				<line x="20" y="60"/>
+				<move x="80" y="20"/>
+				<line x="100" y="20"/>
+				<move x="80" y="60"/>
+				<line x="100" y="60"/>
+				<move x="71" y="55"/>
+				<line x="79" y="55"/>
+				<move x="20" y="35"/>
+				<line x="30" y="40"/>
+				<line x="20" y="45"/>
+				<move x="0" y="40"/>
+				<line x="20" y="40"/>
+			</path>
+			<stroke/>
+			<text align="center" str="J" valign="bottom" x="25" y="25"/>
+			<text align="center" str="K" valign="bottom" x="25" y="65"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="25"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="65"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="90" name="JK Flip-Flop With Clear" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="J" perimeter="0" x="0" y="0.335"/>
+			<constraint name="E" perimeter="0" x="0" y="0.555"/>
+			<constraint name="K" perimeter="0" x="0" y="0.78"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.335"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.78"/>
+			<constraint name="clear" perimeter="0" x="0.5" y="0"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="10"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="30"/>
+				<line x="20" y="30"/>
+				<move x="0" y="70"/>
+				<line x="20" y="70"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+				<move x="80" y="70"/>
+				<line x="100" y="70"/>
+				<move x="71" y="65"/>
+				<line x="79" y="65"/>
+				<move x="20" y="45"/>
+				<line x="30" y="50"/>
+				<line x="20" y="55"/>
+				<move x="0" y="50"/>
+				<line x="20" y="50"/>
+				<move x="50" y="0"/>
+				<line x="50" y="6"/>
+			</path>
+			<stroke/>
+			<text align="center" str="J" valign="bottom" x="25" y="35"/>
+			<text align="center" str="K" valign="bottom" x="25" y="75"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="35"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="75"/>
+			<ellipse h="4" w="4" x="48" y="6"/>
+			<fillstroke/>
+			<text align="center" str="C" valign="bottom" x="50" y="20"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="100" name="JK Flip-Flop With SR" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="J" perimeter="0" x="0" y="0.3"/>
+			<constraint name="E" perimeter="0" x="0" y="0.5"/>
+			<constraint name="K" perimeter="0" x="0" y="0.7"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.3"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.7"/>
+			<constraint name="S" perimeter="0" x="0.5" y="0"/>
+			<constraint name="R" perimeter="0" x="0.5" y="1"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="10"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="30"/>
+				<line x="20" y="30"/>
+				<move x="0" y="70"/>
+				<line x="20" y="70"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+				<move x="80" y="70"/>
+				<line x="100" y="70"/>
+				<move x="71" y="65"/>
+				<line x="79" y="65"/>
+				<move x="20" y="45"/>
+				<line x="30" y="50"/>
+				<line x="20" y="55"/>
+				<move x="0" y="50"/>
+				<line x="20" y="50"/>
+				<move x="50" y="0"/>
+				<line x="50" y="10"/>
+				<move x="50" y="90"/>
+				<line x="50" y="100"/>
+			</path>
+			<stroke/>
+			<text align="center" str="J" valign="bottom" x="25" y="35"/>
+			<text align="center" str="K" valign="bottom" x="25" y="75"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="35"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="75"/>
+			<text align="center" str="S" valign="bottom" x="50" y="20"/>
+			<text align="center" str="R" valign="bottom" x="50" y="89"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="46" name="Lowpass Filter" strokewidth="inherit" w="52">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<rect h="46" w="52" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="6" y="13"/>
+				<line x="36" y="13"/>
+				<line x="46" y="33"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="NAND" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="20" y="0"/>
+				<line x="50" y="0"/>
+				<arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="50" x-axis-rotation="0" y="60"/>
+				<line x="20" y="60"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="10"/>
+				<line x="20" y="10"/>
+				<move x="0" y="50"/>
+				<line x="20" y="50"/>
+				<move x="84" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+			<stroke/>
+			<ellipse h="4" w="4" x="80" y="28"/>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="NOR" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="15" y="0"/>
+				<line x="40" y="0"/>
+				<arc large-arc-flag="0" rx="45" ry="50" sweep-flag="1" x="80" x-axis-rotation="0" y="30"/>
+				<arc large-arc-flag="0" rx="45" ry="50" sweep-flag="1" x="40" x-axis-rotation="0" y="60"/>
+				<line x="15" y="60"/>
+				<arc large-arc-flag="0" rx="60" ry="60" sweep-flag="0" x="15" x-axis-rotation="0" y="0"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="10"/>
+				<line x="20" y="10"/>
+				<move x="0" y="50"/>
+				<line x="20" y="50"/>
+				<move x="84" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+			<stroke/>
+			<ellipse h="4" w="4" x="80" y="28"/>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="OR" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="15" y="0"/>
+				<line x="40" y="0"/>
+				<arc large-arc-flag="0" rx="45" ry="50" sweep-flag="1" x="80" x-axis-rotation="0" y="30"/>
+				<arc large-arc-flag="0" rx="45" ry="50" sweep-flag="1" x="40" x-axis-rotation="0" y="60"/>
+				<line x="15" y="60"/>
+				<arc large-arc-flag="0" rx="60" ry="60" sweep-flag="0" x="15" x-axis-rotation="0" y="0"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="10"/>
+				<line x="20" y="10"/>
+				<move x="0" y="50"/>
+				<line x="20" y="50"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="RS Latch" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="S" perimeter="0" x="0" y="0.25"/>
+			<constraint name="R" perimeter="0" x="0" y="0.75"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.25"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.75"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="20"/>
+				<line x="20" y="20"/>
+				<move x="0" y="60"/>
+				<line x="20" y="60"/>
+				<move x="80" y="20"/>
+				<line x="100" y="20"/>
+				<move x="80" y="60"/>
+				<line x="100" y="60"/>
+				<move x="71" y="55"/>
+				<line x="79" y="55"/>
+			</path>
+			<stroke/>
+			<text align="center" str="S" valign="bottom" x="25" y="25"/>
+			<text align="center" str="R" valign="bottom" x="25" y="65"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="25"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="65"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Schmitt Trigger" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="20" y="0"/>
+				<line x="80" y="30"/>
+				<line x="20" y="60"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="30"/>
+				<line x="20" y="30"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+				<move x="30" y="35"/>
+				<line x="46" y="35"/>
+				<arc large-arc-flag="0" rx="4" ry="4" sweep-flag="0" x="50" x-axis-rotation="0" y="31"/>
+				<line x="50" y="29"/>
+				<arc large-arc-flag="0" rx="4" ry="4" sweep-flag="1" x="54" x-axis-rotation="0" y="25"/>
+				<line x="55" y="25"/>
+				<line x="39" y="25"/>
+				<arc large-arc-flag="0" rx="4" ry="4" sweep-flag="0" x="35" x-axis-rotation="0" y="29"/>
+				<line x="35" y="31"/>
+				<arc large-arc-flag="0" rx="4" ry="4" sweep-flag="1" x="31" x-axis-rotation="0" y="35"/>
+				<close/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="Synchronous RS Latch" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="S" perimeter="0" x="0" y="0.25"/>
+			<constraint name="E" perimeter="0" x="0" y="0.5"/>
+			<constraint name="R" perimeter="0" x="0" y="0.75"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.25"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.75"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="20"/>
+				<line x="20" y="20"/>
+				<move x="0" y="60"/>
+				<line x="20" y="60"/>
+				<move x="80" y="20"/>
+				<line x="100" y="20"/>
+				<move x="80" y="60"/>
+				<line x="100" y="60"/>
+				<move x="71" y="55"/>
+				<line x="79" y="55"/>
+				<move x="20" y="35"/>
+				<line x="30" y="40"/>
+				<line x="20" y="45"/>
+				<move x="0" y="40"/>
+				<line x="20" y="40"/>
+			</path>
+			<stroke/>
+			<text align="center" str="S" valign="bottom" x="25" y="25"/>
+			<text align="center" str="R" valign="bottom" x="25" y="65"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="25"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="65"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="T Type Flip-Flop" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="T" perimeter="0" x="0" y="0.25"/>
+			<constraint name="E" perimeter="0" x="0" y="0.75"/>
+			<constraint name="Q" perimeter="0" x="1" y="0.25"/>
+			<constraint name="Qneg" perimeter="0" x="1" y="0.75"/>
+		</connections>
+		<background>
+			<rect h="80" w="60" x="20" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="20"/>
+				<line x="20" y="20"/>
+				<move x="0" y="60"/>
+				<line x="20" y="60"/>
+				<move x="80" y="20"/>
+				<line x="100" y="20"/>
+				<move x="80" y="60"/>
+				<line x="100" y="60"/>
+				<move x="71" y="55"/>
+				<line x="79" y="55"/>
+				<move x="20" y="55"/>
+				<line x="30" y="60"/>
+				<line x="20" y="65"/>
+			</path>
+			<stroke/>
+			<text align="center" str="T" valign="bottom" x="25" y="25"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="25"/>
+			<text align="center" str="Q" valign="bottom" x="75" y="65"/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="XNOR" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="15" y="0"/>
+				<line x="40" y="0"/>
+				<arc large-arc-flag="0" rx="45" ry="50" sweep-flag="1" x="80" x-axis-rotation="0" y="30"/>
+				<arc large-arc-flag="0" rx="45" ry="50" sweep-flag="1" x="40" x-axis-rotation="0" y="60"/>
+				<line x="15" y="60"/>
+				<arc large-arc-flag="0" rx="60" ry="60" sweep-flag="0" x="15" x-axis-rotation="0" y="0"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="10"/>
+				<line x="20" y="10"/>
+				<move x="0" y="50"/>
+				<line x="20" y="50"/>
+				<move x="84" y="30"/>
+				<line x="100" y="30"/>
+				<move x="10" y="0"/>
+				<arc large-arc-flag="0" rx="60" ry="60" sweep-flag="1" x="10" x-axis-rotation="0" y="60"/>
+			</path>
+			<stroke/>
+			<ellipse h="4" w="4" x="80" y="28"/>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="XOR" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.165"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.835"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<background>
+			<path>
+				<move x="15" y="0"/>
+				<line x="40" y="0"/>
+				<arc large-arc-flag="0" rx="45" ry="50" sweep-flag="1" x="80" x-axis-rotation="0" y="30"/>
+				<arc large-arc-flag="0" rx="45" ry="50" sweep-flag="1" x="40" x-axis-rotation="0" y="60"/>
+				<line x="15" y="60"/>
+				<arc large-arc-flag="0" rx="60" ry="60" sweep-flag="0" x="15" x-axis-rotation="0" y="0"/>
+				<close/>
+			</path>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="0" y="10"/>
+				<line x="20" y="10"/>
+				<move x="0" y="50"/>
+				<line x="20" y="50"/>
+				<move x="80" y="30"/>
+				<line x="100" y="30"/>
+				<move x="10" y="0"/>
+				<arc large-arc-flag="0" rx="60" ry="60" sweep-flag="1" x="10" x-axis-rotation="0" y="60"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+</shapes>

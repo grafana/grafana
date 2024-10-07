@@ -1,0 +1,235 @@
+<shapes name="mxGraph.pid.driers">
+<shape aspect="variable" h="140" name="Drier" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="0"/>
+            <line x="90" y="0"/>
+            <line x="100" y="25"/>
+            <line x="100" y="140"/>
+            <line x="0" y="140"/>
+            <line x="0" y="25"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Drier (Fluidized Bed)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.25"/>
+        <constraint name="E" perimeter="0" x="1" y="0.25"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="0"/>
+            <line x="90" y="0"/>
+            <line x="100" y="25"/>
+            <line x="100" y="140"/>
+            <line x="0" y="140"/>
+            <line x="0" y="25"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="40"/>
+            <line x="100" y="40"/>
+            <move x="0" y="70"/>
+            <line x="100" y="70"/>
+        </path>
+        <stroke/>
+        <ellipse h="1" w="1" x="12" y="59.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="24.5" y="49.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="37" y="59.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="49.5" y="49.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="62" y="59.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="74.5" y="49.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="87" y="59.5"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Drier (Roller Conveyor Belt)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.25"/>
+        <constraint name="E" perimeter="0" x="1" y="0.25"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="0"/>
+            <line x="90" y="0"/>
+            <line x="100" y="25"/>
+            <line x="100" y="140"/>
+            <line x="0" y="140"/>
+            <line x="0" y="25"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="10" y="35"/>
+        <stroke/>
+        <ellipse h="20" w="20" x="70" y="35"/>
+        <stroke/>
+        <path>
+            <move x="20" y="35"/>
+            <line x="80" y="35"/>
+            <move x="20" y="55"/>
+            <line x="80" y="55"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Drying Oven, Drying Chamber, Shelf Dryer" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="0"/>
+            <line x="90" y="0"/>
+            <line x="100" y="25"/>
+            <line x="100" y="140"/>
+            <line x="0" y="140"/>
+            <line x="0" y="25"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="20" y="40"/>
+            <line x="80" y="40"/>
+            <move x="20" y="50"/>
+            <line x="80" y="50"/>
+            <move x="20" y="60"/>
+            <line x="80" y="60"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Heat Consumer" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="70" w="70" x="15" y="15"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Rotary Drum Drier, Tumbling Drier" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.25"/>
+        <constraint name="E" perimeter="0" x="1" y="0.25"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="0"/>
+            <line x="90" y="0"/>
+            <line x="100" y="25"/>
+            <line x="100" y="140"/>
+            <line x="0" y="140"/>
+            <line x="0" y="25"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="40" w="40" x="30" y="30"/>
+        <stroke/>
+        <path>
+            <move x="33" y="25.4"/>
+            <arc large-arc-flag="0" rx="30" ry="30" sweep-flag="1" x="67" x-axis-rotation="0" y="25.4"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Spray Drier" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.9"/>
+        <constraint name="E" perimeter="0" x="1" y="0.25"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="0"/>
+            <line x="90" y="0"/>
+            <line x="100" y="25"/>
+            <line x="100" y="140"/>
+            <line x="0" y="140"/>
+            <line x="0" y="25"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="40" y="10"/>
+            <line x="50" y="0"/>
+            <line x="60" y="10"/>
+            <move x="50" y="0"/>
+            <line x="50" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Turbo Drier, Disc Drier, Moving Shelf Drier" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="0"/>
+            <line x="90" y="0"/>
+            <line x="100" y="25"/>
+            <line x="100" y="140"/>
+            <line x="0" y="140"/>
+            <line x="0" y="25"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="50" y="0"/>
+            <line x="50" y="70"/>
+            <move x="25" y="70"/>
+            <line x="75" y="70"/>
+            <move x="25" y="40"/>
+            <line x="75" y="40"/>
+            <move x="65" y="55"/>
+            <line x="100" y="55"/>
+            <move x="35" y="55"/>
+            <line x="0" y="55"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

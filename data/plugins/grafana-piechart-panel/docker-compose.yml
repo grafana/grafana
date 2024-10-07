@@ -1,0 +1,12 @@
+grafana:
+  image: grafana/grafana:6.6.0
+  #image: grafana/grafana:6.5.3
+  #image: grafana/grafana:6.4.5
+  #image: grafana/grafana:5.4.4
+  ports:
+    - "3000:3000"
+  volumes:
+    - ./:/var/lib/grafana/plugins/grafana-piechart-panel
+    - ./provisioning:/etc/grafana/provisioning
+  environment:
+    - TERM=linux

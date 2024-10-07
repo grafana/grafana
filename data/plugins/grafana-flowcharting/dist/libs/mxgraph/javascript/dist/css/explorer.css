@@ -1,0 +1,18 @@
+div.mxTooltip {
+	filter:progid:DXImageTransform.Microsoft.DropShadow(OffX=4, OffY=4, 
+        Color='#A2A2A2', Positive='true');
+}
+div.mxPopupMenu {
+	filter:progid:DXImageTransform.Microsoft.DropShadow(OffX=4, OffY=4, 
+        Color='#C0C0C0', Positive='true');
+}
+div.mxWindow {
+	_filter:progid:DXImageTransform.Microsoft.DropShadow(OffX=4, OffY=4, 
+        Color='#C0C0C0', Positive='true');
+}
+td.mxWindowTitle {
+	_height: 23px;
+}
+.mxDisabled {
+	filter:alpha(opacity=20) !important;
+}

@@ -1,0 +1,191 @@
+<div class="edit-tab-content">
+	<div class="editor-row">
+		<div class="section gf-form-group">
+			<h5 class="section-heading">Inspector</h5>
+		</div>
+	</div>
+	<!-- STATES -->
+	<div class="editor-row">
+		<h5 class="section-heading">Graph inspect
+			Id
+			<info-popover mode="right-normal">
+				<span
+					ng-bind-html="GF_PLUGIN.popover('List of all objects in graph with states', 'INSPECT','inspect_graph_table')">
+				</span>
+			</info-popover>
+		</h5>
+		<gf-form-switch class="gf-form" label-class="width-14" tooltip="Enable inspect mode to view/modify identity of shapes"
+		label="Enable" checked="editor.enable">
+		</gf-form-switch>
+		<div class="table-panel-container" ng-if="editor.enable">
+			<div class="table-panel-header-bg"/>
+			<div class="table-panel-scroll" style="max-height: 300px;">
+				<table class="table-panel-table">
+					<thead>
+						<tr>
+							<th>
+								<div class="table-panel-table-header-inner pointer">
+									Id
+									<info-popover mode="right-normal">
+										<span
+											ng-bind-html="GF_PLUGIN.popover('Id of object, double click on it to rename', 'INSPECT','inspect_graph_table')">
+										</span>
+									</info-popover>
+								</div>
+							</th>
+							<th>
+								<div class="table-panel-table-header-inner pointer">
+									Text</div>
+							</th>
+							<th>
+								<div class="table-panel-table-header-inner pointer" style="text-align:center;">
+									Level
+								</div>
+							</th>
+							<th>
+								<div class="table-panel-table-header-inner pointer" style="text-align:center;">
+									Font Col.
+								</div>
+							</th>
+							<th>
+								<div class="table-panel-table-header-inner pointer" style="text-align:center;">
+									Fill Col.
+								</div>
+							</th>
+							<th>
+								<div class="table-panel-table-header-inner pointer" style="text-align:center;">
+									Stoke Col.
+								</div>
+							</th>
+							<th style="display:inline-block;">
+								<div class="table-panel-table-header-inner pointer" style="text-align:center;">
+									Match
+								</div>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="state in flowchartHandler.getFlowchart(0).getStateHandler().getStates()"
+							ng-mouseleave="editor.unselectCell(state)" ng-mouseover="editor.selectCell(state)">
+							<td>
+								<div class="flowchartTable-editor" ng-dblclick="editor.onEdit(state)">
+									<div ng-hide="state.edited || state.edit"><span>{{state.cellId}}</span></div>
+									<div ng-hide="!state.edited || state.edit"><span style="color:blue">{{state.cellId}}</span></div>
+									<div ng-show="state.edit">
+										<input type="text" id="{{state.cellId}}" class="gf-form-input width-15" ng-model="state.newcellId"
+											ng-blur="editor.onChangeId(state)" placeholder="{{state.cellId}}"
+											ng-keydown="$event.keyCode === 13 && editor.onChangeId(state)" />
+									</div>
+								</div>
+							</td>
+							<td>
+								<div class="flowchartTable-editor">
+									{{state.getCellProp('value')}}
+								</div>
+							</td>
+							<td>
+								<div class="flowchartTable-editor"
+									bs-tooltip="'Font : ' + state.getLevelStyle('fontColor') + ', Fill : ' + state.getLevelStyle('fillColor') + ', Stroke : ' + state.getLevelStyle('strokeColor')"
+									style="display:table-cell;vertical-align:middle;">
+									{{state.getTextLevel()}}
+								</div>
+							</td>
+							<td>
+								<div class="flowchartTable-editor">
+									<div ng-show="state.getOriginalColorStyle('fontColor') !== undefined"
+										style="display:table-cell;vertical-align:middle;">
+										<div class="sp-preview">
+											<div class="sp-preview-inner" bs-tooltip="state.getOriginalColorStyle('fontColor')"
+												style="background-color: {{state.getOriginalColorStyle('fontColor')}};border: 1px solid rgb(228, 228, 228);" />
+										</div>
+									</div>
+							</td>
+							<td>
+								<div class="flowchartTable-editor">
+									<div ng-show="state.getOriginalColorStyle('fillColor') !== undefined"
+										style="display:table-cell;vertical-align:middle;">
+										<div class="sp-preview">
+											<div class="sp-preview-inner" bs-tooltip="state.getOriginalColorStyle('fillColor')"
+												style="background-color: {{state.getOriginalColorStyle('fillColor')}};border: 1px solid rgb(228, 228, 228);" />
+										</div>
+									</div>
+							</td>
+							<td>
+								<div class="flowchartTable-editor">
+									<div ng-show="state.getOriginalColorStyle('strokeColor') !== undefined"
+										style="display:table-cell;vertical-align:middle;">
+										<div class="sp-preview">
+											<div class="sp-preview-inner" bs-tooltip="state.getOriginalColorStyle('strokeColor')"
+												style="background-color: {{state.getOriginalColorStyle('strokeColor')}};border: 1px solid rgb(228, 228, 228);" />
+										</div>
+									</div>
+								</div>
+							</td>
+							<td style='text-align:center;'>
+								<div class="flowchartTable-editor">
+									<div>
+										<div style="display:inline-block" ng-show="state.matchedShape" bs-tooltip="'Mapping on shape'"><i
+												class="fa fa-cube"></i><i class="fa fa-fw"></i></div>
+										<div style="display:inline-block" ng-show="state.matchedText" bs-tooltip="'Mapping on text'"><i
+												class="fa fa-paragraph"></i><i class="fa fa-fw"></i></div>
+										<div style="display:inline-block" ng-show="state.matchedLink" bs-tooltip="'Mapping on Link'"><i
+												class="fa fa-chain"></i><i class="fa fa-fw"></i></div>
+											<div style="display:inline-block" ng-show="state.changed" bs-tooltip="'Colorized or Valorized or Linked'"><i
+												class="fa fa-check-circle"></i><i class="fa fa-fw"></i></div>
+									</div>
+								</div>
+						</tr>
+					</tbody>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<hr>
+		<div class="gf-form">
+			<button class="btn btn-danger btn-small" ng-click="editor.reset()" style="margin-right: 5px;">
+				<i class="fa fa-power-off"></i> Reinit graph and color
+			</button>
+			<button ng-show="flowchartHandler.getFlowchart(0).getStateHandler().edited" class="btn btn-secondary btn-small"
+				ng-click="editor.apply()" style="margin-right: 5px;">
+				<i class="fa fa-save"></i> Apply changes
+			</button>
+		</div>
+	</div>
+	<br />
+	<hr>
+	<!-- PANEL JSON -->
+	<!-- <div class="editor-row">
+		<h5 class="section-heading">Data panel</h5>
+		<div class="section gf-form-group" style="width:100%;">
+			<div class="gf-form gf-form--v-stretch">
+				<span class="gf-form-label width-12">
+					Data Panel
+				</span>
+				<textarea class="gf-form-input width:95% ng-pristine ng-valid ng-empty ng-touched" rows="10"
+					placeholder="Json Data panel " style="margin-top: 0px; margin-bottom: 0px; height: 145px; width: 95%;"
+					ng-change="editor.onSourceChange()" ng-model="editor.json" ng-readonly="all">
+				</textarea>
+			</div>
+		</div>
+	</div> -->
+	<!-- <br /> -->
+	<!-- <hr> -->
+	<!-- DEBUG -->
+	<div class="editor-row">
+		<h5 class="section-heading">Debug Mode</h5>
+		<div class="section gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label width-12">Display</span>
+				<select class="gf-form-input" ng-model="editor.logDisplay"
+					ng-options="c.value as c.text for c in editor.logDisplayOption" ng-change="editor.onDebug()">
+				</select>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-12">Level</span>
+				<select class="gf-form-input" ng-model="editor.logLevel"
+					ng-options="c.value as c.text for c in editor.logLevelOption" ng-change="editor.onDebug()">
+				</select>
+			</div>
+		</div>
+	</div>
+</div>

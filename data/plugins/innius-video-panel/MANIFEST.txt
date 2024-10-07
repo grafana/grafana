@@ -1,0 +1,38 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "community",
+  "signedByOrg": "innius",
+  "signedByOrgName": "innius",
+  "plugin": "innius-video-panel",
+  "version": "1.0.7",
+  "time": 1680849057599,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "LICENSE": "bbe881e9ecd692de0c4999a2d034130b1369e3cc646f7171b611cef3a3f1c58a",
+    "module.js": "0a1254d160486832bcd190e2d9e7fbeb1e9cba663adbcd7635ce02a1dd706847",
+    "module.js.map": "c9c1f22e3395bc7607dce7c57a9f3008d476f68f8e21ced8d6dc7c60c964ae5c",
+    "README.md": "58a7d832f0ec556f70d91cce028879b4415308727dcd19855171b319e87099af",
+    "plugin.json": "f45daddde6199109f9f0309fe377c8390eb5da4c1316b90d842e0d05a56ae1d0",
+    "img/logo.svg": "0830fb44aa94f29c16facaf731d1b5ede8e7015ae40dff16e25aabf6ddd023a3",
+    "img/examples.png": "ead211c62df25d295bb6a841c78ec26b5b379f6cfe16966b9bb6253a689ca70a",
+    "img/screenshots/youtube.png": "f658713e8694bc1320e8340300b7776f11fd886a05b7db09e944575d8abd7e05",
+    "img/screenshots/video.png": "2c21d23620ca3cd82e37e64581a3aa2cf9f97423f9880b597809643c182de45a",
+    "img/screenshots/iframe.png": "3a1a1474b0f704ece445cc74f179728f619b786e3ad7a94471cd0dcd2db39a45",
+    "CHANGELOG.md": "65ac19aad275f981add5b9994b6df80bb4eab1d0e63938321247b6147630c3df"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.10
+Comment: https://openpgpjs.org
+
+wrcEARMKAAYFAmQvuKEAIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm5zf4AgQPzThNEa66GKJuEYrcyMlBOGdjEjY5uLRl53A+ZqdjUJqiGbZK
+8DbeeZ4ksaBpaWiO42tQaIBWaPLdHwttQ9jDwgIFGiG+OZF1U/GV/PUA3tQE
+a7dpaPEsLqAnyGbaYy1B9i7bnjYkjljLVUoRdyVaQviCC99N0U3SsX4X+DnO
+ABOB9UQ=
+=B9vL
+-----END PGP SIGNATURE-----

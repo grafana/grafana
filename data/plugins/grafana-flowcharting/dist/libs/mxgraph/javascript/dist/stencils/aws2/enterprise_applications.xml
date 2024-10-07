@@ -1,0 +1,235 @@
+<shapes name="mxgraph.aws2.enterprise_applications">
+<shape aspect="variable" h="143.62" name="WorkDocs" strokewidth="inherit" w="125.94">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0" y="0.25"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.75"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.75"/>
+    </connections>
+    <foreground>
+        <fillcolor color="#e3772e"/>
+        <path>
+            <move x="0" y="35.91"/>
+            <line x="62.97" y="0"/>
+            <line x="125.94" y="35.91"/>
+            <line x="125.94" y="107.72"/>
+            <line x="62.97" y="143.62"/>
+            <line x="0" y="107.72"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#FFFFFF"/>
+        <rect h="6.63" w="25.67" x="43.12" y="65.16"/>
+        <fillstroke/>
+        <rect h="6.63" w="25.67" x="43.12" y="78.42"/>
+        <fillstroke/>
+        <rect h="6.63" w="25.67" x="43.12" y="91.67"/>
+        <fillstroke/>
+        <path>
+            <move x="75.41" y="55.9"/>
+            <line x="75.41" y="94.3"/>
+            <line x="82.04" y="94.3"/>
+            <line x="82.04" y="49.27"/>
+            <line x="49.76" y="49.27"/>
+            <line x="49.76" y="55.9"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="95.3" y="36.02"/>
+            <line x="43.13" y="36.02"/>
+            <line x="43.13" y="49.27"/>
+            <line x="29.87" y="49.27"/>
+            <line x="29.87" y="114.19"/>
+            <line x="82.04" y="114.19"/>
+            <line x="82.04" y="100.93"/>
+            <line x="95.3" y="100.93"/>
+            <line x="95.3" y="36.02"/>
+            <close/>
+            <move x="75.41" y="107.56"/>
+            <line x="36.5" y="107.56"/>
+            <line x="36.5" y="55.9"/>
+            <line x="75.41" y="55.9"/>
+            <line x="75.41" y="107.56"/>
+            <close/>
+            <move x="88.67" y="94.3"/>
+            <line x="82.04" y="94.3"/>
+            <line x="82.04" y="49.27"/>
+            <line x="49.75" y="49.27"/>
+            <line x="49.75" y="42.64"/>
+            <line x="88.67" y="42.64"/>
+            <line x="88.67" y="94.3"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="84.4" name="WorkMail" strokewidth="inherit" w="74">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0" y="0.25"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.75"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.75"/>
+    </connections>
+    <foreground>
+        <fillcolor color="#e3772e"/>
+        <path>
+            <move x="0" y="21.1"/>
+            <line x="37" y="0"/>
+            <line x="74" y="21.1"/>
+            <line x="74" y="63.3"/>
+            <line x="37" y="84.4"/>
+            <line x="0" y="63.3"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#FFFFFF"/>
+        <path>
+            <move x="58.4" y="28"/>
+            <line x="58.4" y="34.5"/>
+            <line x="58.4" y="37"/>
+            <line x="36.3" y="46.8"/>
+            <line x="14.2" y="37"/>
+            <line x="14.2" y="34.5"/>
+            <line x="14.2" y="28"/>
+            <line x="10.3" y="28"/>
+            <line x="10.3" y="30.6"/>
+            <line x="10.3" y="39.6"/>
+            <line x="10.3" y="61"/>
+            <line x="62.2" y="61"/>
+            <line x="62.2" y="39.6"/>
+            <line x="62.2" y="30.6"/>
+            <line x="62.2" y="28"/>
+            <curve x1="62.3" x2="58.4" x3="58.4" y1="28" y2="28" y3="28"/>
+            <close/>
+            <move x="58.4" y="57.2"/>
+            <line x="14.3" y="57.2"/>
+            <line x="14.3" y="41.4"/>
+            <line x="36.4" y="51.2"/>
+            <line x="58.5" y="41.4"/>
+            <line x="58.5" y="57.2"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="36.3" y="13.9"/>
+            <line x="10.4" y="25.5"/>
+            <line x="10.4" y="30.6"/>
+            <line x="14.3" y="30.6"/>
+            <line x="14.3" y="28.1"/>
+            <line x="36.3" y="18.2"/>
+            <line x="58.4" y="28.1"/>
+            <line x="58.4" y="30.6"/>
+            <line x="62.3" y="30.6"/>
+            <line x="62.3" y="25.5"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="22.1" y="40.6"/>
+            <line x="22.1" y="34.3"/>
+            <line x="50.5" y="34.3"/>
+            <line x="50.5" y="40.6"/>
+            <line x="54.5" y="38.8"/>
+            <line x="54.5" y="30.3"/>
+            <line x="18.2" y="30.3"/>
+            <line x="18.2" y="38.8"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="84.98" name="WorkSpaces" strokewidth="inherit" w="74">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0" y="0.25"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.75"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.75"/>
+    </connections>
+    <foreground>
+        <fillcolor color="#e3772e"/>
+        <path>
+            <move x="0" y="21.25"/>
+            <line x="37" y="0"/>
+            <line x="74" y="21.25"/>
+            <line x="74" y="63.73"/>
+            <line x="37" y="84.98"/>
+            <line x="0" y="63.73"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#FFFFFF"/>
+        <path>
+            <move x="32.3" y="32.74"/>
+            <line x="32.27" y="32.74"/>
+            <line x="13.27" y="32.74"/>
+            <line x="13.23" y="32.74"/>
+            <curve x1="12.17" x2="11.31" x3="11.31" y1="32.74" y2="33.6" y3="34.66"/>
+            <line x="11.31" y="34.7"/>
+            <line x="11.31" y="60.98"/>
+            <line x="11.31" y="61.01"/>
+            <curve x1="11.31" x2="12.17" x3="13.23" y1="62.07" y2="62.94" y3="62.94"/>
+            <line x="13.27" y="62.94"/>
+            <line x="32.27" y="62.94"/>
+            <line x="32.3" y="62.94"/>
+            <curve x1="33.36" x2="34.23" x3="34.23" y1="62.94" y2="62.07" y3="61.01"/>
+            <line x="34.23" y="60.98"/>
+            <line x="34.23" y="34.7"/>
+            <line x="34.23" y="34.66"/>
+            <curve x1="34.23" x2="33.36" x3="32.3" y1="33.6" y2="32.74" y3="32.74"/>
+            <close/>
+            <move x="22.77" y="62.05"/>
+            <curve x1="21.86" x2="21.13" x3="21.13" y1="62.05" y2="61.32" y3="60.42"/>
+            <curve x1="21.13" x2="21.86" x3="22.77" y1="59.52" y2="58.78" y3="58.78"/>
+            <curve x1="23.67" x2="24.4" x3="24.4" y1="58.78" y2="59.51" y3="60.42"/>
+            <curve x1="24.4" x2="23.67" x3="22.77" y1="61.32" y2="62.05" y3="62.05"/>
+            <close/>
+            <move x="30.31" y="57.9"/>
+            <line x="15.23" y="57.9"/>
+            <line x="15.23" y="36.66"/>
+            <line x="30.31" y="36.66"/>
+            <line x="30.31" y="57.9"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="61.98" y="50.52"/>
+            <line x="61.98" y="22.89"/>
+            <line x="24.44" y="22.89"/>
+            <line x="24.44" y="32.74"/>
+            <line x="28.37" y="32.74"/>
+            <line x="28.37" y="26.81"/>
+            <line x="58.06" y="26.81"/>
+            <line x="58.06" y="46.6"/>
+            <line x="34.23" y="46.6"/>
+            <line x="34.23" y="50.52"/>
+            <line x="40.48" y="50.52"/>
+            <line x="40.48" y="53.53"/>
+            <curve x1="38.11" x2="35.97" x3="34.23" y1="53.63" y2="53.86" y3="54.18"/>
+            <line x="34.23" y="58.2"/>
+            <line x="40.55" y="58.2"/>
+            <line x="43.43" y="58.2"/>
+            <line x="46.03" y="58.2"/>
+            <line x="56.61" y="58.2"/>
+            <line x="56.61" y="56.22"/>
+            <curve x1="56.61" x2="52" x3="45.86" y1="54.89" y2="53.79" y3="53.53"/>
+            <line x="45.86" y="50.52"/>
+            <line x="61.98" y="50.52"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

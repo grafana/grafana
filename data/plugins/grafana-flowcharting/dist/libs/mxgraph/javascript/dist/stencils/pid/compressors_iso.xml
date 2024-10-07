@@ -1,0 +1,286 @@
+<shapes name="mxGraph.pid.compressors_-_iso">
+<shape aspect="variable" h="100" name="Blower, Fan" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+        </path>
+        <stroke/>
+        <fillcolor color="none"/>
+        <ellipse h="6" w="30" x="50" y="47"/>
+        <stroke/>
+        <path>
+            <move x="42.28" y="36.55"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="49.75" x-axis-rotation="49.48" y="49.9"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="37.72" x-axis-rotation="49.48" y="40.45"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="30.25" x-axis-rotation="49.48" y="27.1"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="42.28" x-axis-rotation="49.48" y="36.55"/>
+            <close/>
+            <move x="37.7" y="59.73"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="49.66" x-axis-rotation="-49.91" y="50.19"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="42.3" x-axis-rotation="-49.91" y="63.6"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="30.34" x-axis-rotation="-49.91" y="73.14"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="37.7" x-axis-rotation="-49.91" y="59.73"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor, Vacuum Pump" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Centrifugal)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+            <move x="0" y="50"/>
+            <line x="100" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Diaphragm)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+            <move x="25" y="7"/>
+            <arc large-arc-flag="0" rx="100" ry="100" sweep-flag="0" x="25" x-axis-rotation="0" y="93"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Ejector)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+            <move x="6.5" y="25"/>
+            <arc large-arc-flag="0" rx="50" ry="50" sweep-flag="0" x="70" x-axis-rotation="0" y="20"/>
+            <move x="6.5" y="75"/>
+            <arc large-arc-flag="0" rx="50" ry="50" sweep-flag="1" x="70" x-axis-rotation="0" y="80"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Piston)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+            <move x="35" y="50"/>
+            <line x="65" y="50"/>
+            <move x="65" y="35"/>
+            <line x="65" y="65"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Ring)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+        </path>
+        <stroke/>
+        <ellipse h="40" w="40" x="30" y="30"/>
+        <stroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+            <move x="34.4" y="24"/>
+            <line x="39.8" y="33"/>
+            <move x="34.4" y="76"/>
+            <line x="39.8" y="67"/>
+            <move x="65.6" y="76"/>
+            <line x="60.2" y="67"/>
+            <move x="65.6" y="24"/>
+            <line x="60.2" y="33"/>
+            <move x="20" y="50"/>
+            <line x="30" y="50"/>
+            <move x="70" y="50"/>
+            <line x="80" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Roller Vane)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+            <move x="50" y="14.5"/>
+            <line x="50" y="25"/>
+            <move x="50" y="75"/>
+            <line x="50" y="85.5"/>
+            <move x="0" y="50"/>
+            <line x="20" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Rotary)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+            <move x="30" y="50"/>
+            <line x="70" y="50"/>
+            <move x="65" y="37"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="65" x-axis-rotation="0" y="63"/>
+            <move x="35" y="37"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="0" x="35" x-axis-rotation="0" y="63"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Screw)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+            <move x="25" y="45"/>
+            <line x="30" y="40"/>
+            <line x="40" y="50"/>
+            <line x="50" y="40"/>
+            <line x="60" y="50"/>
+            <line x="70" y="40"/>
+            <line x="75" y="45"/>
+            <move x="25" y="55"/>
+            <line x="30" y="50"/>
+            <line x="40" y="60"/>
+            <line x="50" y="50"/>
+            <line x="60" y="60"/>
+            <line x="70" y="50"/>
+            <line x="75" y="55"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Compressor (Turbo)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="25" y="7"/>
+            <line x="95" y="28"/>
+            <move x="25" y="93"/>
+            <line x="95" y="72"/>
+        </path>
+        <stroke/>
+        <ellipse h="50" w="50" x="25" y="25"/>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

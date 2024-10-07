@@ -1,0 +1,208 @@
+<shapes name="mxgraph.aws2.management_tools">
+<shape aspect="variable" h="72" name="Service Catalog" strokewidth="inherit" w="59.6">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0.06" y="0.5"/>
+        <constraint name="E" perimeter="0" x="0.94" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0" y="0.21"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.21"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.79"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.79"/>
+    </connections>
+    <foreground>
+        <fillcolor color="#3D4A2A"/>
+        <path>
+            <move x="48" y="27.6"/>
+            <line x="55.9" y="26.8"/>
+            <line x="59.6" y="27.6"/>
+            <line x="52" y="28.2"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#B7CA9D"/>
+        <path>
+            <move x="47.4" y="44.4"/>
+            <line x="55.7" y="45.1"/>
+            <line x="59.6" y="44.4"/>
+            <line x="51.7" y="43.7"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="37" y="45.9"/>
+            <line x="46.2" y="47.1"/>
+            <line x="52.2" y="45.9"/>
+            <line x="43.3" y="45"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#4C622C"/>
+        <path>
+            <move x="42.4" y="26.7"/>
+            <line x="51.2" y="25.7"/>
+            <line x="51.2" y="45.9"/>
+            <line x="42.4" y="45"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#3D4A2A"/>
+        <path>
+            <move x="37.8" y="25.7"/>
+            <line x="46.8" y="24.6"/>
+            <line x="52.6" y="25.7"/>
+            <line x="43.9" y="26.7"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#769C3E"/>
+        <path>
+            <move x="45.7" y="52.8"/>
+            <line x="38.7" y="54.9"/>
+            <line x="38.7" y="17"/>
+            <line x="45.7" y="19.1"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="55.8" y="22.2"/>
+            <line x="51.2" y="20.8"/>
+            <line x="51.2" y="51.1"/>
+            <line x="55.8" y="49.8"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#4C622C"/>
+        <path>
+            <move x="29.7" y="47.1"/>
+            <line x="38.7" y="48.5"/>
+            <line x="38.7" y="23.3"/>
+            <line x="29.7" y="24.7"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#769C3E"/>
+        <path>
+            <move x="29.8" y="0"/>
+            <line x="59.6" y="14.9"/>
+            <line x="59.6" y="27.6"/>
+            <line x="29.8" y="21.6"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="59.6" y="44.4"/>
+            <line x="29.8" y="50.3"/>
+            <line x="29.8" y="72"/>
+            <line x="59.6" y="57"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#3D4A2A"/>
+        <path>
+            <move x="11.5" y="27.6"/>
+            <line x="3.6" y="26.8"/>
+            <line x="0" y="27.6"/>
+            <line x="7.5" y="28.2"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#B7CA9D"/>
+        <path>
+            <move x="12.1" y="44.4"/>
+            <line x="3.9" y="45.1"/>
+            <line x="0" y="44.4"/>
+            <line x="7.9" y="43.7"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="22.6" y="45.9"/>
+            <line x="13.3" y="47.1"/>
+            <line x="7.3" y="45.9"/>
+            <line x="16.3" y="45"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#769C3E"/>
+        <path>
+            <move x="17.1" y="26.7"/>
+            <line x="8.3" y="25.7"/>
+            <line x="8.3" y="45.9"/>
+            <line x="17.1" y="45"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#3D4A2A"/>
+        <path>
+            <move x="21.8" y="25.7"/>
+            <line x="12.8" y="24.6"/>
+            <line x="7" y="25.7"/>
+            <line x="15.7" y="26.7"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#4C622C"/>
+        <path>
+            <move x="13.9" y="52.8"/>
+            <line x="20.9" y="54.9"/>
+            <line x="20.9" y="17"/>
+            <line x="13.9" y="19.1"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="3.8" y="22.2"/>
+            <line x="8.3" y="20.8"/>
+            <line x="8.3" y="51.1"/>
+            <line x="3.8" y="49.8"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#769C3E"/>
+        <path>
+            <move x="29.8" y="47.1"/>
+            <line x="20.9" y="48.5"/>
+            <line x="20.9" y="23.3"/>
+            <line x="29.8" y="24.7"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#4C622C"/>
+        <path>
+            <move x="29.8" y="0"/>
+            <line x="0" y="14.9"/>
+            <line x="0" y="27.6"/>
+            <line x="29.8" y="21.6"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="0" y="44.4"/>
+            <line x="29.8" y="50.3"/>
+            <line x="29.8" y="72"/>
+            <line x="0" y="57"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#3D4A2A"/>
+        <path>
+            <move x="38.7" y="23.3"/>
+            <line x="29.8" y="24.7"/>
+            <line x="20.9" y="23.3"/>
+            <line x="29.8" y="21.5"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <fillcolor color="#B7CA9D"/>
+        <path>
+            <move x="38.9" y="48.5"/>
+            <line x="29.9" y="47.1"/>
+            <line x="20.9" y="48.5"/>
+            <line x="29.9" y="50.3"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

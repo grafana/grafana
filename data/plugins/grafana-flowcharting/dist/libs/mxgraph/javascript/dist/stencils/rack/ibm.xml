@@ -1,0 +1,2657 @@
+<shapes name="mxgraph.rack.IBM">
+<shape aspect="variable" h="75" name="IBM 11000VA UPS" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="25" y2="50" y3="75"/>
+            <line x="161.9" y="75"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="75"/>
+            <line x="161.9" y="75"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="30.6"/>
+            <line x="6" y="30.6"/>
+            <line x="6" y="74"/>
+            <line x="1" y="74"/>
+            <close/>
+            <move x="7" y="30.6"/>
+            <line x="155" y="30.6"/>
+            <line x="155" y="74"/>
+            <line x="7" y="74"/>
+            <close/>
+            <move x="156" y="30.6"/>
+            <line x="160.9" y="30.6"/>
+            <line x="160.9" y="74"/>
+            <line x="156" y="74"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="30.6"/>
+            <line x="160.9" y="30.6"/>
+            <line x="160.9" y="74"/>
+            <line x="156" y="74"/>
+            <close/>
+            <move x="8.5" y="30.6"/>
+            <line x="8.5" y="73.5"/>
+            <line x="43.5" y="73.5"/>
+            <line x="43.5" y="30.6"/>
+            <close/>
+            <move x="65.5" y="30.6"/>
+            <line x="65.5" y="73.5"/>
+            <line x="153.5" y="73.5"/>
+            <line x="153.5" y="30.6"/>
+            <close/>
+            <move x="1" y="30.6"/>
+            <line x="6" y="30.6"/>
+            <line x="6" y="74"/>
+            <line x="1" y="74"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="43.5" y="29.6"/>
+            <line x="43.5" y="4.5"/>
+            <line x="8.5" y="4.5"/>
+            <line x="8.5" y="29.6"/>
+            <close/>
+            <move x="153.5" y="29.6"/>
+            <line x="153.5" y="4.5"/>
+            <line x="65.5" y="4.5"/>
+            <line x="65.5" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="IBM 1500-2200VA UPS" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="65.5" y="4.5"/>
+            <line x="153.5" y="4.5"/>
+            <line x="153.5" y="29.5"/>
+            <line x="65.5" y="29.5"/>
+            <close/>
+            <move x="8.5" y="4.5"/>
+            <line x="43.5" y="4.5"/>
+            <line x="43.5" y="29.5"/>
+            <line x="8.5" y="29.5"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.7" name="IBM 1754 Local Console Manager" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.7"/>
+            <line x="161.9" y="15.7"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.7"/>
+            <line x="161.9" y="15.7"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="5.99" y="1"/>
+            <line x="5.99" y="14.7"/>
+            <line x="1" y="14.7"/>
+            <close/>
+            <move x="6.99" y="1"/>
+            <line x="155.08" y="1"/>
+            <line x="155.08" y="14.7"/>
+            <line x="6.99" y="14.7"/>
+            <close/>
+            <move x="156.08" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.7"/>
+            <line x="156.08" y="14.7"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="106.5" y="2.5"/>
+            <line x="106.5" y="13.5"/>
+            <line x="146.5" y="13.5"/>
+            <line x="146.5" y="2.5"/>
+            <close/>
+            <move x="15.5" y="2.5"/>
+            <line x="15.5" y="13.5"/>
+            <line x="55.5" y="13.5"/>
+            <line x="55.5" y="2.5"/>
+            <close/>
+            <move x="156.08" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.7"/>
+            <line x="156.08" y="14.7"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="5.99" y="1"/>
+            <line x="5.99" y="14.7"/>
+            <line x="1" y="14.7"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.7" name="IBM 1U Flat Panel Console Kit" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.7"/>
+            <line x="161.9" y="15.7"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.7"/>
+            <line x="161.9" y="15.7"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="5.99" y="1"/>
+            <line x="5.99" y="14.7"/>
+            <line x="1" y="14.7"/>
+            <close/>
+            <move x="6.99" y="1"/>
+            <line x="155.08" y="1"/>
+            <line x="155.08" y="14.7"/>
+            <line x="6.99" y="14.7"/>
+            <close/>
+            <move x="156.08" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.7"/>
+            <line x="156.08" y="14.7"/>
+            <close/>
+            <move x="50.5" y="2.5"/>
+            <curve x1="47.46" x2="45" x3="45" y1="2.5" y2="4.96" y3="8"/>
+            <curve x1="45" x2="47.46" x3="50.5" y1="11.04" y2="13.5" y3="13.5"/>
+            <line x="111.5" y="13.5"/>
+            <curve x1="114.54" x2="117" x3="117" y1="13.5" y2="11.04" y3="8"/>
+            <curve x1="117" x2="114.54" x3="111.5" y1="4.96" y2="2.5" y3="2.5"/>
+            <close/>
+            <move x="50.5" y="3.5"/>
+            <line x="111.5" y="3.5"/>
+            <curve x1="114" x2="116" x3="116" y1="3.5" y2="5.5" y3="8"/>
+            <curve x1="116" x2="114" x3="111.5" y1="10.5" y2="12.5" y3="12.5"/>
+            <line x="50.5" y="12.5"/>
+            <curve x1="48" x2="46" x3="46" y1="12.5" y2="10.5" y3="8"/>
+            <curve x1="46" x2="48" x3="50.5" y1="5.5" y2="3.5" y3="3.5"/>
+            <close/>
+            <move x="59.5" y="5.5"/>
+            <curve x1="58.95" x2="58.5" x3="58.5" y1="5.5" y2="6.62" y3="8"/>
+            <curve x1="58.5" x2="58.95" x3="59.5" y1="9.38" y2="10.5" y3="10.5"/>
+            <line x="102.5" y="10.5"/>
+            <curve x1="103.05" x2="103.5" x3="103.5" y1="10.5" y2="9.38" y3="8"/>
+            <curve x1="103.5" x2="103.05" x3="102.5" y1="6.62" y2="5.5" y3="5.5"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156.08" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.7"/>
+            <line x="156.08" y="14.7"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="5.99" y="1"/>
+            <line x="5.99" y="14.7"/>
+            <line x="1" y="14.7"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="45.4" name="IBM 3000VA UPS" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="45.4"/>
+            <line x="161.9" y="45.4"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="45.4"/>
+            <line x="161.9" y="45.4"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="44.4"/>
+            <line x="1" y="44.4"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="44.4"/>
+            <line x="7" y="44.4"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="44.4"/>
+            <line x="156" y="44.4"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="65.5" y="4.5"/>
+            <line x="65.5" y="43.5"/>
+            <line x="153.5" y="43.5"/>
+            <line x="153.5" y="4.5"/>
+            <close/>
+            <move x="8.5" y="4.5"/>
+            <line x="8.5" y="43.5"/>
+            <line x="43.5" y="43.5"/>
+            <line x="43.5" y="4.5"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="44.4"/>
+            <line x="156" y="44.4"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="44.4"/>
+            <line x="1" y="44.4"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60.2" name="IBM 6000VA UPS" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="60.2"/>
+            <line x="161.9" y="60.2"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.2"/>
+            <line x="161.9" y="60.2"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="30.6"/>
+            <line x="6" y="30.6"/>
+            <line x="6" y="59.2"/>
+            <line x="1" y="59.2"/>
+            <close/>
+            <move x="7" y="30.6"/>
+            <line x="155" y="30.6"/>
+            <line x="155" y="59.2"/>
+            <line x="7" y="59.2"/>
+            <close/>
+            <move x="156" y="30.6"/>
+            <line x="160.9" y="30.6"/>
+            <line x="160.9" y="59.2"/>
+            <line x="156" y="59.2"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="30.6"/>
+            <line x="160.9" y="30.6"/>
+            <line x="160.9" y="59.2"/>
+            <line x="156" y="59.2"/>
+            <close/>
+            <move x="153.5" y="29.6"/>
+            <line x="153.5" y="4.5"/>
+            <line x="65.5" y="4.5"/>
+            <line x="65.5" y="29.6"/>
+            <close/>
+            <move x="43.5" y="29.6"/>
+            <line x="43.5" y="4.5"/>
+            <line x="8.5" y="4.5"/>
+            <line x="8.5" y="29.6"/>
+            <close/>
+            <move x="8.5" y="30.6"/>
+            <line x="8.5" y="58.5"/>
+            <line x="43.5" y="58.5"/>
+            <line x="43.5" y="30.6"/>
+            <close/>
+            <move x="65.5" y="30.6"/>
+            <line x="65.5" y="58.5"/>
+            <line x="153.5" y="58.5"/>
+            <line x="153.5" y="30.6"/>
+            <close/>
+            <move x="1" y="30.6"/>
+            <line x="6" y="30.6"/>
+            <line x="6" y="59.2"/>
+            <line x="1" y="59.2"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="IBM dx360" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="35" y="1"/>
+            <line x="35" y="14.8"/>
+            <line x="7" y="14.8"/>
+            <close/>
+            <move x="36" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="14.8"/>
+            <line x="36" y="14.8"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="7" y="15.8"/>
+            <line x="35" y="15.8"/>
+            <line x="35" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="36" y="15.8"/>
+            <line x="155" y="15.8"/>
+            <line x="155" y="29.6"/>
+            <line x="36" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="25" y="16.5"/>
+            <line x="25" y="28.5"/>
+            <line x="34" y="28.5"/>
+            <line x="34" y="16.5"/>
+            <close/>
+            <move x="8.5" y="16.5"/>
+            <line x="8.5" y="28.5"/>
+            <line x="17.5" y="28.5"/>
+            <line x="17.5" y="16.5"/>
+            <close/>
+            <move x="25" y="2"/>
+            <line x="25" y="14"/>
+            <line x="34" y="14"/>
+            <line x="34" y="2"/>
+            <close/>
+            <move x="8.5" y="2"/>
+            <line x="8.5" y="14"/>
+            <line x="17.5" y="14"/>
+            <line x="17.5" y="2"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="89.8" name="IBM UPS10000" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="89.8"/>
+            <line x="161.9" y="89.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="89.8"/>
+            <line x="161.9" y="89.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="88.8"/>
+            <line x="1" y="88.8"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="130" y="1"/>
+            <line x="130" y="8"/>
+            <line x="7" y="8"/>
+            <close/>
+            <move x="131" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="8"/>
+            <line x="131" y="8"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="88.8"/>
+            <line x="156" y="88.8"/>
+            <close/>
+            <move x="131" y="9"/>
+            <line x="155" y="9"/>
+            <line x="155" y="44.4"/>
+            <line x="131" y="44.4"/>
+            <close/>
+            <move x="8" y="10"/>
+            <line x="129" y="10"/>
+            <line x="129" y="15"/>
+            <line x="8" y="15"/>
+            <close/>
+            <move x="7" y="16"/>
+            <line x="130" y="16"/>
+            <line x="130" y="44.4"/>
+            <line x="7" y="44.4"/>
+            <close/>
+            <move x="7" y="45.4"/>
+            <line x="130" y="45.4"/>
+            <line x="130" y="52.4"/>
+            <line x="7" y="52.4"/>
+            <close/>
+            <move x="131" y="45.4"/>
+            <line x="155" y="45.4"/>
+            <line x="155" y="52.4"/>
+            <line x="131" y="52.4"/>
+            <close/>
+            <move x="131" y="53.4"/>
+            <line x="155" y="53.4"/>
+            <line x="155" y="88.8"/>
+            <line x="131" y="88.8"/>
+            <close/>
+            <move x="8" y="54"/>
+            <line x="129" y="54"/>
+            <line x="129" y="59"/>
+            <line x="8" y="59"/>
+            <close/>
+            <move x="7" y="60"/>
+            <line x="130" y="60"/>
+            <line x="130" y="88.8"/>
+            <line x="7" y="88.8"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="8.5" y="17.5"/>
+            <line x="8.5" y="43.5"/>
+            <line x="128.5" y="43.5"/>
+            <line x="128.5" y="17.5"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="88.8"/>
+            <line x="156" y="88.8"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="88.8"/>
+            <line x="1" y="88.8"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="45.4" name="IBM UPS5000 HV" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="15.13" y2="30.27" y3="45.4"/>
+            <line x="161.9" y="45.4"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="45.4"/>
+            <line x="161.9" y="45.4"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="44.4"/>
+            <line x="1" y="44.4"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="130" y="1"/>
+            <line x="130" y="8"/>
+            <line x="7" y="8"/>
+            <close/>
+            <move x="131" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="8"/>
+            <line x="131" y="8"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="44.4"/>
+            <line x="156" y="44.4"/>
+            <close/>
+            <move x="131" y="9"/>
+            <line x="155" y="9"/>
+            <line x="155" y="44.4"/>
+            <line x="131" y="44.4"/>
+            <close/>
+            <move x="8" y="10"/>
+            <line x="129" y="10"/>
+            <line x="129" y="15"/>
+            <line x="8" y="15"/>
+            <close/>
+            <move x="7" y="16"/>
+            <line x="130" y="16"/>
+            <line x="130" y="44.4"/>
+            <line x="7" y="44.4"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="8.5" y="17.5"/>
+            <line x="8.5" y="43.5"/>
+            <line x="128.5" y="43.5"/>
+            <line x="128.5" y="17.5"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="44.4"/>
+            <line x="156" y="44.4"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="44.4"/>
+            <line x="1" y="44.4"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="89.8" name="IBM UPS7500" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="89.8"/>
+            <line x="161.9" y="89.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="89.8"/>
+            <line x="161.9" y="89.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="88.8"/>
+            <line x="1" y="88.8"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="130" y="1"/>
+            <line x="130" y="8"/>
+            <line x="7" y="8"/>
+            <close/>
+            <move x="131" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="8"/>
+            <line x="131" y="8"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="88.8"/>
+            <line x="156" y="88.8"/>
+            <close/>
+            <move x="131" y="9"/>
+            <line x="155" y="9"/>
+            <line x="155" y="44.4"/>
+            <line x="131" y="44.4"/>
+            <close/>
+            <move x="8" y="10"/>
+            <line x="129" y="10"/>
+            <line x="129" y="15"/>
+            <line x="8" y="15"/>
+            <close/>
+            <move x="7" y="16"/>
+            <line x="130" y="16"/>
+            <line x="130" y="44.4"/>
+            <line x="7" y="44.4"/>
+            <close/>
+            <move x="7" y="45.4"/>
+            <line x="130" y="45.4"/>
+            <line x="130" y="52.4"/>
+            <line x="7" y="52.4"/>
+            <close/>
+            <move x="131" y="45.4"/>
+            <line x="155" y="45.4"/>
+            <line x="155" y="52.4"/>
+            <line x="131" y="52.4"/>
+            <close/>
+            <move x="131" y="53.4"/>
+            <line x="155" y="53.4"/>
+            <line x="155" y="88.8"/>
+            <line x="131" y="88.8"/>
+            <close/>
+            <move x="8" y="54"/>
+            <line x="129" y="54"/>
+            <line x="129" y="59"/>
+            <line x="8" y="59"/>
+            <close/>
+            <move x="7" y="60"/>
+            <line x="130" y="60"/>
+            <line x="130" y="88.8"/>
+            <line x="7" y="88.8"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="8.5" y="17.5"/>
+            <line x="8.5" y="43.5"/>
+            <line x="128.5" y="43.5"/>
+            <line x="128.5" y="17.5"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="88.8"/>
+            <line x="156" y="88.8"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="88.8"/>
+            <line x="1" y="88.8"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.8" name="IBM x3250 M4" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="14.8"/>
+            <line x="7" y="14.8"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="156" y="14.8"/>
+            <close/>
+            <move x="72" y="5"/>
+            <line x="72" y="13"/>
+            <line x="108" y="13"/>
+            <line x="108" y="5"/>
+            <close/>
+            <move x="110" y="5"/>
+            <line x="110" y="13"/>
+            <line x="146" y="13"/>
+            <line x="146" y="5"/>
+            <close/>
+            <move x="73" y="6"/>
+            <line x="107" y="6"/>
+            <line x="107" y="12"/>
+            <line x="73" y="12"/>
+            <close/>
+            <move x="111" y="6"/>
+            <line x="145" y="6"/>
+            <line x="145" y="12"/>
+            <line x="111" y="12"/>
+            <close/>
+            <move x="17.75" y="9.12"/>
+            <line x="17.75" y="9.62"/>
+            <line x="17.75" y="14.12"/>
+            <line x="62.75" y="14.12"/>
+            <line x="62.75" y="9.12"/>
+            <close/>
+            <move x="18.75" y="10.12"/>
+            <line x="61.75" y="10.12"/>
+            <line x="61.75" y="13.12"/>
+            <line x="18.75" y="13.12"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="156" y="14.8"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.8" name="IBM x3530 M4" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="14.8"/>
+            <line x="7" y="14.8"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="156" y="14.8"/>
+            <close/>
+            <move x="8" y="2"/>
+            <line x="8" y="8"/>
+            <line x="31" y="8"/>
+            <line x="31" y="2"/>
+            <close/>
+            <move x="32" y="2"/>
+            <line x="32" y="8"/>
+            <line x="55" y="8"/>
+            <line x="55" y="2"/>
+            <close/>
+            <move x="56" y="2"/>
+            <line x="56" y="8"/>
+            <line x="79" y="8"/>
+            <line x="79" y="2"/>
+            <close/>
+            <move x="80" y="2"/>
+            <line x="80" y="8"/>
+            <line x="103" y="8"/>
+            <line x="103" y="2"/>
+            <close/>
+            <move x="9" y="3"/>
+            <line x="30" y="3"/>
+            <line x="30" y="7"/>
+            <line x="9" y="7"/>
+            <close/>
+            <move x="33" y="3"/>
+            <line x="54" y="3"/>
+            <line x="54" y="7"/>
+            <line x="33" y="7"/>
+            <close/>
+            <move x="57" y="3"/>
+            <line x="78" y="3"/>
+            <line x="78" y="7"/>
+            <line x="57" y="7"/>
+            <close/>
+            <move x="81" y="3"/>
+            <line x="102" y="3"/>
+            <line x="102" y="7"/>
+            <line x="81" y="7"/>
+            <close/>
+            <move x="8" y="8.5"/>
+            <line x="8" y="14.5"/>
+            <line x="31" y="14.5"/>
+            <line x="31" y="8.5"/>
+            <close/>
+            <move x="32" y="8.5"/>
+            <line x="32" y="14.5"/>
+            <line x="55" y="14.5"/>
+            <line x="55" y="8.5"/>
+            <close/>
+            <move x="56" y="8.5"/>
+            <line x="56" y="14.5"/>
+            <line x="79" y="14.5"/>
+            <line x="79" y="8.5"/>
+            <close/>
+            <move x="80" y="8.5"/>
+            <line x="80" y="14.5"/>
+            <line x="103" y="14.5"/>
+            <line x="103" y="8.5"/>
+            <close/>
+            <move x="109" y="9"/>
+            <line x="109" y="14"/>
+            <line x="154" y="14"/>
+            <line x="154" y="9"/>
+            <close/>
+            <move x="9" y="9.5"/>
+            <line x="30" y="9.5"/>
+            <line x="30" y="13.5"/>
+            <line x="9" y="13.5"/>
+            <close/>
+            <move x="33" y="9.5"/>
+            <line x="54" y="9.5"/>
+            <line x="54" y="13.5"/>
+            <line x="33" y="13.5"/>
+            <close/>
+            <move x="57" y="9.5"/>
+            <line x="78" y="9.5"/>
+            <line x="78" y="13.5"/>
+            <line x="57" y="13.5"/>
+            <close/>
+            <move x="81" y="9.5"/>
+            <line x="102" y="9.5"/>
+            <line x="102" y="13.5"/>
+            <line x="81" y="13.5"/>
+            <close/>
+            <move x="110" y="10"/>
+            <line x="153" y="10"/>
+            <line x="153" y="13"/>
+            <line x="110" y="13"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="156" y="14.8"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.8" name="IBM x3550 M4" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.8"/>
+            <line x="161.9" y="15.8"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="14.8"/>
+            <line x="7" y="14.8"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="156" y="14.8"/>
+            <close/>
+            <move x="8" y="2"/>
+            <line x="8" y="8"/>
+            <line x="31" y="8"/>
+            <line x="31" y="2"/>
+            <close/>
+            <move x="32" y="2"/>
+            <line x="32" y="8"/>
+            <line x="55" y="8"/>
+            <line x="55" y="2"/>
+            <close/>
+            <move x="56" y="2"/>
+            <line x="56" y="8"/>
+            <line x="79" y="8"/>
+            <line x="79" y="2"/>
+            <close/>
+            <move x="80" y="2"/>
+            <line x="80" y="8"/>
+            <line x="103" y="8"/>
+            <line x="103" y="2"/>
+            <close/>
+            <move x="9" y="3"/>
+            <line x="30" y="3"/>
+            <line x="30" y="7"/>
+            <line x="9" y="7"/>
+            <close/>
+            <move x="33" y="3"/>
+            <line x="54" y="3"/>
+            <line x="54" y="7"/>
+            <line x="33" y="7"/>
+            <close/>
+            <move x="57" y="3"/>
+            <line x="78" y="3"/>
+            <line x="78" y="7"/>
+            <line x="57" y="7"/>
+            <close/>
+            <move x="81" y="3"/>
+            <line x="102" y="3"/>
+            <line x="102" y="7"/>
+            <line x="81" y="7"/>
+            <close/>
+            <move x="8" y="8.5"/>
+            <line x="8" y="14.5"/>
+            <line x="31" y="14.5"/>
+            <line x="31" y="8.5"/>
+            <close/>
+            <move x="32" y="8.5"/>
+            <line x="32" y="14.5"/>
+            <line x="55" y="14.5"/>
+            <line x="55" y="8.5"/>
+            <close/>
+            <move x="56" y="8.5"/>
+            <line x="56" y="14.5"/>
+            <line x="79" y="14.5"/>
+            <line x="79" y="8.5"/>
+            <close/>
+            <move x="80" y="8.5"/>
+            <line x="80" y="14.5"/>
+            <line x="103" y="14.5"/>
+            <line x="103" y="8.5"/>
+            <close/>
+            <move x="109" y="9"/>
+            <line x="109" y="14"/>
+            <line x="154" y="14"/>
+            <line x="154" y="9"/>
+            <close/>
+            <move x="9" y="9.5"/>
+            <line x="30" y="9.5"/>
+            <line x="30" y="13.5"/>
+            <line x="9" y="13.5"/>
+            <close/>
+            <move x="33" y="9.5"/>
+            <line x="54" y="9.5"/>
+            <line x="54" y="13.5"/>
+            <line x="33" y="13.5"/>
+            <close/>
+            <move x="57" y="9.5"/>
+            <line x="78" y="9.5"/>
+            <line x="78" y="13.5"/>
+            <line x="57" y="13.5"/>
+            <close/>
+            <move x="81" y="9.5"/>
+            <line x="102" y="9.5"/>
+            <line x="102" y="13.5"/>
+            <line x="81" y="13.5"/>
+            <close/>
+            <move x="110" y="10"/>
+            <line x="153" y="10"/>
+            <line x="153" y="13"/>
+            <line x="110" y="13"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.8"/>
+            <line x="156" y="14.8"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="14.8"/>
+            <line x="1" y="14.8"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="IBM x3630 M3" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="9" y="2"/>
+            <line x="9" y="10"/>
+            <line x="44" y="10"/>
+            <line x="44" y="2"/>
+            <close/>
+            <move x="45" y="2"/>
+            <line x="45" y="10"/>
+            <line x="80" y="10"/>
+            <line x="80" y="2"/>
+            <close/>
+            <move x="81" y="2"/>
+            <line x="81" y="10"/>
+            <line x="116" y="10"/>
+            <line x="116" y="2"/>
+            <close/>
+            <move x="117" y="2"/>
+            <line x="117" y="10"/>
+            <line x="152" y="10"/>
+            <line x="152" y="2"/>
+            <close/>
+            <move x="10" y="3"/>
+            <line x="43" y="3"/>
+            <line x="43" y="9"/>
+            <line x="10" y="9"/>
+            <close/>
+            <move x="46" y="3"/>
+            <line x="79" y="3"/>
+            <line x="79" y="9"/>
+            <line x="46" y="9"/>
+            <close/>
+            <move x="82" y="3"/>
+            <line x="115" y="3"/>
+            <line x="115" y="9"/>
+            <line x="82" y="9"/>
+            <close/>
+            <move x="118" y="3"/>
+            <line x="151" y="3"/>
+            <line x="151" y="9"/>
+            <line x="118" y="9"/>
+            <close/>
+            <move x="9" y="11"/>
+            <line x="9" y="19"/>
+            <line x="44" y="19"/>
+            <line x="44" y="11"/>
+            <close/>
+            <move x="45" y="11"/>
+            <line x="45" y="19"/>
+            <line x="80" y="19"/>
+            <line x="80" y="11"/>
+            <close/>
+            <move x="81" y="11"/>
+            <line x="81" y="19"/>
+            <line x="116" y="19"/>
+            <line x="116" y="11"/>
+            <close/>
+            <move x="117" y="11"/>
+            <line x="117" y="19"/>
+            <line x="152" y="19"/>
+            <line x="152" y="11"/>
+            <close/>
+            <move x="10" y="12"/>
+            <line x="43" y="12"/>
+            <line x="43" y="18"/>
+            <line x="10" y="18"/>
+            <close/>
+            <move x="46" y="12"/>
+            <line x="79" y="12"/>
+            <line x="79" y="18"/>
+            <line x="46" y="18"/>
+            <close/>
+            <move x="82" y="12"/>
+            <line x="115" y="12"/>
+            <line x="115" y="18"/>
+            <line x="82" y="18"/>
+            <close/>
+            <move x="118" y="12"/>
+            <line x="151" y="12"/>
+            <line x="151" y="18"/>
+            <line x="118" y="18"/>
+            <close/>
+            <move x="9" y="20"/>
+            <line x="9" y="28"/>
+            <line x="44" y="28"/>
+            <line x="44" y="20"/>
+            <close/>
+            <move x="45" y="20"/>
+            <line x="45" y="28"/>
+            <line x="80" y="28"/>
+            <line x="80" y="20"/>
+            <close/>
+            <move x="81" y="20"/>
+            <line x="81" y="28"/>
+            <line x="116" y="28"/>
+            <line x="116" y="20"/>
+            <close/>
+            <move x="117" y="20"/>
+            <line x="117" y="28"/>
+            <line x="152" y="28"/>
+            <line x="152" y="20"/>
+            <close/>
+            <move x="10" y="21"/>
+            <line x="43" y="21"/>
+            <line x="43" y="27"/>
+            <line x="10" y="27"/>
+            <close/>
+            <move x="46" y="21"/>
+            <line x="79" y="21"/>
+            <line x="79" y="27"/>
+            <line x="46" y="27"/>
+            <close/>
+            <move x="82" y="21"/>
+            <line x="115" y="21"/>
+            <line x="115" y="27"/>
+            <line x="82" y="27"/>
+            <close/>
+            <move x="118" y="21"/>
+            <line x="151" y="21"/>
+            <line x="151" y="27"/>
+            <line x="118" y="27"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="IBM x3630 M4" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="9" y="2"/>
+            <line x="9" y="10"/>
+            <line x="44" y="10"/>
+            <line x="44" y="2"/>
+            <close/>
+            <move x="45" y="2"/>
+            <line x="45" y="10"/>
+            <line x="80" y="10"/>
+            <line x="80" y="2"/>
+            <close/>
+            <move x="81" y="2"/>
+            <line x="81" y="10"/>
+            <line x="116" y="10"/>
+            <line x="116" y="2"/>
+            <close/>
+            <move x="117" y="2"/>
+            <line x="117" y="10"/>
+            <line x="152" y="10"/>
+            <line x="152" y="2"/>
+            <close/>
+            <move x="10" y="3"/>
+            <line x="43" y="3"/>
+            <line x="43" y="9"/>
+            <line x="10" y="9"/>
+            <close/>
+            <move x="46" y="3"/>
+            <line x="79" y="3"/>
+            <line x="79" y="9"/>
+            <line x="46" y="9"/>
+            <close/>
+            <move x="82" y="3"/>
+            <line x="115" y="3"/>
+            <line x="115" y="9"/>
+            <line x="82" y="9"/>
+            <close/>
+            <move x="118" y="3"/>
+            <line x="151" y="3"/>
+            <line x="151" y="9"/>
+            <line x="118" y="9"/>
+            <close/>
+            <move x="9" y="11"/>
+            <line x="9" y="19"/>
+            <line x="44" y="19"/>
+            <line x="44" y="11"/>
+            <close/>
+            <move x="45" y="11"/>
+            <line x="45" y="19"/>
+            <line x="80" y="19"/>
+            <line x="80" y="11"/>
+            <close/>
+            <move x="10" y="12"/>
+            <line x="43" y="12"/>
+            <line x="43" y="18"/>
+            <line x="10" y="18"/>
+            <close/>
+            <move x="46" y="12"/>
+            <line x="79" y="12"/>
+            <line x="79" y="18"/>
+            <line x="46" y="18"/>
+            <close/>
+            <move x="9" y="20"/>
+            <line x="9" y="28"/>
+            <line x="44" y="28"/>
+            <line x="44" y="20"/>
+            <close/>
+            <move x="45" y="20"/>
+            <line x="45" y="28"/>
+            <line x="80" y="28"/>
+            <line x="80" y="20"/>
+            <close/>
+            <move x="10" y="21"/>
+            <line x="43" y="21"/>
+            <line x="43" y="27"/>
+            <line x="10" y="27"/>
+            <close/>
+            <move x="46" y="21"/>
+            <line x="79" y="21"/>
+            <line x="79" y="27"/>
+            <line x="46" y="27"/>
+            <close/>
+            <move x="109" y="24"/>
+            <line x="109" y="29"/>
+            <line x="154" y="29"/>
+            <line x="154" y="24"/>
+            <close/>
+            <move x="110" y="25"/>
+            <line x="153" y="25"/>
+            <line x="153" y="28"/>
+            <line x="110" y="28"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="IBM x3650 M4" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="10" y="3"/>
+            <line x="10" y="28"/>
+            <line x="106" y="28"/>
+            <line x="106" y="3"/>
+            <close/>
+            <move x="11" y="4"/>
+            <line x="15" y="4"/>
+            <line x="15" y="27"/>
+            <line x="11" y="27"/>
+            <close/>
+            <move x="17" y="4"/>
+            <line x="21" y="4"/>
+            <line x="21" y="27"/>
+            <line x="17" y="27"/>
+            <close/>
+            <move x="23" y="4"/>
+            <line x="27" y="4"/>
+            <line x="27" y="27"/>
+            <line x="23" y="27"/>
+            <close/>
+            <move x="29" y="4"/>
+            <line x="33" y="4"/>
+            <line x="33" y="27"/>
+            <line x="29" y="27"/>
+            <close/>
+            <move x="35" y="4"/>
+            <line x="39" y="4"/>
+            <line x="39" y="27"/>
+            <line x="35" y="27"/>
+            <close/>
+            <move x="41" y="4"/>
+            <line x="45" y="4"/>
+            <line x="45" y="27"/>
+            <line x="41" y="27"/>
+            <close/>
+            <move x="47" y="4"/>
+            <line x="51" y="4"/>
+            <line x="51" y="27"/>
+            <line x="47" y="27"/>
+            <close/>
+            <move x="53" y="4"/>
+            <line x="57" y="4"/>
+            <line x="57" y="27"/>
+            <line x="53" y="27"/>
+            <close/>
+            <move x="59" y="4"/>
+            <line x="63" y="4"/>
+            <line x="63" y="27"/>
+            <line x="59" y="27"/>
+            <close/>
+            <move x="65" y="4"/>
+            <line x="69" y="4"/>
+            <line x="69" y="27"/>
+            <line x="65" y="27"/>
+            <close/>
+            <move x="71" y="4"/>
+            <line x="75" y="4"/>
+            <line x="75" y="27"/>
+            <line x="71" y="27"/>
+            <close/>
+            <move x="77" y="4"/>
+            <line x="81" y="4"/>
+            <line x="81" y="27"/>
+            <line x="77" y="27"/>
+            <close/>
+            <move x="83" y="4"/>
+            <line x="87" y="4"/>
+            <line x="87" y="27"/>
+            <line x="83" y="27"/>
+            <close/>
+            <move x="89" y="4"/>
+            <line x="93" y="4"/>
+            <line x="93" y="27"/>
+            <line x="89" y="27"/>
+            <close/>
+            <move x="95" y="4"/>
+            <line x="99" y="4"/>
+            <line x="99" y="27"/>
+            <line x="95" y="27"/>
+            <close/>
+            <move x="101" y="4"/>
+            <line x="105" y="4"/>
+            <line x="105" y="27"/>
+            <line x="101" y="27"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="IBM x3690" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="10" y="3"/>
+            <line x="10" y="28"/>
+            <line x="106" y="28"/>
+            <line x="106" y="3"/>
+            <close/>
+            <move x="11" y="4"/>
+            <line x="15" y="4"/>
+            <line x="15" y="27"/>
+            <line x="11" y="27"/>
+            <close/>
+            <move x="17" y="4"/>
+            <line x="21" y="4"/>
+            <line x="21" y="27"/>
+            <line x="17" y="27"/>
+            <close/>
+            <move x="23" y="4"/>
+            <line x="27" y="4"/>
+            <line x="27" y="27"/>
+            <line x="23" y="27"/>
+            <close/>
+            <move x="29" y="4"/>
+            <line x="33" y="4"/>
+            <line x="33" y="27"/>
+            <line x="29" y="27"/>
+            <close/>
+            <move x="35" y="4"/>
+            <line x="39" y="4"/>
+            <line x="39" y="27"/>
+            <line x="35" y="27"/>
+            <close/>
+            <move x="41" y="4"/>
+            <line x="45" y="4"/>
+            <line x="45" y="27"/>
+            <line x="41" y="27"/>
+            <close/>
+            <move x="47" y="4"/>
+            <line x="51" y="4"/>
+            <line x="51" y="27"/>
+            <line x="47" y="27"/>
+            <close/>
+            <move x="53" y="4"/>
+            <line x="57" y="4"/>
+            <line x="57" y="27"/>
+            <line x="53" y="27"/>
+            <close/>
+            <move x="59" y="4"/>
+            <line x="63" y="4"/>
+            <line x="63" y="27"/>
+            <line x="59" y="27"/>
+            <close/>
+            <move x="65" y="4"/>
+            <line x="69" y="4"/>
+            <line x="69" y="27"/>
+            <line x="65" y="27"/>
+            <close/>
+            <move x="71" y="4"/>
+            <line x="75" y="4"/>
+            <line x="75" y="27"/>
+            <line x="71" y="27"/>
+            <close/>
+            <move x="77" y="4"/>
+            <line x="81" y="4"/>
+            <line x="81" y="27"/>
+            <line x="77" y="27"/>
+            <close/>
+            <move x="83" y="4"/>
+            <line x="87" y="4"/>
+            <line x="87" y="27"/>
+            <line x="83" y="27"/>
+            <close/>
+            <move x="89" y="4"/>
+            <line x="93" y="4"/>
+            <line x="93" y="27"/>
+            <line x="89" y="27"/>
+            <close/>
+            <move x="95" y="4"/>
+            <line x="99" y="4"/>
+            <line x="99" y="27"/>
+            <line x="95" y="27"/>
+            <close/>
+            <move x="101" y="4"/>
+            <line x="105" y="4"/>
+            <line x="105" y="27"/>
+            <line x="101" y="27"/>
+            <close/>
+            <move x="110" y="23"/>
+            <line x="110" y="28"/>
+            <line x="151" y="28"/>
+            <line x="151" y="23"/>
+            <close/>
+            <move x="111" y="24"/>
+            <line x="150" y="24"/>
+            <line x="150" y="27"/>
+            <line x="111" y="27"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="IBM x3750" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="60" y="3"/>
+            <line x="60" y="28"/>
+            <line x="132" y="28"/>
+            <line x="132" y="3"/>
+            <close/>
+            <move x="61" y="4"/>
+            <line x="65" y="4"/>
+            <line x="65" y="27"/>
+            <line x="61" y="27"/>
+            <close/>
+            <move x="67" y="4"/>
+            <line x="71" y="4"/>
+            <line x="71" y="27"/>
+            <line x="67" y="27"/>
+            <close/>
+            <move x="73" y="4"/>
+            <line x="77" y="4"/>
+            <line x="77" y="27"/>
+            <line x="73" y="27"/>
+            <close/>
+            <move x="79" y="4"/>
+            <line x="83" y="4"/>
+            <line x="83" y="27"/>
+            <line x="79" y="27"/>
+            <close/>
+            <move x="85" y="4"/>
+            <line x="89" y="4"/>
+            <line x="89" y="27"/>
+            <line x="85" y="27"/>
+            <close/>
+            <move x="91" y="4"/>
+            <line x="95" y="4"/>
+            <line x="95" y="27"/>
+            <line x="91" y="27"/>
+            <close/>
+            <move x="97" y="4"/>
+            <line x="101" y="4"/>
+            <line x="101" y="27"/>
+            <line x="97" y="27"/>
+            <close/>
+            <move x="103" y="4"/>
+            <line x="107" y="4"/>
+            <line x="107" y="27"/>
+            <line x="103" y="27"/>
+            <close/>
+            <move x="109" y="4"/>
+            <line x="113" y="4"/>
+            <line x="113" y="27"/>
+            <line x="109" y="27"/>
+            <close/>
+            <move x="115" y="4"/>
+            <line x="119" y="4"/>
+            <line x="119" y="27"/>
+            <line x="115" y="27"/>
+            <close/>
+            <move x="121" y="4"/>
+            <line x="125" y="4"/>
+            <line x="125" y="27"/>
+            <line x="121" y="27"/>
+            <close/>
+            <move x="127" y="4"/>
+            <line x="131" y="4"/>
+            <line x="131" y="27"/>
+            <line x="127" y="27"/>
+            <close/>
+            <move x="9" y="23"/>
+            <line x="9" y="28"/>
+            <line x="45" y="28"/>
+            <line x="45" y="23"/>
+            <close/>
+            <move x="10" y="24"/>
+            <line x="44" y="24"/>
+            <line x="44" y="27"/>
+            <line x="10" y="27"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="133.5" y="2.12"/>
+            <line x="133.5" y="26.5"/>
+            <line x="153.62" y="26.5"/>
+            <line x="153.62" y="2.12"/>
+            <close/>
+            <move x="8.5" y="1.5"/>
+            <line x="8.5" y="11.5"/>
+            <line x="53.5" y="11.5"/>
+            <line x="53.5" y="1.5"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="IBM x3755 M3" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.9" y="30.6"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="15" y="2"/>
+            <line x="15" y="10"/>
+            <line x="50" y="10"/>
+            <line x="50" y="2"/>
+            <close/>
+            <move x="59" y="2"/>
+            <line x="59" y="10"/>
+            <line x="94" y="10"/>
+            <line x="94" y="2"/>
+            <close/>
+            <move x="16" y="3"/>
+            <line x="49" y="3"/>
+            <line x="49" y="9"/>
+            <line x="16" y="9"/>
+            <close/>
+            <move x="60" y="3"/>
+            <line x="93" y="3"/>
+            <line x="93" y="9"/>
+            <line x="60" y="9"/>
+            <close/>
+            <move x="103" y="5"/>
+            <line x="103" y="10"/>
+            <line x="144" y="10"/>
+            <line x="144" y="5"/>
+            <close/>
+            <move x="104" y="6"/>
+            <line x="143" y="6"/>
+            <line x="143" y="9"/>
+            <line x="104" y="9"/>
+            <close/>
+            <move x="15" y="11.5"/>
+            <line x="15" y="19.5"/>
+            <line x="50" y="19.5"/>
+            <line x="50" y="11.5"/>
+            <close/>
+            <move x="59" y="11.5"/>
+            <line x="59" y="19.5"/>
+            <line x="94" y="19.5"/>
+            <line x="94" y="11.5"/>
+            <close/>
+            <move x="103" y="11.5"/>
+            <line x="103" y="19.5"/>
+            <line x="138" y="19.5"/>
+            <line x="138" y="11.5"/>
+            <close/>
+            <move x="16" y="12.5"/>
+            <line x="49" y="12.5"/>
+            <line x="49" y="18.5"/>
+            <line x="16" y="18.5"/>
+            <close/>
+            <move x="60" y="12.5"/>
+            <line x="93" y="12.5"/>
+            <line x="93" y="18.5"/>
+            <line x="60" y="18.5"/>
+            <close/>
+            <move x="104" y="12.5"/>
+            <line x="137" y="12.5"/>
+            <line x="137" y="18.5"/>
+            <line x="104" y="18.5"/>
+            <close/>
+            <move x="15" y="21"/>
+            <line x="15" y="29"/>
+            <line x="50" y="29"/>
+            <line x="50" y="21"/>
+            <close/>
+            <move x="59" y="21"/>
+            <line x="59" y="29"/>
+            <line x="94" y="29"/>
+            <line x="94" y="21"/>
+            <close/>
+            <move x="103" y="21"/>
+            <line x="103" y="29"/>
+            <line x="138" y="29"/>
+            <line x="138" y="21"/>
+            <close/>
+            <move x="16" y="22"/>
+            <line x="49" y="22"/>
+            <line x="49" y="28"/>
+            <line x="16" y="28"/>
+            <close/>
+            <move x="60" y="22"/>
+            <line x="93" y="22"/>
+            <line x="93" y="28"/>
+            <line x="60" y="28"/>
+            <close/>
+            <move x="104" y="22"/>
+            <line x="137" y="22"/>
+            <line x="137" y="28"/>
+            <line x="104" y="28"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="145.5" y="4.5"/>
+            <line x="145.5" y="13.5"/>
+            <line x="139.5" y="13.5"/>
+            <line x="139.5" y="28.5"/>
+            <line x="153.5" y="28.5"/>
+            <line x="153.5" y="4.5"/>
+            <close/>
+            <move x="96" y="2"/>
+            <line x="96" y="29"/>
+            <line x="101" y="29"/>
+            <line x="101" y="2"/>
+            <close/>
+            <move x="52" y="2"/>
+            <line x="52" y="29"/>
+            <line x="57" y="29"/>
+            <line x="57" y="2"/>
+            <close/>
+            <move x="8.5" y="2"/>
+            <line x="8.5" y="29"/>
+            <line x="13.5" y="29"/>
+            <line x="13.5" y="2"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60.3" name="IBM x3850 X5" strokewidth="inherit" w="161.85">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.3"/>
+            <line x="161.85" y="60.3"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.3"/>
+            <line x="161.85" y="60.3"/>
+            <line x="161.85" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="59.3"/>
+            <line x="1" y="59.3"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155.32" y="1"/>
+            <line x="155.32" y="59.3"/>
+            <line x="7" y="59.3"/>
+            <close/>
+            <move x="156.32" y="1"/>
+            <line x="160.85" y="1"/>
+            <line x="160.85" y="59.3"/>
+            <line x="156.32" y="59.3"/>
+            <close/>
+            <move x="115" y="2"/>
+            <line x="115" y="8"/>
+            <line x="138" y="8"/>
+            <line x="138" y="2"/>
+            <close/>
+            <move x="116" y="3"/>
+            <line x="137" y="3"/>
+            <line x="137" y="7"/>
+            <line x="116" y="7"/>
+            <close/>
+            <move x="115" y="9"/>
+            <line x="115" y="15"/>
+            <line x="138" y="15"/>
+            <line x="138" y="9"/>
+            <close/>
+            <move x="116" y="10"/>
+            <line x="137" y="10"/>
+            <line x="137" y="14"/>
+            <line x="116" y="14"/>
+            <close/>
+            <move x="115" y="16"/>
+            <line x="115" y="22"/>
+            <line x="138" y="22"/>
+            <line x="138" y="16"/>
+            <close/>
+            <move x="116" y="17"/>
+            <line x="137" y="17"/>
+            <line x="137" y="21"/>
+            <line x="116" y="21"/>
+            <close/>
+            <move x="115" y="23"/>
+            <line x="115" y="29"/>
+            <line x="138" y="29"/>
+            <line x="138" y="23"/>
+            <close/>
+            <move x="116" y="24"/>
+            <line x="137" y="24"/>
+            <line x="137" y="28"/>
+            <line x="116" y="28"/>
+            <close/>
+            <move x="115" y="30"/>
+            <line x="115" y="36"/>
+            <line x="138" y="36"/>
+            <line x="138" y="30"/>
+            <close/>
+            <move x="116" y="31"/>
+            <line x="137" y="31"/>
+            <line x="137" y="35"/>
+            <line x="116" y="35"/>
+            <close/>
+            <move x="115" y="37"/>
+            <line x="115" y="43"/>
+            <line x="138" y="43"/>
+            <line x="138" y="37"/>
+            <close/>
+            <move x="116" y="38"/>
+            <line x="137" y="38"/>
+            <line x="137" y="42"/>
+            <line x="116" y="42"/>
+            <close/>
+            <move x="115" y="44"/>
+            <line x="115" y="50"/>
+            <line x="138" y="50"/>
+            <line x="138" y="44"/>
+            <close/>
+            <move x="116" y="45"/>
+            <line x="137" y="45"/>
+            <line x="137" y="49"/>
+            <line x="116" y="49"/>
+            <close/>
+            <move x="115" y="51"/>
+            <line x="115" y="57"/>
+            <line x="138" y="57"/>
+            <line x="138" y="51"/>
+            <close/>
+            <move x="116" y="52"/>
+            <line x="137" y="52"/>
+            <line x="137" y="56"/>
+            <line x="116" y="56"/>
+            <close/>
+            <move x="8" y="53"/>
+            <line x="8" y="58"/>
+            <line x="49" y="58"/>
+            <line x="49" y="53"/>
+            <close/>
+            <move x="9" y="54"/>
+            <line x="48" y="54"/>
+            <line x="48" y="57"/>
+            <line x="9" y="57"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="8.3" y="2.1"/>
+            <line x="8.3" y="51.7"/>
+            <line x="110.5" y="51.7"/>
+            <line x="110.5" y="2.1"/>
+            <close/>
+            <move x="156.32" y="1"/>
+            <line x="160.85" y="1"/>
+            <line x="160.85" y="59.3"/>
+            <line x="156.32" y="59.3"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="59.3"/>
+            <line x="1" y="59.3"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60.3" name="IBM x3950 X5" strokewidth="inherit" w="161.85">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.3"/>
+            <line x="161.85" y="60.3"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.3"/>
+            <line x="161.85" y="60.3"/>
+            <line x="161.85" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="59.3"/>
+            <line x="1" y="59.3"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155.32" y="1"/>
+            <line x="155.32" y="59.3"/>
+            <line x="7" y="59.3"/>
+            <close/>
+            <move x="156.32" y="1"/>
+            <line x="160.85" y="1"/>
+            <line x="160.85" y="59.3"/>
+            <line x="156.32" y="59.3"/>
+            <close/>
+            <move x="115" y="2"/>
+            <line x="115" y="8"/>
+            <line x="138" y="8"/>
+            <line x="138" y="2"/>
+            <close/>
+            <move x="116" y="3"/>
+            <line x="137" y="3"/>
+            <line x="137" y="7"/>
+            <line x="116" y="7"/>
+            <close/>
+            <move x="115" y="9"/>
+            <line x="115" y="15"/>
+            <line x="138" y="15"/>
+            <line x="138" y="9"/>
+            <close/>
+            <move x="116" y="10"/>
+            <line x="137" y="10"/>
+            <line x="137" y="14"/>
+            <line x="116" y="14"/>
+            <close/>
+            <move x="115" y="16"/>
+            <line x="115" y="22"/>
+            <line x="138" y="22"/>
+            <line x="138" y="16"/>
+            <close/>
+            <move x="116" y="17"/>
+            <line x="137" y="17"/>
+            <line x="137" y="21"/>
+            <line x="116" y="21"/>
+            <close/>
+            <move x="115" y="23"/>
+            <line x="115" y="29"/>
+            <line x="138" y="29"/>
+            <line x="138" y="23"/>
+            <close/>
+            <move x="116" y="24"/>
+            <line x="137" y="24"/>
+            <line x="137" y="28"/>
+            <line x="116" y="28"/>
+            <close/>
+            <move x="115" y="30"/>
+            <line x="115" y="36"/>
+            <line x="138" y="36"/>
+            <line x="138" y="30"/>
+            <close/>
+            <move x="116" y="31"/>
+            <line x="137" y="31"/>
+            <line x="137" y="35"/>
+            <line x="116" y="35"/>
+            <close/>
+            <move x="115" y="37"/>
+            <line x="115" y="43"/>
+            <line x="138" y="43"/>
+            <line x="138" y="37"/>
+            <close/>
+            <move x="116" y="38"/>
+            <line x="137" y="38"/>
+            <line x="137" y="42"/>
+            <line x="116" y="42"/>
+            <close/>
+            <move x="115" y="44"/>
+            <line x="115" y="50"/>
+            <line x="138" y="50"/>
+            <line x="138" y="44"/>
+            <close/>
+            <move x="116" y="45"/>
+            <line x="137" y="45"/>
+            <line x="137" y="49"/>
+            <line x="116" y="49"/>
+            <close/>
+            <move x="115" y="51"/>
+            <line x="115" y="57"/>
+            <line x="138" y="57"/>
+            <line x="138" y="51"/>
+            <close/>
+            <move x="116" y="52"/>
+            <line x="137" y="52"/>
+            <line x="137" y="56"/>
+            <line x="116" y="56"/>
+            <close/>
+            <move x="8" y="53"/>
+            <line x="8" y="58"/>
+            <line x="49" y="58"/>
+            <line x="49" y="53"/>
+            <close/>
+            <move x="9" y="54"/>
+            <line x="48" y="54"/>
+            <line x="48" y="57"/>
+            <line x="9" y="57"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="8.3" y="2.1"/>
+            <line x="8.3" y="51.7"/>
+            <line x="110.5" y="51.7"/>
+            <line x="110.5" y="2.1"/>
+            <close/>
+            <move x="156.32" y="1"/>
+            <line x="160.85" y="1"/>
+            <line x="160.85" y="59.3"/>
+            <line x="156.32" y="59.3"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="59.3"/>
+            <line x="1" y="59.3"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+</shapes>

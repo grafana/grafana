@@ -1,0 +1,221 @@
+<shapes name="mxGraph.pid.pumps_-_din">
+<shape aspect="variable" h="100" name="Centrifugal" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="50" y="0"/>
+            <line x="50" y="100"/>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Diaphragm" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="50" y="0"/>
+            <line x="100" y="50"/>
+            <arc large-arc-flag="0" rx="65" ry="65" sweep-flag="1" x="0" x-axis-rotation="0" y="50"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Eccentric Worm" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+            <move x="49.8" y="14.2"/>
+            <curve x1="49.8" x2="43.4" x3="49.6" y1="14.2" y2="17.4" y3="25.2"/>
+            <curve x1="55.8" x2="56.4" x3="49.6" y1="33" y2="31.4" y3="38.8"/>
+            <curve x1="42.8" x2="39.6" x3="49.8" y1="46.2" y2="47.4" y3="57.4"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Electromagnetic" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+            <move x="40" y="35"/>
+            <line x="45" y="35"/>
+            <line x="45" y="65"/>
+            <line x="40" y="65"/>
+            <move x="60" y="35"/>
+            <line x="55" y="35"/>
+            <line x="55" y="65"/>
+            <line x="60" y="65"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Gear" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+        </path>
+        <stroke/>
+        <ellipse h="30" w="30" x="20" y="35"/>
+        <stroke/>
+        <ellipse h="30" w="30" x="50" y="35"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Hydraulic" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Jet" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+            <move x="22" y="28"/>
+            <arc large-arc-flag="0" rx="50" ry="50" sweep-flag="1" x="22" x-axis-rotation="0" y="91.5"/>
+            <move x="78" y="28"/>
+            <arc large-arc-flag="0" rx="50" ry="50" sweep-flag="0" x="78" x-axis-rotation="0" y="91.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Reciprocating" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+            <move x="50" y="30"/>
+            <line x="50" y="50"/>
+            <move x="30" y="50"/>
+            <line x="70" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Rotary Piston" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+            <move x="50" y="30"/>
+            <line x="50" y="50"/>
+            <move x="40" y="50"/>
+            <line x="60" y="50"/>
+        </path>
+        <stroke/>
+        <ellipse h="40" w="40" x="30" y="25"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Screw" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+            <move x="40" y="20"/>
+            <line x="50" y="10"/>
+            <line x="60" y="20"/>
+            <move x="40" y="30"/>
+            <line x="50" y="20"/>
+            <line x="60" y="30"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

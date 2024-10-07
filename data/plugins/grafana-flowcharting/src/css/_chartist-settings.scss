@@ -1,0 +1,88 @@
+// Scales for responsive SVG containers
+$ct-scales: ((1), (15/16), (8/9), (5/6), (4/5), (3/4), (2/3), (5/8), (1/1.618), (3/5), (9/16), (8/15), (1/2), (2/5), (3/8), (1/3), (1/4)) !default;
+$ct-scales-names: (ct-square, ct-minor-second, ct-major-second, ct-minor-third, ct-major-third, ct-perfect-fourth, ct-perfect-fifth, ct-minor-sixth, ct-golden-section, ct-major-sixth, ct-minor-seventh, ct-major-seventh, ct-octave, ct-major-tenth, ct-major-eleventh, ct-major-twelfth, ct-double-octave) !default;
+
+// Class names to be used when generating CSS
+$ct-class-chart: ct-chart !default;
+$ct-class-chart-line: ct-chart-line !default;
+$ct-class-chart-bar: ct-chart-bar !default;
+$ct-class-horizontal-bars: ct-horizontal-bars !default;
+$ct-class-chart-pie: ct-chart-pie !default;
+$ct-class-chart-donut: ct-chart-donut !default;
+$ct-class-label: ct-label !default;
+$ct-class-series: ct-series !default;
+$ct-class-line: ct-line !default;
+$ct-class-point: ct-point !default;
+$ct-class-area: ct-area !default;
+$ct-class-bar: ct-bar !default;
+$ct-class-slice-pie: ct-slice-pie !default;
+$ct-class-slice-donut: ct-slice-donut !default;
+$ct-class-slice-donut-solid: ct-slice-donut-solid !default;
+$ct-class-grid: ct-grid !default;
+$ct-class-grid-background: ct-grid-background !default;
+$ct-class-vertical: ct-vertical !default;
+$ct-class-horizontal: ct-horizontal !default;
+$ct-class-start: ct-start !default;
+$ct-class-end: ct-end !default;
+
+// Container ratio
+$ct-container-ratio: (1/1.618) !default;
+
+// Text styles for labels
+$ct-text-color: rgba(0, 0, 0, 0.4) !default;
+$ct-text-size: 0.75rem !default;
+$ct-text-align: flex-start !default;
+$ct-text-justify: flex-start !default;
+$ct-text-line-height: 1;
+
+// Grid styles
+$ct-grid-color: rgba(0, 0, 0, 0.2) !default;
+$ct-grid-dasharray: 2px !default;
+$ct-grid-width: 1px !default;
+$ct-grid-background-fill: none !default;
+
+// Line chart properties
+$ct-line-width: 4px !default;
+$ct-line-dasharray: false !default;
+$ct-point-size: 10px !default;
+// Line chart point, can be either round or square
+$ct-point-shape: round !default;
+// Area fill transparency between 0 and 1
+$ct-area-opacity: 0.1 !default;
+
+// Bar chart bar width
+$ct-bar-width: 10px !default;
+
+// Donut width (If donut width is to big it can cause issues where the shape gets distorted)
+$ct-donut-width: 60px !default;
+
+// If set to true it will include the default classes and generate CSS output. If you're planning to use the mixins you
+// should set this property to false
+$ct-include-classes: true !default;
+
+// If this is set to true the CSS will contain colored series. You can extend or change the color with the
+// properties below
+$ct-include-colored-series: $ct-include-classes !default;
+
+// If set to true this will include all responsive container variations using the scales defined at the top of the script
+$ct-include-alternative-responsive-containers: $ct-include-classes !default;
+
+// Series names and colors. This can be extended or customized as desired. Just add more series and colors.
+$ct-series-names: (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) !default;
+$ct-series-colors: (
+  #d70206,
+  #f05b4f,
+  #f4c63d,
+  #d17905,
+  #453d3f,
+  #59922b,
+  #0544d3,
+  #6b0392,
+  #f05b4f,
+  #dda458,
+  #eacf7d,
+  #86797d,
+  #b2c326,
+  #6188e2,
+  #a748ca
+) !default;

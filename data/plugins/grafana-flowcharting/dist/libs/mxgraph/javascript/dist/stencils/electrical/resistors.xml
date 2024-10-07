@@ -1,0 +1,617 @@
+<shapes name="mxgraph.electrical.resistors">
+<shape aspect="variable" h="60" name="Attenuator" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="30"/>
+            <line x="18" y="30"/>
+            <line x="22" y="20"/>
+            <line x="30" y="40"/>
+            <line x="38" y="20"/>
+            <line x="46" y="40"/>
+            <line x="54" y="20"/>
+            <line x="62" y="40"/>
+            <line x="70" y="20"/>
+            <line x="78" y="40"/>
+            <line x="82" y="30"/>
+            <line x="100" y="30"/>
+            <move x="50" y="0"/>
+            <line x="50" y="60"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Magnetoresistor" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="30"/>
+            <line x="18" y="30"/>
+            <line x="22" y="20"/>
+            <line x="30" y="40"/>
+            <line x="38" y="20"/>
+            <line x="46" y="40"/>
+            <line x="54" y="20"/>
+            <line x="62" y="40"/>
+            <line x="70" y="20"/>
+            <line x="78" y="40"/>
+            <line x="82" y="30"/>
+            <line x="100" y="30"/>
+            <move x="30" y="60"/>
+            <line x="70" y="0"/>
+            <move x="45" y="45"/>
+            <line x="55" y="60"/>
+            <move x="55" y="45"/>
+            <line x="45" y="60"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Memristor 1" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <line x="18" y="0"/>
+            <line x="26" y="0"/>
+            <line x="26" y="20"/>
+            <line x="34" y="20"/>
+            <line x="34" y="0"/>
+            <line x="42" y="0"/>
+            <line x="42" y="20"/>
+            <line x="50" y="20"/>
+            <line x="50" y="0"/>
+            <line x="58" y="0"/>
+            <line x="58" y="20"/>
+            <line x="66" y="20"/>
+            <line x="66" y="0"/>
+            <line x="74" y="0"/>
+            <line x="74" y="20"/>
+            <line x="82" y="20"/>
+            <line x="82" y="10"/>
+            <line x="100" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="24" name="Memristor 2" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="24" w="68" x="16" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="12"/>
+            <line x="18" y="12"/>
+            <line x="18" y="2"/>
+            <line x="26" y="2"/>
+            <line x="26" y="22"/>
+            <line x="34" y="22"/>
+            <line x="34" y="2"/>
+            <line x="42" y="2"/>
+            <line x="42" y="22"/>
+            <line x="50" y="22"/>
+            <line x="50" y="2"/>
+            <line x="58" y="2"/>
+            <line x="58" y="22"/>
+            <line x="66" y="22"/>
+            <line x="66" y="2"/>
+            <line x="74" y="2"/>
+            <line x="74" y="22"/>
+            <line x="82" y="22"/>
+            <line x="82" y="12"/>
+            <line x="100" y="12"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Nonlinear Resistor" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="18" y="60"/>
+            <line x="30" y="60"/>
+            <line x="70" y="0"/>
+            <move x="0" y="30"/>
+            <line x="18" y="30"/>
+            <line x="22" y="20"/>
+            <line x="30" y="40"/>
+            <line x="38" y="20"/>
+            <line x="46" y="40"/>
+            <line x="54" y="20"/>
+            <line x="62" y="40"/>
+            <line x="70" y="20"/>
+            <line x="78" y="40"/>
+            <line x="82" y="30"/>
+            <line x="100" y="30"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Potentiometer 1" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.25"/>
+        <constraint name="out" perimeter="0" x="1" y="0.25"/>
+        <constraint name="control" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <linejoin join="round"/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <move x="82" y="10"/>
+            <line x="100" y="10"/>
+            <move x="50" y="20"/>
+            <line x="50" y="40"/>
+            <move x="45" y="25"/>
+            <line x="50" y="20"/>
+            <line x="55" y="25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Potentiometer 2" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.25"/>
+        <constraint name="out" perimeter="0" x="1" y="0.25"/>
+        <constraint name="control" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="50" y="20"/>
+            <line x="50" y="40"/>
+            <move x="45" y="25"/>
+            <line x="50" y="20"/>
+            <line x="55" y="25"/>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <line x="22" y="0"/>
+            <line x="30" y="20"/>
+            <line x="38" y="0"/>
+            <line x="46" y="20"/>
+            <line x="54" y="0"/>
+            <line x="62" y="20"/>
+            <line x="70" y="0"/>
+            <line x="78" y="20"/>
+            <line x="82" y="10"/>
+            <line x="100" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Resistor, Adjustable Contact" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.25"/>
+        <constraint name="out" perimeter="0" x="1" y="0.25"/>
+        <constraint name="control" perimeter="0" x="0.46" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="41" y="33"/>
+            <line x="46" y="20"/>
+            <line x="51" y="33"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <line x="22" y="0"/>
+            <line x="30" y="20"/>
+            <line x="38" y="0"/>
+            <line x="46" y="20"/>
+            <line x="54" y="0"/>
+            <line x="62" y="20"/>
+            <line x="70" y="0"/>
+            <line x="78" y="20"/>
+            <line x="82" y="10"/>
+            <line x="100" y="10"/>
+            <move x="46" y="33"/>
+            <line x="46" y="40"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="45" name="Resistor, Shunt" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.78"/>
+        <constraint name="out" perimeter="0" x="1" y="0.78"/>
+        <constraint name="control1" perimeter="0" x="0.3" y="0"/>
+        <constraint name="control2" perimeter="0" x="0.7" y="0"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="25"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="35"/>
+            <line x="18" y="35"/>
+            <move x="82" y="35"/>
+            <line x="100" y="35"/>
+            <move x="30" y="0"/>
+            <line x="30" y="25"/>
+            <move x="70" y="0"/>
+            <line x="70" y="25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Resistor 1" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <move x="82" y="10"/>
+            <line x="100" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Resistor 2" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <line x="22" y="0"/>
+            <line x="30" y="20"/>
+            <line x="38" y="0"/>
+            <line x="46" y="20"/>
+            <line x="54" y="0"/>
+            <line x="62" y="20"/>
+            <line x="70" y="0"/>
+            <line x="78" y="20"/>
+            <line x="82" y="10"/>
+            <line x="100" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Resistor 3" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <move x="82" y="10"/>
+            <line x="100" y="10"/>
+            <move x="18" y="0"/>
+            <line x="38" y="20"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Resistor 4" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <move x="82" y="10"/>
+            <line x="100" y="10"/>
+            <move x="18" y="20"/>
+            <line x="38" y="0"/>
+            <line x="18" y="0"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Resistor With Instrument or Relay Shunt" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <move x="82" y="10"/>
+            <line x="100" y="10"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="35" y="5"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="55" y="5"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Symmetrical Photoconductive Transducer" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.75"/>
+        <constraint name="E" perimeter="0" x="1" y="0.75"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="30"/>
+            <line x="18" y="30"/>
+            <line x="22" y="20"/>
+            <line x="30" y="40"/>
+            <line x="38" y="20"/>
+            <line x="46" y="40"/>
+            <line x="54" y="20"/>
+            <line x="62" y="40"/>
+            <line x="70" y="20"/>
+            <line x="78" y="40"/>
+            <line x="82" y="30"/>
+            <line x="100" y="30"/>
+            <move x="80" y="12"/>
+            <line x="87" y="5"/>
+            <move x="80" y="9"/>
+            <line x="80" y="12"/>
+            <line x="83" y="12"/>
+            <move x="75" y="7"/>
+            <line x="82" y="0"/>
+            <move x="75" y="4"/>
+            <line x="75" y="7"/>
+            <line x="78" y="7"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Symmetrical Varistor" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="18" y="60"/>
+            <line x="30" y="60"/>
+            <line x="70" y="0"/>
+            <move x="0" y="30"/>
+            <line x="18" y="30"/>
+            <line x="22" y="20"/>
+            <line x="30" y="40"/>
+            <line x="38" y="20"/>
+            <line x="46" y="40"/>
+            <line x="54" y="20"/>
+            <line x="62" y="40"/>
+            <line x="70" y="20"/>
+            <line x="78" y="40"/>
+            <line x="82" y="30"/>
+            <line x="100" y="30"/>
+            <move x="45" y="45"/>
+            <line x="50" y="60"/>
+            <line x="55" y="45"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Tapped Resistor" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.25"/>
+        <constraint name="out" perimeter="0" x="1" y="0.25"/>
+        <constraint name="control1" perimeter="0" x="0.46" y="1"/>
+        <constraint name="control2" perimeter="0" x="0.62" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <line x="22" y="0"/>
+            <line x="30" y="20"/>
+            <line x="38" y="0"/>
+            <line x="46" y="20"/>
+            <line x="54" y="0"/>
+            <line x="62" y="20"/>
+            <line x="70" y="0"/>
+            <line x="78" y="20"/>
+            <line x="82" y="10"/>
+            <line x="100" y="10"/>
+            <move x="46" y="20"/>
+            <line x="46" y="40"/>
+            <move x="62" y="20"/>
+            <line x="62" y="40"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Trimmer Pot 1" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.25"/>
+        <constraint name="out" perimeter="0" x="1" y="0.25"/>
+        <constraint name="control" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <move x="82" y="10"/>
+            <line x="100" y="10"/>
+            <move x="50" y="20"/>
+            <line x="50" y="40"/>
+        </path>
+        <stroke/>
+        <rect h="2" w="16" x="42" y="21"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Trimmer Pot 2" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.25"/>
+        <constraint name="out" perimeter="0" x="1" y="0.25"/>
+        <constraint name="control" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="50" y="21"/>
+            <line x="50" y="40"/>
+            <move x="0" y="10"/>
+            <line x="18" y="10"/>
+            <line x="22" y="0"/>
+            <line x="30" y="20"/>
+            <line x="38" y="0"/>
+            <line x="46" y="20"/>
+            <line x="54" y="0"/>
+            <line x="62" y="20"/>
+            <line x="70" y="0"/>
+            <line x="78" y="20"/>
+            <line x="82" y="10"/>
+            <line x="100" y="10"/>
+        </path>
+        <stroke/>
+        <rect h="2" w="16" x="42" y="21"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="65.5" name="Trimmer Resistor 1" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.54"/>
+        <constraint name="out" perimeter="0" x="1" y="0.54"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="25.5"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="35.5"/>
+            <line x="18" y="35.5"/>
+            <move x="82" y="35.5"/>
+            <line x="100" y="35.5"/>
+            <move x="30" y="65.5"/>
+            <line x="70" y="5.5"/>
+            <move x="62.2" y="0"/>
+            <line x="78.2" y="10.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="65.5" name="Trimmer Resistor 2" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.54"/>
+        <constraint name="out" perimeter="0" x="1" y="0.54"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="30" y="65.5"/>
+            <line x="70" y="5.5"/>
+            <move x="62.2" y="0"/>
+            <line x="78.2" y="10.5"/>
+            <move x="0" y="35.5"/>
+            <line x="18" y="35.5"/>
+            <line x="22" y="25.5"/>
+            <line x="30" y="45.5"/>
+            <line x="38" y="25.5"/>
+            <line x="46" y="45.5"/>
+            <line x="54" y="25.5"/>
+            <line x="62" y="45.5"/>
+            <line x="70" y="25.5"/>
+            <line x="78" y="45.5"/>
+            <line x="82" y="35.5"/>
+            <line x="100" y="35.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Variable Resistor 1" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="20" w="64" x="18" y="20"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="18" y="30"/>
+            <move x="82" y="30"/>
+            <line x="100" y="30"/>
+            <move x="30" y="60"/>
+            <line x="70" y="0"/>
+            <move x="57" y="10"/>
+            <line x="70" y="0"/>
+            <line x="66.5" y="15.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Variable Resistor 2" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="in" perimeter="0" x="0" y="0.5"/>
+        <constraint name="out" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <foreground>
+        <path>
+            <move x="0" y="30"/>
+            <line x="18" y="30"/>
+            <line x="22" y="20"/>
+            <line x="30" y="40"/>
+            <line x="38" y="20"/>
+            <line x="46" y="40"/>
+            <line x="54" y="20"/>
+            <line x="62" y="40"/>
+            <line x="70" y="20"/>
+            <line x="78" y="40"/>
+            <line x="82" y="30"/>
+            <line x="100" y="30"/>
+            <move x="30" y="60"/>
+            <line x="70" y="0"/>
+            <move x="57" y="10"/>
+            <line x="70" y="0"/>
+            <line x="66.5" y="15.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

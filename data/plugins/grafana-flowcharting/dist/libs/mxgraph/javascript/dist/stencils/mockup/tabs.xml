@@ -1,0 +1,193 @@
+<shapes name="mxgraph.mockup.tabs">
+    <shape name="Horizontal Tabs 1" h="129" w="492" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="14" y="0" w="115" h="24" arcsize="7.554347826086956"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#263156"/>
+            <roundrect x="132" y="0" w="115" h="24" arcsize="7.554347826086956"/>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="250" y="0" w="115" h="24" arcsize="7.554347826086956"/>
+            <fillstroke/>
+            <strokecolor color="#808080"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="24" w="492" h="105"/>
+            <fillstroke/>
+            <strokecolor color="#263156"/>
+            <fillcolor color="#263156"/>
+            <rect x="0" y="22" w="492" h="6"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Horizontal Tabs 2" h="129" w="492" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="14" y="0" w="115" h="24" arcsize="7.554347826086956"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#263156"/>
+            <roundrect x="132" y="0" w="115" h="24" arcsize="7.554347826086956"/>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="250" y="0" w="115" h="24" arcsize="7.554347826086956"/>
+            <fillstroke/>
+            <strokecolor color="#808080"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="22" w="492" h="107"/>
+            <fillstroke/>
+            <strokecolor color="#263156"/>
+            <fillcolor color="#263156"/>
+            <path>
+                <move x="189.5" y="31"/>
+                <line x="198" y="21"/>
+                <line x="180" y="21"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Tabs 1" h="180" w="492" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#808080"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="0" w="492" h="180"/>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <rect x="0" y="121" w="128" h="59"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#263156"/>
+            <path>
+                <move x="0" y="61"/>
+                <line x="0" y="120"/>
+                <line x="128" y="120"/>
+                <line x="141" y="90.5"/>
+                <line x="128" y="61"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <rect x="0" y="0" w="128" h="60"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Tabs 2" h="180" w="492" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#808080"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="0" w="492" h="180"/>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <rect x="0" y="121" w="128" h="59"/>
+            <fillstroke/>
+            <rect x="0" y="0" w="128" h="60"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#263156"/>
+            <rect x="0" y="61" w="128" h="60"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Tabs 3" h="180" w="492" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#808080"/>
+            <fillcolor color="#ffffff"/>
+            <path>
+                <move x="492" y="0"/>
+                <line x="492" y="180"/>
+                <line x="0" y="180"/>
+                <line x="0" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <path>
+                <move x="492" y="121"/>
+                <line x="492" y="180"/>
+                <line x="364" y="180"/>
+                <line x="364" y="121"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#263156"/>
+            <path>
+                <move x="492" y="61"/>
+                <line x="492" y="120"/>
+                <line x="364" y="120"/>
+                <line x="351" y="90.5"/>
+                <line x="364" y="61"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <path>
+                <move x="492" y="0"/>
+                <line x="492" y="60"/>
+                <line x="364" y="60"/>
+                <line x="364" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Vertical Tabs 4" h="180" w="492" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#808080"/>
+            <fillcolor color="#ffffff"/>
+            <path>
+                <move x="492" y="0"/>
+                <line x="492" y="180"/>
+                <line x="0" y="180"/>
+                <line x="0" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <path>
+                <move x="492" y="121"/>
+                <line x="492" y="180"/>
+                <line x="364" y="180"/>
+                <line x="364" y="121"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <path>
+                <move x="492" y="0"/>
+                <line x="492" y="60"/>
+                <line x="364" y="60"/>
+                <line x="364" y="0"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#263156"/>
+            <path>
+                <move x="492" y="61"/>
+                <line x="492" y="121"/>
+                <line x="364" y="121"/>
+                <line x="364" y="61"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    </shapes>

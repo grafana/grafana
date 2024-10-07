@@ -1,0 +1,11 @@
+alreadyConnected=Nodes already connected
+containsValidationErrors=Contains validation errors
+updatingDocument=Updating Document. Please wait...
+updatingSelection=Updating Selection. Please wait...
+collapse-expand=Collapse/Expand
+doubleClickOrientation=Doubleclick to change orientation
+close=Close
+error=Error
+done=Done
+cancel=Cancel
+ok=OK

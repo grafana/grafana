@@ -1,0 +1,376 @@
+<shapes name="mxgraph.aws.storage">
+<shape name="AWS Import Export" h="58.9" w="58.04" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0.04" y="0.62" perimeter="0" name="W"/>
+<constraint x="1" y="0.62" perimeter="0" name="E"/>
+<constraint x="0" y="0.12" perimeter="0" name="NW"/>
+<constraint x="0.17" y="0.93" perimeter="0" name="SW"/>
+<constraint x="1" y="0.12" perimeter="0" name="NE"/>
+<constraint x="0.83" y="0.93" perimeter="0" name="SE"/>
+</connections>
+<foreground>
+<path>
+<move x="57.73" y="11.03"/>
+<curve x1="57.84" y1="10.77" x2="57.9" y2="10.5" x3="57.9" y3="10.24"/>
+<line x="57.73" y="11.03"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="0.17" y="11.03"/>
+<line x="0" y="10.24"/>
+<curve x1="0" y1="10.5" x2="0.06" y2="10.77" x3="0.17" y3="11.03"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="28.95" y="14.47"/>
+<curve x1="44.94" y1="14.47" x2="57.9" y2="11.24" x3="57.9" y3="7.24"/>
+<curve x1="57.9" y1="3.23" x2="44.94" y2="0" x3="28.95" y3="0"/>
+<curve x1="12.96" y1="0" x2="0" y2="3.23" x3="0" y3="7.24"/>
+<curve x1="0" y1="11.24" x2="12.96" y2="14.47" x3="28.95" y3="14.47"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="13.72" y="28.43"/>
+<line x="13.72" y="19.24"/>
+<line x="24.33" y="27.91"/>
+<line x="39.95" y="27.91"/>
+<line x="39.95" y="18.71"/>
+<line x="53.58" y="29.85"/>
+<line x="57.73" y="11.02"/>
+<curve x1="56.16" y1="14.66" x2="43.87" y2="17.47" x3="28.95" y3="17.47"/>
+<curve x1="14.03" y1="17.47" x2="1.75" y2="14.66" x3="0.17" y3="11.02"/>
+<line x="4.01" y="28.43"/>
+<line x="13.72" y="28.43"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="39.95" y="45.37"/>
+<line x="25.71" y="45.37"/>
+<line x="13.72" y="55.06"/>
+<line x="13.72" y="45.89"/>
+<line x="7.85" y="45.89"/>
+<line x="9.65" y="54.08"/>
+<curve x1="9.65" y1="56.75" x2="18.29" y2="58.9" x3="28.95" y3="58.9"/>
+<curve x1="39.61" y1="58.9" x2="48.25" y2="56.75" x3="48.25" y3="54.08"/>
+<line x="49.92" y="46.49"/>
+<line x="39.96" y="54.54"/>
+<line x="39.96" y="45.37"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="16.22" y="49.83"/>
+<line x="24.72" y="42.95"/>
+<line x="24.72" y="42.95"/>
+<line x="31.33" y="37.29"/>
+<line x="23.02" y="30.06"/>
+<line x="23.02" y="30.06"/>
+<line x="16.22" y="24.51"/>
+<line x="16.22" y="30.93"/>
+<line x="2.67" y="30.93"/>
+<line x="2.67" y="43.39"/>
+<line x="16.22" y="43.39"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="28.2" y="42.87"/>
+<line x="42.45" y="42.87"/>
+<line x="42.45" y="49.31"/>
+<line x="58.04" y="36.71"/>
+<line x="42.45" y="23.98"/>
+<line x="42.45" y="30.41"/>
+<line x="27.42" y="30.41"/>
+<line x="35.16" y="37.28"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="EBS" h="60.41" w="46.79" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0.15" perimeter="0" name="NW"/>
+<constraint x="0" y="1" perimeter="0" name="SW"/>
+<constraint x="1" y="0.15" perimeter="0" name="NE"/>
+<constraint x="1" y="1" perimeter="0" name="SE"/>
+</connections>
+<background>
+<rect x="0" y="9.05" w="46.79" h="51.37"/>
+</background>
+<foreground>
+<fillstroke/>
+<path>
+<move x="38.37" y="0"/>
+<line x="8.42" y="0"/>
+<line x="1.98" y="6.42"/>
+<line x="2.45" y="6.42"/>
+<line x="44.35" y="6.42"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="EBS Snapshot" h="61.64" w="53.33" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0.055" y="0.5" perimeter="0" name="W"/>
+<constraint x="0.945" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.01" y="0.24" perimeter="0" name="NW"/>
+<constraint x="0.17" y="0.94" perimeter="0" name="SW"/>
+<constraint x="0.985" y="0.24" perimeter="0" name="NE"/>
+<constraint x="0.83" y="0.94" perimeter="0" name="SE"/>
+</connections>
+<foreground>
+<path>
+<move x="0.09" y="17.57"/>
+<curve x1="0.1" y1="17.61" x2="0.11" y2="17.64" x3="0.12" y3="17.68"/>
+<line x="0.11" y="17.62"/>
+<curve x1="0.1" y1="17.6" x2="0.09" y2="17.59" x3="0.09" y3="17.57"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="44" y="22.02"/>
+<curve x1="40.94" y1="22.67" x2="37.27" y2="23.16" x3="33.24" y3="23.41"/>
+<curve x1="30.87" y1="23.58" x2="28.6" y2="23.64" x3="26.65" y3="23.62"/>
+<curve x1="12.89" y1="23.62" x2="1.58" y2="21.03" x3="0.12" y3="17.68"/>
+<line x="8.86" y="57.2"/>
+<curve x1="8.86" y1="59.66" x2="16.82" y2="61.64" x3="26.64" y3="61.64"/>
+<curve x1="36.47" y1="61.64" x2="44.43" y2="59.66" x3="44.43" y3="57.2"/>
+<line x="53.12" y="17.86"/>
+<curve x1="52.25" y1="19.69" x2="48.58" y2="21.07" x3="44" y3="22.02"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="0.06" y="17.48"/>
+<curve x1="0.04" y1="17.42" x2="0.02" y2="17.35" x3="0" y3="17.28"/>
+<curve x1="0.01" y1="17.35" x2="0.04" y2="17.42" x3="0.06" y3="17.48"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="53.33" y="16.95"/>
+<line x="53.32" y="16.98"/>
+<line x="53.32" y="16.99"/>
+<curve x1="53.32" y1="16.98" x2="53.33" y2="16.96" x3="53.33" y3="16.95"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="52.56" y="14.63"/>
+<curve x1="52.56" y1="12.52" x2="47.97" y2="10.67" x3="41" y3="9.58"/>
+<line x="41" y="4.85"/>
+<line x="40.52" y="4.85"/>
+<line x="40.52" y="5"/>
+<line x="12.52" y="5"/>
+<line x="12.52" y="4.85"/>
+<line x="12.04" y="4.85"/>
+<line x="12.04" y="9.58"/>
+<curve x1="5.07" y1="10.67" x2="0.49" y2="12.52" x3="0.49" y3="14.63"/>
+<curve x1="0.49" y1="14.79" x2="0.52" y2="14.95" x3="0.57" y3="15.1"/>
+<line x="0.73" y="14.63"/>
+<curve x1="0.79" y1="16.28" x2="3.92" y2="18.02" x3="9.45" y3="19.21"/>
+<curve x1="14.02" y1="20.14" x2="19.99" y2="20.7" x3="26.52" y3="20.7"/>
+<curve x1="29.14" y1="20.69" x2="31.49" y2="20.6" x3="33.62" y3="20.47"/>
+<curve x1="37.76" y1="20.2" x2="41.48" y2="19.69" x3="44.51" y3="19.02"/>
+<curve x1="51.24" y1="17.43" x2="52.58" y2="15.22" x3="52.36" y3="14.67"/>
+<line x="52.5" y="15.01"/>
+<curve x1="52.53" y1="14.88" x2="52.56" y2="14.76" x3="52.56" y3="14.63"/>
+<close/>
+</path>
+<fillstroke/>
+<path>
+<move x="37.52" y="0"/>
+<line x="15.52" y="0"/>
+<line x="12.52" y="3"/>
+<line x="40.52" y="3"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="EBS Volume" h="60.41" w="46.79" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0.15" perimeter="0" name="NW"/>
+<constraint x="0" y="1" perimeter="0" name="SW"/>
+<constraint x="1" y="0.15" perimeter="0" name="NE"/>
+<constraint x="1" y="1" perimeter="0" name="SE"/>
+</connections>
+<background>
+<rect x="0" y="9.05" w="46.79" h="51.37"/>
+</background>
+<foreground>
+<fillstroke/>
+<path>
+<move x="38.37" y="0"/>
+<line x="8.42" y="0"/>
+<line x="1.98" y="6.42"/>
+<line x="2.45" y="6.42"/>
+<line x="44.35" y="6.42"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="S3" h="58.9" w="57.9" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0.07" y="0.5" perimeter="0" name="W"/>
+<constraint x="0.93" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0.12" perimeter="0" name="NW"/>
+<constraint x="0.17" y="0.93" perimeter="0" name="SW"/>
+<constraint x="1" y="0.12" perimeter="0" name="NE"/>
+<constraint x="0.83" y="0.93" perimeter="0" name="SE"/>
+</connections>
+<background>
+<path>
+<move x="57.9" y="10.24"/>
+<curve x1="57.9" y1="14.24" x2="44.94" y2="17.47" x3="28.95" y3="17.47"/>
+<curve x1="12.96" y1="17.47" x2="0" y2="14.24" x3="0" y3="10.24"/>
+<line x="9.65" y="54.08"/>
+<curve x1="9.65" y1="56.75" x2="18.29" y2="58.9" x3="28.95" y3="58.9"/>
+<curve x1="39.61" y1="58.9" x2="48.25" y2="56.75" x3="48.25" y3="54.08"/>
+<line x="48.25" y="54.08"/>
+<line x="57.9" y="10.24"/>
+<close/>
+</path>
+</background>
+<foreground>
+<fillstroke/>
+<path>
+<move x="57.9" y="7.24"/>
+<curve x1="57.9" y1="3.23" x2="44.94" y2="0" x3="28.95" y3="0"/>
+<curve x1="12.96" y1="0" x2="0" y2="3.23" x3="0" y3="7.24"/>
+<curve x1="0" y1="11.24" x2="12.96" y2="14.47" x3="28.95" y3="14.47"/>
+<curve x1="44.94" y1="14.47" x2="57.9" y2="11.24" x3="57.9" y3="7.24"/>
+<line x="57.9" y="7.24"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="S3 Bucket" h="58.9" w="57.9" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0.07" y="0.5" perimeter="0" name="W"/>
+<constraint x="0.93" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0.12" perimeter="0" name="NW"/>
+<constraint x="0.17" y="0.93" perimeter="0" name="SW"/>
+<constraint x="1" y="0.12" perimeter="0" name="NE"/>
+<constraint x="0.83" y="0.93" perimeter="0" name="SE"/>
+</connections>
+<background>
+<path>
+<move x="57.9" y="10.24"/>
+<curve x1="57.9" y1="14.24" x2="44.94" y2="17.47" x3="28.95" y3="17.47"/>
+<curve x1="12.96" y1="17.47" x2="0" y2="14.24" x3="0" y3="10.24"/>
+<line x="9.65" y="54.08"/>
+<curve x1="9.65" y1="56.75" x2="18.29" y2="58.9" x3="28.95" y3="58.9"/>
+<curve x1="39.61" y1="58.9" x2="48.25" y2="56.75" x3="48.25" y3="54.08"/>
+<line x="48.25" y="54.08"/>
+<line x="57.9" y="10.24"/>
+<close/>
+</path>
+</background>
+<foreground>
+<fillstroke/>
+<path>
+<move x="57.9" y="7.24"/>
+<curve x1="57.9" y1="3.23" x2="44.94" y2="0" x3="28.95" y3="0"/>
+<curve x1="12.96" y1="0" x2="0" y2="3.23" x3="0" y3="7.24"/>
+<curve x1="0" y1="11.24" x2="12.96" y2="14.47" x3="28.95" y3="14.47"/>
+<curve x1="44.94" y1="14.47" x2="57.9" y2="11.24" x3="57.9" y3="7.24"/>
+<line x="57.9" y="7.24"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="S3 Bucket with Objects" h="58.9" w="57.9" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0.07" y="0.5" perimeter="0" name="W"/>
+<constraint x="0.93" y="0.5" perimeter="0" name="E"/>
+<constraint x="0" y="0.12" perimeter="0" name="NW"/>
+<constraint x="0.17" y="0.93" perimeter="0" name="SW"/>
+<constraint x="1" y="0.12" perimeter="0" name="NE"/>
+<constraint x="0.83" y="0.93" perimeter="0" name="SE"/>
+</connections>
+<background>
+<path>
+<move x="57.9" y="10.24"/>
+<curve x1="57.9" y1="14.24" x2="44.94" y2="17.48" x3="28.95" y3="17.48"/>
+<curve x1="12.96" y1="17.48" x2="0" y2="14.24" x3="0" y3="10.24"/>
+<line x="9.65" y="54.08"/>
+<curve x1="9.65" y1="56.75" x2="18.29" y2="58.9" x3="28.95" y3="58.9"/>
+<curve x1="39.61" y1="58.9" x2="48.25" y2="56.75" x3="48.25" y3="54.08"/>
+<line x="48.25" y="54.08"/>
+<line x="57.9" y="10.24"/>
+<close/>
+</path>
+</background>
+<foreground>
+<fillstroke/>
+<path>
+<move x="57.9" y="7.24"/>
+<curve x1="57.9" y1="3.23" x2="44.94" y2="0" x3="28.95" y3="0"/>
+<curve x1="12.96" y1="0" x2="0" y2="3.23" x3="0" y3="7.24"/>
+<curve x1="0" y1="11.24" x2="12.96" y2="14.48" x3="28.95" y3="14.48"/>
+<curve x1="44.94" y1="14.48" x2="57.9" y2="11.24" x3="57.9" y3="7.24"/>
+<line x="57.9" y="7.24"/>
+<close/>
+</path>
+<fillstroke/>
+
+<fillcolor color="#FFFFFF"/>
+<ellipse x="12.86" y="40.26" w="11.66" h="11.66"/>
+<fillstroke/>
+<rect x="22.4" y="22.82" w="11.83" h="11.83"/>
+<fillstroke/>
+<path>
+<move x="43.62" y="51.78"/>
+<line x="31.93" y="51.78"/>
+<line x="37.77" y="40.91"/>
+<close/>
+</path>
+<fillstroke/>
+</foreground>
+</shape>
+<shape name="S3 Object" h="33" w="33" aspect="variable" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="33" h="33"/>
+</background>
+<foreground>
+<fillstroke/>
+</foreground>
+</shape>
+</shapes>

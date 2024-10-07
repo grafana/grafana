@@ -1,0 +1,146 @@
+<shapes name="mxgraph.electrical.instruments">
+	<shape aspect="fixed" h="90" name="Ampermeter" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S" perimeter="0" x="0.5" y="1"/>
+			<constraint name="W" perimeter="0" x="0" y="0.5"/>
+			<constraint name="E" perimeter="0" x="1" y="0.5"/>
+			<constraint name="NW" perimeter="0" x="0.145" y="0.145"/>
+			<constraint name="SW" perimeter="0" x="0.145" y="0.855"/>
+			<constraint name="NE" perimeter="0" x="0.855" y="0.145"/>
+			<constraint name="SE" perimeter="0" x="0.855" y="0.855"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="25" y="75"/>
+				<line x="65" y="15"/>
+			</path>
+			<stroke/>
+			<path>
+				<move x="52" y="25"/>
+				<line x="65" y="15"/>
+				<line x="61.5" y="30.5"/>
+				<close/>
+			</path>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="fixed" h="90" name="Galvanometer" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S" perimeter="0" x="0.5" y="1"/>
+			<constraint name="W" perimeter="0" x="0" y="0.5"/>
+			<constraint name="E" perimeter="0" x="1" y="0.5"/>
+			<constraint name="NW" perimeter="0" x="0.145" y="0.145"/>
+			<constraint name="SW" perimeter="0" x="0.145" y="0.855"/>
+			<constraint name="NE" perimeter="0" x="0.855" y="0.145"/>
+			<constraint name="SE" perimeter="0" x="0.855" y="0.855"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="45" y="77"/>
+				<line x="45" y="13"/>
+				<move x="40" y="27"/>
+				<line x="45" y="13"/>
+				<line x="50" y="27"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="fixed" h="90" name="Oscilloscope" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S" perimeter="0" x="0.5" y="1"/>
+			<constraint name="W" perimeter="0" x="0" y="0.5"/>
+			<constraint name="E" perimeter="0" x="1" y="0.5"/>
+			<constraint name="NW" perimeter="0" x="0.145" y="0.145"/>
+			<constraint name="SW" perimeter="0" x="0.145" y="0.855"/>
+			<constraint name="NE" perimeter="0" x="0.855" y="0.145"/>
+			<constraint name="SE" perimeter="0" x="0.855" y="0.855"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="10" y="55"/>
+				<line x="25" y="35"/>
+				<line x="25" y="55"/>
+				<line x="40" y="35"/>
+				<line x="40" y="55"/>
+				<line x="55" y="35"/>
+				<line x="55" y="55"/>
+				<line x="70" y="35"/>
+				<line x="70" y="55"/>
+				<line x="77.5" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="fixed" h="90" name="Signal Generator" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S" perimeter="0" x="0.5" y="1"/>
+			<constraint name="W" perimeter="0" x="0" y="0.5"/>
+			<constraint name="E" perimeter="0" x="1" y="0.5"/>
+			<constraint name="NW" perimeter="0" x="0.145" y="0.145"/>
+			<constraint name="SW" perimeter="0" x="0.145" y="0.855"/>
+			<constraint name="NE" perimeter="0" x="0.855" y="0.145"/>
+			<constraint name="SE" perimeter="0" x="0.855" y="0.855"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<path>
+				<move x="30" y="75"/>
+				<line x="40" y="65"/>
+				<line x="40" y="75"/>
+				<line x="50" y="65"/>
+				<line x="50" y="75"/>
+				<line x="60" y="65"/>
+				<line x="60" y="75"/>
+				<move x="30" y="20"/>
+				<arc large-arc-flag="0" rx="8" ry="8" sweep-flag="1" x="45" x-axis-rotation="0" y="20"/>
+				<arc large-arc-flag="0" rx="8" ry="8" sweep-flag="0" x="60" x-axis-rotation="0" y="20"/>
+				<move x="30" y="45"/>
+				<line x="30" y="35"/>
+				<line x="45" y="35"/>
+				<line x="45" y="55"/>
+				<line x="60" y="55"/>
+				<line x="60" y="45"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="fixed" h="90" name="Voltmeter" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="N" perimeter="0" x="0.5" y="0"/>
+			<constraint name="S" perimeter="0" x="0.5" y="1"/>
+			<constraint name="W" perimeter="0" x="0" y="0.5"/>
+			<constraint name="E" perimeter="0" x="1" y="0.5"/>
+			<constraint name="NW" perimeter="0" x="0.145" y="0.145"/>
+			<constraint name="SW" perimeter="0" x="0.145" y="0.855"/>
+			<constraint name="NE" perimeter="0" x="0.855" y="0.145"/>
+			<constraint name="SE" perimeter="0" x="0.855" y="0.855"/>
+		</connections>
+		<background>
+			<ellipse h="90" w="90" x="0" y="0"/>
+		</background>
+		<foreground>
+			<fillstroke/>
+			<fontsize size="50"/>
+			<text align="center" str="V" valign="bottom" x="45" y="70"/>
+		</foreground>
+	</shape>
+</shapes>

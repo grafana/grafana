@@ -1,0 +1,97 @@
+<shapes name="mxGraph.pid.mixers">
+<shape aspect="variable" h="100" name="In-Line Rotary Mixer" strokewidth="inherit" w="190">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.25" y="0"/>
+        <constraint name="NE" perimeter="0" x="0.1" y="0"/>
+        <constraint name="S" perimeter="0" x="0.75" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="180" x="10" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="190" y="50"/>
+            <move x="20" y="40"/>
+            <line x="20" y="10"/>
+            <line x="85" y="90"/>
+            <line x="85" y="60"/>
+            <move x="100" y="40"/>
+            <line x="100" y="10"/>
+            <line x="165" y="90"/>
+            <line x="165" y="60"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="In-Line Static Mixer" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="17.5" y="40"/>
+            <line x="17.5" y="10"/>
+            <line x="82.5" y="90"/>
+            <line x="82.5" y="60"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Kneader" strokewidth="inherit" w="170">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.35" y="0"/>
+        <constraint name="NE" perimeter="0" x="0.1" y="0"/>
+        <constraint name="S" perimeter="0" x="0.85" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="160" x="10" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="30" y="50"/>
+            <line x="60" y="30"/>
+            <line x="110" y="70"/>
+            <line x="150" y="50"/>
+            <line x="170" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Mixing Path" strokewidth="inherit" w="260">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.2" y="0"/>
+        <constraint name="E" perimeter="0" x="0" y="0.5"/>
+        <constraint name="W" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="100" w="260" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="10" y="40"/>
+            <line x="10" y="10"/>
+            <line x="75" y="90"/>
+            <line x="75" y="60"/>
+            <move x="90" y="40"/>
+            <line x="90" y="10"/>
+            <line x="155" y="90"/>
+            <line x="155" y="60"/>
+            <move x="170" y="40"/>
+            <line x="170" y="10"/>
+            <line x="235" y="90"/>
+            <line x="235" y="60"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

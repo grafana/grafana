@@ -1,0 +1,105 @@
+<shapes name="mxGraph.pid.feeders">
+<shape aspect="variable" h="100" name="Feeder (Rotary Table)" strokewidth="inherit" w="104.65">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="2.33" y="0"/>
+            <line x="102.33" y="0"/>
+            <move x="52.33" y="0"/>
+            <line x="52.33" y="100"/>
+            <move x="62.33" y="40"/>
+            <arc large-arc-flag="1" rx="50" ry="20" sweep-flag="1" x="42.33" x-axis-rotation="0" y="40"/>
+            <move x="36.33" y="37"/>
+            <line x="42.33" y="40"/>
+            <line x="36.33" y="43"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Proportional Feeder" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <linejoin join="round"/>
+        <path>
+            <move x="10" y="20"/>
+            <line x="90" y="20"/>
+            <line x="10" y="80"/>
+            <line x="90" y="80"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Proportional Feeder (Metering)" strokewidth="inherit" w="300">
+    <connections>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="NW" perimeter="0" x="0" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="80" y="0"/>
+            <arc large-arc-flag="1" rx="40" ry="40" sweep-flag="1" x="0" x-axis-rotation="0" y="0"/>
+            <line x="300" y="0"/>
+            <arc large-arc-flag="1" rx="40" ry="40" sweep-flag="1" x="220" x-axis-rotation="0" y="0"/>
+            <close/>
+            <move x="150" y="1"/>
+            <line x="180" y="50"/>
+            <line x="120" y="50"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Proportional Feeder (Rotary Valve)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="100" y="50"/>
+            <move x="75.8" y="7"/>
+            <line x="24.2" y="93"/>
+            <move x="24.2" y="7"/>
+            <line x="75.8" y="93"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="45" y="45"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Spray Nozzle" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="0"/>
+            <line x="100" y="50"/>
+            <move x="50" y="0"/>
+            <line x="50" y="50"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

@@ -1,0 +1,848 @@
+<shapes name="mxgraph.mockup.menus_and_buttons">
+    <shape name="Primary and Secondary 1" h="25" w="171" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#2c457e"/>
+            <roundrect x="0" y="0" w="81" h="25" arcsize="7.851851851851851"/>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="90" y="0" w="81" h="25" arcsize="7.851851851851851"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Primary and Secondary 2" h="32" w="171" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#2c457e"/>
+            <roundrect x="0" y="0" w="81" h="32" arcsize="6.539351851851852"/>
+            <fillstroke/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="90" y="0" w="81" h="32" arcsize="6.539351851851852"/>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Edit" h="16" w="48" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="48" h="16" arcsize="12.5"/>
+            <fillstroke/>
+            <fontsize size="11"/>
+            <fontstyle style="1"/>
+            <text str="EDIT" x="24" y="8" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Delete" h="16" w="48" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="48" h="16" arcsize="12.5"/>
+            <fillstroke/>
+            <fontsize size="11"/>
+            <fontstyle style="1"/>
+            <text str="DELETE" x="24" y="8" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="View" h="16" w="48" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="48" h="16" arcsize="12.5"/>
+            <fillstroke/>
+            <fontsize size="11"/>
+            <fontstyle style="1"/>
+            <text str="VIEW" x="24" y="8" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="New" h="16" w="48" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="48" h="16" arcsize="12.5"/>
+            <fillstroke/>
+            <fontsize size="11"/>
+            <fontstyle style="1"/>
+            <text str="NEW" x="24" y="8" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Close" h="16" w="48" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="48" h="16" arcsize="12.5"/>
+            <fillstroke/>
+            <fontsize size="11"/>
+            <fontstyle style="1"/>
+            <text str="CLOSE" x="24" y="8" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Open" h="16" w="48" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="48" h="16" arcsize="12.5"/>
+            <fillstroke/>
+            <fontsize size="11"/>
+            <fontstyle style="1"/>
+            <text str="OPEN" x="24" y="8" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Color Picker" h="226" w="172" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#818181"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="24" w="172" h="202"/>
+            <fillstroke/>
+            <path>
+                <move x="0" y="196"/>
+                <line x="172" y="196"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#c8dfff"/>
+            <roundrect x="0" y="0" w="34" h="24" arcsize="10.661764705882353"/>
+            <fillstroke/>
+            <strokecolor color="#818181"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="24" y="0"/>
+                <line x="24" y="24"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#000000"/>
+            <rect x="7" y="7" w="12" h="11"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <rect x="3" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#111111"/>
+            <rect x="17" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#2d2d2d"/>
+            <rect x="31" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#434343"/>
+            <rect x="45" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#5b5b5b"/>
+            <rect x="59" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#737373"/>
+            <rect x="73" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#8b8b8b"/>
+            <rect x="87" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#a2a2a2"/>
+            <rect x="101" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#b9b9b9"/>
+            <rect x="115" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#d0d0d0"/>
+            <rect x="129" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#e6e6e6"/>
+            <rect x="143" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ffffff"/>
+            <rect x="157" y="26" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#7f7f00"/>
+            <rect x="3" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bfbf00"/>
+            <rect x="17" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ffff00"/>
+            <rect x="31" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ffff40"/>
+            <rect x="45" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ffff80"/>
+            <rect x="59" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ffffbf"/>
+            <rect x="73" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#525330"/>
+            <rect x="87" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#898a49"/>
+            <rect x="101" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#aea945"/>
+            <rect x="115" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#c3be71"/>
+            <rect x="129" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#e0dcaa"/>
+            <rect x="143" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#fcfae1"/>
+            <rect x="157" y="40" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#407f00"/>
+            <rect x="3" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#60bf00"/>
+            <rect x="17" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#80ff00"/>
+            <rect x="31" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#a0ff40"/>
+            <rect x="45" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#c0ff80"/>
+            <rect x="59" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#dfffbf"/>
+            <rect x="73" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#3b5738"/>
+            <rect x="87" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#668f5a"/>
+            <rect x="101" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#7f9757"/>
+            <rect x="115" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#8a9b55"/>
+            <rect x="129" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#b7c296"/>
+            <rect x="143" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#e6ebd5"/>
+            <rect x="157" y="54" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#007f40"/>
+            <rect x="3" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#00bf60"/>
+            <rect x="17" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#00ff80"/>
+            <rect x="31" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#40ffa0"/>
+            <rect x="45" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#80ffc0"/>
+            <rect x="59" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bfffdf"/>
+            <rect x="73" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#033d3d"/>
+            <rect x="87" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#438059"/>
+            <rect x="101" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#7fa37c"/>
+            <rect x="115" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#8dae94"/>
+            <rect x="129" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#acc6b5"/>
+            <rect x="143" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ddebe2"/>
+            <rect x="157" y="68" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#007f7f"/>
+            <rect x="3" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#00bfbf"/>
+            <rect x="17" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#00ffff"/>
+            <rect x="31" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#40ffff"/>
+            <rect x="45" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#80ffff"/>
+            <rect x="59" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bfffff"/>
+            <rect x="73" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#033d3d"/>
+            <rect x="87" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#347d7e"/>
+            <rect x="101" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#609a9f"/>
+            <rect x="115" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#96bdc4"/>
+            <rect x="129" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#b5d1d7"/>
+            <rect x="143" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#e2f1f4"/>
+            <rect x="157" y="82" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#00407f"/>
+            <rect x="3" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#0060bf"/>
+            <rect x="17" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#0080ff"/>
+            <rect x="31" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#40a0ff"/>
+            <rect x="45" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#80c0ff"/>
+            <rect x="59" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bfdfff"/>
+            <rect x="73" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#1b2c48"/>
+            <rect x="87" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#385376"/>
+            <rect x="101" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#57708f"/>
+            <rect x="115" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#7792ac"/>
+            <rect x="129" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#a8bed1"/>
+            <rect x="143" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#deebf6"/>
+            <rect x="157" y="96" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#00007f"/>
+            <rect x="3" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#0000bf"/>
+            <rect x="17" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#0000ff"/>
+            <rect x="31" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#4040ff"/>
+            <rect x="45" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#8080ff"/>
+            <rect x="59" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bfbfff"/>
+            <rect x="73" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#212143"/>
+            <rect x="87" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#373e68"/>
+            <rect x="101" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#444f75"/>
+            <rect x="115" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#585e82"/>
+            <rect x="129" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#8687a4"/>
+            <rect x="143" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#d2d1e1"/>
+            <rect x="157" y="110" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#40007f"/>
+            <rect x="3" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#6000bf"/>
+            <rect x="17" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#8000ff"/>
+            <rect x="31" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#a040ff"/>
+            <rect x="45" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#c080ff"/>
+            <rect x="59" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#dfbfff"/>
+            <rect x="73" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#302449"/>
+            <rect x="87" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#54466f"/>
+            <rect x="101" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#655a7f"/>
+            <rect x="115" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#726284"/>
+            <rect x="129" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#9e8fa9"/>
+            <rect x="143" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#dcd1df"/>
+            <rect x="157" y="124" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#7f007f"/>
+            <rect x="3" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bf00bf"/>
+            <rect x="17" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff00ff"/>
+            <rect x="31" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff40ff"/>
+            <rect x="45" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff80ff"/>
+            <rect x="59" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ffbfff"/>
+            <rect x="73" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#4a234a"/>
+            <rect x="87" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#794a72"/>
+            <rect x="101" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#936386"/>
+            <rect x="115" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#9d7292"/>
+            <rect x="129" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#c0a0b6"/>
+            <rect x="143" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ecdae5"/>
+            <rect x="157" y="138" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#7f003f"/>
+            <rect x="3" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bf005f"/>
+            <rect x="17" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff007f"/>
+            <rect x="31" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff409f"/>
+            <rect x="45" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff80bf"/>
+            <rect x="59" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ffbfdf"/>
+            <rect x="73" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#451528"/>
+            <rect x="87" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#823857"/>
+            <rect x="101" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#a94a76"/>
+            <rect x="115" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bc6f95"/>
+            <rect x="129" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#d8a5bb"/>
+            <rect x="143" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#f7dde9"/>
+            <rect x="157" y="152" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#800000"/>
+            <rect x="3" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#c00000"/>
+            <rect x="17" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff0000"/>
+            <rect x="31" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff4040"/>
+            <rect x="45" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff8080"/>
+            <rect x="59" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ffc0c0"/>
+            <rect x="73" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#441415"/>
+            <rect x="87" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#82393c"/>
+            <rect x="101" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#aa4d4e"/>
+            <rect x="115" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bc6e6e"/>
+            <rect x="129" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#d8a3a4"/>
+            <rect x="143" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#f8dddd"/>
+            <rect x="157" y="166" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#7f3f00"/>
+            <rect x="3" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#bf5f00"/>
+            <rect x="17" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#ff7f00"/>
+            <rect x="31" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#ff9f40"/>
+            <rect x="45" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <strokecolor color="none"/>
+            <fillcolor color="#ffbf80"/>
+            <rect x="59" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <rect x="73" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#482c1b"/>
+            <rect x="87" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#855a40"/>
+            <rect x="101" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#b27c51"/>
+            <rect x="115" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#c49b71"/>
+            <rect x="129" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#e1c4a8"/>
+            <rect x="143" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <fillcolor color="#fdeee0"/>
+            <rect x="157" y="180" w="12" h="12"/>
+            <fillstroke/>
+            <strokecolor color="#818181"/>
+            <fillcolor color="#fea243"/>
+            <rect x="7" y="200" w="44" h="21"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="#000000"/>
+            <linejoin join="round"/>
+            <path>
+                <move x="27.5" y="10.5"/>
+                <line x="31.5" y="10.5"/>
+                <line x="29.5" y="13"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Font Style Selector 1" h="31" w="136" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="97" h="24" arcsize="7.8"/>
+            <fillstroke/>
+            <path>
+                <move x="72" y="0"/>
+                <line x="72" y="24"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#cee3ff"/>
+            <rect x="24" y="0" w="24" h="24"/>
+            <fillstroke/>
+            <strokecolor color="#fece7a"/>
+            <fillcolor color="#fcff68"/>
+            <rect x="40" y="18" w="96" h="13"/>
+            <fillstroke/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="B" x="12" y="11.5" align="center" valign="middle"/>
+            <fontstyle style="2"/>
+            <text str="I" x="35" y="11.5" align="center" valign="middle"/>
+            <fontstyle style="0"/>
+            <text str="U" x="59.5" y="11.5" align="center" valign="middle"/>
+            <fontsize size="12"/>
+            <text str="abc" x="84.5" y="11.5" align="center" valign="middle"/>
+            <strokecolor color="#000000"/>
+            <path>
+                <move x="74" y="13"/>
+                <line x="95" y="13"/>
+            </path>
+            <stroke/>
+            <fontsize size="8"/>
+            <text str="Italic Text CTRL + I" x="88" y="24" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Font Style Selector 2" h="31" w="235" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="235" h="24" arcsize="6.9"/>
+            <fillstroke/>
+            <path>
+                <move x="171" y="0"/>
+                <line x="171" y="24"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#cee3ff"/>
+            <rect x="48" y="0" w="48" h="24"/>
+            <fillstroke/>
+            <strokecolor color="#fece7a"/>
+            <fillcolor color="#fcff68"/>
+            <rect x="68" y="18" w="97" h="13"/>
+            <fillstroke/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="B" x="10" y="11.5" align="center" valign="middle"/>
+            <fontstyle style="2"/>
+            <text str="I" x="55" y="11.5" align="center" valign="middle"/>
+            <fontstyle style="0"/>
+            <text str="U" x="105" y="11.5" align="center" valign="middle"/>
+            <fontsize size="12"/>
+            <text str="abc" x="185" y="12.5" align="center" valign="middle"/>
+            <fontsize size="11"/>
+            <fontstyle style="0"/>
+            <text str="Bold" x="30" y="13" align="center" valign="middle"/>
+            <text str="Italic" x="72" y="13" align="center" valign="middle"/>
+            <text str="Underline" x="135" y="13" align="center" valign="middle"/>
+            <text str="Striken" x="215" y="13" align="center" valign="middle"/>
+            <strokecolor color="#000000"/>
+            <path>
+                <move x="174" y="13"/>
+                <line x="196" y="13"/>
+            </path>
+            <stroke/>
+            <fontsize size="8"/>
+            <text str="Italic Text CTRL + I" x="110" y="24" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Font Style Selector 3" h="38" w="176" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#a4a4a4"/>
+            <fillcolor color="#e3e3e4"/>
+            <roundrect x="0" y="0" w="176" h="24" arcsize="7.1"/>
+            <fillstroke/>
+            <path>
+                <move x="131" y="0"/>
+                <line x="131" y="24"/>
+            </path>
+            <stroke/>
+            <fontsize size="10"/>
+            <fontstyle style="0"/>
+            <text str="Bold" x="22" y="30" align="center" valign="middle"/>
+            <text str="Italic" x="65" y="30" align="center" valign="middle"/>
+            <text str="Underline" x="108" y="30" align="center" valign="middle"/>
+            <text str="Striken" x="153" y="30" align="center" valign="middle"/>
+            <fillcolor color="#cee3ff"/>
+            <rect x="44" y="0" w="43" h="24"/>
+            <fillstroke/>
+            <strokecolor color="#fece7a"/>
+            <fillcolor color="#fcff68"/>
+            <rect x="72" y="18" w="97" h="13"/>
+            <fillstroke/>
+            <fontsize size="14"/>
+            <fontstyle style="1"/>
+            <text str="B" x="22" y="11.5" align="center" valign="middle"/>
+            <fontstyle style="2"/>
+            <text str="I" x="65" y="11.5" align="center" valign="middle"/>
+            <fontstyle style="0"/>
+            <text str="U" x="108" y="11.5" align="center" valign="middle"/>
+            <fontsize size="12"/>
+            <text str="abc" x="153" y="12.5" align="center" valign="middle"/>
+            <strokecolor color="#000000"/>
+            <path>
+                <move x="142" y="13"/>
+                <line x="164" y="13"/>
+            </path>
+            <stroke/>
+            <fontsize size="8"/>
+            <text str="Italic Text CTRL + I" x="110" y="24" align="center" valign="middle"/>
+        </foreground>
+    </shape>
+    <shape name="Drop Down Menu" h="161" w="284" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#130d8e"/>
+            <fillcolor color="#130d8e"/>
+            <rect x="0" y="0" w="82" h="23"/>
+            <fillstroke/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="24" w="141" h="137"/>
+            <fillstroke/>
+            <rect x="141" y="46" w="143" h="69"/>
+            <fillstroke/>
+            <strokecolor color="#130d8e"/>
+            <fillcolor color="#130d8e"/>
+            <rect x="1" y="48" w="139" h="20"/>
+            <fillstroke/>
+            <rect x="142" y="93" w="141" h="21"/>
+            <fillstroke/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="none"/>
+            <path>
+                <move x="5" y="92.5"/>
+                <line x="135.5" y="92.5"/>
+            </path>
+            <stroke/>
+            <path>
+                <move x="5.5" y="138.5"/>
+                <line x="137" y="138"/>
+            </path>
+            <stroke/>
+            <strokecolor color="#ffffff"/>
+            <strokewidth width="2"/>
+            <linejoin join="round"/>
+            <linecap cap="round"/>
+            <path>
+                <move x="129" y="54.69999999999999"/>
+                <line x="134.5" y="57.5"/>
+                <line x="129" y="60.30000000000001"/>
+            </path>
+            <stroke/>
+        </foreground>
+    </shape>
+    <shape name="Font Selector" h="247" w="121" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="25" w="121" h="222"/>
+            <fillstroke/>
+            <strokecolor color="#a6c7fd"/>
+            <fillcolor color="#d8e8ff"/>
+            <roundrect x="0" y="0" w="121" h="24" arcsize="7.489669421487603"/>
+            <fillstroke/>
+            <fillcolor color="#a6c7fd"/>
+            <rect x="1" y="63" w="119" h="18"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="none"/>
+            <linejoin join="round"/>
+            <linecap cap="round"/>
+            <path>
+                <move x="8.555565000000001" y="72.31139999999999"/>
+                <line x="8.962540000000004" y="74.83332999999999"/>
+                <line x="12.05556" y="70.66667000000001"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="112" y="11"/>
+                <line x="115" y="11"/>
+                <line x="113.5" y="13.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+        </foreground>
+    </shape>
+    <shape name="Line Width Selector" h="145" w="52" aspect="1">
+        <foreground>
+            <strokecolor color="#000000"/>
+            <strokecolor color="#666666"/>
+            <fillcolor color="#ffffff"/>
+            <rect x="0" y="25" w="52" h="120"/>
+            <fillstroke/>
+            <strokecolor color="#a6c7fd"/>
+            <fillcolor color="#d8e8ff"/>
+            <roundrect x="0" y="0" w="52" h="24" arcsize="9.134615384615385"/>
+            <fillstroke/>
+            <fillcolor color="#a6c7fd"/>
+            <rect x="1" y="63" w="50" h="18"/>
+            <fillstroke/>
+            <strokecolor color="#000000"/>
+            <fillcolor color="none"/>
+            <linejoin join="round"/>
+            <linecap cap="round"/>
+            <path>
+                <move x="10.22" y="36.14"/>
+                <line x="10.63" y="38.67"/>
+                <line x="13.72" y="34.5"/>
+            </path>
+            <stroke/>
+            <fillcolor color="#000000"/>
+            <path>
+                <move x="41" y="11"/>
+                <line x="44" y="11"/>
+                <line x="42.5" y="13.5"/>
+                <close/>
+            </path>
+            <fillstroke/>
+            <fillcolor color="none"/>
+            <linejoin join="miter"/>
+            <linecap cap="butt"/>
+            <path>
+                <move x="21" y="53.5"/>
+                <line x="43" y="53.5"/>
+            </path>
+            <stroke/>
+            <strokewidth width="2"/>
+            <path>
+                <move x="21" y="72.5"/>
+                <line x="43" y="72.5"/>
+            </path>
+            <stroke/>
+            <strokewidth width="3"/>
+            <path>
+                <move x="21" y="90.5"/>
+                <line x="43" y="90.5"/>
+            </path>
+            <stroke/>
+            <strokewidth width="4"/>
+            <path>
+                <move x="21" y="108"/>
+                <line x="43" y="108"/>
+            </path>
+            <stroke/>
+            <strokewidth width="5"/>
+            <path>
+                <move x="21" y="130.5"/>
+                <line x="43" y="130.5"/>
+            </path>
+            <stroke/>
+            <fontsize size="12"/>
+            <fontstyle style="0"/>
+            <text str="none" x="5" y="11" align="left" valign="middle"/>
+            <text str="none" x="19" y="36" align="left" valign="middle"/>
+        </foreground>
+    </shape>
+</shapes>

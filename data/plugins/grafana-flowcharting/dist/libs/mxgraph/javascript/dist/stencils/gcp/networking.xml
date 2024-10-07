@@ -1,0 +1,951 @@
+<shapes name="mxgraph.gcp.networking">
+<shape aspect="variable" h="113.93" name="Cloud CDN" strokewidth="inherit" w="129.03">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.18"/>
+            <line x="2.05" y="62.72"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.22"/>
+            <line x="28.3" y="5.75"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0"/>
+            <line x="90.76" y="0"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.72" x-axis-rotation="0" y="5.75"/>
+            <line x="126.97" y="51.22"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="126.97" x-axis-rotation="0" y="62.72"/>
+            <line x="100.72" y="108.18"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.93"/>
+            <line x="38.26" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.18"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="75.37" y="33.86"/>
+            <line x="63.76" y="29.72"/>
+            <line x="53.51" y="42.26"/>
+            <line x="60.49" y="49.24"/>
+            <line x="56.69" y="52.98"/>
+            <line x="49.69" y="45.98"/>
+            <line x="37.01" y="56.22"/>
+            <line x="41.42" y="67.87"/>
+            <line x="87.48" y="113.93"/>
+            <line x="90.76" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.72" x-axis-rotation="0" y="108.18"/>
+            <line x="118.65" y="77.14"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <path>
+            <move x="64.51" y="22.97"/>
+            <line x="53.51" y="33.97"/>
+            <line x="53.51" y="42.28"/>
+            <line x="64.51" y="31.28"/>
+            <line x="75.51" y="42.28"/>
+            <line x="75.51" y="33.97"/>
+            <line x="64.51" y="22.97"/>
+            <close/>
+            <move x="64.51" y="90.97"/>
+            <line x="53.51" y="79.97"/>
+            <line x="53.51" y="71.66"/>
+            <line x="64.51" y="82.66"/>
+            <line x="75.51" y="71.66"/>
+            <line x="75.51" y="79.97"/>
+            <line x="64.51" y="90.97"/>
+            <close/>
+            <move x="30.51" y="56.97"/>
+            <line x="41.51" y="67.97"/>
+            <line x="49.83" y="67.97"/>
+            <line x="38.83" y="56.97"/>
+            <line x="49.83" y="45.97"/>
+            <line x="41.51" y="45.97"/>
+            <line x="30.51" y="56.97"/>
+            <close/>
+            <move x="98.51" y="56.97"/>
+            <line x="87.51" y="67.97"/>
+            <line x="79.2" y="67.97"/>
+            <line x="90.2" y="56.97"/>
+            <line x="79.2" y="45.97"/>
+            <line x="87.51" y="45.97"/>
+            <line x="98.51" y="56.97"/>
+            <close/>
+        </path>
+        <fill/>
+        <roundrect arcsize="4.55" h="22" w="22" x="53.51" y="45.97"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="113.93" name="Cloud DNS" strokewidth="inherit" w="129.03">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.18"/>
+            <line x="2.05" y="62.72"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.22"/>
+            <line x="28.3" y="5.75"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0"/>
+            <line x="90.76" y="0"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.72" x-axis-rotation="0" y="5.75"/>
+            <line x="126.97" y="51.22"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="126.97" x-axis-rotation="0" y="62.72"/>
+            <line x="100.72" y="108.18"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.93"/>
+            <line x="38.26" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.18"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="86.22" y="33.24"/>
+            <line x="44.26" y="34.84"/>
+            <line x="42.8" y="45.62"/>
+            <line x="49.89" y="52.72"/>
+            <line x="43.7" y="53.84"/>
+            <line x="42.82" y="64.71"/>
+            <line x="53.95" y="75.84"/>
+            <line x="42.51" y="77.9"/>
+            <line x="78.54" y="113.93"/>
+            <line x="90.76" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.72" x-axis-rotation="0" y="108.18"/>
+            <line x="122.85" y="69.86"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <rect h="32" w="4" x="62.51" y="43.97"/>
+        <fill/>
+        <rect h="4" w="44" x="42.51" y="73.97"/>
+        <fill/>
+        <roundrect arcsize="11.12" h="8" w="8" x="60.51" y="71.97"/>
+        <fill/>
+        <path>
+            <move x="42.51" y="52.93"/>
+            <line x="42.51" y="64"/>
+            <arc large-arc-flag="0" rx="0.97" ry="0.97" sweep-flag="0" x="43.49" x-axis-rotation="0" y="64.97"/>
+            <line x="85.54" y="64.97"/>
+            <arc large-arc-flag="0" rx="0.97" ry="0.97" sweep-flag="0" x="86.51" x-axis-rotation="0" y="64"/>
+            <line x="86.51" y="52.93"/>
+            <arc large-arc-flag="0" rx="0.97" ry="0.97" sweep-flag="0" x="85.54" x-axis-rotation="0" y="51.97"/>
+            <line x="43.49" y="51.97"/>
+            <arc large-arc-flag="0" rx="0.97" ry="0.97" sweep-flag="0" x="42.51" x-axis-rotation="0" y="52.93"/>
+            <close/>
+            <move x="50.51" y="59.97"/>
+            <line x="46.51" y="59.97"/>
+            <line x="46.51" y="55.97"/>
+            <line x="50.51" y="55.97"/>
+            <close/>
+            <move x="42.51" y="33.93"/>
+            <line x="42.51" y="45"/>
+            <arc large-arc-flag="0" rx="0.97" ry="0.97" sweep-flag="0" x="43.49" x-axis-rotation="0" y="45.97"/>
+            <line x="85.54" y="45.97"/>
+            <arc large-arc-flag="0" rx="0.97" ry="0.97" sweep-flag="0" x="86.51" x-axis-rotation="0" y="45"/>
+            <line x="86.51" y="33.93"/>
+            <arc large-arc-flag="0" rx="0.97" ry="0.97" sweep-flag="0" x="85.54" x-axis-rotation="0" y="32.97"/>
+            <line x="43.49" y="32.97"/>
+            <arc large-arc-flag="0" rx="0.97" ry="0.97" sweep-flag="0" x="42.51" x-axis-rotation="0" y="33.93"/>
+            <close/>
+            <move x="50.51" y="40.97"/>
+            <line x="46.51" y="40.97"/>
+            <line x="46.51" y="36.97"/>
+            <line x="50.51" y="36.97"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="114.03" name="Cloud External IP Addresses" strokewidth="inherit" w="129.07">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.23"/>
+            <line x="2.05" y="62.76"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.26"/>
+            <line x="28.3" y="5.79"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0.01"/>
+            <line x="90.76" y="0.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.76" x-axis-rotation="0" y="5.76"/>
+            <line x="127.01" y="51.23"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="127.01" x-axis-rotation="0" y="62.73"/>
+            <line x="100.76" y="108.2"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.95"/>
+            <line x="38.26" y="113.95"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.23"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="89.25" y="32.35"/>
+            <line x="75.43" y="34.93"/>
+            <line x="71.72" y="44.81"/>
+            <line x="64.22" y="37.31"/>
+            <line x="43.76" y="40.13"/>
+            <line x="39.76" y="81.71"/>
+            <line x="72.06" y="114.01"/>
+            <line x="90.76" y="114.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.76" x-axis-rotation="0" y="108.26"/>
+            <line x="124.34" y="67.42"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <path>
+            <move x="78.26" y="58.01"/>
+            <line x="78.26" y="74.76"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="1" x="77.26" x-axis-rotation="0" y="75.76"/>
+            <line x="46.76" y="75.76"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="1" x="45.76" x-axis-rotation="0" y="74.76"/>
+            <line x="45.76" y="44.26"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="1" x="46.76" x-axis-rotation="0" y="43.26"/>
+            <line x="63.51" y="43.26"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="64.51" x-axis-rotation="0" y="42.26"/>
+            <line x="64.51" y="38.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="63.51" x-axis-rotation="0" y="37.01"/>
+            <line x="40.51" y="37.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="39.51" x-axis-rotation="0" y="38.01"/>
+            <line x="39.51" y="81.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="40.51" x-axis-rotation="0" y="82.01"/>
+            <line x="83.51" y="82.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="84.51" x-axis-rotation="0" y="81.01"/>
+            <line x="84.51" y="58.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="83.51" x-axis-rotation="0" y="57.01"/>
+            <line x="79.26" y="57.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="78.26" x-axis-rotation="0" y="58.01"/>
+            <close/>
+            <move x="69.51" y="33.01"/>
+            <line x="69.51" y="51.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="70.51" x-axis-rotation="0" y="52.01"/>
+            <line x="88.51" y="52.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="89.51" x-axis-rotation="0" y="51.01"/>
+            <line x="89.51" y="33.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="88.51" x-axis-rotation="0" y="32.01"/>
+            <line x="70.51" y="32.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="0" x="69.51" x-axis-rotation="0" y="33.01"/>
+            <close/>
+            <move x="83.51" y="43.26"/>
+            <line x="79.26" y="43.26"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="1" x="78.26" x-axis-rotation="0" y="42.26"/>
+            <line x="78.26" y="38.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="1" x="79.26" x-axis-rotation="0" y="37.01"/>
+            <line x="83.51" y="37.01"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="1" x="84.51" x-axis-rotation="0" y="38.01"/>
+            <line x="84.51" y="42.26"/>
+            <arc large-arc-flag="0" rx="1" ry="1" sweep-flag="1" x="83.51" x-axis-rotation="0" y="43.26"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="114.03" name="Cloud Firewall Rules" strokewidth="inherit" w="129.07">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.23"/>
+            <line x="2.05" y="62.76"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.26"/>
+            <line x="28.3" y="5.79"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0.01"/>
+            <line x="90.76" y="0.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.76" x-axis-rotation="0" y="5.76"/>
+            <line x="127.01" y="51.23"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="127.01" x-axis-rotation="0" y="62.73"/>
+            <line x="100.76" y="108.2"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.95"/>
+            <line x="38.26" y="113.95"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.23"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="124.51" y="67.01"/>
+            <line x="89.51" y="32.01"/>
+            <line x="67.29" y="37.57"/>
+            <line x="61.73" y="32.01"/>
+            <line x="39.51" y="37.57"/>
+            <line x="45.16" y="43.22"/>
+            <line x="39.51" y="48.68"/>
+            <line x="45.58" y="54.75"/>
+            <line x="39.51" y="59.75"/>
+            <line x="45.86" y="66.1"/>
+            <line x="39.51" y="70.9"/>
+            <line x="45.89" y="77.28"/>
+            <line x="39.51" y="82.01"/>
+            <line x="71.51" y="114.01"/>
+            <line x="90.76" y="114.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.76" x-axis-rotation="0" y="108.26"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <rect h="5.56" w="22.22" x="39.51" y="32.01"/>
+        <fill/>
+        <rect h="5.56" w="22.22" x="39.51" y="76.45"/>
+        <fill/>
+        <rect h="5.56" w="22.22" x="39.51" y="54.23"/>
+        <fill/>
+        <rect h="5.56" w="22.22" x="67.29" y="32.01"/>
+        <fill/>
+        <rect h="5.56" w="22.22" x="67.29" y="76.45"/>
+        <fill/>
+        <rect h="5.56" w="22.22" x="67.29" y="54.23"/>
+        <fill/>
+        <rect h="5.56" w="22.22" x="53.4" y="43.12"/>
+        <fill/>
+        <rect h="5.56" w="22.22" x="53.4" y="65.34"/>
+        <fill/>
+        <rect h="5.56" w="8.33" x="39.51" y="43.12"/>
+        <fill/>
+        <rect h="5.56" w="8.33" x="39.51" y="65.34"/>
+        <fill/>
+        <rect h="5.56" w="8.33" x="81.18" y="43.12"/>
+        <fill/>
+        <rect h="5.56" w="8.33" x="81.18" y="65.34"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="113.93" name="Cloud Interconnect" strokewidth="inherit" w="129.03">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.18"/>
+            <line x="2.05" y="62.72"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.22"/>
+            <line x="28.3" y="5.75"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0"/>
+            <line x="90.76" y="0"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.72" x-axis-rotation="0" y="5.75"/>
+            <line x="126.97" y="51.22"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="126.97" x-axis-rotation="0" y="62.72"/>
+            <line x="100.72" y="108.18"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.93"/>
+            <line x="38.26" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.18"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="121.35" y="72.46"/>
+            <line x="81.17" y="32.29"/>
+            <line x="50.59" y="37.89"/>
+            <line x="58.8" y="46.06"/>
+            <line x="43.26" y="55.47"/>
+            <line x="33.58" y="59.95"/>
+            <line x="52.46" y="78.83"/>
+            <line x="50.7" y="78.65"/>
+            <line x="51.26" y="79.22"/>
+            <line x="50.73" y="81.69"/>
+            <line x="82.98" y="113.93"/>
+            <line x="90.76" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.72" x-axis-rotation="0" y="108.18"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <rect h="6" w="13.5" x="80.01" y="53.97"/>
+        <fill/>
+        <rect h="38" w="6" x="75.51" y="37.97"/>
+        <fill/>
+        <rect h="6" w="12" x="33.51" y="53.97"/>
+        <fill/>
+        <path>
+            <move x="51.56" y="31.97"/>
+            <line x="80.47" y="31.97"/>
+            <arc large-arc-flag="0" rx="1.04" ry="1.04" sweep-flag="1" x="81.51" x-axis-rotation="0" y="33.01"/>
+            <line x="81.51" y="33.01"/>
+            <line x="81.51" y="37.97"/>
+            <line x="50.51" y="37.97"/>
+            <line x="50.51" y="33.01"/>
+            <arc large-arc-flag="0" rx="1.04" ry="1.04" sweep-flag="1" x="51.56" x-axis-rotation="0" y="31.97"/>
+            <close/>
+            <move x="50.51" y="75.97"/>
+            <line x="81.51" y="75.97"/>
+            <line x="81.51" y="80.92"/>
+            <arc large-arc-flag="0" rx="1.04" ry="1.04" sweep-flag="1" x="80.47" x-axis-rotation="0" y="81.97"/>
+            <line x="51.56" y="81.97"/>
+            <arc large-arc-flag="0" rx="1.04" ry="1.04" sweep-flag="1" x="50.51" x-axis-rotation="0" y="80.92"/>
+            <line x="50.51" y="80.92"/>
+            <line x="50.51" y="75.97"/>
+            <close/>
+        </path>
+        <fill/>
+        <roundrect arcsize="3.71" h="24" w="24" x="44.51" y="44.97"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="113.93" name="Cloud Load Balancing" strokewidth="inherit" w="129.03">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.18"/>
+            <line x="2.05" y="62.72"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.22"/>
+            <line x="28.3" y="5.75"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0"/>
+            <line x="90.76" y="0"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.72" x-axis-rotation="0" y="5.75"/>
+            <line x="126.97" y="51.22"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="126.97" x-axis-rotation="0" y="62.72"/>
+            <line x="100.72" y="108.18"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.93"/>
+            <line x="38.26" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.18"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="80.15" y="35.44"/>
+            <line x="54.93" y="43.3"/>
+            <line x="49.1" y="46.63"/>
+            <line x="57.51" y="55.05"/>
+            <line x="46.01" y="55.72"/>
+            <line x="46.26" y="66.55"/>
+            <line x="39.88" y="74.64"/>
+            <line x="79.17" y="113.93"/>
+            <line x="90.76" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.72" x-axis-rotation="0" y="108.18"/>
+            <line x="119.82" y="75.11"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <rect h="21.75" w="4" x="62.51" y="45.97"/>
+        <fill/>
+        <path>
+            <move x="45.44" y="55.97"/>
+            <line x="48.51" y="55.97"/>
+            <line x="48.51" y="68.97"/>
+            <line x="44.51" y="68.97"/>
+            <line x="44.51" y="56.9"/>
+            <arc large-arc-flag="0" rx="0.93" ry="0.93" sweep-flag="1" x="45.44" x-axis-rotation="0" y="55.97"/>
+            <close/>
+            <move x="80.51" y="55.97"/>
+            <line x="83.58" y="55.97"/>
+            <arc large-arc-flag="0" rx="0.93" ry="0.93" sweep-flag="1" x="84.51" x-axis-rotation="0" y="56.9"/>
+            <line x="84.51" y="56.9"/>
+            <line x="84.51" y="68.97"/>
+            <line x="80.51" y="68.97"/>
+            <line x="80.51" y="55.97"/>
+            <close/>
+            <move x="45.51" y="53.97"/>
+            <line x="83.52" y="53.97"/>
+            <arc large-arc-flag="0" rx="0.99" ry="0.99" sweep-flag="1" x="84.51" x-axis-rotation="0" y="54.96"/>
+            <line x="84.51" y="57.97"/>
+            <line x="44.51" y="57.97"/>
+            <line x="44.51" y="54.96"/>
+            <arc large-arc-flag="0" rx="0.99" ry="0.99" sweep-flag="1" x="45.51" x-axis-rotation="0" y="53.97"/>
+            <close/>
+        </path>
+        <fill/>
+        <roundrect arcsize="8.08" h="12" w="32" x="48.51" y="34.97"/>
+        <fill/>
+        <roundrect arcsize="9.8" h="10" w="13" x="39.51" y="64.97"/>
+        <fill/>
+        <roundrect arcsize="9.8" h="10" w="13" x="76.51" y="64.97"/>
+        <fill/>
+        <roundrect arcsize="10.1" h="10" w="14" x="57.51" y="64.97"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="113.93" name="Cloud Network" strokewidth="inherit" w="129.03">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.18"/>
+            <line x="2.05" y="62.72"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.22"/>
+            <line x="28.3" y="5.75"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0"/>
+            <line x="90.76" y="0"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.72" x-axis-rotation="0" y="5.75"/>
+            <line x="126.97" y="51.22"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="126.97" x-axis-rotation="0" y="62.72"/>
+            <line x="100.72" y="108.18"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.93"/>
+            <line x="38.26" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.18"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="68.62" y="33.15"/>
+            <line x="64.64" y="32.42"/>
+            <line x="60.53" y="41.13"/>
+            <line x="64" y="44.6"/>
+            <line x="63.02" y="50.22"/>
+            <line x="68.73" y="55.93"/>
+            <line x="53.21" y="57.53"/>
+            <line x="48.62" y="52.94"/>
+            <line x="40.58" y="61"/>
+            <line x="93.22" y="113.64"/>
+            <arc large-arc-flag="0" rx="11.48" ry="11.48" sweep-flag="0" x="100.72" x-axis-rotation="0" y="108.18"/>
+            <line x="116.43" y="80.97"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <ellipse h="11.38" w="11.38" x="58.82" y="31.37"/>
+        <fill/>
+        <ellipse h="11.38" w="11.38" x="58.82" y="71.19"/>
+        <fill/>
+        <ellipse h="11.38" w="11.38" x="38.91" y="51.28"/>
+        <fill/>
+        <ellipse h="11.38" w="11.38" x="78.73" y="51.28"/>
+        <fill/>
+        <path>
+            <move x="63.07" y="78.44"/>
+            <line x="39.55" y="55.13"/>
+            <line x="79.54" y="55.13"/>
+            <line x="63.07" y="38.62"/>
+            <line x="65.96" y="35.56"/>
+            <line x="89.48" y="58.81"/>
+            <line x="49.48" y="58.81"/>
+            <line x="65.96" y="75.38"/>
+            <line x="63.07" y="78.44"/>
+            <close/>
+        </path>
+        <fill/>
+        <rect h="13.49" w="2.45" x="63.02" y="63.72"/>
+        <fill/>
+        <rect h="13.49" w="2.45" x="63.02" y="36.74"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="113.93" name="Cloud Partner Interconnect" strokewidth="inherit" w="129.03">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.18"/>
+            <line x="2.05" y="62.72"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.22"/>
+            <line x="28.3" y="5.75"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0"/>
+            <line x="90.76" y="0"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.72" x-axis-rotation="0" y="5.75"/>
+            <line x="126.97" y="51.22"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="126.97" x-axis-rotation="0" y="62.72"/>
+            <line x="100.72" y="108.18"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.93"/>
+            <line x="38.26" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.18"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="88.72" y="32.29"/>
+            <line x="58.01" y="37.97"/>
+            <line x="71.26" y="51.22"/>
+            <line x="71.11" y="53.62"/>
+            <line x="62.76" y="45.28"/>
+            <line x="28.01" y="59.97"/>
+            <line x="81.98" y="113.93"/>
+            <line x="90.76" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.72" x-axis-rotation="0" y="108.18"/>
+            <line x="124.11" y="67.67"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <rect h="6" w="13.5" x="87.51" y="53.97"/>
+        <fill/>
+        <rect h="38" w="6" x="83.01" y="37.97"/>
+        <fill/>
+        <rect h="6" w="12" x="28.01" y="53.97"/>
+        <fill/>
+        <path>
+            <move x="59.06" y="31.97"/>
+            <line x="87.97" y="31.97"/>
+            <arc large-arc-flag="0" rx="1.04" ry="1.04" sweep-flag="1" x="89.01" x-axis-rotation="0" y="33.01"/>
+            <line x="89.01" y="33.01"/>
+            <line x="89.01" y="37.97"/>
+            <line x="58.01" y="37.97"/>
+            <line x="58.01" y="33.01"/>
+            <arc large-arc-flag="0" rx="1.04" ry="1.04" sweep-flag="1" x="59.06" x-axis-rotation="0" y="31.97"/>
+            <close/>
+            <move x="58.01" y="75.97"/>
+            <line x="89.01" y="75.97"/>
+            <line x="89.01" y="80.92"/>
+            <arc large-arc-flag="0" rx="1.04" ry="1.04" sweep-flag="1" x="87.97" x-axis-rotation="0" y="81.97"/>
+            <line x="59.06" y="81.97"/>
+            <arc large-arc-flag="0" rx="1.04" ry="1.04" sweep-flag="1" x="58.01" x-axis-rotation="0" y="80.92"/>
+            <line x="58.01" y="80.92"/>
+            <line x="58.01" y="80.92"/>
+            <close/>
+        </path>
+        <fill/>
+        <roundrect arcsize="3.71" h="24" w="24" x="39.01" y="44.97"/>
+        <fill/>
+        <path>
+            <move x="76.01" y="45.86"/>
+            <line x="76.01" y="68.08"/>
+            <arc large-arc-flag="0" rx="0.83" ry="0.83" sweep-flag="1" x="75.25" x-axis-rotation="0" y="68.97"/>
+            <line x="70.78" y="68.97"/>
+            <arc large-arc-flag="0" rx="0.83" ry="0.83" sweep-flag="1" x="70.01" x-axis-rotation="0" y="68.08"/>
+            <line x="70.01" y="45.86"/>
+            <arc large-arc-flag="0" rx="0.83" ry="0.83" sweep-flag="1" x="70.78" x-axis-rotation="0" y="44.97"/>
+            <line x="75.25" y="44.97"/>
+            <arc large-arc-flag="0" rx="0.83" ry="0.83" sweep-flag="1" x="76.01" x-axis-rotation="0" y="45.86"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="114.03" name="Cloud Router" strokewidth="inherit" w="129.07">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.23"/>
+            <line x="2.05" y="62.76"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.26"/>
+            <line x="28.3" y="5.79"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0.01"/>
+            <line x="90.76" y="0.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.76" x-axis-rotation="0" y="5.76"/>
+            <line x="127.01" y="51.23"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="127.01" x-axis-rotation="0" y="62.73"/>
+            <line x="100.76" y="108.2"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.95"/>
+            <line x="38.26" y="113.95"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.23"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="86.21" y="41.5"/>
+            <line x="84.09" y="45.59"/>
+            <line x="80.01" y="41.51"/>
+            <line x="61.13" y="35.01"/>
+            <line x="49.01" y="41.51"/>
+            <line x="70.71" y="63.2"/>
+            <line x="67.14" y="65.82"/>
+            <line x="58.31" y="57.01"/>
+            <line x="35.63" y="57.01"/>
+            <line x="33.51" y="63.2"/>
+            <line x="84.28" y="114.01"/>
+            <line x="90.76" y="114.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.76" x-axis-rotation="0" y="108.26"/>
+            <line x="119.87" y="75.16"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <path>
+            <move x="86.21" y="63.2"/>
+            <line x="86.21" y="72.5"/>
+            <line x="70.71" y="57.01"/>
+            <line x="86.21" y="41.51"/>
+            <line x="86.21" y="50.81"/>
+            <line x="95.51" y="50.81"/>
+            <line x="95.51" y="63.21"/>
+            <close/>
+            <move x="42.81" y="50.8"/>
+            <line x="33.51" y="50.8"/>
+            <line x="33.51" y="63.2"/>
+            <line x="42.81" y="63.2"/>
+            <line x="42.81" y="72.5"/>
+            <line x="58.31" y="57.01"/>
+            <line x="42.81" y="41.5"/>
+            <close/>
+            <move x="70.71" y="72.51"/>
+            <line x="70.71" y="63.2"/>
+            <line x="58.31" y="63.2"/>
+            <line x="58.31" y="72.51"/>
+            <line x="49.01" y="72.51"/>
+            <line x="64.51" y="88.01"/>
+            <line x="80.01" y="72.51"/>
+            <close/>
+            <move x="70.71" y="41.51"/>
+            <line x="70.71" y="50.8"/>
+            <line x="58.31" y="50.8"/>
+            <line x="58.31" y="41.51"/>
+            <line x="49.01" y="41.51"/>
+            <line x="64.51" y="26.01"/>
+            <line x="80.01" y="41.51"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="114.03" name="Cloud Routes" strokewidth="inherit" w="129.07">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.23"/>
+            <line x="2.05" y="62.76"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.26"/>
+            <line x="28.3" y="5.79"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0.01"/>
+            <line x="90.76" y="0.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.76" x-axis-rotation="0" y="5.76"/>
+            <line x="127.01" y="51.23"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="127.01" x-axis-rotation="0" y="62.73"/>
+            <line x="100.76" y="108.2"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.95"/>
+            <line x="38.26" y="113.95"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.23"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="94.01" y="42.39"/>
+            <line x="69.76" y="42.77"/>
+            <line x="67.31" y="53.77"/>
+            <line x="80.95" y="67.4"/>
+            <line x="81.14" y="69.55"/>
+            <line x="49.06" y="37.46"/>
+            <line x="38.06" y="47.07"/>
+            <line x="50.19" y="60.27"/>
+            <line x="38.01" y="76.56"/>
+            <line x="74.73" y="114.01"/>
+            <line x="90.73" y="114.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.73" x-axis-rotation="0" y="108.26"/>
+            <line x="122.64" y="70.32"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <path>
+            <move x="79.12" y="76.44"/>
+            <line x="68.29" y="76.44"/>
+            <line x="44.8" y="47.07"/>
+            <line x="38.01" y="47.07"/>
+            <line x="38.01" y="37.46"/>
+            <line x="49.06" y="37.46"/>
+            <line x="72.55" y="66.83"/>
+            <line x="79.12" y="66.83"/>
+            <line x="79.12" y="59.23"/>
+            <line x="94.01" y="71.63"/>
+            <line x="79.12" y="84.04"/>
+            <line x="79.12" y="76.44"/>
+            <close/>
+            <move x="67.31" y="53.75"/>
+            <line x="72.55" y="47.19"/>
+            <line x="79.12" y="47.19"/>
+            <line x="79.12" y="54.79"/>
+            <line x="94.01" y="42.39"/>
+            <line x="79.12" y="29.98"/>
+            <line x="79.12" y="37.58"/>
+            <line x="68.29" y="37.58"/>
+            <line x="61.33" y="46.28"/>
+            <line x="67.31" y="53.75"/>
+            <close/>
+            <move x="50.14" y="60.27"/>
+            <line x="44.8" y="66.95"/>
+            <line x="38.01" y="66.95"/>
+            <line x="38.01" y="76.56"/>
+            <line x="49.06" y="76.56"/>
+            <line x="56.11" y="67.74"/>
+            <line x="50.14" y="60.27"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="113.93" name="Cloud Virtual Network" strokewidth="inherit" w="129.03">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.18"/>
+            <line x="2.05" y="62.72"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.22"/>
+            <line x="28.3" y="5.75"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0"/>
+            <line x="90.76" y="0"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.72" x-axis-rotation="0" y="5.75"/>
+            <line x="126.97" y="51.22"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="126.97" x-axis-rotation="0" y="62.72"/>
+            <line x="100.72" y="108.18"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.93"/>
+            <line x="38.26" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.18"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="88.15" y="33.27"/>
+            <line x="67.24" y="43.32"/>
+            <line x="57.24" y="33.32"/>
+            <line x="40.91" y="49.73"/>
+            <line x="51.79" y="60.61"/>
+            <line x="40.89" y="80.59"/>
+            <line x="74.03" y="113.73"/>
+            <line x="78.02" y="113.93"/>
+            <line x="90.76" y="113.93"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.72" x-axis-rotation="0" y="108.18"/>
+            <line x="123.54" y="68.66"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <rect h="19.5" w="5" x="47.51" y="47.47"/>
+        <fill/>
+        <rect h="21.82" w="5" x="76.51" y="45.09"/>
+        <fill/>
+        <rect h="5" w="19.25" x="54.89" y="39.97"/>
+        <fill/>
+        <rect h="5" w="19.25" x="54.89" y="68.97"/>
+        <fill/>
+        <roundrect arcsize="5.88" h="17" w="17" x="40.51" y="32.97"/>
+        <fill/>
+        <roundrect arcsize="5.88" h="17" w="17" x="71.51" y="32.97"/>
+        <fill/>
+        <roundrect arcsize="5.88" h="17" w="17" x="40.51" y="63.97"/>
+        <fill/>
+        <roundrect arcsize="5.88" h="17" w="17" x="71.51" y="63.97"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="114.03" name="Cloud VPN" strokewidth="inherit" w="129.07">
+    <connections/>
+    <foreground>
+        <save/>
+        <path>
+            <move x="28.3" y="108.23"/>
+            <line x="2.05" y="62.76"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="2.05" x-axis-rotation="0" y="51.26"/>
+            <line x="28.3" y="5.79"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="38.26" x-axis-rotation="0" y="0.01"/>
+            <line x="90.76" y="0.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="100.76" x-axis-rotation="0" y="5.76"/>
+            <line x="127.01" y="51.23"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="127.01" x-axis-rotation="0" y="62.73"/>
+            <line x="100.76" y="108.2"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="90.76" x-axis-rotation="0" y="113.95"/>
+            <line x="38.26" y="113.95"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="1" x="28.3" x-axis-rotation="0" y="108.23"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#000000"/>
+        <alpha alpha="0.07"/>
+        <path>
+            <move x="77.51" y="114.01"/>
+            <line x="90.76" y="114.01"/>
+            <arc large-arc-flag="0" rx="11.5" ry="11.5" sweep-flag="0" x="100.76" x-axis-rotation="0" y="108.26"/>
+            <line x="127.01" y="62.79"/>
+            <arc large-arc-flag="0" rx="11.49" ry="11.49" sweep-flag="0" x="128.51" x-axis-rotation="0" y="56.17"/>
+            <line x="93.4" y="21.07"/>
+            <line x="85.2" y="31.85"/>
+            <line x="85.2" y="56.51"/>
+            <line x="76.91" y="58.11"/>
+            <line x="70.06" y="51.26"/>
+            <line x="62.46" y="50.84"/>
+            <line x="53.73" y="57.38"/>
+            <line x="45.11" y="48.76"/>
+            <line x="28.73" y="65.21"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <strokecolor color="none"/>
+        <fillcolor color="#fff"/>
+        <rect h="5" w="15.19" x="71.01" y="54.51"/>
+        <fill/>
+        <rect h="42.55" w="5" x="82.7" y="35.74"/>
+        <fill/>
+        <roundrect arcsize="5.88" h="17" w="17" x="76.7" y="76.49"/>
+        <fill/>
+        <roundrect arcsize="5.88" h="17" w="17" x="76.7" y="20.78"/>
+        <fill/>
+        <rect h="5" w="15.56" x="42.82" y="54.51"/>
+        <fill/>
+        <roundrect arcsize="5.88" h="17" w="17" x="28.45" y="48.51"/>
+        <fill/>
+        <strokecolor color="#fff"/>
+        <fillcolor color="none"/>
+        <strokewidth width="3"/>
+        <miterlimit limit="10"/>
+        <ellipse h="13" w="13" x="58.01" y="50.51"/>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

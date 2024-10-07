@@ -1,0 +1,439 @@
+<shapes name="mxgraph.electrical.capacitors">
+	<shape aspect="variable" h="60" name="Capacitor 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="45" y="30"/>
+				<move x="55" y="0"/>
+				<line x="55" y="60"/>
+				<move x="45" y="0"/>
+				<line x="45" y="60"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Capacitor 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="45" y="30"/>
+				<move x="45" y="0"/>
+				<line x="45" y="60"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="65" y="0"/>
+				<arc large-arc-flag="0" rx="50" ry="50" sweep-flag="0" x="65" x-axis-rotation="0" y="60"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Capacitor 3" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="45" y="30"/>
+				<move x="45" y="0"/>
+				<line x="45" y="60"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="65" y="0"/>
+				<arc large-arc-flag="0" rx="50" ry="50" sweep-flag="0" x="65" x-axis-rotation="0" y="60"/>
+				<move x="30" y="5"/>
+				<line x="30" y="15"/>
+				<move x="25" y="10"/>
+				<line x="35" y="10"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Capacitor 4" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="42" y="30"/>
+				<move x="58" y="30"/>
+				<line x="100" y="30"/>
+			</path>
+			<stroke/>
+			<rect h="60" w="3" x="42" y="0"/>
+			<stroke/>
+			<rect h="60" w="3" x="55" y="0"/>
+			<fillstroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Capacitor 5" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="45" y="30"/>
+				<move x="55" y="0"/>
+				<line x="55" y="60"/>
+				<move x="45" y="0"/>
+				<line x="45" y="60"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="30" y="5"/>
+				<line x="30" y="15"/>
+				<move x="25" y="10"/>
+				<line x="35" y="10"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Capacitor 6" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="45" y="30"/>
+				<move x="55" y="0"/>
+				<line x="55" y="60"/>
+				<move x="45" y="0"/>
+				<line x="45" y="60"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="30" y="5"/>
+				<line x="30" y="15"/>
+				<move x="25" y="10"/>
+				<line x="35" y="10"/>
+				<move x="45" y="5"/>
+				<line x="50" y="0"/>
+				<move x="45" y="10"/>
+				<line x="55" y="0"/>
+				<move x="45" y="15"/>
+				<line x="55" y="5"/>
+				<move x="45" y="20"/>
+				<line x="55" y="10"/>
+				<move x="45" y="25"/>
+				<line x="55" y="15"/>
+				<move x="45" y="30"/>
+				<line x="55" y="20"/>
+				<move x="45" y="35"/>
+				<line x="55" y="25"/>
+				<move x="45" y="40"/>
+				<line x="55" y="30"/>
+				<move x="45" y="45"/>
+				<line x="55" y="35"/>
+				<move x="45" y="50"/>
+				<line x="55" y="40"/>
+				<move x="45" y="55"/>
+				<line x="55" y="45"/>
+				<move x="45" y="60"/>
+				<line x="55" y="50"/>
+				<move x="50" y="60"/>
+				<line x="55" y="55"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="80" name="Differential Capacitor" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.625"/>
+			<constraint name="out" perimeter="0" x="1" y="0.625"/>
+			<constraint name="diff" perimeter="0" x="0.5" y="0"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="50"/>
+				<line x="45" y="50"/>
+				<move x="55" y="20"/>
+				<line x="55" y="80"/>
+				<move x="45" y="20"/>
+				<line x="45" y="80"/>
+				<move x="55" y="50"/>
+				<line x="100" y="50"/>
+				<move x="30" y="80"/>
+				<line x="70" y="20"/>
+				<move x="57" y="30"/>
+				<line x="70" y="20"/>
+				<line x="66.5" y="35.5"/>
+				<move x="50" y="0"/>
+				<line x="50" y="80"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="100" name="Feed Through Capacitor" strokewidth="inherit" w="90">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="50"/>
+				<line x="10" y="50"/>
+				<move x="50" y="20"/>
+				<line x="50" y="80"/>
+				<move x="40" y="20"/>
+				<line x="40" y="80"/>
+				<move x="50" y="50"/>
+				<line x="60" y="50"/>
+				<move x="15" y="50"/>
+				<line x="25" y="50"/>
+				<move x="30" y="50"/>
+				<line x="40" y="50"/>
+				<move x="65" y="50"/>
+				<line x="75" y="50"/>
+				<move x="80" y="50"/>
+				<line x="90" y="50"/>
+				<move x="45" y="0"/>
+				<line x="45" y="100"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="130" name="Ganged Capacitor" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in1" perimeter="0" x="0" y="0.23"/>
+			<constraint name="in2" perimeter="0" x="0" y="0.77"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.23"/>
+			<constraint name="out2" perimeter="0" x="1" y="0.77"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="45" y="30"/>
+				<move x="55" y="0"/>
+				<line x="55" y="60"/>
+				<move x="45" y="0"/>
+				<line x="45" y="60"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="55" y="70"/>
+				<line x="55" y="130"/>
+				<move x="55" y="100"/>
+				<line x="100" y="100"/>
+				<move x="0" y="100"/>
+				<line x="45" y="100"/>
+				<move x="45" y="70"/>
+				<line x="45" y="130"/>
+				<move x="57" y="10"/>
+				<line x="70" y="0"/>
+				<line x="66.5" y="15.5"/>
+				<move x="57" y="80"/>
+				<line x="70" y="70"/>
+				<line x="66.5" y="85.5"/>
+				<move x="30" y="80"/>
+				<line x="30" y="90"/>
+				<move x="30" y="100"/>
+				<line x="30" y="110"/>
+				<move x="30" y="70"/>
+				<line x="30" y="60"/>
+				<line x="70" y="0.6"/>
+				<move x="30" y="120"/>
+				<line x="30" y="130"/>
+				<line x="70" y="70"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="130" name="Multiple Capacitor" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.23"/>
+			<constraint name="out2" perimeter="0" x="1" y="0.77"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="65"/>
+				<line x="45" y="65"/>
+				<move x="55" y="0"/>
+				<line x="55" y="60"/>
+				<move x="45" y="0"/>
+				<line x="45" y="130"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="55" y="70"/>
+				<line x="55" y="130"/>
+				<move x="55" y="100"/>
+				<line x="100" y="100"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="130" name="Multiple Electrolytic Capacitor Comm Neg" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.23"/>
+			<constraint name="out2" perimeter="0" x="1" y="0.77"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="65"/>
+				<line x="45" y="65"/>
+				<move x="55" y="0"/>
+				<line x="55" y="60"/>
+				<move x="45" y="0"/>
+				<line x="45" y="130"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="55" y="70"/>
+				<line x="55" y="130"/>
+				<move x="55" y="100"/>
+				<line x="100" y="100"/>
+				<move x="25" y="10"/>
+				<line x="35" y="10"/>
+				<move x="75" y="10"/>
+				<line x="65" y="10"/>
+				<move x="70" y="5"/>
+				<line x="70" y="15"/>
+				<move x="75" y="120"/>
+				<line x="65" y="120"/>
+				<move x="70" y="115"/>
+				<line x="70" y="125"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="130" name="Multiple Electrolytic Capacitor Comm Pos" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out1" perimeter="0" x="1" y="0.23"/>
+			<constraint name="out2" perimeter="0" x="1" y="0.77"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="65"/>
+				<line x="45" y="65"/>
+				<move x="55" y="0"/>
+				<line x="55" y="60"/>
+				<move x="45" y="0"/>
+				<line x="45" y="130"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="55" y="70"/>
+				<line x="55" y="130"/>
+				<move x="55" y="100"/>
+				<line x="100" y="100"/>
+				<move x="30" y="5"/>
+				<line x="30" y="15"/>
+				<move x="25" y="10"/>
+				<line x="35" y="10"/>
+				<move x="75" y="120"/>
+				<line x="65" y="120"/>
+				<move x="75" y="10"/>
+				<line x="65" y="10"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="65.5" name="Trimmer Capacitor 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.54"/>
+			<constraint name="out" perimeter="0" x="1" y="0.54"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="35.5"/>
+				<line x="45" y="35.5"/>
+				<move x="55" y="5.5"/>
+				<line x="55" y="65.5"/>
+				<move x="45" y="5.5"/>
+				<line x="45" y="65.5"/>
+				<move x="55" y="35.5"/>
+				<line x="100" y="35.5"/>
+				<move x="30" y="65.5"/>
+				<line x="70" y="5.5"/>
+				<move x="62.2" y="0"/>
+				<line x="78.2" y="10.5"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="65.5" name="Trimmer Capacitor 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.54"/>
+			<constraint name="out" perimeter="0" x="1" y="0.54"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="35.5"/>
+				<line x="45" y="35.5"/>
+				<move x="45" y="5.5"/>
+				<line x="45" y="65.5"/>
+				<move x="55" y="35.5"/>
+				<line x="100" y="35.5"/>
+				<move x="65" y="5.5"/>
+				<arc large-arc-flag="0" rx="50" ry="50" sweep-flag="0" x="65" x-axis-rotation="0" y="65.5"/>
+				<move x="30" y="65.5"/>
+				<line x="70" y="5.5"/>
+				<move x="62.2" y="0"/>
+				<line x="78.2" y="10.5"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Variable Capacitor 1" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="45" y="30"/>
+				<move x="55" y="0"/>
+				<line x="55" y="60"/>
+				<move x="45" y="0"/>
+				<line x="45" y="60"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="30" y="60"/>
+				<line x="70" y="0"/>
+				<move x="57" y="10"/>
+				<line x="70" y="0"/>
+				<line x="66.5" y="15.5"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+	<shape aspect="variable" h="60" name="Variable Capacitor 2" strokewidth="inherit" w="100">
+		<connections>
+			<constraint name="in" perimeter="0" x="0" y="0.5"/>
+			<constraint name="out" perimeter="0" x="1" y="0.5"/>
+		</connections>
+		<foreground>
+			<path>
+				<move x="0" y="30"/>
+				<line x="45" y="30"/>
+				<move x="45" y="0"/>
+				<line x="45" y="60"/>
+				<move x="55" y="30"/>
+				<line x="100" y="30"/>
+				<move x="65" y="0"/>
+				<arc large-arc-flag="0" rx="50" ry="50" sweep-flag="0" x="65" x-axis-rotation="0" y="60"/>
+				<move x="30" y="60"/>
+				<line x="70" y="0"/>
+				<move x="57" y="10"/>
+				<line x="70" y="0"/>
+				<line x="66.5" y="15.5"/>
+			</path>
+			<stroke/>
+		</foreground>
+	</shape>
+</shapes>

@@ -1,0 +1,571 @@
+<shapes name="mxGraph.pid.instruments">
+<shape name="Analyzer Transmitter" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="AT" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Flow Element" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="FE" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Flow Indicator" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="FI" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Flow Recorder" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="FR" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Flow Transmitter" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="FT" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Level Alarm" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="LA" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Level Controller 1" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="LC" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Level Controller 2" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="LC" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Level Gauge" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="LG" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Level Indicator" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="LI" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Level Recorder" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="LR" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Level Transmitter 1" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="LT" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Level Transmitter 2" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="LT" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Pressure Controller" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="PC" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Pressure Indicating Controller" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="PIC" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Pressure Indicator" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="PI" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Pressure Recorder" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="PR" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Pressure Recording Controller" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="PRC" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Pressure Transmitter 1" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="PT" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Pressure Transmitter 2" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="PT" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Temperature Element" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="20"/>
+<text str="TE" x="48" y="43" align="center" valign="bottom"/>
+<path>
+<move x="0" y="48"/>
+<line x="96" y="48"/>
+</path>
+<stroke/>
+</foreground>
+</shape>
+<shape name="Temperature Indicator" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="TI" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Temperature Recorder" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="TR" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+<shape name="Temperature Transmitter" h="96" w="96" aspect="fixed" strokewidth="inherit">
+<connections>
+<constraint x="0.5" y="0" perimeter="0" name="N"/>
+<constraint x="0.5" y="1" perimeter="0" name="S"/>
+<constraint x="0" y="0.5" perimeter="0" name="W"/>
+<constraint x="1" y="0.5" perimeter="0" name="E"/>
+<constraint x="0.145" y="0.145" perimeter="0" name="NW"/>
+<constraint x="0.145" y="0.855" perimeter="0" name="SW"/>
+<constraint x="0.855" y="0.145" perimeter="0" name="NE"/>
+<constraint x="0.855" y="0.855" perimeter="0" name="SE"/>
+</connections>
+<background>
+<ellipse x="0" y="0" w="96" h="96"/>
+</background>
+<foreground>
+<fillstroke/>
+<fontcolor color="#000000"/>
+<fontsize size="40"/>
+<text str="TT" x="48" y="68" align="center" valign="bottom"/>
+</foreground>
+</shape>
+</shapes>

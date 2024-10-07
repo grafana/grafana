@@ -1,0 +1,277 @@
+<shapes name="mxgraph.aws2.networking">
+<shape aspect="variable" h="63.4" name="VPC Customer Gateway" strokewidth="inherit" w="60.8">
+    <connections/>
+    <foreground>
+        <fillcolor color="#9D5025"/>
+        <ellipse h="60.8" w="60.8" x="0" y="2.6"/>
+        <fillstroke/>
+        <fillcolor color="#F58536"/>
+        <ellipse h="60.8" w="60.8" x="0" y="0"/>
+        <fillstroke/>
+        <fillcolor color="#FFFFFF"/>
+        <rect h="36.5" w="5" x="27.9" y="12.3"/>
+        <fillstroke/>
+        <path>
+            <move x="24.2" y="14.1"/>
+            <line x="30.4" y="3.3"/>
+            <line x="36.6" y="14.1"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="24.2" y="47"/>
+            <line x="30.4" y="57.8"/>
+            <line x="36.6" y="47"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <rect h="5" w="36.5" x="12.2" y="28.1"/>
+        <fillstroke/>
+        <path>
+            <move x="14" y="36.8"/>
+            <line x="3.2" y="30.6"/>
+            <line x="14" y="24.3"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="46.8" y="36.8"/>
+            <line x="57.6" y="30.6"/>
+            <line x="46.8" y="24.3"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="63.4" name="VPC Endpoints" strokewidth="inherit" w="60.8">
+    <connections/>
+    <foreground>
+        <fillcolor color="#9D5025"/>
+        <ellipse h="60.8" w="60.8" x="0" y="2.6"/>
+        <fillstroke/>
+        <fillcolor color="#F58536"/>
+        <ellipse h="60.8" w="60.8" x="0" y="0"/>
+        <fillstroke/>
+        <fillcolor color="#FFFFFF"/>
+        <path>
+            <move x="30.4" y="53.1"/>
+            <line x="29.9" y="52.9"/>
+            <curve x1="29.7" x2="25.2" x3="20.6" y1="52.8" y2="51.2" y3="46"/>
+            <curve x1="18" x2="15.9" x3="14.4" y1="43" y2="39.4" y3="35.3"/>
+            <curve x1="12.6" x2="11.6" x3="11.6" y1="30.2" y2="24.3" y3="17.8"/>
+            <line x="11.6" y="16.4"/>
+            <line x="13" y="16.4"/>
+            <curve x1="14.3" x2="16.7" x3="17.7" y1="16.4" y2="16" y3="15"/>
+            <curve x1="19.1" x2="19.3" x3="19.3" y1="13.6" y2="11.1" y3="11.1"/>
+            <line x="19.4" y="10.2"/>
+            <line x="20.3" y="9.9"/>
+            <curve x1="20.5" x2="25.4" x3="30.4" y1="9.7" y2="7.8" y3="7.8"/>
+            <curve x1="35.2" x2="40.2" x3="40.5" y1="7.8" y2="9.6" y3="9.7"/>
+            <line x="41.4" y="10"/>
+            <line x="41.5" y="10.9"/>
+            <curve x1="41.5" x2="41.7" x3="43.1" y1="10.9" y2="13.4" y3="14.8"/>
+            <curve x1="44" x2="46.6" x3="47.8" y1="15.7" y2="16.1" y3="16.1"/>
+            <line x="49.2" y="16.2"/>
+            <line x="49.2" y="17.6"/>
+            <curve x1="49.2" x2="48.3" x3="46.4" y1="24.1" y2="30" y3="35.1"/>
+            <curve x1="44.9" x2="42.8" x3="40.2" y1="39.2" y2="42.8" y3="45.9"/>
+            <curve x1="35.7" x2="31.1" x3="30.9" y1="51.1" y2="52.7" y3="52.8"/>
+            <line x="30.4" y="53.1"/>
+            <close/>
+            <move x="14.6" y="19.2"/>
+            <curve x1="14.8" x2="17.6" x3="22.7" y1="29.5" y2="38" y3="44"/>
+            <curve x1="25.9" x2="29.2" x3="30.4" y1="47.7" y2="49.4" y3="50"/>
+            <curve x1="31.6" x2="34.8" x3="38.1" y1="49.5" y2="47.8" y3="44"/>
+            <curve x1="43.2" x2="46" x3="46.2" y1="38" y2="29.5" y3="19.1"/>
+            <curve x1="44.7" x2="42.3" x3="41" y1="18.9" y2="18.4" y3="17"/>
+            <curve x1="39.5" x2="38.9" x3="38.7" y1="15.5" y2="13.4" y3="12.2"/>
+            <curve x1="37.2" x2="33.7" x3="30.5" y1="11.7" y2="10.7" y3="10.7"/>
+            <curve x1="27.2" x2="23.8" x3="22.3" y1="10.7" y2="11.7" y3="12.2"/>
+            <curve x1="22.1" x2="21.5" x3="20" y1="13.4" y2="15.5" y3="17"/>
+            <curve x1="18.4" x2="16.1" x3="14.6" y1="18.5" y2="19" y3="19.2"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="39.5" y="29.1"/>
+            <curve x1="37.7" x2="32.2" x3="30.1" y1="30.9" y2="34.7" y3="36.8"/>
+            <curve x1="30.1" x2="30.1" x3="30.1" y1="35.8" y2="31.8" y3="30.8"/>
+            <curve x1="26.5" x2="9.4" x3="5.9" y1="30.8" y2="30.8" y3="30.8"/>
+            <curve x1="5.9" x2="5.9" x3="5.9" y1="28.7" y2="29.4" y3="27.2"/>
+            <curve x1="9.4" x2="26.5" x3="30.1" y1="27.2" y2="27.2" y3="27.2"/>
+            <curve x1="30.1" x2="30.1" x3="30.1" y1="26.2" y2="22.1" y3="21.3"/>
+            <curve x1="32" x2="37.5" x3="39.5" y1="23.3" y2="27.1" y3="29.1"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="63.4" name="VPC Flowlogs" strokewidth="inherit" w="60.8">
+    <connections/>
+    <foreground>
+        <fillcolor color="#9D5025"/>
+        <ellipse h="60.8" w="60.8" x="0" y="2.6"/>
+        <fillstroke/>
+        <fillcolor color="#F58536"/>
+        <ellipse h="60.8" w="60.8" x="0" y="0"/>
+        <fillstroke/>
+        <fillcolor color="#FFFFFF"/>
+        <rect h="2.8" w="19.4" x="18.6" y="40.7"/>
+        <fillstroke/>
+        <rect h="2.8" w="19.4" x="18.6" y="34.9"/>
+        <fillstroke/>
+        <rect h="2.8" w="19.4" x="18.6" y="23.2"/>
+        <fillstroke/>
+        <rect h="3.2" w="44.3" x="4.7" y="28.8"/>
+        <fillstroke/>
+        <rect h="2.8" w="19.4" x="18.6" y="17.4"/>
+        <fillstroke/>
+        <path>
+            <move x="42.5" y="27.5"/>
+            <line x="39.6" y="27.5"/>
+            <line x="39.6" y="14.8"/>
+            <line x="16.9" y="14.8"/>
+            <line x="16.9" y="27.5"/>
+            <line x="14.1" y="27.5"/>
+            <line x="14.1" y="12"/>
+            <line x="42.5" y="12"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="42.5" y="48.9"/>
+            <line x="14.1" y="48.9"/>
+            <line x="14.1" y="33.5"/>
+            <line x="16.9" y="33.5"/>
+            <line x="16.9" y="46.1"/>
+            <line x="39.6" y="46.1"/>
+            <line x="39.6" y="33.7"/>
+            <line x="42.5" y="33.7"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="47.7" y="23.6"/>
+            <line x="56.1" y="30.4"/>
+            <line x="47.7" y="37.6"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="63.4" name="VPC Router" strokewidth="inherit" w="60.8">
+    <connections/>
+    <foreground>
+        <fillcolor color="#9D5025"/>
+        <ellipse h="60.8" w="60.8" x="0" y="2.6"/>
+        <fillstroke/>
+        <fillcolor color="#F58536"/>
+        <ellipse h="60.8" w="60.8" x="0" y="0"/>
+        <fillstroke/>
+        <fillcolor color="#FFFFFF"/>
+        <rect h="36.5" w="5" x="27.9" y="12.3"/>
+        <fillstroke/>
+        <path>
+            <move x="24.2" y="14.1"/>
+            <line x="30.4" y="3.3"/>
+            <line x="36.6" y="14.1"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="24.2" y="47"/>
+            <line x="30.4" y="57.8"/>
+            <line x="36.6" y="47"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <rect h="5" w="12.9" x="44.5" y="28"/>
+        <fillstroke/>
+        <path>
+            <move x="46.3" y="36.7"/>
+            <line x="35.6" y="30.4"/>
+            <line x="46.3" y="24.2"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <rect h="5" w="12.9" x="3.4" y="28"/>
+        <fillstroke/>
+        <path>
+            <move x="14.5" y="36.7"/>
+            <line x="25.2" y="30.4"/>
+            <line x="14.5" y="24.2"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="63.4" name="VPCNAT Gateway" strokewidth="inherit" w="60.8">
+    <connections/>
+    <foreground>
+        <fillcolor color="#9D5025"/>
+        <ellipse h="60.8" w="60.8" x="0" y="2.6"/>
+        <fillstroke/>
+        <fillcolor color="#F58536"/>
+        <ellipse h="60.8" w="60.8" x="0" y="0"/>
+        <fillstroke/>
+        <fillcolor color="#FFFFFF"/>
+        <rect h="28.3" w="3.2" x="38.6" y="16.3"/>
+        <fillstroke/>
+        <path>
+            <move x="47.7" y="23.5"/>
+            <line x="56.1" y="30.3"/>
+            <line x="47.7" y="37.4"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="18" y="28.8"/>
+            <line x="19.8" y="30.3"/>
+            <line x="17.8" y="32.1"/>
+            <line x="49.1" y="32.1"/>
+            <line x="49.1" y="28.8"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="17.8" y="17.9"/>
+            <line x="41.9" y="17.9"/>
+            <line x="41.9" y="14.7"/>
+            <line x="18" y="14.7"/>
+            <line x="19.8" y="16.2"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="19.8" y="44.5"/>
+            <line x="17.8" y="46.2"/>
+            <line x="41.9" y="46.2"/>
+            <line x="41.9" y="43"/>
+            <line x="18" y="43"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="11.1" y="24.9"/>
+            <line x="17.8" y="30.3"/>
+            <line x="11.1" y="36"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="11.1" y="10.7"/>
+            <line x="17.8" y="16.2"/>
+            <line x="11.1" y="21.9"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="11.1" y="39"/>
+            <line x="17.8" y="44.5"/>
+            <line x="11.1" y="50.2"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+</shapes>

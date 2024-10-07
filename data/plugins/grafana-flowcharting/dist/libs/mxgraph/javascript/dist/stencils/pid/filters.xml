@@ -1,0 +1,429 @@
+<shapes name="mxGraph.pid.filters">
+<shape aspect="variable" h="50" name="Filter" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="50" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="50" y="0"/>
+            <line x="0" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Gas Filter" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="70"/>
+            <line x="25" y="99.5"/>
+            <line x="50" y="70"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Gas Filter (Bag, Candle, Cartridge)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="70"/>
+            <line x="25" y="99.5"/>
+            <line x="50" y="70"/>
+            <move x="0" y="40"/>
+            <line x="15" y="40"/>
+            <line x="15" y="60"/>
+            <line x="35" y="60"/>
+            <line x="35" y="40"/>
+            <line x="50" y="40"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Gas Filter (Belt, Roll)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="12" w="12" x="0" y="59"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="38" y="59"/>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="70"/>
+            <line x="25" y="99.5"/>
+            <line x="50" y="70"/>
+            <move x="6" y="59"/>
+            <line x="44" y="59"/>
+            <move x="6" y="71"/>
+            <line x="44" y="71"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Gas Filter (Fixed Bed)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="50" y="70"/>
+            <move x="50" y="30"/>
+            <line x="0" y="70"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="70"/>
+            <line x="25" y="99.5"/>
+            <line x="50" y="70"/>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="30"/>
+            <line x="50" y="30"/>
+            <move x="0" y="70"/>
+            <line x="50" y="70"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Gas Filter (HEPA)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="70"/>
+            <line x="25" y="99.5"/>
+            <line x="50" y="70"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Filter" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="50" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Filter (Bag, Candle, Cartridge)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="80"/>
+            <line x="50" y="80"/>
+            <move x="0" y="40"/>
+            <line x="15" y="40"/>
+            <line x="15" y="60"/>
+            <line x="35" y="60"/>
+            <line x="35" y="40"/>
+            <line x="50" y="40"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Filter (Belt, Roll)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="12" w="12" x="0" y="59"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="38" y="59"/>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="80"/>
+            <line x="50" y="80"/>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="6" y="59"/>
+            <line x="44" y="59"/>
+            <move x="6" y="71"/>
+            <line x="44" y="71"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Filter (Biological)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="80"/>
+            <line x="50" y="80"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Filter (Fixed Bed)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="80"/>
+            <move x="50" y="20"/>
+            <line x="0" y="80"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="80"/>
+            <line x="50" y="80"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Filter (Ion Exchanger)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <move x="0" y="80"/>
+            <line x="50" y="80"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Filter (Rotary, Drum or Disc)" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="13" y="31.5"/>
+            <arc large-arc-flag="0" rx="22" ry="22" sweep-flag="1" x="37" x-axis-rotation="0" y="31.5"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="80"/>
+            <line x="50" y="80"/>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+        </path>
+        <stroke/>
+        <ellipse h="30" w="30" x="10" y="35"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Liquid Filter (Rotary, Drum or Disc, Scraper)" strokewidth="inherit" w="55">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.455" y="0"/>
+        <constraint name="S" perimeter="0" x="0.455" y="1"/>
+        <constraint name="E" perimeter="0" x="0.91" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="6" y="31.5"/>
+            <arc large-arc-flag="0" rx="22" ry="22" sweep-flag="1" x="30" x-axis-rotation="0" y="31.5"/>
+            <move x="55" y="65"/>
+            <line x="33" y="65"/>
+            <line x="33" y="50"/>
+            <line x="47" y="65"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="80"/>
+            <line x="50" y="80"/>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+        </path>
+        <stroke/>
+        <ellipse h="30" w="30" x="3" y="35"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Press Filter" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0"/>
+        <constraint name="E" perimeter="0" x="1" y="1"/>
+    </connections>
+    <background>
+        <rect h="50" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="10" y="10"/>
+            <line x="10" y="40"/>
+            <move x="30" y="10"/>
+            <line x="30" y="40"/>
+            <move x="50" y="10"/>
+            <line x="50" y="40"/>
+            <move x="70" y="10"/>
+            <line x="70" y="40"/>
+            <move x="90" y="10"/>
+            <line x="90" y="40"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="20" y="0"/>
+            <line x="20" y="50"/>
+            <move x="40" y="0"/>
+            <line x="40" y="50"/>
+            <move x="60" y="0"/>
+            <line x="60" y="50"/>
+            <move x="80" y="0"/>
+            <line x="80" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Suction Filter" strokewidth="inherit" w="50">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="70"/>
+            <line x="50" y="70"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

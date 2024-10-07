@@ -1,0 +1,2058 @@
+<shapes name="mxgraph.pid.misc">
+<shape aspect="variable" h="97.4" name="Aerator With Sparger" strokewidth="inherit" w="35">
+    <connections/>
+    <background>
+        <path>
+            <move x="23.5" y="2.4"/>
+            <line x="23.5" y="27.4"/>
+            <arc large-arc-flag="0" rx="5" ry="2" sweep-flag="1" x="11.5" x-axis-rotation="0" y="27.4"/>
+            <line x="11.5" y="2.4"/>
+            <arc large-arc-flag="0" rx="5" ry="2" sweep-flag="1" x="23.5" x-axis-rotation="0" y="2.4"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="5" w="30" x="2.5" y="92.4"/>
+        <fillstroke/>
+        <rect h="57.5" w="2" x="16.5" y="29.9"/>
+        <fillstroke/>
+        <path>
+            <move x="11.5" y="2.4"/>
+            <line x="23.5" y="2.4"/>
+            <move x="11.5" y="27.4"/>
+            <line x="23.5" y="27.4"/>
+        </path>
+        <stroke/>
+        <ellipse h="2" w="10" x="17.5" y="86.4"/>
+        <fillstroke/>
+        <ellipse h="2" w="10" x="7.5" y="86.4"/>
+        <fillstroke/>
+        <ellipse h="5" w="5" x="0" y="92.4"/>
+        <fillstroke/>
+        <ellipse h="5" w="5" x="30" y="92.4"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Air Cooler" strokewidth="inherit" w="70">
+    <connections/>
+    <background>
+        <rect h="20" w="70" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="10" y="14"/>
+            <line x="60" y="6"/>
+            <arc large-arc-flag="1" rx="4" ry="4" sweep-flag="1" x="60" x-axis-rotation="0" y="14"/>
+            <line x="10" y="6"/>
+            <arc large-arc-flag="1" rx="4" ry="4" sweep-flag="0" x="10" x-axis-rotation="0" y="14"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="65" name="Air Filter" strokewidth="inherit" w="40">
+    <connections/>
+    <background>
+        <rect h="65" w="40" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="40" y="65"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="106" name="Air Separator" strokewidth="inherit" w="65.5">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.78"/>
+        <constraint name="E" perimeter="0" x="1" y="0.22"/>
+    </connections>
+    <background>
+        <rect h="106" w="10" x="28" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="53" y="23"/>
+            <line x="61.5" y="23"/>
+            <move x="61.5" y="13"/>
+            <line x="61.5" y="33"/>
+            <move x="65.5" y="13"/>
+            <line x="65.5" y="33"/>
+            <move x="13" y="83"/>
+            <line x="4.5" y="83"/>
+            <move x="4.5" y="73"/>
+            <line x="4.5" y="93"/>
+            <move x="0" y="73"/>
+            <line x="0" y="93"/>
+            <move x="53" y="13"/>
+            <line x="53" y="93"/>
+            <arc large-arc-flag="0" rx="13" ry="5" sweep-flag="1" x="13" x-axis-rotation="0" y="93"/>
+            <line x="13" y="13"/>
+            <arc large-arc-flag="0" rx="13" ry="5" sweep-flag="1" x="53" x-axis-rotation="0" y="13"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="32" name="Back Draft Damper" strokewidth="inherit" w="62">
+    <connections/>
+    <background>
+        <rect h="30" w="60" x="2" y="2"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="2" y="2"/>
+            <line x="62" y="32"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <ellipse h="4" w="4" x="0" y="0"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Bag Filling Machine" strokewidth="inherit" w="80">
+    <connections/>
+    <background>
+        <rect h="100" w="80" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="35" w="25" x="10" y="20"/>
+        <stroke/>
+        <rect h="35" w="25" x="45" y="20"/>
+        <stroke/>
+        <path>
+            <move x="75" y="80"/>
+            <line x="20" y="80"/>
+            <move x="22.5" y="19.5"/>
+            <line x="15" y="10"/>
+            <line x="30" y="10"/>
+            <close/>
+            <move x="22.5" y="10"/>
+            <line x="22.5" y="20"/>
+            <move x="57.5" y="19.5"/>
+            <line x="50" y="10"/>
+            <line x="65" y="10"/>
+            <close/>
+            <move x="57.5" y="10"/>
+            <line x="57.5" y="20"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="20" y="77"/>
+            <line x="20" y="83"/>
+            <line x="9" y="80"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="98" name="Belt Skimmer" strokewidth="inherit" w="70">
+    <connections/>
+    <background>
+        <rect h="25" w="40" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="16" w="16" x="12" y="4.5"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="82"/>
+        <fillstroke/>
+        <path>
+            <move x="12" y="12.5"/>
+            <line x="12" y="90"/>
+            <move x="28" y="12.5"/>
+            <line x="28" y="90"/>
+            <move x="70" y="20"/>
+            <line x="40" y="8"/>
+            <line x="40" y="16"/>
+            <line x="70" y="28"/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="65" name="Bin" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="0"/>
+            <line x="100" y="40"/>
+            <line x="75" y="65"/>
+            <line x="25" y="65"/>
+            <line x="0" y="40"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Boiler (Dome)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.3"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="0" y="20"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="30" y="20"/>
+            <arc large-arc-flag="1" rx="20" ry="20" sweep-flag="1" x="70" x-axis-rotation="0" y="20"/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Boiler (Dome, Hot Liquid)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.6"/>
+        <constraint name="E" perimeter="0" x="1" y="0.6"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="0" y="20"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="30" y="20"/>
+            <arc large-arc-flag="1" rx="20" ry="20" sweep-flag="1" x="70" x-axis-rotation="0" y="20"/>
+            <move x="100" y="20"/>
+            <line x="0" y="120"/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Box Truck" strokewidth="inherit" w="120">
+    <connections/>
+    <background>
+        <rect h="60" w="120" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="15" y="60"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="85" y="60"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="200" name="Bucket Elevator" strokewidth="inherit" w="65">
+    <connections/>
+    <background>
+        <path>
+            <move x="25" y="0"/>
+            <line x="45" y="0"/>
+            <line x="45" y="185"/>
+            <line x="65" y="185"/>
+            <line x="45" y="200"/>
+            <line x="25" y="200"/>
+            <line x="25" y="15"/>
+            <line x="0" y="15"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="115.5" name="Chiller" strokewidth="inherit" w="156.69">
+    <connections>
+        <constraint name="NE" perimeter="0" x="0.885" y="0"/>
+        <constraint name="NW" perimeter="0" x="0.18" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.69"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.915"/>
+    </connections>
+    <background>
+        <path>
+            <move x="149" y="12.5"/>
+            <arc large-arc-flag="1" rx="5" ry="13" sweep-flag="1" x="149" x-axis-rotation="0" y="52.5"/>
+            <line x="19" y="52.5"/>
+            <arc large-arc-flag="1" rx="5" ry="13" sweep-flag="1" x="19" x-axis-rotation="0" y="12.5"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="149" y="72.5"/>
+            <arc large-arc-flag="1" rx="5" ry="13" sweep-flag="1" x="149" x-axis-rotation="0" y="112.5"/>
+            <line x="19" y="112.5"/>
+            <arc large-arc-flag="1" rx="5" ry="13" sweep-flag="1" x="19" x-axis-rotation="0" y="72.5"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="4" y="79.5"/>
+            <line x="13" y="79.5"/>
+            <move x="4" y="105.5"/>
+            <line x="13" y="105.5"/>
+            <move x="4" y="69.5"/>
+            <line x="4" y="89.5"/>
+            <move x="0" y="69.5"/>
+            <line x="0" y="89.5"/>
+            <move x="4" y="95.5"/>
+            <line x="4" y="115.5"/>
+            <move x="0" y="95.5"/>
+            <line x="0" y="115.5"/>
+            <move x="139" y="12.5"/>
+            <line x="139" y="4"/>
+            <move x="129" y="4"/>
+            <line x="149" y="4"/>
+            <move x="129" y="0"/>
+            <line x="149" y="0"/>
+            <move x="29" y="12.5"/>
+            <line x="29" y="4"/>
+            <move x="19" y="4"/>
+            <line x="39" y="4"/>
+            <move x="19" y="0"/>
+            <line x="39" y="0"/>
+        </path>
+        <stroke/>
+        <rect h="20" w="10" x="34" y="52.5"/>
+        <fillstroke/>
+        <rect h="20" w="10" x="119" y="52.5"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Combustion Chamber" strokewidth="inherit" w="130">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="100" w="130" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="10" w="130" x="0" y="90"/>
+        <stroke/>
+        <path>
+            <move x="25" y="90"/>
+            <line x="65" y="15"/>
+            <line x="105" y="90"/>
+            <close/>
+            <move x="40" y="90"/>
+            <line x="65" y="45"/>
+            <line x="90" y="90"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Conveyor" strokewidth="inherit" w="200">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.1" y="0"/>
+        <constraint name="S" perimeter="0" x="0.9" y="1"/>
+    </connections>
+    <background>
+        <rect h="60" w="200" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="20" y="30"/>
+            <line x="115" y="30"/>
+            <move x="115" y="20"/>
+            <line x="115" y="40"/>
+            <line x="150" y="30"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Conveyor (Belt)" strokewidth="inherit" w="200">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.125" y="0"/>
+        <constraint name="S" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="50" w="150" x="25" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="0" y="0"/>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="150" y="0"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Conveyor (Belt, Closed)" strokewidth="inherit" w="240">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.19" y="0"/>
+        <constraint name="S" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="80" w="240" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="50" w="150" x="45" y="15"/>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="20" y="15"/>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="170" y="15"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Conveyor (Belt, Closed, Reversible)" strokewidth="inherit" w="240">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="80" w="240" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="50" w="150" x="45" y="15"/>
+        <stroke/>
+        <ellipse h="50" w="50" x="20" y="15"/>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="170" y="15"/>
+        <fillstroke/>
+        <path>
+            <move x="105" y="40"/>
+            <line x="135" y="40"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="135" y="35"/>
+            <line x="135" y="45"/>
+            <line x="151.2" y="40"/>
+            <close/>
+            <move x="105" y="35"/>
+            <line x="105" y="45"/>
+            <line x="90" y="40"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Conveyor (Chain, Closed)" strokewidth="inherit" w="240">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.19" y="0"/>
+        <constraint name="S" perimeter="0" x="0.81" y="1"/>
+    </connections>
+    <background>
+        <save/>
+        <rect h="80" w="240" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <rect h="50" w="150" x="45" y="15"/>
+        <stroke/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <ellipse h="50" w="50" x="20" y="15"/>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="170" y="15"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Conveyor (Screw, Closed)" strokewidth="inherit" w="220">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.1" y="0"/>
+        <constraint name="S" perimeter="0" x="0.94" y="1"/>
+    </connections>
+    <background>
+        <rect h="80" w="210" x="10" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="35" y="40"/>
+            <line x="50" y="15"/>
+            <line x="80" y="65"/>
+            <line x="95" y="40"/>
+            <move x="0" y="40"/>
+            <line x="205" y="40"/>
+            <move x="130" y="40"/>
+            <line x="145" y="15"/>
+            <line x="175" y="65"/>
+            <line x="190" y="40"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Conveyor (Vibrating, Closed)" strokewidth="inherit" w="240">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.1" y="0"/>
+        <constraint name="S" perimeter="0" x="0.94" y="1"/>
+    </connections>
+    <background>
+        <rect h="80" w="240" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="140" y="30"/>
+            <line x="120" y="30"/>
+            <move x="100" y="50"/>
+            <line x="120" y="50"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="120" y="25"/>
+            <line x="120" y="35"/>
+            <line x="100" y="30"/>
+            <close/>
+            <move x="120" y="45"/>
+            <line x="120" y="55"/>
+            <line x="140" y="50"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="90" name="Cooler" strokewidth="inherit" w="85">
+    <connections/>
+    <background>
+        <ellipse h="80" w="80" x="0" y="5"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="10" y="0"/>
+            <line x="10" y="90"/>
+            <move x="85" y="15"/>
+            <line x="50" y="15"/>
+            <line x="50" y="35"/>
+            <line x="65" y="35"/>
+            <line x="65" y="60"/>
+            <line x="50" y="60"/>
+            <line x="50" y="80"/>
+            <line x="85" y="80"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Cooling Tower" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0" y="0.92"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.92"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="120"/>
+            <line x="0" y="100"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="100" y="100"/>
+            <line x="100" y="120"/>
+            <close/>
+            <move x="100" y="100"/>
+            <line x="0" y="100"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Cooling Tower (Dry, Forced Draught)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0" y="0.92"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.92"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="120"/>
+            <line x="0" y="100"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="100" y="100"/>
+            <line x="100" y="120"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="100" y="100"/>
+            <line x="0" y="100"/>
+            <move x="0" y="110"/>
+            <line x="100" y="110"/>
+            <move x="50" y="105"/>
+            <line x="50" y="115"/>
+            <move x="37.5" y="105"/>
+            <line x="37.5" y="115"/>
+            <move x="25" y="105"/>
+            <line x="25" y="115"/>
+            <move x="12.5" y="105"/>
+            <line x="12.5" y="115"/>
+            <move x="62.5" y="105"/>
+            <line x="62.5" y="115"/>
+            <move x="75" y="105"/>
+            <line x="75" y="115"/>
+            <move x="87.5" y="105"/>
+            <line x="87.5" y="115"/>
+            <move x="42" y="62.5"/>
+            <line x="36" y="81"/>
+            <move x="58" y="62.5"/>
+            <line x="64" y="81"/>
+        </path>
+        <stroke/>
+        <ellipse h="30" w="30" x="35" y="60"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Cooling Tower (Dry, Induced Draught)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="SW" perimeter="0" x="0" y="0.92"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.92"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="120"/>
+            <line x="0" y="100"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="100" y="100"/>
+            <line x="100" y="120"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="100" y="100"/>
+            <line x="0" y="100"/>
+            <move x="0" y="110"/>
+            <line x="100" y="110"/>
+            <move x="50" y="105"/>
+            <line x="50" y="115"/>
+            <move x="37.5" y="105"/>
+            <line x="37.5" y="115"/>
+            <move x="25" y="105"/>
+            <line x="25" y="115"/>
+            <move x="12.5" y="105"/>
+            <line x="12.5" y="115"/>
+            <move x="62.5" y="105"/>
+            <line x="62.5" y="115"/>
+            <move x="75" y="105"/>
+            <line x="75" y="115"/>
+            <move x="87.5" y="105"/>
+            <line x="87.5" y="115"/>
+            <move x="42" y="12.5"/>
+            <line x="36" y="31"/>
+            <move x="58" y="12.5"/>
+            <line x="64" y="31"/>
+        </path>
+        <stroke/>
+        <ellipse h="30" w="30" x="35" y="10"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Cooling Tower (Dry, Natural Draught)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.92"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.92"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="120"/>
+            <line x="0" y="100"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="100" y="100"/>
+            <line x="100" y="120"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="100" y="100"/>
+            <line x="0" y="100"/>
+            <move x="0" y="110"/>
+            <line x="100" y="110"/>
+            <move x="50" y="105"/>
+            <line x="50" y="115"/>
+            <move x="37.5" y="105"/>
+            <line x="37.5" y="115"/>
+            <move x="25" y="105"/>
+            <line x="25" y="115"/>
+            <move x="12.5" y="105"/>
+            <line x="12.5" y="115"/>
+            <move x="62.5" y="105"/>
+            <line x="62.5" y="115"/>
+            <move x="75" y="105"/>
+            <line x="75" y="115"/>
+            <move x="87.5" y="105"/>
+            <line x="87.5" y="115"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Cooling Tower (Wet, Forced Draught)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.14" y="0.375"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.92"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.92"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="120"/>
+            <line x="0" y="100"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="100" y="100"/>
+            <line x="100" y="120"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="100" y="100"/>
+            <line x="0" y="100"/>
+            <move x="14" y="45"/>
+            <line x="50" y="45"/>
+            <line x="50" y="55"/>
+            <move x="40" y="55"/>
+            <line x="50" y="45"/>
+            <line x="60" y="55"/>
+            <move x="42" y="62.5"/>
+            <line x="36" y="81"/>
+            <move x="58" y="62.5"/>
+            <line x="64" y="81"/>
+        </path>
+        <stroke/>
+        <ellipse h="30" w="30" x="35" y="60"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Cooling Tower (Wet, Induced Draught)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.14" y="0.375"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.92"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.92"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="120"/>
+            <line x="0" y="100"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="100" y="100"/>
+            <line x="100" y="120"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="100" y="100"/>
+            <line x="0" y="100"/>
+            <move x="14" y="45"/>
+            <line x="50" y="45"/>
+            <line x="50" y="55"/>
+            <move x="40" y="55"/>
+            <line x="50" y="45"/>
+            <line x="60" y="55"/>
+            <move x="58" y="12.5"/>
+            <line x="64" y="31"/>
+            <move x="42" y="12.5"/>
+            <line x="36" y="31"/>
+        </path>
+        <stroke/>
+        <ellipse h="30" w="30" x="35" y="10"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Cooling Tower (Wet, Natural Draught)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.14" y="0.375"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.92"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.92"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="120"/>
+            <line x="0" y="100"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="100" y="100"/>
+            <line x="100" y="120"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="100" y="100"/>
+            <line x="0" y="100"/>
+            <move x="14" y="45"/>
+            <line x="50" y="45"/>
+            <line x="50" y="55"/>
+            <move x="40" y="55"/>
+            <line x="50" y="45"/>
+            <line x="60" y="55"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Cooling Tower (Wet-Dry, Natural Draught)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.14" y="0.375"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.92"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.92"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="120"/>
+            <line x="0" y="100"/>
+            <line x="25" y="0"/>
+            <line x="75" y="0"/>
+            <line x="100" y="100"/>
+            <line x="100" y="120"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="100" y="100"/>
+            <line x="0" y="100"/>
+            <move x="14" y="45"/>
+            <line x="50" y="45"/>
+            <line x="50" y="55"/>
+            <move x="40" y="55"/>
+            <line x="50" y="45"/>
+            <line x="60" y="55"/>
+            <move x="0" y="110"/>
+            <line x="100" y="110"/>
+            <move x="50" y="105"/>
+            <line x="50" y="115"/>
+            <move x="37.5" y="105"/>
+            <line x="37.5" y="115"/>
+            <move x="25" y="105"/>
+            <line x="25" y="115"/>
+            <move x="12.5" y="105"/>
+            <line x="12.5" y="115"/>
+            <move x="62.5" y="105"/>
+            <line x="62.5" y="115"/>
+            <move x="75" y="105"/>
+            <line x="75" y="115"/>
+            <move x="87.5" y="105"/>
+            <line x="87.5" y="115"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Covered Gas Vent" strokewidth="inherit" w="80">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="40"/>
+            <line x="40" y="0"/>
+            <line x="80" y="40"/>
+            <move x="40" y="100"/>
+            <line x="40" y="20"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Crane" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="50" y="10"/>
+            <line x="50" y="25"/>
+            <arc large-arc-flag="1" rx="15" ry="15" sweep-flag="1" x="35" x-axis-rotation="0" y="40"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="70" name="Curved Gas Vent" strokewidth="inherit" w="30">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="70"/>
+            <line x="0" y="15"/>
+            <arc large-arc-flag="1" rx="15" ry="15" sweep-flag="1" x="30" x-axis-rotation="0" y="15"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Cyclone" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="W" perimeter="0" x="0" y="0.12"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="20"/>
+            <line x="50" y="80"/>
+            <line x="100" y="20"/>
+            <line x="100" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Dryer" strokewidth="inherit" w="80">
+    <connections/>
+    <background>
+        <path>
+            <move x="15" y="100"/>
+            <line x="0" y="85"/>
+            <line x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="85"/>
+            <line x="65" y="100"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="250" name="Elevator (Bucket)" strokewidth="inherit" w="160">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="250" w="160" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="180" w="40" x="60" y="40"/>
+        <stroke/>
+        <path>
+            <move x="100" y="40"/>
+            <arc large-arc-flag="0" rx="40" ry="40" sweep-flag="1" x="140" x-axis-rotation="0" y="80"/>
+            <line x="100" y="80"/>
+            <close/>
+            <move x="60" y="180"/>
+            <line x="60" y="220"/>
+            <arc large-arc-flag="0" rx="40" ry="40" sweep-flag="1" x="20" x-axis-rotation="0" y="180"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="40" w="40" x="60" y="20"/>
+        <fillstroke/>
+        <ellipse h="40" w="40" x="60" y="200"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="250" name="Elevator (Bucket, Z-Form)" strokewidth="inherit" w="430">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.08" y="0.72"/>
+        <constraint name="E" perimeter="0" x="0.92" y="0.28"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="180"/>
+            <line x="180" y="180"/>
+            <line x="180" y="0"/>
+            <line x="430" y="0"/>
+            <line x="430" y="70"/>
+            <line x="250" y="70"/>
+            <line x="250" y="250"/>
+            <line x="0" y="250"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="180" w="40" x="195" y="35"/>
+        <stroke/>
+        <rect h="40" w="180" x="215" y="15"/>
+        <stroke/>
+        <rect h="40" w="180" x="35" y="195"/>
+        <stroke/>
+        <ellipse h="40" w="40" x="375" y="15"/>
+        <fillstroke/>
+        <ellipse h="40" w="40" x="15" y="195"/>
+        <fillstroke/>
+        <ellipse h="40" w="40" x="195" y="15"/>
+        <fillstroke/>
+        <ellipse h="40" w="40" x="195" y="195"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Fan" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+        <constraint name="NW" perimeter="0" x="0.145" y="0.145"/>
+        <constraint name="SW" perimeter="0" x="0.145" y="0.855"/>
+        <constraint name="NE" perimeter="0" x="0.855" y="0.145"/>
+        <constraint name="SE" perimeter="0" x="0.855" y="0.855"/>
+    </connections>
+    <background>
+        <ellipse h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="30" y="4.5"/>
+            <line x="97" y="33"/>
+            <move x="30" y="95.5"/>
+            <line x="97" y="67"/>
+            <move x="42.28" y="36.55"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="49.75" x-axis-rotation="49.48" y="49.9"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="37.72" x-axis-rotation="49.48" y="40.45"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="30.25" x-axis-rotation="49.48" y="27.1"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="42.28" x-axis-rotation="49.48" y="36.55"/>
+            <close/>
+            <move x="37.7" y="59.73"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="49.66" x-axis-rotation="-49.91" y="50.19"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="42.3" x-axis-rotation="-49.91" y="63.6"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="30.34" x-axis-rotation="-49.91" y="73.14"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="37.7" x-axis-rotation="-49.91" y="59.73"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="6" w="30" x="50" y="47"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="8" name="Fan 2" strokewidth="inherit" w="58">
+    <connections/>
+    <background>
+        <path>
+            <move x="4" y="8"/>
+            <line x="54" y="0"/>
+            <arc large-arc-flag="1" rx="4" ry="4" sweep-flag="1" x="54" x-axis-rotation="0" y="8"/>
+            <line x="4" y="0"/>
+            <arc large-arc-flag="1" rx="4" ry="4" sweep-flag="0" x="4" x-axis-rotation="0" y="8"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Filter" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="100" y="0"/>
+            <line x="0" y="100"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Filter 2" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="100" y="100"/>
+            <move x="20" y="0"/>
+            <line x="100" y="80"/>
+            <move x="40" y="0"/>
+            <line x="100" y="60"/>
+            <move x="60" y="0"/>
+            <line x="100" y="40"/>
+            <move x="80" y="0"/>
+            <line x="100" y="20"/>
+            <move x="0" y="20"/>
+            <line x="80" y="100"/>
+            <move x="0" y="40"/>
+            <line x="60" y="100"/>
+            <move x="0" y="60"/>
+            <line x="40" y="100"/>
+            <move x="0" y="80"/>
+            <line x="20" y="100"/>
+            <move x="0" y="20"/>
+            <line x="20" y="0"/>
+            <move x="0" y="40"/>
+            <line x="40" y="0"/>
+            <move x="0" y="60"/>
+            <line x="60" y="0"/>
+            <move x="0" y="80"/>
+            <line x="80" y="0"/>
+            <move x="0" y="100"/>
+            <line x="100" y="0"/>
+            <move x="100" y="20"/>
+            <line x="20" y="100"/>
+            <move x="40" y="100"/>
+            <line x="100" y="40"/>
+            <move x="100" y="60"/>
+            <line x="60" y="100"/>
+            <move x="80" y="100"/>
+            <line x="100" y="80"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Firing System, Burner" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="E" perimeter="0" x="0" y="0.88"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="25" w="100" x="0" y="75"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="10" y="75"/>
+            <line x="50" y="0"/>
+            <line x="90" y="75"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="25" y="75"/>
+            <line x="50" y="30"/>
+            <line x="75" y="75"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="40" name="Flame Arrestor" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="20" y="0"/>
+            <line x="80" y="0"/>
+            <line x="88.5" y="20"/>
+            <line x="80" y="40"/>
+            <line x="20" y="40"/>
+            <line x="11.5" y="20"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="0" y="30"/>
+            <move x="3" y="10"/>
+            <line x="3" y="30"/>
+            <move x="3" y="20"/>
+            <line x="11.5" y="20"/>
+            <move x="100" y="10"/>
+            <line x="100" y="30"/>
+            <move x="97" y="10"/>
+            <line x="97" y="30"/>
+            <move x="97" y="20"/>
+            <line x="88.5" y="20"/>
+            <move x="20" y="0"/>
+            <line x="20" y="40"/>
+            <move x="30" y="0"/>
+            <line x="30" y="40"/>
+            <move x="40" y="0"/>
+            <line x="40" y="40"/>
+            <move x="50" y="0"/>
+            <line x="50" y="40"/>
+            <move x="60" y="0"/>
+            <line x="60" y="40"/>
+            <move x="70" y="0"/>
+            <line x="70" y="40"/>
+            <move x="80" y="0"/>
+            <line x="80" y="40"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="16" name="Flexible Pipe" strokewidth="inherit" w="60">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="8"/>
+            <arc large-arc-flag="1" rx="5" ry="8" sweep-flag="1" x="10" x-axis-rotation="0" y="8"/>
+            <arc large-arc-flag="1" rx="5" ry="8" sweep-flag="0" x="20" x-axis-rotation="0" y="8"/>
+            <arc large-arc-flag="1" rx="5" ry="8" sweep-flag="1" x="30" x-axis-rotation="0" y="8"/>
+            <arc large-arc-flag="1" rx="5" ry="8" sweep-flag="0" x="40" x-axis-rotation="0" y="8"/>
+            <arc large-arc-flag="1" rx="5" ry="8" sweep-flag="1" x="50" x-axis-rotation="0" y="8"/>
+            <arc large-arc-flag="1" rx="5" ry="8" sweep-flag="0" x="60" x-axis-rotation="0" y="8"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="Forced Flow Air Cooler" strokewidth="inherit" w="70">
+    <connections/>
+    <background>
+        <rect h="15" w="70" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="23" y="26"/>
+            <line x="47" y="20"/>
+            <arc large-arc-flag="1" rx="3" ry="3" sweep-flag="1" x="47" x-axis-rotation="0" y="26"/>
+            <line x="23" y="20"/>
+            <arc large-arc-flag="1" rx="3" ry="3" sweep-flag="0" x="23" x-axis-rotation="0" y="26"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="10" y="0"/>
+            <line x="10" y="15"/>
+            <line x="5" y="30"/>
+            <move x="60" y="0"/>
+            <line x="60" y="15"/>
+            <line x="65" y="30"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Forklift (Manual)" strokewidth="inherit" w="140">
+    <connections/>
+    <background>
+        <rect h="100" w="140" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="20" y="15"/>
+            <line x="20" y="70"/>
+            <line x="130" y="70"/>
+            <move x="10" y="15"/>
+            <line x="30" y="15"/>
+        </path>
+        <stroke/>
+        <ellipse h="20" w="20" x="30" y="75"/>
+        <stroke/>
+        <ellipse h="20" w="20" x="110" y="75"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Forklift (Truck)" strokewidth="inherit" w="140">
+    <connections/>
+    <background>
+        <rect h="100" w="140" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="85" y="30"/>
+            <line x="85" y="80"/>
+            <line x="110" y="80"/>
+            <move x="30" y="55"/>
+            <line x="80" y="55"/>
+            <line x="70" y="20"/>
+            <line x="50" y="20"/>
+            <line x="50" y="55"/>
+        </path>
+        <stroke/>
+        <ellipse h="20" w="20" x="30" y="60"/>
+        <stroke/>
+        <ellipse h="20" w="20" x="60" y="60"/>
+        <stroke/>
+        <path>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Funnel" strokewidth="inherit" w="40">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="20" y="35"/>
+            <line x="40" y="0"/>
+            <move x="20" y="35"/>
+            <line x="20" y="80"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Gas Flare" strokewidth="inherit" w="60">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.33" y="0.9"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="100"/>
+            <line x="60" y="100"/>
+            <move x="30" y="25"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="30" x-axis-rotation="0" y="0"/>
+            <arc large-arc-flag="0" rx="15" ry="15" sweep-flag="1" x="30" x-axis-rotation="0" y="25"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <rect h="75" w="20" x="20" y="25"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="Induced Flow Air Cooler" strokewidth="inherit" w="92.8">
+    <connections/>
+    <background>
+        <rect h="15" w="70" x="12" y="15"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="35" y="10"/>
+            <line x="59" y="4"/>
+            <arc large-arc-flag="1" rx="3" ry="3" sweep-flag="1" x="59" x-axis-rotation="0" y="10"/>
+            <line x="35" y="4"/>
+            <arc large-arc-flag="1" rx="3" ry="3" sweep-flag="0" x="35" x-axis-rotation="0" y="10"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <path>
+            <move x="22" y="30"/>
+            <line x="22" y="15"/>
+            <line x="27" y="0"/>
+            <move x="72" y="30"/>
+            <line x="72" y="15"/>
+            <line x="67" y="0"/>
+            <move x="0" y="22.5"/>
+            <line x="92.8" y="22.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Industrial Truck" strokewidth="inherit" w="120">
+    <connections/>
+    <background>
+        <ellipse h="20" w="20" x="15" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="85" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="120" y="0"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Lift" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="30" w="30" x="45" y="10"/>
+        <stroke/>
+        <path>
+            <move x="45" y="25"/>
+            <line x="45" y="60"/>
+        </path>
+        <stroke/>
+        <rect h="30" w="30" x="30" y="60"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Loading Arm" strokewidth="inherit" w="120">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.88"/>
+        <constraint name="E" perimeter="0" x="1" y="0.88"/>
+        <constraint name="S" perimeter="0" x="0.92" y="1"/>
+        <constraint name="SE" perimeter="0" x="0.98" y="0.96"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="70"/>
+            <line x="60" y="10"/>
+            <line x="110" y="70"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+        <ellipse h="20" w="20" x="0" y="60"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="50" y="0"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="100" y="60"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Mixer" strokewidth="inherit" w="80">
+    <connections/>
+    <background>
+        <path>
+            <move x="80" y="0"/>
+            <line x="80" y="60"/>
+            <arc large-arc-flag="1" rx="40" ry="40" sweep-flag="1" x="0" x-axis-rotation="0" y="60"/>
+            <line x="0" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="43.09" y="60.64"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="40.06" x-axis-rotation="90.13" y="75.63"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="37.09" x-axis-rotation="90.13" y="60.63"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="40.13" x-axis-rotation="90.13" y="45.63"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="43.09" x-axis-rotation="90.13" y="60.64"/>
+            <close/>
+            <move x="53.6" y="37.94"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="40.23" x-axis-rotation="139.61" y="45.38"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="49.71" x-axis-rotation="139.61" y="33.38"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="63.08" x-axis-rotation="139.61" y="25.94"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="53.6" x-axis-rotation="139.61" y="37.94"/>
+            <close/>
+            <move x="30.42" y="33.32"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="39.94" x-axis-rotation="40.22" y="45.29"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="26.55" x-axis-rotation="40.22" y="37.9"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="17.03" x-axis-rotation="40.22" y="25.92"/>
+            <arc large-arc-flag="0" rx="15" ry="3" sweep-flag="1" x="30.42" x-axis-rotation="40.22" y="33.32"/>
+            <close/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Palletizer" strokewidth="inherit" w="80">
+    <connections/>
+    <background>
+        <rect h="100" w="80" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="5" y="60"/>
+            <line x="75" y="60"/>
+            <move x="75" y="80"/>
+            <line x="20" y="80"/>
+            <move x="15" y="60"/>
+            <line x="15" y="30"/>
+            <line x="40" y="30"/>
+            <line x="40" y="35"/>
+            <line x="65" y="35"/>
+            <line x="65" y="60"/>
+            <move x="15" y="55"/>
+            <line x="65" y="55"/>
+            <move x="15" y="50"/>
+            <line x="65" y="50"/>
+            <move x="15" y="45"/>
+            <line x="65" y="45"/>
+            <move x="15" y="40"/>
+            <line x="65" y="40"/>
+            <move x="15" y="35"/>
+            <line x="40" y="35"/>
+            <move x="27.5" y="35"/>
+            <line x="27.5" y="40"/>
+            <move x="27.5" y="45"/>
+            <line x="27.5" y="50"/>
+            <move x="27.5" y="55"/>
+            <line x="27.5" y="60"/>
+            <move x="40" y="40"/>
+            <line x="40" y="45"/>
+            <move x="40" y="50"/>
+            <line x="40" y="55"/>
+            <move x="52.5" y="35"/>
+            <line x="52.5" y="40"/>
+            <move x="52.5" y="45"/>
+            <line x="52.5" y="50"/>
+            <move x="52.5" y="55"/>
+            <line x="52.5" y="60"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="20" y="77"/>
+            <line x="20" y="83"/>
+            <line x="9" y="80"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Protective Palette Covering" strokewidth="inherit" w="80">
+    <connections/>
+    <background>
+        <rect h="100" w="80" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="5" y="80"/>
+            <line x="75" y="80"/>
+            <move x="15" y="70"/>
+            <line x="65" y="70"/>
+            <move x="15" y="65"/>
+            <line x="65" y="65"/>
+            <move x="15" y="60"/>
+            <line x="65" y="60"/>
+            <move x="15" y="55"/>
+            <line x="65" y="55"/>
+            <move x="27.3" y="55.4"/>
+            <line x="27.3" y="60.4"/>
+            <move x="27.3" y="65.4"/>
+            <line x="27.3" y="70.4"/>
+            <move x="27.3" y="75.4"/>
+            <line x="27.3" y="80.4"/>
+            <move x="39.8" y="60.4"/>
+            <line x="39.8" y="65.4"/>
+            <move x="39.8" y="70.4"/>
+            <line x="39.8" y="75.4"/>
+            <move x="52.3" y="55.4"/>
+            <line x="52.3" y="60.4"/>
+            <move x="52.3" y="65.4"/>
+            <line x="52.3" y="70.4"/>
+            <move x="52.3" y="75.4"/>
+            <line x="52.3" y="80.4"/>
+            <move x="15" y="45"/>
+            <line x="65" y="45"/>
+            <move x="15" y="50"/>
+            <line x="65" y="50"/>
+            <move x="40" y="50"/>
+            <line x="40" y="55"/>
+            <move x="40" y="40"/>
+            <line x="40" y="45"/>
+            <move x="27.5" y="45"/>
+            <line x="27.5" y="50"/>
+            <move x="52.5" y="45"/>
+            <line x="52.5" y="50"/>
+        </path>
+        <stroke/>
+        <rect h="60" w="70" x="5" y="15"/>
+        <stroke/>
+        <rect h="40" w="50" x="15" y="40"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Roller Conveyor" strokewidth="inherit" w="160">
+    <connections/>
+    <background>
+        <rect h="10" w="160" x="0" y="10"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="10" y="0"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="40" y="0"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="70" y="0"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="100" y="0"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="130" y="0"/>
+        <fillstroke/>
+        <rect h="10" w="160" x="0" y="10"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="65" name="Rolling Bin" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="45"/>
+            <line x="100" y="45"/>
+            <line x="100" y="0"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="0" y="45"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="80" y="45"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="65" name="Rotary Screen" strokewidth="inherit" w="100">
+    <connections/>
+    <background>
+        <rect h="40" w="100" x="0" y="25"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="25" y="0"/>
+        <fillstroke/>
+        <rect h="40" w="100" x="0" y="25"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Screening Device, Sieve, Strainer" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0.5" y="0.75"/>
+            <line x="80" y="79.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="180" name="Screening Device, Sieve, Strainer (Basket Reel)" strokewidth="inherit" w="80">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="140"/>
+            <line x="40" y="180"/>
+            <line x="0" y="140"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="30" y="15"/>
+        <stroke/>
+        <ellipse h="20" w="20" x="30" y="115"/>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="30" y="25"/>
+            <line x="30" y="125"/>
+            <move x="50" y="25"/>
+            <line x="50" y="125"/>
+            <move x="50" y="40"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="70" x-axis-rotation="0" y="60"/>
+            <move x="50" y="85"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="70" x-axis-rotation="0" y="105"/>
+            <move x="30" y="60"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="10" x-axis-rotation="0" y="40"/>
+            <move x="30" y="105"/>
+            <arc large-arc-flag="0" rx="20" ry="20" sweep-flag="1" x="10" x-axis-rotation="0" y="85"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Screening Device, Sieve, Strainer (Coarse and Fine Screens)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.3"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0.5" y="0.75"/>
+            <line x="80" y="79.5"/>
+            <move x="25" y="0"/>
+            <line x="80" y="55"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Screening Device, Sieve, Strainer (Coarse Rake)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="31.43" y="23.44"/>
+            <line x="38.51" y="16.38"/>
+            <line x="63.91" y="41.9"/>
+            <line x="56.82" y="48.95"/>
+            <move x="46.98" y="24.89"/>
+            <line x="39.89" y="31.94"/>
+            <move x="55.44" y="33.39"/>
+            <line x="48.36" y="40.45"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0.5" y="0.75"/>
+            <line x="80" y="79.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Screening Device, Sieve, Strainer (Fine Rake)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="31.43" y="23.44"/>
+            <line x="38.51" y="16.38"/>
+            <line x="63.91" y="41.9"/>
+            <line x="56.82" y="48.95"/>
+            <move x="46.98" y="24.89"/>
+            <line x="39.89" y="31.94"/>
+            <move x="55.44" y="33.39"/>
+            <line x="48.36" y="40.45"/>
+            <move x="42.48" y="20.39"/>
+            <line x="35.39" y="27.44"/>
+            <move x="51.1" y="28.89"/>
+            <line x="44.02" y="35.94"/>
+            <move x="59.6" y="37.39"/>
+            <line x="52.52" y="44.44"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0.5" y="0.75"/>
+            <line x="80" y="79.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Screening Device, Sieve, Strainer (Rotating Drum)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="28" y="31.5"/>
+            <arc large-arc-flag="0" rx="22" ry="22" sweep-flag="1" x="52" x-axis-rotation="0" y="31.5"/>
+        </path>
+        <stroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <ellipse h="30" w="30" x="25" y="35"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Screening Device, Sieve, Strainer (Vibrating)" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="80" y="0"/>
+            <line x="80" y="80"/>
+            <line x="40" y="120"/>
+            <line x="0" y="80"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="31.63" y="23.63"/>
+            <line x="52.88" y="44.8"/>
+            <move x="40.12" y="22.2"/>
+            <line x="61.37" y="43.37"/>
+        </path>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="54.3" y="43.39"/>
+            <line x="51.47" y="46.22"/>
+            <line x="56.43" y="48.33"/>
+            <close/>
+            <move x="41.53" y="20.78"/>
+            <line x="38.7" y="23.61"/>
+            <line x="36.57" y="18.67"/>
+            <close/>
+        </path>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="0.5" y="0.75"/>
+            <line x="80" y="79.5"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Ship" strokewidth="inherit" w="105">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="40"/>
+            <line x="70" y="40"/>
+            <line x="70" y="35"/>
+            <line x="105" y="30"/>
+            <line x="95" y="60"/>
+            <line x="5" y="60"/>
+            <close/>
+            <move x="25" y="20"/>
+            <line x="35" y="20"/>
+            <line x="35" y="40"/>
+            <line x="15" y="40"/>
+            <line x="15" y="30"/>
+            <line x="25" y="30"/>
+            <close/>
+            <move x="35" y="0"/>
+            <line x="35" y="20"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="Silencer" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <path>
+            <move x="3" y="10"/>
+            <line x="20" y="10"/>
+            <arc large-arc-flag="0" rx="10" ry="10" sweep-flag="1" x="30" x-axis-rotation="0" y="0"/>
+            <line x="70" y="0"/>
+            <arc large-arc-flag="0" rx="10" ry="10" sweep-flag="1" x="80" x-axis-rotation="0" y="10"/>
+            <line x="97" y="10"/>
+            <line x="97" y="20"/>
+            <line x="80" y="20"/>
+            <arc large-arc-flag="0" rx="10" ry="10" sweep-flag="1" x="70" x-axis-rotation="0" y="30"/>
+            <line x="30" y="30"/>
+            <arc large-arc-flag="0" rx="10" ry="10" sweep-flag="1" x="20" x-axis-rotation="0" y="20"/>
+            <line x="3" y="20"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="5"/>
+            <line x="0" y="25"/>
+            <move x="3" y="5"/>
+            <line x="3" y="25"/>
+            <move x="100" y="5"/>
+            <line x="100" y="25"/>
+            <move x="97" y="5"/>
+            <line x="97" y="25"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="20" name="Spraying Device" strokewidth="inherit" w="60">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="35" y="0"/>
+            <line x="35" y="10"/>
+            <move x="10" y="20"/>
+            <line x="35" y="10"/>
+            <line x="60" y="20"/>
+            <move x="25" y="20"/>
+            <line x="35" y="10"/>
+            <line x="45" y="20"/>
+        </path>
+    </background>
+    <foreground>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Spray Cooler" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="NW" perimeter="0" x="0" y="0.17"/>
+        <constraint name="W" perimeter="0" x="0" y="0.46"/>
+        <constraint name="SW" perimeter="0" x="0" y="0.875"/>
+        <constraint name="S" perimeter="0" x="0.5" y="1"/>
+    </connections>
+    <background>
+        <rect h="120" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="0" y="20"/>
+            <line x="50" y="20"/>
+            <line x="50" y="30"/>
+            <move x="40" y="30"/>
+            <line x="50" y="20"/>
+            <line x="60" y="30"/>
+            <move x="0" y="55"/>
+            <line x="50" y="55"/>
+            <line x="75" y="80"/>
+            <line x="25" y="80"/>
+            <line x="50" y="105"/>
+            <line x="0" y="105"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Stack, Chimney" strokewidth="inherit" w="60">
+    <connections>
+        <constraint name="W" perimeter="0" x="0.18" y="0.9"/>
+    </connections>
+    <background>
+        <path>
+            <move x="10" y="100"/>
+            <line x="20" y="0"/>
+            <line x="40" y="0"/>
+            <line x="50" y="100"/>
+            <close/>
+            <move x="0" y="100"/>
+            <line x="60" y="100"/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="52.48" name="Steam Trap" strokewidth="inherit" w="52.48">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="0.955" y="0.5"/>
+    </connections>
+    <background>
+        <ellipse h="50" w="50" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <fillcolor color="#000000"/>
+        <path>
+            <move x="42.7" y="7.3"/>
+            <arc large-arc-flag="1" rx="25" ry="25" sweep-flag="1" x="7.3" x-axis-rotation="0" y="42.7"/>
+            <close/>
+        </path>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Tank Car, Tank Wagon" strokewidth="inherit" w="126.67">
+    <connections/>
+    <background>
+        <path>
+            <move x="13.33" y="60"/>
+            <arc large-arc-flag="0" rx="50" ry="50" sweep-flag="1" x="13.33" x-axis-rotation="0" y="0"/>
+            <line x="113.33" y="0"/>
+            <arc large-arc-flag="0" rx="50" ry="50" sweep-flag="1" x="113.33" x-axis-rotation="0" y="60"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="18.33" y="60"/>
+        <fillstroke/>
+        <ellipse h="20" w="20" x="88.33" y="60"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Viewing Glass" strokewidth="inherit" w="80">
+    <connections>
+        <constraint name="W" perimeter="0" x="0" y="0.5"/>
+        <constraint name="E" perimeter="0" x="1" y="0.5"/>
+    </connections>
+    <background>
+        <rect h="50" w="80" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="15" y="0"/>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

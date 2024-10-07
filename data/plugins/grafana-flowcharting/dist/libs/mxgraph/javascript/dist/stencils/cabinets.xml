@@ -1,0 +1,2359 @@
+<shapes name="mxgraph.cabinets">
+<shape aspect="variable" h="86" name="Auxiliary Contact Contactor 1 32A" strokewidth="inherit" w="9">
+    <connections/>
+    <foreground>
+        <rect h="86" w="9" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="12"/>
+            <line x="9" y="12"/>
+            <move x="0" y="25"/>
+            <line x="9" y="25"/>
+            <move x="0" y="74"/>
+            <line x="9" y="74"/>
+            <move x="0" y="61"/>
+            <line x="9" y="61"/>
+        </path>
+        <fillstroke/>
+        <ellipse h="4" w="4" x="2.5" y="4"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="17"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="65"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="78"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Auxiliary Contact Contactor 32 125A" strokewidth="inherit" w="9">
+    <connections/>
+    <foreground>
+        <rect h="100" w="9" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="14"/>
+            <line x="9" y="14"/>
+            <move x="0" y="29"/>
+            <line x="9" y="29"/>
+            <move x="0" y="86"/>
+            <line x="9" y="86"/>
+            <move x="0" y="71"/>
+            <line x="9" y="71"/>
+        </path>
+        <fillstroke/>
+        <ellipse h="4" w="4" x="2.5" y="5"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="20"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="76"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="91"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB 1p" strokewidth="inherit" w="18">
+    <connections/>
+    <foreground>
+        <rect h="100" w="18" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="18" y="25"/>
+            <move x="0" y="75"/>
+            <line x="18" y="75"/>
+            <move x="0" y="45"/>
+            <line x="5" y="45"/>
+            <line x="5" y="42"/>
+            <line x="13" y="42"/>
+            <line x="13" y="45"/>
+            <line x="18" y="45"/>
+            <line x="18" y="55"/>
+            <line x="0" y="55"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB 1p x10" strokewidth="inherit" w="180">
+    <connections/>
+    <foreground>
+        <rect h="100" w="180" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="180" y="25"/>
+            <move x="0" y="75"/>
+            <line x="180" y="75"/>
+            <move x="0" y="45"/>
+            <line x="5" y="45"/>
+            <line x="5" y="42"/>
+            <line x="13" y="42"/>
+            <line x="13" y="45"/>
+            <line x="23" y="45"/>
+            <line x="23" y="42"/>
+            <line x="31" y="42"/>
+            <line x="31" y="45"/>
+            <line x="41" y="45"/>
+            <line x="41" y="42"/>
+            <line x="49" y="42"/>
+            <line x="49" y="45"/>
+            <line x="59" y="45"/>
+            <line x="59" y="42"/>
+            <line x="67" y="42"/>
+            <line x="67" y="45"/>
+            <line x="77" y="45"/>
+            <line x="77" y="42"/>
+            <line x="85" y="42"/>
+            <line x="85" y="45"/>
+            <line x="95" y="45"/>
+            <line x="95" y="42"/>
+            <line x="103" y="42"/>
+            <line x="103" y="45"/>
+            <line x="113" y="45"/>
+            <line x="113" y="42"/>
+            <line x="121" y="42"/>
+            <line x="121" y="45"/>
+            <line x="131" y="45"/>
+            <line x="131" y="42"/>
+            <line x="139" y="42"/>
+            <line x="139" y="45"/>
+            <line x="149" y="45"/>
+            <line x="149" y="42"/>
+            <line x="157" y="42"/>
+            <line x="157" y="45"/>
+            <line x="167" y="45"/>
+            <line x="167" y="42"/>
+            <line x="175" y="42"/>
+            <line x="175" y="45"/>
+            <line x="180" y="45"/>
+            <line x="180" y="55"/>
+            <line x="0.8" y="55"/>
+            <close/>
+            <move x="18" y="0"/>
+            <line x="18" y="100"/>
+            <move x="36" y="0"/>
+            <line x="36" y="100"/>
+            <move x="54" y="0"/>
+            <line x="54" y="100"/>
+            <move x="72" y="0"/>
+            <line x="72" y="100"/>
+            <move x="90" y="0"/>
+            <line x="90" y="100"/>
+            <move x="108" y="0"/>
+            <line x="108" y="100"/>
+            <move x="126" y="0"/>
+            <line x="126" y="100"/>
+            <move x="144" y="0"/>
+            <line x="144" y="100"/>
+            <move x="162" y="0"/>
+            <line x="162" y="100"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="58" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="58" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="76" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="76" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="94" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="94" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="112" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="112" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="130" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="130" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="148" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="148" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="166" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="166" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB 2p" strokewidth="inherit" w="36">
+    <connections/>
+    <foreground>
+        <rect h="100" w="36" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="36" y="25"/>
+            <move x="0" y="75"/>
+            <line x="36" y="75"/>
+            <move x="0" y="45"/>
+            <line x="5" y="45"/>
+            <line x="5" y="42"/>
+            <line x="31" y="42"/>
+            <line x="31" y="45"/>
+            <line x="36" y="45"/>
+            <line x="36" y="55"/>
+            <line x="0" y="55"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB 2p x10" strokewidth="inherit" w="360">
+    <connections/>
+    <foreground>
+        <rect h="100" w="360" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="360" y="25"/>
+            <move x="0" y="75"/>
+            <line x="360" y="75"/>
+            <move x="36" y="0"/>
+            <line x="36" y="100"/>
+            <move x="72" y="0"/>
+            <line x="72" y="100"/>
+            <move x="108" y="0"/>
+            <line x="108" y="100"/>
+            <move x="144" y="0"/>
+            <line x="144" y="100"/>
+            <move x="180" y="0"/>
+            <line x="180" y="100"/>
+            <move x="216" y="0"/>
+            <line x="216" y="100"/>
+            <move x="252" y="0"/>
+            <line x="252" y="100"/>
+            <move x="288" y="0"/>
+            <line x="288" y="100"/>
+            <move x="324" y="0"/>
+            <line x="324" y="100"/>
+            <move x="0" y="45"/>
+            <line x="5" y="45"/>
+            <line x="5" y="42"/>
+            <line x="31" y="42"/>
+            <line x="31" y="45"/>
+            <line x="41" y="45"/>
+            <line x="41" y="42"/>
+            <line x="67" y="42"/>
+            <line x="67" y="45"/>
+            <line x="77" y="45"/>
+            <line x="77" y="42"/>
+            <line x="103" y="42"/>
+            <line x="103" y="45"/>
+            <line x="113" y="45"/>
+            <line x="113" y="42"/>
+            <line x="139" y="42"/>
+            <line x="139" y="45"/>
+            <line x="149" y="45"/>
+            <line x="149" y="42"/>
+            <line x="175" y="42"/>
+            <line x="175" y="45"/>
+            <line x="185" y="45"/>
+            <line x="185" y="42"/>
+            <line x="211" y="42"/>
+            <line x="211" y="45"/>
+            <line x="221" y="45"/>
+            <line x="221" y="42"/>
+            <line x="247" y="42"/>
+            <line x="247" y="45"/>
+            <line x="257" y="45"/>
+            <line x="257" y="42"/>
+            <line x="283" y="42"/>
+            <line x="283" y="45"/>
+            <line x="293" y="45"/>
+            <line x="293" y="42"/>
+            <line x="319" y="42"/>
+            <line x="319" y="45"/>
+            <line x="329" y="45"/>
+            <line x="329" y="42"/>
+            <line x="353" y="42"/>
+            <line x="353" y="45"/>
+            <line x="360" y="45"/>
+            <move x="0" y="55"/>
+            <line x="360" y="55"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="58" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="58" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="76" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="76" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="94" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="94" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="112" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="112" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="130" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="130" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="148" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="148" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="166" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="166" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="184" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="184" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="202" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="202" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="220" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="220" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="236" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="236" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="256" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="256" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="272" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="272" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="292" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="292" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="310" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="310" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="328" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="328" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="346" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="346" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB 3p" strokewidth="inherit" w="54">
+    <connections/>
+    <foreground>
+        <rect h="100" w="54" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="54" y="25"/>
+            <move x="0" y="75"/>
+            <line x="54" y="75"/>
+            <move x="0" y="45"/>
+            <line x="5" y="45"/>
+            <line x="5" y="42"/>
+            <line x="49" y="42"/>
+            <line x="49" y="45"/>
+            <line x="54" y="45"/>
+            <line x="54" y="55"/>
+            <line x="0" y="55"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB 3p x5" strokewidth="inherit" w="270">
+    <connections/>
+    <foreground>
+        <rect h="100" w="270" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="270" y="25"/>
+            <move x="0" y="75"/>
+            <line x="270" y="75"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="57.67" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="57.67" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="75.67" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="93.67" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="75.67" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="93.67" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="111.67" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="111.67" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="129.67" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="147.67" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="129.67" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="147.67" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="165.33" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="165.33" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="183.33" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="201.33" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="183.33" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="201.33" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="219.33" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="219.33" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="237.33" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="255.33" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="237.33" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="255.33" y="83"/>
+        <stroke/>
+        <path>
+            <move x="54" y="0"/>
+            <line x="54" y="100"/>
+            <move x="108" y="0"/>
+            <line x="108" y="100"/>
+            <move x="162" y="0"/>
+            <line x="162" y="100"/>
+            <move x="216" y="0"/>
+            <line x="216" y="100"/>
+            <move x="0" y="45"/>
+            <line x="5" y="45"/>
+            <line x="5" y="42"/>
+            <line x="49" y="42"/>
+            <line x="49" y="45"/>
+            <line x="59" y="45"/>
+            <line x="59" y="42"/>
+            <line x="103" y="42"/>
+            <line x="103" y="45"/>
+            <line x="113" y="45"/>
+            <line x="113" y="42"/>
+            <line x="157" y="42"/>
+            <line x="157" y="45"/>
+            <line x="167" y="45"/>
+            <line x="167" y="42"/>
+            <line x="211" y="42"/>
+            <line x="211" y="45"/>
+            <line x="221" y="45"/>
+            <line x="221" y="42"/>
+            <line x="265" y="42"/>
+            <line x="265" y="45"/>
+            <line x="270" y="45"/>
+            <move x="0" y="55"/>
+            <line x="270" y="55"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB 4p" strokewidth="inherit" w="72">
+    <connections/>
+    <foreground>
+        <rect h="100" w="72" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="72" y="25"/>
+            <move x="0" y="75"/>
+            <line x="72" y="75"/>
+            <move x="0" y="45"/>
+            <line x="5" y="45"/>
+            <line x="5" y="42"/>
+            <line x="67" y="42"/>
+            <line x="67" y="45"/>
+            <line x="72" y="45"/>
+            <line x="72" y="55"/>
+            <line x="0" y="55"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="57" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="57" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB 4p x5" strokewidth="inherit" w="360">
+    <connections/>
+    <foreground>
+        <rect h="100" w="360" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="360" y="25"/>
+            <move x="0" y="75"/>
+            <line x="360" y="75"/>
+            <move x="144" y="0"/>
+            <line x="144" y="100"/>
+            <move x="216" y="0"/>
+            <line x="216" y="100"/>
+            <move x="288" y="0"/>
+            <line x="288" y="100"/>
+            <move x="0" y="45"/>
+            <line x="5" y="45"/>
+            <line x="5" y="42"/>
+            <line x="67" y="42"/>
+            <line x="67" y="45"/>
+            <line x="77" y="45"/>
+            <line x="77" y="42"/>
+            <line x="139" y="42"/>
+            <line x="139" y="45"/>
+            <line x="149" y="45"/>
+            <line x="149" y="42"/>
+            <line x="211" y="42"/>
+            <line x="211" y="45"/>
+            <line x="221" y="45"/>
+            <line x="221" y="42"/>
+            <line x="283" y="42"/>
+            <line x="283" y="45"/>
+            <line x="293" y="45"/>
+            <line x="293" y="42"/>
+            <line x="355" y="42"/>
+            <line x="355" y="45"/>
+            <line x="360" y="45"/>
+            <move x="72" y="0"/>
+            <line x="72" y="100"/>
+            <move x="0" y="55"/>
+            <line x="360" y="55"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="58" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="58" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="76" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="76" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="94" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="112" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="94" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="112" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="130" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="130" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="148" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="148" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="166" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="184" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="166" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="184" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="202" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="202" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="220" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="220" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="238" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="256" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="238" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="256" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="274" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="274" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="292" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="292" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="310" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="328" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="310" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="328" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="346" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="346" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="CB Auxiliary Contact" strokewidth="inherit" w="9">
+    <connections/>
+    <foreground>
+        <rect h="100" w="9" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="13.75"/>
+            <line x="9" y="14"/>
+            <move x="0" y="85.25"/>
+            <line x="9" y="85.25"/>
+            <move x="0" y="29"/>
+            <line x="9" y="29"/>
+            <move x="0" y="71"/>
+            <line x="9" y="71"/>
+        </path>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="5"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="20"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="76"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="91"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="180" name="Contactor 125 400A" strokewidth="inherit" w="110">
+    <connections/>
+    <foreground>
+        <rect h="180" w="110" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="110" y="30"/>
+            <move x="0" y="150"/>
+            <line x="110" y="150"/>
+            <move x="37" y="0"/>
+            <line x="37" y="30"/>
+            <move x="73" y="0"/>
+            <line x="73" y="30"/>
+            <move x="37" y="150"/>
+            <line x="37" y="180"/>
+            <move x="73" y="150"/>
+            <line x="73" y="180"/>
+        </path>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="156"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="82" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="47" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="47" y="156"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="82" y="156"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="37"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="82" y="37"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="47" y="37"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="82" y="127"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="47" y="127"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="127"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="86" name="Contactor 1 32A" strokewidth="inherit" w="54">
+    <connections/>
+    <foreground>
+        <rect h="86" w="54" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="18"/>
+            <line x="54" y="18"/>
+            <move x="0" y="68"/>
+            <line x="54" y="68"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="72"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="72"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="72"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="23"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="23"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="23"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="53"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="53"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="53"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Contactor 32 125A" strokewidth="inherit" w="60">
+    <connections/>
+    <foreground>
+        <rect h="100" w="60" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="22"/>
+            <line x="60" y="22"/>
+            <move x="0" y="78"/>
+            <line x="60" y="78"/>
+        </path>
+        <stroke/>
+        <ellipse h="12" w="12" x="5" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="5" y="82"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="24" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="43" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="24" y="82"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="43" y="82"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="5" y="26"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="43" y="26"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="24" y="26"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="43" y="62"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="24" y="62"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="5" y="62"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="DIN Rail" strokewidth="inherit" w="1000">
+    <connections/>
+    <foreground>
+        <rect h="50" w="1000" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="14"/>
+            <line x="1000" y="14"/>
+            <move x="0" y="36"/>
+            <line x="1000" y="36"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="120" name="Distribution Block 4P 125A 11 Connections" strokewidth="inherit" w="200">
+    <connections/>
+    <foreground>
+        <rect h="100" w="200" x="0" y="20"/>
+        <fillstroke/>
+        <rect h="10" w="200" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="10" w="8" x="28" y="10"/>
+        <fillstroke/>
+        <rect h="10" w="8" x="182" y="10"/>
+        <fillstroke/>
+        <path>
+            <move x="18" y="20"/>
+            <line x="18" y="120"/>
+            <move x="182" y="20"/>
+            <line x="182" y="120"/>
+        </path>
+        <stroke/>
+        <rect h="10" w="175" x="7" y="103"/>
+        <stroke/>
+        <rect h="10" w="175" x="18" y="80"/>
+        <stroke/>
+        <rect h="10" w="175" x="7" y="50"/>
+        <stroke/>
+        <rect h="10" w="175" x="18" y="27"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Distribution Block 4P 125A 11 Connections 2" strokewidth="inherit" w="200">
+    <connections/>
+    <foreground>
+        <rect h="100" w="200" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="18" y="0"/>
+            <line x="18" y="100"/>
+            <move x="182" y="0"/>
+            <line x="182" y="100"/>
+        </path>
+        <stroke/>
+        <rect h="10" w="175" x="7" y="83"/>
+        <stroke/>
+        <rect h="10" w="175" x="18" y="60"/>
+        <stroke/>
+        <rect h="10" w="175" x="7" y="30"/>
+        <stroke/>
+        <rect h="10" w="175" x="18" y="7"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="180" name="MCCB 25 63A 3P" strokewidth="inherit" w="120">
+    <connections/>
+    <foreground>
+        <rect h="180" w="120" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="45"/>
+            <line x="120" y="45"/>
+            <move x="0" y="135"/>
+            <line x="120" y="135"/>
+            <move x="2" y="0"/>
+            <line x="2" y="40"/>
+            <line x="5" y="43"/>
+            <line x="35" y="43"/>
+            <line x="38" y="40"/>
+            <line x="38" y="0"/>
+            <move x="42" y="0"/>
+            <line x="42" y="40"/>
+            <line x="45" y="43"/>
+            <line x="75" y="43"/>
+            <line x="78" y="40"/>
+            <line x="78" y="0"/>
+            <move x="82" y="0"/>
+            <line x="82" y="40"/>
+            <line x="85" y="43"/>
+            <line x="115" y="43"/>
+            <line x="118" y="40"/>
+            <line x="118" y="0"/>
+            <move x="2" y="180"/>
+            <line x="2" y="140"/>
+            <line x="5" y="137"/>
+            <line x="35" y="137"/>
+            <line x="38" y="140"/>
+            <line x="38" y="180"/>
+            <move x="42" y="180"/>
+            <line x="42" y="140"/>
+            <line x="45" y="137"/>
+            <line x="75" y="137"/>
+            <line x="78" y="140"/>
+            <line x="78" y="180"/>
+            <move x="82" y="180"/>
+            <line x="82" y="140"/>
+            <line x="85" y="137"/>
+            <line x="115" y="137"/>
+            <line x="118" y="140"/>
+            <line x="118" y="180"/>
+        </path>
+        <stroke/>
+        <rect h="70" w="32" x="44" y="48"/>
+        <stroke/>
+        <rect h="30" w="32" x="44" y="64"/>
+        <stroke/>
+        <rect h="30" w="32" x="84" y="49"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="180" name="MCCB 25 63A 4P" strokewidth="inherit" w="160">
+    <connections/>
+    <foreground>
+        <rect h="180" w="160" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="45"/>
+            <line x="160" y="45"/>
+            <move x="0" y="135"/>
+            <line x="160" y="135"/>
+            <move x="2" y="0"/>
+            <line x="2" y="40"/>
+            <line x="5" y="43"/>
+            <line x="35" y="43"/>
+            <line x="38" y="40"/>
+            <line x="38" y="0"/>
+            <move x="42" y="0"/>
+            <line x="42" y="40"/>
+            <line x="45" y="43"/>
+            <line x="75" y="43"/>
+            <line x="78" y="40"/>
+            <line x="78" y="0"/>
+            <move x="82" y="0"/>
+            <line x="82" y="40"/>
+            <line x="85" y="43"/>
+            <line x="115" y="43"/>
+            <line x="118" y="40"/>
+            <line x="118" y="0"/>
+            <move x="2" y="180"/>
+            <line x="2" y="140"/>
+            <line x="5" y="137"/>
+            <line x="35" y="137"/>
+            <line x="38" y="140"/>
+            <line x="38" y="180"/>
+            <move x="42" y="180"/>
+            <line x="42" y="140"/>
+            <line x="45" y="137"/>
+            <line x="75" y="137"/>
+            <line x="78" y="140"/>
+            <line x="78" y="180"/>
+            <move x="82" y="180"/>
+            <line x="82" y="140"/>
+            <line x="85" y="137"/>
+            <line x="115" y="137"/>
+            <line x="118" y="140"/>
+            <line x="118" y="180"/>
+            <move x="122" y="0"/>
+            <line x="122" y="40"/>
+            <line x="125" y="43"/>
+            <line x="155" y="43"/>
+            <line x="158" y="40"/>
+            <line x="158" y="0"/>
+            <move x="122" y="180"/>
+            <line x="122" y="140"/>
+            <line x="125" y="137"/>
+            <line x="155" y="137"/>
+            <line x="158" y="140"/>
+            <line x="158" y="180"/>
+        </path>
+        <stroke/>
+        <rect h="70" w="32" x="44" y="48"/>
+        <stroke/>
+        <rect h="30" w="32" x="44" y="64"/>
+        <stroke/>
+        <rect h="44" w="32" x="124" y="48"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="210" name="MCCB 63 250A 3P" strokewidth="inherit" w="141">
+    <connections/>
+    <foreground>
+        <rect h="210" w="141" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="53"/>
+            <line x="141" y="53"/>
+            <move x="0" y="157"/>
+            <line x="141" y="157"/>
+            <move x="3" y="0"/>
+            <line x="3" y="46"/>
+            <line x="7" y="50"/>
+            <line x="40" y="50"/>
+            <line x="44" y="46"/>
+            <line x="44" y="0"/>
+            <move x="50" y="0"/>
+            <line x="50" y="46"/>
+            <line x="54" y="50"/>
+            <line x="87" y="50"/>
+            <line x="91" y="46"/>
+            <line x="91" y="0"/>
+            <move x="97" y="0"/>
+            <line x="97" y="46"/>
+            <line x="101" y="50"/>
+            <line x="134" y="50"/>
+            <line x="138" y="46"/>
+            <line x="138" y="0"/>
+            <move x="3" y="210"/>
+            <line x="3" y="164"/>
+            <line x="7" y="160"/>
+            <line x="41" y="160"/>
+            <line x="44" y="164"/>
+            <line x="44" y="210"/>
+            <move x="50" y="210"/>
+            <line x="50" y="164"/>
+            <line x="54" y="160"/>
+            <line x="87" y="160"/>
+            <line x="91" y="164"/>
+            <line x="91" y="210"/>
+            <move x="97" y="210"/>
+            <line x="97" y="162.75"/>
+            <line x="101" y="160"/>
+            <line x="134" y="160"/>
+            <line x="138" y="164"/>
+            <line x="138" y="209.25"/>
+        </path>
+        <stroke/>
+        <rect h="81" w="38" x="51" y="56"/>
+        <stroke/>
+        <rect h="35" w="38" x="51" y="74"/>
+        <stroke/>
+        <rect h="35" w="38" x="98" y="57"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="210" name="MCCB 63 250A 4P" strokewidth="inherit" w="188">
+    <connections/>
+    <foreground>
+        <rect h="210" w="188" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="53"/>
+            <line x="188" y="53"/>
+            <move x="0" y="157"/>
+            <line x="188" y="157"/>
+            <move x="3" y="0"/>
+            <line x="3" y="46"/>
+            <line x="7" y="50"/>
+            <line x="40" y="50"/>
+            <line x="44" y="46"/>
+            <line x="44" y="0"/>
+            <move x="50" y="0"/>
+            <line x="50" y="46"/>
+            <line x="54" y="50"/>
+            <line x="87" y="50"/>
+            <line x="91" y="46"/>
+            <line x="91" y="0"/>
+            <move x="97" y="0"/>
+            <line x="97" y="46"/>
+            <line x="101" y="50"/>
+            <line x="134" y="50"/>
+            <line x="138" y="46"/>
+            <line x="138" y="0"/>
+            <move x="3" y="210"/>
+            <line x="3" y="164"/>
+            <line x="7" y="160"/>
+            <line x="41" y="160"/>
+            <line x="44" y="164"/>
+            <line x="44" y="210"/>
+            <move x="50" y="210"/>
+            <line x="50" y="164"/>
+            <line x="54" y="160"/>
+            <line x="87" y="160"/>
+            <line x="91" y="164"/>
+            <line x="91" y="210"/>
+            <move x="97" y="210"/>
+            <line x="97" y="164"/>
+            <line x="101" y="160"/>
+            <line x="134" y="160"/>
+            <line x="138" y="164"/>
+            <line x="138" y="210"/>
+            <move x="144" y="0"/>
+            <line x="144" y="46"/>
+            <line x="148" y="50"/>
+            <line x="181" y="50"/>
+            <line x="185" y="46"/>
+            <line x="185" y="0"/>
+            <move x="144" y="210"/>
+            <line x="144" y="164"/>
+            <line x="148" y="160"/>
+            <line x="181" y="160"/>
+            <line x="185" y="164"/>
+            <line x="185" y="210"/>
+        </path>
+        <stroke/>
+        <rect h="81" w="38" x="98" y="56"/>
+        <stroke/>
+        <rect h="35" w="38" x="98" y="74"/>
+        <stroke/>
+        <rect h="35" w="38" x="145" y="57"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Motorized Switch 3P" strokewidth="inherit" w="170">
+    <connections/>
+    <foreground>
+        <rect h="80" w="170" x="0" y="30"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="15" y="0"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="65" y="0"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="115" y="0"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="15" y="110"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="65" y="110"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="115" y="110"/>
+        <fillstroke/>
+        <ellipse h="44" w="44" x="118" y="48"/>
+        <stroke/>
+        <rect h="14" w="70" x="80" y="63"/>
+        <fillstroke/>
+        <path>
+            <move x="150" y="70"/>
+            <line x="135" y="70"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Motorized Switch 4P" strokewidth="inherit" w="200">
+    <connections/>
+    <foreground>
+        <rect h="80" w="200" x="0" y="30"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="15" y="0"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="65" y="0"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="115" y="0"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="15" y="110"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="65" y="110"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="115" y="110"/>
+        <fillstroke/>
+        <ellipse h="44" w="44" x="148" y="48"/>
+        <stroke/>
+        <rect h="14" w="70" x="110" y="63"/>
+        <fillstroke/>
+        <path>
+            <move x="180" y="70"/>
+            <line x="165" y="70"/>
+        </path>
+        <stroke/>
+        <rect h="30" w="25" x="165" y="0"/>
+        <fillstroke/>
+        <rect h="30" w="25" x="165" y="110"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="180" name="Motor CB 125 400A" strokewidth="inherit" w="110">
+    <connections/>
+    <foreground>
+        <rect h="180" w="110" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="110" y="30"/>
+            <move x="0" y="150"/>
+            <line x="110" y="150"/>
+        </path>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="156"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="82" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="47" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="47" y="156"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="82" y="156"/>
+        <stroke/>
+        <path>
+            <move x="37" y="0"/>
+            <line x="37" y="30"/>
+            <move x="73" y="0"/>
+            <line x="73" y="30"/>
+            <move x="37" y="150"/>
+            <line x="37" y="180"/>
+            <move x="73" y="150"/>
+            <line x="73" y="180"/>
+            <move x="95" y="66"/>
+            <line x="71" y="66"/>
+            <line x="66" y="71"/>
+            <line x="71" y="76"/>
+            <line x="95" y="76"/>
+        </path>
+        <fillstroke/>
+        <ellipse h="50" w="50" x="46" y="46"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="86" name="Motor CB 1 32A" strokewidth="inherit" w="54">
+    <connections/>
+    <foreground>
+        <rect h="86" w="54" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="18"/>
+            <line x="54" y="18"/>
+            <move x="0" y="68"/>
+            <line x="54" y="68"/>
+            <move x="48" y="36"/>
+            <line x="33" y="36"/>
+            <line x="30" y="39"/>
+            <line x="33" y="42"/>
+            <line x="48" y="42"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="72"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="72"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="72"/>
+        <stroke/>
+        <ellipse h="30" w="30" x="19" y="24"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Motor CB 32 125A" strokewidth="inherit" w="60">
+    <connections/>
+    <foreground>
+        <rect h="100" w="60" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="22"/>
+            <line x="60" y="22"/>
+            <move x="0" y="78"/>
+            <line x="60" y="78"/>
+            <move x="54" y="41"/>
+            <line x="39" y="41"/>
+            <line x="36" y="44"/>
+            <line x="39" y="47"/>
+            <line x="54" y="47"/>
+        </path>
+        <stroke/>
+        <ellipse h="12" w="12" x="5" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="5" y="82"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="24" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="43" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="24" y="82"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="43" y="82"/>
+        <stroke/>
+        <ellipse h="30" w="30" x="25" y="29"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Motor Protection CB" strokewidth="inherit" w="54">
+    <connections/>
+    <foreground>
+        <rect h="100" w="54" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="54" y="25"/>
+            <move x="0" y="75"/>
+            <line x="54" y="75"/>
+            <move x="35" y="33"/>
+            <line x="38" y="33"/>
+            <line x="38" y="29"/>
+            <line x="48" y="29"/>
+            <line x="48" y="33"/>
+            <line x="51" y="33"/>
+            <line x="51" y="42"/>
+            <line x="35" y="42"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="180" name="Motor Starter 125 400A" strokewidth="inherit" w="110">
+    <connections/>
+    <foreground>
+        <rect h="180" w="110" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="110" y="30"/>
+            <move x="0" y="150"/>
+            <line x="110" y="150"/>
+            <move x="37" y="0"/>
+            <line x="37" y="30"/>
+            <move x="73" y="0"/>
+            <line x="73" y="30"/>
+            <move x="37" y="150"/>
+            <line x="37" y="180"/>
+            <move x="73" y="150"/>
+            <line x="73" y="180"/>
+        </path>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="12" y="156"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="82" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="47" y="7"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="47" y="156"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="82" y="156"/>
+        <stroke/>
+        <rect h="30" w="14" x="73" y="35"/>
+        <stroke/>
+        <rect h="30" w="14" x="92" y="35"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="86" name="Motor Starter 1 32A" strokewidth="inherit" w="54">
+    <connections/>
+    <foreground>
+        <rect h="86" w="54" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="18"/>
+            <line x="54" y="18"/>
+            <move x="0" y="68"/>
+            <line x="54" y="68"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="72"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="4"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="72"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="72"/>
+        <stroke/>
+        <rect h="27" w="13" x="21" y="21"/>
+        <stroke/>
+        <rect h="27" w="13" x="38" y="21"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Motor Starter 32 125A" strokewidth="inherit" w="60">
+    <connections/>
+    <foreground>
+        <rect h="100" w="60" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="22"/>
+            <line x="60" y="22"/>
+            <move x="0" y="78"/>
+            <line x="60" y="78"/>
+        </path>
+        <stroke/>
+        <ellipse h="12" w="12" x="5" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="5" y="82"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="24" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="43" y="5"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="24" y="82"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="43" y="82"/>
+        <stroke/>
+        <rect h="27" w="13" x="27" y="25"/>
+        <stroke/>
+        <rect h="27" w="13" x="44" y="25"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Overcurrent Relay 125 400A" strokewidth="inherit" w="109">
+    <connections/>
+    <foreground>
+        <rect h="60" w="109" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0.5" y="15"/>
+            <line x="109" y="15"/>
+        </path>
+        <stroke/>
+        <rect h="20" w="16" x="80" y="20"/>
+        <stroke/>
+        <ellipse h="7" w="7" x="6" y="47.5"/>
+        <stroke/>
+        <ellipse h="7" w="7" x="24" y="47.5"/>
+        <stroke/>
+        <ellipse h="7" w="7" x="42" y="47.5"/>
+        <stroke/>
+        <ellipse h="7" w="7" x="60" y="47.5"/>
+        <stroke/>
+        <ellipse h="7" w="7" x="78" y="47.5"/>
+        <stroke/>
+        <ellipse h="7" w="7" x="96" y="47.5"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30" name="Overcurrent Relay 1 32A" strokewidth="inherit" w="54">
+    <connections/>
+    <foreground>
+        <rect h="30" w="54" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="7"/>
+            <line x="54" y="7"/>
+        </path>
+        <stroke/>
+        <rect h="10" w="8" x="40" y="10"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="2.5" y="23"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="11.5" y="23"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="20.5" y="23"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="29.5" y="23"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="38.5" y="23"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="47.5" y="23"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="33" name="Overcurrent Relay 32 125A" strokewidth="inherit" w="60">
+    <connections/>
+    <foreground>
+        <rect h="33" w="60" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="8"/>
+            <line x="60" y="8"/>
+        </path>
+        <stroke/>
+        <rect h="11" w="9" x="44" y="11"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="3" y="26"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="13" y="26"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="23" y="26"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="33" y="26"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="43" y="26"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="53" y="26"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Plugin Relay 1" strokewidth="inherit" w="6">
+    <connections/>
+    <foreground>
+        <rect h="80" w="6" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="6" y="10"/>
+            <move x="0" y="25"/>
+            <line x="6" y="25"/>
+            <move x="0" y="30"/>
+            <line x="6" y="30"/>
+            <move x="0" y="50"/>
+            <line x="6" y="50"/>
+            <move x="0" y="55"/>
+            <line x="6" y="55"/>
+            <move x="0" y="70"/>
+            <line x="6" y="70"/>
+        </path>
+        <stroke/>
+        <ellipse h="3" w="3" x="1.5" y="3.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="1.5" y="16"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="1.5" y="61"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="1.5" y="73.5"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="80" name="Plugin Relay 2" strokewidth="inherit" w="24">
+    <connections/>
+    <foreground>
+        <rect h="80" w="24" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="10"/>
+            <line x="24" y="10"/>
+            <move x="0" y="25"/>
+            <line x="24" y="25"/>
+            <move x="0" y="30"/>
+            <line x="24" y="30"/>
+            <move x="0" y="50"/>
+            <line x="24" y="50"/>
+            <move x="0" y="55"/>
+            <line x="24" y="55"/>
+            <move x="0" y="70"/>
+            <line x="24" y="70"/>
+        </path>
+        <stroke/>
+        <ellipse h="3" w="3" x="1.5" y="3.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="1.5" y="16"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="1.5" y="61"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="1.5" y="73.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="7.5" y="73.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="7.5" y="61"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="7.5" y="3.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="7.5" y="16"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="13.5" y="73.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="13.5" y="61"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="13.5" y="3.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="13.5" y="16"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="19.5" y="73.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="19.5" y="61"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="19.5" y="3.5"/>
+        <stroke/>
+        <ellipse h="3" w="3" x="19.5" y="16"/>
+        <stroke/>
+        <rect h="4" w="3" x="18" y="34"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Residual Current Device 2P" strokewidth="inherit" w="36">
+    <connections/>
+    <foreground>
+        <rect h="100" w="36" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="36" y="25"/>
+            <move x="0" y="75"/>
+            <line x="36" y="75"/>
+            <move x="4" y="62"/>
+            <line x="7" y="62"/>
+            <line x="7" y="58"/>
+            <line x="17" y="58"/>
+            <line x="17" y="62"/>
+            <line x="20" y="62"/>
+            <line x="20" y="71"/>
+            <line x="4" y="71"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Residual Current Device 4P" strokewidth="inherit" w="72">
+    <connections/>
+    <foreground>
+        <rect h="100" w="72" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="72" y="25"/>
+            <move x="0" y="75"/>
+            <line x="72" y="75"/>
+            <move x="4" y="62"/>
+            <line x="7" y="62"/>
+            <line x="7" y="58"/>
+            <line x="17" y="58"/>
+            <line x="17" y="62"/>
+            <line x="20" y="62"/>
+            <line x="20" y="71"/>
+            <line x="4" y="71"/>
+            <close/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="57" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="57" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Surge Protection 1P" strokewidth="inherit" w="18">
+    <connections/>
+    <foreground>
+        <rect h="100" w="18" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="18" y="25"/>
+            <move x="0" y="75"/>
+            <line x="18" y="75"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <rect h="2" w="10" x="4" y="70"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Surge Protection 2P" strokewidth="inherit" w="36">
+    <connections/>
+    <foreground>
+        <rect h="100" w="36" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="36" y="25"/>
+            <move x="0" y="75"/>
+            <line x="36" y="75"/>
+            <move x="18" y="25"/>
+            <line x="18" y="75"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <rect h="2" w="10" x="4" y="70"/>
+        <stroke/>
+        <rect h="2" w="10" x="22" y="70"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Surge Protection 3P" strokewidth="inherit" w="54">
+    <connections/>
+    <foreground>
+        <rect h="100" w="54" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="54" y="25"/>
+            <move x="0" y="75"/>
+            <line x="54" y="75"/>
+            <move x="18" y="25"/>
+            <line x="18" y="75"/>
+            <move x="36" y="25"/>
+            <line x="36" y="75"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+        <rect h="2" w="10" x="4" y="70"/>
+        <stroke/>
+        <rect h="2" w="10" x="22" y="70"/>
+        <stroke/>
+        <rect h="2" w="10" x="40" y="70"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Surge Protection 4P" strokewidth="inherit" w="72">
+    <connections/>
+    <foreground>
+        <rect h="100" w="72" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="25"/>
+            <line x="72" y="25"/>
+            <move x="0" y="75"/>
+            <line x="72" y="75"/>
+            <move x="18" y="25"/>
+            <line x="18" y="75"/>
+            <move x="36" y="25"/>
+            <line x="36" y="75"/>
+            <move x="54" y="25"/>
+            <line x="54" y="75"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="4" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="22" y="83"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="40" y="83"/>
+        <stroke/>
+        <rect h="2" w="10" x="4" y="70"/>
+        <stroke/>
+        <rect h="2" w="10" x="22" y="70"/>
+        <stroke/>
+        <rect h="2" w="10" x="40" y="70"/>
+        <stroke/>
+        <rect h="2" w="10" x="58" y="70"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="58" y="7"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="58" y="83"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Terminal 40mm2" strokewidth="inherit" w="22">
+    <connections/>
+    <foreground>
+        <rect h="100" w="22" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="28"/>
+            <line x="22" y="28"/>
+            <move x="0" y="72"/>
+            <line x="22" y="72"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="6" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="6" y="81"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Terminal 40mm2 x10" strokewidth="inherit" w="220">
+    <connections/>
+    <foreground>
+        <rect h="100" w="220" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="28"/>
+            <line x="220" y="28"/>
+            <move x="0" y="72"/>
+            <line x="220" y="72"/>
+            <move x="44" y="0"/>
+            <line x="44" y="100"/>
+            <move x="66" y="0"/>
+            <line x="66" y="100"/>
+            <move x="88" y="0"/>
+            <line x="88" y="100"/>
+            <move x="110" y="0"/>
+            <line x="110" y="100"/>
+            <move x="132" y="0"/>
+            <line x="132" y="100"/>
+            <move x="154" y="0"/>
+            <line x="154" y="100"/>
+            <move x="176" y="0"/>
+            <line x="176" y="100"/>
+            <move x="198" y="0"/>
+            <line x="198" y="100"/>
+            <move x="22" y="0"/>
+            <line x="22" y="100"/>
+        </path>
+        <stroke/>
+        <ellipse h="10" w="10" x="6" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="6" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="28" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="28" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="50" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="50" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="72" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="72" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="94" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="94" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="116" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="116" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="138" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="138" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="160" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="160" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="182" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="182" y="81"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="204" y="9"/>
+        <stroke/>
+        <ellipse h="10" w="10" x="204" y="81"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Terminal 4mm2" strokewidth="inherit" w="5">
+    <connections/>
+    <foreground>
+        <rect h="50" w="4" x="0.5" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0.5" y="14"/>
+            <line x="4.5" y="14"/>
+            <move x="0.5" y="36"/>
+            <line x="4.5" y="36"/>
+        </path>
+        <stroke/>
+        <ellipse h="1" w="1" x="2" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="2" y="42.5"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="50" name="Terminal 4mm2 x10" strokewidth="inherit" w="40">
+    <connections/>
+    <foreground>
+        <rect h="50" w="40" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="14"/>
+            <line x="40" y="14"/>
+            <move x="0" y="36"/>
+            <line x="40" y="36"/>
+            <move x="4" y="0"/>
+            <line x="4" y="50"/>
+            <move x="8" y="0"/>
+            <line x="8" y="50"/>
+            <move x="12" y="0"/>
+            <line x="12" y="50"/>
+            <move x="16" y="0"/>
+            <line x="16" y="50"/>
+            <move x="20" y="0"/>
+            <line x="20" y="50"/>
+            <move x="24" y="0"/>
+            <line x="24" y="50"/>
+            <move x="28" y="0"/>
+            <line x="28" y="50"/>
+            <move x="32" y="0"/>
+            <line x="32" y="50"/>
+            <move x="36" y="0"/>
+            <line x="36" y="50"/>
+        </path>
+        <stroke/>
+        <ellipse h="1" w="1" x="1.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="1.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="5.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="5.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="9.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="9.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="13.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="13.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="17.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="17.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="21.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="21.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="25.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="25.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="29.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="29.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="37.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="37.5" y="6.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="33.5" y="42.5"/>
+        <stroke/>
+        <ellipse h="1" w="1" x="33.5" y="6.5"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Terminal 4 6mm2" strokewidth="inherit" w="5">
+    <connections/>
+    <foreground>
+        <rect h="60" w="5" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="16"/>
+            <line x="5" y="16"/>
+            <move x="0" y="44"/>
+            <line x="5" y="44"/>
+        </path>
+        <stroke/>
+        <ellipse h="2" w="2" x="1.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="1.5" y="51"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60" name="Terminal 4 6mm2 x10" strokewidth="inherit" w="50">
+    <connections/>
+    <foreground>
+        <rect h="60" w="50" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="16"/>
+            <line x="50" y="16"/>
+            <move x="0" y="44"/>
+            <line x="50" y="44"/>
+            <move x="5" y="0"/>
+            <line x="5" y="60"/>
+            <move x="10" y="0"/>
+            <line x="10" y="60"/>
+            <move x="15" y="0"/>
+            <line x="15" y="60"/>
+            <move x="20" y="0"/>
+            <line x="20" y="60"/>
+            <move x="25" y="0"/>
+            <line x="25" y="60"/>
+            <move x="30" y="0"/>
+            <line x="30" y="60"/>
+            <move x="35" y="0"/>
+            <line x="35" y="60"/>
+            <move x="40" y="0"/>
+            <line x="40" y="60"/>
+            <move x="45" y="0"/>
+            <line x="45" y="60"/>
+        </path>
+        <stroke/>
+        <ellipse h="2" w="2" x="1.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="1.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="6.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="6.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="11.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="11.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="16.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="16.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="21.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="21.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="26.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="26.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="31.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="31.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="36.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="36.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="41.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="41.5" y="7"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="46.5" y="51"/>
+        <stroke/>
+        <ellipse h="2" w="2" x="46.5" y="7"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="110" name="Terminal 50mm2" strokewidth="inherit" w="25">
+    <connections/>
+    <foreground>
+        <rect h="110" w="25" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="25" y="30"/>
+            <move x="0" y="80"/>
+            <line x="25" y="80"/>
+        </path>
+        <stroke/>
+        <ellipse h="12" w="12" x="6.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="6.5" y="89"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="110" name="Terminal 50mm2 x10" strokewidth="inherit" w="250">
+    <connections/>
+    <foreground>
+        <rect h="110" w="250" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="30"/>
+            <line x="250" y="30"/>
+            <move x="0" y="80"/>
+            <line x="250" y="80"/>
+            <move x="25" y="0"/>
+            <line x="25" y="110"/>
+            <move x="50" y="0"/>
+            <line x="50" y="110"/>
+            <move x="75" y="0"/>
+            <line x="75" y="110"/>
+            <move x="100" y="0"/>
+            <line x="100" y="110"/>
+            <move x="125" y="0"/>
+            <line x="125" y="110"/>
+            <move x="150" y="0"/>
+            <line x="150" y="110"/>
+            <move x="175" y="0"/>
+            <line x="175" y="110"/>
+            <move x="200" y="0"/>
+            <line x="200" y="110"/>
+            <move x="225" y="0"/>
+            <line x="225" y="110"/>
+        </path>
+        <stroke/>
+        <ellipse h="12" w="12" x="6.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="6.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="31.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="31.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="56.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="56.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="81.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="81.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="106.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="106.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="131.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="131.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="156.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="156.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="181.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="181.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="206.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="206.5" y="89"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="231.5" y="9"/>
+        <stroke/>
+        <ellipse h="12" w="12" x="231.5" y="89"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="75" name="Terminal 6 25mm2" strokewidth="inherit" w="10">
+    <connections/>
+    <foreground>
+        <rect h="75" w="10" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="18"/>
+            <line x="10" y="18"/>
+            <move x="0" y="57"/>
+            <line x="10" y="57"/>
+        </path>
+        <stroke/>
+        <ellipse h="4" w="4" x="3" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="3" y="64"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="75" name="Terminal 6 25mm2 x10" strokewidth="inherit" w="100">
+    <connections/>
+    <foreground>
+        <rect h="75" w="100" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="18"/>
+            <line x="100" y="18"/>
+            <move x="0" y="57"/>
+            <line x="100" y="57"/>
+            <move x="20" y="0"/>
+            <line x="20" y="75"/>
+            <move x="30" y="0"/>
+            <line x="30" y="75"/>
+            <move x="40" y="0"/>
+            <line x="40" y="75"/>
+            <move x="50" y="0"/>
+            <line x="50" y="75"/>
+            <move x="60" y="0"/>
+            <line x="60" y="75"/>
+            <move x="70" y="0"/>
+            <line x="70" y="75"/>
+            <move x="80" y="0"/>
+            <line x="80" y="75"/>
+            <move x="90" y="0"/>
+            <line x="90" y="75"/>
+            <move x="10" y="0"/>
+            <line x="10" y="75"/>
+        </path>
+        <stroke/>
+        <ellipse h="4" w="4" x="3" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="3" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="13" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="13" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="23" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="23" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="33" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="33" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="43" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="43" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="53" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="53" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="63" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="63" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="73" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="73" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="83" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="83" y="7"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="93" y="64"/>
+        <stroke/>
+        <ellipse h="4" w="4" x="93" y="7"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Terminal 75mm2" strokewidth="inherit" w="30">
+    <connections/>
+    <foreground>
+        <rect h="140" w="30" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="40"/>
+            <line x="30" y="40"/>
+            <move x="0" y="100"/>
+            <line x="30" y="100"/>
+        </path>
+        <stroke/>
+        <ellipse h="16" w="16" x="7" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="7" y="112"/>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="140" name="Terminal 75mm2 x10" strokewidth="inherit" w="300">
+    <connections/>
+    <foreground>
+        <rect h="140" w="300" x="0" y="0"/>
+        <fillstroke/>
+        <path>
+            <move x="0" y="40"/>
+            <line x="300" y="40"/>
+            <move x="0" y="100"/>
+            <line x="300" y="100"/>
+            <move x="30" y="0"/>
+            <line x="30" y="140"/>
+            <move x="60" y="0"/>
+            <line x="60" y="140"/>
+            <move x="90" y="0"/>
+            <line x="90" y="140"/>
+            <move x="120" y="0"/>
+            <line x="120" y="140"/>
+            <move x="150" y="0"/>
+            <line x="150" y="140"/>
+            <move x="180" y="0"/>
+            <line x="180" y="140"/>
+            <move x="210" y="0"/>
+            <line x="210" y="140"/>
+            <move x="240" y="0"/>
+            <line x="240" y="140"/>
+            <move x="270" y="0"/>
+            <line x="270" y="140"/>
+        </path>
+        <stroke/>
+        <ellipse h="16" w="16" x="7" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="7" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="37" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="37" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="67" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="67" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="97" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="97" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="127" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="127" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="157" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="157" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="187" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="187" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="217" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="217" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="247" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="247" y="12"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="277" y="112"/>
+        <stroke/>
+        <ellipse h="16" w="16" x="277" y="12"/>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

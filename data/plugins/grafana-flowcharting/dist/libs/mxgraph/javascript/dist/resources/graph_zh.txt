@@ -1,0 +1,11 @@
+alreadyConnected=节点已经连接
+containsValidationErrors=包含效验错误
+updatingDocument=更新文档。请等候......
+updatingSelection=更新所选项。请等候......
+collapse-expand=折叠/展开
+doubleClickOrientation=双击以改变方向
+close=关闭
+error=错误
+done=完成
+cancel=取消
+ok=确定

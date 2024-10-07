@@ -1,0 +1,240 @@
+<shapes name="mxGraph.pid.centrifuges">
+<shape aspect="variable" h="100" name="Centrifuge, Decanter (Screw, Solid Shell)" strokewidth="inherit" w="110">
+    <connections>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.75"/>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="10" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="100" y="10"/>
+            <line x="20" y="10"/>
+            <line x="20" y="90"/>
+            <line x="100" y="90"/>
+            <move x="0" y="50"/>
+            <line x="100" y="50"/>
+            <move x="30" y="50"/>
+            <line x="45" y="25"/>
+            <line x="75" y="75"/>
+            <line x="90" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="110" name="Centrifuge (High Speed)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.7"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="35" y="25"/>
+            <line x="10" y="90"/>
+            <line x="90" y="90"/>
+            <line x="65" y="25"/>
+            <move x="50" y="90"/>
+            <line x="50" y="110"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="110" name="Centrifuge (Perforated Shell)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.7"/>
+    </connections>
+    <background>
+        <save/>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="10" y="10"/>
+            <line x="10" y="90"/>
+            <line x="90" y="90"/>
+            <line x="90" y="10"/>
+        </path>
+        <stroke/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <path>
+            <move x="50" y="90"/>
+            <line x="50" y="110"/>
+            <move x="10" y="90"/>
+            <line x="90" y="90"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Centrifuge (Pusher)" strokewidth="inherit" w="110">
+    <connections>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.75"/>
+        <constraint name="S" perimeter="0" x="0.9" y="1"/>
+    </connections>
+    <background>
+        <save/>
+        <rect h="100" w="100" x="10" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="100" y="10"/>
+            <line x="20" y="10"/>
+            <line x="20" y="90"/>
+            <line x="100" y="90"/>
+        </path>
+        <stroke/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="30" y="50"/>
+            <move x="30" y="20"/>
+            <line x="30" y="80"/>
+            <move x="20" y="10"/>
+            <line x="20" y="90"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Centrifuge (Screw, Perforated Shell)" strokewidth="inherit" w="110">
+    <connections>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.75"/>
+        <constraint name="S" perimeter="0" x="0.9" y="1"/>
+    </connections>
+    <background>
+        <save/>
+        <rect h="100" w="100" x="10" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="100" y="10"/>
+            <line x="20" y="10"/>
+            <line x="20" y="90"/>
+            <line x="100" y="90"/>
+        </path>
+        <stroke/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="100" y="50"/>
+            <move x="20" y="10"/>
+            <line x="20" y="90"/>
+            <move x="30" y="50"/>
+            <line x="45" y="25"/>
+            <line x="75" y="75"/>
+            <line x="90" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="110" name="Centrifuge (Separator Disc)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.9"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="50" y="10"/>
+            <line x="50" y="110"/>
+            <move x="10" y="90"/>
+            <line x="90" y="90"/>
+            <move x="10" y="35"/>
+            <line x="50" y="10"/>
+            <line x="90" y="35"/>
+            <move x="10" y="50"/>
+            <line x="50" y="25"/>
+            <line x="90" y="50"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="100" name="Centrifuge (Skimmer)" strokewidth="inherit" w="110">
+    <connections>
+        <constraint name="S" perimeter="0" x="0.9" y="1"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.75"/>
+    </connections>
+    <background>
+        <save/>
+        <rect h="100" w="100" x="10" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <dashpattern pattern="2 2"/>
+        <dashed dashed="1"/>
+        <path>
+            <move x="100" y="10"/>
+            <line x="20" y="10"/>
+            <line x="20" y="90"/>
+            <line x="100" y="90"/>
+        </path>
+        <stroke/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <path>
+            <move x="0" y="50"/>
+            <line x="20" y="50"/>
+            <move x="20" y="10"/>
+            <line x="20" y="90"/>
+            <move x="80" y="20"/>
+            <line x="60" y="20"/>
+            <line x="60" y="10"/>
+            <line x="70" y="20"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="110" name="Centrifuge (Solid Shell)" strokewidth="inherit" w="100">
+    <connections>
+        <constraint name="N" perimeter="0" x="0.5" y="0"/>
+        <constraint name="NE" perimeter="0" x="1" y="0.25"/>
+        <constraint name="SE" perimeter="0" x="1" y="0.9"/>
+    </connections>
+    <background>
+        <rect h="100" w="100" x="0" y="0"/>
+    </background>
+    <foreground>
+        <fillstroke/>
+        <path>
+            <move x="50" y="90"/>
+            <line x="50" y="110"/>
+            <move x="10" y="10"/>
+            <line x="10" y="90"/>
+            <line x="90" y="90"/>
+            <line x="90" y="10"/>
+        </path>
+        <stroke/>
+    </foreground>
+</shape>
+</shapes>

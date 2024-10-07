@@ -1,0 +1,3477 @@
+<shapes name="mxgraph.rack.General">
+<shape aspect="variable" h="219.54" name="12U Rack 19 Standard" strokewidth="inherit" w="179.75">
+    <connections/>
+    <background>
+        <rect h="219.54" w="179.75" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffffff"/>
+        <fillstroke/>
+        <fillcolor color="#f4f4f4"/>
+        <rect h="20.96" w="179.75" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="20.96" w="179.75" x="0" y="198.59"/>
+        <fillstroke/>
+        <rect h="177.63" w="8.99" x="0" y="20.96"/>
+        <fillstroke/>
+        <rect h="177.63" w="8.99" x="170.76" y="20.96"/>
+        <fillstroke/>
+        <ellipse h="5.99" w="5.99" x="2.66" y="7.65"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="5.99" w="5.99" x="170.43" y="7.65"/>
+        <fillstroke/>
+        <ellipse h="5.99" w="5.99" x="2.33" y="206.57"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="5.99" w="5.99" x="170.43" y="206.57"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.78" name="1U Rack Server" strokewidth="inherit" w="161.93">
+    <connections/>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.78"/>
+            <line x="161.93" y="15.78"/>
+            <line x="161.93" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.78"/>
+            <line x="161.93" y="15.78"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="8.84" y="1"/>
+            <line x="152.73" y="1"/>
+            <line x="152.73" y="3.11"/>
+            <curve x1="151.49" x2="150.46" x3="149.78" y1="3.3" y2="3.81" y3="4.6"/>
+            <curve x1="149.01" x2="148.63" x3="148.63" y1="5.51" y2="6.66" y3="7.82"/>
+            <curve x1="148.63" x2="149.01" x3="149.78" y1="8.97" y2="10.13" y3="11.03"/>
+            <curve x1="150.46" x2="151.49" x3="152.73" y1="11.82" y2="12.34" y3="12.52"/>
+            <line x="152.73" y="14.78"/>
+            <line x="8.84" y="14.78"/>
+            <line x="8.84" y="12.54"/>
+            <curve x1="10.15" x2="11.24" x3="11.96" y1="12.42" y2="11.93" y3="11.12"/>
+            <curve x1="12.78" x2="13.17" x3="13.17" y1="10.21" y2="9.01" y3="7.82"/>
+            <curve x1="13.17" x2="12.78" x3="11.96" y1="6.62" y2="5.43" y3="4.51"/>
+            <curve x1="11.24" x2="10.15" x3="8.84" y1="3.71" y2="3.22" y3="3.09"/>
+            <close/>
+            <move x="80.87" y="2.66"/>
+            <curve x1="78.02" x2="75.7" x3="75.7" y1="2.66" y2="4.97" y3="7.82"/>
+            <curve x1="75.7" x2="78.02" x3="80.87" y1="10.66" y2="12.97" y3="12.97"/>
+            <curve x1="83.72" x2="86.04" x3="86.04" y1="12.97" y2="10.66" y3="7.82"/>
+            <curve x1="86.04" x2="83.72" x3="80.87" y1="4.97" y2="2.66" y3="2.66"/>
+            <close/>
+            <move x="80.87" y="3.66"/>
+            <curve x1="83.18" x2="85.04" x3="85.04" y1="3.66" y2="5.52" y3="7.82"/>
+            <curve x1="85.04" x2="83.18" x3="80.87" y1="10.12" y2="11.97" y3="11.97"/>
+            <curve x1="78.56" x2="76.7" x3="76.7" y1="11.97" y2="10.12" y3="7.82"/>
+            <curve x1="76.7" x2="78.56" x3="80.87" y1="5.52" y2="3.66" y3="3.66"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="88.87" y="2.5"/>
+            <line x="144.89" y="2.5"/>
+            <line x="144.89" y="13.14"/>
+            <line x="88.87" y="13.14"/>
+            <close/>
+            <move x="17.84" y="2.5"/>
+            <line x="73.86" y="2.5"/>
+            <line x="73.86" y="13.14"/>
+            <line x="17.84" y="13.14"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.7" name="1U" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.7"/>
+            <line x="161.9" y="15.7"/>
+            <line x="161.9" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="5.23" y2="10.47" y3="15.7"/>
+            <curve x1="56.09" x2="113.77" x3="161.9" y1="15.7" y2="15.7" y3="15.7"/>
+            <line x="161.9" y="0"/>
+            <curve x1="104.66" x2="49.84" x3="0" y1="0" y2="0" y3="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="5.99" y="1"/>
+            <line x="5.99" y="14.7"/>
+            <line x="1" y="14.7"/>
+            <close/>
+            <move x="6.99" y="1"/>
+            <line x="155.08" y="1"/>
+            <line x="155.08" y="14.7"/>
+            <line x="6.99" y="14.7"/>
+            <close/>
+            <move x="156.08" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.7"/>
+            <line x="156.08" y="14.7"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156.08" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="14.7"/>
+            <line x="156.08" y="14.7"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="5.99" y="1"/>
+            <line x="5.99" y="14.7"/>
+            <line x="1" y="14.7"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="427" name="26U Rack 19 Standard" strokewidth="inherit" w="180">
+    <connections/>
+    <background>
+        <rect h="427" w="180" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffffff"/>
+        <fillstroke/>
+        <fillcolor color="#f4f4f4"/>
+        <rect h="20.98" w="180" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="20.98" w="180" x="0" y="406.02"/>
+        <fillstroke/>
+        <rect h="385.03" w="9" x="0" y="20.98"/>
+        <fillstroke/>
+        <rect h="385.03" w="9" x="171" y="20.98"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="7.66"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="6" w="6" x="170.67" y="7.66"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="413.68"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="170.67" y="413.68"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="2U Rack Server" strokewidth="inherit" w="161.85">
+    <connections/>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.6"/>
+            <line x="161.85" y="30.6"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="80.82" y="11.14"/>
+            <curve x1="83.13" x2="84.99" x3="84.99" y1="11.14" y2="13" y3="15.3"/>
+            <curve x1="84.99" x2="83.13" x3="80.82" y1="17.6" y2="19.46" y3="19.46"/>
+            <curve x1="78.52" x2="76.66" x3="76.66" y1="19.46" y2="17.6" y3="15.3"/>
+            <curve x1="76.66" x2="78.52" x3="80.82" y1="13" y2="11.14" y3="11.14"/>
+            <close/>
+            <move x="80.82" y="10.14"/>
+            <curve x1="77.98" x2="75.66" x3="75.66" y1="10.14" y2="12.46" y3="15.3"/>
+            <curve x1="75.66" x2="77.98" x3="80.82" y1="18.15" y2="20.46" y3="20.46"/>
+            <curve x1="83.67" x2="85.99" x3="85.99" y1="20.46" y2="18.15" y3="15.3"/>
+            <curve x1="85.99" x2="83.67" x3="80.82" y1="12.46" y2="10.14" y3="10.14"/>
+            <close/>
+            <move x="8.83" y="1"/>
+            <line x="152.65" y="1"/>
+            <line x="152.65" y="10.59"/>
+            <curve x1="151.34" x2="150.25" x3="149.53" y1="10.71" y2="11.2" y3="12.01"/>
+            <curve x1="148.72" x2="148.32" x3="148.32" y1="12.92" y2="14.12" y3="15.32"/>
+            <curve x1="148.32" x2="148.72" x3="149.53" y1="16.51" y2="17.71" y3="18.62"/>
+            <curve x1="150.25" x2="151.34" x3="152.65" y1="19.43" y2="19.92" y3="20.04"/>
+            <line x="152.65" y="29.6"/>
+            <line x="8.83" y="29.6"/>
+            <line x="8.83" y="20.04"/>
+            <curve x1="10.14" x2="11.24" x3="11.95" y1="19.92" y2="19.43" y3="18.62"/>
+            <curve x1="12.77" x2="13.16" x3="13.16" y1="17.71" y2="16.51" y3="15.32"/>
+            <curve x1="13.16" x2="12.77" x3="11.95" y1="14.12" y2="12.92" y3="12.01"/>
+            <curve x1="11.24" x2="10.14" x3="8.83" y1="11.2" y2="10.71" y3="10.59"/>
+            <close/>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="30.6"/>
+            <line x="161.85" y="30.6"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="88.82" y="17.3"/>
+            <line x="144.82" y="17.3"/>
+            <line x="144.82" y="27.95"/>
+            <line x="88.82" y="27.95"/>
+            <close/>
+            <move x="17.83" y="17.3"/>
+            <line x="73.83" y="17.3"/>
+            <line x="73.83" y="27.95"/>
+            <line x="17.83" y="27.95"/>
+            <close/>
+            <move x="88.82" y="2.5"/>
+            <line x="144.82" y="2.5"/>
+            <line x="144.82" y="13.15"/>
+            <line x="88.82" y="13.15"/>
+            <close/>
+            <move x="17.83" y="2.5"/>
+            <line x="73.83" y="2.5"/>
+            <line x="73.83" y="13.15"/>
+            <line x="17.83" y="13.15"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.6" name="2U" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="10.2" y2="20.4" y3="30.6"/>
+            <curve x1="56.09" x2="113.77" x3="161.9" y1="30.6" y2="30.6" y3="30.6"/>
+            <line x="161.9" y="0"/>
+            <curve x1="104.66" x2="49.84" x3="0" y1="0" y2="0" y3="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="10.2" y2="20.4" y3="30.6"/>
+            <curve x1="56.09" x2="113.77" x3="161.9" y1="30.6" y2="30.6" y3="30.6"/>
+            <line x="161.9" y="0"/>
+            <curve x1="104.66" x2="49.84" x3="0" y1="0" y2="0" y3="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155" y="1"/>
+            <line x="155" y="29.6"/>
+            <line x="7" y="29.6"/>
+            <close/>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="29.6"/>
+            <line x="156" y="29.6"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="29.6"/>
+            <line x="1" y="29.6"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="575.56" name="36U Rack 19 Standard" strokewidth="inherit" w="180.02">
+    <connections/>
+    <background>
+        <rect h="575.56" w="180.02" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffffff"/>
+        <fillstroke/>
+        <fillcolor color="#f4f4f4"/>
+        <rect h="21" w="180.02" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="21" w="180.02" x="0" y="554.55"/>
+        <fillstroke/>
+        <rect h="533.55" w="9" x="0" y="21"/>
+        <fillstroke/>
+        <rect h="533.55" w="9" x="171.02" y="21"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="7.67"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="6" w="6" x="170.68" y="7.67"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="170.68" y="561.89"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="561.89"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="45.35" name="3U Rack Server" strokewidth="inherit" w="161.85">
+    <connections/>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="45.35"/>
+            <line x="161.85" y="45.35"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="45.35"/>
+            <line x="161.85" y="45.35"/>
+            <line x="161.85" y="0"/>
+            <close/>
+            <move x="8.83" y="1"/>
+            <line x="152.65" y="1"/>
+            <line x="152.65" y="17.95"/>
+            <curve x1="151.34" x2="150.25" x3="149.54" y1="18.07" y2="18.57" y3="19.37"/>
+            <curve x1="148.72" x2="148.33" x3="148.33" y1="20.28" y2="21.48" y3="22.68"/>
+            <curve x1="148.33" x2="148.72" x3="149.54" y1="23.87" y2="25.07" y3="25.98"/>
+            <curve x1="150.25" x2="151.34" x3="152.65" y1="26.78" y2="27.27" y3="27.4"/>
+            <line x="152.65" y="44.35"/>
+            <line x="8.83" y="44.35"/>
+            <line x="8.83" y="27.4"/>
+            <curve x1="10.14" x2="11.23" x3="11.95" y1="27.27" y2="26.79" y3="25.98"/>
+            <curve x1="12.76" x2="13.16" x3="13.16" y1="25.07" y2="23.87" y3="22.68"/>
+            <curve x1="13.16" x2="12.76" x3="11.95" y1="21.48" y2="20.28" y3="19.37"/>
+            <curve x1="11.23" x2="10.14" x3="8.83" y1="18.57" y2="18.07" y3="17.95"/>
+            <close/>
+            <move x="80.82" y="17.52"/>
+            <curve x1="77.98" x2="75.66" x3="75.66" y1="17.52" y2="19.83" y3="22.68"/>
+            <curve x1="75.66" x2="77.98" x3="80.82" y1="25.52" y2="27.83" y3="27.83"/>
+            <curve x1="83.67" x2="85.99" x3="85.99" y1="27.83" y2="25.52" y3="22.68"/>
+            <curve x1="85.99" x2="83.67" x3="80.82" y1="19.83" y2="17.52" y3="17.52"/>
+            <close/>
+            <move x="80.82" y="18.52"/>
+            <curve x1="83.13" x2="84.99" x3="84.99" y1="18.52" y2="20.38" y3="22.68"/>
+            <curve x1="84.99" x2="83.13" x3="80.82" y1="24.98" y2="26.83" y3="26.83"/>
+            <curve x1="78.52" x2="76.66" x3="76.66" y1="26.83" y2="24.98" y3="22.68"/>
+            <curve x1="76.66" x2="78.52" x3="80.82" y1="20.38" y2="18.52" y3="18.52"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="88.82" y="23.61"/>
+            <line x="144.82" y="23.61"/>
+            <line x="144.82" y="42.74"/>
+            <line x="88.82" y="42.74"/>
+            <close/>
+            <move x="17.83" y="23.61"/>
+            <line x="73.83" y="23.61"/>
+            <line x="73.83" y="42.74"/>
+            <line x="17.83" y="42.74"/>
+            <close/>
+            <move x="88.82" y="2.5"/>
+            <line x="144.82" y="2.5"/>
+            <line x="144.82" y="21.62"/>
+            <line x="88.82" y="21.62"/>
+            <close/>
+            <move x="17.83" y="2.5"/>
+            <line x="73.83" y="2.5"/>
+            <line x="73.83" y="21.62"/>
+            <line x="17.83" y="21.62"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="45.35" name="3U" strokewidth="inherit" w="161.85">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="15.12" y2="30.23" y3="45.35"/>
+            <curve x1="57.13" x2="112.17" x3="161.85" y1="45.35" y2="45.35" y3="45.35"/>
+            <line x="161.85" y="0"/>
+            <curve x1="104.63" x2="49.83" x3="0" y1="0" y2="0" y3="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="45.35"/>
+            <line x="161.85" y="45.35"/>
+            <line x="161.85" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="44.35"/>
+            <line x="1" y="44.35"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155.32" y="1"/>
+            <line x="155.32" y="44.35"/>
+            <line x="7" y="44.35"/>
+            <close/>
+            <move x="156.32" y="1"/>
+            <line x="160.85" y="1"/>
+            <line x="160.85" y="44.35"/>
+            <line x="156.32" y="44.35"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="44.35"/>
+            <line x="1" y="44.35"/>
+            <close/>
+        </path>
+        <fill/>
+        <path>
+            <move x="156.32" y="1"/>
+            <line x="160.85" y="1"/>
+            <line x="160.85" y="44.35"/>
+            <line x="156.32" y="44.35"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="634.5" name="40U Rack 19 Standard" strokewidth="inherit" w="180">
+    <connections/>
+    <background>
+        <rect h="634.5" w="180" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffffff"/>
+        <fillstroke/>
+        <fillcolor color="#f4f4f4"/>
+        <rect h="20.99" w="180" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="20.99" w="180" x="0" y="613.51"/>
+        <fillstroke/>
+        <rect h="592.51" w="9" x="0" y="20.99"/>
+        <fillstroke/>
+        <rect h="592.51" w="9" x="171" y="20.99"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="7.66"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="6" w="6" x="170.67" y="7.66"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="170.67" y="621.17"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="621.17"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="664.1" name="42U Rack 19 Standard" strokewidth="inherit" w="180">
+    <connections/>
+    <background>
+        <rect h="650" w="180" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffffff"/>
+        <fillstroke/>
+        <fillcolor color="#f4f4f4"/>
+        <rect h="20.99" w="180" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="623" w="9" x="0" y="20.99"/>
+        <fillstroke/>
+        <rect h="623" w="9" x="171" y="20.99"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="7.66"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="6" w="6" x="170.67" y="7.66"/>
+        <fillstroke/>
+        <rect h="21" w="180" x="0" y="643.1"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="650.77"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="170.67" y="650.77"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="693.74" name="44U Rack 19 Standard" strokewidth="inherit" w="180">
+    <connections/>
+    <background>
+        <rect h="693.74" w="180" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffffff"/>
+        <fillstroke/>
+        <fillcolor color="#f4f4f4"/>
+        <rect h="21" w="180" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="21" w="180" x="0" y="672.75"/>
+        <fillstroke/>
+        <rect h="651.75" w="9" x="0" y="21"/>
+        <fillstroke/>
+        <rect h="651.75" w="9" x="171" y="21"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="7.66"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="6" w="6" x="170.67" y="7.66"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="170.67" y="680.51"/>
+        <fillstroke/>
+        <ellipse h="6" w="6" x="2.67" y="680.51"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="753.24" name="47U Rack 19 IBM" strokewidth="inherit" w="180.18">
+    <connections/>
+    <background>
+        <rect h="753.24" w="180.18" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffffff"/>
+        <fillstroke/>
+        <fillcolor color="#f4f4f4"/>
+        <rect h="21.01" w="180.18" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="21.01" w="180.18" x="0" y="732.23"/>
+        <fillstroke/>
+        <rect h="711.23" w="9.01" x="0" y="21.01"/>
+        <fillstroke/>
+        <rect h="711.23" w="9.01" x="171.17" y="21.01"/>
+        <fillstroke/>
+        <ellipse h="6" w="6.01" x="2.67" y="7.67"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="6" w="6.01" x="170.84" y="7.67"/>
+        <fillstroke/>
+        <ellipse h="6" w="6.01" x="170.84" y="739.9"/>
+        <fillstroke/>
+        <ellipse h="6" w="6.01" x="2.67" y="739.9"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="753.24" name="48U Rack 19 Standard" strokewidth="inherit" w="180.18">
+    <connections/>
+    <background>
+        <rect h="753.24" w="180.18" x="0" y="0"/>
+    </background>
+    <foreground>
+        <strokecolor color="#000000"/>
+        <fillcolor color="#ffffff"/>
+        <fillstroke/>
+        <fillcolor color="#f4f4f4"/>
+        <rect h="21.01" w="180.18" x="0" y="0"/>
+        <fillstroke/>
+        <rect h="21.01" w="180.18" x="0" y="732.23"/>
+        <fillstroke/>
+        <rect h="711.23" w="9.01" x="0" y="21.01"/>
+        <fillstroke/>
+        <rect h="711.23" w="9.01" x="171.17" y="21.01"/>
+        <fillstroke/>
+        <ellipse h="6" w="6.01" x="2.67" y="7.67"/>
+        <stroke/>
+        <fillcolor color="#f4f4f4"/>
+        <ellipse h="6" w="6.01" x="170.84" y="7.67"/>
+        <fillstroke/>
+        <ellipse h="6" w="6.01" x="170.84" y="739.9"/>
+        <fillstroke/>
+        <ellipse h="6" w="6.01" x="2.67" y="739.9"/>
+        <fillstroke/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60.3" name="4U" strokewidth="inherit" w="161.85">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.3"/>
+            <line x="161.85" y="60.3"/>
+            <line x="161.85" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.3"/>
+            <curve x1="56.07" x2="113.74" x3="161.85" y1="60.3" y2="60.3" y3="60.3"/>
+            <line x="161.85" y="0"/>
+            <curve x1="104.63" x2="49.83" x3="0" y1="0" y2="0" y3="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="59.3"/>
+            <line x="1" y="59.3"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155.32" y="1"/>
+            <line x="155.32" y="59.3"/>
+            <line x="7" y="59.3"/>
+            <close/>
+            <move x="156.32" y="1"/>
+            <line x="160.85" y="1"/>
+            <line x="160.85" y="59.3"/>
+            <line x="156.32" y="59.3"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156.32" y="1"/>
+            <line x="160.85" y="1"/>
+            <line x="160.85" y="59.3"/>
+            <line x="156.32" y="59.3"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="59.3"/>
+            <line x="1" y="59.3"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="75.25" name="5U" strokewidth="inherit" w="161.77">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="75.25"/>
+            <line x="161.77" y="75.25"/>
+            <line x="161.77" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="75.25"/>
+            <line x="161.77" y="75.25"/>
+            <line x="161.77" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="74.25"/>
+            <line x="1" y="74.25"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155.24" y="1"/>
+            <line x="155.24" y="74.25"/>
+            <line x="7" y="74.25"/>
+            <close/>
+            <move x="156.24" y="1"/>
+            <line x="160.77" y="1"/>
+            <line x="160.77" y="74.25"/>
+            <line x="156.24" y="74.25"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156.24" y="1"/>
+            <line x="160.77" y="1"/>
+            <line x="160.77" y="74.25"/>
+            <line x="156.24" y="74.25"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="74.25"/>
+            <line x="1" y="74.25"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="89.7" name="6U" strokewidth="inherit" w="161.93">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="89.7"/>
+            <line x="161.93" y="89.7"/>
+            <line x="161.93" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="89.7"/>
+            <line x="161.93" y="89.7"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="88.7"/>
+            <line x="1" y="88.7"/>
+            <close/>
+            <move x="7" y="1"/>
+            <line x="155.4" y="1"/>
+            <line x="155.4" y="88.7"/>
+            <line x="7" y="88.7"/>
+            <close/>
+            <move x="156.4" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="88.7"/>
+            <line x="156.4" y="88.7"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="156.4" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="88.7"/>
+            <line x="156.4" y="88.7"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="6" y="1"/>
+            <line x="6" y="88.7"/>
+            <line x="1" y="88.7"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.65" name="CAT5e Enhanced Patch Panel 48 ports" strokewidth="inherit" w="161.93">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.65"/>
+            <line x="161.93" y="30.65"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="2.17" y="2.33"/>
+            <line x="5.17" y="2.33"/>
+            <curve x1="5.46" x2="5.67" x3="5.67" y1="2.33" y2="2.55" y3="2.83"/>
+            <line x="5.67" y="2.84"/>
+            <curve x1="5.67" x2="5.46" x3="5.17" y1="3.12" y2="3.34" y3="3.34"/>
+            <line x="2.17" y="3.34"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="3.34" y2="3.12" y3="2.84"/>
+            <line x="1.67" y="2.83"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="2.55" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="8.51" y="2.33"/>
+            <line x="152.23" y="2.33"/>
+            <curve x1="152.33" x2="152.4" x3="152.4" y1="2.33" y2="2.4" y3="2.5"/>
+            <line x="152.4" y="3.5"/>
+            <curve x1="152.4" x2="152.33" x3="152.23" y1="3.6" y2="3.67" y3="3.67"/>
+            <line x="8.51" y="3.67"/>
+            <curve x1="8.4" x2="8.34" x3="8.34" y1="3.67" y2="3.6" y3="3.5"/>
+            <line x="8.34" y="2.5"/>
+            <curve x1="8.34" x2="8.4" x3="8.51" y1="2.4" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="156.23" y="2.33"/>
+            <line x="159.23" y="2.33"/>
+            <curve x1="159.52" x2="159.73" x3="159.73" y1="2.33" y2="2.55" y3="2.83"/>
+            <line x="159.73" y="2.84"/>
+            <curve x1="159.73" x2="159.52" x3="159.23" y1="3.12" y2="3.34" y3="3.34"/>
+            <line x="156.23" y="3.34"/>
+            <curve x1="155.94" x2="155.73" x3="155.73" y1="3.34" y2="3.12" y3="2.84"/>
+            <line x="155.73" y="2.83"/>
+            <curve x1="155.73" x2="155.94" x3="156.23" y1="2.55" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="8.51" y="17.18"/>
+            <line x="152.23" y="17.18"/>
+            <curve x1="152.33" x2="152.4" x3="152.4" y1="17.18" y2="17.24" y3="17.35"/>
+            <line x="152.4" y="18.34"/>
+            <curve x1="152.4" x2="152.33" x3="152.23" y1="18.44" y2="18.51" y3="18.51"/>
+            <line x="8.51" y="18.51"/>
+            <curve x1="8.4" x2="8.34" x3="8.34" y1="18.51" y2="18.44" y3="18.34"/>
+            <line x="8.34" y="17.35"/>
+            <curve x1="8.34" x2="8.4" x3="8.51" y1="17.24" y2="17.18" y3="17.18"/>
+            <close/>
+            <move x="2.17" y="27.18"/>
+            <line x="5.17" y="27.18"/>
+            <curve x1="5.46" x2="5.67" x3="5.67" y1="27.18" y2="27.4" y3="27.68"/>
+            <curve x1="5.67" x2="5.46" x3="5.17" y1="27.97" y2="28.18" y3="28.18"/>
+            <line x="2.17" y="28.18"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="28.18" y2="27.97" y3="27.68"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="27.4" y2="27.18" y3="27.18"/>
+            <close/>
+            <move x="156.23" y="27.18"/>
+            <line x="159.23" y="27.18"/>
+            <curve x1="159.52" x2="159.73" x3="159.73" y1="27.18" y2="27.4" y3="27.68"/>
+            <curve x1="159.73" x2="159.52" x3="159.23" y1="27.97" y2="28.18" y3="28.18"/>
+            <line x="156.23" y="28.18"/>
+            <curve x1="155.94" x2="155.73" x3="155.73" y1="28.18" y2="27.97" y3="27.68"/>
+            <curve x1="155.73" x2="155.94" x3="156.23" y1="27.4" y2="27.18" y3="27.18"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.68686865"/>
+        <path>
+            <move x="8.17" y="20.68"/>
+            <line x="152.23" y="20.68"/>
+            <line x="152.23" y="23.68"/>
+            <line x="8.17" y="23.68"/>
+            <close/>
+            <move x="8.17" y="5.84"/>
+            <line x="152.23" y="5.84"/>
+            <line x="152.23" y="8.84"/>
+            <line x="8.17" y="8.84"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="10.22" y2="20.43" y3="30.65"/>
+            <line x="161.93" y="30.65"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="29.65"/>
+            <line x="1" y="29.65"/>
+            <line x="1" y="28.61"/>
+            <curve x1="1.28" x2="1.69" x3="2.17" y1="28.95" y2="29.18" y3="29.18"/>
+            <line x="5.17" y="29.18"/>
+            <curve x1="5.99" x2="6.67" x3="6.67" y1="29.18" y2="28.5" y3="27.68"/>
+            <curve x1="6.67" x2="5.99" x3="5.17" y1="26.86" y2="26.18" y3="26.18"/>
+            <line x="2.17" y="26.18"/>
+            <curve x1="1.69" x2="1.28" x3="1" y1="26.18" y2="26.41" y3="26.75"/>
+            <line x="1" y="3.76"/>
+            <curve x1="1.28" x2="1.69" x3="2.17" y1="4.11" y2="4.34" y3="4.34"/>
+            <line x="5.17" y="4.34"/>
+            <curve x1="5.99" x2="6.67" x3="6.67" y1="4.34" y2="3.66" y3="2.84"/>
+            <line x="6.67" y="2.83"/>
+            <curve x1="6.67" x2="5.99" x3="5.17" y1="2.01" y2="1.33" y3="1.33"/>
+            <line x="2.17" y="1.33"/>
+            <curve x1="1.69" x2="1.28" x3="1" y1="1.33" y2="1.56" y3="1.91"/>
+            <close/>
+            <move x="8.51" y="1.33"/>
+            <curve x1="7.87" x2="7.34" x3="7.34" y1="1.33" y2="1.86" y3="2.5"/>
+            <line x="7.34" y="3.5"/>
+            <curve x1="7.34" x2="7.87" x3="8.51" y1="4.14" y2="4.67" y3="4.67"/>
+            <line x="152.23" y="4.67"/>
+            <curve x1="152.87" x2="153.4" x3="153.4" y1="4.67" y2="4.14" y3="3.5"/>
+            <line x="153.4" y="2.5"/>
+            <curve x1="153.4" x2="152.87" x3="152.23" y1="1.86" y2="1.33" y3="1.33"/>
+            <close/>
+            <move x="156.23" y="1.33"/>
+            <curve x1="155.41" x2="154.73" x3="154.73" y1="1.33" y2="2.01" y3="2.83"/>
+            <line x="154.73" y="2.84"/>
+            <curve x1="154.73" x2="155.41" x3="156.23" y1="3.66" y2="4.34" y3="4.34"/>
+            <line x="159.23" y="4.34"/>
+            <curve x1="160.05" x2="160.73" x3="160.73" y1="4.34" y2="3.66" y3="2.84"/>
+            <line x="160.73" y="2.83"/>
+            <curve x1="160.73" x2="160.05" x3="159.23" y1="2.01" y2="1.33" y3="1.33"/>
+            <close/>
+            <move x="2.17" y="2.33"/>
+            <line x="5.17" y="2.33"/>
+            <curve x1="5.46" x2="5.67" x3="5.67" y1="2.33" y2="2.55" y3="2.83"/>
+            <line x="5.67" y="2.84"/>
+            <curve x1="5.67" x2="5.46" x3="5.17" y1="3.12" y2="3.34" y3="3.34"/>
+            <line x="2.17" y="3.34"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="3.34" y2="3.12" y3="2.84"/>
+            <line x="1.67" y="2.83"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="2.55" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="8.51" y="2.33"/>
+            <line x="152.23" y="2.33"/>
+            <curve x1="152.33" x2="152.4" x3="152.4" y1="2.33" y2="2.4" y3="2.5"/>
+            <line x="152.4" y="3.5"/>
+            <curve x1="152.4" x2="152.33" x3="152.23" y1="3.6" y2="3.67" y3="3.67"/>
+            <line x="8.51" y="3.67"/>
+            <curve x1="8.4" x2="8.34" x3="8.34" y1="3.67" y2="3.6" y3="3.5"/>
+            <line x="8.34" y="2.5"/>
+            <curve x1="8.34" x2="8.4" x3="8.51" y1="2.4" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="156.23" y="2.33"/>
+            <line x="159.23" y="2.33"/>
+            <curve x1="159.52" x2="159.73" x3="159.73" y1="2.33" y2="2.55" y3="2.83"/>
+            <line x="159.73" y="2.84"/>
+            <curve x1="159.73" x2="159.52" x3="159.23" y1="3.12" y2="3.34" y3="3.34"/>
+            <line x="156.23" y="3.34"/>
+            <curve x1="155.94" x2="155.73" x3="155.73" y1="3.34" y2="3.12" y3="2.84"/>
+            <line x="155.73" y="2.83"/>
+            <curve x1="155.73" x2="155.94" x3="156.23" y1="2.55" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="12.84" y="5.84"/>
+            <line x="12.84" y="8.84"/>
+            <line x="13.84" y="8.84"/>
+            <line x="13.84" y="5.84"/>
+            <close/>
+            <move x="18.84" y="5.84"/>
+            <line x="18.84" y="8.84"/>
+            <line x="19.84" y="8.84"/>
+            <line x="19.84" y="5.84"/>
+            <close/>
+            <move x="24.84" y="5.84"/>
+            <line x="24.84" y="8.84"/>
+            <line x="25.84" y="8.84"/>
+            <line x="25.84" y="5.84"/>
+            <close/>
+            <move x="31.18" y="5.84"/>
+            <line x="31.18" y="8.84"/>
+            <line x="32.18" y="8.84"/>
+            <line x="32.18" y="5.84"/>
+            <close/>
+            <move x="37.18" y="5.84"/>
+            <line x="37.18" y="8.84"/>
+            <line x="38.18" y="8.84"/>
+            <line x="38.18" y="5.84"/>
+            <close/>
+            <move x="43.18" y="5.84"/>
+            <line x="43.18" y="8.84"/>
+            <line x="44.19" y="8.84"/>
+            <line x="44.19" y="5.84"/>
+            <close/>
+            <move x="49.19" y="5.84"/>
+            <line x="49.19" y="8.84"/>
+            <line x="50.19" y="8.84"/>
+            <line x="50.19" y="5.84"/>
+            <close/>
+            <move x="55.52" y="5.84"/>
+            <line x="55.52" y="8.84"/>
+            <line x="56.52" y="8.84"/>
+            <line x="56.52" y="5.84"/>
+            <close/>
+            <move x="61.53" y="5.84"/>
+            <line x="61.53" y="8.84"/>
+            <line x="62.53" y="8.84"/>
+            <line x="62.53" y="5.84"/>
+            <close/>
+            <move x="67.19" y="5.84"/>
+            <line x="67.19" y="8.84"/>
+            <line x="68.2" y="8.84"/>
+            <line x="68.2" y="5.84"/>
+            <close/>
+            <move x="73.53" y="5.84"/>
+            <line x="73.53" y="8.84"/>
+            <line x="74.53" y="8.84"/>
+            <line x="74.53" y="5.84"/>
+            <close/>
+            <move x="79.53" y="5.84"/>
+            <line x="79.53" y="8.84"/>
+            <line x="80.53" y="8.84"/>
+            <line x="80.53" y="5.84"/>
+            <close/>
+            <move x="85.54" y="5.84"/>
+            <line x="85.54" y="8.84"/>
+            <line x="86.54" y="8.84"/>
+            <line x="86.54" y="5.84"/>
+            <close/>
+            <move x="91.87" y="5.84"/>
+            <line x="91.87" y="8.84"/>
+            <line x="92.87" y="8.84"/>
+            <line x="92.87" y="5.84"/>
+            <close/>
+            <move x="97.87" y="5.84"/>
+            <line x="97.87" y="8.84"/>
+            <line x="98.88" y="8.84"/>
+            <line x="98.88" y="5.84"/>
+            <close/>
+            <move x="103.88" y="5.84"/>
+            <line x="103.88" y="8.84"/>
+            <line x="104.88" y="8.84"/>
+            <line x="104.88" y="5.84"/>
+            <close/>
+            <move x="109.88" y="5.84"/>
+            <line x="109.88" y="8.84"/>
+            <line x="110.88" y="8.84"/>
+            <line x="110.88" y="5.84"/>
+            <close/>
+            <move x="116.21" y="5.84"/>
+            <line x="116.21" y="8.84"/>
+            <line x="117.21" y="8.84"/>
+            <line x="117.21" y="5.84"/>
+            <close/>
+            <move x="122.22" y="5.84"/>
+            <line x="122.22" y="8.84"/>
+            <line x="123.22" y="8.84"/>
+            <line x="123.22" y="5.84"/>
+            <close/>
+            <move x="127.89" y="5.84"/>
+            <line x="127.89" y="8.84"/>
+            <line x="128.89" y="8.84"/>
+            <line x="128.89" y="5.84"/>
+            <close/>
+            <move x="134.22" y="5.84"/>
+            <line x="134.22" y="8.84"/>
+            <line x="135.22" y="8.84"/>
+            <line x="135.22" y="5.84"/>
+            <close/>
+            <move x="140.22" y="5.84"/>
+            <line x="140.22" y="8.84"/>
+            <line x="141.22" y="8.84"/>
+            <line x="141.22" y="5.84"/>
+            <close/>
+            <move x="146.23" y="5.84"/>
+            <line x="146.23" y="8.84"/>
+            <line x="147.23" y="8.84"/>
+            <line x="147.23" y="5.84"/>
+            <close/>
+            <move x="8.51" y="16.18"/>
+            <curve x1="7.87" x2="7.34" x3="7.34" y1="16.18" y2="16.71" y3="17.35"/>
+            <line x="7.34" y="18.34"/>
+            <curve x1="7.34" x2="7.87" x3="8.51" y1="18.98" y2="19.51" y3="19.51"/>
+            <line x="152.23" y="19.51"/>
+            <curve x1="152.87" x2="153.4" x3="153.4" y1="19.51" y2="18.98" y3="18.34"/>
+            <line x="153.4" y="17.35"/>
+            <curve x1="153.4" x2="152.87" x3="152.23" y1="16.71" y2="16.18" y3="16.18"/>
+            <close/>
+            <move x="8.51" y="17.18"/>
+            <line x="152.23" y="17.18"/>
+            <curve x1="152.33" x2="152.4" x3="152.4" y1="17.18" y2="17.24" y3="17.35"/>
+            <line x="152.4" y="18.34"/>
+            <curve x1="152.4" x2="152.33" x3="152.23" y1="18.44" y2="18.51" y3="18.51"/>
+            <line x="8.51" y="18.51"/>
+            <curve x1="8.4" x2="8.34" x3="8.34" y1="18.51" y2="18.44" y3="18.34"/>
+            <line x="8.34" y="17.35"/>
+            <curve x1="8.34" x2="8.4" x3="8.51" y1="17.24" y2="17.18" y3="17.18"/>
+            <close/>
+            <move x="12.84" y="20.68"/>
+            <line x="12.84" y="23.68"/>
+            <line x="13.84" y="23.68"/>
+            <line x="13.84" y="20.68"/>
+            <close/>
+            <move x="18.84" y="20.68"/>
+            <line x="18.84" y="23.68"/>
+            <line x="19.84" y="23.68"/>
+            <line x="19.84" y="20.68"/>
+            <close/>
+            <move x="24.84" y="20.68"/>
+            <line x="24.84" y="23.68"/>
+            <line x="25.84" y="23.68"/>
+            <line x="25.84" y="20.68"/>
+            <close/>
+            <move x="31.18" y="20.68"/>
+            <line x="31.18" y="23.68"/>
+            <line x="32.18" y="23.68"/>
+            <line x="32.18" y="20.68"/>
+            <close/>
+            <move x="37.18" y="20.68"/>
+            <line x="37.18" y="23.68"/>
+            <line x="38.18" y="23.68"/>
+            <line x="38.18" y="20.68"/>
+            <close/>
+            <move x="43.18" y="20.68"/>
+            <line x="43.18" y="23.68"/>
+            <line x="44.19" y="23.68"/>
+            <line x="44.19" y="20.68"/>
+            <close/>
+            <move x="49.19" y="20.68"/>
+            <line x="49.19" y="23.68"/>
+            <line x="50.19" y="23.68"/>
+            <line x="50.19" y="20.68"/>
+            <close/>
+            <move x="55.52" y="20.68"/>
+            <line x="55.52" y="23.68"/>
+            <line x="56.52" y="23.68"/>
+            <line x="56.52" y="20.68"/>
+            <close/>
+            <move x="61.53" y="20.68"/>
+            <line x="61.53" y="23.68"/>
+            <line x="62.53" y="23.68"/>
+            <line x="62.53" y="20.68"/>
+            <close/>
+            <move x="67.19" y="20.68"/>
+            <line x="67.19" y="23.68"/>
+            <line x="68.2" y="23.68"/>
+            <line x="68.2" y="20.68"/>
+            <close/>
+            <move x="73.53" y="20.68"/>
+            <line x="73.53" y="23.68"/>
+            <line x="74.53" y="23.68"/>
+            <line x="74.53" y="20.68"/>
+            <close/>
+            <move x="79.53" y="20.68"/>
+            <line x="79.53" y="23.68"/>
+            <line x="80.53" y="23.68"/>
+            <line x="80.53" y="20.68"/>
+            <close/>
+            <move x="85.54" y="20.68"/>
+            <line x="85.54" y="23.68"/>
+            <line x="86.54" y="23.68"/>
+            <line x="86.54" y="20.68"/>
+            <close/>
+            <move x="91.87" y="20.68"/>
+            <line x="91.87" y="23.68"/>
+            <line x="92.87" y="23.68"/>
+            <line x="92.87" y="20.68"/>
+            <close/>
+            <move x="97.87" y="20.68"/>
+            <line x="97.87" y="23.68"/>
+            <line x="98.88" y="23.68"/>
+            <line x="98.88" y="20.68"/>
+            <close/>
+            <move x="103.88" y="20.68"/>
+            <line x="103.88" y="23.68"/>
+            <line x="104.88" y="23.68"/>
+            <line x="104.88" y="20.68"/>
+            <close/>
+            <move x="109.88" y="20.68"/>
+            <line x="109.88" y="23.68"/>
+            <line x="110.88" y="23.68"/>
+            <line x="110.88" y="20.68"/>
+            <close/>
+            <move x="116.21" y="20.68"/>
+            <line x="116.21" y="23.68"/>
+            <line x="117.21" y="23.68"/>
+            <line x="117.21" y="20.68"/>
+            <close/>
+            <move x="122.22" y="20.68"/>
+            <line x="122.22" y="23.68"/>
+            <line x="123.22" y="23.68"/>
+            <line x="123.22" y="20.68"/>
+            <close/>
+            <move x="127.89" y="20.68"/>
+            <line x="127.89" y="23.68"/>
+            <line x="128.89" y="23.68"/>
+            <line x="128.89" y="20.68"/>
+            <close/>
+            <move x="134.22" y="20.68"/>
+            <line x="134.22" y="23.68"/>
+            <line x="135.22" y="23.68"/>
+            <line x="135.22" y="20.68"/>
+            <close/>
+            <move x="140.22" y="20.68"/>
+            <line x="140.22" y="23.68"/>
+            <line x="141.22" y="23.68"/>
+            <line x="141.22" y="20.68"/>
+            <close/>
+            <move x="146.23" y="20.68"/>
+            <line x="146.23" y="23.68"/>
+            <line x="147.23" y="23.68"/>
+            <line x="147.23" y="20.68"/>
+            <close/>
+            <move x="156.23" y="26.18"/>
+            <curve x1="155.41" x2="154.73" x3="154.73" y1="26.18" y2="26.86" y3="27.68"/>
+            <curve x1="154.73" x2="155.41" x3="156.23" y1="28.5" y2="29.18" y3="29.18"/>
+            <line x="159.23" y="29.18"/>
+            <curve x1="160.05" x2="160.73" x3="160.73" y1="29.18" y2="28.5" y3="27.68"/>
+            <curve x1="160.73" x2="160.05" x3="159.23" y1="26.86" y2="26.18" y3="26.18"/>
+            <close/>
+            <move x="2.17" y="27.18"/>
+            <line x="5.17" y="27.18"/>
+            <curve x1="5.46" x2="5.67" x3="5.67" y1="27.18" y2="27.4" y3="27.68"/>
+            <curve x1="5.67" x2="5.46" x3="5.17" y1="27.97" y2="28.18" y3="28.18"/>
+            <line x="2.17" y="28.18"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="28.18" y2="27.97" y3="27.68"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="27.4" y2="27.18" y3="27.18"/>
+            <close/>
+            <move x="156.23" y="27.18"/>
+            <line x="159.23" y="27.18"/>
+            <curve x1="159.52" x2="159.73" x3="159.73" y1="27.18" y2="27.4" y3="27.68"/>
+            <curve x1="159.73" x2="159.52" x3="159.23" y1="27.97" y2="28.18" y3="28.18"/>
+            <line x="156.23" y="28.18"/>
+            <curve x1="155.94" x2="155.73" x3="155.73" y1="28.18" y2="27.97" y3="27.68"/>
+            <curve x1="155.73" x2="155.94" x3="156.23" y1="27.4" y2="27.18" y3="27.18"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="15.95" name="CAT5e Rack Mount Patch Panel 24 ports" strokewidth="inherit" w="161.93">
+    <connections/>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="15.95"/>
+            <line x="161.93" y="15.95"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="2.17" y="2.35"/>
+            <line x="5.17" y="2.35"/>
+            <curve x1="5.46" x2="5.67" x3="5.67" y1="2.35" y2="2.56" y3="2.85"/>
+            <line x="5.67" y="2.86"/>
+            <curve x1="5.67" x2="5.46" x3="5.17" y1="3.15" y2="3.36" y3="3.36"/>
+            <line x="2.17" y="3.36"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="3.36" y2="3.15" y3="2.86"/>
+            <line x="1.67" y="2.85"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="2.56" y2="2.35" y3="2.35"/>
+            <close/>
+            <move x="8.51" y="2.35"/>
+            <line x="152.23" y="2.35"/>
+            <curve x1="152.33" x2="152.4" x3="152.4" y1="2.35" y2="2.41" y3="2.52"/>
+            <line x="152.4" y="3.53"/>
+            <curve x1="152.4" x2="152.33" x3="152.23" y1="3.63" y2="3.7" y3="3.7"/>
+            <line x="8.51" y="3.7"/>
+            <curve x1="8.4" x2="8.34" x3="8.34" y1="3.7" y2="3.63" y3="3.53"/>
+            <line x="8.34" y="2.52"/>
+            <curve x1="8.34" x2="8.4" x3="8.51" y1="2.41" y2="2.35" y3="2.35"/>
+            <close/>
+            <move x="156.23" y="2.35"/>
+            <line x="159.23" y="2.35"/>
+            <curve x1="159.52" x2="159.73" x3="159.73" y1="2.35" y2="2.56" y3="2.85"/>
+            <line x="159.73" y="2.86"/>
+            <curve x1="159.73" x2="159.52" x3="159.23" y1="3.15" y2="3.36" y3="3.36"/>
+            <line x="156.23" y="3.36"/>
+            <curve x1="155.94" x2="155.73" x3="155.73" y1="3.36" y2="3.15" y3="2.86"/>
+            <line x="155.73" y="2.85"/>
+            <curve x1="155.73" x2="155.94" x3="156.23" y1="2.56" y2="2.35" y3="2.35"/>
+            <close/>
+            <move x="2.17" y="12.44"/>
+            <line x="5.17" y="12.44"/>
+            <curve x1="5.46" x2="5.67" x3="5.67" y1="12.44" y2="12.65" y3="12.94"/>
+            <line x="5.67" y="12.95"/>
+            <curve x1="5.67" x2="5.46" x3="5.17" y1="13.24" y2="13.45" y3="13.45"/>
+            <line x="2.17" y="13.45"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="13.45" y2="13.24" y3="12.95"/>
+            <line x="1.67" y="12.94"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="12.65" y2="12.44" y3="12.44"/>
+            <close/>
+            <move x="156.23" y="12.44"/>
+            <line x="159.23" y="12.44"/>
+            <curve x1="159.52" x2="159.73" x3="159.73" y1="12.44" y2="12.65" y3="12.94"/>
+            <line x="159.73" y="12.95"/>
+            <curve x1="159.73" x2="159.52" x3="159.23" y1="13.24" y2="13.45" y3="13.45"/>
+            <line x="156.23" y="13.45"/>
+            <curve x1="155.94" x2="155.73" x3="155.73" y1="13.45" y2="13.24" y3="12.95"/>
+            <line x="155.73" y="12.94"/>
+            <curve x1="155.73" x2="155.94" x3="156.23" y1="12.65" y2="12.44" y3="12.44"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="5.32" y2="10.63" y3="15.95"/>
+            <line x="161.93" y="15.95"/>
+            <line x="161.93" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.93" y="1"/>
+            <line x="160.93" y="14.95"/>
+            <line x="1" y="14.95"/>
+            <line x="1" y="13.88"/>
+            <curve x1="1.28" x2="1.69" x3="2.17" y1="14.23" y2="14.45" y3="14.45"/>
+            <line x="5.17" y="14.45"/>
+            <curve x1="5.99" x2="6.67" x3="6.67" y1="14.45" y2="13.78" y3="12.95"/>
+            <line x="6.67" y="12.94"/>
+            <curve x1="6.67" x2="5.99" x3="5.17" y1="12.11" y2="11.44" y3="11.44"/>
+            <line x="2.17" y="11.44"/>
+            <curve x1="1.69" x2="1.28" x3="1" y1="11.44" y2="11.66" y3="12.01"/>
+            <line x="1" y="3.79"/>
+            <curve x1="1.28" x2="1.69" x3="2.17" y1="4.14" y2="4.36" y3="4.36"/>
+            <line x="5.17" y="4.36"/>
+            <curve x1="5.99" x2="6.67" x3="6.67" y1="4.36" y2="3.69" y3="2.86"/>
+            <line x="6.67" y="2.85"/>
+            <curve x1="6.67" x2="5.99" x3="5.17" y1="2.02" y2="1.35" y3="1.35"/>
+            <line x="2.17" y="1.35"/>
+            <curve x1="1.69" x2="1.28" x3="1" y1="1.35" y2="1.57" y3="1.92"/>
+            <close/>
+            <move x="8.51" y="1.35"/>
+            <curve x1="7.87" x2="7.34" x3="7.34" y1="1.35" y2="1.88" y3="2.52"/>
+            <line x="7.34" y="3.53"/>
+            <curve x1="7.34" x2="7.87" x3="8.51" y1="4.17" y2="4.7" y3="4.7"/>
+            <line x="152.23" y="4.7"/>
+            <curve x1="152.87" x2="153.4" x3="153.4" y1="4.7" y2="4.17" y3="3.53"/>
+            <line x="153.4" y="2.52"/>
+            <curve x1="153.4" x2="152.87" x3="152.23" y1="1.88" y2="1.35" y3="1.35"/>
+            <close/>
+            <move x="156.23" y="1.35"/>
+            <curve x1="155.41" x2="154.73" x3="154.73" y1="1.35" y2="2.02" y3="2.85"/>
+            <line x="154.73" y="2.86"/>
+            <curve x1="154.73" x2="155.41" x3="156.23" y1="3.69" y2="4.36" y3="4.36"/>
+            <line x="159.23" y="4.36"/>
+            <curve x1="160.05" x2="160.73" x3="160.73" y1="4.36" y2="3.69" y3="2.86"/>
+            <line x="160.73" y="2.85"/>
+            <curve x1="160.73" x2="160.05" x3="159.23" y1="2.02" y2="1.35" y3="1.35"/>
+            <close/>
+            <move x="2.17" y="2.35"/>
+            <line x="5.17" y="2.35"/>
+            <curve x1="5.46" x2="5.67" x3="5.67" y1="2.35" y2="2.56" y3="2.85"/>
+            <line x="5.67" y="2.86"/>
+            <curve x1="5.67" x2="5.46" x3="5.17" y1="3.15" y2="3.36" y3="3.36"/>
+            <line x="2.17" y="3.36"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="3.36" y2="3.15" y3="2.86"/>
+            <line x="1.67" y="2.85"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="2.56" y2="2.35" y3="2.35"/>
+            <close/>
+            <move x="8.51" y="2.35"/>
+            <line x="152.23" y="2.35"/>
+            <curve x1="152.33" x2="152.4" x3="152.4" y1="2.35" y2="2.41" y3="2.52"/>
+            <line x="152.4" y="3.53"/>
+            <curve x1="152.4" x2="152.33" x3="152.23" y1="3.63" y2="3.7" y3="3.7"/>
+            <line x="8.51" y="3.7"/>
+            <curve x1="8.4" x2="8.34" x3="8.34" y1="3.7" y2="3.63" y3="3.53"/>
+            <line x="8.34" y="2.52"/>
+            <curve x1="8.34" x2="8.4" x3="8.51" y1="2.41" y2="2.35" y3="2.35"/>
+            <close/>
+            <move x="156.23" y="2.35"/>
+            <line x="159.23" y="2.35"/>
+            <curve x1="159.52" x2="159.73" x3="159.73" y1="2.35" y2="2.56" y3="2.85"/>
+            <line x="159.73" y="2.86"/>
+            <curve x1="159.73" x2="159.52" x3="159.23" y1="3.15" y2="3.36" y3="3.36"/>
+            <line x="156.23" y="3.36"/>
+            <curve x1="155.94" x2="155.73" x3="155.73" y1="3.36" y2="3.15" y3="2.86"/>
+            <line x="155.73" y="2.85"/>
+            <curve x1="155.73" x2="155.94" x3="156.23" y1="2.56" y2="2.35" y3="2.35"/>
+            <close/>
+            <move x="12.84" y="5.88"/>
+            <line x="12.84" y="8.91"/>
+            <line x="13.84" y="8.91"/>
+            <line x="13.84" y="5.88"/>
+            <close/>
+            <move x="18.84" y="5.88"/>
+            <line x="18.84" y="8.91"/>
+            <line x="19.84" y="8.91"/>
+            <line x="19.84" y="5.88"/>
+            <close/>
+            <move x="24.84" y="5.88"/>
+            <line x="24.84" y="8.91"/>
+            <line x="25.84" y="8.91"/>
+            <line x="25.84" y="5.88"/>
+            <close/>
+            <move x="31.18" y="5.88"/>
+            <line x="31.18" y="8.91"/>
+            <line x="32.18" y="8.91"/>
+            <line x="32.18" y="5.88"/>
+            <close/>
+            <move x="37.18" y="5.88"/>
+            <line x="37.18" y="8.91"/>
+            <line x="38.18" y="8.91"/>
+            <line x="38.18" y="5.88"/>
+            <close/>
+            <move x="43.18" y="5.88"/>
+            <line x="43.18" y="8.91"/>
+            <line x="44.19" y="8.91"/>
+            <line x="44.19" y="5.88"/>
+            <close/>
+            <move x="49.19" y="5.88"/>
+            <line x="49.19" y="8.91"/>
+            <line x="50.19" y="8.91"/>
+            <line x="50.19" y="5.88"/>
+            <close/>
+            <move x="55.52" y="5.88"/>
+            <line x="55.52" y="8.91"/>
+            <line x="56.52" y="8.91"/>
+            <line x="56.52" y="5.88"/>
+            <close/>
+            <move x="61.53" y="5.88"/>
+            <line x="61.53" y="8.91"/>
+            <line x="62.53" y="8.91"/>
+            <line x="62.53" y="5.88"/>
+            <close/>
+            <move x="67.19" y="5.88"/>
+            <line x="67.19" y="8.91"/>
+            <line x="68.2" y="8.91"/>
+            <line x="68.2" y="5.88"/>
+            <close/>
+            <move x="73.53" y="5.88"/>
+            <line x="73.53" y="8.91"/>
+            <line x="74.53" y="8.91"/>
+            <line x="74.53" y="5.88"/>
+            <close/>
+            <move x="79.53" y="5.88"/>
+            <line x="79.53" y="8.91"/>
+            <line x="80.53" y="8.91"/>
+            <line x="80.53" y="5.88"/>
+            <close/>
+            <move x="85.54" y="5.88"/>
+            <line x="85.54" y="8.91"/>
+            <line x="86.54" y="8.91"/>
+            <line x="86.54" y="5.88"/>
+            <close/>
+            <move x="91.87" y="5.88"/>
+            <line x="91.87" y="8.91"/>
+            <line x="92.87" y="8.91"/>
+            <line x="92.87" y="5.88"/>
+            <close/>
+            <move x="97.87" y="5.88"/>
+            <line x="97.87" y="8.91"/>
+            <line x="98.88" y="8.91"/>
+            <line x="98.88" y="5.88"/>
+            <close/>
+            <move x="103.88" y="5.88"/>
+            <line x="103.88" y="8.91"/>
+            <line x="104.88" y="8.91"/>
+            <line x="104.88" y="5.88"/>
+            <close/>
+            <move x="109.88" y="5.88"/>
+            <line x="109.88" y="8.91"/>
+            <line x="110.88" y="8.91"/>
+            <line x="110.88" y="5.88"/>
+            <close/>
+            <move x="116.21" y="5.88"/>
+            <line x="116.21" y="8.91"/>
+            <line x="117.21" y="8.91"/>
+            <line x="117.21" y="5.88"/>
+            <close/>
+            <move x="122.22" y="5.88"/>
+            <line x="122.22" y="8.91"/>
+            <line x="123.22" y="8.91"/>
+            <line x="123.22" y="5.88"/>
+            <close/>
+            <move x="127.89" y="5.88"/>
+            <line x="127.89" y="8.91"/>
+            <line x="128.89" y="8.91"/>
+            <line x="128.89" y="5.88"/>
+            <close/>
+            <move x="134.22" y="5.88"/>
+            <line x="134.22" y="8.91"/>
+            <line x="135.22" y="8.91"/>
+            <line x="135.22" y="5.88"/>
+            <close/>
+            <move x="140.22" y="5.88"/>
+            <line x="140.22" y="8.91"/>
+            <line x="141.22" y="8.91"/>
+            <line x="141.22" y="5.88"/>
+            <close/>
+            <move x="146.23" y="5.88"/>
+            <line x="146.23" y="8.91"/>
+            <line x="147.23" y="8.91"/>
+            <line x="147.23" y="5.88"/>
+            <close/>
+            <move x="156.23" y="11.44"/>
+            <curve x1="155.41" x2="154.73" x3="154.73" y1="11.44" y2="12.11" y3="12.94"/>
+            <line x="154.73" y="12.95"/>
+            <curve x1="154.73" x2="155.41" x3="156.23" y1="13.78" y2="14.45" y3="14.45"/>
+            <line x="159.23" y="14.45"/>
+            <curve x1="160.05" x2="160.73" x3="160.73" y1="14.45" y2="13.78" y3="12.95"/>
+            <line x="160.73" y="12.94"/>
+            <curve x1="160.73" x2="160.05" x3="159.23" y1="12.11" y2="11.44" y3="11.44"/>
+            <close/>
+            <move x="2.17" y="12.44"/>
+            <line x="5.17" y="12.44"/>
+            <curve x1="5.46" x2="5.67" x3="5.67" y1="12.44" y2="12.65" y3="12.94"/>
+            <line x="5.67" y="12.95"/>
+            <curve x1="5.67" x2="5.46" x3="5.17" y1="13.24" y2="13.45" y3="13.45"/>
+            <line x="2.17" y="13.45"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="13.45" y2="13.24" y3="12.95"/>
+            <line x="1.67" y="12.94"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="12.65" y2="12.44" y3="12.44"/>
+            <close/>
+            <move x="156.23" y="12.44"/>
+            <line x="159.23" y="12.44"/>
+            <curve x1="159.52" x2="159.73" x3="159.73" y1="12.44" y2="12.65" y3="12.94"/>
+            <line x="159.73" y="12.95"/>
+            <curve x1="159.73" x2="159.52" x3="159.23" y1="13.24" y2="13.45" y3="13.45"/>
+            <line x="156.23" y="13.45"/>
+            <curve x1="155.94" x2="155.73" x3="155.73" y1="13.45" y2="13.24" y3="12.95"/>
+            <line x="155.73" y="12.94"/>
+            <curve x1="155.73" x2="155.94" x3="156.23" y1="12.65" y2="12.44" y3="12.44"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.64313725"/>
+        <rect h="3.03" w="144.06" x="8.17" y="5.88"/>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="60.2" name="CAT5e Rack Mount Patch Panel 96 ports" strokewidth="inherit" w="161.9">
+    <connections/>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="60.2"/>
+            <line x="161.9" y="60.2"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="8.5" y="2.33"/>
+            <line x="152.2" y="2.33"/>
+            <curve x1="152.3" x2="152.37" x3="152.37" y1="2.33" y2="2.4" y3="2.5"/>
+            <line x="152.37" y="3.49"/>
+            <curve x1="152.37" x2="152.3" x3="152.2" y1="3.6" y2="3.66" y3="3.66"/>
+            <line x="8.5" y="3.66"/>
+            <curve x1="8.4" x2="8.33" x3="8.33" y1="3.66" y2="3.6" y3="3.49"/>
+            <line x="8.33" y="2.5"/>
+            <curve x1="8.33" x2="8.4" x3="8.5" y1="2.4" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="2.17" y="2.33"/>
+            <line x="5.17" y="2.33"/>
+            <curve x1="5.45" x2="5.67" x3="5.67" y1="2.33" y2="2.55" y3="2.83"/>
+            <curve x1="5.67" x2="5.45" x3="5.17" y1="3.11" y2="3.33" y3="3.33"/>
+            <line x="2.17" y="3.33"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="3.33" y2="3.11" y3="2.83"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="2.55" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="2.17" y="27.14"/>
+            <line x="5.17" y="27.14"/>
+            <curve x1="5.45" x2="5.67" x3="5.67" y1="27.14" y2="27.35" y3="27.64"/>
+            <curve x1="5.67" x2="5.45" x3="5.17" y1="27.92" y2="28.13" y3="28.13"/>
+            <line x="2.17" y="28.13"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="28.13" y2="27.92" y3="27.64"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="27.35" y2="27.14" y3="27.14"/>
+            <close/>
+            <move x="155.7" y="2.83"/>
+            <curve x1="155.7" x2="155.91" x3="156.2" y1="2.55" y2="2.33" y3="2.33"/>
+            <line x="159.2" y="2.33"/>
+            <curve x1="159.49" x2="159.7" x3="159.7" y1="2.33" y2="2.55" y3="2.83"/>
+            <curve x1="159.7" x2="159.49" x3="159.2" y1="3.11" y2="3.33" y3="3.33"/>
+            <line x="156.2" y="3.33"/>
+            <curve x1="155.91" x2="155.7" x3="155.7" y1="3.33" y2="3.11" y3="2.83"/>
+            <close/>
+            <move x="156.2" y="27.14"/>
+            <line x="159.2" y="27.14"/>
+            <curve x1="159.49" x2="159.7" x3="159.7" y1="27.14" y2="27.35" y3="27.64"/>
+            <curve x1="159.7" x2="159.49" x3="159.2" y1="27.92" y2="28.13" y3="28.13"/>
+            <line x="156.2" y="28.13"/>
+            <curve x1="155.91" x2="155.7" x3="155.7" y1="28.13" y2="27.92" y3="27.64"/>
+            <curve x1="155.7" x2="155.91" x3="156.2" y1="27.35" y2="27.14" y3="27.14"/>
+            <close/>
+            <move x="8.5" y="17.15"/>
+            <line x="152.2" y="17.15"/>
+            <curve x1="152.3" x2="152.37" x3="152.37" y1="17.15" y2="17.22" y3="17.32"/>
+            <line x="152.37" y="18.31"/>
+            <curve x1="152.37" x2="152.3" x3="152.2" y1="18.41" y2="18.48" y3="18.48"/>
+            <line x="8.5" y="18.48"/>
+            <curve x1="8.4" x2="8.33" x3="8.33" y1="18.48" y2="18.41" y3="18.31"/>
+            <line x="8.33" y="17.32"/>
+            <curve x1="8.33" x2="8.4" x3="8.5" y1="17.22" y2="17.15" y3="17.15"/>
+            <close/>
+            <move x="2.17" y="31.93"/>
+            <line x="5.17" y="31.93"/>
+            <curve x1="5.45" x2="5.67" x3="5.67" y1="31.93" y2="32.15" y3="32.43"/>
+            <curve x1="5.67" x2="5.45" x3="5.17" y1="32.72" y2="32.93" y3="32.93"/>
+            <line x="2.17" y="32.93"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="32.93" y2="32.72" y3="32.43"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="32.15" y2="31.93" y3="31.93"/>
+            <close/>
+            <move x="2.17" y="56.74"/>
+            <line x="5.17" y="56.74"/>
+            <curve x1="5.45" x2="5.67" x3="5.67" y1="56.74" y2="56.95" y3="57.24"/>
+            <curve x1="5.67" x2="5.45" x3="5.17" y1="57.52" y2="57.73" y3="57.73"/>
+            <line x="2.17" y="57.73"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="57.73" y2="57.52" y3="57.24"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="56.95" y2="56.74" y3="56.74"/>
+            <close/>
+            <move x="156.2" y="56.74"/>
+            <line x="159.2" y="56.74"/>
+            <curve x1="159.49" x2="159.7" x3="159.7" y1="56.74" y2="56.95" y3="57.24"/>
+            <curve x1="159.7" x2="159.49" x3="159.2" y1="57.52" y2="57.73" y3="57.73"/>
+            <line x="156.2" y="57.73"/>
+            <curve x1="155.91" x2="155.7" x3="155.7" y1="57.73" y2="57.52" y3="57.24"/>
+            <curve x1="155.7" x2="155.91" x3="156.2" y1="56.95" y2="56.74" y3="56.74"/>
+            <close/>
+            <move x="156.2" y="31.93"/>
+            <line x="159.2" y="31.93"/>
+            <curve x1="159.49" x2="159.7" x3="159.7" y1="31.93" y2="32.15" y3="32.43"/>
+            <curve x1="159.7" x2="159.49" x3="159.2" y1="32.72" y2="32.93" y3="32.93"/>
+            <line x="156.2" y="32.93"/>
+            <curve x1="155.91" x2="155.7" x3="155.7" y1="32.93" y2="32.72" y3="32.43"/>
+            <curve x1="155.7" x2="155.91" x3="156.2" y1="32.15" y2="31.93" y3="31.93"/>
+            <close/>
+            <move x="8.5" y="31.93"/>
+            <line x="152.2" y="31.93"/>
+            <curve x1="152.3" x2="152.37" x3="152.37" y1="31.93" y2="32" y3="32.1"/>
+            <line x="152.37" y="33.09"/>
+            <curve x1="152.37" x2="152.3" x3="152.2" y1="33.19" y2="33.26" y3="33.26"/>
+            <line x="8.5" y="33.26"/>
+            <curve x1="8.4" x2="8.33" x3="8.33" y1="33.26" y2="33.19" y3="33.09"/>
+            <line x="8.33" y="32.1"/>
+            <curve x1="8.33" x2="8.4" x3="8.5" y1="32" y2="31.93" y3="31.93"/>
+            <close/>
+            <move x="8.5" y="46.75"/>
+            <line x="152.2" y="46.75"/>
+            <curve x1="152.3" x2="152.37" x3="152.37" y1="46.75" y2="46.82" y3="46.92"/>
+            <line x="152.37" y="47.91"/>
+            <curve x1="152.37" x2="152.3" x3="152.2" y1="48.01" y2="48.08" y3="48.08"/>
+            <line x="8.5" y="48.08"/>
+            <curve x1="8.4" x2="8.33" x3="8.33" y1="48.08" y2="48.01" y3="47.91"/>
+            <line x="8.33" y="46.92"/>
+            <curve x1="8.33" x2="8.4" x3="8.5" y1="46.82" y2="46.75" y3="46.75"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="60.2"/>
+            <line x="161.9" y="60.2"/>
+            <line x="161.9" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.9" y="1"/>
+            <line x="160.9" y="59.2"/>
+            <line x="1" y="59.2"/>
+            <line x="1" y="58.16"/>
+            <curve x1="1.28" x2="1.69" x3="2.17" y1="58.51" y2="58.73" y3="58.73"/>
+            <line x="5.17" y="58.73"/>
+            <curve x1="5.99" x2="6.67" x3="6.67" y1="58.73" y2="58.06" y3="57.24"/>
+            <curve x1="6.67" x2="5.99" x3="5.17" y1="56.41" y2="55.74" y3="55.74"/>
+            <line x="2.17" y="55.74"/>
+            <curve x1="1.69" x2="1.28" x3="1" y1="55.74" y2="55.96" y3="56.31"/>
+            <line x="1" y="33.36"/>
+            <curve x1="1.28" x2="1.69" x3="2.17" y1="33.7" y2="33.93" y3="33.93"/>
+            <line x="5.17" y="33.93"/>
+            <curve x1="5.99" x2="6.67" x3="6.67" y1="33.93" y2="33.25" y3="32.43"/>
+            <curve x1="6.67" x2="5.99" x3="5.17" y1="31.61" y2="30.93" y3="30.93"/>
+            <line x="2.17" y="30.93"/>
+            <curve x1="1.69" x2="1.28" x3="1" y1="30.93" y2="31.16" y3="31.5"/>
+            <line x="1" y="28.56"/>
+            <curve x1="1.28" x2="1.69" x3="2.17" y1="28.91" y2="29.13" y3="29.13"/>
+            <line x="5.17" y="29.13"/>
+            <curve x1="5.99" x2="6.67" x3="6.67" y1="29.13" y2="28.46" y3="27.64"/>
+            <curve x1="6.67" x2="5.99" x3="5.17" y1="26.81" y2="26.14" y3="26.14"/>
+            <line x="2.17" y="26.14"/>
+            <curve x1="1.69" x2="1.28" x3="1" y1="26.14" y2="26.36" y3="26.71"/>
+            <line x="1" y="3.76"/>
+            <curve x1="1.28" x2="1.69" x3="2.17" y1="4.1" y2="4.33" y3="4.33"/>
+            <line x="5.17" y="4.33"/>
+            <curve x1="5.99" x2="6.67" x3="6.67" y1="4.33" y2="3.65" y3="2.83"/>
+            <curve x1="6.67" x2="5.99" x3="5.17" y1="2.01" y2="1.33" y3="1.33"/>
+            <line x="2.17" y="1.33"/>
+            <curve x1="1.69" x2="1.28" x3="1" y1="1.33" y2="1.56" y3="1.9"/>
+            <close/>
+            <move x="8.5" y="1.33"/>
+            <curve x1="7.86" x2="7.33" x3="7.33" y1="1.33" y2="1.86" y3="2.5"/>
+            <line x="7.33" y="3.49"/>
+            <curve x1="7.33" x2="7.86" x3="8.5" y1="4.13" y2="4.66" y3="4.66"/>
+            <line x="152.2" y="4.66"/>
+            <curve x1="152.83" x2="153.37" x3="153.37" y1="4.66" y2="4.13" y3="3.49"/>
+            <line x="153.37" y="2.5"/>
+            <curve x1="153.37" x2="152.83" x3="152.2" y1="1.86" y2="1.33" y3="1.33"/>
+            <close/>
+            <move x="156.2" y="1.33"/>
+            <curve x1="155.38" x2="154.7" x3="154.7" y1="1.33" y2="2.01" y3="2.83"/>
+            <curve x1="154.7" x2="155.38" x3="156.2" y1="3.65" y2="4.33" y3="4.33"/>
+            <line x="159.2" y="4.33"/>
+            <curve x1="160.02" x2="160.7" x3="160.7" y1="4.33" y2="3.65" y3="2.83"/>
+            <curve x1="160.7" x2="160.02" x3="159.2" y1="2.01" y2="1.33" y3="1.33"/>
+            <close/>
+            <move x="2.17" y="2.33"/>
+            <line x="5.17" y="2.33"/>
+            <curve x1="5.45" x2="5.67" x3="5.67" y1="2.33" y2="2.55" y3="2.83"/>
+            <curve x1="5.67" x2="5.45" x3="5.17" y1="3.11" y2="3.33" y3="3.33"/>
+            <line x="2.17" y="3.33"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="3.33" y2="3.11" y3="2.83"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="2.55" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="8.5" y="2.33"/>
+            <line x="152.2" y="2.33"/>
+            <curve x1="152.3" x2="152.37" x3="152.37" y1="2.33" y2="2.4" y3="2.5"/>
+            <line x="152.37" y="3.49"/>
+            <curve x1="152.37" x2="152.3" x3="152.2" y1="3.6" y2="3.66" y3="3.66"/>
+            <line x="8.5" y="3.66"/>
+            <curve x1="8.4" x2="8.33" x3="8.33" y1="3.66" y2="3.6" y3="3.49"/>
+            <line x="8.33" y="2.5"/>
+            <curve x1="8.33" x2="8.4" x3="8.5" y1="2.4" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="156.2" y="2.33"/>
+            <line x="159.2" y="2.33"/>
+            <curve x1="159.49" x2="159.7" x3="159.7" y1="2.33" y2="2.55" y3="2.83"/>
+            <curve x1="159.7" x2="159.49" x3="159.2" y1="3.11" y2="3.33" y3="3.33"/>
+            <line x="156.2" y="3.33"/>
+            <curve x1="155.91" x2="155.7" x3="155.7" y1="3.33" y2="3.11" y3="2.83"/>
+            <curve x1="155.7" x2="155.91" x3="156.2" y1="2.55" y2="2.33" y3="2.33"/>
+            <close/>
+            <move x="12.84" y="5.83"/>
+            <line x="12.84" y="8.82"/>
+            <line x="13.84" y="8.82"/>
+            <line x="13.84" y="5.83"/>
+            <close/>
+            <move x="18.84" y="5.83"/>
+            <line x="18.84" y="8.82"/>
+            <line x="19.84" y="8.82"/>
+            <line x="19.84" y="5.83"/>
+            <close/>
+            <move x="24.84" y="5.83"/>
+            <line x="24.84" y="8.82"/>
+            <line x="25.84" y="8.82"/>
+            <line x="25.84" y="5.83"/>
+            <close/>
+            <move x="31.17" y="5.83"/>
+            <line x="31.17" y="8.82"/>
+            <line x="32.17" y="8.82"/>
+            <line x="32.17" y="5.83"/>
+            <close/>
+            <move x="37.17" y="5.83"/>
+            <line x="37.17" y="8.82"/>
+            <line x="38.17" y="8.82"/>
+            <line x="38.17" y="5.83"/>
+            <close/>
+            <move x="43.18" y="5.83"/>
+            <line x="43.18" y="8.82"/>
+            <line x="44.18" y="8.82"/>
+            <line x="44.18" y="5.83"/>
+            <close/>
+            <move x="49.18" y="5.83"/>
+            <line x="49.18" y="8.82"/>
+            <line x="50.18" y="8.82"/>
+            <line x="50.18" y="5.83"/>
+            <close/>
+            <move x="55.51" y="5.83"/>
+            <line x="55.51" y="8.82"/>
+            <line x="56.51" y="8.82"/>
+            <line x="56.51" y="5.83"/>
+            <close/>
+            <move x="61.51" y="5.83"/>
+            <line x="61.51" y="8.82"/>
+            <line x="62.51" y="8.82"/>
+            <line x="62.51" y="5.83"/>
+            <close/>
+            <move x="67.18" y="5.83"/>
+            <line x="67.18" y="8.82"/>
+            <line x="68.18" y="8.82"/>
+            <line x="68.18" y="5.83"/>
+            <close/>
+            <move x="73.52" y="5.83"/>
+            <line x="73.52" y="8.82"/>
+            <line x="74.52" y="8.82"/>
+            <line x="74.52" y="5.83"/>
+            <close/>
+            <move x="79.52" y="5.83"/>
+            <line x="79.52" y="8.82"/>
+            <line x="80.52" y="8.82"/>
+            <line x="80.52" y="5.83"/>
+            <close/>
+            <move x="85.52" y="5.83"/>
+            <line x="85.52" y="8.82"/>
+            <line x="86.52" y="8.82"/>
+            <line x="86.52" y="5.83"/>
+            <close/>
+            <move x="91.85" y="5.83"/>
+            <line x="91.85" y="8.82"/>
+            <line x="92.85" y="8.82"/>
+            <line x="92.85" y="5.83"/>
+            <close/>
+            <move x="97.85" y="5.83"/>
+            <line x="97.85" y="8.82"/>
+            <line x="98.85" y="8.82"/>
+            <line x="98.85" y="5.83"/>
+            <close/>
+            <move x="103.86" y="5.83"/>
+            <line x="103.86" y="8.82"/>
+            <line x="104.86" y="8.82"/>
+            <line x="104.86" y="5.83"/>
+            <close/>
+            <move x="109.86" y="5.83"/>
+            <line x="109.86" y="8.82"/>
+            <line x="110.86" y="8.82"/>
+            <line x="110.86" y="5.83"/>
+            <close/>
+            <move x="116.19" y="5.83"/>
+            <line x="116.19" y="8.82"/>
+            <line x="117.19" y="8.82"/>
+            <line x="117.19" y="5.83"/>
+            <close/>
+            <move x="122.19" y="5.83"/>
+            <line x="122.19" y="8.82"/>
+            <line x="123.19" y="8.82"/>
+            <line x="123.19" y="5.83"/>
+            <close/>
+            <move x="127.86" y="5.83"/>
+            <line x="127.86" y="8.82"/>
+            <line x="128.86" y="8.82"/>
+            <line x="128.86" y="5.83"/>
+            <close/>
+            <move x="134.2" y="5.83"/>
+            <line x="134.2" y="8.82"/>
+            <line x="135.2" y="8.82"/>
+            <line x="135.2" y="5.83"/>
+            <close/>
+            <move x="140.2" y="5.83"/>
+            <line x="140.2" y="8.82"/>
+            <line x="141.2" y="8.82"/>
+            <line x="141.2" y="5.83"/>
+            <close/>
+            <move x="146.2" y="5.83"/>
+            <line x="146.2" y="8.82"/>
+            <line x="147.2" y="8.82"/>
+            <line x="147.2" y="5.83"/>
+            <close/>
+            <move x="8.5" y="16.15"/>
+            <curve x1="7.86" x2="7.33" x3="7.33" y1="16.15" y2="16.68" y3="17.32"/>
+            <line x="7.33" y="18.31"/>
+            <curve x1="7.33" x2="7.86" x3="8.5" y1="18.95" y2="19.48" y3="19.48"/>
+            <line x="152.2" y="19.48"/>
+            <curve x1="152.83" x2="153.37" x3="153.37" y1="19.48" y2="18.95" y3="18.31"/>
+            <line x="153.37" y="17.32"/>
+            <curve x1="153.37" x2="152.83" x3="152.2" y1="16.68" y2="16.15" y3="16.15"/>
+            <close/>
+            <move x="8.5" y="17.15"/>
+            <line x="152.2" y="17.15"/>
+            <curve x1="152.3" x2="152.37" x3="152.37" y1="17.15" y2="17.22" y3="17.32"/>
+            <line x="152.37" y="18.31"/>
+            <curve x1="152.37" x2="152.3" x3="152.2" y1="18.41" y2="18.48" y3="18.48"/>
+            <line x="8.5" y="18.48"/>
+            <curve x1="8.4" x2="8.33" x3="8.33" y1="18.48" y2="18.41" y3="18.31"/>
+            <line x="8.33" y="17.32"/>
+            <curve x1="8.33" x2="8.4" x3="8.5" y1="17.22" y2="17.15" y3="17.15"/>
+            <close/>
+            <move x="12.84" y="20.64"/>
+            <line x="12.84" y="23.64"/>
+            <line x="13.84" y="23.64"/>
+            <line x="13.84" y="20.64"/>
+            <close/>
+            <move x="18.84" y="20.64"/>
+            <line x="18.84" y="23.64"/>
+            <line x="19.84" y="23.64"/>
+            <line x="19.84" y="20.64"/>
+            <close/>
+            <move x="24.84" y="20.64"/>
+            <line x="24.84" y="23.64"/>
+            <line x="25.84" y="23.64"/>
+            <line x="25.84" y="20.64"/>
+            <close/>
+            <move x="31.17" y="20.64"/>
+            <line x="31.17" y="23.64"/>
+            <line x="32.17" y="23.64"/>
+            <line x="32.17" y="20.64"/>
+            <close/>
+            <move x="37.17" y="20.64"/>
+            <line x="37.17" y="23.64"/>
+            <line x="38.17" y="23.64"/>
+            <line x="38.17" y="20.64"/>
+            <close/>
+            <move x="43.18" y="20.64"/>
+            <line x="43.18" y="23.64"/>
+            <line x="44.18" y="23.64"/>
+            <line x="44.18" y="20.64"/>
+            <close/>
+            <move x="49.18" y="20.64"/>
+            <line x="49.18" y="23.64"/>
+            <line x="50.18" y="23.64"/>
+            <line x="50.18" y="20.64"/>
+            <close/>
+            <move x="55.51" y="20.64"/>
+            <line x="55.51" y="23.64"/>
+            <line x="56.51" y="23.64"/>
+            <line x="56.51" y="20.64"/>
+            <close/>
+            <move x="61.51" y="20.64"/>
+            <line x="61.51" y="23.64"/>
+            <line x="62.51" y="23.64"/>
+            <line x="62.51" y="20.64"/>
+            <close/>
+            <move x="67.18" y="20.64"/>
+            <line x="67.18" y="23.64"/>
+            <line x="68.18" y="23.64"/>
+            <line x="68.18" y="20.64"/>
+            <close/>
+            <move x="73.52" y="20.64"/>
+            <line x="73.52" y="23.64"/>
+            <line x="74.52" y="23.64"/>
+            <line x="74.52" y="20.64"/>
+            <close/>
+            <move x="79.52" y="20.64"/>
+            <line x="79.52" y="23.64"/>
+            <line x="80.52" y="23.64"/>
+            <line x="80.52" y="20.64"/>
+            <close/>
+            <move x="85.52" y="20.64"/>
+            <line x="85.52" y="23.64"/>
+            <line x="86.52" y="23.64"/>
+            <line x="86.52" y="20.64"/>
+            <close/>
+            <move x="91.85" y="20.64"/>
+            <line x="91.85" y="23.64"/>
+            <line x="92.85" y="23.64"/>
+            <line x="92.85" y="20.64"/>
+            <close/>
+            <move x="97.85" y="20.64"/>
+            <line x="97.85" y="23.64"/>
+            <line x="98.85" y="23.64"/>
+            <line x="98.85" y="20.64"/>
+            <close/>
+            <move x="103.86" y="20.64"/>
+            <line x="103.86" y="23.64"/>
+            <line x="104.86" y="23.64"/>
+            <line x="104.86" y="20.64"/>
+            <close/>
+            <move x="109.86" y="20.64"/>
+            <line x="109.86" y="23.64"/>
+            <line x="110.86" y="23.64"/>
+            <line x="110.86" y="20.64"/>
+            <close/>
+            <move x="116.19" y="20.64"/>
+            <line x="116.19" y="23.64"/>
+            <line x="117.19" y="23.64"/>
+            <line x="117.19" y="20.64"/>
+            <close/>
+            <move x="122.19" y="20.64"/>
+            <line x="122.19" y="23.64"/>
+            <line x="123.19" y="23.64"/>
+            <line x="123.19" y="20.64"/>
+            <close/>
+            <move x="127.86" y="20.64"/>
+            <line x="127.86" y="23.64"/>
+            <line x="128.86" y="23.64"/>
+            <line x="128.86" y="20.64"/>
+            <close/>
+            <move x="134.2" y="20.64"/>
+            <line x="134.2" y="23.64"/>
+            <line x="135.2" y="23.64"/>
+            <line x="135.2" y="20.64"/>
+            <close/>
+            <move x="140.2" y="20.64"/>
+            <line x="140.2" y="23.64"/>
+            <line x="141.2" y="23.64"/>
+            <line x="141.2" y="20.64"/>
+            <close/>
+            <move x="146.2" y="20.64"/>
+            <line x="146.2" y="23.64"/>
+            <line x="147.2" y="23.64"/>
+            <line x="147.2" y="20.64"/>
+            <close/>
+            <move x="156.2" y="26.14"/>
+            <curve x1="155.38" x2="154.7" x3="154.7" y1="26.14" y2="26.81" y3="27.64"/>
+            <curve x1="154.7" x2="155.38" x3="156.2" y1="28.46" y2="29.13" y3="29.13"/>
+            <line x="159.2" y="29.13"/>
+            <curve x1="160.02" x2="160.7" x3="160.7" y1="29.13" y2="28.46" y3="27.64"/>
+            <curve x1="160.7" x2="160.02" x3="159.2" y1="26.81" y2="26.14" y3="26.14"/>
+            <close/>
+            <move x="2.17" y="27.14"/>
+            <line x="5.17" y="27.14"/>
+            <curve x1="5.45" x2="5.67" x3="5.67" y1="27.14" y2="27.35" y3="27.64"/>
+            <curve x1="5.67" x2="5.45" x3="5.17" y1="27.92" y2="28.13" y3="28.13"/>
+            <line x="2.17" y="28.13"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="28.13" y2="27.92" y3="27.64"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="27.35" y2="27.14" y3="27.14"/>
+            <close/>
+            <move x="156.2" y="27.14"/>
+            <line x="159.2" y="27.14"/>
+            <curve x1="159.49" x2="159.7" x3="159.7" y1="27.14" y2="27.35" y3="27.64"/>
+            <curve x1="159.7" x2="159.49" x3="159.2" y1="27.92" y2="28.13" y3="28.13"/>
+            <line x="156.2" y="28.13"/>
+            <curve x1="155.91" x2="155.7" x3="155.7" y1="28.13" y2="27.92" y3="27.64"/>
+            <curve x1="155.7" x2="155.91" x3="156.2" y1="27.35" y2="27.14" y3="27.14"/>
+            <close/>
+            <move x="8.5" y="30.93"/>
+            <curve x1="7.86" x2="7.33" x3="7.33" y1="30.93" y2="31.46" y3="32.1"/>
+            <line x="7.33" y="33.09"/>
+            <curve x1="7.33" x2="7.86" x3="8.5" y1="33.73" y2="34.26" y3="34.26"/>
+            <line x="152.2" y="34.26"/>
+            <curve x1="152.83" x2="153.37" x3="153.37" y1="34.26" y2="33.73" y3="33.09"/>
+            <line x="153.37" y="32.1"/>
+            <curve x1="153.37" x2="152.83" x3="152.2" y1="31.46" y2="30.93" y3="30.93"/>
+            <close/>
+            <move x="156.2" y="30.93"/>
+            <curve x1="155.38" x2="154.7" x3="154.7" y1="30.93" y2="31.61" y3="32.43"/>
+            <curve x1="154.7" x2="155.38" x3="156.2" y1="33.25" y2="33.93" y3="33.93"/>
+            <line x="159.2" y="33.93"/>
+            <curve x1="160.02" x2="160.7" x3="160.7" y1="33.93" y2="33.25" y3="32.43"/>
+            <curve x1="160.7" x2="160.02" x3="159.2" y1="31.61" y2="30.93" y3="30.93"/>
+            <close/>
+            <move x="2.17" y="31.93"/>
+            <line x="5.17" y="31.93"/>
+            <curve x1="5.45" x2="5.67" x3="5.67" y1="31.93" y2="32.15" y3="32.43"/>
+            <curve x1="5.67" x2="5.45" x3="5.17" y1="32.72" y2="32.93" y3="32.93"/>
+            <line x="2.17" y="32.93"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="32.93" y2="32.72" y3="32.43"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="32.15" y2="31.93" y3="31.93"/>
+            <close/>
+            <move x="8.5" y="31.93"/>
+            <line x="152.2" y="31.93"/>
+            <curve x1="152.3" x2="152.37" x3="152.37" y1="31.93" y2="32" y3="32.1"/>
+            <line x="152.37" y="33.09"/>
+            <curve x1="152.37" x2="152.3" x3="152.2" y1="33.19" y2="33.26" y3="33.26"/>
+            <line x="8.5" y="33.26"/>
+            <curve x1="8.4" x2="8.33" x3="8.33" y1="33.26" y2="33.19" y3="33.09"/>
+            <line x="8.33" y="32.1"/>
+            <curve x1="8.33" x2="8.4" x3="8.5" y1="32" y2="31.93" y3="31.93"/>
+            <close/>
+            <move x="156.2" y="31.93"/>
+            <line x="159.2" y="31.93"/>
+            <curve x1="159.49" x2="159.7" x3="159.7" y1="31.93" y2="32.15" y3="32.43"/>
+            <curve x1="159.7" x2="159.49" x3="159.2" y1="32.72" y2="32.93" y3="32.93"/>
+            <line x="156.2" y="32.93"/>
+            <curve x1="155.91" x2="155.7" x3="155.7" y1="32.93" y2="32.72" y3="32.43"/>
+            <curve x1="155.7" x2="155.91" x3="156.2" y1="32.15" y2="31.93" y3="31.93"/>
+            <close/>
+            <move x="12.84" y="35.43"/>
+            <line x="12.84" y="38.42"/>
+            <line x="13.84" y="38.42"/>
+            <line x="13.84" y="35.43"/>
+            <close/>
+            <move x="18.84" y="35.43"/>
+            <line x="18.84" y="38.42"/>
+            <line x="19.84" y="38.42"/>
+            <line x="19.84" y="35.43"/>
+            <close/>
+            <move x="24.84" y="35.43"/>
+            <line x="24.84" y="38.42"/>
+            <line x="25.84" y="38.42"/>
+            <line x="25.84" y="35.43"/>
+            <close/>
+            <move x="31.17" y="35.43"/>
+            <line x="31.17" y="38.42"/>
+            <line x="32.17" y="38.42"/>
+            <line x="32.17" y="35.43"/>
+            <close/>
+            <move x="37.17" y="35.43"/>
+            <line x="37.17" y="38.42"/>
+            <line x="38.17" y="38.42"/>
+            <line x="38.17" y="35.43"/>
+            <close/>
+            <move x="43.18" y="35.43"/>
+            <line x="43.18" y="38.42"/>
+            <line x="44.18" y="38.42"/>
+            <line x="44.18" y="35.43"/>
+            <close/>
+            <move x="49.18" y="35.43"/>
+            <line x="49.18" y="38.42"/>
+            <line x="50.18" y="38.42"/>
+            <line x="50.18" y="35.43"/>
+            <close/>
+            <move x="55.51" y="35.43"/>
+            <line x="55.51" y="38.42"/>
+            <line x="56.51" y="38.42"/>
+            <line x="56.51" y="35.43"/>
+            <close/>
+            <move x="61.51" y="35.43"/>
+            <line x="61.51" y="38.42"/>
+            <line x="62.51" y="38.42"/>
+            <line x="62.51" y="35.43"/>
+            <close/>
+            <move x="67.18" y="35.43"/>
+            <line x="67.18" y="38.42"/>
+            <line x="68.18" y="38.42"/>
+            <line x="68.18" y="35.43"/>
+            <close/>
+            <move x="73.52" y="35.43"/>
+            <line x="73.52" y="38.42"/>
+            <line x="74.52" y="38.42"/>
+            <line x="74.52" y="35.43"/>
+            <close/>
+            <move x="79.52" y="35.43"/>
+            <line x="79.52" y="38.42"/>
+            <line x="80.52" y="38.42"/>
+            <line x="80.52" y="35.43"/>
+            <close/>
+            <move x="85.52" y="35.43"/>
+            <line x="85.52" y="38.42"/>
+            <line x="86.52" y="38.42"/>
+            <line x="86.52" y="35.43"/>
+            <close/>
+            <move x="91.85" y="35.43"/>
+            <line x="91.85" y="38.42"/>
+            <line x="92.85" y="38.42"/>
+            <line x="92.85" y="35.43"/>
+            <close/>
+            <move x="97.85" y="35.43"/>
+            <line x="97.85" y="38.42"/>
+            <line x="98.85" y="38.42"/>
+            <line x="98.85" y="35.43"/>
+            <close/>
+            <move x="103.86" y="35.43"/>
+            <line x="103.86" y="38.42"/>
+            <line x="104.86" y="38.42"/>
+            <line x="104.86" y="35.43"/>
+            <close/>
+            <move x="109.86" y="35.43"/>
+            <line x="109.86" y="38.42"/>
+            <line x="110.86" y="38.42"/>
+            <line x="110.86" y="35.43"/>
+            <close/>
+            <move x="116.19" y="35.43"/>
+            <line x="116.19" y="38.42"/>
+            <line x="117.19" y="38.42"/>
+            <line x="117.19" y="35.43"/>
+            <close/>
+            <move x="122.19" y="35.43"/>
+            <line x="122.19" y="38.42"/>
+            <line x="123.19" y="38.42"/>
+            <line x="123.19" y="35.43"/>
+            <close/>
+            <move x="127.86" y="35.43"/>
+            <line x="127.86" y="38.42"/>
+            <line x="128.86" y="38.42"/>
+            <line x="128.86" y="35.43"/>
+            <close/>
+            <move x="134.2" y="35.43"/>
+            <line x="134.2" y="38.42"/>
+            <line x="135.2" y="38.42"/>
+            <line x="135.2" y="35.43"/>
+            <close/>
+            <move x="140.2" y="35.43"/>
+            <line x="140.2" y="38.42"/>
+            <line x="141.2" y="38.42"/>
+            <line x="141.2" y="35.43"/>
+            <close/>
+            <move x="146.2" y="35.43"/>
+            <line x="146.2" y="38.42"/>
+            <line x="147.2" y="38.42"/>
+            <line x="147.2" y="35.43"/>
+            <close/>
+            <move x="8.5" y="45.75"/>
+            <curve x1="7.86" x2="7.33" x3="7.33" y1="45.75" y2="46.28" y3="46.92"/>
+            <line x="7.33" y="47.91"/>
+            <curve x1="7.33" x2="7.86" x3="8.5" y1="48.55" y2="49.08" y3="49.08"/>
+            <line x="152.2" y="49.08"/>
+            <curve x1="152.83" x2="153.37" x3="153.37" y1="49.08" y2="48.55" y3="47.91"/>
+            <line x="153.37" y="46.92"/>
+            <curve x1="153.37" x2="152.83" x3="152.2" y1="46.28" y2="45.75" y3="45.75"/>
+            <close/>
+            <move x="8.5" y="46.75"/>
+            <line x="152.2" y="46.75"/>
+            <curve x1="152.3" x2="152.37" x3="152.37" y1="46.75" y2="46.82" y3="46.92"/>
+            <line x="152.37" y="47.91"/>
+            <curve x1="152.37" x2="152.3" x3="152.2" y1="48.01" y2="48.08" y3="48.08"/>
+            <line x="8.5" y="48.08"/>
+            <curve x1="8.4" x2="8.33" x3="8.33" y1="48.08" y2="48.01" y3="47.91"/>
+            <line x="8.33" y="46.92"/>
+            <curve x1="8.33" x2="8.4" x3="8.5" y1="46.82" y2="46.75" y3="46.75"/>
+            <close/>
+            <move x="12.84" y="50.24"/>
+            <line x="12.84" y="53.24"/>
+            <line x="13.84" y="53.24"/>
+            <line x="13.84" y="50.24"/>
+            <close/>
+            <move x="18.84" y="50.24"/>
+            <line x="18.84" y="53.24"/>
+            <line x="19.84" y="53.24"/>
+            <line x="19.84" y="50.24"/>
+            <close/>
+            <move x="24.84" y="50.24"/>
+            <line x="24.84" y="53.24"/>
+            <line x="25.84" y="53.24"/>
+            <line x="25.84" y="50.24"/>
+            <close/>
+            <move x="31.17" y="50.24"/>
+            <line x="31.17" y="53.24"/>
+            <line x="32.17" y="53.24"/>
+            <line x="32.17" y="50.24"/>
+            <close/>
+            <move x="37.17" y="50.24"/>
+            <line x="37.17" y="53.24"/>
+            <line x="38.17" y="53.24"/>
+            <line x="38.17" y="50.24"/>
+            <close/>
+            <move x="43.18" y="50.24"/>
+            <line x="43.18" y="53.24"/>
+            <line x="44.18" y="53.24"/>
+            <line x="44.18" y="50.24"/>
+            <close/>
+            <move x="49.18" y="50.24"/>
+            <line x="49.18" y="53.24"/>
+            <line x="50.18" y="53.24"/>
+            <line x="50.18" y="50.24"/>
+            <close/>
+            <move x="55.51" y="50.24"/>
+            <line x="55.51" y="53.24"/>
+            <line x="56.51" y="53.24"/>
+            <line x="56.51" y="50.24"/>
+            <close/>
+            <move x="61.51" y="50.24"/>
+            <line x="61.51" y="53.24"/>
+            <line x="62.51" y="53.24"/>
+            <line x="62.51" y="50.24"/>
+            <close/>
+            <move x="67.18" y="50.24"/>
+            <line x="67.18" y="53.24"/>
+            <line x="68.18" y="53.24"/>
+            <line x="68.18" y="50.24"/>
+            <close/>
+            <move x="73.52" y="50.24"/>
+            <line x="73.52" y="53.24"/>
+            <line x="74.52" y="53.24"/>
+            <line x="74.52" y="50.24"/>
+            <close/>
+            <move x="79.52" y="50.24"/>
+            <line x="79.52" y="53.24"/>
+            <line x="80.52" y="53.24"/>
+            <line x="80.52" y="50.24"/>
+            <close/>
+            <move x="85.52" y="50.24"/>
+            <line x="85.52" y="53.24"/>
+            <line x="86.52" y="53.24"/>
+            <line x="86.52" y="50.24"/>
+            <close/>
+            <move x="91.85" y="50.24"/>
+            <line x="91.85" y="53.24"/>
+            <line x="92.85" y="53.24"/>
+            <line x="92.85" y="50.24"/>
+            <close/>
+            <move x="97.85" y="50.24"/>
+            <line x="97.85" y="53.24"/>
+            <line x="98.85" y="53.24"/>
+            <line x="98.85" y="50.24"/>
+            <close/>
+            <move x="103.86" y="50.24"/>
+            <line x="103.86" y="53.24"/>
+            <line x="104.86" y="53.24"/>
+            <line x="104.86" y="50.24"/>
+            <close/>
+            <move x="109.86" y="50.24"/>
+            <line x="109.86" y="53.24"/>
+            <line x="110.86" y="53.24"/>
+            <line x="110.86" y="50.24"/>
+            <close/>
+            <move x="116.19" y="50.24"/>
+            <line x="116.19" y="53.24"/>
+            <line x="117.19" y="53.24"/>
+            <line x="117.19" y="50.24"/>
+            <close/>
+            <move x="122.19" y="50.24"/>
+            <line x="122.19" y="53.24"/>
+            <line x="123.19" y="53.24"/>
+            <line x="123.19" y="50.24"/>
+            <close/>
+            <move x="127.86" y="50.24"/>
+            <line x="127.86" y="53.24"/>
+            <line x="128.86" y="53.24"/>
+            <line x="128.86" y="50.24"/>
+            <close/>
+            <move x="134.2" y="50.24"/>
+            <line x="134.2" y="53.24"/>
+            <line x="135.2" y="53.24"/>
+            <line x="135.2" y="50.24"/>
+            <close/>
+            <move x="140.2" y="50.24"/>
+            <line x="140.2" y="53.24"/>
+            <line x="141.2" y="53.24"/>
+            <line x="141.2" y="50.24"/>
+            <close/>
+            <move x="146.2" y="50.24"/>
+            <line x="146.2" y="53.24"/>
+            <line x="147.2" y="53.24"/>
+            <line x="147.2" y="50.24"/>
+            <close/>
+            <move x="156.2" y="55.74"/>
+            <curve x1="155.38" x2="154.7" x3="154.7" y1="55.74" y2="56.41" y3="57.24"/>
+            <curve x1="154.7" x2="155.38" x3="156.2" y1="58.06" y2="58.73" y3="58.73"/>
+            <line x="159.2" y="58.73"/>
+            <curve x1="160.02" x2="160.7" x3="160.7" y1="58.73" y2="58.06" y3="57.24"/>
+            <curve x1="160.7" x2="160.02" x3="159.2" y1="56.41" y2="55.74" y3="55.74"/>
+            <close/>
+            <move x="2.17" y="56.74"/>
+            <line x="5.17" y="56.74"/>
+            <curve x1="5.45" x2="5.67" x3="5.67" y1="56.74" y2="56.95" y3="57.24"/>
+            <curve x1="5.67" x2="5.45" x3="5.17" y1="57.52" y2="57.73" y3="57.73"/>
+            <line x="2.17" y="57.73"/>
+            <curve x1="1.88" x2="1.67" x3="1.67" y1="57.73" y2="57.52" y3="57.24"/>
+            <curve x1="1.67" x2="1.88" x3="2.17" y1="56.95" y2="56.74" y3="56.74"/>
+            <close/>
+            <move x="156.2" y="56.74"/>
+            <line x="159.2" y="56.74"/>
+            <curve x1="159.49" x2="159.7" x3="159.7" y1="56.74" y2="56.95" y3="57.24"/>
+            <curve x1="159.7" x2="159.49" x3="159.2" y1="57.52" y2="57.73" y3="57.73"/>
+            <line x="156.2" y="57.73"/>
+            <curve x1="155.91" x2="155.7" x3="155.7" y1="57.73" y2="57.52" y3="57.24"/>
+            <curve x1="155.7" x2="155.91" x3="156.2" y1="56.95" y2="56.74" y3="56.74"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.64313725"/>
+        <path>
+            <move x="8.17" y="50.24"/>
+            <line x="152.2" y="50.24"/>
+            <line x="152.2" y="53.24"/>
+            <line x="8.17" y="53.24"/>
+            <close/>
+            <move x="8.17" y="35.43"/>
+            <line x="152.2" y="35.43"/>
+            <line x="152.2" y="38.42"/>
+            <line x="8.17" y="38.42"/>
+            <close/>
+            <move x="8.17" y="20.64"/>
+            <line x="152.2" y="20.64"/>
+            <line x="152.2" y="23.64"/>
+            <line x="8.17" y="23.64"/>
+            <close/>
+            <move x="8.17" y="5.83"/>
+            <line x="152.2" y="5.83"/>
+            <line x="152.2" y="8.82"/>
+            <line x="8.17" y="8.82"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.7" name="Hub" strokewidth="inherit" w="161.8">
+    <connections/>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="30.7"/>
+            <line x="161.8" y="30.7"/>
+            <line x="161.8" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="10.23" y2="20.47" y3="30.7"/>
+            <line x="161.8" y="30.7"/>
+            <line x="161.8" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.8" y="1"/>
+            <line x="160.8" y="29.7"/>
+            <line x="154.94" y="29.7"/>
+            <line x="154.94" y="2.67"/>
+            <line x="7.33" y="2.67"/>
+            <curve x1="7.33" x2="7.33" x3="7.33" y1="11.68" y2="20.69" y3="29.7"/>
+            <line x="1" y="29.7"/>
+            <close/>
+            <move x="8.33" y="3.67"/>
+            <line x="153.94" y="3.67"/>
+            <line x="153.94" y="12.36"/>
+            <line x="47.98" y="12.36"/>
+            <curve x1="47.98" x2="47.98" x3="47.98" y1="18.1" y2="23.83" y3="29.57"/>
+            <line x="8.33" y="29.57"/>
+            <close/>
+            <move x="13.16" y="7.52"/>
+            <line x="13.16" y="15.87"/>
+            <line x="25.16" y="15.87"/>
+            <line x="25.16" y="7.52"/>
+            <close/>
+            <move x="48.98" y="13.36"/>
+            <line x="153.27" y="13.36"/>
+            <line x="153.27" y="29.57"/>
+            <line x="48.98" y="29.57"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="133.11" y="16.2"/>
+            <curve x1="130.34" x2="128.11" x3="128.11" y1="16.2" y2="17.39" y3="18.88"/>
+            <curve x1="128.11" x2="130.34" x3="133.11" y1="20.36" y2="21.55" y3="21.55"/>
+            <curve x1="135.88" x2="138.11" x3="138.11" y1="21.55" y2="20.36" y3="18.88"/>
+            <curve x1="138.11" x2="135.88" x3="133.11" y1="17.39" y2="16.2" y3="16.2"/>
+            <close/>
+            <move x="112.79" y="16.2"/>
+            <curve x1="110.02" x2="107.79" x3="107.79" y1="16.2" y2="17.39" y3="18.88"/>
+            <curve x1="107.79" x2="110.02" x3="112.79" y1="20.36" y2="21.55" y3="21.55"/>
+            <curve x1="115.56" x2="117.79" x3="117.79" y1="21.55" y2="20.36" y3="18.88"/>
+            <curve x1="117.79" x2="115.56" x3="112.79" y1="17.39" y2="16.2" y3="16.2"/>
+            <close/>
+            <move x="92.46" y="16.2"/>
+            <curve x1="89.69" x2="87.46" x3="87.46" y1="16.2" y2="17.39" y3="18.88"/>
+            <curve x1="87.46" x2="89.69" x3="92.46" y1="20.36" y2="21.55" y3="21.55"/>
+            <curve x1="95.23" x2="97.46" x3="97.46" y1="21.55" y2="20.36" y3="18.88"/>
+            <curve x1="97.46" x2="95.23" x3="92.46" y1="17.39" y2="16.2" y3="16.2"/>
+            <close/>
+            <move x="72.14" y="16.2"/>
+            <curve x1="69.37" x2="67.14" x3="67.14" y1="16.2" y2="17.39" y3="18.88"/>
+            <curve x1="67.14" x2="69.37" x3="72.14" y1="20.36" y2="21.55" y3="21.55"/>
+            <curve x1="74.91" x2="77.13" x3="77.13" y1="21.55" y2="20.36" y3="18.88"/>
+            <curve x1="77.13" x2="74.91" x3="72.14" y1="17.39" y2="16.2" y3="16.2"/>
+            <close/>
+            <move x="48.98" y="13.36"/>
+            <line x="153.27" y="13.36"/>
+            <line x="153.27" y="29.57"/>
+            <line x="48.98" y="29.57"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.8" y="1"/>
+            <line x="160.8" y="29.7"/>
+            <line x="154.94" y="29.7"/>
+            <line x="154.94" y="2.67"/>
+            <line x="7.33" y="2.67"/>
+            <line x="7.33" y="29.7"/>
+            <line x="1" y="29.7"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.36868687"/>
+        <path>
+            <move x="133.11" y="16.2"/>
+            <curve x1="135.88" x2="138.11" x3="138.11" y1="16.2" y2="17.39" y3="18.87"/>
+            <curve x1="138.11" x2="135.88" x3="133.11" y1="20.36" y2="21.55" y3="21.55"/>
+            <curve x1="130.34" x2="128.11" x3="128.11" y1="21.55" y2="20.36" y3="18.87"/>
+            <curve x1="128.11" x2="130.34" x3="133.11" y1="17.39" y2="16.2" y3="16.2"/>
+            <close/>
+            <move x="112.79" y="16.2"/>
+            <curve x1="115.56" x2="117.78" x3="117.78" y1="16.2" y2="17.39" y3="18.87"/>
+            <curve x1="117.78" x2="115.56" x3="112.79" y1="20.36" y2="21.55" y3="21.55"/>
+            <curve x1="110.02" x2="107.79" x3="107.79" y1="21.55" y2="20.36" y3="18.87"/>
+            <curve x1="107.79" x2="110.02" x3="112.79" y1="17.39" y2="16.2" y3="16.2"/>
+            <close/>
+            <move x="92.46" y="16.2"/>
+            <curve x1="95.23" x2="97.46" x3="97.46" y1="16.2" y2="17.39" y3="18.87"/>
+            <curve x1="97.46" x2="95.23" x3="92.46" y1="20.36" y2="21.55" y3="21.55"/>
+            <curve x1="89.69" x2="87.46" x3="87.46" y1="21.55" y2="20.36" y3="18.87"/>
+            <curve x1="87.46" x2="89.69" x3="92.46" y1="17.39" y2="16.2" y3="16.2"/>
+            <close/>
+            <move x="72.14" y="16.2"/>
+            <curve x1="74.91" x2="77.13" x3="77.13" y1="16.2" y2="17.39" y3="18.87"/>
+            <curve x1="77.13" x2="74.91" x3="72.14" y1="20.36" y2="21.55" y3="21.55"/>
+            <curve x1="69.37" x2="67.14" x3="67.14" y1="21.55" y2="20.36" y3="18.87"/>
+            <curve x1="67.14" x2="69.37" x3="72.14" y1="17.39" y2="16.2" y3="16.2"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="154.25" name="Server 1" strokewidth="inherit" w="74.25">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <curve x1="0" x2="0" x3="0" y1="50.31" y2="100.61" y3="150.92"/>
+            <line x="3.33" y="150.92"/>
+            <line x="3.33" y="154.25"/>
+            <line x="70.92" y="154.25"/>
+            <line x="70.92" y="150.92"/>
+            <line x="74.25" y="150.92"/>
+            <line x="74.25" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="150.92"/>
+            <line x="3.33" y="150.92"/>
+            <line x="3.33" y="154.25"/>
+            <line x="70.92" y="154.25"/>
+            <line x="70.92" y="150.92"/>
+            <line x="74.25" y="150.92"/>
+            <line x="74.25" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="73.25" y="1"/>
+            <line x="73.25" y="149.92"/>
+            <line x="1" y="149.92"/>
+            <close/>
+            <move x="23.64" y="3.33"/>
+            <line x="23.64" y="5.33"/>
+            <line x="48.95" y="5.33"/>
+            <line x="48.95" y="3.33"/>
+            <close/>
+            <move x="5.83" y="6.66"/>
+            <line x="5.83" y="19.32"/>
+            <line x="66.76" y="19.32"/>
+            <line x="66.76" y="6.66"/>
+            <close/>
+            <move x="6.83" y="7.66"/>
+            <line x="65.76" y="7.66"/>
+            <line x="65.76" y="18.32"/>
+            <line x="6.83" y="18.32"/>
+            <close/>
+            <move x="6.66" y="68.3"/>
+            <line x="6.66" y="145.92"/>
+            <line x="65.93" y="145.92"/>
+            <line x="65.93" y="68.3"/>
+            <close/>
+            <move x="7.66" y="69.3"/>
+            <line x="64.93" y="69.3"/>
+            <line x="64.93" y="144.92"/>
+            <line x="7.66" y="144.92"/>
+            <close/>
+            <move x="4.33" y="150.92"/>
+            <line x="69.92" y="150.92"/>
+            <line x="69.92" y="153.25"/>
+            <line x="4.33" y="153.25"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="1" y="1"/>
+            <line x="1" y="149.92"/>
+            <line x="73.25" y="149.92"/>
+            <line x="73.25" y="1"/>
+            <close/>
+            <move x="4.83" y="2"/>
+            <line x="68.09" y="2"/>
+            <line x="68.09" y="20.49"/>
+            <line x="4.83" y="20.49"/>
+            <close/>
+            <move x="6.83" y="7.66"/>
+            <line x="6.83" y="18.32"/>
+            <line x="65.76" y="18.32"/>
+            <line x="65.76" y="7.66"/>
+            <close/>
+            <move x="4.83" y="25.49"/>
+            <line x="68.09" y="25.49"/>
+            <line x="68.09" y="60.47"/>
+            <line x="4.83" y="60.47"/>
+            <close/>
+            <move x="8.82" y="30.48"/>
+            <line x="8.82" y="35.48"/>
+            <line x="63.76" y="35.48"/>
+            <line x="63.76" y="30.48"/>
+            <close/>
+            <move x="8.82" y="40.48"/>
+            <line x="8.82" y="45.47"/>
+            <line x="63.76" y="45.47"/>
+            <line x="63.76" y="40.48"/>
+            <close/>
+            <move x="8.82" y="50.47"/>
+            <line x="8.82" y="55.47"/>
+            <line x="63.76" y="55.47"/>
+            <line x="63.76" y="50.47"/>
+            <close/>
+            <move x="4.83" y="65.46"/>
+            <line x="68.09" y="65.46"/>
+            <line x="68.09" y="148.25"/>
+            <line x="4.83" y="148.25"/>
+            <close/>
+            <move x="7.66" y="69.3"/>
+            <line x="7.66" y="144.92"/>
+            <line x="64.93" y="144.92"/>
+            <line x="64.93" y="69.3"/>
+            <close/>
+            <move x="4.33" y="150.92"/>
+            <line x="4.33" y="153.25"/>
+            <line x="69.92" y="153.25"/>
+            <line x="69.92" y="150.92"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="154.25" name="Server 2" strokewidth="inherit" w="74.33">
+    <connections/>
+    <background>
+        <save/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="154.25"/>
+            <line x="74.33" y="154.25"/>
+            <line x="74.33" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="154.25"/>
+            <line x="74.33" y="154.25"/>
+            <line x="74.33" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="73.33" y="1"/>
+            <line x="73.33" y="153.25"/>
+            <line x="1" y="153.25"/>
+            <close/>
+            <move x="5" y="8"/>
+            <line x="5" y="60.63"/>
+            <line x="57" y="60.63"/>
+            <line x="57" y="8"/>
+            <close/>
+            <move x="59" y="8"/>
+            <line x="59" y="150.59"/>
+            <line x="70.33" y="150.59"/>
+            <line x="70.33" y="8"/>
+            <close/>
+            <move x="6" y="9"/>
+            <line x="56" y="9"/>
+            <line x="56" y="59.63"/>
+            <line x="6" y="59.63"/>
+            <close/>
+            <move x="60" y="9"/>
+            <line x="69.33" y="9"/>
+            <line x="69.33" y="59.63"/>
+            <line x="60" y="59.63"/>
+            <line x="60" y="16.82"/>
+            <close/>
+            <move x="60" y="16.82"/>
+            <curve x1="60" x2="62.02" x3="64.5" y1="19.3" y2="21.32" y3="21.32"/>
+            <curve x1="66.98" x2="69" x3="69" y1="21.32" y2="19.3" y3="16.82"/>
+            <curve x1="69" x2="66.98" x3="64.5" y1="14.35" y2="12.33" y3="12.33"/>
+            <curve x1="62.02" x2="60" x3="60" y1="12.33" y2="14.35" y3="16.82"/>
+            <close/>
+            <move x="64.5" y="13.33"/>
+            <curve x1="66.44" x2="68" x3="68" y1="13.33" y2="14.89" y3="16.82"/>
+            <curve x1="68" x2="66.44" x3="64.5" y1="18.76" y2="20.32" y3="20.32"/>
+            <curve x1="62.56" x2="61" x3="61" y1="20.32" y2="18.76" y3="16.82"/>
+            <curve x1="61" x2="62.56" x3="64.5" y1="14.89" y2="13.33" y3="13.33"/>
+            <close/>
+            <move x="8.33" y="13.66"/>
+            <line x="8.33" y="42.98"/>
+            <line x="53.33" y="42.98"/>
+            <line x="53.33" y="13.66"/>
+            <close/>
+            <move x="9.33" y="14.66"/>
+            <line x="52.33" y="14.66"/>
+            <line x="52.33" y="27.98"/>
+            <line x="9.33" y="27.98"/>
+            <close/>
+            <move x="64.5" y="26.65"/>
+            <curve x1="62.76" x2="61.33" x3="61.33" y1="26.65" y2="28.08" y3="29.82"/>
+            <curve x1="61.33" x2="62.76" x3="64.5" y1="31.56" y2="32.98" y3="32.98"/>
+            <curve x1="66.24" x2="67.67" x3="67.67" y1="32.98" y2="31.56" y3="29.82"/>
+            <curve x1="67.67" x2="66.24" x3="64.5" y1="28.08" y2="26.65" y3="26.65"/>
+            <close/>
+            <move x="64.5" y="27.65"/>
+            <curve x1="65.7" x2="66.67" x3="66.67" y1="27.65" y2="28.62" y3="29.82"/>
+            <curve x1="66.67" x2="65.7" x3="64.5" y1="31.02" y2="31.98" y3="31.98"/>
+            <curve x1="63.3" x2="62.33" x3="62.33" y1="31.98" y2="31.02" y3="29.82"/>
+            <curve x1="62.33" x2="63.3" x3="64.5" y1="28.62" y2="27.65" y3="27.65"/>
+            <close/>
+            <move x="9.33" y="28.98"/>
+            <line x="52.33" y="28.98"/>
+            <line x="52.33" y="41.98"/>
+            <line x="9.33" y="41.98"/>
+            <close/>
+            <move x="60" y="60.63"/>
+            <line x="69.33" y="60.63"/>
+            <line x="69.33" y="149.59"/>
+            <line x="60" y="149.59"/>
+            <close/>
+        </path>
+        <fill/>
+        <restore/>
+        <rect/>
+        <stroke/>
+        <fillcolor color="#000000"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="5.5" y="144.75"/>
+            <line x="56.17" y="144.75"/>
+            <line x="56.17" y="148.09"/>
+            <line x="5.5" y="148.09"/>
+            <close/>
+            <move x="5.5" y="136.09"/>
+            <line x="56.17" y="136.09"/>
+            <line x="56.17" y="139.42"/>
+            <line x="5.5" y="139.42"/>
+            <close/>
+            <move x="5.5" y="127.43"/>
+            <line x="56.17" y="127.43"/>
+            <line x="56.17" y="130.76"/>
+            <line x="5.5" y="130.76"/>
+            <close/>
+            <move x="5.5" y="119.1"/>
+            <line x="56.17" y="119.1"/>
+            <line x="56.17" y="122.43"/>
+            <line x="5.5" y="122.43"/>
+            <close/>
+            <move x="5.5" y="110.44"/>
+            <line x="56.17" y="110.44"/>
+            <line x="56.17" y="113.77"/>
+            <line x="5.5" y="113.77"/>
+            <close/>
+            <move x="5.5" y="101.78"/>
+            <line x="56.17" y="101.78"/>
+            <line x="56.17" y="105.11"/>
+            <line x="5.5" y="105.11"/>
+            <close/>
+            <move x="5.5" y="93.45"/>
+            <line x="56.17" y="93.45"/>
+            <line x="56.17" y="96.78"/>
+            <line x="5.5" y="96.78"/>
+            <close/>
+            <move x="5.5" y="84.79"/>
+            <line x="56.17" y="84.79"/>
+            <line x="56.17" y="88.12"/>
+            <line x="5.5" y="88.12"/>
+            <close/>
+            <move x="5.5" y="76.13"/>
+            <line x="56.17" y="76.13"/>
+            <line x="56.17" y="79.46"/>
+            <line x="5.5" y="79.46"/>
+            <close/>
+            <move x="5.5" y="67.8"/>
+            <line x="56.17" y="67.8"/>
+            <line x="56.17" y="71.13"/>
+            <line x="5.5" y="71.13"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="154" name="Server 3" strokewidth="inherit" w="74">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="154"/>
+            <line x="74" y="154"/>
+            <line x="74" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="153.5"/>
+            <line x="0" y="154"/>
+            <line x="74" y="154"/>
+            <line x="74" y="153.52"/>
+            <line x="74" y="153.5"/>
+            <line x="74" y="0"/>
+            <close/>
+            <move x="1.46" y="1"/>
+            <line x="72.55" y="1"/>
+            <line x="63.28" y="14.63"/>
+            <line x="54.75" y="14.63"/>
+            <line x="54.75" y="10.82"/>
+            <curve x1="54.75" x2="52.59" x3="49.92" y1="8.15" y2="5.99" y3="5.99"/>
+            <line x="24.41" y="5.99"/>
+            <curve x1="21.74" x2="19.58" x3="19.58" y1="5.99" y2="8.15" y3="10.82"/>
+            <line x="19.58" y="14.63"/>
+            <line x="11.04" y="14.63"/>
+            <close/>
+            <move x="1" y="2.08"/>
+            <line x="10.29" y="15.29"/>
+            <line x="10.29" y="139.04"/>
+            <line x="1" y="151.95"/>
+            <close/>
+            <move x="73" y="2.13"/>
+            <line x="73" y="151.88"/>
+            <line x="64.04" y="138.71"/>
+            <line x="64.04" y="15.29"/>
+            <close/>
+            <move x="24.41" y="6.99"/>
+            <line x="49.92" y="6.99"/>
+            <curve x1="52.05" x2="53.75" x3="53.75" y1="6.99" y2="8.69" y3="10.82"/>
+            <line x="53.75" y="14.63"/>
+            <line x="48.28" y="14.63"/>
+            <line x="48.28" y="8.81"/>
+            <line x="26.05" y="8.81"/>
+            <line x="26.05" y="14.63"/>
+            <line x="20.58" y="14.63"/>
+            <line x="20.58" y="10.82"/>
+            <curve x1="20.58" x2="22.28" x3="24.41" y1="8.69" y2="6.99" y3="6.99"/>
+            <close/>
+            <move x="11.29" y="15.63"/>
+            <line x="19.58" y="15.63"/>
+            <line x="19.58" y="22.78"/>
+            <curve x1="19.58" x2="21.74" x3="24.41" y1="25.45" y2="27.61" y3="27.61"/>
+            <line x="49.92" y="27.61"/>
+            <curve x1="52.59" x2="54.75" x3="54.75" y1="27.61" y2="25.45" y3="22.78"/>
+            <line x="54.75" y="15.63"/>
+            <line x="63.04" y="15.63"/>
+            <line x="63.04" y="138.7"/>
+            <line x="11.29" y="138.7"/>
+            <close/>
+            <move x="20.58" y="15.63"/>
+            <line x="53.75" y="15.63"/>
+            <line x="53.75" y="22.78"/>
+            <curve x1="53.75" x2="52.05" x3="49.92" y1="24.91" y2="26.61" y3="26.61"/>
+            <line x="24.41" y="26.61"/>
+            <curve x1="22.28" x2="20.58" x3="20.58" y1="26.61" y2="24.91" y3="22.78"/>
+            <close/>
+            <move x="16.26" y="31.93"/>
+            <line x="16.26" y="132.71"/>
+            <line x="58.07" y="132.71"/>
+            <line x="58.07" y="31.93"/>
+            <close/>
+            <move x="17.26" y="32.93"/>
+            <line x="57.07" y="32.93"/>
+            <line x="57.07" y="131.71"/>
+            <line x="17.26" y="131.71"/>
+            <close/>
+            <move x="37.33" y="76.17"/>
+            <curve x1="33.95" x2="31.19" x3="31.19" y1="76.17" y2="78.93" y3="82.32"/>
+            <curve x1="31.19" x2="33.95" x3="37.33" y1="85.71" y2="88.48" y3="88.48"/>
+            <curve x1="40.72" x2="43.47" x3="43.47" y1="88.48" y2="85.71" y3="82.32"/>
+            <curve x1="43.47" x2="40.72" x3="37.33" y1="78.93" y2="76.17" y3="76.17"/>
+            <close/>
+            <move x="37.33" y="77.17"/>
+            <curve x1="40.18" x2="42.47" x3="42.47" y1="77.17" y2="79.47" y3="82.32"/>
+            <curve x1="42.47" x2="40.18" x3="37.33" y1="85.18" y2="87.48" y3="87.48"/>
+            <curve x1="34.49" x2="32.19" x3="32.19" y1="87.48" y2="85.18" y3="82.32"/>
+            <curve x1="32.19" x2="34.49" x3="37.33" y1="79.47" y2="77.17" y3="77.17"/>
+            <close/>
+            <move x="11.04" y="139.7"/>
+            <line x="63.51" y="139.7"/>
+            <line x="72.55" y="153"/>
+            <line x="1.47" y="153"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="1" y="2.08"/>
+            <line x="1" y="151.95"/>
+            <line x="10.29" y="139.04"/>
+            <line x="10.29" y="15.29"/>
+            <close/>
+            <move x="73" y="2.13"/>
+            <line x="64.04" y="15.29"/>
+            <line x="64.04" y="138.71"/>
+            <line x="73" y="151.88"/>
+            <close/>
+            <move x="17.26" y="32.93"/>
+            <line x="17.26" y="131.71"/>
+            <line x="57.07" y="131.71"/>
+            <line x="57.07" y="32.93"/>
+            <close/>
+            <move x="37.33" y="76.17"/>
+            <curve x1="40.72" x2="43.47" x3="43.47" y1="76.17" y2="78.93" y3="82.32"/>
+            <curve x1="43.47" x2="40.72" x3="37.33" y1="85.71" y2="88.48" y3="88.48"/>
+            <curve x1="33.95" x2="31.19" x3="31.19" y1="88.48" y2="85.71" y3="82.32"/>
+            <curve x1="31.19" x2="33.95" x3="37.33" y1="78.93" y2="76.17" y3="76.17"/>
+            <close/>
+            <move x="37.33" y="77.17"/>
+            <curve x1="34.49" x2="32.19" x3="32.19" y1="77.17" y2="79.47" y3="82.32"/>
+            <curve x1="32.19" x2="34.49" x3="37.33" y1="85.18" y2="87.48" y3="87.48"/>
+            <curve x1="40.18" x2="42.47" x3="42.47" y1="87.48" y2="85.18" y3="82.32"/>
+            <curve x1="42.47" x2="40.18" x3="37.33" y1="79.47" y2="77.17" y3="77.17"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.69" name="Switches 1" strokewidth="inherit" w="161.97">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.69"/>
+            <line x="161.97" y="30.69"/>
+            <line x="161.97" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.69"/>
+            <line x="161.97" y="30.69"/>
+            <line x="161.97" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.97" y="1"/>
+            <line x="160.97" y="29.69"/>
+            <line x="1" y="29.69"/>
+            <close/>
+            <move x="2" y="3.01"/>
+            <line x="2" y="14.03"/>
+            <line x="52.04" y="14.03"/>
+            <line x="52.04" y="3.01"/>
+            <close/>
+            <move x="53.04" y="3.01"/>
+            <line x="53.04" y="14.03"/>
+            <line x="116.08" y="14.03"/>
+            <line x="116.08" y="3.01"/>
+            <close/>
+            <move x="3" y="4.01"/>
+            <line x="51.04" y="4.01"/>
+            <line x="51.04" y="13.03"/>
+            <line x="3" y="13.03"/>
+            <close/>
+            <move x="54.04" y="4.01"/>
+            <line x="115.08" y="4.01"/>
+            <line x="115.08" y="13.03"/>
+            <line x="54.04" y="13.03"/>
+            <close/>
+            <move x="68.04" y="6.01"/>
+            <line x="68.04" y="11.69"/>
+            <line x="82.72" y="11.69"/>
+            <line x="82.72" y="6.01"/>
+            <close/>
+            <move x="85.72" y="6.01"/>
+            <line x="85.72" y="11.69"/>
+            <line x="100.4" y="11.69"/>
+            <line x="100.4" y="6.01"/>
+            <close/>
+            <move x="69.04" y="7.01"/>
+            <line x="81.72" y="7.01"/>
+            <line x="81.72" y="10.69"/>
+            <line x="69.04" y="10.69"/>
+            <close/>
+            <move x="86.72" y="7.01"/>
+            <line x="99.4" y="7.01"/>
+            <line x="99.4" y="10.69"/>
+            <line x="86.72" y="10.69"/>
+            <close/>
+            <move x="2" y="14.7"/>
+            <line x="2" y="29.05"/>
+            <line x="159.77" y="29.05"/>
+            <line x="159.77" y="14.7"/>
+            <close/>
+            <move x="3" y="15.7"/>
+            <line x="158.77" y="15.7"/>
+            <line x="158.77" y="28.05"/>
+            <line x="3" y="28.05"/>
+            <close/>
+            <move x="6.34" y="19.37"/>
+            <line x="6.34" y="25.05"/>
+            <line x="48.03" y="25.05"/>
+            <line x="48.03" y="19.37"/>
+            <close/>
+            <move x="52.37" y="19.37"/>
+            <line x="52.37" y="25.05"/>
+            <line x="94.06" y="25.05"/>
+            <line x="94.06" y="19.37"/>
+            <close/>
+            <move x="98.4" y="19.37"/>
+            <line x="98.4" y="25.05"/>
+            <line x="140.09" y="25.05"/>
+            <line x="140.09" y="19.37"/>
+            <close/>
+            <move x="7.34" y="20.37"/>
+            <line x="47.03" y="20.37"/>
+            <line x="47.03" y="24.05"/>
+            <line x="7.34" y="24.05"/>
+            <close/>
+            <move x="53.37" y="20.37"/>
+            <line x="93.06" y="20.37"/>
+            <line x="93.06" y="24.05"/>
+            <line x="53.37" y="24.05"/>
+            <close/>
+            <move x="99.4" y="20.37"/>
+            <line x="139.09" y="20.37"/>
+            <line x="139.09" y="24.05"/>
+            <line x="99.4" y="24.05"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.23137255"/>
+        <path>
+            <move x="99.4" y="20.37"/>
+            <line x="139.09" y="20.37"/>
+            <line x="139.09" y="24.05"/>
+            <line x="99.4" y="24.05"/>
+            <close/>
+            <move x="53.37" y="20.37"/>
+            <line x="93.06" y="20.37"/>
+            <line x="93.06" y="24.05"/>
+            <line x="53.37" y="24.05"/>
+            <close/>
+            <move x="7.34" y="20.37"/>
+            <line x="47.03" y="20.37"/>
+            <line x="47.03" y="24.05"/>
+            <line x="7.34" y="24.05"/>
+            <close/>
+            <move x="2" y="14.7"/>
+            <line x="2" y="29.05"/>
+            <line x="159.77" y="29.05"/>
+            <line x="159.77" y="14.7"/>
+            <close/>
+            <move x="86.72" y="7.01"/>
+            <line x="99.4" y="7.01"/>
+            <line x="99.4" y="10.69"/>
+            <line x="86.72" y="10.69"/>
+            <close/>
+            <move x="69.04" y="7.01"/>
+            <line x="81.72" y="7.01"/>
+            <line x="81.72" y="10.69"/>
+            <line x="69.04" y="10.69"/>
+            <close/>
+            <move x="7.5" y="6.51"/>
+            <line x="7.5" y="10.52"/>
+            <line x="47.53" y="10.52"/>
+            <line x="47.53" y="6.51"/>
+            <close/>
+            <move x="53.04" y="3.01"/>
+            <line x="53.04" y="14.03"/>
+            <line x="116.08" y="14.03"/>
+            <line x="116.08" y="3.01"/>
+            <close/>
+            <move x="2" y="3.01"/>
+            <line x="2" y="14.03"/>
+            <line x="52.04" y="14.03"/>
+            <line x="52.04" y="3.01"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="160.97" y="1"/>
+            <line x="160.97" y="29.69"/>
+            <line x="1" y="29.69"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+<shape aspect="variable" h="30.57" name="Switches 2" strokewidth="inherit" w="162.1">
+    <connections/>
+    <background>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="0.5"/>
+            <line x="0" y="30.57"/>
+            <line x="162.1" y="30.57"/>
+            <line x="162.1" y="0"/>
+            <close/>
+        </path>
+    </background>
+    <foreground>
+        <fill/>
+        <fillcolor color="#000000"/>
+        <strokewidth width="1"/>
+        <linejoin join="miter"/>
+        <linecap cap="butt"/>
+        <miterlimit limit="4"/>
+        <dashpattern pattern="none"/>
+        <dashed dashed="1"/>
+        <alpha alpha="1"/>
+        <strokealpha alpha="1"/>
+        <fillalpha alpha="0.64313725"/>
+        <fontfamily family="sans-serif"/>
+        <fontstyle style="0"/>
+        <path>
+            <move x="0" y="0"/>
+            <line x="0" y="30.57"/>
+            <line x="162.1" y="30.57"/>
+            <line x="162.1" y="0"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="161.1" y="1"/>
+            <line x="161.1" y="29.57"/>
+            <line x="1" y="29.57"/>
+            <close/>
+            <move x="76.11" y="2.66"/>
+            <line x="76.11" y="12.97"/>
+            <line x="159.56" y="12.97"/>
+            <line x="159.56" y="2.66"/>
+            <close/>
+            <move x="77.11" y="3.66"/>
+            <line x="158.56" y="3.66"/>
+            <line x="158.56" y="11.97"/>
+            <line x="77.11" y="11.97"/>
+            <close/>
+            <move x="130.19" y="4.99"/>
+            <line x="130.19" y="10.64"/>
+            <line x="144.54" y="10.64"/>
+            <line x="144.54" y="4.99"/>
+            <close/>
+            <move x="131.19" y="5.99"/>
+            <line x="143.54" y="5.99"/>
+            <line x="143.54" y="9.64"/>
+            <line x="131.19" y="9.64"/>
+            <close/>
+            <move x="16.36" y="6.65"/>
+            <line x="16.36" y="12.31"/>
+            <line x="30.71" y="12.31"/>
+            <line x="30.71" y="6.65"/>
+            <close/>
+            <move x="17.36" y="7.65"/>
+            <line x="29.71" y="7.65"/>
+            <line x="29.71" y="11.31"/>
+            <line x="17.36" y="11.31"/>
+            <close/>
+            <move x="16.36" y="18.96"/>
+            <line x="16.36" y="24.61"/>
+            <line x="30.71" y="24.61"/>
+            <line x="30.71" y="18.96"/>
+            <close/>
+            <move x="40.39" y="18.96"/>
+            <line x="40.39" y="24.61"/>
+            <line x="54.74" y="24.61"/>
+            <line x="54.74" y="18.96"/>
+            <close/>
+            <move x="64.76" y="18.96"/>
+            <line x="64.76" y="24.61"/>
+            <line x="79.11" y="24.61"/>
+            <line x="79.11" y="18.96"/>
+            <close/>
+            <move x="85.12" y="18.96"/>
+            <line x="85.12" y="24.61"/>
+            <line x="99.48" y="24.61"/>
+            <line x="99.48" y="18.96"/>
+            <close/>
+            <move x="105.49" y="18.96"/>
+            <line x="105.49" y="24.61"/>
+            <line x="119.84" y="24.61"/>
+            <line x="119.84" y="18.96"/>
+            <close/>
+            <move x="129.86" y="18.96"/>
+            <line x="129.86" y="24.61"/>
+            <line x="144.21" y="24.61"/>
+            <line x="144.21" y="18.96"/>
+            <close/>
+            <move x="17.36" y="19.96"/>
+            <line x="29.71" y="19.96"/>
+            <line x="29.71" y="23.61"/>
+            <line x="17.36" y="23.61"/>
+            <close/>
+            <move x="41.39" y="19.96"/>
+            <line x="53.74" y="19.96"/>
+            <line x="53.74" y="23.61"/>
+            <line x="41.39" y="23.61"/>
+            <close/>
+            <move x="65.76" y="19.96"/>
+            <line x="78.11" y="19.96"/>
+            <line x="78.11" y="23.61"/>
+            <line x="65.76" y="23.61"/>
+            <close/>
+            <move x="86.12" y="19.96"/>
+            <line x="98.48" y="19.96"/>
+            <line x="98.48" y="23.61"/>
+            <line x="86.12" y="23.61"/>
+            <close/>
+            <move x="106.49" y="19.96"/>
+            <line x="118.84" y="19.96"/>
+            <line x="118.84" y="23.61"/>
+            <line x="106.49" y="23.61"/>
+            <close/>
+            <move x="130.86" y="19.96"/>
+            <line x="143.21" y="19.96"/>
+            <line x="143.21" y="23.61"/>
+            <line x="130.86" y="23.61"/>
+            <close/>
+        </path>
+        <fill/>
+        <strokewidth width="0.30000001"/>
+        <fillalpha alpha="0.22745098"/>
+        <path>
+            <move x="129.86" y="18.96"/>
+            <line x="144.21" y="18.96"/>
+            <line x="144.21" y="24.61"/>
+            <line x="129.86" y="24.61"/>
+            <line x="129.86" y="19.46"/>
+            <close/>
+            <move x="105.49" y="18.96"/>
+            <line x="119.84" y="18.96"/>
+            <line x="119.84" y="24.61"/>
+            <line x="105.49" y="24.61"/>
+            <line x="105.49" y="19.46"/>
+            <close/>
+            <move x="85.12" y="18.96"/>
+            <line x="99.48" y="18.96"/>
+            <line x="99.48" y="24.61"/>
+            <line x="85.12" y="24.61"/>
+            <line x="85.12" y="19.46"/>
+            <close/>
+            <move x="64.76" y="18.96"/>
+            <line x="79.11" y="18.96"/>
+            <line x="79.11" y="24.61"/>
+            <line x="64.76" y="24.61"/>
+            <line x="64.76" y="19.46"/>
+            <close/>
+            <move x="40.39" y="18.96"/>
+            <line x="54.74" y="18.96"/>
+            <line x="54.74" y="24.61"/>
+            <line x="40.39" y="24.61"/>
+            <line x="40.39" y="19.46"/>
+            <close/>
+            <move x="16.36" y="18.96"/>
+            <line x="30.71" y="18.96"/>
+            <line x="30.71" y="24.61"/>
+            <line x="16.36" y="24.61"/>
+            <line x="16.36" y="19.46"/>
+            <close/>
+            <move x="16.36" y="6.65"/>
+            <line x="30.71" y="6.65"/>
+            <line x="30.71" y="12.31"/>
+            <line x="16.36" y="12.31"/>
+            <line x="16.36" y="7.15"/>
+            <close/>
+            <move x="130.19" y="4.99"/>
+            <line x="144.54" y="4.99"/>
+            <line x="144.54" y="10.64"/>
+            <line x="130.19" y="10.64"/>
+            <line x="130.19" y="5.49"/>
+            <close/>
+            <move x="77.11" y="3.66"/>
+            <line x="77.11" y="11.97"/>
+            <line x="158.56" y="11.97"/>
+            <line x="158.56" y="3.66"/>
+            <close/>
+            <move x="76.11" y="2.66"/>
+            <line x="159.56" y="2.66"/>
+            <line x="159.56" y="12.97"/>
+            <line x="76.11" y="12.97"/>
+            <line x="76.11" y="3.16"/>
+            <close/>
+            <move x="1" y="1"/>
+            <line x="1" y="29.57"/>
+            <line x="161.1" y="29.57"/>
+            <line x="161.1" y="1"/>
+            <close/>
+        </path>
+        <fill/>
+        <fillalpha alpha="0.36868687"/>
+        <path>
+            <move x="130.86" y="19.96"/>
+            <line x="130.86" y="23.61"/>
+            <line x="143.21" y="23.61"/>
+            <line x="143.21" y="19.96"/>
+            <close/>
+            <move x="106.49" y="19.96"/>
+            <line x="106.49" y="23.61"/>
+            <line x="118.84" y="23.61"/>
+            <line x="118.84" y="19.96"/>
+            <close/>
+            <move x="86.12" y="19.96"/>
+            <line x="86.12" y="23.61"/>
+            <line x="98.48" y="23.61"/>
+            <line x="98.48" y="19.96"/>
+            <close/>
+            <move x="65.76" y="19.96"/>
+            <line x="65.76" y="23.61"/>
+            <line x="78.11" y="23.61"/>
+            <line x="78.11" y="19.96"/>
+            <close/>
+            <move x="41.39" y="19.96"/>
+            <line x="41.39" y="23.61"/>
+            <line x="53.74" y="23.61"/>
+            <line x="53.74" y="19.96"/>
+            <close/>
+            <move x="17.36" y="19.96"/>
+            <line x="17.36" y="23.61"/>
+            <line x="29.71" y="23.61"/>
+            <line x="29.71" y="19.96"/>
+            <close/>
+            <move x="17.36" y="7.65"/>
+            <line x="17.36" y="11.31"/>
+            <line x="29.71" y="11.31"/>
+            <line x="29.71" y="7.65"/>
+            <close/>
+            <move x="131.19" y="5.99"/>
+            <line x="131.19" y="9.64"/>
+            <line x="143.54" y="9.64"/>
+            <line x="143.54" y="5.99"/>
+            <close/>
+        </path>
+        <fill/>
+    </foreground>
+</shape>
+</shapes>
