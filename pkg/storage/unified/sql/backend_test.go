@@ -227,7 +227,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 
 		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), v)
+		require.Equal(t, int64(2), v)
 	})
 
 	t.Run("happy path - update existing row", func(t *testing.T) {
@@ -304,7 +304,7 @@ func TestBackend_create(t *testing.T) {
 
 		v, err := b.create(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), v)
+		require.Equal(t, int64(2), v)
 	})
 
 	t.Run("error inserting into resource", func(t *testing.T) {
@@ -409,7 +409,7 @@ func TestBackend_update(t *testing.T) {
 
 		v, err := b.update(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), v)
+		require.Equal(t, int64(2), v)
 	})
 
 	t.Run("error in first update to resource", func(t *testing.T) {
@@ -513,7 +513,7 @@ func TestBackend_delete(t *testing.T) {
 
 		v, err := b.delete(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), v)
+		require.Equal(t, int64(2), v)
 	})
 
 	t.Run("error deleting resource", func(t *testing.T) {

@@ -7,6 +7,6 @@ INSERT INTO "resource_version"
     VALUES (
         '',
         '',
-        1
+        2
     )
 ;

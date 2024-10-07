@@ -26,7 +26,6 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -51,7 +50,6 @@ type Storage struct {
 	store  resource.ResourceClient
 	getKey func(string) (*resource.ResourceKey, error)
 
-	watchSet  *WatchSet
 	versioner storage.Versioner
 }
 
@@ -84,8 +82,7 @@ func NewStorage(
 		trigger:      trigger,
 		indexers:     indexers,
 
-		watchSet: NewWatchSet(),
-		getKey:   keyParser,
+		getKey: keyParser,
 
 		versioner: &storage.APIObjectVersioner{},
 	}
@@ -112,9 +109,7 @@ func NewStorage(
 		}
 	}
 
-	return s, func() {
-		s.watchSet.cleanupWatchers()
-	}, nil
+	return s, func() {}, nil
 }
 
 func (s *Storage) Versioner() storage.Versioner {
@@ -164,11 +159,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 			}
 		})
 	}
-
-	s.watchSet.notifyWatchers(watch.Event{
-		Object: out.DeepCopyObject(),
-		Type:   watch.Added,
-	}, nil)
 
 	return nil
 }
@@ -226,16 +216,11 @@ func (s *Storage) Delete(
 	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
 		return err
 	}
-
-	s.watchSet.notifyWatchers(watch.Event{
-		Object: out.DeepCopyObject(),
-		Type:   watch.Deleted,
-	}, nil)
 	return nil
 }
 
 // This version is not yet passing the watch tests
-func (s *Storage) WatchNEXT(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
+func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
 	k, err := s.getKey(key)
 	if err != nil {
 		return watch.NewEmptyWatch(), nil
@@ -255,10 +240,11 @@ func (s *Storage) WatchNEXT(ctx context.Context, key string, opts storage.ListOp
 	if opts.SendInitialEvents != nil {
 		cmd.SendInitialEvents = *opts.SendInitialEvents
 	}
-
+	ctx, cancelWatch := context.WithCancel(ctx)
 	client, err := s.store.Watch(ctx, cmd)
 	if err != nil {
 		// if the context was canceled, just return a new empty watch
+		cancelWatch()
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
@@ -266,136 +252,9 @@ func (s *Storage) WatchNEXT(ctx context.Context, key string, opts storage.ListOp
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-	decoder := &streamDecoder{
-		client:    client,
-		newFunc:   s.newFunc,
-		predicate: predicate,
-		codec:     s.codec,
-	}
+	decoder := newStreamDecoder(client, s.newFunc, predicate, s.codec, cancelWatch)
 
 	return watch.NewStreamWatcher(decoder, reporter), nil
-}
-
-// Watch begins watching the specified key. Events are decoded into API objects,
-// and any items selected by the predicate are sent down to returned watch.Interface.
-// resourceVersion may be used to specify what version to begin watching,
-// which should be the current resourceVersion, and no longer rv+1
-// (e.g. reconnecting without missing any updates).
-// If resource version is "0", this interface will get current object at given key
-// and send it in an "ADDED" event, before watch starts.
-func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	k, err := s.getKey(key)
-	if err != nil {
-		return watch.NewEmptyWatch(), nil
-	}
-
-	req, predicate, err := toListRequest(k, opts)
-	if err != nil {
-		return watch.NewEmptyWatch(), nil
-	}
-
-	listObj := s.newListFunc()
-
-	var namespace *string
-	if k.Namespace != "" {
-		namespace = &k.Namespace
-	}
-
-	if ctx.Err() != nil {
-		return watch.NewEmptyWatch(), nil
-	}
-
-	if (opts.SendInitialEvents == nil && req.ResourceVersion == 0) || (opts.SendInitialEvents != nil && *opts.SendInitialEvents) {
-		if err := s.GetList(ctx, key, opts, listObj); err != nil {
-			return nil, err
-		}
-
-		listAccessor, err := meta.ListAccessor(listObj)
-		if err != nil {
-			klog.Errorf("could not determine new list accessor in watch")
-			return nil, err
-		}
-		// Updated if requesting RV was either "0" or ""
-		maybeUpdatedRV, err := s.versioner.ParseResourceVersion(listAccessor.GetResourceVersion())
-		if err != nil {
-			klog.Errorf("could not determine new list RV in watch")
-			return nil, err
-		}
-
-		jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, predicate, s.versioner, namespace)
-
-		initEvents := make([]watch.Event, 0)
-		listPtr, err := meta.GetItemsPtr(listObj)
-		if err != nil {
-			return nil, err
-		}
-		v, err := conversion.EnforcePtr(listPtr)
-		if err != nil || v.Kind() != reflect.Slice {
-			return nil, fmt.Errorf("need pointer to slice: %v", err)
-		}
-
-		for i := 0; i < v.Len(); i++ {
-			obj, ok := v.Index(i).Addr().Interface().(runtime.Object)
-			if !ok {
-				return nil, fmt.Errorf("need item to be a runtime.Object: %v", err)
-			}
-
-			initEvents = append(initEvents, watch.Event{
-				Type:   watch.Added,
-				Object: obj.DeepCopyObject(),
-			})
-		}
-
-		if predicate.AllowWatchBookmarks && len(initEvents) > 0 {
-			listRV, err := s.versioner.ParseResourceVersion(listAccessor.GetResourceVersion())
-			if err != nil {
-				return nil, fmt.Errorf("could not get last init event's revision for bookmark: %v", err)
-			}
-
-			bookmarkEvent := watch.Event{
-				Type:   watch.Bookmark,
-				Object: s.newFunc(),
-			}
-
-			if err := s.versioner.UpdateObject(bookmarkEvent.Object, listRV); err != nil {
-				return nil, err
-			}
-
-			bookmarkObject, err := meta.Accessor(bookmarkEvent.Object)
-			if err != nil {
-				return nil, fmt.Errorf("could not get bookmark object's acccesor: %v", err)
-			}
-			bookmarkObject.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
-			initEvents = append(initEvents, bookmarkEvent)
-		}
-
-		jw.Start(initEvents...)
-		return jw, nil
-	}
-
-	maybeUpdatedRV := uint64(req.ResourceVersion)
-	if maybeUpdatedRV == 0 {
-		rsp, err := s.store.List(ctx, &resource.ListRequest{
-			Options: &resource.ListOptions{
-				Key: k,
-			},
-			Limit: 1, // we ignore the results, just look at the RV
-		})
-		if err != nil {
-			return nil, err
-		}
-		if rsp.Error != nil {
-			return nil, resource.GetError(rsp.Error)
-		}
-		maybeUpdatedRV = uint64(rsp.ResourceVersion)
-		if maybeUpdatedRV < 1 {
-			return nil, fmt.Errorf("expecting a non-zero resource version")
-		}
-	}
-	jw := s.watchSet.newWatch(ctx, maybeUpdatedRV, predicate, s.versioner, namespace)
-
-	jw.Start()
-	return jw, nil
 }
 
 // Get unmarshals object found at key into objPtr. On a not found error, will either
@@ -668,17 +527,6 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	if created {
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: destination.DeepCopyObject(),
-			Type:   watch.Added,
-		}, nil)
-	} else {
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: destination.DeepCopyObject(),
-			Type:   watch.Modified,
-		}, existingObj.DeepCopyObject())
-	}
 	return nil
 }
 
