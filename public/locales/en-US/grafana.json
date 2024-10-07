@@ -2676,6 +2676,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+    },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",
