@@ -158,3 +158,7 @@ Grafana lists these variables in dropdown select boxes at the top of the dashboa
 Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+
+## Try Explore Logs
+
+Try our new [simplified queryless Explore experiences]({{< relref "../../explore/simplified-exploration/logs" >}}) for Loki.
