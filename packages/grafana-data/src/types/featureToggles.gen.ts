@@ -117,6 +117,7 @@ export interface FeatureToggles {
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
   kubernetesFolders?: boolean;
+  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -218,4 +219,5 @@ export interface FeatureToggles {
   useSessionStorageForRedirection?: boolean;
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
+  pluginsSriChecks?: boolean;
 }
