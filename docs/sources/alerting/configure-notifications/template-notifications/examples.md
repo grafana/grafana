@@ -21,7 +21,7 @@ weight: 103
 
 This document is a compilation of common use cases for templating within Grafana notification templates. Templating in notification templates allows you to dynamically generate and reuse content for alert messages sent to external systems, such as email, Slack, or PagerDuty. By using variables and functions, you can create more detailed and customized notifications that enhance alert clarity and improve response.
 
-Each example provided here applies specifically to notification templates (note that the syntax and behavior may differ from alert rule templating). For examples related to templating within alert rules, please refer to the Alert Rule Templating Examples document.
+Each example provided here applies specifically to notification templates (note that the syntax and behavior may differ from alert rule templating). For examples related to templating within alert rules, please refer to the [Alert Rule Templating Examples](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/) document.
 
 > Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See more details in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
 
@@ -334,6 +334,8 @@ Template alert notifications based on a label. In this example the label represe
    This template alters the content of alert notifications depending on the namespace value.
 
 ## Templates for contact points
+
+Though the way alerts are processed remains largely uniform across contact points, the templates are tailored to suit the unique characteristics of each platform. Each contact point has its own formatting standards, interaction methods, and message presentation styles. These templates are customized to ensure that alerts are displayed effectively and aligned with the communication model of each platform, delivering a cohesive user experience across different channels.
 
 ### Email
 
