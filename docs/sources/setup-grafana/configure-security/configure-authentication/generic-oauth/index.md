@@ -313,7 +313,7 @@ Payload:
         "roles": [
             "org_foo",
             "org_bar",
-            "another_org'
+            "another_org"
         ],
         ...
     },

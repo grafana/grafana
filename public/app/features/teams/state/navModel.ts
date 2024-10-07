@@ -9,6 +9,7 @@ import { AccessControlAction, Team, TeamPermissionLevel } from 'app/types';
 const loadingTeam = {
   avatarUrl: 'public/img/user_profile.png',
   id: 1,
+  uid: '',
   name: 'Loading',
   email: 'loading',
   memberCount: 0,
@@ -23,7 +24,7 @@ export function buildNavModel(team: Team): NavModelItem {
     img: team.avatarUrl,
     id: 'team-' + team.id,
     subTitle: 'Manage members and settings',
-    url: '',
+    url: `org/teams/edit/${team.id}`,
     text: team.name,
     children: [
       // With RBAC this tab will always be available (but not always editable)

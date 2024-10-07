@@ -65,6 +65,7 @@ func TestPlaylistConversion(t *testing.T) {
 			  "value": "123"
 			}
 		  ]
-		}
+		},
+		"status": {}
 	  }`, string(out))
 }

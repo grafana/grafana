@@ -87,10 +87,6 @@ type schedule struct {
 	rrCfg                setting.RecordingRuleSettings
 
 	metrics *metrics.Scheduler
-	// lastUpdatedMetricsForOrgsAndGroups contains AlertRuleGroupKeyWithFolderFullpaths that
-	// were passed to updateRulesMetrics in the current tick. This is used to
-	// delete metrics for the rules/groups that are not longer present.
-	lastUpdatedMetricsForOrgsAndGroups map[int64]map[ngmodels.AlertRuleGroupKeyWithFolderFullpath]struct{} // orgID -> set of AlertRuleGroupKeyWithFolderFullpath
 
 	alertsSender    AlertsSender
 	minRuleInterval time.Duration
@@ -134,25 +130,24 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	}
 
 	sch := schedule{
-		registry:                           newRuleRegistry(),
-		maxAttempts:                        cfg.MaxAttempts,
-		clock:                              cfg.C,
-		baseInterval:                       cfg.BaseInterval,
-		log:                                cfg.Log,
-		evaluatorFactory:                   cfg.EvaluatorFactory,
-		ruleStore:                          cfg.RuleStore,
-		metrics:                            cfg.Metrics,
-		lastUpdatedMetricsForOrgsAndGroups: make(map[int64]map[ngmodels.AlertRuleGroupKeyWithFolderFullpath]struct{}),
-		appURL:                             cfg.AppURL,
-		disableGrafanaFolder:               cfg.DisableGrafanaFolder,
-		jitterEvaluations:                  cfg.JitterEvaluations,
-		rrCfg:                              cfg.RecordingRulesCfg,
-		stateManager:                       stateManager,
-		minRuleInterval:                    cfg.MinRuleInterval,
-		schedulableAlertRules:              alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
-		alertsSender:                       cfg.AlertSender,
-		tracer:                             cfg.Tracer,
-		recordingWriter:                    cfg.RecordingWriter,
+		registry:              newRuleRegistry(),
+		maxAttempts:           cfg.MaxAttempts,
+		clock:                 cfg.C,
+		baseInterval:          cfg.BaseInterval,
+		log:                   cfg.Log,
+		evaluatorFactory:      cfg.EvaluatorFactory,
+		ruleStore:             cfg.RuleStore,
+		metrics:               cfg.Metrics,
+		appURL:                cfg.AppURL,
+		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
+		jitterEvaluations:     cfg.JitterEvaluations,
+		rrCfg:                 cfg.RecordingRulesCfg,
+		stateManager:          stateManager,
+		minRuleInterval:       cfg.MinRuleInterval,
+		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
+		alertsSender:          cfg.AlertSender,
+		tracer:                cfg.Tracer,
+		recordingWriter:       cfg.RecordingWriter,
 	}
 
 	return &sch
@@ -174,6 +169,14 @@ func (sch *schedule) Run(ctx context.Context) error {
 // Rules returns all supplementary metadata for the rules that is stored by the scheduler - namely, the set of folder titles.
 func (sch *schedule) Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]string) {
 	return sch.schedulableAlertRules.all()
+}
+
+// Status fetches the health of a given scheduled rule, by key.
+func (sch *schedule) Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
+	if rule, ok := sch.registry.get(key); ok {
+		return rule.Status(), true
+	}
+	return ngmodels.RuleStatus{}, false
 }
 
 // deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.

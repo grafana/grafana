@@ -13,7 +13,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var logger = log.New("find-scopenode")
 
 type findREST struct {
 	scopeNodeStorage *storage
@@ -89,6 +92,8 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		for _, item := range all.Items {
 			filterAndAppendItem(item, parent, query, results)
 		}
+
+		logger.FromContext(req.Context()).Debug("find scopenode", "raw", len(all.Items), "filtered", len(results.Items))
 
 		responder.Object(200, results)
 	}), nil

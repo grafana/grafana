@@ -1,13 +1,15 @@
 const { parse } = require('ini');
 const { readFileSync, existsSync } = require('node:fs');
+const path = require('path');
 
 const getEnvConfig = () => {
-  const defaultSettings = readFileSync(`./conf/defaults.ini`, {
+  const grafanaRoot = path.join(__dirname, '../..');
+  const defaultSettings = readFileSync(`${grafanaRoot}/conf/defaults.ini`, {
     encoding: 'utf-8',
   });
 
-  const customSettings = existsSync(`./conf/custom.ini`)
-    ? readFileSync(`./conf/custom.ini`, {
+  const customSettings = existsSync(`${grafanaRoot}/conf/custom.ini`)
+    ? readFileSync(`${grafanaRoot}/conf/custom.ini`, {
         encoding: 'utf-8',
       })
     : '';

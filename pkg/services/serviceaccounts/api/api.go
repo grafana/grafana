@@ -40,6 +40,7 @@ func NewServiceAccountsAPI(
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 	features featuremgmt.FeatureToggles,
 ) *ServiceAccountsAPI {
+	enabled := features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) && cfg.ManagedServiceAccountsEnabled
 	return &ServiceAccountsAPI{
 		cfg:                  cfg,
 		service:              service,
@@ -48,7 +49,7 @@ func NewServiceAccountsAPI(
 		RouterRegister:       routerRegister,
 		log:                  log.New("serviceaccounts.api"),
 		permissionService:    permissionService,
-		isExternalSAEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		isExternalSAEnabled:  enabled,
 	}
 }
 

@@ -57,28 +57,6 @@ func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models
 	return settings, nil
 }
 
-func (f *fakeConfigStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
-	if oldReceiver == newReceiver {
-		return 0, nil
-	}
-	settings, ok := f.notificationSettings[orgID]
-	if !ok {
-		return 0, nil
-	}
-
-	var updated int
-	for _, notificationSettings := range settings {
-		for i, setting := range notificationSettings {
-			if setting.Receiver == oldReceiver {
-				updated++
-				notificationSettings[i].Receiver = newReceiver
-			}
-		}
-	}
-
-	return updated, nil
-}
-
 // Saves the image or returns an error.
 func (f *fakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
 	return alertingImages.ErrImageNotFound
@@ -378,4 +356,46 @@ func createNotificationLog(groupKey string, receiverName string, sentAt, expires
 		},
 		ExpiresAt: expiresAt,
 	}
+}
+
+type call struct {
+	Method string
+	Args   []interface{}
+}
+
+type fakeAlertRuleNotificationStore struct {
+	Calls []call
+
+	RenameReceiverInNotificationSettingsFn func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
+	ListNotificationSettingsFn             func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
+}
+
+func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+	call := call{
+		Method: "RenameReceiverInNotificationSettings",
+		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.RenameReceiverInNotificationSettingsFn != nil {
+		return f.RenameReceiverInNotificationSettingsFn(ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil, nil
+}
+
+func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+	call := call{
+		Method: "ListNotificationSettings",
+		Args:   []interface{}{ctx, q},
+	}
+	f.Calls = append(f.Calls, call)
+
+	if f.ListNotificationSettingsFn != nil {
+		return f.ListNotificationSettingsFn(ctx, q)
+	}
+
+	// Default values when no function hook is provided
+	return nil, nil
 }

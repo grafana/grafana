@@ -32,7 +32,19 @@ kubernetesPlaylists = true
 [grafana-apiserver]
 ; use unified storage for k8s apiserver
 storage_type = unified
+
+# Dualwriter modes
+# 0: disabled (default mode)
+# 1: read from legacy, write to legacy, write to unified best-effort
+# 2: read from legacy, write to both
+# 3: read from unified, write to both
+# 4: read from unified, write to unified
+# 5: read from unified, write to unified, ignore background sync state
+[unified_storage.playlists.playlist.grafana.app]
+dualWriterMode = 0
 ```
+
+**Note**: When using the Dualwriter, Watch will only work with mode 5.
 
 ### Folders: baseline configuration
 
@@ -220,6 +232,13 @@ make run
 ### Run as a GRPC service
 
 #### Start GRPC storage-server
+
+Make sure you have the gRPC address in the `[grafana-apiserver]` section of your config file:
+```ini
+[grafana-apiserver]
+; your gRPC server address
+address = localhost:10000
+```
 
 This currently only works with a separate database configuration (see previous section).
 

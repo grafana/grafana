@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
@@ -57,7 +57,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     // If there are no recent trails, don't show home page and create a new trail
     if (!getTrailStore().recent.length) {
       const trail = newMetricsTrail(getDatasourceForNewTrail());
-      return <Redirect to={getUrlForTrail(trail)} />;
+      return <Navigate replace to={getUrlForTrail(trail)} />;
     }
 
     return (

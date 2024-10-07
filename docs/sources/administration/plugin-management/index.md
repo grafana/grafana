@@ -56,7 +56,7 @@ Use app plugins when you want an out-of-the-box monitoring experience.
 
 ### Managing access for app plugins
 
-Customize access to app plugins with [RBAC]({{< relref "../roles-and-permissions/access-control/#about-rbac" >}}).
+Customize access to app plugins with [RBAC]({{< relref "../roles-and-permissions/access-control/rbac-for-app-plugins" >}}).
 
 By default, the Viewer, Editor and Admin roles have access to all app plugins that their Organization role allows them to access. Access is granted by the `fixed:plugins.app:reader` role.
 

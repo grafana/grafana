@@ -34,7 +34,7 @@ describe('Dashboard templating', () => {
       `Server:sqlstring = 'A''A\\"A','BB\\\B','CCC'`,
       `Server:date = NaN`,
       `Server:text = All`,
-      `Server:queryparam = var-Server=All`,
+      `Server:queryparam = var-Server=A%27A%22A&var-Server=BB%5CB&var-Server=CCC`,
       `1 < 2`,
       `Example: from=now-6h&to=now`,
     ];

@@ -25,4 +25,4 @@ If you want to make or review large changes to the backend, be sure to habituall
 
 ## Guidelines for dependency management
 
-If you work with a dependency that requires an upgrade, refer to [Upgrading dependencies](/contribute/backend/upgrading-dependencies.md).
+If you work with a dependency that requires an upgrade, refer to [Upgrade dependencies](/contribute/backend/upgrade-dependencies.md).
