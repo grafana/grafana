@@ -62,7 +62,6 @@ func ProvideUnifiedStorageClient(
 		return resource.NewLocalResourceClient(server), nil
 
 	case options.StorageTypeUnifiedGrpc:
-		fmt.Println("GRPC????")
 		if opts.Address == "" {
 			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
 		}
