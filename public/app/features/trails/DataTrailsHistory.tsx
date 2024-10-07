@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
-import { getAppEvents } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -16,6 +15,7 @@ import {
   SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { HistoryChangedEvent } from 'app/types/events';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
@@ -158,7 +158,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
           this.addTrailStep(trail, 'time', tooltip);
 
-          getAppEvents().publish(
+          appEvents.publish(
             new HistoryChangedEvent({
               name: 'Time range changed',
               description: tooltip,
