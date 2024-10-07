@@ -1,7 +1,8 @@
 import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
+import { randomBytes } from 'crypto';
 
 function generateShortUid(): string {
-  return Math.random().toString(36).substring(2, 8); // Generate a short UID
+  return randomBytes(3).toString('hex'); // Generate a short UID
 }
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
