@@ -656,15 +656,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
-func (hs *HTTPServer) getAccessControlMetadata(c *contextmodel.ReqContext,
+func getAccessControlMetadata(c *contextmodel.ReqContext,
 	prefix string, resourceID string) ac.Metadata {
 	ids := map[string]bool{resourceID: true}
-	return hs.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
+	return getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }
 
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
 // Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
-func (hs *HTTPServer) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
+func getMultiAccessControlMetadata(c *contextmodel.ReqContext,
 	prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
 	if !c.QueryBool("accesscontrol") {
 		return map[string]ac.Metadata{}

@@ -123,7 +123,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	}
 
 	// Compute metadata
-	pluginsMetadata := hs.getMultiAccessControlMetadata(c, pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+	pluginsMetadata := getMultiAccessControlMetadata(c, pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
