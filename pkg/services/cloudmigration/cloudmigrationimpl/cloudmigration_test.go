@@ -2,18 +2,24 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -26,7 +32,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	libraryelementsfake "github.com/grafana/grafana/pkg/services/libraryelements/fake"
 	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -391,6 +402,7 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 			Results: []cloudmigration.CloudMigrationResource{
 				{
 					Name:        "1 name",
+					ParentName:  "1 parent name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "1", // this will be core
 					Status:      cloudmigration.ItemStatusOK,
@@ -398,6 +410,7 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 				},
 				{
 					Name:        "2 name",
+					ParentName:  "",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "2", // this will be non-core
 					Status:      cloudmigration.ItemStatusOK,
@@ -405,6 +418,7 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 				},
 				{
 					Name:        "3 name",
+					ParentName:  "3 parent name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "3", // this will be non-core with an error
 					Status:      cloudmigration.ItemStatusError,
@@ -413,6 +427,7 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 				},
 				{
 					Name:        "4 name",
+					ParentName:  "4 folder name",
 					Type:        cloudmigration.DatasourceDataType,
 					RefID:       "4", // this will be deleted
 					Status:      cloudmigration.ItemStatusOK,
@@ -563,6 +578,121 @@ func TestReportEvent(t *testing.T) {
 		require.Equal(t, 1, gmsMock.reportEventCalled)
 	})
 }
+func TestGetFolderNamesForFolderUIDs(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	user := &user.SignedInUser{OrgID: 1}
+
+	testcases := []struct {
+		folders             []*folder.Folder
+		folderUIDs          []string
+		expectedFolderNames []string
+	}{
+		{
+			folders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
+				{UID: "folderUID-B", Title: "Folder B", OrgID: 1},
+			},
+			folderUIDs:          []string{"folderUID-A", "folderUID-B"},
+			expectedFolderNames: []string{"Folder A", "Folder B"},
+		},
+		{
+			folders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
+			},
+			folderUIDs:          []string{"folderUID-A"},
+			expectedFolderNames: []string{"Folder A"},
+		},
+		{
+			folders:             []*folder.Folder{},
+			folderUIDs:          []string{"folderUID-A"},
+			expectedFolderNames: []string{""},
+		},
+		{
+			folders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1},
+			},
+			folderUIDs:          []string{"folderUID-A", "folderUID-B"},
+			expectedFolderNames: []string{"Folder A", ""},
+		},
+		{
+			folders:             []*folder.Folder{},
+			folderUIDs:          []string{""},
+			expectedFolderNames: []string{""},
+		},
+		{
+			folders:             []*folder.Folder{},
+			folderUIDs:          []string{},
+			expectedFolderNames: []string{},
+		},
+	}
+
+	for _, tc := range testcases {
+		s.folderService = &foldertest.FakeService{ExpectedFolders: tc.folders}
+
+		folderUIDsToFolders, err := s.getFolderNamesForFolderUIDs(ctx, user, tc.folderUIDs)
+		require.NoError(t, err)
+
+		resFolderNames := slices.Collect(maps.Values(folderUIDsToFolders))
+		require.Len(t, resFolderNames, len(tc.expectedFolderNames))
+
+		require.ElementsMatch(t, resFolderNames, tc.expectedFolderNames)
+	}
+}
+
+func TestGetParentNames(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	user := &user.SignedInUser{OrgID: 1}
+	libraryElementFolderUID := "folderUID-A"
+	testcases := []struct {
+		fakeFolders             []*folder.Folder
+		folders                 []folder.CreateFolderCommand
+		dashboards              []dashboards.Dashboard
+		libraryElements         []libraryElement
+		expectedDashParentNames []string
+		expectedFoldParentNames []string
+	}{
+		{
+			fakeFolders: []*folder.Folder{
+				{UID: "folderUID-A", Title: "Folder A", OrgID: 1, ParentUID: ""},
+				{UID: "folderUID-B", Title: "Folder B", OrgID: 1, ParentUID: "folderUID-A"},
+			},
+			folders: []folder.CreateFolderCommand{
+				{UID: "folderUID-C", Title: "Folder A", OrgID: 1, ParentUID: "folderUID-A"},
+			},
+			dashboards: []dashboards.Dashboard{
+				{UID: "dashboardUID-0", OrgID: 1, FolderUID: ""},
+				{UID: "dashboardUID-1", OrgID: 1, FolderUID: "folderUID-A"},
+				{UID: "dashboardUID-2", OrgID: 1, FolderUID: "folderUID-B"},
+			},
+			libraryElements: []libraryElement{
+				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
+			},
+			expectedDashParentNames: []string{"", "Folder A", "Folder B"},
+			expectedFoldParentNames: []string{"Folder A"},
+		},
+	}
+
+	for _, tc := range testcases {
+		s.folderService = &foldertest.FakeService{ExpectedFolders: tc.fakeFolders}
+
+		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders, tc.libraryElements)
+		require.NoError(t, err)
+
+		resDashParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.DashboardDataType]))
+		require.Len(t, resDashParentNames, len(tc.expectedDashParentNames))
+		require.ElementsMatch(t, resDashParentNames, tc.expectedDashParentNames)
+
+		resFoldParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.FolderDataType]))
+		require.Len(t, resFoldParentNames, len(tc.expectedFoldParentNames))
+		require.ElementsMatch(t, resFoldParentNames, tc.expectedFoldParentNames)
+	}
+}
 
 func TestGetLibraryElementsCommands(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
@@ -642,8 +772,29 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		},
 	}
 
+	featureToggles := featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagDashboardRestore)
+
+	kvStore := kvstore.ProvideService(sqlStore)
+
+	bus := bus.ProvideBus(tracer)
+	fakeAccessControl := actest.FakeAccessControl{}
+	fakeAccessControlService := actest.FakeService{}
+	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
+
+	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl)
+	require.NoError(t, err)
+
+	ng, err := ngalert.ProvideService(
+		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, quotatest.New(false, nil),
+		secretsService, nil, alertMetrics, mockFolder, fakeAccessControl, dashboardService, nil, bus, fakeAccessControlService,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
+		httpclient.NewProvider(), ngalertfakes.NewFakeReceiverPermissionsService(),
+	)
+	require.NoError(t, err)
+
 	s, err := ProvideService(
 		cfg,
+		httpclient.NewProvider(),
 		featuremgmt.WithFeatures(
 			featuremgmt.FlagOnPremToCloudMigrations,
 			featuremgmt.FlagDashboardRestore),
@@ -659,6 +810,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		&pluginstore.FakePluginStore{},
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},
+		ng,
 	)
 	require.NoError(t, err)
 

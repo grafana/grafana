@@ -1185,7 +1185,7 @@
     },
     "misc-section": {
       "allow-sign-up-descrition": "If not enabled, only existing Grafana users can log in using LDAP",
-      "allow-sign-up-label": "Allow sign up",
+      "allow-sign-up-label": "Allow sign-up",
       "label": "Misc",
       "port-description": "Default port is 389 without SSL or 636 with SSL",
       "port-label": "Port",
@@ -1478,6 +1478,7 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "dashboard-load-error": "Unable to load dashboard",
       "error-library-element-sub": "Library Element {uid}",
       "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
@@ -1924,6 +1925,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "No matches found",
     "unsupported-layout": "Unsupported layout"
   },
   "playlist-edit": {
@@ -2385,7 +2387,6 @@
     "menu": {
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
-      "share-internally-description": "Link settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
     },
@@ -2675,6 +2676,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+    },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",

@@ -1,5 +1,5 @@
 import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -749,6 +749,21 @@ describe('DashboardScene', () => {
       );
       variable.setState({ name: 'A' });
       expect(scene.state.isDirty).toBe(false);
+    });
+
+    it('should trigger scene RefreshEvent when a scene variable changes', () => {
+      const varA = new TestVariable({ name: 'A', query: 'A.*', value: 'A.AA', text: '', options: [], delayMs: 0 });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [varA] }),
+      });
+
+      scene.activate();
+
+      const eventHandler = jest.fn();
+      // this RefreshEvent is from the scenes library
+      scene.subscribeToEvent(RefreshEvent, eventHandler);
+      varA.changeValueTo('A.AB');
+      expect(eventHandler).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -1063,6 +1063,12 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "onPremToCloudMigrationsAlerts",
+			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
@@ -1323,12 +1329,12 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:              "ssoSettingsLDAP",
-			Description:       "Use the new SSO Settings API to configure LDAP",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			Name:            "ssoSettingsLDAP",
+			Description:     "Use the new SSO Settings API to configure LDAP",
+			Stage:           FeatureStagePublicPreview,
+			Owner:           identityAccessTeam,
+			AllowSelfServe:  true,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "failWrongDSUID",
@@ -1512,6 +1518,12 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:        "pluginsSriChecks",
+			Description: "Enables SRI checks for plugin assets",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 	}
 )

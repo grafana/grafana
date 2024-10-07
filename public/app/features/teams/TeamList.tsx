@@ -39,6 +39,7 @@ export interface State {
 // this is dummy data to pass to the table while the real data is loading
 const skeletonData: Team[] = new Array(3).fill(null).map((_, index) => ({
   id: index,
+  uid: '',
   memberCount: 0,
   name: '',
   orgId: 0,

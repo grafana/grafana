@@ -212,9 +212,15 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/receivers":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/receivers/test":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+			ac.EvalPermission(ac.ActionAlertingReceiversTest),
+		)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/templates/test":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		)
 
 	// External Alertmanager Paths
 	case http.MethodDelete + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":

@@ -329,6 +329,9 @@
       "moving": "Déplacement...",
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier."
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
       "alertRule_other": "{{count}} règles d'alerte",
@@ -1090,6 +1093,13 @@
     },
     "title": "Raccourcis"
   },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
+  },
   "inspector": {
     "query": {
       "collapse-all": "Tout réduire",
@@ -1468,6 +1478,7 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "dashboard-load-error": "",
       "error-library-element-sub": "",
       "error-library-element-title": "",
       "unknown-datasource-title": "",
@@ -1855,6 +1866,7 @@
       "close": "Fermer le menu",
       "dock": "Ancrer le menu",
       "list-label": "Navigation",
+      "open": "",
       "undock": "Ancrer le menu"
     },
     "toolbar": {
@@ -1913,6 +1925,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "",
     "unsupported-layout": ""
   },
   "playlist-edit": {
@@ -2374,7 +2387,6 @@
     "menu": {
       "export-json-title": "",
       "share-externally-title": "",
-      "share-internally-description": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
     },
