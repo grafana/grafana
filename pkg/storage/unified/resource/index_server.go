@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/blevesearch/bleve/v2"
@@ -26,16 +25,25 @@ TODO
 5. How do we get the tenant?
 */
 func (is indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	fmt.Println(req.Query)
-
 	// TODO how do we get tenant?
-	tenant := "default"
-	tenantIndex := is.index.shards[tenant].index
+	tenantId := "default"
+	tenantIndex := is.index.shards[tenantId].index
 
-	// assume the query is a bleve query string for now
-	//query := bleve.NewQueryStringQuery(req.Query)
-	query := bleve.NewMatchAllQuery()
-	searchReq := bleve.SearchRequest{Query: query, Size: 100, Fields: []string{"Kind", "Metadata.CreationTimestamp"}}
+	// TODO create search/browse interface and extract Bleve implementation
+	query := bleve.NewBooleanQuery()
+
+	// scope query to specific kind if provided
+	if req.Kind != "" {
+		kindQuery := bleve.NewTermQuery(req.Kind)
+		kindQuery.SetField("Kind")
+		query.AddMust(kindQuery)
+	}
+
+	//query := bleve.NewMatchAllQuery()
+	queryString := bleve.NewQueryStringQuery(req.Query)
+	query.AddMust(queryString)
+
+	searchReq := bleve.SearchRequest{Query: query, Size: 25, Fields: []string{"Kind", "Metadata.Name", "Metadata.CreationTimestamp"}}
 
 	res, err := tenantIndex.Search(&searchReq)
 	if err != nil {
@@ -49,6 +57,7 @@ func (is indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchRe
 		summary := map[string]interface{}{}
 		summary["Kind"] = hit.Fields["Kind"]
 		summary["CreationTimestamp"] = hit.Fields["Metadata.CreationTimestamp"]
+		summary["Name"] = hit.Fields["Metadata.Name"]
 		// marshal the summary and append it to response results
 		jsonBytes, err := json.Marshal(summary)
 		if err != nil {

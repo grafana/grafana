@@ -3,6 +3,8 @@ package search
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -74,18 +76,42 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					urlQuery := r.URL.Query().Get("query")
-					searchRequest := &resource.SearchRequest{Query: urlQuery}
+					//urlQuery := r.URL.Query().Get("query")
+					queryParams, err := url.ParseQuery(r.URL.RawQuery)
+					if err != nil {
+						panic(err)
+					}
+
+					// get limit and offset from query params
+					limit := 0
+					offset := 0
+					if queryParams.Has("limit") {
+						limit, err = strconv.Atoi(queryParams.Get("limit"))
+					}
+					if queryParams.Has("offset") {
+						offset, err = strconv.Atoi(queryParams.Get("offset"))
+					}
+
+					searchRequest := &resource.SearchRequest{
+						Kind:      queryParams.Get("kind"),
+						QueryType: queryParams.Get("queryType"),
+						Query:     queryParams.Get("query"),
+						Limit:     int64(limit),
+						Offset:    int64(offset),
+					}
+
 					res, err := b.unified.Search(r.Context(), searchRequest)
 					if err != nil {
 						panic(err)
 					}
 
+					// TODO need a nicer way of handling this
 					// the [][]byte response already contains the marshalled JSON, so we don't need to re-encode it
 					rawMessages := make([]json.RawMessage, len(res.GetSearchSummaries()))
 					for i, item := range res.GetSearchSummaries() {
 						rawMessages[i] = item
 					}
+
 					w.Header().Set("Content-Type", "application/json")
 					if err := json.NewEncoder(w).Encode(rawMessages); err != nil {
 						panic(err)
