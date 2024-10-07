@@ -22,10 +22,10 @@ func TestGetExternalSession(t *testing.T) {
 			AccessToken: "access-token",
 		}
 
-		err := store.CreateExternalSession(context.Background(), extSession)
+		err := store.Create(context.Background(), extSession)
 		require.NoError(t, err)
 
-		actual, err := store.GetExternalSession(context.Background(), extSession.ID)
+		actual, err := store.Get(context.Background(), extSession.ID)
 		require.NoError(t, err)
 		require.EqualValues(t, extSession.ID, actual.ID)
 		require.EqualValues(t, extSession.AccessToken, actual.AccessToken)
@@ -34,7 +34,7 @@ func TestGetExternalSession(t *testing.T) {
 	t.Run("returns not found if the external session is missing", func(t *testing.T) {
 		store := setupTest(t)
 
-		_, err := store.GetExternalSession(context.Background(), 999)
+		_, err := store.Get(context.Background(), 999)
 		require.ErrorIs(t, err, auth.ErrExternalSessionNotFound)
 	})
 }
@@ -51,11 +51,11 @@ func TestFindExternalSessions(t *testing.T) {
 			AccessToken: "access-token",
 		}
 
-		err := store.CreateExternalSession(context.Background(), extSession)
+		err := store.Create(context.Background(), extSession)
 		require.NoError(t, err)
 
-		query := &auth.GetExternalSessionQuery{ID: extSession.ID}
-		actual, err := store.FindExternalSessions(context.Background(), query)
+		query := &auth.ListExternalSessionQuery{ID: extSession.ID}
+		actual, err := store.List(context.Background(), query)
 		require.NoError(t, err)
 		require.Len(t, actual, 1)
 		require.EqualValues(t, extSession.ID, actual[0].ID)
@@ -68,11 +68,11 @@ func TestFindExternalSessions(t *testing.T) {
 		extSession := &auth.ExternalSession{
 			SessionID: "session-index",
 		}
-		err := store.CreateExternalSession(context.Background(), extSession)
+		err := store.Create(context.Background(), extSession)
 		require.NoError(t, err)
 
-		query := &auth.GetExternalSessionQuery{SessionID: extSession.SessionID}
-		actual, err := store.FindExternalSessions(context.Background(), query)
+		query := &auth.ListExternalSessionQuery{SessionID: extSession.SessionID}
+		actual, err := store.List(context.Background(), query)
 		require.NoError(t, err)
 		require.Len(t, actual, 1)
 		require.EqualValues(t, extSession.ID, actual[0].ID)
@@ -86,11 +86,11 @@ func TestFindExternalSessions(t *testing.T) {
 			NameID: "name-id",
 		}
 
-		err := store.CreateExternalSession(context.Background(), extSession)
+		err := store.Create(context.Background(), extSession)
 		require.NoError(t, err)
 
-		query := &auth.GetExternalSessionQuery{NameID: extSession.NameID}
-		actual, err := store.FindExternalSessions(context.Background(), query)
+		query := &auth.ListExternalSessionQuery{NameID: extSession.NameID}
+		actual, err := store.List(context.Background(), query)
 		require.NoError(t, err)
 		require.Len(t, actual, 1)
 		require.EqualValues(t, extSession.ID, actual[0].ID)
@@ -100,8 +100,8 @@ func TestFindExternalSessions(t *testing.T) {
 	t.Run("returns empty result if no external sessions match the query", func(t *testing.T) {
 		store := setupTest(t)
 
-		query := &auth.GetExternalSessionQuery{ID: 999}
-		actual, err := store.FindExternalSessions(context.Background(), query)
+		query := &auth.ListExternalSessionQuery{ID: 999}
+		actual, err := store.List(context.Background(), query)
 		require.NoError(t, err)
 		require.Len(t, actual, 0)
 	})
@@ -125,16 +125,16 @@ func TestDeleteExternalSessionsByUserID(t *testing.T) {
 			AccessToken: "access-token-2",
 		}
 
-		err := store.CreateExternalSession(context.Background(), extSession1)
+		err := store.Create(context.Background(), extSession1)
 		require.NoError(t, err)
-		err = store.CreateExternalSession(context.Background(), extSession2)
+		err = store.Create(context.Background(), extSession2)
 		require.NoError(t, err)
 
 		err = store.DeleteExternalSessionsByUserID(context.Background(), userID)
 		require.NoError(t, err)
 
-		query := &auth.GetExternalSessionQuery{}
-		actual, err := store.FindExternalSessions(context.Background(), query)
+		query := &auth.ListExternalSessionQuery{}
+		actual, err := store.List(context.Background(), query)
 		require.NoError(t, err)
 		require.Len(t, actual, 0)
 	})
@@ -160,20 +160,20 @@ func TestDeleteExternalSession(t *testing.T) {
 			AccessToken: "access-token",
 		}
 
-		err := store.CreateExternalSession(context.Background(), extSession)
+		err := store.Create(context.Background(), extSession)
 		require.NoError(t, err)
 
-		err = store.DeleteExternalSession(context.Background(), extSession.ID)
+		err = store.Delete(context.Background(), extSession.ID)
 		require.NoError(t, err)
 
-		_, err = store.GetExternalSession(context.Background(), extSession.ID)
+		_, err = store.Get(context.Background(), extSession.ID)
 		require.ErrorIs(t, err, auth.ErrExternalSessionNotFound)
 	})
 
 	t.Run("returns no error if the external session does not exist", func(t *testing.T) {
 		store := setupTest(t)
 
-		err := store.DeleteExternalSession(context.Background(), 999)
+		err := store.Delete(context.Background(), 999)
 		require.NoError(t, err)
 	})
 }
@@ -197,16 +197,16 @@ func TestBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
 			AccessToken: "access-token-2",
 		}
 
-		err := store.CreateExternalSession(context.Background(), extSession1)
+		err := store.Create(context.Background(), extSession1)
 		require.NoError(t, err)
-		err = store.CreateExternalSession(context.Background(), extSession2)
+		err = store.Create(context.Background(), extSession2)
 		require.NoError(t, err)
 
 		err = store.BatchDeleteExternalSessionsByUserIDs(context.Background(), []int64{userID1, userID2})
 		require.NoError(t, err)
 
-		query := &auth.GetExternalSessionQuery{}
-		actual, err := store.FindExternalSessions(context.Background(), query)
+		query := &auth.ListExternalSessionQuery{}
+		actual, err := store.List(context.Background(), query)
 		require.NoError(t, err)
 		require.Len(t, actual, 0)
 	})
@@ -219,10 +219,10 @@ func TestBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
 	})
 }
 
-func setupTest(t *testing.T) *Store {
+func setupTest(t *testing.T) *store {
 	sqlStore := db.InitTestDB(t)
 	secretService := fakes.NewFakeSecretsService()
 	tracer := tracing.InitializeTracerForTest()
-	externalSessionStore := ProvideExternalSessionStore(sqlStore, secretService, tracer).(*Store)
+	externalSessionStore := provideExternalSessionStore(sqlStore, secretService, tracer).(*store)
 	return externalSessionStore
 }

@@ -41,8 +41,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 	t.Run("When creating token", func(t *testing.T) {
 		createToken := func() *auth.UserToken {
-			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-				net.ParseIP("192.168.10.11"), "some user agent", nil)
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  net.ParseIP("192.168.10.11"),
+				UserAgent: "some user agent",
+			})
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
 			require.False(t, userToken.AuthTokenSeen)
@@ -114,8 +117,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		userToken = createToken()
 
 		t.Run("When creating an additional token", func(t *testing.T) {
-			userToken2, err := ctx.tokenService.CreateToken(context.Background(), usr,
-				net.ParseIP("192.168.10.11"), "some user agent", nil)
+			userToken2, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  net.ParseIP("192.168.10.11"),
+				UserAgent: "some user agent",
+			})
 			require.Nil(t, err)
 			require.NotNil(t, userToken2)
 
@@ -161,8 +167,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 				for i := 0; i < 3; i++ {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
-					_, err := ctx.tokenService.CreateToken(context.Background(), usr,
-						net.ParseIP("192.168.10.11"), "some user agent", nil)
+					_, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+						User:      usr,
+						ClientIP:  net.ParseIP("192.168.10.11"),
+						UserAgent: "some user agent",
+					})
 					require.Nil(t, err)
 				}
 
@@ -180,8 +189,12 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 	t.Run("When creating token with external session", func(t *testing.T) {
 		createToken := func() *auth.UserToken {
-			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-				net.ParseIP("192.168.10.11"), "some user agent", &auth.ExternalSession{UserID: usr.ID, AuthModule: "test", UserAuthID: 1})
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:            usr,
+				ClientIP:        net.ParseIP("192.168.10.11"),
+				UserAgent:       "some user agent",
+				ExternalSession: &auth.ExternalSession{UserID: usr.ID, AuthModule: "test", UserAuthID: 1},
+			})
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
 			require.False(t, userToken.AuthTokenSeen)
@@ -224,8 +237,12 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 				for i := 0; i < 3; i++ {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
-					token, err := ctx.tokenService.CreateToken(context.Background(), usr,
-						net.ParseIP("192.168.10.11"), "some user agent", &auth.ExternalSession{UserID: userId, AuthModule: "test", UserAuthID: 1})
+					token, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+						User:            usr,
+						ClientIP:        net.ParseIP("192.168.10.11"),
+						UserAgent:       "some user agent",
+						ExternalSession: &auth.ExternalSession{UserID: userId, AuthModule: "test", UserAuthID: 1},
+					})
 					require.Nil(t, err)
 					extSessionIds = append(extSessionIds, token.ExternalSessionId)
 				}
@@ -248,8 +265,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 	t.Run("expires correctly", func(t *testing.T) {
 		ctx := createTestContext(t)
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-			net.ParseIP("192.168.10.11"), "some user agent", nil)
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User:      usr,
+			ClientIP:  net.ParseIP("192.168.10.11"),
+			UserAgent: "some user agent",
+		})
 		require.Nil(t, err)
 
 		userToken, err = ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
@@ -335,7 +355,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	t.Run("can properly rotate tokens", func(t *testing.T) {
 		getTime = func() time.Time { return now }
 		ctx := createTestContext(t)
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr, net.ParseIP("192.168.10.11"), "some user agent", nil)
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User:      usr,
+			ClientIP:  net.ParseIP("192.168.10.11"),
+			UserAgent: "some user agent",
+		})
 		require.Nil(t, err)
 
 		prevToken := userToken.AuthToken
@@ -408,8 +432,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 	t.Run("keeps prev token valid for 1 minute after it is confirmed", func(t *testing.T) {
 		getTime = func() time.Time { return now }
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-			net.ParseIP("192.168.10.11"), "some user agent", nil)
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User:      usr,
+			ClientIP:  net.ParseIP("192.168.10.11"),
+			UserAgent: "some user agent",
+		})
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
 
@@ -441,8 +468,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	})
 
 	t.Run("will not mark token unseen when prev and current are the same", func(t *testing.T) {
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-			net.ParseIP("192.168.10.11"), "some user agent", nil)
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User:      usr,
+			ClientIP:  net.ParseIP("192.168.10.11"),
+			UserAgent: "some user agent",
+		})
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
 
@@ -462,7 +492,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 	t.Run("RotateToken", func(t *testing.T) {
 		var prev string
-		token, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
+		token, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User:      usr,
+			ClientIP:  nil,
+			UserAgent: "",
+		})
 		require.NoError(t, err)
 		t.Run("should rotate token when called with current auth token", func(t *testing.T) {
 			prev = token.UnhashedToken
@@ -485,7 +519,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("should return error when token is revoked", func(t *testing.T) {
-			revokedToken, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
+			revokedToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  nil,
+				UserAgent: "",
+			})
 			require.NoError(t, err)
 			// mark token as revoked
 			err = ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -499,7 +537,11 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("should return error when token has expired", func(t *testing.T) {
-			expiredToken, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
+			expiredToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  nil,
+				UserAgent: "",
+			})
 			require.NoError(t, err)
 			// mark token as expired
 			err = ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -514,10 +556,18 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("should only delete revoked tokens that are outside on specified window", func(t *testing.T) {
 			usr := &user.User{ID: 100}
-			token1, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
+			token1, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  nil,
+				UserAgent: "",
+			})
 			require.NoError(t, err)
 
-			token2, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
+			token2, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  nil,
+				UserAgent: "",
+			})
 			require.NoError(t, err)
 
 			getTime = func() time.Time {
@@ -626,7 +676,7 @@ func createTestContext(t *testing.T) *testContext {
 		TokenRotationIntervalMinutes: 10,
 	}
 
-	extSessionStore := ProvideExternalSessionStore(sqlstore, &fakes.FakeSecretsService{}, tracing.InitializeTracerForTest())
+	extSessionStore := provideExternalSessionStore(sqlstore, &fakes.FakeSecretsService{}, tracing.InitializeTracerForTest())
 
 	tokenService := &UserAuthTokenService{
 		sqlStore:             sqlstore,
@@ -705,8 +755,11 @@ func TestIntegrationTokenCount(t *testing.T) {
 	user := &user.User{ID: int64(10)}
 
 	createToken := func() *auth.UserToken {
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
-			net.ParseIP("192.168.10.11"), "some user agent", nil)
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User:      user,
+			ClientIP:  net.ParseIP("192.168.10.11"),
+			UserAgent: "some user agent",
+		})
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
 		require.False(t, userToken.AuthTokenSeen)
@@ -742,14 +795,19 @@ func TestRevokeAllUserTokens(t *testing.T) {
 		// Mock the external session store to return an error
 		mockExternalSessionStore := &authtest.MockExternalSessionStore{}
 
-		mockExternalSessionStore.On("CreateExternalSession", mock.Anything, mock.IsType(&auth.ExternalSession{})).Run(func(args mock.Arguments) {
+		mockExternalSessionStore.On("Create", mock.Anything, mock.IsType(&auth.ExternalSession{})).Run(func(args mock.Arguments) {
 			extSession := args.Get(1).(*auth.ExternalSession)
 			extSession.ID = 1
 		}).Return(nil)
 		mockExternalSessionStore.On("DeleteExternalSessionsByUserID", mock.Anything, usr.ID).Return(errors.New("some error"))
 		ctx.tokenService.externalSessionStore = mockExternalSessionStore
 
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr, net.ParseIP("192.168.10.11"), "some user agent", &auth.ExternalSession{UserID: usr.ID, AuthModule: "test", UserAuthID: 1})
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User:            usr,
+			ClientIP:        net.ParseIP("192.168.10.11"),
+			UserAgent:       "some user agent",
+			ExternalSession: &auth.ExternalSession{UserID: usr.ID, AuthModule: "test", UserAuthID: 1},
+		})
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
 
@@ -768,14 +826,19 @@ func TestRevokeToken(t *testing.T) {
 		usr := &user.User{ID: int64(10)}
 		mockExternalSessionStore := &authtest.MockExternalSessionStore{}
 
-		mockExternalSessionStore.On("CreateExternalSession", mock.Anything, mock.IsType(&auth.ExternalSession{})).Run(func(args mock.Arguments) {
+		mockExternalSessionStore.On("Create", mock.Anything, mock.IsType(&auth.ExternalSession{})).Run(func(args mock.Arguments) {
 			extSession := args.Get(1).(*auth.ExternalSession)
 			extSession.ID = 2
 		}).Return(nil)
 		mockExternalSessionStore.On("DeleteExternalSession", mock.Anything, int64(2)).Return(errors.New("some error"))
 		ctx.tokenService.externalSessionStore = mockExternalSessionStore
 
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr, net.ParseIP("192.168.10.11"), "some user agent", &auth.ExternalSession{UserID: usr.ID, AuthModule: "test", UserAuthID: 1})
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User:            usr,
+			ClientIP:        net.ParseIP("192.168.10.11"),
+			UserAgent:       "some user agent",
+			ExternalSession: &auth.ExternalSession{UserID: usr.ID, AuthModule: "test", UserAuthID: 1},
+		})
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
 
@@ -796,7 +859,7 @@ func TestBatchRevokeAllUserTokens(t *testing.T) {
 
 		mockExternalSessionStore.On("BatchDeleteExternalSessionsByUserIDs", mock.Anything, userIds).Return(errors.New("some error"))
 		ctr := int64(0)
-		mockExternalSessionStore.On("CreateExternalSession", mock.Anything, mock.IsType(&auth.ExternalSession{})).Run(func(args mock.Arguments) {
+		mockExternalSessionStore.On("Create", mock.Anything, mock.IsType(&auth.ExternalSession{})).Run(func(args mock.Arguments) {
 			extSession := args.Get(1).(*auth.ExternalSession)
 			ctr += 1
 			extSession.ID = ctr
@@ -806,7 +869,12 @@ func TestBatchRevokeAllUserTokens(t *testing.T) {
 
 		for _, userID := range userIds {
 			usr := &user.User{ID: userID}
-			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr, net.ParseIP("192.168.10.11"), "some user agent", &auth.ExternalSession{UserID: usr.ID, AuthModule: "test", UserAuthID: 1})
+			userToken, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:            usr,
+				ClientIP:        net.ParseIP("192.168.10.11"),
+				UserAgent:       "some user agent",
+				ExternalSession: &auth.ExternalSession{UserID: usr.ID, AuthModule: "test", UserAuthID: 1},
+			})
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
 		}

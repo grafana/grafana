@@ -11,15 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type FakeUserAuthTokenService struct {
-	CreateTokenProvider                 func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, extSession *auth.ExternalSession) (*auth.UserToken, error)
+	CreateTokenProvider                 func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error)
 	RotateTokenProvider                 func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
 	GetTokenByExternalSessionIDProvider func(ctx context.Context, externalSessionID int64) (*auth.UserToken, error)
 	GetExternalSessionProvider          func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error)
-	FindExternalSessionsProvider        func(ctx context.Context, query *auth.GetExternalSessionQuery) ([]*auth.ExternalSession, error)
+	FindExternalSessionsProvider        func(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error)
 	TryRotateTokenProvider              func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider                 func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider                 func(ctx context.Context, token *auth.UserToken, soft bool) error
@@ -33,7 +32,7 @@ type FakeUserAuthTokenService struct {
 
 func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 	return &FakeUserAuthTokenService{
-		CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, extSession *auth.ExternalSession) (*auth.UserToken, error) {
+		CreateTokenProvider: func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
 			return &auth.UserToken{
 				UserId:        0,
 				UnhashedToken: "",
@@ -75,8 +74,8 @@ func (s *FakeUserAuthTokenService) Init() error {
 	return nil
 }
 
-func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, extSession *auth.ExternalSession) (*auth.UserToken, error) {
-	return s.CreateTokenProvider(context.Background(), user, clientIP, userAgent, extSession)
+func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
+	return s.CreateTokenProvider(context.Background(), cmd)
 }
 
 func (s *FakeUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
@@ -91,7 +90,7 @@ func (s *FakeUserAuthTokenService) GetExternalSession(ctx context.Context, exter
 	return s.GetExternalSessionProvider(ctx, externalSessionID)
 }
 
-func (s *FakeUserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.GetExternalSessionQuery) ([]*auth.ExternalSession, error) {
+func (s *FakeUserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
 	return s.FindExternalSessionsProvider(context.Background(), query)
 }
 

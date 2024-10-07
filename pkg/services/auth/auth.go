@@ -66,13 +66,20 @@ type RotateCommand struct {
 	UserAgent     string
 }
 
+type CreateTokenCommand struct {
+	User            *user.User
+	ClientIP        net.IP
+	UserAgent       string
+	ExternalSession *ExternalSession
+}
+
 // UserTokenService are used for generating and validating user tokens
 type UserTokenService interface {
-	CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, extSession *ExternalSession) (*UserToken, error)
+	CreateToken(ctx context.Context, cmd *CreateTokenCommand) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
 	GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*UserToken, error)
 	GetExternalSession(ctx context.Context, extSessionID int64) (*ExternalSession, error)
-	FindExternalSessions(ctx context.Context, query *GetExternalSessionQuery) ([]*ExternalSession, error)
+	FindExternalSessions(ctx context.Context, query *ListExternalSessionQuery) ([]*ExternalSession, error)
 
 	// RotateToken will always rotate a valid token
 	RotateToken(ctx context.Context, cmd RotateCommand) (*UserToken, error)

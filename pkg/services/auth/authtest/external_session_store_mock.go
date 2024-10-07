@@ -33,12 +33,12 @@ func (_m *MockExternalSessionStore) BatchDeleteExternalSessionsByUserIDs(ctx con
 	return r0
 }
 
-// CreateExternalSession provides a mock function with given fields: ctx, extSesion
-func (_m *MockExternalSessionStore) CreateExternalSession(ctx context.Context, extSesion *auth.ExternalSession) error {
+// Create provides a mock function with given fields: ctx, extSesion
+func (_m *MockExternalSessionStore) Create(ctx context.Context, extSesion *auth.ExternalSession) error {
 	ret := _m.Called(ctx, extSesion)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateExternalSession")
+		panic("no return value specified for Create")
 	}
 
 	var r0 error
@@ -51,12 +51,12 @@ func (_m *MockExternalSessionStore) CreateExternalSession(ctx context.Context, e
 	return r0
 }
 
-// DeleteExternalSession provides a mock function with given fields: ctx, ID
-func (_m *MockExternalSessionStore) DeleteExternalSession(ctx context.Context, ID int64) error {
+// Delete provides a mock function with given fields: ctx, ID
+func (_m *MockExternalSessionStore) Delete(ctx context.Context, ID int64) error {
 	ret := _m.Called(ctx, ID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteExternalSession")
+		panic("no return value specified for Delete")
 	}
 
 	var r0 error
@@ -87,42 +87,12 @@ func (_m *MockExternalSessionStore) DeleteExternalSessionsByUserID(ctx context.C
 	return r0
 }
 
-// FindExternalSessions provides a mock function with given fields: ctx, query
-func (_m *MockExternalSessionStore) FindExternalSessions(ctx context.Context, query *auth.GetExternalSessionQuery) ([]*auth.ExternalSession, error) {
-	ret := _m.Called(ctx, query)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindExternalSessions")
-	}
-
-	var r0 []*auth.ExternalSession
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *auth.GetExternalSessionQuery) ([]*auth.ExternalSession, error)); ok {
-		return rf(ctx, query)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *auth.GetExternalSessionQuery) []*auth.ExternalSession); ok {
-		r0 = rf(ctx, query)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*auth.ExternalSession)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *auth.GetExternalSessionQuery) error); ok {
-		r1 = rf(ctx, query)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetExternalSession provides a mock function with given fields: ctx, ID
-func (_m *MockExternalSessionStore) GetExternalSession(ctx context.Context, ID int64) (*auth.ExternalSession, error) {
+// Get provides a mock function with given fields: ctx, ID
+func (_m *MockExternalSessionStore) Get(ctx context.Context, ID int64) (*auth.ExternalSession, error) {
 	ret := _m.Called(ctx, ID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetExternalSession")
+		panic("no return value specified for Get")
 	}
 
 	var r0 *auth.ExternalSession
@@ -140,6 +110,36 @@ func (_m *MockExternalSessionStore) GetExternalSession(ctx context.Context, ID i
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
 		r1 = rf(ctx, ID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// List provides a mock function with given fields: ctx, query
+func (_m *MockExternalSessionStore) List(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
+	ret := _m.Called(ctx, query)
+
+	if len(ret) == 0 {
+		panic("no return value specified for List")
+	}
+
+	var r0 []*auth.ExternalSession
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error)); ok {
+		return rf(ctx, query)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *auth.ListExternalSessionQuery) []*auth.ExternalSession); ok {
+		r0 = rf(ctx, query)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*auth.ExternalSession)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *auth.ListExternalSessionQuery) error); ok {
+		r1 = rf(ctx, query)
 	} else {
 		r1 = ret.Error(1)
 	}

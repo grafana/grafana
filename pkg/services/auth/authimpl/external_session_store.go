@@ -11,24 +11,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
-var _ auth.ExternalSessionStore = (*Store)(nil)
+var _ auth.ExternalSessionStore = (*store)(nil)
 
-type Store struct {
+type store struct {
 	sqlStore       db.DB
 	secretsService secrets.Service
 	tracer         tracing.Tracer
 }
 
-func ProvideExternalSessionStore(sqlStore db.DB, secretService secrets.Service, tracer tracing.Tracer) auth.ExternalSessionStore {
-	return &Store{
+func provideExternalSessionStore(sqlStore db.DB, secretService secrets.Service, tracer tracing.Tracer) auth.ExternalSessionStore {
+	return &store{
 		sqlStore:       sqlStore,
 		secretsService: secretService,
 		tracer:         tracer,
 	}
 }
 
-func (s *Store) GetExternalSession(ctx context.Context, extSessionID int64) (*auth.ExternalSession, error) {
-	ctx, span := s.tracer.Start(ctx, "externalsession.GetExternalSession")
+func (s *store) Get(ctx context.Context, extSessionID int64) (*auth.ExternalSession, error) {
+	ctx, span := s.tracer.Start(ctx, "externalsession.Get")
 	defer span.End()
 
 	externalSession := &auth.ExternalSession{ID: extSessionID}
@@ -56,8 +56,8 @@ func (s *Store) GetExternalSession(ctx context.Context, extSessionID int64) (*au
 	return externalSession, nil
 }
 
-func (s *Store) FindExternalSessions(ctx context.Context, query *auth.GetExternalSessionQuery) ([]*auth.ExternalSession, error) {
-	ctx, span := s.tracer.Start(ctx, "externalsession.FindExternalSessions")
+func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
+	ctx, span := s.tracer.Start(ctx, "externalsession.List")
 	defer span.End()
 
 	externalSession := &auth.ExternalSession{}
@@ -95,8 +95,8 @@ func (s *Store) FindExternalSessions(ctx context.Context, query *auth.GetExterna
 	return queryResult, nil
 }
 
-func (s *Store) CreateExternalSession(ctx context.Context, extSession *auth.ExternalSession) error {
-	ctx, span := s.tracer.Start(ctx, "externalsession.CreateExternalSession")
+func (s *store) Create(ctx context.Context, extSession *auth.ExternalSession) error {
+	ctx, span := s.tracer.Start(ctx, "externalsession.Create")
 	defer span.End()
 
 	var err error
@@ -150,8 +150,8 @@ func (s *Store) CreateExternalSession(ctx context.Context, extSession *auth.Exte
 	return nil
 }
 
-func (s *Store) DeleteExternalSession(ctx context.Context, ID int64) error {
-	ctx, span := s.tracer.Start(ctx, "externalsession.DeleteExternalSession")
+func (s *store) Delete(ctx context.Context, ID int64) error {
+	ctx, span := s.tracer.Start(ctx, "externalsession.Delete")
 	defer span.End()
 
 	externalSession := &auth.ExternalSession{ID: ID}
@@ -162,7 +162,7 @@ func (s *Store) DeleteExternalSession(ctx context.Context, ID int64) error {
 	return err
 }
 
-func (s *Store) DeleteExternalSessionsByUserID(ctx context.Context, userID int64) error {
+func (s *store) DeleteExternalSessionsByUserID(ctx context.Context, userID int64) error {
 	ctx, span := s.tracer.Start(ctx, "externalsession.DeleteExternalSessionsByUserID")
 	defer span.End()
 
@@ -174,7 +174,7 @@ func (s *Store) DeleteExternalSessionsByUserID(ctx context.Context, userID int64
 	return err
 }
 
-func (s *Store) BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userIDs []int64) error {
+func (s *store) BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userIDs []int64) error {
 	ctx, span := s.tracer.Start(ctx, "externalsession.BatchDeleteExternalSessionsByUserIDs")
 	defer span.End()
 
@@ -186,7 +186,7 @@ func (s *Store) BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userID
 	return err
 }
 
-func (s *Store) decryptSecrets(extSession *auth.ExternalSession) error {
+func (s *store) decryptSecrets(extSession *auth.ExternalSession) error {
 	var err error
 	extSession.AccessToken, err = s.decodeAndDecrypt(extSession.AccessToken)
 	if err != nil {
@@ -215,7 +215,7 @@ func (s *Store) decryptSecrets(extSession *auth.ExternalSession) error {
 	return nil
 }
 
-func (s *Store) encryptAndEncode(str string) (string, error) {
+func (s *store) encryptAndEncode(str string) (string, error) {
 	if str == "" {
 		return "", nil
 	}
@@ -227,7 +227,7 @@ func (s *Store) encryptAndEncode(str string) (string, error) {
 	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
 
-func (s *Store) decodeAndDecrypt(str string) (string, error) {
+func (s *store) decodeAndDecrypt(str string) (string, error) {
 	// Bail out if empty string since it'll cause a segfault in Decrypt
 	if str == "" {
 		return "", nil

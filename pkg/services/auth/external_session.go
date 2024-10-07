@@ -43,7 +43,7 @@ func (e *ExternalSession) Clone() *ExternalSession {
 	}
 }
 
-type GetExternalSessionQuery struct {
+type ListExternalSessionQuery struct {
 	ID        int64
 	NameID    string
 	SessionID string
@@ -51,15 +51,15 @@ type GetExternalSessionQuery struct {
 
 //go:generate mockery --name ExternalSessionStore --structname MockExternalSessionStore --outpkg authtest --filename external_session_store_mock.go --output ./authtest/
 type ExternalSessionStore interface {
-	// GetExternalSession returns the external session
-	GetExternalSession(ctx context.Context, ID int64) (*ExternalSession, error)
-	// FindExternalSessions returns all external sessions fπor the given query
-	FindExternalSessions(ctx context.Context, query *GetExternalSessionQuery) ([]*ExternalSession, error)
-	// CreateExternalSession creates a new external session for a user
-	CreateExternalSession(ctx context.Context, extSesion *ExternalSession) error
-	// DeleteExternalSession deletes an external session
-	DeleteExternalSession(ctx context.Context, ID int64) error
-	// DeleteExternalSessionBySessionID deletes an external session
+	// Get returns the external session
+	Get(ctx context.Context, ID int64) (*ExternalSession, error)
+	// List returns all external sessions fπor the given query
+	List(ctx context.Context, query *ListExternalSessionQuery) ([]*ExternalSession, error)
+	// Create creates a new external session for a user
+	Create(ctx context.Context, extSesion *ExternalSession) error
+	// Delete deletes an external session
+	Delete(ctx context.Context, ID int64) error
+	// DeleteExternalSessionsByUserID deletes an external session
 	DeleteExternalSessionsByUserID(ctx context.Context, userID int64) error
 	// BatchDeleteExternalSessionsByUserIDs deletes external sessions by user IDs
 	BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userIDs []int64) error

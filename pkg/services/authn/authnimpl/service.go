@@ -243,7 +243,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	externalSession := s.resolveExternalSessionFromIdentity(ctx, id, userID)
 
-	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: userID}, ip, r.HTTPRequest.UserAgent(), externalSession)
+	sessionToken, err := s.sessionService.CreateToken(ctx, &auth.CreateTokenCommand{User: &user.User{ID: userID}, ClientIP: ip, UserAgent: r.HTTPRequest.UserAgent(), ExternalSession: externalSession})
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", id.ID, "err", err)

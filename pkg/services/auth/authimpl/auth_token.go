@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -44,7 +43,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
 	}
-	s.externalSessionStore = ProvideExternalSessionStore(sqlStore, secretService, tracer)
+	s.externalSessionStore = provideExternalSessionStore(sqlStore, secretService, tracer)
 
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
@@ -71,24 +70,24 @@ type UserAuthTokenService struct {
 	singleflight         *singleflight.Group
 }
 
-func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, extSession *auth.ExternalSession) (*auth.UserToken, error) {
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
 	token, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
 	if err != nil {
 		return nil, err
 	}
 
 	now := getTime().Unix()
-	clientIPStr := clientIP.String()
-	if len(clientIP) == 0 {
+	clientIPStr := cmd.ClientIP.String()
+	if len(cmd.ClientIP) == 0 {
 		clientIPStr = ""
 	}
 
 	userAuthToken := userAuthToken{
-		UserId:        user.ID,
+		UserId:        cmd.User.ID,
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
 		ClientIp:      clientIPStr,
-		UserAgent:     userAgent,
+		UserAgent:     cmd.UserAgent,
 		RotatedAt:     now,
 		CreatedAt:     now,
 		UpdatedAt:     now,
@@ -98,12 +97,12 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 	}
 
 	err = s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
-		if extSession != nil {
-			inErr := s.externalSessionStore.CreateExternalSession(ctx, extSession)
+		if cmd.ExternalSession != nil {
+			inErr := s.externalSessionStore.Create(ctx, cmd.ExternalSession)
 			if inErr != nil {
 				return inErr
 			}
-			userAuthToken.ExternalSessionId = extSession.ID
+			userAuthToken.ExternalSessionId = cmd.ExternalSession.ID
 		}
 
 		inErr := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -250,11 +249,11 @@ func (s *UserAuthTokenService) GetTokenByExternalSessionID(ctx context.Context, 
 }
 
 func (s *UserAuthTokenService) GetExternalSession(ctx context.Context, extSessionID int64) (*auth.ExternalSession, error) {
-	return s.externalSessionStore.GetExternalSession(ctx, extSessionID)
+	return s.externalSessionStore.Get(ctx, extSessionID)
 }
 
-func (s *UserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.GetExternalSessionQuery) ([]*auth.ExternalSession, error) {
-	return s.externalSessionStore.FindExternalSessions(ctx, query)
+func (s *UserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
+	return s.externalSessionStore.List(ctx, query)
 }
 
 func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
@@ -373,7 +372,7 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *auth.User
 	}
 
 	if model.ExternalSessionId != 0 {
-		err = s.externalSessionStore.DeleteExternalSession(ctx, model.ExternalSessionId)
+		err = s.externalSessionStore.Delete(ctx, model.ExternalSessionId)
 		if err != nil {
 			// Intentionally not returning error here, as the token has been revoked -> the backround job will clean up orphaned external sessions
 			ctxLogger.Warn("Failed to delete external session", "externalSessionID", model.ExternalSessionId, "err", err)
