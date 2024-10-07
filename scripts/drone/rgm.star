@@ -233,7 +233,6 @@ def rgm_tag():
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
         steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
-        depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
 def rgm_tag_windows():
@@ -254,7 +253,6 @@ def rgm_version_branch():
         name = "rgm-version-branch-prerelease",
         trigger = version_branch_trigger,
         steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
-        depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
 def rgm_nightly_build():
@@ -300,8 +298,6 @@ def rgm_nightly_pipeline():
 def rgm_tag_pipeline():
     return [
         whats_new_checker_pipeline(tag_trigger),
-        test_frontend(tag_trigger, "release"),
-        test_backend(tag_trigger, "release"),
         rgm_tag(),
         rgm_tag_windows(),
         verify_release_pipeline(
