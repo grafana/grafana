@@ -1,15 +1,62 @@
 import React from 'react';
 import { firstValueFrom } from 'rxjs';
 
+import { PluginLoadingStrategy } from '@grafana/data';
+import { config } from '@grafana/runtime';
+
+import { isGrafanaDevMode } from '../utils';
+
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
 
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+
+  // Manually set the dev mode to false
+  // (to make sure that by default we are testing a production scneario)
+  isGrafanaDevMode: jest.fn().mockReturnValue(false),
+}));
+
 describe('ExposedComponentsRegistry', () => {
   const consoleWarn = jest.fn();
+  const originalApps = config.apps;
+  const pluginId = 'grafana-basic-app';
+  const appPluginConfig = {
+    id: pluginId,
+    path: '',
+    version: '',
+    preload: false,
+    angular: {
+      detected: false,
+      hideDeprecation: false,
+    },
+    loadingStrategy: PluginLoadingStrategy.fetch,
+    dependencies: {
+      grafanaVersion: '8.0.0',
+      plugins: [],
+      extensions: {
+        exposedComponents: [],
+      },
+    },
+    extensions: {
+      addedLinks: [],
+      addedComponents: [],
+      exposedComponents: [],
+      extensionPoints: [],
+    },
+  };
 
   beforeEach(() => {
     global.console.warn = consoleWarn;
     consoleWarn.mockReset();
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+    config.apps = {
+      [pluginId]: appPluginConfig,
+    };
+  });
+
+  afterEach(() => {
+    config.apps = originalApps;
   });
 
   it('should return empty registry when no exposed components have been registered', async () => {
@@ -396,5 +443,106 @@ describe('ExposedComponentsRegistry', () => {
 
     expect(subscribeCallback).toHaveBeenCalledTimes(2);
     expect(Object.keys(subscribeCallback.mock.calls[1][0])).toEqual([`${pluginId}/hello-world/v1`]);
+  });
+
+  it('should not register an exposed component added by a plugin in dev-mode if the meta-info is missing from the plugin.json', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new ExposedComponentsRegistry();
+    const componentConfig = {
+      id: `${pluginId}/exposed-component/v1`,
+      title: 'Component title',
+      description: 'Component description',
+      component: () => React.createElement('div', null, 'Hello World1'),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.exposedComponents = [];
+
+    registry.register({
+      pluginId,
+      configs: [componentConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(0);
+    expect(consoleWarn).toHaveBeenCalled();
+  });
+
+  it('should register an exposed component added by a core Grafana in dev-mode even if the meta-info is missing', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new ExposedComponentsRegistry();
+    const componentConfig = {
+      id: `${pluginId}/exposed-component/v1`,
+      title: 'Component title',
+      description: 'Component description',
+      component: () => React.createElement('div', null, 'Hello World1'),
+    };
+
+    registry.register({
+      pluginId: 'grafana',
+      configs: [componentConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
+  });
+
+  it('should register an exposed component added by a plugin in production mode even if the meta-info is missing', async () => {
+    // Production mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+
+    const registry = new ExposedComponentsRegistry();
+    const componentConfig = {
+      id: `${pluginId}/exposed-component/v1`,
+      title: 'Component title',
+      description: 'Component description',
+      component: () => React.createElement('div', null, 'Hello World1'),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.exposedComponents = [];
+
+    registry.register({
+      pluginId,
+      configs: [componentConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
+  });
+
+  it('should register an exposed component added by a plugin in dev-mode if the meta-info is present', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new ExposedComponentsRegistry();
+    const componentConfig = {
+      id: `${pluginId}/exposed-component/v1`,
+      title: 'Component title',
+      description: 'Component description',
+      component: () => React.createElement('div', null, 'Hello World1'),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.exposedComponents = [componentConfig];
+
+    registry.register({
+      pluginId,
+      configs: [componentConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
   });
 });

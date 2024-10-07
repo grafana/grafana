@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -13,6 +14,7 @@ import {
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
 import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesDashboardsScene } from './ScopesDashboardsScene';
@@ -277,7 +279,10 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
 }
 
 export function ScopesSelectorSceneRenderer({ model }: SceneComponentProps<ScopesSelectorScene>) {
-  const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
+  const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
+  const styles = useStyles2(getStyles, menuDockedAndOpen);
   const {
     dashboards: dashboardsRef,
     nodes,
@@ -374,13 +379,16 @@ export function ScopesSelectorSceneRenderer({ model }: SceneComponentProps<Scope
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
   return {
     container: css({
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexDirection: 'row',
-      paddingLeft: theme.spacing(2),
+      paddingLeft: menuDockedAndOpen ? theme.spacing(2) : 'unset',
+      ...(!config.featureToggles.singleTopNav && {
+        paddingLeft: theme.spacing(2),
+        borderLeft: `1px solid ${theme.colors.border.weak}`,
+      }),
     }),
     dashboards: css({
       color: theme.colors.text.secondary,

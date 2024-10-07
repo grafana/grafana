@@ -3382,6 +3382,7 @@
       }
     },
     "CorrelationType": {
+      "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
       "type": "string"
     },
     "CreateAccessTokenResponseDTO": {
@@ -5417,6 +5418,9 @@
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "parentName": {
           "type": "string"
         },
         "refId": {

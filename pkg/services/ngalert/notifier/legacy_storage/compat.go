@@ -11,9 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func NameToUid(name string) string {
-	return base64.RawURLEncoding.EncodeToString([]byte(name))
-}
+var NameToUid = models.NameToUid
 
 func UidToName(uid string) (string, error) {
 	data, err := base64.RawURLEncoding.DecodeString(uid)
