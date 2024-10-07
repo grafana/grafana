@@ -21,7 +21,7 @@ weight: 102
 
 This document is a compilation of common use cases for templating labels and annotations within Grafana alert rules. Templating allows you to dynamically generate values for both labels and annotations, making your alerts more flexible and context-aware. By leveraging variables from your metrics, you can create more informative and actionable alerts that improve both routing and response times.
 
-Each example provided here is specifically applicable to alert rules (though syntax and functionality may differ from notification templates). For those seeking examples related to notification templates—which cover the formatting of alert messages sent to external systems—please refer to the [Notification Templates Examples](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/) document.
+Each example provided here is specifically applicable to alert rules (though syntax and functionality may differ from notification templates). For those seeking examples related to notification templates—which cover the formatting of alert messages sent to external systems—please refer to the [notification templates examples](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/) document.
 
 ## Common use cases
 
