@@ -134,6 +134,10 @@ describe('Combobox', () => {
   });
 
   describe('async', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
     // Assume that most apis only return with the value
     const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
 
@@ -142,7 +146,7 @@ describe('Combobox', () => {
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
-      await userEvent.click(input);
+      await userEvent.click(input, { delay: null });
 
       expect(asyncOptions).toHaveBeenCalled();
       //expect(screen.getByText('Loading')).toBeInTheDocument();
@@ -153,33 +157,48 @@ describe('Combobox', () => {
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
-      await userEvent.click(input);
+      await userEvent.click(input, { delay: null });
 
       const item = await screen.findByRole('option', { name: 'Option 3' });
-      await userEvent.click(item);
+      await userEvent.click(item, { delay: null });
 
       expect(onChangeHandler).toHaveBeenCalledWith(simpleAsyncOptions[2]);
       expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
     });
 
     it('should ignore late responses', async () => {
-      const asyncOptions = jest
-        .fn()
-        .mockResolvedValue(new Promise((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 1000)))
-        .mockResolvedValueOnce(new Promise((resolve) => setTimeout(() => resolve([{ value: 'second' }]), 200)));
+      const asyncOptions = jest.fn(async (searchTerm: string) => {
+        //console.log('called with ', searchTerm);
+        if (searchTerm === 'a') {
+          return new Promise((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 1000));
+        } else if (searchTerm === 'ab') {
+          return new Promise((resolve) => setTimeout(() => resolve([{ value: 'second' }]), 200));
+        }
+        return Promise.resolve([]);
+      });
+      //@ts-ignore
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
-      await userEvent.click(input); // First request
+      await userEvent.click(input, { delay: null }); // First request
 
-      await userEvent.keyboard('a'); // Second request
-      const firstItem = screen.queryByRole('option', { name: 'first' });
-      const item = await screen.findByRole('option', { name: 'second' });
+      await userEvent.keyboard('ab', { delay: null }); // Second request
+      jest.advanceTimersByTime(210); // Resolve the second request
 
-      await userEvent.click(item);
+      let item = await screen.findByRole('option', { name: 'second' });
+      let firstItem = screen.queryByRole('option', { name: 'first' });
+
+      expect(item).toBeInTheDocument();
       expect(firstItem).not.toBeInTheDocument();
-      expect(onChangeHandler).toHaveBeenCalledWith({ value: 'second' });
-      expect(screen.getByDisplayValue('second')).toBeInTheDocument();
+
+      jest.advanceTimersByTime(1100); // Resolve the first request
+
+      item = await screen.findByRole('option', { name: 'second' });
+      firstItem = screen.queryByRole('option', { name: 'first' });
+
+      //screen.debug();
+      expect(firstItem).not.toBeInTheDocument();
+      expect(item).toBeInTheDocument();
     });
   });
 });
