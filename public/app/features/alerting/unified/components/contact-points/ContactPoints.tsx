@@ -24,6 +24,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import { ContactPoint } from './ContactPoint';
@@ -242,4 +243,10 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
   );
 };
 
-export default ContactPointsPageContents;
+export default function ContactPointsPage() {
+  return (
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+      <ContactPointsPageContents />
+    </AlertmanagerPageWrapper>
+  );
+}

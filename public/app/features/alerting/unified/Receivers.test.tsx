@@ -11,9 +11,8 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AccessControlAction } from 'app/types';
 
-import ContactPoints from './Receivers';
-
 import 'core-js/stable/structured-clone';
+import ContactPoints from './components/contact-points/ContactPoints';
 
 const server = setupMswServer();
 
