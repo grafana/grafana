@@ -51,25 +51,6 @@ func (f *fakeAlertInstanceManager) GetStatesForRuleUID(orgID int64, alertRuleUID
 	return f.states[orgID][alertRuleUID]
 }
 
-func (f *fakeAlertInstanceManager) GetStatesForRuleGroup(orgID int64, alertRuleGroup string) []*state.State {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-
-	var result []*state.State
-
-	orgRuleStates := f.states[orgID]
-
-	for _, states := range orgRuleStates {
-		for _, st := range states {
-			if st.AlertRuleGroup == alertRuleGroup {
-				states = append(states, st)
-			}
-		}
-	}
-
-	return result
-}
-
 // forEachState represents the callback used when generating alert instances that allows us to modify the generated result
 type forEachState func(s *state.State) *state.State
 

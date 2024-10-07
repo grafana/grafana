@@ -28,7 +28,6 @@ var (
 type AlertInstanceManager interface {
 	GetAll(orgID int64) []*State
 	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State
-	GetStatesForRuleGroup(orgID int64, alertRuleGroup string) []*State
 }
 
 type StatePersister interface {
@@ -562,10 +561,6 @@ func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*Stat
 func (st *Manager) GetStatusForRuleUID(orgID int64, alertRuleUID string) ngModels.RuleStatus {
 	states := st.GetStatesForRuleUID(orgID, alertRuleUID)
 	return StatesToRuleStatus(states)
-}
-
-func (st *Manager) GetStatesForRuleGroup(orgID int64, alertRuleGroup string) []*State {
-	return st.cache.getAll(orgID, alertRuleGroup, st.doNotSaveNormalState)
 }
 
 func (st *Manager) Put(states []*State) {

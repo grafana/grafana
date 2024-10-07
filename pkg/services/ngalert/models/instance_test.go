@@ -103,3 +103,23 @@ func TestValidateAlertInstance(t *testing.T) {
 		})
 	}
 }
+
+func TestAlertInstanceGetKeyWithGroup(t *testing.T) {
+	instance := AlertInstanceGen(func(instance *AlertInstance) {
+		instance.RuleOrgID = 1
+		instance.RuleUID = "rule-uid"
+		instance.LabelsHash = "labels-hash"
+		instance.RuleGroup = "rule-group"
+	})
+
+	expected := AlertInstanceKeyWithGroup{
+		AlertInstanceKey: AlertInstanceKey{
+			RuleOrgID:  instance.RuleOrgID,
+			RuleUID:    instance.RuleUID,
+			LabelsHash: instance.LabelsHash,
+		},
+		RuleGroup: instance.RuleGroup,
+	}
+
+	require.Equal(t, expected, instance.GetKeyWithGroup())
+}
