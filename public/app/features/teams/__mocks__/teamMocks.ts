@@ -14,7 +14,7 @@ export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   return teams;
 };
 
-export const getMockTeam = (i = 1, uid= "aaaaaa", overrides = {}): Team => {
+export const getMockTeam = (i = 1, uid = 'aaaaaa', overrides = {}): Team => {
   uid = uid || generateShortUid();
   return {
     id: i,

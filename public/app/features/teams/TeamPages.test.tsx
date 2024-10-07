@@ -63,7 +63,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 
 const setup = (propOverrides: { teamUid?: string; pageName?: string } = {}) => {
   const pageName = propOverrides.pageName ?? 'members';
-  const teamUid = propOverrides.teamUid ?? "aaaaaa";
+  const teamUid = propOverrides.teamUid ?? 'aaaaaa';
   (useParams as jest.Mock).mockReturnValue({ uid: `${teamUid}`, page: pageName });
   render(<TeamPages />);
 };
