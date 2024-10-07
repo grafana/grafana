@@ -44,7 +44,7 @@ func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 
 	token := grpcClientAuthSection.Key("token").MustString("")
 	tokenExchangeURL := grpcClientAuthSection.Key("token_exchange_url").MustString("")
-	tokenNamespace := grpcClientAuthSection.Key("token_namespace").MustString("stack-" + cfg.StackID)
+	tokenNamespace := grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
 
 	// When running in cloud mode, the token and tokenExchangeURL are required.
 	if cfg.StackID != "" && token == "" && tokenExchangeURL == "" {
