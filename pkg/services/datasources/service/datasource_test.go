@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -102,6 +103,27 @@ func TestService_AddDataSource(t *testing.T) {
 
 		_, err := dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
+	})
+
+	t.Run("should fail if the datasource managed permissions fail", func(t *testing.T) {
+		dsService := initDSService(t)
+		enableRBACManagedPermissions(t, dsService.cfg)
+		dsService.permissionsService = &actest.FakePermissionsService{
+			ExpectedErr: errors.New("failed to set datasource permissions"),
+		}
+		dsService.pluginStore = &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{},
+		}
+
+		cmd := &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Type:  datasources.DS_TESTDATA,
+			Name:  "test",
+		}
+
+		ds, err := dsService.AddDataSource(context.Background(), cmd)
+		assert.Nil(t, ds)
+		assert.ErrorContains(t, err, "failed to set datasource permissions")
 	})
 
 	t.Run("if a plugin has an API version defined (EXPERIMENTAL)", func(t *testing.T) {
@@ -580,11 +602,8 @@ func TestService_DeleteDataSource(t *testing.T) {
 		permissionSvc := acmock.NewMockedPermissionsService()
 		permissionSvc.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
 		permissionSvc.On("DeleteResourcePermissions", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
-
-		f := ini.Empty()
-		f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("datasource")
-		cfg, err := setting.NewCfgFromINIFile(f)
-		require.NoError(t, err)
+		cfg := &setting.Cfg{}
+		enableRBACManagedPermissions(t, cfg)
 		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), permissionSvc, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, nil)
 		require.NoError(t, err)
 
@@ -1519,6 +1538,15 @@ func initDSService(t *testing.T) *Service {
 	require.NoError(t, err)
 
 	return dsService
+}
+
+func enableRBACManagedPermissions(t testing.TB, cfg *setting.Cfg) {
+	t.Helper()
+	f := ini.Empty()
+	f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("datasource")
+	tempCfg, err := setting.NewCfgFromINIFile(f)
+	cfg.RBAC = tempCfg.RBAC
+	require.NoError(t, err)
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----
