@@ -21,8 +21,7 @@ import (
 func TestGetPolicyTree(t *testing.T) {
 	orgID := int64(1)
 	rev := getDefaultConfigRevision()
-	expectedVersion, err := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
-	require.NoError(t, err)
+	expectedVersion := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
 
 	sut, store, prov := createNotificationPolicyServiceSut()
 	store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
@@ -56,8 +55,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 	orgID := int64(1)
 	rev := getDefaultConfigRevision()
 
-	defaultVersion, err := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
-	require.NoError(t, err)
+	defaultVersion := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
 
 	newRoute := definitions.Route{
 		Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,

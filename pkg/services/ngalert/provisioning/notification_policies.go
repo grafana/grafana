@@ -54,10 +54,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	}
 	result := *rev.Config.AlertmanagerConfig.Route
 	result.Provenance = definitions.Provenance(provenance)
-	version, err := calculateRouteFingerprint(result)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
+	version := calculateRouteFingerprint(result)
 	return result, version, nil
 }
 
@@ -170,16 +167,13 @@ func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitio
 	return fmt.Errorf("inconsistent default configuration")
 }
 
-func calculateRouteFingerprint(route definitions.Route) (string, error) {
+func calculateRouteFingerprint(route definitions.Route) string {
 	sum := fnv.New64a()
-	err := writeToHash(sum, &route)
-	if err != nil {
-		return "", fmt.Errorf("failed to calculate fingerprint: %w", err)
-	}
-	return fmt.Sprintf("%016x", sum.Sum64()), nil
+	writeToHash(sum, &route)
+	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func writeToHash(sum hash.Hash, r *definitions.Route) error {
+func writeToHash(sum hash.Hash, r *definitions.Route) {
 	writeBytes := func(b []byte) {
 		_, _ = sum.Write(b)
 		// add a byte sequence that cannot happen in UTF-8 strings.
@@ -241,7 +235,7 @@ func writeToHash(sum hash.Hash, r *definitions.Route) error {
 			writeString(key)
 			str, err := r.MatchRE[key].MarshalJSON()
 			if err != nil {
-				return err
+				writeString(fmt.Sprintf("%+v", r.MatchRE))
 			}
 			writeBytes(str)
 		}
@@ -260,12 +254,8 @@ func writeToHash(sum hash.Hash, r *definitions.Route) error {
 	writeDuration(r.GroupInterval)
 	writeDuration(r.RepeatInterval)
 	for _, route := range r.Routes {
-		err := writeToHash(sum, route)
-		if err != nil {
-			return err
-		}
+		writeToHash(sum, route)
 	}
-	return nil
 }
 
 func (nps *NotificationPolicyService) checkOptimisticConcurrency(current definitions.Route, provenance models.Provenance, desiredVersion string, action string) error {
@@ -276,10 +266,7 @@ func (nps *NotificationPolicyService) checkOptimisticConcurrency(current definit
 		}
 		return nil
 	}
-	currentVersion, err := calculateRouteFingerprint(current)
-	if err != nil {
-		return err
-	}
+	currentVersion := calculateRouteFingerprint(current)
 	if currentVersion != desiredVersion {
 		return ErrVersionConflict.Errorf("provided version %s of routing tree does not match current version %s", desiredVersion, currentVersion)
 	}
