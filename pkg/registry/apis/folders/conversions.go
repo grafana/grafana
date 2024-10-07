@@ -79,6 +79,12 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 		return nil, err
 	}
 
+	// avoid panic
+	var createdTime time.Time
+	if created != nil {
+		createdTime = *created
+	}
+
 	dto := &dtos.Folder{
 		UID:       uid,
 		Title:     title,
@@ -91,15 +97,15 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 		// UpdatedBy: meta.GetCreatedBy(),
 		URL: getURL(meta, title),
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
-		Created: *created,
+		Created: createdTime,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
 		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
-		Updated: *created,
+		Updated: createdTime,
 		// #TODO figure out how to set these properly
-		CanSave:   true,
-		CanEdit:   true,
-		CanAdmin:  true,
-		CanDelete: true,
+		CanSave:   false,
+		CanEdit:   false,
+		CanAdmin:  false,
+		CanDelete: false,
 		HasACL:    false,
 
 		// #TODO figure out about adding version, parents, orgID fields

@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -448,7 +451,7 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 		folderIDs[p.UID] = true
 	}
 
-	allMetadata := hs.getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
+	allMetadata := getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
 	metadata := map[string]bool{}
 	// Flatten metadata - if any parent has a permission, the child folder inherits it
 	for _, md := range allMetadata {
@@ -629,6 +632,7 @@ type folderK8sHandler struct {
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	// #TODO check if it makes more sense to move this to FolderAPIBuilder
 	accesscontrolService accesscontrol.Service
+	userService          user.Service
 }
 
 //-----------------------------------------------------------------------------------------
@@ -641,6 +645,7 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 		accesscontrolService: hs.accesscontrolService,
+		userService:          hs.userService,
 	}
 }
 
@@ -692,13 +697,13 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		return
 	}
 
-	fk8s.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
+	folderDTO, err := fk8s.newToFolderDto(c, *out)
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, f)
+
+	c.JSON(http.StatusOK, folderDTO)
 }
 
 // func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
@@ -713,13 +718,13 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 // 		return
 // 	}
 
-// 	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
+// folderDTO, err := fk8s.newToFolderDto(c, *out)
+// if err != nil {
+// 	fk8s.writeError(c, err)
+// 	return
+// }
 
-// 	c.JSON(http.StatusOK, f)
+// 	c.JSON(http.StatusOK, folderDTO)
 // }
 
 // func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
@@ -755,13 +760,13 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 // 		return
 // 	}
 
-// 	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
+// folderDTO, err := fk8s.newToFolderDto(c, *out)
+// if err != nil {
+// 	fk8s.writeError(c, err)
+// 	return
+// }
 
-// 	c.JSON(http.StatusOK, f)
+// 	c.JSON(http.StatusOK, folderDTO)
 // }
 
 //-----------------------------------------------------------------------------------------
@@ -785,4 +790,129 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 		return
 	}
 	errhttp.Write(c.Req.Context(), err, c.Resp)
+}
+
+func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured) (dtos.Folder, error) {
+	ctx := c.Req.Context()
+
+	f := internalfolders.UnstructuredToLegacyFolder(item)
+
+	fDTO, err := internalfolders.UnstructuredToLegacyFolderDTO(item)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
+
+	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
+		g, err := guardian.NewByFolder(c.Req.Context(), f, c.SignedInUser.GetOrgID(), c.SignedInUser)
+		if err != nil {
+			return dtos.Folder{}, err
+		}
+
+		canEdit, _ := g.CanEdit()
+		canSave, _ := g.CanSave()
+		canAdmin, _ := g.CanAdmin()
+		canDelete, _ := g.CanDelete()
+
+		// Finding creator and last updater of the folder
+		updater, creator := anonString, anonString
+		if f.CreatedBy > 0 {
+			creator = fk8s.getUserLogin(ctx, f.CreatedBy)
+		}
+		if f.UpdatedBy > 0 {
+			updater = fk8s.getUserLogin(ctx, f.UpdatedBy)
+		}
+
+		acMetadata, _ := fk8s.getFolderACMetadata(c, f)
+
+		if checkCanView {
+			canView, _ := g.CanView()
+			if !canView {
+				return dtos.Folder{
+					UID:   REDACTED,
+					Title: REDACTED,
+				}, nil
+			}
+		}
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.NewToFolderDTO).Inc()
+
+		fDTO.CanSave = canSave
+		fDTO.CanEdit = canEdit
+		fDTO.CanAdmin = canAdmin
+		fDTO.CanDelete = canDelete
+		fDTO.CreatedBy = creator
+		fDTO.UpdatedBy = updater
+		fDTO.AccessControl = acMetadata
+
+		return *fDTO, nil
+	}
+
+	// no need to check view permission for the starting folder since it's already checked by the callers
+	folderDTO, err := toDTO(f, false)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
+
+	// TODO: handle parents
+	/*
+		parents, err := fk8s.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+		if err != nil {
+			// log the error instead of failing
+			fk8s.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
+		}
+
+		folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
+		for _, f := range parents {
+			DTO, err := toDTO(f, true)
+			if err != nil {
+				// fk8s.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
+				continue
+			}
+			folderDTO.Parents = append(folderDTO.Parents, DTO)
+		}
+	*/
+
+	return folderDTO, nil
+}
+
+func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userID int64) string {
+	ctx, span := tracer.Start(ctx, "api.getUserLogin")
+	defer span.End()
+
+	query := user.GetUserByIDQuery{ID: userID}
+	user, err := fk8s.userService.GetByID(ctx, &query)
+	if err != nil {
+		return anonString
+	}
+	return user.Login
+}
+
+func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
+	if !c.QueryBool("accesscontrol") {
+		return nil, nil
+	}
+
+	folderIDs := map[string]bool{f.UID: true}
+
+	// TODO: handle parents
+	/*
+		parents, err := fk8s.folderService.GetParents(c.Req.Context(), folder.GetParentsQuery{UID: f.UID, OrgID: c.SignedInUser.GetOrgID()})
+		if err != nil {
+			return nil, err
+		}
+
+		folderIDs := map[string]bool{f.UID: true}
+		for _, p := range parents {
+			folderIDs[p.UID] = true
+		}
+	*/
+
+	allMetadata := getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
+	metadata := map[string]bool{}
+	// Flatten metadata - if any parent has a permission, the child folder inherits it
+	for _, md := range allMetadata {
+		for action := range md {
+			metadata[action] = true
+		}
+	}
+	return metadata, nil
 }
