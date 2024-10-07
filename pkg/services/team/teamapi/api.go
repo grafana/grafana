@@ -1,20 +1,16 @@
 package teamapi
 
 import (
-	"strconv"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 type TeamAPI struct {
@@ -55,27 +51,6 @@ func ProvideTeamAPI(
 
 	tapi.registerRoutes(routeRegister, acEvaluator)
 	return tapi
-}
-
-func TeamUIDResolver(teamService team.Service) web.Handler {
-	return func(c *contextmodel.ReqContext) {
-		// Get team id from request, fetch team and replace teamId with team id
-		teamID := web.Params(c.Req)[":teamId"]
-		// if teamID is empty or is an integer, we assume it's a team id and we don't need to resolve it
-		_, err := strconv.ParseInt(teamID, 10, 64)
-		if teamID == "" || err == nil {
-			return
-		}
-
-		team, err := teamService.GetTeamByID(c.Req.Context(), &team.GetTeamByIDQuery{UID: teamID, OrgID: c.OrgID})
-		if err == nil {
-			gotParams := web.Params(c.Req)
-			gotParams[":teamId"] = strconv.FormatInt(team.ID, 10)
-			web.SetURLParams(c.Req, gotParams)
-		} else {
-			c.JsonApiErr(404, "Not found", nil)
-		}
-	}
 }
 
 func (tapi *TeamAPI) registerRoutes(router routing.RouteRegister, ac accesscontrol.AccessControl) {
