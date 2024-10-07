@@ -108,8 +108,7 @@ export const MenuItem = React.memo(
         [styles.disabled]: disabled,
         [styles.destructive]: destructive && !disabled,
       },
-      className,
-      hasSubMenu ? 'hasSubmenu' : 'noSubmenu'
+      className
     );
 
     const disabledProps = {
@@ -154,7 +153,7 @@ export const MenuItem = React.memo(
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         href={url}
         onClick={(event) => {
-          if (hasSubMenu && !(event.target as HTMLElement).closest('.noSubmenu')) {
+          if (hasSubMenu && !isSubMenuOpen) {
             event.preventDefault();
             event.stopPropagation();
           }
@@ -163,7 +162,6 @@ export const MenuItem = React.memo(
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
-        onTouchStart={onMouseEnter}
         // If there's no URL, then set either the role from the props, or fallback to menuitem
         // If there IS a URL, then use the role from props - which will result in this either being a
         // link (default role of an anchor), or whatever the user of this component specified
