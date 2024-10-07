@@ -8,12 +8,5 @@
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": [
-    "src/**/*.ts*",
-    "typings/jest",
-    "../../public/app/types/jquery/*.ts",
-    "../../public/app/types/*.d.ts",
-    "../grafana-runtime/src/components/QueryEditorWithMigration.test.tsx",
-    "../grafana-runtime/src/components/QueryEditorWithMigration.tsx"
-  ]
+  "include": ["src/**/*.ts*", "typings/jest", "../../public/app/types/jquery/*.ts", "../../public/app/types/*.d.ts"]
 }
