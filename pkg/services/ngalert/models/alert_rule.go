@@ -269,6 +269,15 @@ type AlertRule struct {
 	Labels               map[string]string
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
+	Metadata             AlertRuleMetadata
+}
+
+type AlertRuleMetadata struct {
+	EditorSettings EditorSettings `json:"editor_settings"`
+}
+
+type EditorSettings struct {
+	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -601,7 +610,18 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 	if !prommodels.IsValidMetricName(metricName) {
 		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
+
+	clearRecordingRuleIgnoredFields(rule)
+
 	return nil
+}
+
+func clearRecordingRuleIgnoredFields(rule *AlertRule) {
+	rule.NoDataState = ""
+	rule.ExecErrState = ""
+	rule.Condition = ""
+	rule.For = 0
+	rule.NotificationSettings = nil
 }
 
 func (alertRule *AlertRule) ResourceType() string {
@@ -775,6 +795,13 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
+
+	// Currently metadata contains only editor settings, so we can just copy it.
+	// If we add more fields to metadata, we might need to handle them separately,
+	// and/or merge or update their values.
+	if ruleToPatch.Metadata == (AlertRuleMetadata{}) {
+		ruleToPatch.Metadata = existingRule.Metadata
+	}
 }
 
 func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
@@ -858,4 +885,12 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 func hasAnyCondition(rule *AlertRuleWithOptionals) bool {
 	return rule.Condition != "" || (rule.Record != nil && rule.Record.From != "")
+}
+
+// RuleStatus contains info about a rule's current evaluation state.
+type RuleStatus struct {
+	Health              string
+	LastError           error
+	EvaluationTimestamp time.Time
+	EvaluationDuration  time.Duration
 }

@@ -117,9 +117,9 @@ The webhook notification is a simple way to send information about a state chang
 | version           | string                    | Version of the payload                                                          |
 | groupKey          | string                    | Key that is used for grouping                                                   |
 | truncatedAlerts   | number                    | Number of alerts that were truncated                                            |
-| title             | string                    | **Will be deprecated soon**                                                     |
-| state             | string                    | **Will be deprecated soon**                                                     |
-| message           | string                    | **Will be deprecated soon**                                                     |
+| title             | string                    | Custom title                                                                    |
+| state             | string                    | State of the alert group (either `alerting` or `ok`)                            |
+| message           | string                    | Custom message                                                                  |
 
 ### Alert
 
@@ -152,6 +152,9 @@ To create your Webhook integration in Grafana Alerting, complete the following s
 1. From the Integration list, select **Webhook**.
 1. In the **URL** field, copy in your Webhook URL.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps

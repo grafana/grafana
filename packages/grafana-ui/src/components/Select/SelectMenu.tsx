@@ -141,6 +141,7 @@ export const VirtualizedSelectMenu = ({
         // add a bottom divider to the last item in the category
         React.cloneElement(child.props.children.at(-1), {
           innerProps: {
+            ...child.props.children.at(-1).props.innerProps,
             style: {
               borderBottom: `1px solid ${theme.colors.border.weak}`,
               height: VIRTUAL_LIST_ITEM_HEIGHT,

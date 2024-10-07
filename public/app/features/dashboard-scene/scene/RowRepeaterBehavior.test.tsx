@@ -21,6 +21,7 @@ import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { panelMenuBehavior, repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './row-actions/RowActions';
 
 jest.mock('@grafana/runtime', () => ({
@@ -164,24 +165,6 @@ describe('RowRepeaterBehavior', () => {
       expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
 
       notifyPanelsSpy.mockRestore();
-    });
-  });
-
-  describe('Should not repeat row', () => {
-    it('Should ignore repeat process if the variable is not a multi select variable', async () => {
-      const { scene, grid, repeatBehavior } = buildScene({ variableQueryTime: 0 }, undefined, { isMulti: false });
-      const gridStateUpdates = [];
-      grid.subscribeToState((state) => gridStateUpdates.push(state));
-
-      activateFullSceneTree(scene);
-      await new Promise((r) => setTimeout(r, 1));
-
-      // trigger another repeat cycle by changing the variable
-      repeatBehavior.performRepeat();
-
-      await new Promise((r) => setTimeout(r, 1));
-
-      expect(gridStateUpdates.length).toBe(0);
     });
   });
 
@@ -368,7 +351,7 @@ function buildScene(
         }),
       ],
     }),
-    body: grid,
+    body: new DefaultGridLayoutManager({ grid }),
   });
 
   const rowToRepeat = repeatBehavior.parent as SceneGridRow;
