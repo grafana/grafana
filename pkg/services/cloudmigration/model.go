@@ -75,7 +75,7 @@ type CloudMigrationResource struct {
 	Error  string          `xorm:"error_string" json:"error"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
-	ParentName  string `xorm:"parent_folder_name" json:"parentName"`
+	ParentName  string `xorm:"parent_name" json:"parentName"`
 }
 
 type MigrateDataType string

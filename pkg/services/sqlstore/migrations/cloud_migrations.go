@@ -165,8 +165,8 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Nullable: true,
 	}))
 
-	mg.AddMigration("add cloud_migration_resource.parent_folder_name column", NewAddColumnMigration(migrationResourceTable, &Column{
-		Name:     "parent_folder_name",
+	mg.AddMigration("add cloud_migration_resource.parent_name column", NewAddColumnMigration(migrationResourceTable, &Column{
+		Name:     "parent_name",
 		Type:     DB_Text,
 		Nullable: true,
 	}))
