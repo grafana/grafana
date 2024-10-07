@@ -1,3 +1,4 @@
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor, userEvent } from 'test/test-utils';
 
@@ -14,8 +15,6 @@ import { AccessControlAction } from 'app/types';
 import 'core-js/stable/structured-clone';
 import EditContactPoint from './components/contact-points/EditContactPoint';
 import NewReceiverView from './components/receivers/NewReceiverView';
-
-import { Route, Routes } from 'react-router-dom-v5-compat';
 
 const server = setupMswServer();
 
