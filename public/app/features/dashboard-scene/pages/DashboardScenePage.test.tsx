@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -196,7 +196,7 @@ describe('DashboardScenePage', () => {
 
     const inspectMenuItem = await screen.findAllByText('Inspect');
 
-    act(() => fireEvent.click(inspectMenuItem[0]));
+    await userEvent.click(inspectMenuItem[0]);
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
 
