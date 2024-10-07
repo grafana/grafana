@@ -1478,6 +1478,7 @@
       "warning-details-button": "Đęŧäįľş"
     },
     "resource-table": {
+      "dashboard-load-error": "Ůŉäþľę ŧő ľőäđ đäşĥþőäřđ",
       "error-library-element-sub": "Ŀįþřäřy Ēľęmęŉŧ {ūįđ}",
       "error-library-element-title": "Ůŉäþľę ŧő ľőäđ ľįþřäřy ęľęmęŉŧ",
       "unknown-datasource-title": "Đäŧä şőūřčę {{datasourceUID}}",
