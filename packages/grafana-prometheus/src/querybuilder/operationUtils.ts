@@ -95,9 +95,9 @@ export function rangeRendererLeftWithParams(
 
 function renderParams(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   return (model.params ?? []).map((value, index) => {
-    const paramDef = def.params[index];
-    if (paramDef.type === 'string') {
-      return '"' + value + '"';
+    const paramDef = def?.params?.[index];
+    if (paramDef?.type === 'string') {
+      return `"${value}"`;
     }
 
     return value;
