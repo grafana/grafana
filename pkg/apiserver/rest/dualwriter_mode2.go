@@ -48,8 +48,9 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 	if err != nil {
 		return nil, err
 	}
+
 	if accIn.GetUID() != "" {
-		return nil, fmt.Errorf("UID should not be present: %v", accIn.GetUID())
+		return nil, fmt.Errorf("UID should be empty: %v", accIn.GetUID())
 	}
 
 	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
@@ -64,21 +65,6 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return createdFromLegacy, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
-
-	accIn, err = meta.Accessor(in)
-	if err != nil {
-		return createdFromLegacy, err
-	}
-	if accIn.GetUID() != "" {
-		return nil, fmt.Errorf("UID should be empty: %v", accIn.GetUID())
-	}
-
-	accLegacy, err := meta.Accessor(createdFromLegacy)
-	if err != nil {
-		return createdFromLegacy, err
-	}
-
-	accIn.SetUID(accLegacy.GetUID())
 
 	startStorage := time.Now()
 	createdFromStorage, err := d.Storage.Create(ctx, in, createValidation, options)
