@@ -5,8 +5,6 @@ import { DataFrame, MatcherConfig, SelectableValue } from '@grafana/data';
 import { SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
 
-import { log } from './log';
-
 export type LogFilter = {
   pluginIds?: Set<string>;
   extensionPointIds?: Set<string>;
