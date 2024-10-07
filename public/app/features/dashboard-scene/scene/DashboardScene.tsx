@@ -10,7 +10,7 @@ import {
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridRow,
@@ -67,6 +67,7 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
+import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from './types';
@@ -662,6 +663,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.replace('/');
   }
 
+  public getDashboardPanels() {
+    return dashboardSceneGraph.getVizPanels(this);
+  }
+
+  public hasDashboardAngularPlugins() {
+    const sceneGridLayout = this.state.body;
+    if (!(sceneGridLayout instanceof DefaultGridLayoutManager)) {
+      return false;
+    }
+    const gridItems = sceneGridLayout.state.grid.state.children;
+    const dashboardWasAngular = gridItems.some((gridItem) => {
+      if (!(gridItem instanceof DashboardGridItem)) {
+        return false;
+      }
+      const isAngularPanel = isUsingAngularPanelPlugin(gridItem.state.body);
+      const isAngularDs = isUsingAngularDatasourcePlugin(gridItem.state.body);
+      return isAngularPanel || isAngularDs;
+    });
+    return dashboardWasAngular;
+  }
+
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
     this._scrollRef = scrollElement;
   };
@@ -694,6 +716,9 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+      // Backwards compat with plugins that rely on the RefreshEvent when a
+      // variable changes. TODO: We should redirect plugin devs to use VariablesChanged event
+      this._dashboard.publishEvent(new RefreshEvent());
     }
 
     if (variable.state.name === PANEL_SEARCH_VAR) {
