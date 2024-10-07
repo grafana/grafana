@@ -1478,6 +1478,7 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "dashboard-load-error": "Unable to load dashboard",
       "error-library-element-sub": "Library Element {uid}",
       "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
@@ -2386,7 +2387,6 @@
     "menu": {
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
-      "share-internally-description": "Link settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
     },
@@ -2676,6 +2676,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+    },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",
