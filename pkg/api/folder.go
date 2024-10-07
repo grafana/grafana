@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -804,17 +805,16 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
-	toID := func(rawIdentifier string) int64 {
+	toID := func(rawIdentifier string) (int64, error) {
 		parts := strings.Split(rawIdentifier, ":")
 		if len(parts) < 2 {
-			return 0
+			return 0, fmt.Errorf("invalid user identifier")
 		}
-		// return parts[1]
 		userID, err := strconv.ParseInt(parts[1], 10, 64)
 		if err != nil {
-			return 0
+			return 0, fmt.Errorf("faild to parse user identifier")
 		}
-		return userID
+		return userID, nil
 	}
 
 	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
@@ -831,10 +831,18 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		// Finding creator and last updater of the folder
 		updater, creator := anonString, anonString
 		if len(fDTO.CreatedBy) > 0 {
-			creator = fk8s.getUserLogin(ctx, toID(fDTO.CreatedBy))
+			id, err := toID(fDTO.CreatedBy)
+			if err != nil {
+				return dtos.Folder{}, err
+			}
+			creator = fk8s.getUserLogin(ctx, id)
 		}
 		if len(fDTO.UpdatedBy) > 0 {
-			updater = fk8s.getUserLogin(ctx, toID(fDTO.UpdatedBy))
+			id, err := toID(fDTO.UpdatedBy)
+			if err != nil {
+				return dtos.Folder{}, err
+			}
+			updater = fk8s.getUserLogin(ctx, id)
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, f)
