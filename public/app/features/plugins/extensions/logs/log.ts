@@ -4,7 +4,7 @@ import { Observable, ReplaySubject } from 'rxjs';
 
 import { Labels, LogLevel } from '@grafana/data';
 
-export type LogItem = {
+export type ExtensionsLogItem = {
   level: LogLevel;
   timestamp: number;
   labels: Labels;
@@ -18,10 +18,10 @@ const channelName = 'ui-extension-logs';
 
 export class ExtensionsLog {
   private baseLabels: Labels | undefined;
-  private subject: ReplaySubject<LogItem> | undefined;
+  private subject: ReplaySubject<ExtensionsLogItem> | undefined;
   private channel: BroadcastChannel;
 
-  constructor(baseLabels?: Labels, subject?: ReplaySubject<LogItem>, channel?: BroadcastChannel) {
+  constructor(baseLabels?: Labels, subject?: ReplaySubject<ExtensionsLogItem>, channel?: BroadcastChannel) {
     this.baseLabels = baseLabels;
     this.channel = channel ?? new BroadcastChannel(channelName);
     this.subject = subject;
@@ -55,7 +55,7 @@ export class ExtensionsLog {
     const combinedLabels = { ...labels, ...this.baseLabels };
     const { pluginId, extensionPointId } = combinedLabels;
 
-    const item: LogItem = {
+    const item: ExtensionsLogItem = {
       level: level,
       labels: combinedLabels,
       timestamp: Date.now(),
@@ -68,12 +68,12 @@ export class ExtensionsLog {
     this.channel.postMessage(item);
   }
 
-  asObservable(): Observable<LogItem> {
+  asObservable(): Observable<ExtensionsLogItem> {
     if (!this.subject) {
       // Lazily create the subject on first subscription to prevent
       // to create buffers when no subscribers exists
-      this.subject = new ReplaySubject<LogItem>(1000, 1000 * 60 * 10);
-      this.channel.onmessage = (msg: MessageEvent<LogItem>) => this.subject?.next(msg.data);
+      this.subject = new ReplaySubject<ExtensionsLogItem>(1000, 1000 * 60 * 10);
+      this.channel.onmessage = (msg: MessageEvent<ExtensionsLogItem>) => this.subject?.next(msg.data);
     }
 
     return this.subject.asObservable();

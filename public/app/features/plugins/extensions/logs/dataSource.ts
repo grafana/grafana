@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { RuntimeDataSource, SceneDataQuery } from '@grafana/scenes';
 
-import { ExtensionsLog, LogItem } from './log';
+import { ExtensionsLog, ExtensionsLogItem } from './log';
 
 export class ExtensionsLogDataSource extends RuntimeDataSource {
   constructor(
@@ -27,7 +27,7 @@ export class ExtensionsLogDataSource extends RuntimeDataSource {
     const [query] = request.targets;
 
     return this.extensionsLog.asObservable().pipe(
-      scan<LogItem, DataQueryResponse>(
+      scan<ExtensionsLogItem, DataQueryResponse>(
         (response, item) => {
           const [existing] = response.data;
 
@@ -51,7 +51,7 @@ export class ExtensionsLogDataSource extends RuntimeDataSource {
   }
 }
 
-function createFrame(query: SceneDataQuery, item: LogItem, existing?: DataFrame): DataFrame {
+function createFrame(query: SceneDataQuery, item: ExtensionsLogItem, existing?: DataFrame): DataFrame {
   const timestamps = existing?.fields?.[0]?.values ?? [];
   const messages = existing?.fields?.[1]?.values ?? [];
   const levels = existing?.fields?.[2]?.values ?? [];

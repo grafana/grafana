@@ -5,6 +5,8 @@ import { DataFrame, MatcherConfig, SelectableValue } from '@grafana/data';
 import { SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
 
+import { log } from './log';
+
 export type LogFilter = {
   pluginIds?: Set<string>;
   extensionPointIds?: Set<string>;
@@ -23,45 +25,42 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
   const { pluginIds, extensionPointIds, severity } = useLogFilters(provider, filteredProvider, filter);
 
   const onChangePluginIds = (values: Array<SelectableValue<string>>) => {
-    if (isEmpty(filter.extensionPointIds) && isEmpty(filter.severity)) {
-      return onChange({
-        ...filter,
-        initial: isEmpty(values) ? undefined : 'pluginId',
-        pluginIds: mapToSet(values),
-      });
-    }
-    onChange({
+    const update = {
       ...filter,
       pluginIds: mapToSet(values),
-    });
+    };
+
+    if (isEmpty(filter.extensionPointIds) && isEmpty(filter.severity)) {
+      update.initial = isEmpty(values) ? undefined : 'pluginId';
+    }
+
+    onChange(update);
   };
 
   const onChangeExtensionPointIds = (values: Array<SelectableValue<string>>) => {
-    if (isEmpty(filter.pluginIds) && isEmpty(filter.severity)) {
-      return onChange({
-        ...filter,
-        initial: isEmpty(values) ? undefined : 'extensionPointId',
-        extensionPointIds: mapToSet(values),
-      });
-    }
-    onChange({
+    const update = {
       ...filter,
       extensionPointIds: mapToSet(values),
-    });
+    };
+
+    if (isEmpty(filter.pluginIds) && isEmpty(filter.severity)) {
+      update.initial = isEmpty(values) ? undefined : 'extensionPointId';
+    }
+
+    onChange(update);
   };
 
   const onChangeSeverity = (values: Array<SelectableValue<string>>) => {
-    if (isEmpty(filter.pluginIds) && isEmpty(filter.extensionPointIds)) {
-      return onChange({
-        ...filter,
-        initial: isEmpty(values) ? undefined : 'severity',
-        severity: mapToSet(values),
-      });
-    }
-    onChange({
+    const update = {
       ...filter,
       severity: mapToSet(values),
-    });
+    };
+
+    if (isEmpty(filter.pluginIds) && isEmpty(filter.extensionPointIds)) {
+      update.initial = isEmpty(values) ? undefined : 'severity';
+    }
+
+    onChange(update);
   };
 
   return (
@@ -99,7 +98,10 @@ function useLogFilters(
   const { data: filteredData } = filteredProvider.useState();
 
   return useMemo(() => {
-    // We only support single series for now
+    if (data && data?.series.length > 1) {
+      console.warn('LogViewFilter does not support multiple series in query result.');
+    }
+
     const frame = data?.series[0];
     const filteredFrame = filteredData?.series[0];
 
