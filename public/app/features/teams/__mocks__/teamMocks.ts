@@ -12,6 +12,7 @@ export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
 export const getMockTeam = (i = 1, overrides = {}): Team => {
   return {
     id: i,
+    uid: '',
     name: `test-${i}`,
     avatarUrl: 'some/url/',
     email: `test-${i}@test.com`,

@@ -54,8 +54,10 @@ type DeleteTeamCommand struct {
 }
 
 type GetTeamByIDQuery struct {
-	OrgID        int64
+	OrgID int64
+	// Get team by ID or UID. If ID is set, UID is ignored.
 	ID           int64
+	UID          string
 	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
 }

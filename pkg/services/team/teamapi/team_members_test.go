@@ -28,14 +28,18 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func SetupAPITestServer(t *testing.T, opts ...func(a *TeamAPI)) *webtest.Server {
+func SetupAPITestServer(t *testing.T, teamService team.Service, opts ...func(a *TeamAPI)) *webtest.Server {
 	t.Helper()
 	router := routing.NewRouteRegister()
 	cfg := setting.NewCfg()
 	cfg.LDAPAuthEnabled = true
 
+	if teamService == nil {
+		teamService = teamtest.NewFakeService()
+	}
+
 	a := ProvideTeamAPI(router,
-		teamtest.NewFakeService(),
+		teamService,
 		actest.FakeService{},
 		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		&actest.FakePermissionsService{},
@@ -55,11 +59,22 @@ func SetupAPITestServer(t *testing.T, opts ...func(a *TeamAPI)) *webtest.Server 
 }
 
 func TestAddTeamMembersAPIEndpoint(t *testing.T) {
-	server := SetupAPITestServer(t)
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}})
 
 	t.Run("should be able to add team member with correct permission", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(
 			server.NewRequest(http.MethodPost, "/api/teams/1/members", strings.NewReader("{\"userId\": 1}")),
+			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
+		)
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should be able to add team member with correct permission by UID", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(
+			server.NewRequest(http.MethodPost, "/api/teams/a00001/members", strings.NewReader("{\"userId\": 1}")),
 			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
 		)
 		res, err := server.SendJSON(req)
@@ -81,7 +96,7 @@ func TestAddTeamMembersAPIEndpoint(t *testing.T) {
 }
 
 func TestGetTeamMembersAPIEndpoint(t *testing.T) {
-	server := SetupAPITestServer(t)
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedIsMember: true, ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}})
 
 	t.Run("should be able to get team members with correct permission", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(
@@ -93,6 +108,18 @@ func TestGetTeamMembersAPIEndpoint(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+
+	t.Run("should be able to get team members with correct permission by UID", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(
+			server.NewGetRequest("/api/teams/a00001/members"),
+			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}),
+		)
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
 	t.Run("should not be able to get team members without correct permission", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(
 			server.NewGetRequest("/api/teams/1/members"),
@@ -106,9 +133,7 @@ func TestGetTeamMembersAPIEndpoint(t *testing.T) {
 }
 
 func TestUpdateTeamMembersAPIEndpoint(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
-		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
-	})
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedIsMember: true, ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}})
 
 	t.Run("should be able to update team member with correct permission", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(
@@ -120,6 +145,18 @@ func TestUpdateTeamMembersAPIEndpoint(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+
+	t.Run("should be able to update team member with correct permission by team UID", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(
+			server.NewRequest(http.MethodPut, "/api/teams/a00001/members/1", strings.NewReader("{\"permission\": 1}")),
+			authedUserWithPermissions(1, 1, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}),
+		)
+		res, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
 	t.Run("should not be able to update team member without correct permission", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(
 			server.NewRequest(http.MethodPut, "/api/teams/1/members/1", strings.NewReader("{\"permission\": 1}")),
@@ -133,7 +170,7 @@ func TestUpdateTeamMembersAPIEndpoint(t *testing.T) {
 }
 
 func TestDeleteTeamMembersAPIEndpoint(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *TeamAPI) {
+	server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
 		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
 		hs.teamPermissionsService = &actest.FakePermissionsService{}
 	})

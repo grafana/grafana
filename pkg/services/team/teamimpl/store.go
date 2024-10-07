@@ -3,6 +3,7 @@ package teamimpl
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -268,6 +269,12 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 
 func (ss *xormStore) GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
 	var queryResult *team.TeamDTO
+
+	// Check if both ID and UID are unset
+	if query.ID == 0 && query.UID == "" {
+		return nil, errors.New("either ID or UID must be set")
+	}
+
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql bytes.Buffer
 		params := make([]any, 0)
@@ -278,8 +285,14 @@ func (ss *xormStore) GetByID(ctx context.Context, query *team.GetTeamByIDQuery) 
 			params = append(params, user)
 		}
 
-		sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
-		params = append(params, query.OrgID, query.ID)
+		// Prioritize ID over UID
+		if query.ID != 0 {
+			sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
+			params = append(params, query.OrgID, query.ID)
+		} else {
+			sql.WriteString(` WHERE team.org_id = ? and team.uid = ?`)
+			params = append(params, query.OrgID, query.UID)
+		}
 
 		var t team.TeamDTO
 		exists, err := sess.SQL(sql.String(), params...).Get(&t)

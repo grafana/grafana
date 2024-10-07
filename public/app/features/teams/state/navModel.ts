@@ -9,6 +9,7 @@ import { AccessControlAction, Team, TeamPermissionLevel } from 'app/types';
 const loadingTeam = {
   avatarUrl: 'public/img/user_profile.png',
   id: 1,
+  uid: '',
   name: 'Loading',
   email: 'loading',
   memberCount: 0,
