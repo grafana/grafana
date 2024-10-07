@@ -34,8 +34,10 @@ describe('Inspect drawer tests', () => {
 
     e2e.flows.openDashboard({ uid: 'wfTJJL5Wz' });
 
-    // testing opening inspect drawer directly by clicking on Inspect in header menu
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST);
+    e2e.components.Panels.Panel.title(PANEL_UNDER_TEST).scrollIntoView().should('be.visible');
+    e2e.components.Panels.Panel.menu(PANEL_UNDER_TEST).click({ force: true }); // force click because menu is hidden and show on hover
+    e2e.components.Panels.Panel.menuItems('Inspect').trigger('mouseover', { force: true });
+    e2e.components.Panels.Panel.menuItems('Data').click({ force: true });
 
     expectDrawerTabsAndContent();
 
