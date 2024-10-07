@@ -13,7 +13,7 @@ import { RouteDescriptor } from '../../navigation/types';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
-import { HistoryEntryApp } from './types';
+import { HistoryEntry } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
@@ -117,11 +117,11 @@ export class AppChromeService {
     window.sessionStorage.removeItem('returnToPrevious');
   };
 
-  private getUpdatedHistory(newState: AppChromeState): HistoryEntryApp[] {
+  private getUpdatedHistory(newState: AppChromeState): HistoryEntry[] {
     const breadcrumbs = buildBreadcrumbs(newState.sectionNav.node, newState.pageNav, { text: 'Home', url: '/' }, true);
     const newPageNav = newState.pageNav || newState.sectionNav.node;
 
-    let entries = store.getObject<HistoryEntryApp[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+    let entries = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
     if (!newPageNav) {
       return entries;
     }

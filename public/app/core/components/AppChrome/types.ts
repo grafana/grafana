@@ -6,16 +6,26 @@ export interface ToolbarUpdateProps {
   actions?: React.ReactNode;
 }
 
-export interface HistoryEntryAppView {
+export interface HistoryEntryView {
   name: string;
   description: string;
   url: string;
 }
 
-export interface HistoryEntryApp {
+export interface HistoryEntrySparkline {
+  values: number[];
+  range: {
+    min: number;
+    max: number;
+    delta: number;
+  };
+}
+
+export interface HistoryEntry {
   name: string;
   time: number;
   breadcrumbs: NavModelItem[];
   url: string;
-  views: HistoryEntryAppView[];
+  views: HistoryEntryView[];
+  sparklineData?: HistoryEntrySparkline;
 }

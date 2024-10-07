@@ -9,7 +9,7 @@ import { HistoryChangedEvent } from 'app/types/events';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
-import { HistoryEntryApp } from '../types';
+import { HistoryEntry } from '../types';
 
 import { HistoryWrapper } from './HistoryWrapper';
 
@@ -19,7 +19,7 @@ export function HistoryContainer() {
 
   useEffect(() => {
     const sub = appEvents.subscribe(HistoryChangedEvent, (ev) => {
-      const history = store.getObject<HistoryEntryApp[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+      const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
       let lastEntry = history[0];
       const newUrl = ev.payload.url;
       const lastUrl = lastEntry.views[0]?.url;

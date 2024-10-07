@@ -2,15 +2,15 @@ import { css } from '@emotion/css';
 import moment from 'moment';
 import { useState } from 'react';
 
-import { GrafanaTheme2, store } from '@grafana/data';
-import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box } from '@grafana/ui';
+import { FieldType, GrafanaTheme2, store } from '@grafana/data';
+import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
-import { HistoryEntryApp } from '../types';
+import { HistoryEntry } from '../types';
 
 export function HistoryWrapper() {
-  const history = store.getObject<HistoryEntryApp[]>(HISTORY_LOCAL_STORAGE_KEY, []);
+  const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
   const [numItemsToShow, setNumItemsToShow] = useState(5);
 
   return (
@@ -29,14 +29,15 @@ export function HistoryWrapper() {
   );
 }
 interface ItemProps {
-  entry: HistoryEntryApp;
+  entry: HistoryEntry;
   isFirst: boolean;
 }
 
 function HistoryEntryAppView({ entry, isFirst }: ItemProps) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const [isExpanded, setIsExpanded] = useState(isFirst && entry.views.length > 0);
-  const { breadcrumbs, views, time, url } = entry;
+  const { breadcrumbs, views, time, url, sparklineData } = entry;
 
   return (
     <Stack direction="column" gap={1}>
@@ -62,6 +63,32 @@ function HistoryEntryAppView({ entry, isFirst }: ItemProps) {
               ))}
             </div>
             <Text color="secondary">{moment(time).format('h:mm A')}</Text>
+            {sparklineData && (
+              <Sparkline
+                theme={theme}
+                width={240}
+                height={40}
+                config={{
+                  custom: {
+                    fillColor: 'rgba(130, 181, 216, 0.1)',
+                    lineColor: '#82B5D8',
+                  },
+                }}
+                sparkline={{
+                  y: {
+                    type: FieldType.number,
+                    name: 'test',
+                    config: {},
+                    values: sparklineData.values,
+                    state: {
+                      range: {
+                        ...sparklineData.range,
+                      },
+                    },
+                  },
+                }}
+              />
+            )}
           </Stack>
         </Card>
       </Stack>
