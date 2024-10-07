@@ -966,6 +966,18 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 	return response.JSON(http.StatusOK, payload)
 }
 
+// swagger:parameters AddDataSource
+type AddDataSourceCommandParams struct {
+    // Name of the datasource.
+    Name string `json:"name" binding:"Required"`
+    // Type of the datasource (e.g., Graphite, MySQL).
+    Type string `json:"type" binding:"Required"`
+    // URL of the datasource.
+    URL string `json:"url"`
+    // Access mode of the datasource: 'proxy' or 'direct'.
+    Access string `json:"access" binding:"Required"`
+}
+
 // swagger:parameters checkDatasourceHealthByID
 type CheckDatasourceHealthByIDParams struct {
 	// in:path

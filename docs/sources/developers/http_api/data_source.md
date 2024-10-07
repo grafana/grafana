@@ -80,6 +80,35 @@ Content-Type: application/json
 ]
 ```
 
+## Add Data Source
+
+`POST /api/datasources`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.
+
+| Action             | Scope          |
+| ------------------ | -------------- |
+| datasources:create | n/a            | 
+
+**Example Request**:  
+{
+  "name": "Prometheus",
+  "type": "prometheus",
+  "url": "http://localhost:9090",
+  "access": "proxy", // 'proxy' or 'direct'
+}
+
+### JSON Body Schema
+
+- `name` – The name of the data source.
+- `type` – The type of the data source (e.g., Prometheus, MySQL).
+- `url` – The URL to the data source.
+- `access` – Determines how requests to the data source are made. 
+  - `proxy`: Requests are proxied through the Grafana backend, providing additional security and uniform HTTP headers.
+  - `direct`: Requests are made directly from the client-side browser to the data source. This method is less secure and is generally used when the data source is not accessible from the Grafana server.
+
 ## Get a single data source by id
 
 `GET /api/datasources/:datasourceId`
