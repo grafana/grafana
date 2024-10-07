@@ -9,7 +9,7 @@ import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Trans } from 'app/core/internationalization';
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
-import { useGetDashboardByUidQuery } from '../api';
+import { useGetDashboardByUidQuery, useGetLibraryElementByUidQuery } from '../api';
 
 import { ResourceTableItem } from './types';
 
@@ -36,7 +36,7 @@ function ResourceInfo({ data }: { data: ResourceTableItem }) {
     case 'FOLDER':
       return <FolderInfo data={data} />;
     case 'LIBRARY_ELEMENT':
-      return null;
+      return <LibraryElementInfo data={data} />;
   }
 }
 
@@ -134,6 +134,44 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   );
 }
 
+function LibraryElementInfo({ data }: { data: ResourceTableItem }) {
+  const uid = data.refId;
+  const { data: libraryElementData, isError, isLoading } = useGetLibraryElementByUidQuery({ libraryElementUid: uid });
+
+  const name = useMemo(() => {
+    return data?.name || (libraryElementData?.result?.name ?? uid);
+  }, [data, libraryElementData, uid]);
+
+  if (isError) {
+    return (
+      <>
+        <Text italic>
+          <Trans i18nKey="migrate-to-cloud.resource-table.error-library-element-title">
+            Unable to load library element
+          </Trans>
+        </Text>
+
+        <Text color="secondary">
+          <Trans i18nKey="migrate-to-cloud.resource-table.error-library-element-sub">Library Element {uid}</Trans>
+        </Text>
+      </>
+    );
+  }
+
+  if (isLoading || !libraryElementData) {
+    return <InfoSkeleton />;
+  }
+
+  const folderName = libraryElementData?.result?.meta?.folderName ?? 'General';
+
+  return (
+    <>
+      <span>{name}</span>
+      <Text color="secondary">{folderName}</Text>
+    </>
+  );
+}
+
 function InfoSkeleton() {
   return (
     <>
@@ -155,6 +193,8 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
     return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
   } else if (resource.type === 'DATASOURCE') {
     return <Icon size="xl" name="database" />;
+  } else if (resource.type === 'LIBRARY_ELEMENT') {
+    return <Icon size="xl" name="library-panel" />;
   }
 
   return undefined;
