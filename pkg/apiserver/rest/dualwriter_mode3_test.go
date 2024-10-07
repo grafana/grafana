@@ -118,7 +118,7 @@ func TestMode1_CreateOnLegacyStorage(t *testing.T) {
 			}
 
 			dw := NewDualWriter(Mode3, ls, us, p, kind)
-			err := dw.(*DualWriterMode3).createOnLegacyStorage(ctx, tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
+			err := dw.(*DualWriterMode3).createOnLegacyStorage(ctx, tt.input, exampleObj, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
 			assert.NoError(t, err)
 		})
 	}
