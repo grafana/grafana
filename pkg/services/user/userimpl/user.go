@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -31,6 +32,7 @@ type Service struct {
 	cacheService *localcache.CacheService
 	cfg          *setting.Cfg
 	tracer       tracing.Tracer
+	features     featuremgmt.FeatureToggles
 }
 
 func ProvideService(
@@ -40,6 +42,7 @@ func ProvideService(
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	features featuremgmt.FeatureToggles,
 ) (user.Service, error) {
 	store := ProvideStore(db, cfg)
 	s := &Service{
@@ -49,6 +52,7 @@ func ProvideService(
 		teamService:  teamService,
 		cacheService: cacheService,
 		tracer:       tracer,
+		features:     features,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -316,6 +320,14 @@ func (s *Service) shouldUpdateLastSeen(t time.Time) bool {
 	return time.Since(t) > s.cfg.UserLastSeenUpdateInterval
 }
 
+func (s *Service) applyElevatedServerAdminOrg(ctx context.Context, u *user.SignedInUser, targetOrgID int64) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagServerAdminElevatedOrgPrivileges) {
+		if u.IsGrafanaAdmin && u.OrgID != targetOrgID {
+			u.OrgID = targetOrgID
+		}
+	}
+}
+
 func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUser", trace.WithAttributes(
 		attribute.Int64("userID", query.UserID),
@@ -332,6 +344,7 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 			if cached, found := s.cacheService.Get(cacheKey); found {
 				cachedUser := cached.(user.SignedInUser)
 				signedInUser = &cachedUser
+				s.applyElevatedServerAdminOrg(ctx, signedInUser, query.OrgID)
 				return signedInUser, nil
 			}
 		}
@@ -347,6 +360,7 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 		s.cacheService.Set(cacheKey, *result, time.Second*5)
 	}
 
+	s.applyElevatedServerAdminOrg(ctx, result, query.OrgID)
 	return result, nil
 }
 
