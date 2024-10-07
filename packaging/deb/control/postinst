@@ -23,9 +23,9 @@ if [ "$1" = configure ]; then
   fi
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
-  mkdir -p /var/log/grafana /var/lib/grafana
+  mkdir -p /var/log/grafana /var/lib/grafana /var/lib/grafana/plugins
   chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
-  chmod 755 /var/log/grafana /var/lib/grafana
+  chmod 755 /var/log/grafana /var/lib/grafana /var/lib/grafana/plugins
 
   # copy user config files
   if [ ! -f $CONF_FILE ]; then
