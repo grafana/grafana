@@ -12,7 +12,7 @@ const EditContactPoint = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const { name = '' } = useParams();
 
-  const contactPointName = decodeURIComponent(name!);
+  const contactPointName = decodeURIComponent(name);
   const {
     isLoading,
     error,
