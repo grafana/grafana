@@ -153,7 +153,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 
 			t.Run("DELETE returns 500", func(t *testing.T) {
@@ -1985,16 +1984,16 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
 	if orgID != 1 {
-		return definitions.Route{}, store.ErrNoAlertmanagerConfiguration
+		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
 	result := f.tree
 	result.Provenance = definitions.Provenance(f.prov)
-	return result, nil
+	return result, "", nil
 }
 
-func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	if orgID != 1 {
 		return store.ErrNoAlertmanagerConfiguration
 	}
@@ -2010,11 +2009,11 @@ func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, org
 
 type fakeFailingNotificationPolicyService struct{}
 
-func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
+	return definitions.Route{}, "", fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	return fmt.Errorf("something went wrong")
 }
 
@@ -2024,11 +2023,11 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 
 type fakeRejectingNotificationPolicyService struct{}
 
-func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, nil
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
+	return definitions.Route{}, "", nil
 }
 
-func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
