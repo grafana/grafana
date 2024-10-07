@@ -27,7 +27,7 @@ sceneUtils.registerRuntimeDataSource({
   dataSource: new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log),
 });
 
-export default function LogViewer(): ReactElement | null {
+export default function LogViewer(): ReactElement {
   return (
     <SceneContextProvider>
       <LogViewScene />
