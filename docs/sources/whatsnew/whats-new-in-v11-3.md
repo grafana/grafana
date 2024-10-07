@@ -117,7 +117,7 @@ We've added legend support to bar gauge visualizations. You can customize legend
 
 To better support the legend integration, we've added the ability to hide names in each bar gauge. To do that, in the **Name placement** option, choose **Hidden**.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-bargauge-legend-11.3.png" alt="Bar gauge legend" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-bargauge-legend1-11.3.png" alt="Bar gauge legend" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/bar-gauge/#legend-options)
 
@@ -230,3 +230,19 @@ _Available in public preview in all editions of Grafana_
 To help make it easier for administrators to assess and interact with Grafana plugins, we are reworking the plugin details page to highlight important metadata, such as when the plugin was last updated.
 
 We intend to further extend this new layout with consistent links for all plugins, to complement the custom links which can currently be optionally configured. This improved consistency will enable simpler interaction with a plugin's developer - whether that is Grafana Labs, our commercial partners, or our community. These links will include actions such as raising feature requests or bug reports, as well as allowing our community developers to indicate available support and sponsorship options for those that depend on their work.
+
+## Authentication and authorization
+
+### Setup LDAP through the UI
+
+<!-- #proj-grafana-sso-config -->
+
+_Available in public preview in all editions of Grafana_
+
+![Advanced LDAP settings.](/media/docs/grafana/2024-10-04-sso_ldap_2.png)
+
+At Grafana, we're comminited to ease of use, and we've now introduced a new screen to set up your LDAP server as an Identity Provider.
+
+The new user interface makes it much clearer what each option does, and setting up the various configurations is now more transparent. Also, you no longer need to restart the Grafana instance for the new settings to take effect.
+
+This feature is available in Public Preview by enabling the feature toggle `ssoSettingsLDAP`.
