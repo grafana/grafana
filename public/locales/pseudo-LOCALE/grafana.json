@@ -2676,6 +2676,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy þőőĸmäřĸş yęŧ. Ůşę ŧĥę Ēχpľőřę Męŧřįčş þőőĸmäřĸş ƒęäŧūřę ŧő şävę yőūř päŉęľş äş þőőĸmäřĸş."
+    },
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",
       "labels": "Ŀäþęľş",
