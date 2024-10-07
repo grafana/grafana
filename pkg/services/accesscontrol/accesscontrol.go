@@ -357,15 +357,21 @@ func ManagedBuiltInRoleName(builtInRole string) string {
 }
 
 // GetOrgRoles returns legacy org roles for a user
-func GetOrgRoles(user identity.Requester) []string {
-	roles := []string{string(user.GetOrgRole())}
+func GetOrgRoles(user identity.Requester, elevateServerAdmin bool) []string {
+	roles := []string{}
+	orgRole := string(user.GetOrgRole())
 
 	if user.GetIsGrafanaAdmin() {
 		if user.GetOrgID() == GlobalOrgID {
 			// A server admin is the admin of the global organization
 			return []string{RoleGrafanaAdmin, string(org.RoleAdmin)}
 		}
+		if elevateServerAdmin && orgRole != string(org.RoleAdmin) {
+			roles = append(roles, string(org.RoleAdmin))
+		}
 		roles = append(roles, RoleGrafanaAdmin)
+	} else {
+		roles = append(roles, orgRole)
 	}
 
 	return roles

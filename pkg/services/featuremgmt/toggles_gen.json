@@ -2936,6 +2936,19 @@
     },
     {
       "metadata": {
+        "name": "serverAdminElevatedOrgPrivileges",
+        "resourceVersion": "1728315418123",
+        "creationTimestamp": "2024-10-07T15:36:58Z"
+      },
+      "spec": {
+        "description": "Enables treating server admins as org admins for all orgs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "showDashboardValidationWarnings",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-10-14T13:51:05Z"

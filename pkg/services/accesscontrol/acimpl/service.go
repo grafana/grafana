@@ -157,8 +157,10 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getUserPermissions")
 	defer span.End()
 
+	orgRoles := accesscontrol.GetOrgRoles(user, s.features.IsEnabled(ctx, featuremgmt.FlagServerAdminElevatedOrgPrivileges))
+
 	permissions := make([]accesscontrol.Permission, 0)
-	for _, builtin := range accesscontrol.GetOrgRoles(user) {
+	for _, builtin := range orgRoles {
 		if basicRole, ok := s.roles[builtin]; ok {
 			permissions = append(permissions, basicRole.Permissions...)
 		}
@@ -175,7 +177,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:        user.GetOrgID(),
 		UserID:       userID,
-		Roles:        accesscontrol.GetOrgRoles(user),
+		Roles:        orgRoles,
 		TeamIDs:      user.GetTeams(),
 		RolePrefixes: OSSRolesPrefixes,
 	})
@@ -301,7 +303,7 @@ func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user ident
 
 	// Viewer role has ~30 permissions, so we can pre-allocate memory
 	permissions := make([]accesscontrol.Permission, 0, 50)
-	basicRoles := accesscontrol.GetOrgRoles(user)
+	basicRoles := accesscontrol.GetOrgRoles(user, s.features.IsEnabled(ctx, featuremgmt.FlagServerAdminElevatedOrgPrivileges))
 	span.SetAttributes(attribute.Int("roles", len(basicRoles)))
 	for _, role := range basicRoles {
 		perms, err := s.getCachedBasicRolePermissions(ctx, role, user.GetOrgID(), options)

@@ -842,4 +842,8 @@ const (
 	// FlagPlaylistsWatcher
 	// Enables experimental watcher for playlists
 	FlagPlaylistsWatcher = "playlistsWatcher"
+
+	// FlagServerAdminElevatedOrgPrivileges
+	// Enables treating server admins as org admins for all orgs
+	FlagServerAdminElevatedOrgPrivileges = "serverAdminElevatedOrgPrivileges"
 )
