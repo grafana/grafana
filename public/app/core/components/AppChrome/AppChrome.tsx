@@ -92,6 +92,9 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
+          {isSingleTopNav && menuDockedAndOpen && (
+            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+          )}
           <header className={cx(styles.topNav, isSingleTopNav && menuDockedAndOpen && styles.topNavMenuDocked)}>
             {isSingleTopNav ? (
               <SingleTopBar
@@ -119,7 +122,7 @@ export function AppChrome({ children }: Props) {
       )}
       <div className={contentClass}>
         <div className={styles.panes}>
-          {menuDockedAndOpen && (
+          {!isSingleTopNav && menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
           {!state.chromeless && (

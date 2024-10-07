@@ -79,6 +79,14 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 		return nil, err
 	}
 
+	// avoid panic
+	var createdTime time.Time
+	if created != nil {
+		// #TODO Fix this time format. The legacy time format seems to be along the lines of time.Now()
+		// which includes a part that represents a fraction of a second.
+		createdTime = created.Local()
+	}
+
 	dto := &dtos.Folder{
 		UID:       uid,
 		Title:     title,
@@ -87,20 +95,14 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 		// #TODO add back CreatedBy, UpdatedBy once we figure out how to access userService
 		// to translate user ID into user login. meta.GetCreatedBy() only stores user ID
 		// Could convert meta.GetCreatedBy() return value to a struct--id and name
-		// CreatedBy: meta.GetCreatedBy(),
-		// UpdatedBy: meta.GetCreatedBy(),
-		URL: getURL(meta, title),
+		CreatedBy: meta.GetCreatedBy(),
+		UpdatedBy: meta.GetCreatedBy(),
+		URL:       getURL(meta, title),
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
-		Created: *created,
+		Created: createdTime,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
 		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
-		Updated: *created,
-		// #TODO figure out how to set these properly
-		CanSave:   true,
-		CanEdit:   true,
-		CanAdmin:  true,
-		CanDelete: true,
-		HasACL:    false,
+		Updated: createdTime,
 
 		// #TODO figure out about adding version, parents, orgID fields
 	}
@@ -135,6 +137,9 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 			Timestamp: &v.Created,
 		})
 	}
+	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
+	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
+	// as the only user identifier
 	if v.CreatedBy > 0 {
 		meta.SetCreatedBy(fmt.Sprintf("user:%d", v.CreatedBy))
 	}

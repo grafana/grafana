@@ -1,4 +1,5 @@
 import { Route, Switch } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { withErrorBoundary } from '@grafana/ui';
 import {
@@ -30,25 +31,7 @@ const Silences = () => {
           <SilencesTable alertManagerSourceName={selectedAlertmanager} />
         </Route>
         <Route exact path="/alerting/silence/new">
-          {({ location }) => {
-            const queryParams = new URLSearchParams(location.search);
-
-            const potentialAlertRuleMatcher = parseQueryParamMatchers(queryParams.getAll('matcher')).find(
-              (m) => m.name === MATCHER_ALERT_RULE_UID
-            );
-
-            const potentialRuleUid = potentialAlertRuleMatcher?.value;
-
-            const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
-
-            return (
-              <SilencesEditor
-                formValues={formValues}
-                alertManagerSourceName={selectedAlertmanager}
-                ruleUid={potentialRuleUid}
-              />
-            );
-          }}
+          <SilencesEditorComponent selectedAlertmanager={selectedAlertmanager} />
         </Route>
         <Route exact path="/alerting/silence/:id/edit">
           <ExistingSilenceEditor alertManagerSourceName={selectedAlertmanager} />
@@ -69,3 +52,23 @@ function SilencesPage() {
 }
 
 export default withErrorBoundary(SilencesPage, { style: 'page' });
+
+type SilencesEditorComponentProps = {
+  selectedAlertmanager: string;
+};
+const SilencesEditorComponent = ({ selectedAlertmanager }: SilencesEditorComponentProps) => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+
+  const potentialAlertRuleMatcher = parseQueryParamMatchers(queryParams.getAll('matcher')).find(
+    (m) => m.name === MATCHER_ALERT_RULE_UID
+  );
+
+  const potentialRuleUid = potentialAlertRuleMatcher?.value;
+
+  const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
+
+  return (
+    <SilencesEditor formValues={formValues} alertManagerSourceName={selectedAlertmanager} ruleUid={potentialRuleUid} />
+  );
+};
