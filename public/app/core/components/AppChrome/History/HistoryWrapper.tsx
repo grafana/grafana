@@ -140,23 +140,5 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.border.weak,
       },
     }),
-    innerWrapper: css({
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
-    grot: css({
-      display: `flex`,
-      alignItems: `center`,
-      justifyContent: `center`,
-      padding: theme.spacing(5, 0),
-
-      img: {
-        width: `186px`,
-        height: `186px`,
-      },
-    }),
   };
 };
