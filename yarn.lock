@@ -4143,9 +4143,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:5.18.0":
-  version: 5.18.0
-  resolution: "@grafana/scenes@npm:5.18.0"
+"@grafana/scenes@npm:5.18.1":
+  version: 5.18.1
+  resolution: "@grafana/scenes@npm:5.18.1"
   dependencies:
     "@floating-ui/react": "npm:0.26.16"
     "@grafana/e2e-selectors": "npm:^11.0.0"
@@ -4162,7 +4162,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/ea3ba39f8e9615a6666f57b9846b3b30154eac86655c1f68c0372077a26398039fd2a9d7a692a19be8f23b76fdfbaa9fb5158971132dcd19be28ec36aef20bcc
+  checksum: 10/e34b4c56d5236a429fc4fa6cf381191911f1d34bbef1bd385683a9cf275d2619e0e95b1773865415a5596305bb2c14e8f6b5b55439a15bdbc4360e5cd9390c66
   languageName: node
   linkType: hard
 
@@ -6909,18 +6909,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/overlays@npm:3.8.9":
-  version: 3.8.9
-  resolution: "@react-types/overlays@npm:3.8.9"
-  dependencies:
-    "@react-types/shared": "npm:^3.24.1"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/b657c912dea8007d6b95a54c8075a844784b4bf1e82a104d60d1b403cbcdfdbe936837230a981029671edea09ddac51807b22e8b02da97e2e4c4a7648daa6c61
-  languageName: node
-  linkType: hard
-
-"@react-types/overlays@npm:^3.8.10":
+"@react-types/overlays@npm:3.8.10, @react-types/overlays@npm:^3.8.10":
   version: 3.8.10
   resolution: "@react-types/overlays@npm:3.8.10"
   dependencies:
@@ -18971,7 +18960,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.18.0"
+    "@grafana/scenes": "npm:5.18.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -19001,7 +18990,7 @@ __metadata:
     "@react-awesome-query-builder/ui": "npm:6.6.3"
     "@react-types/button": "npm:3.9.6"
     "@react-types/menu": "npm:3.9.12"
-    "@react-types/overlays": "npm:3.8.9"
+    "@react-types/overlays": "npm:3.8.10"
     "@react-types/shared": "npm:3.24.1"
     "@reduxjs/toolkit": "npm:2.2.7"
     "@rtk-query/codegen-openapi": "npm:^1.2.0"
