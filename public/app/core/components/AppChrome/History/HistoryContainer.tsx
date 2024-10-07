@@ -46,7 +46,7 @@ export function HistoryContainer() {
       <NavToolbarSeparator className={styles.separator} />
       {showHistoryDrawer && (
         <Drawer title="History" onClose={onToggleShowHistoryDrawer} size="md">
-          <HistoryWrapper />
+          <HistoryWrapper onClose={() => onToggleShowHistoryDrawer(false)} />
         </Drawer>
       )}
     </>

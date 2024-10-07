@@ -9,15 +9,20 @@ import { t } from 'app/core/internationalization';
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';
 import { HistoryEntry } from '../types';
 
-export function HistoryWrapper() {
+export function HistoryWrapper({ onClose }: { onClose: () => void }) {
   const history = store.getObject<HistoryEntry[]>(HISTORY_LOCAL_STORAGE_KEY, []);
   const [numItemsToShow, setNumItemsToShow] = useState(5);
+
+  const onClickHistory = (url: string) => {
+    window.location.href = url;
+    onClose();
+  };
 
   return (
     <Stack direction="column" alignItems="flex-start">
       <Box width="100%">
         {history.slice(0, numItemsToShow).map((entry, index) => (
-          <HistoryEntryAppView key={index} entry={entry} isFirst={index === 0} />
+          <HistoryEntryAppView key={index} entry={entry} isFirst={index === 0} onClick={onClickHistory} />
         ))}
       </Box>
       {history.length > numItemsToShow && (
@@ -31,9 +36,10 @@ export function HistoryWrapper() {
 interface ItemProps {
   entry: HistoryEntry;
   isFirst: boolean;
+  onClick: (url: string) => void;
 }
 
-function HistoryEntryAppView({ entry, isFirst }: ItemProps) {
+function HistoryEntryAppView({ entry, isFirst, onClick }: ItemProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const [isExpanded, setIsExpanded] = useState(isFirst && entry.views.length > 0);
@@ -53,7 +59,11 @@ function HistoryEntryAppView({ entry, isFirst }: ItemProps) {
           <Space h={2} />
         )}
 
-        <Card href={url} isCompact={true} className={url === window.location.href ? undefined : styles.card}>
+        <Card
+          onClick={() => onClick(url)}
+          isCompact={true}
+          className={url === window.location.href ? undefined : styles.card}
+        >
           <Stack direction="column">
             <div>
               {breadcrumbs.map((breadcrumb, index) => (
@@ -97,7 +107,7 @@ function HistoryEntryAppView({ entry, isFirst }: ItemProps) {
           {views.map((view, index) => (
             <Card
               key={index}
-              href={view.url}
+              onClick={() => onClick(view.url)}
               isCompact={true}
               className={view.url === window.location.href ? undefined : styles.card}
             >
