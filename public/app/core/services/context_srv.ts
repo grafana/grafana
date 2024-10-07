@@ -167,7 +167,12 @@ export class ContextSrv {
     if (!config.minRefreshInterval || interval === AutoRefreshInterval) {
       return true;
     }
-    return rangeUtil.intervalToMs(interval) >= rangeUtil.intervalToMs(config.minRefreshInterval);
+
+    if (rangeUtil.intervalToMs(interval) < rangeUtil.intervalToMs(config.minRefreshInterval)) {
+      throw new Error(`Intervals must be greater than or equal to "${config.minRefreshInterval}"`);
+    }
+
+    return true;
   }
 
   getValidInterval(interval: string) {
@@ -181,6 +186,8 @@ export class ContextSrv {
     if (this.minRefreshInterval) {
       return intervals.filter((str) => str !== '').filter(this.isAllowedInterval);
     }
+
+    console.log(intervals);
     return intervals;
   }
 
