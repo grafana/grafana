@@ -148,7 +148,7 @@ describe('Transform data frames by filtering', () => {
     ]);
   });
 
-  it('should exclude all rows not matching one of pluginId with severity', async () => {
+  it('should exclude all rows not matching pluginId and severity', async () => {
     const filter = {
       pluginIds: new Set<string>(['grafana-k8s-app', 'grafana']),
       severity: new Set<string>(['info']),
