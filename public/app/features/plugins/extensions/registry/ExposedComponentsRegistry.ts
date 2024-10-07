@@ -2,6 +2,7 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionExposedComponentConfig } from '@grafana/data';
 
+import { isExposedComponentMetaInfoMissing, isGrafanaDevMode } from '../utils';
 import { extensionPointEndsWithVersion } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
@@ -73,7 +74,12 @@ export class ExposedComponentsRegistry extends Registry<
         continue;
       }
 
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isExposedComponentMetaInfoMissing(pluginId, config)) {
+        continue;
+      }
+
       pointIdLog.debug(`Exposed component from '${pluginId}' to '${id}'`);
+
       registry[id] = { ...config, pluginId };
     }
 

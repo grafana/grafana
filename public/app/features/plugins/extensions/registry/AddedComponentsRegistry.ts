@@ -2,13 +2,8 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
-import { wrapWithPluginContext } from '../utils';
-import {
-  extensionPointEndsWithVersion,
-  isExtensionPointIdValid,
-  isGrafanaCoreExtensionPoint,
-  isReactComponent,
-} from '../validators';
+import { isAddedComponentMetaInfoMissing, isGrafanaDevMode, wrapWithPluginContext } from '../utils';
+import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint, isReactComponent } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
@@ -62,20 +57,17 @@ export class AddedComponentsRegistry extends Registry<
         continue;
       }
 
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedComponentMetaInfoMissing(pluginId, config)) {
+        continue;
+      }
+
       const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
       for (const extensionPointId of extensionPointIds) {
         const pointIdLog = configLog.child({ extensionPointId });
 
-        if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
-          pointIdLog.error(
-            `Could not register added component. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id or grafana. e.g '<grafana|myorg-basic-app>/my-component-id/v1'.`
-          );
-          continue;
-        }
-
         if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          pointIdLog.error(
-            `Added component does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+          pointIdLog.warning(
+            `Added component "${config.title}": it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
           );
         }
 

@@ -242,6 +242,22 @@
     },
     {
       "metadata": {
+        "name": "alertingPrometheusRulesPrimary",
+        "resourceVersion": "1727332930692",
+        "creationTimestamp": "2024-09-09T13:56:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 06:42:10.692959 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
         "resourceVersion": "1725978395461",
         "creationTimestamp": "2024-09-10T14:26:35Z"
@@ -824,40 +840,52 @@
     {
       "metadata": {
         "name": "dashboardScene",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-13T08:51:21Z"
+        "resourceVersion": "1727354524763",
+        "creationTimestamp": "2023-11-13T08:51:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables dashboard rendering using scenes for all roles",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "dashboardSceneForViewers",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-02T19:02:25Z"
+        "resourceVersion": "1727354524763",
+        "creationTimestamp": "2023-11-02T19:02:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables dashboard rendering using Scenes for viewer roles",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "dashboardSceneSolo",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-11T08:08:47Z"
+        "resourceVersion": "1727354524763",
+        "creationTimestamp": "2024-02-11T08:08:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables rendering dashboards using scenes for solo panels",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -1358,6 +1386,18 @@
     },
     {
       "metadata": {
+        "name": "grafanaAPIServerTestingWithExperimentalAPIs",
+        "resourceVersion": "1727945615419",
+        "creationTimestamp": "2024-10-03T08:53:35Z"
+      },
+      "spec": {
+        "description": "Facilitate integration testing of experimental APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerWithExperimentalAPIs",
         "resourceVersion": "1726731672938",
         "creationTimestamp": "2023-10-06T18:55:22Z",
@@ -1662,13 +1702,16 @@
     {
       "metadata": {
         "name": "live-service-web-worker",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "resourceVersion": "1727432782383",
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-27 10:26:22.38366 +0000 UTC"
+        }
       },
       "spec": {
         "description": "This will use a webworker thread to processes events rather than the main thread",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
     },
@@ -2077,13 +2120,17 @@
     {
       "metadata": {
         "name": "notificationBanner",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-13T09:32:34Z"
+        "resourceVersion": "1727777007488",
+        "creationTimestamp": "2024-05-13T09:32:34Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-01 10:03:27.48823 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the notification banner UI and API",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "true"
       }
     },
     {
@@ -2233,13 +2280,17 @@
     {
       "metadata": {
         "name": "pinNavItems",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-10T11:40:03Z"
+        "resourceVersion": "1727948775526",
+        "creationTimestamp": "2024-06-10T11:40:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-03 09:46:15.526594 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables pinning of nav items",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "true"
       }
     },
     {
@@ -2308,6 +2359,18 @@
       },
       "spec": {
         "description": "Disables passing host environment variable to plugin processes",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginsSriChecks",
+        "resourceVersion": "1727785264632",
+        "creationTimestamp": "2024-10-01T12:21:04Z"
+      },
+      "spec": {
+        "description": "Enables SRI checks for plugin assets",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend"
       }
@@ -2497,14 +2560,18 @@
     {
       "metadata": {
         "name": "publicDashboardsScene",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-22T14:48:21Z"
+        "resourceVersion": "1727354524763",
+        "creationTimestamp": "2024-03-22T14:48:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables public dashboard rendering using scenes",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -2523,13 +2590,16 @@
     {
       "metadata": {
         "name": "queryOverLive",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "resourceVersion": "1727432782383",
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-27 10:26:22.38366 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use Grafana Live WebSocket to execute backend queries",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
     },
@@ -2780,15 +2850,18 @@
     {
       "metadata": {
         "name": "ssoSettingsLDAP",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-06-18T11:31:27Z"
+        "resourceVersion": "1728034012257",
+        "creationTimestamp": "2024-06-18T11:31:27Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-04 09:26:52.257203 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure LDAP",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "requiresRestart": true,
+        "allowSelfServe": true
       }
     },
     {
@@ -2959,6 +3032,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageSearch",
+        "resourceVersion": "1726771421439",
+        "creationTimestamp": "2024-09-19T18:43:41Z"
+      },
+      "spec": {
+        "description": "Enable unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {

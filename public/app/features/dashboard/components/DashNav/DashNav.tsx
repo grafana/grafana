@@ -16,7 +16,6 @@ import {
   Badge,
 } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -83,6 +82,7 @@ export const DashNav = memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   useLocation();
   const forceUpdate = useForceUpdate();
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
@@ -357,15 +357,11 @@ export const DashNav = memo<Props>((props) => {
   };
 
   return (
-    <AppChromeUpdate
-      actions={
-        <>
-          {renderLeftActions()}
-          <NavToolbarSeparator leftActionsSeparator />
-          <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
-        </>
-      }
-    />
+    <>
+      {renderLeftActions()}
+      {!isSingleTopNav && <NavToolbarSeparator leftActionsSeparator />}
+      <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
+    </>
   );
 });
 

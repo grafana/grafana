@@ -130,6 +130,7 @@ export const TrendPanel = ({
                       sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
                       maxHeight={options.tooltip.maxHeight}
+                      replaceVariables={replaceVariables}
                     />
                   );
                 }}

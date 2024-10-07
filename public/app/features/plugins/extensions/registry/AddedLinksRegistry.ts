@@ -3,10 +3,10 @@ import { ReplaySubject } from 'rxjs';
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
+import { isAddedLinkMetaInfoMissing, isGrafanaDevMode } from '../utils';
 import {
   extensionPointEndsWithVersion,
   isConfigureFnValid,
-  isExtensionPointIdValid,
   isGrafanaCoreExtensionPoint,
   isLinkPathValid,
 } from '../validators';
@@ -78,20 +78,19 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         continue;
       }
 
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config)) {
+        configLog.warning(`Did not register links from plugin ${pluginId} due to missing meta information.`);
+        continue;
+      }
+
       const extensionPointIds = Array.isArray(targets) ? targets : [targets];
+
       for (const extensionPointId of extensionPointIds) {
         const pointIdLog = configLog.child({ extensionPointId });
 
-        if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
-          pointIdLog.error(
-            `Could not register added link. Reason: Target extension point id must start with grafana, plugins or plugin id.`
-          );
-          continue;
-        }
-
         if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          pointIdLog.error(
-            `Added link does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+          pointIdLog.warning(
+            `Added link "${config.title}: it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
           );
         }
 

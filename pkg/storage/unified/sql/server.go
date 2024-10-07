@@ -15,7 +15,7 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.Fea
 		Tracer: tracer,
 	}
 
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, features, tracer)
+	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -26,6 +26,10 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.Fea
 	opts.Backend = store
 	opts.Diagnostics = store
 	opts.Lifecycle = store
+
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+		opts.Index = resource.NewResourceIndexServer()
+	}
 
 	return resource.NewResourceServer(opts)
 }

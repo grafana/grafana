@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -53,13 +54,14 @@ type Service struct {
 	gmsClient     gmsclient.Client
 	objectStorage objectstorage.ObjectStorage
 
-	dsService        datasources.DataSourceService
-	gcomService      gcom.Service
-	dashboardService dashboards.DashboardService
-	folderService    folder.Service
-	pluginStore      pluginstore.Store
-	secretsService   secrets.Service
-	kvStore          *kvstore.NamespacedKVStore
+	dsService              datasources.DataSourceService
+	gcomService            gcom.Service
+	dashboardService       dashboards.DashboardService
+	folderService          folder.Service
+	pluginStore            pluginstore.Store
+	secretsService         secrets.Service
+	kvStore                *kvstore.NamespacedKVStore
+	libraryElementsService libraryelements.Service
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -93,24 +95,26 @@ func ProvideService(
 	folderService folder.Service,
 	pluginStore pluginstore.Store,
 	kvStore kvstore.KVStore,
+	libraryElementsService libraryelements.Service,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
 	}
 
 	s := &Service{
-		store:            &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
-		log:              log.New(LogPrefix),
-		cfg:              cfg,
-		features:         features,
-		dsService:        dsService,
-		tracer:           tracer,
-		metrics:          newMetrics(),
-		secretsService:   secretsService,
-		dashboardService: dashboardService,
-		folderService:    folderService,
-		pluginStore:      pluginStore,
-		kvStore:          kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
+		store:                  &sqlStore{db: db, secretsStore: secretsStore, secretsService: secretsService},
+		log:                    log.New(LogPrefix),
+		cfg:                    cfg,
+		features:               features,
+		dsService:              dsService,
+		tracer:                 tracer,
+		metrics:                newMetrics(),
+		secretsService:         secretsService,
+		dashboardService:       dashboardService,
+		folderService:          folderService,
+		pluginStore:            pluginStore,
+		kvStore:                kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
+		libraryElementsService: libraryElementsService,
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
@@ -179,7 +183,8 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 	}
 
 	logger.Info("cloud migration token not found")
-	return gcom.TokenView{}, cloudmigration.ErrTokenNotFound
+	return gcom.TokenView{}, fmt.Errorf("fetching cloud migration token: instance=%+v accessPolicyName=%s accessTokenName=%s %w",
+		instance, accessPolicyName, accessTokenName, cloudmigration.ErrTokenNotFound)
 }
 
 func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
@@ -300,7 +305,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	defer span.End()
 
 	if err := s.gmsClient.ValidateKey(ctx, cm); err != nil {
-		return fmt.Errorf("validating key: %w", err)
+		return fmt.Errorf("validating token: %w", err)
 	}
 
 	return nil

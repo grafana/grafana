@@ -1,4 +1,7 @@
-import { Field, LinkModel } from '@grafana/data';
+import { ActionModel, Field, InterpolateFunction, LinkModel } from '@grafana/data';
+import { DataFrame } from '@grafana/data/';
+import { config } from '@grafana/runtime';
+import { getActions } from 'app/features/actions/utils';
 
 export const getDataLinks = (field: Field, rowIdx: number) => {
   const links: Array<LinkModel<Field>> = [];
@@ -19,4 +22,32 @@ export const getDataLinks = (field: Field, rowIdx: number) => {
   }
 
   return links;
+};
+
+export const getFieldActions = (dataFrame: DataFrame, field: Field, replaceVars: InterpolateFunction) => {
+  if (!config.featureToggles?.vizActions) {
+    return [];
+  }
+
+  const actions: Array<ActionModel<Field>> = [];
+  const actionLookup = new Set<string>();
+
+  const actionsModel = getActions(
+    dataFrame,
+    field,
+    field.state!.scopedVars!,
+    replaceVars,
+    field.config.actions ?? [],
+    {}
+  );
+
+  actionsModel.forEach((action) => {
+    const key = `${action.title}`;
+    if (!actionLookup.has(key)) {
+      actions.push(action);
+      actionLookup.add(key);
+    }
+  });
+
+  return actions;
 };

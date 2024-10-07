@@ -45,6 +45,7 @@ export const RuleEditorSection = ({
                   label="Advanced options"
                   showLabel
                   transparent
+                  className={styles.reverse}
                 />
               </Text>
             )}
@@ -73,5 +74,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   fullWidth: css({
     width: '100%',
+  }),
+  reverse: css({
+    flexDirection: 'row-reverse',
+    gap: theme.spacing(1),
   }),
 });
