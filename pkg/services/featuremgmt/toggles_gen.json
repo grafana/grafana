@@ -1234,18 +1234,14 @@
     {
       "metadata": {
         "name": "externalServiceAccounts",
-        "resourceVersion": "1726562284896",
-        "creationTimestamp": "2023-09-28T07:26:37Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-17 08:38:04.896869045 +0000 UTC"
-        }
+        "resourceVersion": "1718727528075",
+        "creationTimestamp": "2023-09-28T07:26:37Z"
       },
       "spec": {
         "description": "Automatic service account and token setup for plugins",
-        "stage": "GA",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "expression": "true"
+        "hideFromAdminPage": true
       }
     },
     {
@@ -2165,6 +2161,18 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "onPremToCloudMigrationsAlerts",
+        "resourceVersion": "1728048163201",
+        "creationTimestamp": "2024-10-04T13:22:43Z"
+      },
+      "spec": {
+        "description": "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
       }
     },
     {
