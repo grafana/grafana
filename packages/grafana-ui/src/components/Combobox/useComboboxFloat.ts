@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { measureText } from '../../utils';
 
 import { ComboboxOption } from './Combobox';
-import { MENU_ITEM_FONT_SIZE } from './getComboboxStyles';
+import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from './getComboboxStyles';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 1000;
@@ -24,6 +24,8 @@ export const useComboboxFloat = (
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
+
+  const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
   // the order of middleware is important!
   const middleware = [
@@ -57,12 +59,10 @@ export const useComboboxFloat = (
       longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
     }
 
-    // pr todo: get weight from theme/styles
-    const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, 500).width;
+    const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-    // pr todo: ideally we want to remove these magic numbers from here, or derive them from the styles
-    return size + 16 /* padding */ + 17 /* chrome fixed scrollbar width */;
-  }, [items]);
+    return size + MENU_ITEM_PADDING_X * 2 + scrollbarWidth;
+  }, [items, scrollbarWidth]);
 
   const floatStyles = {
     ...floatingStyles,
@@ -73,3 +73,20 @@ export const useComboboxFloat = (
 
   return { inputRef, floatingRef, floatStyles };
 };
+
+// Creates a temporary div with a scrolling inner div to calculate the width of the scrollbar
+function getScrollbarWidth(): number {
+  const outer = document.createElement('div');
+  outer.style.visibility = 'hidden';
+  outer.style.overflow = 'scroll';
+  document.body.appendChild(outer);
+
+  const inner = document.createElement('div');
+  outer.appendChild(inner);
+
+  const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+
+  outer.parentNode?.removeChild(outer);
+
+  return scrollbarWidth;
+}
