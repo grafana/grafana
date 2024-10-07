@@ -29,7 +29,7 @@ export interface GrafanaQuery extends DataQuery {
   buffer?: number;
   path?: string; // for list and read
   search?: SearchQuery;
-  searchNext?: SearchQuery
+  searchNext?: SearchQuery;
   snapshot?: DataFrameJSON[];
   timeRegion?: TimeRegionConfig;
   file?: GrafanaQueryFile;

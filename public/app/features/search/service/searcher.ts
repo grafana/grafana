@@ -1,10 +1,10 @@
 import { config } from '@grafana/runtime';
 
+import { BleveSearcher } from './bleve';
 import { BlugeSearcher } from './bluge';
 import { FrontendSearcher } from './frontend';
 import { SQLSearcher } from './sql';
 import { GrafanaSearcher } from './types';
-import { BleveSearcher } from './bleve';
 
 let searcher: GrafanaSearcher | undefined = undefined;
 
