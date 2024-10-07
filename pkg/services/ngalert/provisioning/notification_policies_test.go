@@ -225,14 +225,12 @@ func TestResetPolicyTree(t *testing.T) {
 		sut.settings = setting.UnifiedAlertingSettings{
 			DefaultConfiguration: "{",
 		}
-		_, _, err := sut.ResetPolicyTree(context.Background(), orgID)
+		_, err := sut.ResetPolicyTree(context.Background(), orgID)
 		require.ErrorContains(t, err, "failed to parse default alertmanager config")
 	})
 
 	t.Run("replaces route with one from the default config and copies receivers if do not exist", func(t *testing.T) {
 		defaultConfig := getDefaultConfigRevision().Config
-		defaultVersion, err := calculateRouteFingerprint(*defaultConfig.AlertmanagerConfig.Route)
-		require.NoError(t, err)
 		data, err := legacy_storage.SerializeAlertmanagerConfig(*defaultConfig)
 		require.NoError(t, err)
 
@@ -256,10 +254,9 @@ func TestResetPolicyTree(t *testing.T) {
 		expectedRev.Config.AlertmanagerConfig.Route = getDefaultConfigRevision().Config.AlertmanagerConfig.Route
 		expectedRev.Config.AlertmanagerConfig.Receivers = append(expectedRev.Config.AlertmanagerConfig.Receivers, getDefaultConfigRevision().Config.AlertmanagerConfig.Receivers[0])
 
-		tree, version, err := sut.ResetPolicyTree(context.Background(), orgID)
+		tree, err := sut.ResetPolicyTree(context.Background(), orgID)
 		require.NoError(t, err)
 		assert.Equal(t, *defaultConfig.AlertmanagerConfig.Route, tree)
-		assert.Equal(t, defaultVersion, version)
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)

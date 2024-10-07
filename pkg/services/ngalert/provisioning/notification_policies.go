@@ -110,22 +110,22 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	})
 }
 
-func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
+func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
 	defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
 		nps.log.Error("Failed to parse default alertmanager config: %w", err)
-		return definitions.Route{}, "", fmt.Errorf("failed to parse default alertmanager config: %w", err)
+		return definitions.Route{}, fmt.Errorf("failed to parse default alertmanager config: %w", err)
 	}
 	route := defaultCfg.AlertmanagerConfig.Route
 
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
-		return definitions.Route{}, "", err
+		return definitions.Route{}, err
 	}
 	revision.Config.AlertmanagerConfig.Config.Route = route
 	err = nps.ensureDefaultReceiverExists(revision.Config, defaultCfg)
 	if err != nil {
-		return definitions.Route{}, "", err
+		return definitions.Route{}, err
 	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -136,14 +136,10 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	})
 
 	if err != nil {
-		return definitions.Route{}, "", nil
+		return definitions.Route{}, nil
 	} // TODO should be error?
 
-	version, err := calculateRouteFingerprint(*route)
-	if err != nil {
-		return definitions.Route{}, "", err
-	}
-	return *route, version, nil
+	return *route, nil
 }
 
 func (nps *NotificationPolicyService) receiversToMap(records []*definitions.PostableApiReceiver) (map[string]struct{}, error) {
