@@ -7,6 +7,6 @@ INSERT INTO `resource_version`
     VALUES (
         '',
         '',
-        (UNIX_TIMESTAMP(NOW(6)) * 1000000)
+        FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000)
     )
 ;
