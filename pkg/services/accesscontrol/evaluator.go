@@ -293,3 +293,30 @@ func (a anyEvaluator) GoString() string {
 
 	return fmt.Sprintf("any(%s)", strings.Join(permissions, " "))
 }
+
+type denyEvaluator struct{}
+
+func (*denyEvaluator) Evaluate(permissions map[string][]string) bool {
+	return false
+}
+
+func (*denyEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
+	return false, nil
+}
+
+func (*denyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
+	return &denyEvaluator{}, nil
+}
+
+func (*denyEvaluator) String() string {
+	return "deny"
+}
+
+func (*denyEvaluator) GoString() string {
+	return "deny"
+}
+
+// EvalDeny returns an evaluator that always returns false
+func EvalDeny() Evaluator {
+	return &denyEvaluator{}
+}
