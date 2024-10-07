@@ -156,6 +156,8 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
             timeZone: newState.timeZone,
           });
 
+          this.addTrailStep(trail, 'time', tooltip);
+
           getAppEvents().publish(
             new HistoryChangedEvent({
               name: 'Time range changed',
@@ -163,8 +165,6 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
               url: window.location.href,
             })
           );
-
-          this.addTrailStep(trail, 'time', tooltip);
         }
       }
     });

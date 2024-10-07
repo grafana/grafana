@@ -1691,6 +1691,9 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
+    "history": {
+      "show-more": "Show more"
+    },
     "home": {
       "title": "Home"
     },
