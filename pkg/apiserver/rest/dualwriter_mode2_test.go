@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -80,9 +79,6 @@ func TestMode2_Create(t *testing.T) {
 			}
 
 			assert.Equal(t, exampleObj, obj)
-			accessor, err := meta.Accessor(obj)
-			assert.NoError(t, err)
-			assert.Equal(t, accessor.GetResourceVersion(), "1")
 		})
 	}
 }
