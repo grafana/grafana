@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/blevesearch/bleve/v2"
@@ -155,9 +156,12 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 		specResult := map[string]interface{}{}
 		for k, v := range hit.Fields {
 			if strings.HasPrefix(k, "spec.") {
-				// TODO should only include spec fields we care about in search results
-				specKey := strings.TrimPrefix(k, "spec.")
-				specResult[specKey] = v
+				mappedFields := specFieldMappings(searchSummary.Kind)
+				if slices.Contains(mappedFields, k) {
+					// TODO should only include spec fields we care about in search results
+					specKey := strings.TrimPrefix(k, "spec.")
+					specResult[specKey] = v
+				}
 			}
 			searchSummary.Spec = specResult
 		}
@@ -179,12 +183,12 @@ type SearchSummary struct {
 }
 
 type Metadata struct {
-	Name              string
-	Namespace         string
+	name              string
+	namespace         string
 	Uid               string `json:"uid"`
 	CreationTimestamp string `json:"creationTimestamp"`
-	Labels            map[string]string
-	Annotations       map[string]string
+	labels            map[string]string
+	annotations       map[string]string
 }
 
 type Resource struct {
@@ -284,4 +288,13 @@ func fetchResourceTypes() []*ListOptions {
 		},
 	})
 	return items
+}
+
+func specFieldMappings(kind string) map[string][]string {
+	return map[string][]string{
+		"playlist": {
+			"spec.title",
+			"spec.interval",
+		},
+	}
 }
