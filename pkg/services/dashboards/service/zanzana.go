@@ -10,6 +10,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -193,9 +195,11 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashb
 				}
 
 				req := accesscontrol.CheckRequest{
-					User:     query.SignedInUser.GetUID(),
-					Relation: "read",
-					Object:   zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
+					Namespace: claims.OrgNamespaceFormatter(orgId),
+					User:      query.SignedInUser.GetUID(),
+					Relation:  "read",
+					Object:    zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
+					Parent:    d.FolderUID,
 				}
 
 				allowed, err := dr.ac.Check(ctx, req)

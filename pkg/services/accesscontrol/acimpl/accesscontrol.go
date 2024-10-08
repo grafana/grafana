@@ -3,11 +3,14 @@ package acimpl
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -226,7 +229,26 @@ func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckReques
 		Relation: req.Relation,
 		Object:   req.Object,
 	}
-	in := &openfgav1.CheckRequest{TupleKey: key}
+
+	ns, err := claims.ParseNamespace(req.Namespace)
+	if err != nil {
+		return false, err
+	}
+
+	contextualTuple := &openfgav1.TupleKey{
+		User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
+		Relation: zanzana.RelationParent,
+		Object:   req.Object,
+	}
+
+	in := &openfgav1.CheckRequest{
+		TupleKey: key,
+		ContextualTuples: &openfgav1.ContextualTupleKeys{
+			TupleKeys: []*openfgav1.TupleKey{
+				contextualTuple,
+			},
+		},
+	}
 	res, err := a.zclient.Check(ctx, in)
 	if err != nil {
 		return false, err

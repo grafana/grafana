@@ -39,7 +39,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
 		folderTreeCollector(store),
-		dashboardFolderCollector(store),
+		// dashboardFolderCollector(store),
 		basicRolesCollector(store),
 		customRolesCollector(store),
 		basicRoleAssignemtCollector(store),
@@ -58,6 +58,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 // Sync runs all collectors and tries to write all collected tuples.
 // It will skip over any "sync group" that has already been written.
 func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
+	z.log.Info("Starting zanzana permissions sync")
 	ctx, span := tracer.Start(ctx, "accesscontrol.migrator.Sync")
 	defer span.End()
 
