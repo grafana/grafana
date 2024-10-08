@@ -18,57 +18,16 @@ type IndexServer struct {
 	ws    *indexWatchServer
 }
 
-/*
-TODO
-1. Does the client only provide a bleve query string?
-2. What SearchRequest fields do we need to fill in?
-3. What are sensible defaults? Size? Sorting? Fields?
-4. Response items are showing as base64 encoded JSON. Is this expected?
-5. How do we get the tenant?
-*/
 func (is IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	// TODO how do we get tenant?
-	tenantId := "default"
-	tenantIndex := is.index.shards[tenantId].index
-
-	// TODO create search/browse interface and extract Bleve implementation
-	query := bleve.NewBooleanQuery()
-
-	// scope query to specific kind if provided
-	if req.Kind != "" {
-		kindQuery := bleve.NewTermQuery(req.Kind)
-		kindQuery.SetField("Kind")
-		query.AddMust(kindQuery)
-	}
-
-	//query := bleve.NewMatchAllQuery()
-	queryString := bleve.NewQueryStringQuery(req.Query)
-	query.AddMust(queryString)
-
-	searchReq := bleve.SearchRequest{Query: query, Size: 25, Fields: []string{"Kind", "Metadata.Name", "Metadata.CreationTimestamp"}}
-
-	res, err := tenantIndex.Search(&searchReq)
+	results, err := is.index.Search(ctx, req.Tenant, req.Query)
 	if err != nil {
 		return nil, err
 	}
-
-	response := &SearchResponse{}
-	response.SearchSummaries = make([][]byte, len(res.Hits))
-	for i, hit := range res.Hits {
-		// create a summary
-		summary := map[string]interface{}{}
-		summary["Kind"] = hit.Fields["Kind"]
-		summary["CreationTimestamp"] = hit.Fields["Metadata.CreationTimestamp"]
-		summary["Name"] = hit.Fields["Metadata.Name"]
-		// marshal the summary and append it to response results
-		jsonBytes, err := json.Marshal(summary)
-		if err != nil {
-			return nil, err
-		}
-		response.SearchSummaries[i] = jsonBytes
+	res := &SearchResponse{}
+	for _, r := range results {
+		res.Items = append(res.Items, &ResourceWrapper{Value: []byte(r)})
 	}
-
-	return response, nil
+	return res, nil
 }
 
 func (is IndexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
