@@ -26,6 +26,10 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
+  language:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language
+    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language
 ---
 
 # Labels and annotations template examples
@@ -74,6 +78,8 @@ You can then use the `severity` label to control how alerts are handled. For ins
 
 Each example provided here is specifically applicable to alert rules (though syntax and functionality may differ from notification templates). For those seeking examples related to notification templates—which cover the formatting of alert messages sent to external systems—please refer to the [notification templates examples](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/) document.
 
+If you are using classic conditions, refer to [legacy alerting templates](#legacy-alerting-templates) for more information.
+
 ## How to template annotations and labels
 
 Templates are added to annotations and labels in the configuration menu of alert rules.
@@ -94,7 +100,7 @@ To template a label:
 
 ## Common use cases
 
-Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [corresponding documentation](#).
+Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [Language page](ref:language).
 
 ### Print all labels, comma separated
 
@@ -109,8 +115,6 @@ For example, given an alert with the labels `alertname=High CPU usage`, `grafana
 ```
 alertname=High CPU usage, grafana_folder=CPU alerts, instance=server1
 ```
-
-> If you are using classic conditions then `$labels` will not contain any labels from the query. Refer to [the $labels variable](#the-labels-variable) for more information.
 
 ### Print all labels, one per line
 
@@ -130,8 +134,6 @@ grafana_folder=CPU alerts
 instance=server1
 ```
 
-> If you are using classic conditions then `$labels` will not contain any labels from the query. Refer to [the $labels variable](#the-labels-variable) for more information.
-
 ### Print an individual label
 
 To print an individual label use the `index` function with the `$labels` variable:
@@ -145,8 +147,6 @@ For example, given an alert with the labels `instance=server1`, this would print
 ```
 The host server1 has exceeded 80% CPU usage for the last 5 minutes
 ```
-
-> If you are using classic conditions then `$labels` will not contain any labels from the query. Refer to [the $labels variable](#the-labels-variable) for more information.
 
 ### Print the value of a query
 
