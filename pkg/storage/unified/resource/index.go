@@ -151,10 +151,6 @@ func tenant(res *Resource) string {
 	return res.Metadata.Namespace
 }
 
-type SearchSummary struct {
-	results [][]byte
-}
-
 type Metadata struct {
 	Name              string
 	Namespace         string
