@@ -117,22 +117,26 @@ export function AppChrome({ children }: Props) {
     >
       {isSingleTopNav ? (
         <>
-          <LinkButton className={styles.skipLink} href="#pageContent">
-            Skip to main content
-          </LinkButton>
-          <Stack gap={0} grow={1}>
-            {menuDockedAndOpen && (
+          {!state.chromeless && (
+            <LinkButton className={styles.skipLink} href="#pageContent">
+              Skip to main content
+            </LinkButton>
+          )}
+          <Stack gap={0} grow={1} minWidth={0}>
+            {!state.chromeless && menuDockedAndOpen && (
               <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
             )}
-            <Stack gap={0} direction="column" grow={1}>
-              <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
-                <SingleTopBar
-                  sectionNav={state.sectionNav.node}
-                  pageNav={state.pageNav}
-                  onToggleMegaMenu={handleMegaMenu}
-                  onToggleKioskMode={chrome.onToggleKioskMode}
-                />
-              </header>
+            <Stack gap={0} direction="column" grow={1} minWidth={0}>
+              {!state.chromeless && (
+                <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
+                  <SingleTopBar
+                    sectionNav={state.sectionNav.node}
+                    pageNav={state.pageNav}
+                    onToggleMegaMenu={handleMegaMenu}
+                    onToggleKioskMode={chrome.onToggleKioskMode}
+                  />
+                </header>
+              )}
               {content}
             </Stack>
           </Stack>
