@@ -98,6 +98,15 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Category:     "cloud",
 						Annotations:  true,
@@ -141,6 +150,15 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Executable: "test",
 						Backend:    true,
@@ -195,6 +213,9 @@ func TestLoader_Load(t *testing.T) {
 								{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
 								{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
 							},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
 						},
 						Includes: []*plugins.Includes{
 							{
@@ -227,6 +248,12 @@ func TestLoader_Load(t *testing.T) {
 								Action: plugins.ActionAppAccess,
 								Slug:   "nginx-datasource",
 							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 					},
 					Class:         plugins.ClassExternal,
@@ -266,6 +293,15 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
@@ -312,6 +348,15 @@ func TestLoader_Load(t *testing.T) {
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
 							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Backend: true,
 						State:   plugins.ReleaseStateAlpha,
@@ -393,10 +438,19 @@ func TestLoader_Load(t *testing.T) {
 							GrafanaDependency: ">=8.0.0",
 							GrafanaVersion:    "*",
 							Plugins:           []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
 						},
 						Includes: []*plugins.Includes{
 							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
 							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:        []plugins.AddedLink{},
+							AddedComponents:   []plugins.AddedComponent{},
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
 						},
 						Backend: false,
 					},

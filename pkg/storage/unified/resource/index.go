@@ -34,41 +34,37 @@ func NewIndex(s *server, opts Opts) *Index {
 }
 
 func (i *Index) Init(ctx context.Context) error {
-	// TODO: configure resources to index in ini file?
-	r := &ListRequest{Options: &ListOptions{
-		Key: &ResourceKey{
-			Group:    "playlist.grafana.app",
-			Resource: "playlists",
-		},
-	}}
-
-	list, err := i.s.List(ctx, r)
-	if err != nil {
-		return err
-	}
-
-	for _, obj := range list.Items {
-		res, err := getResource(obj.Value)
+	resourceTypes := fetchResourceTypes()
+	for _, rt := range resourceTypes {
+		r := &ListRequest{Options: rt}
+		list, err := i.s.List(ctx, r)
 		if err != nil {
 			return err
 		}
 
-		shard, err := i.getShard(tenant(res))
-		if err != nil {
-			return err
-		}
-		err = shard.batch.Index(res.Metadata.Uid, res)
-		if err != nil {
-			return err
-		}
-	}
+		for _, obj := range list.Items {
+			res, err := getResource(obj.Value)
+			if err != nil {
+				return err
+			}
 
-	for _, shard := range i.shards {
-		err := shard.index.Batch(shard.batch)
-		if err != nil {
-			return err
+			shard, err := i.getShard(tenant(res))
+			if err != nil {
+				return err
+			}
+			err = shard.batch.Index(res.Metadata.Uid, obj)
+			if err != nil {
+				return err
+			}
 		}
-		shard.batch.Reset()
+
+		for _, shard := range i.shards {
+			err := shard.index.Batch(shard.batch)
+			if err != nil {
+				return err
+			}
+			shard.batch.Reset()
+		}
 	}
 
 	return nil
@@ -84,7 +80,7 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	if err != nil {
 		return err
 	}
-	err = shard.index.Index(res.Metadata.Uid, res)
+	err = shard.index.Index(res.Metadata.Uid, data.Value.Value)
 	if err != nil {
 		return err
 	}
@@ -196,4 +192,16 @@ func (i *Index) getShard(tenant string) (Shard, error) {
 	// TODO: do we need to lock this?
 	i.shards[tenant] = shard
 	return shard, nil
+}
+
+// TODO - fetch from api
+func fetchResourceTypes() []*ListOptions {
+	items := []*ListOptions{}
+	items = append(items, &ListOptions{
+		Key: &ResourceKey{
+			Group:    "playlist.grafana.app",
+			Resource: "playlists",
+		},
+	})
+	return items
 }

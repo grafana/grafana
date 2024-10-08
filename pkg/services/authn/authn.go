@@ -32,9 +32,10 @@ const (
 )
 
 const (
-	MetaKeyUsername   = "username"
-	MetaKeyAuthModule = "authModule"
-	MetaKeyIsLogin    = "isLogin"
+	MetaKeyUsername            = "username"
+	MetaKeyAuthModule          = "authModule"
+	MetaKeyIsLogin             = "isLogin"
+	defaultRedirectToCookieKey = "redirect_to"
 )
 
 // ClientParams are hints to the auth service about how to handle the identity management
@@ -74,9 +75,11 @@ type FetchPermissionsParams struct {
 	Roles []string
 }
 
-type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
-type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
-type PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
+type (
+	PostAuthHookFn  func(ctx context.Context, identity *Identity, r *Request) error
+	PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
+	PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
+)
 
 type Authenticator interface {
 	// Authenticate authenticates a request
@@ -233,41 +236,52 @@ type RedirectValidator func(url string) error
 // HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
 func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) *response.NormalResponse {
 	result := map[string]any{"message": "Logged in"}
-	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator, features)
+	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator, features, "")
 	return response.JSON(http.StatusOK, result)
 }
 
 // HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
 func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) {
-	redirectURL := handleLogin(r, w, cfg, identity, validator, features)
+	redirectURL := handleLogin(r, w, cfg, identity, validator, features, "redirectTo")
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 // HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse
-func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) *response.RedirectResponse {
-	return response.Redirect(handleLogin(r, w, cfg, identity, validator, features))
+func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles, redirectToCookieName string) *response.RedirectResponse {
+	return response.Redirect(handleLogin(r, w, cfg, identity, validator, features, redirectToCookieName))
 }
 
-func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) string {
+func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles, redirectToCookieName string) string {
 	WriteSessionCookie(w, cfg, identity.SessionToken)
 
+	redirectURL := cfg.AppSubURL + "/"
 	if features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
-		return cfg.AppSubURL + "/"
+		if redirectToCookieName != "" {
+			scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)
+			if err == nil {
+				redirectTo, _ := url.QueryUnescape(scopedRedirectToCookie.Value)
+				if redirectTo != "" && validator(redirectTo) == nil {
+					redirectURL = cfg.AppSubURL + redirectTo
+				}
+				cookies.DeleteCookie(w, redirectToCookieName, cookieOptions(cfg))
+			}
+		}
+		return redirectURL
 	}
 
-	redirectURL := cfg.AppSubURL + "/"
+	redirectURL = cfg.AppSubURL + "/"
 	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 {
 		if validator(redirectTo) == nil {
 			redirectURL = redirectTo
 		}
-		cookies.DeleteCookie(w, "redirect_to", cookieOptions(cfg))
+		cookies.DeleteCookie(w, defaultRedirectToCookieKey, cookieOptions(cfg))
 	}
 
 	return redirectURL
 }
 
 func getRedirectURL(r *http.Request) string {
-	cookie, err := r.Cookie("redirect_to")
+	cookie, err := r.Cookie(defaultRedirectToCookieKey)
 	if err != nil {
 		return ""
 	}

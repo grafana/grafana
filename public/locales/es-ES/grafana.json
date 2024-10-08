@@ -329,6 +329,9 @@
       "moving": "Moviendo...",
       "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta."
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
       "alertRule_other": "{{count}} reglas de alerta",
@@ -1090,6 +1093,13 @@
     },
     "title": "Accesos directos"
   },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
+  },
   "inspector": {
     "query": {
       "collapse-all": "Contraer todo",
@@ -1129,9 +1139,9 @@
       "root-ca-cert-label": "",
       "root-ca-cert-placeholder": "",
       "root-ca-cert-value-label": "",
+      "root-ca-cert-value-placeholder": "",
       "start-tls-description": "",
       "start-tls-label": "",
-      "tls-ciphers-description": "",
       "tls-ciphers-label": "",
       "tls-ciphers-placeholder": "",
       "use-ssl-description": "",
@@ -1163,8 +1173,8 @@
         "button": ""
       },
       "description": "",
-      "group-search-base-dns-description": "",
       "group-search-base-dns-label": "",
+      "group-search-base-dns-placeholder": "",
       "group-search-filter-description": "",
       "group-search-filter-label": "",
       "group-search-filter-user-attribute-description": "",
@@ -1207,15 +1217,10 @@
       "label": ""
     },
     "buttons-section": {
+      "disable-button": "",
       "discard-button": "",
       "save-and-enable-button": "",
       "save-button": ""
-    },
-    "discard-modal": {
-      "cancel-button": "",
-      "description": "",
-      "discard-button": "",
-      "title": ""
     },
     "documentation": "",
     "host": {
@@ -1234,7 +1239,8 @@
     },
     "search-base-dns": {
       "description": "",
-      "label": ""
+      "label": "",
+      "placeholder": ""
     },
     "subtitle": "",
     "title": ""
@@ -1399,7 +1405,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1471,6 +1478,9 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "dashboard-load-error": "",
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1478,6 +1488,7 @@
       "dashboard": "Panel de control",
       "datasource": "Fuente de datos",
       "folder": "",
+      "library_element": "",
       "unknown": "Desconocido"
     },
     "summary": {
@@ -1855,6 +1866,7 @@
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
       "list-label": "Navegación",
+      "open": "",
       "undock": "Desanclar el menú"
     },
     "toolbar": {
@@ -1913,6 +1925,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "",
     "unsupported-layout": ""
   },
   "playlist-edit": {
@@ -2202,7 +2215,10 @@
     }
   },
   "query-library": {
-    "delete-query-button": ""
+    "datasource-names": "",
+    "delete-query-button": "",
+    "query-template-get-error": "",
+    "search": ""
   },
   "query-operation": {
     "header": {
@@ -2371,7 +2387,6 @@
     "menu": {
       "export-json-title": "",
       "share-externally-title": "",
-      "share-internally-description": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
     },
@@ -2661,6 +2676,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": ""
+    },
     "metric-overview": {
       "description-label": "",
       "labels": "",

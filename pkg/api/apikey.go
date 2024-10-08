@@ -56,7 +56,7 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	metadata := hs.getMultiAccessControlMetadata(c, "apikeys:id", ids)
+	metadata := getMultiAccessControlMetadata(c, "apikeys:id", ids)
 	if len(metadata) > 0 {
 		for _, key := range result {
 			key.AccessControl = metadata[strconv.FormatInt(key.ID, 10)]

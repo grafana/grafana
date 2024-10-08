@@ -633,6 +633,10 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			return nextRV, fmt.Errorf("missing key in response")
 		}
 		nextRV = rec.ResourceVersion
+		prevRV := rec.PreviousRV
+		if prevRV == nil {
+			*prevRV = int64(0)
+		}
 		stream <- &resource.WrittenEvent{
 			WriteEvent: resource.WriteEvent{
 				Value: rec.Value,
@@ -643,7 +647,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 					Name:      rec.Key.Name,
 				},
 				Type:       resource.WatchEvent_Type(rec.Action),
-				PreviousRV: rec.PreviousRV,
+				PreviousRV: *prevRV,
 			},
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp

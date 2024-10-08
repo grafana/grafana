@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 	"google.golang.org/grpc"
 )
 
-type indexServer struct {
+type IndexServer struct {
+	ResourceServer
 	s     *server
 	index *Index
 	ws    *indexWatchServer
@@ -24,7 +26,7 @@ TODO
 4. Response items are showing as base64 encoded JSON. Is this expected?
 5. How do we get the tenant?
 */
-func (is indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+func (is IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	// TODO how do we get tenant?
 	tenantId := "default"
 	tenantIndex := is.index.shards[tenantId].index
@@ -69,35 +71,39 @@ func (is indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchRe
 	return response, nil
 }
 
-func (is indexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
+func (is IndexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
 	return nil, nil
 }
 
-func (is indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
+func (is IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
 	return nil, nil
 }
 
-func (is *indexServer) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
-	if req.Key == nil {
-		is.index = NewIndex(is.s, Opts{})
-		err := is.index.Init(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return nil, nil
-	}
-
-	err := is.index.Index(ctx, &Data{Key: req.Key, Value: req.Value})
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
-
-func (is indexServer) Delete(ctx context.Context, uid string, key *ResourceKey) error {
-	err := is.index.Delete(ctx, uid, key)
+// Load the index
+func (is *IndexServer) Load(ctx context.Context) error {
+	is.index = NewIndex(is.s, Opts{})
+	err := is.index.Init(ctx)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// Watch resources for changes and update the index
+func (is *IndexServer) Watch(ctx context.Context) error {
+	rtList := fetchResourceTypes()
+	for _, rt := range rtList {
+		wr := &WatchRequest{
+			Options: rt,
+		}
+
+		go func() {
+			// TODO: handle error
+			err := is.s.Watch(wr, is.ws)
+			if err != nil {
+				log.Printf("Error watching resource %v", err)
+			}
+		}()
 	}
 	return nil
 }
@@ -105,84 +111,40 @@ func (is indexServer) Delete(ctx context.Context, uid string, key *ResourceKey) 
 // Init sets the resource server on the index server
 // so we can call the resource server from the index server
 // TODO: a chicken and egg problem - index server needs the resource server but the resource server is created with the index server
-func (is *indexServer) Init(ctx context.Context, rs *server) error {
+func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 	is.s = rs
 	is.ws = &indexWatchServer{
 		is:      is,
 		context: ctx,
 	}
-	// TODO: how to watch all resources?
-	wr := &WatchRequest{
-		Options: &ListOptions{
-			Key: &ResourceKey{
-				Group:    "playlist.grafana.app",
-				Resource: "playlists",
-			},
-		},
-	}
-	// TODO: handle watch error
-	var err error
-	go func() {
-		err = rs.Watch(wr, is.ws)
-	}()
-	return err
+	return nil
 }
 
 func NewResourceIndexServer() ResourceIndexServer {
-	return &indexServer{}
+	return &IndexServer{}
 }
 
 type ResourceIndexer interface {
-	ResourceIndexServer
-	Init(context.Context, *server) error
-	Delete(context.Context, string, *ResourceKey) error
+	Index(ctx context.Context) (*Index, error)
 }
 
 type indexWatchServer struct {
 	grpc.ServerStream
 	context context.Context
-	is      *indexServer
+	is      *IndexServer
 }
 
 func (f *indexWatchServer) Send(we *WatchEvent) error {
-	r, err := getResource(we.Resource.Value)
-	if err != nil {
-		return err
-	}
-
-	key := &ResourceKey{
-		Group:     getGroup(r),
-		Resource:  r.Kind,
-		Namespace: r.Metadata.Namespace,
-		Name:      r.Metadata.Name,
-	}
-
-	value := &ResourceWrapper{
-		ResourceVersion: we.Resource.Version,
-		Value:           we.Resource.Value,
-	}
-
-	index := f.is.s.index
-	indexer, ok := index.(ResourceIndexer)
-	if !ok {
-		return errors.New("index server does not implement ResourceIndexer")
-	}
-
 	if we.Type == WatchEvent_ADDED {
-		_, err = indexer.Index(f.context, &IndexRequest{Key: key, Value: value})
-		if err != nil {
-			return err
-		}
-		return nil
+		return f.Add(we)
 	}
 
 	if we.Type == WatchEvent_DELETED {
-		we.GetType()
-		err = indexer.Delete(f.context, r.Metadata.Uid, key)
-		if err != nil {
-			return err
-		}
-		return nil
+		return f.Delete(we)
+	}
+
+	if we.Type == WatchEvent_MODIFIED {
+		return f.Update(we)
 	}
 
 	return nil
@@ -203,9 +165,63 @@ func (f *indexWatchServer) Context() context.Context {
 	return f.context
 }
 
+func (f *indexWatchServer) Index() *Index {
+	return f.is.index
+}
+
+func (f *indexWatchServer) Add(we *WatchEvent) error {
+	data, err := getData(we.Resource)
+	if err != nil {
+		return err
+	}
+	err = f.Index().Index(f.context, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *indexWatchServer) Delete(we *WatchEvent) error {
+	// TODO: this seems flakey. Does a delete have a Resource or Previous?
+	// both cases have happened ( maybe because Georges pr was reverted )
+	rs := we.Resource
+	if rs == nil {
+		rs = we.Previous
+	}
+	if rs == nil {
+		return errors.New("resource not found")
+	}
+	data, err := getData(rs)
+	if err != nil {
+		return err
+	}
+	err = f.Index().Delete(f.context, data.Uid, data.Key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *indexWatchServer) Update(we *WatchEvent) error {
+	data, err := getData(we.Resource)
+	if err != nil {
+		return err
+	}
+	err = f.Index().Delete(f.context, data.Uid, data.Key)
+	if err != nil {
+		return err
+	}
+	err = f.Index().Index(f.context, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type Data struct {
 	Key   *ResourceKey
 	Value *ResourceWrapper
+	Uid   string
 }
 
 func getGroup(r *Resource) string {
@@ -214,4 +230,24 @@ func getGroup(r *Resource) string {
 		return v[0]
 	}
 	return ""
+}
+
+func getData(wr *WatchEvent_Resource) (*Data, error) {
+	r, err := getResource(wr.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	key := &ResourceKey{
+		Group:     getGroup(r),
+		Resource:  r.Kind,
+		Namespace: r.Metadata.Namespace,
+		Name:      r.Metadata.Name,
+	}
+
+	value := &ResourceWrapper{
+		ResourceVersion: wr.Version,
+		Value:           wr.Value,
+	}
+	return &Data{Key: key, Value: value, Uid: r.Metadata.Uid}, nil
 }

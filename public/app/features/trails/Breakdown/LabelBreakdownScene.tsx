@@ -22,8 +22,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { Field } from '@grafana/ui/';
+import { Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
@@ -230,7 +229,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       <div className={styles.container}>
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
           <div className={styles.controls}>
-            {!loading && labels.length && (
+            {!loading && Boolean(labels.length) && (
               <Field label={useOtelExperience ? 'By metric attribute' : 'By label'}>
                 <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
               </Field>
@@ -308,8 +307,8 @@ export function buildAllLayout(
           datasource: trailDS,
           queries: [
             {
-              refId: 'A',
-              expr: expr,
+              refId: `A-${option.label}`,
+              expr,
               legendFormat: `{{${option.label}}}`,
             },
           ],

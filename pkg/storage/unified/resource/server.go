@@ -688,19 +688,26 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 	return s.index.Origin(ctx, req)
 }
 
-func (s *server) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
-	if err := s.Init(ctx); err != nil {
-		return nil, err
+// Index returns the search index. If the index is not initialized, it will be initialized.
+func (s *server) Index(ctx context.Context) (*Index, error) {
+	index := s.index.(*IndexServer)
+	if index.index == nil {
+		err := index.Init(ctx, s)
+		if err != nil {
+			return nil, err
+		}
+
+		err = index.Load(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		err = index.Watch(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
-	indexer, ok := s.index.(ResourceIndexer)
-	if !ok {
-		return nil, fmt.Errorf("indexer not initializable - doeesn't implement ResourceIndexer interface")
-	}
-	err := indexer.Init(ctx, s)
-	if err != nil {
-		return nil, err
-	}
-	return s.index.Index(ctx, req)
+	return index.index, nil
 }
 
 // IsHealthy implements ResourceServer.

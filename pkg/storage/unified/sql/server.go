@@ -2,7 +2,9 @@ package sql
 
 import (
 	"context"
+	"errors"
 
+	"github.com/grafana/authlib/claims"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -17,7 +19,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		Tracer: tracer,
 	}
 
-	eDB, err := dbimpl.ProvideResourceDB(db, cfg, features, tracer)
+	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +38,23 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 			return nil, err
 		}
 		// initialze the search index
-		_, err = server.Index(ctx, &resource.IndexRequest{})
+		indexer, ok := server.(resource.ResourceIndexer)
+		if !ok {
+			return nil, errors.New("index server does not implement ResourceIndexer")
+		}
+		_, err = indexer.Index(ctx)
 		return server, err
+	}
+
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
+		opts.WriteAccess = resource.WriteAccessHooks{
+			Folder: func(ctx context.Context, user claims.AuthInfo, uid string) bool {
+				// #TODO build on the logic here
+				// #TODO only enable write access when the resource being written in the folder
+				// is another folder
+				return true
+			},
+		}
 	}
 
 	return resource.NewResourceServer(opts)
