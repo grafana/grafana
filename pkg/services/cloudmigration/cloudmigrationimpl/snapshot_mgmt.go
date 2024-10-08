@@ -23,9 +23,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/crypto/nacl/box"
+
+	"go.opentelemetry.io/otel/codes"
 )
 
+var currentMigrationTypes = []cloudmigration.MigrateDataType{
+	cloudmigration.DatasourceDataType,
+	cloudmigration.FolderDataType,
+	cloudmigration.LibraryElementDataType,
+	cloudmigration.DashboardDataType,
+}
+
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getMigrationDataJSON")
+	defer span.End()
+
 	// Data sources
 	dataSources, err := s.getDataSourceCommands(ctx)
 	if err != nil {
@@ -95,14 +107,24 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
+	// Obtain the names of parent elements for Dashboard and Folders data types
+	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements)
+	if err != nil {
+		s.log.Error("Failed to get parent folder names", "err", err)
+	}
+
 	migrationData := &cloudmigration.MigrateDataRequest{
-		Items: migrationDataSlice,
+		Items:           migrationDataSlice,
+		ItemParentNames: parentNamesByType,
 	}
 
 	return migrationData, nil
 }
 
 func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDataSourceCommands")
+	defer span.End()
+
 	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
@@ -141,6 +163,9 @@ func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddD
 
 // getDashboardAndFolderCommands returns the json payloads required by the dashboard and folder creation APIs
 func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]dashboards.Dashboard, []folder.CreateFolderCommand, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDashboardAndFolderCommands")
+	defer span.End()
+
 	dashs, err := s.dashboardService.GetAllDashboards(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -196,6 +221,9 @@ type libraryElement struct {
 
 // getLibraryElementsCommands returns the json payloads required by the library elements creation API
 func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]libraryElement, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getLibraryElementsCommands")
+	defer span.End()
+
 	const perPage = 100
 
 	cmds := make([]libraryElement, 0)
@@ -242,6 +270,9 @@ func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
 func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedInUser, maxItemsPerPartition uint32, metadata []byte, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.buildSnapshot")
+	defer span.End()
+
 	// TODO -- make sure we can only build one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
@@ -289,20 +320,21 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 			Data:  item.Data,
 		})
 
+		parentName := ""
+		if _, exists := migrationData.ItemParentNames[item.Type]; exists {
+			parentName = migrationData.ItemParentNames[item.Type][item.RefID]
+		}
+
 		localSnapshotResource[i] = cloudmigration.CloudMigrationResource{
-			Name:   item.Name,
-			Type:   item.Type,
-			RefID:  item.RefID,
-			Status: cloudmigration.ItemStatusPending,
+			Name:       item.Name,
+			Type:       item.Type,
+			RefID:      item.RefID,
+			Status:     cloudmigration.ItemStatusPending,
+			ParentName: parentName,
 		}
 	}
 
-	for _, resourceType := range []cloudmigration.MigrateDataType{
-		cloudmigration.DatasourceDataType,
-		cloudmigration.FolderDataType,
-		cloudmigration.LibraryElementDataType,
-		cloudmigration.DashboardDataType,
-	} {
+	for _, resourceType := range currentMigrationTypes {
 		for chunk := range slices.Chunk(resourcesGroupedByType[resourceType], int(maxItemsPerPartition)) {
 			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {
 				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
@@ -339,6 +371,9 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 
 // asynchronous process for and updating the snapshot status
 func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshotMeta *cloudmigration.CloudMigrationSnapshot, uploadUrl string) (err error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot")
+	defer span.End()
+
 	// TODO -- make sure we can only upload one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
@@ -361,36 +396,60 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 		}
 	}()
 
+	_, readIndexSpan := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.readIndex")
 	index, err := snapshot.ReadIndex(indexFile)
 	if err != nil {
+		readIndexSpan.SetStatus(codes.Error, "reading index from file")
+		readIndexSpan.RecordError(err)
+		readIndexSpan.End()
+
 		return fmt.Errorf("reading index from file: %w", err)
 	}
+	readIndexSpan.End()
 
 	s.log.Debug(fmt.Sprintf("uploadSnapshot: read index file in %d ms", time.Since(start).Milliseconds()))
 
+	uploadCtx, uploadSpan := s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.uploadDataFiles")
 	// Upload the data files.
 	for _, fileNames := range index.Items {
 		for _, fileName := range fileNames {
 			filePath := filepath.Join(snapshotMeta.LocalDir, fileName)
 			key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, fileName)
-			if err := s.uploadUsingPresignedURL(ctx, uploadUrl, key, filePath); err != nil {
+			if err := s.uploadUsingPresignedURL(uploadCtx, uploadUrl, key, filePath); err != nil {
+				uploadSpan.SetStatus(codes.Error, "uploading snapshot data file using presigned url")
+				uploadSpan.RecordError(err)
+				uploadSpan.End()
+
 				return fmt.Errorf("uploading snapshot file using presigned url: %w", err)
 			}
 			s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded %s in %d ms", fileName, time.Since(start).Milliseconds()))
 		}
 	}
+	uploadSpan.End()
 
 	s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded all data files in %d ms", time.Since(start).Milliseconds()))
+
+	uploadCtx, uploadSpan = s.tracer.Start(ctx, "CloudMigrationService.uploadSnapshot.uploadIndex")
 
 	// Upload the index file. Must be done after uploading the data files.
 	key := fmt.Sprintf("%d/snapshots/%s/%s", session.StackID, snapshotMeta.GMSSnapshotUID, "index.json")
 	if _, err := indexFile.Seek(0, 0); err != nil {
+		uploadSpan.SetStatus(codes.Error, "seeking to beginning of index file")
+		uploadSpan.RecordError(err)
+		uploadSpan.End()
+
 		return fmt.Errorf("seeking to beginning of index file: %w", err)
 	}
 
-	if err := s.objectStorage.PresignedURLUpload(ctx, uploadUrl, key, indexFile); err != nil {
+	if err := s.objectStorage.PresignedURLUpload(uploadCtx, uploadUrl, key, indexFile); err != nil {
+		uploadSpan.SetStatus(codes.Error, "uploading index file using presigned url")
+		uploadSpan.RecordError(err)
+		uploadSpan.End()
+
 		return fmt.Errorf("uploading file using presigned url: %w", err)
 	}
+
+	uploadSpan.End()
 
 	s.log.Debug(fmt.Sprintf("uploadSnapshot: uploaded index file in %d ms", time.Since(start).Milliseconds()))
 	s.log.Info("successfully uploaded snapshot", "snapshotUid", snapshotMeta.UID, "cloud_snapshotUid", snapshotMeta.GMSSnapshotUID)
@@ -408,6 +467,9 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 }
 
 func (s *Service) uploadUsingPresignedURL(ctx context.Context, uploadURL, key string, filePath string) (err error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.uploadUsingPresignedURL")
+	defer span.End()
+
 	// The directory that contains the file can set in the configuration, therefore the directory can be any directory.
 	// nolint:gosec
 	file, err := os.Open(filePath)
@@ -485,4 +547,71 @@ func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderComman
 	})
 
 	return input
+}
+
+// getFolderNamesForFolderUIDs queries the folders service to obtain folder names for a list of folderUIDs
+func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser *user.SignedInUser, folderUIDs []string) (map[string](string), error) {
+	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:             folderUIDs,
+		SignedInUser:     signedInUser,
+		WithFullpathUIDs: true,
+	})
+	if err != nil {
+		s.log.Error("Failed to obtain folders from folder UIDs", "err", err)
+		return nil, err
+	}
+
+	folderUIDsToNames := make(map[string](string), len(folderUIDs))
+	for _, folderUID := range folderUIDs {
+		folderUIDsToNames[folderUID] = ""
+	}
+	for _, f := range folders {
+		folderUIDsToNames[f.UID] = f.Title
+	}
+	return folderUIDsToNames, nil
+}
+
+// getParentNames finds the parent names for resources and returns a map of data type: {data UID : parentName}
+// for dashboards, folders and library elements - the parent is the parent folder
+func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand, libraryElements []libraryElement) (map[cloudmigration.MigrateDataType]map[string](string), error) {
+	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
+	for _, dataType := range currentMigrationTypes {
+		parentNamesByType[dataType] = make(map[string]string)
+	}
+
+	// Obtain list of unique folderUIDs
+	parentFolderUIDsSet := make(map[string]struct{}, len(dashboards)+len(folders)+len(libraryElements))
+	for _, dashboard := range dashboards {
+		parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
+	}
+	for _, f := range folders {
+		parentFolderUIDsSet[f.ParentUID] = struct{}{}
+	}
+	for _, libraryElement := range libraryElements {
+		parentFolderUIDsSet[*libraryElement.FolderUID] = struct{}{}
+	}
+	parentFolderUIDsSlice := make([]string, 0, len(parentFolderUIDsSet))
+	for parentFolderUID := range parentFolderUIDsSet {
+		parentFolderUIDsSlice = append(parentFolderUIDsSlice, parentFolderUID)
+	}
+
+	// Obtain folder names given a list of folderUIDs
+	foldersUIDsToFolderName, err := s.getFolderNamesForFolderUIDs(ctx, signedInUser, parentFolderUIDsSlice)
+	if err != nil {
+		s.log.Error("Failed to get parent folder names from folder UIDs", "err", err)
+		return parentNamesByType, err
+	}
+
+	// Prepare map of {data type: {data UID : parentName}}
+	for _, dashboard := range dashboards {
+		parentNamesByType[cloudmigration.DashboardDataType][dashboard.UID] = foldersUIDsToFolderName[dashboard.FolderUID]
+	}
+	for _, f := range folders {
+		parentNamesByType[cloudmigration.FolderDataType][f.UID] = foldersUIDsToFolderName[f.ParentUID]
+	}
+	for _, libraryElement := range libraryElements {
+		parentNamesByType[cloudmigration.LibraryElementDataType][libraryElement.UID] = foldersUIDsToFolderName[*libraryElement.FolderUID]
+	}
+
+	return parentNamesByType, err
 }
