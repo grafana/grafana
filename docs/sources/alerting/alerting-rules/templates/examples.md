@@ -74,23 +74,27 @@ You can then use the `severity` label to control how alerts are handled. For ins
 
 Each example provided here is specifically applicable to alert rules (though syntax and functionality may differ from notification templates). For those seeking examples related to notification templates—which cover the formatting of alert messages sent to external systems—please refer to the [notification templates examples](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/) document.
 
+## How to template annotations and labels
+
+Templates are added to annotations and labels in the configuration menu of alert rules.
+
+To template an annotation:
+
+1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
+1. Scroll down to the **Configure notification message** section.
+1. Copy in your template in the corresponding annotation field (`summary`, `description`, `runbook_url`, `custom`)
+
+To template a label:
+
+1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Click **+ Add labels**
+1. Enter a **key** that indentifies the label.
+1. Copy in your template in the **value** field.
+
 ## Common use cases
 
 Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [corresponding documentation](#).
-
-### Firing and resolved alerts, with summary annotation
-
-This is the Summary annotation for a rule that fires when disk usage of a database server exceeds 75%. It uses the instance label from the query to tell you which database server(s) are low on disk space.
-
-```
-The database server {{ index $labels "instance" }} has exceeded 75% of available disk space, please resize the disk within the next 24 hours
-```
-
-You can also show the amount of disk space used with the $values variable. For example, if your rule has a query called A that queries the disk space usage of all database servers and a Reduce expression called B that averages the result of query A, then you can use $values to show the average disk space usage for each database server.
-
-```
-The database server {{ index $labels "instance" }} has exceeded 75% of available disk space. Disk space used is {{ index $values "B" }}%, please resize the disk within the next 24 hours
-```
 
 ### Print all labels, comma separated
 
@@ -206,6 +210,20 @@ medium
 {{ else -}}
 low
 {{- end }}
+```
+
+### Firing and resolved alerts, with summary annotation
+
+This is the Summary annotation for a rule that fires when disk usage of a database server exceeds 75%. It uses the instance label from the query to tell you which database server(s) are low on disk space.
+
+```
+The database server {{ index $labels "instance" }} has exceeded 75% of available disk space, please resize the disk within the next 24 hours
+```
+
+You can also show the amount of disk space used with the $values variable. For example, if your rule has a query called A that queries the disk space usage of all database servers and a Reduce expression called B that averages the result of query A, then you can use $values to show the average disk space usage for each database server.
+
+```
+The database server {{ index $labels "instance" }} has exceeded 75% of available disk space. Disk space used is {{ index $values "B" }}%, please resize the disk within the next 24 hours
 ```
 
 ## Legacy Alerting templates
