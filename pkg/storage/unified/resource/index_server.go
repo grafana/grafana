@@ -2,12 +2,10 @@ package resource
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
 	"strings"
 
-	"github.com/blevesearch/bleve/v2"
 	"google.golang.org/grpc"
 )
 
