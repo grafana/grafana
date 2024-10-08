@@ -12,7 +12,7 @@ import {
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboards } from 'app/features/scopes';
 
@@ -97,7 +97,7 @@ export const Page: PageType = ({
     <PageContext.Provider value={{ setToolbar }}>
       <div className={cx(styles.wrapper, className)} {...otherProps}>
         {isSingleTopNav && toolbar && <PageToolbarActions>{toolbar}</PageToolbarActions>}
-        <Stack gap={0} minWidth={0} flex={1}>
+        <div className={styles.scopesWrapper}>
           {isSingleTopNav && (
             <div className={styles.scopesDashboardsContainer}>
               <ScopesDashboards />
@@ -137,7 +137,7 @@ export const Page: PageType = ({
           )}
 
           {layout === PageLayoutType.Custom && children}
-        </Stack>
+        </div>
       </div>
     </PageContext.Provider>
   );
@@ -188,6 +188,13 @@ const getStyles = (theme: GrafanaTheme2, isChromeless: boolean) => {
       height: `calc(100vh - ${isChromeless ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
       position: 'sticky',
       top: isChromeless ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2,
+    }),
+    scopesWrapper: css({
+      display: 'flex',
+      flex: 1,
+      flexDirection: 'row',
+      minWidth: 0,
+      position: 'relative',
     }),
   };
 };
