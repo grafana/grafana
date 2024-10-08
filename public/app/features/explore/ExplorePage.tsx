@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
-import { ErrorBoundaryAlert, Modal, useStyles2, useTheme2 } from '@grafana/ui';
+import { Badge, ErrorBoundaryAlert, Modal, useStyles2, useTheme2 } from '@grafana/ui';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -21,6 +22,7 @@ import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { QueriesDrawerContextProvider, useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
+import { QUERY_LIBRARY_LOCAL_STORAGE_KEYS } from './QueryLibrary/QueryLibrary';
 import { queryLibraryTrackAddFromQueryRow } from './QueryLibrary/QueryLibraryAnalyticsEvents';
 import { QueryTemplateForm } from './QueryLibrary/QueryTemplateForm';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
@@ -63,6 +65,10 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
   const [queryToAdd, setQueryToAdd] = useState<DataQuery | undefined>();
+  const [showQueryLibraryBadgeButton, setShowQueryLibraryBadgeButton] = useLocalStorage(
+    QUERY_LIBRARY_LOCAL_STORAGE_KEYS.explore.newButton,
+    true
+  );
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -77,19 +83,32 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
     if (hasQueryLibrary) {
       RowActionComponents.addKeyedExtraRenderAction(QUERY_LIBRARY_ACTION_KEY, {
         scope: CoreApp.Explore,
-        queryActionComponent: (props) => (
-          <QueryOperationAction
-            key={props.key}
-            title={t('query-operation.header.save-to-query-library', 'Save to query library')}
-            icon="save"
-            onClick={() => {
-              setQueryToAdd(props.query);
-            }}
-          />
-        ),
+        queryActionComponent: (props) =>
+          showQueryLibraryBadgeButton ? (
+            <Badge
+              key={props.key}
+              text={`New: ${t('query-operation.header.save-to-query-library', 'Save to query library')}`}
+              icon="save"
+              color="blue"
+              onClick={() => {
+                setQueryToAdd(props.query);
+                setShowQueryLibraryBadgeButton(false);
+              }}
+              style={{ cursor: 'pointer' }}
+            />
+          ) : (
+            <QueryOperationAction
+              key={props.key}
+              title={t('query-operation.header.save-to-query-library', 'Save to query library')}
+              icon="save"
+              onClick={() => {
+                setQueryToAdd(props.query);
+              }}
+            />
+          ),
       });
     }
-  }, []);
+  }, [showQueryLibraryBadgeButton, setShowQueryLibraryBadgeButton]);
 
   useKeyboardShortcuts();
 
