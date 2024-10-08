@@ -12,7 +12,7 @@ import * as ruleId from '../utils/rule-id';
 import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
 import { attachRulerRulesToCombinedRules, combineRulesNamespace } from './useCombinedRuleNamespaces';
-import { useFolder } from './useFolder';
+import { stringifyFolder, useFolder } from './useFolder';
 
 export function useCloudCombinedRulesMatching(
   ruleName: string,
@@ -120,14 +120,10 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   );
   // in case of Grafana folder, we need to use the folder name instead of uid, as in promrules we don't use uid
   const folder = useFolder(ruleLocation?.namespace);
-  const folderNameForGrafana = folder.folder?.title ?? '';
-  const folderParents = folder.folder?.parents ?? [];
-  const parentsPlusChild =
-    folderParents?.length > 0
-      ? [...folderParents.map((p) => p.title), folderNameForGrafana].join('/')
-      : folderNameForGrafana;
-
-  const folderName = ruleSourceName === GRAFANA_RULES_SOURCE_NAME ? parentsPlusChild : ruleLocation?.namespace;
+  const folderName =
+    ruleSourceName === GRAFANA_RULES_SOURCE_NAME && folder.folder
+      ? stringifyFolder(folder.folder)
+      : ruleLocation?.namespace;
 
   const [
     fetchRulerRuleGroup,
