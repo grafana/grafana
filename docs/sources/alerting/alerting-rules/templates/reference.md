@@ -28,9 +28,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/
   template-language-functions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
   print-all-labels-from-a-classic-condition:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/examples/#print-all-labels-from-a-classic-condition
@@ -156,7 +156,7 @@ In addition, the following functions are also available for templating annotatio
 
 | Name                            | Arguments                  | Returns | Description                                                                                   |
 | ------------------------------- | -------------------------- | ------- | --------------------------------------------------------------------------------------------- |
-| [title](#humanize)              | string                     | string  | Capitalizes the first character of each word.                                                 |
+| [title](#title)                 | string                     | string  | Capitalizes the first character of each word.                                                 |
 | [toUpper](#toupper)             | string                     | string  | Returns all text in uppercase.                                                                |
 | [toLower](#tolower)             | string                     | string  | Returns all text in lowercase.                                                                |
 | [stripPort](#stripport)         | string                     | string  | Returns only host.                                                                            |
