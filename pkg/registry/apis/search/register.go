@@ -76,7 +76,6 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					//urlQuery := r.URL.Query().Get("query")
 					queryParams, err := url.ParseQuery(r.URL.RawQuery)
 					if err != nil {
 						panic(err)
