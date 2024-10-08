@@ -4,7 +4,7 @@ import { e2e } from '..';
 import { fromBaseUrl } from '../support/url';
 
 const defaultUserPreferences = {
-  timezone: '', // "Default" optionz
+  timezone: '', // "Default" option
   navbar: {
     bookmarkUrls: [],
   },
