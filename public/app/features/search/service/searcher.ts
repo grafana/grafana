@@ -1,10 +1,10 @@
 import { config } from '@grafana/runtime';
 
-import { UnifiedSearcher } from './unified';
 import { BlugeSearcher } from './bluge';
 import { FrontendSearcher } from './frontend';
 import { SQLSearcher } from './sql';
 import { GrafanaSearcher } from './types';
+import { UnifiedSearcher } from './unified';
 
 let searcher: GrafanaSearcher | undefined = undefined;
 
