@@ -32,7 +32,7 @@ func (c *defaultNotificationPolicyProvisioner) Provision(ctx context.Context,
 	for _, file := range files {
 		for _, np := range file.Policies {
 			err := c.notificationPolicyService.UpdatePolicyTree(ctx, np.OrgID,
-				np.Policy, models.ProvenanceFile)
+				np.Policy, models.ProvenanceFile, "")
 			if err != nil {
 				return fmt.Errorf("%s: %w", file.Filename, err)
 			}

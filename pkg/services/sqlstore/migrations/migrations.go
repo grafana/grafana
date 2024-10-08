@@ -133,6 +133,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddRuleMetadata(mg)
 
 	accesscontrol.AddOrphanedMigrations(mg)
+
+	accesscontrol.AddActionSetPermissionsMigrator(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

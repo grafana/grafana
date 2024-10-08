@@ -136,6 +136,7 @@ var (
 			Group:       AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversCreate},
+				{Action: accesscontrol.ActionAlertingReceiversTest},
 			},
 		},
 	}
