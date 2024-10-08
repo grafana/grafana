@@ -90,16 +90,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingSilenceUpdate,
       ]),
       component: importAlertingComponent(
-        () =>
-          import(
-            /* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/components/silences/SilencesTable'
-          )
+        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/NewSilencePage')
       ),
     },
     {
       path: '/alerting/silence/:id/edit',
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () =>
+          import(
+            /* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/components/silences/SilencesEditor'
+          )
       ),
     },
     {
