@@ -30,8 +30,6 @@ import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '..
 import {
   createExploreLink,
   createShareLink,
-  isLocalDevEnv,
-  isOpenSourceEdition,
   makeRuleBasedSilenceLink,
 } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
@@ -333,7 +331,8 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
  * We should show it in development mode
  */
 function shouldShowDeclareIncidentButton() {
-  return !isOpenSourceEdition() || isLocalDevEnv();
+  return false; // LOGZ.IO CHANGE :: DEV-46543 - show not "declare incident"
+  // return !isOpenSourceEdition() || isLocalDevEnv();
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
