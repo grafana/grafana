@@ -34,7 +34,7 @@ describe('Pin nav items', () => {
     });
   });
 
-  it('should unpinned the item and remove it from the Bookmarks section', () => {
+  it('should unpin the item and remove it from the Bookmarks section', () => {
     // Set Administration as a pinned item and reload the page
     e2e.flows.setUserPreferences({ navbar: { bookmarkUrls: ['/admin'] } });
     cy.reload();
