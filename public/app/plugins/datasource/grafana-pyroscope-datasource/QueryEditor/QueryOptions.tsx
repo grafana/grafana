@@ -86,6 +86,21 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
+          <EditorField
+            label={'Limit'}
+            tooltip={<>Sets the maximum number of series to return. Does not apply to profile query.</>}
+          >
+            <Input
+              value={query.limit || ''}
+              type="number"
+              placeholder="10"
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                let newValue = parseInt(event.currentTarget.value, 10);
+                newValue = isNaN(newValue) ? 0 : newValue;
+                onQueryChange({ ...query, limit: newValue });
+              }}
+            />
+          </EditorField>
           <EditorField label={'Span ID'} tooltip={<>Sets the span ID from which to search for profiles.</>}>
             <Input
               value={query.spanSelector || ['']}

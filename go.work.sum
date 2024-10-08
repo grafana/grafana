@@ -247,6 +247,7 @@ cloud.google.com/go/websecurityscanner v1.6.11 h1:r3ePI3YN7ujwX8c9gIkgbVjYVwP4yQ
 cloud.google.com/go/websecurityscanner v1.6.11/go.mod h1:vhAZjksELSg58EZfUQ1BMExD+hxqpn0G0DuyCZQjiTg=
 cloud.google.com/go/workflows v1.12.10 h1:EGJeZmwgE71jxFOI5s9iKST2Bivif3DSzlqVbiXACXQ=
 cloud.google.com/go/workflows v1.12.10/go.mod h1:RcKqCiOmKs8wFUEf3EwWZPH5eHc7Oq0kamIyOUCk0IE=
+connectrpc.com/connect v1.16.2 h1:ybd6y+ls7GOlb7Bh5C8+ghA6SvCBajHwxssO2CGFjqE=
 contrib.go.opencensus.io/exporter/aws v0.0.0-20230502192102-15967c811cec h1:CSNP8nIEQt4sZEo2sGUiWSmVJ9c5QdyIQvwzZAsn+8Y=
 contrib.go.opencensus.io/exporter/aws v0.0.0-20230502192102-15967c811cec/go.mod h1:uu1P0UCM/6RbsMrgPa98ll8ZcHM858i/AD06a9aLRCA=
 contrib.go.opencensus.io/exporter/prometheus v0.4.2 h1:sqfsYl5GIY/L570iT+l93ehxaWJs2/OwXtiWwew3oAg=
