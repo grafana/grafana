@@ -3,6 +3,9 @@ import { useEffect } from 'react';
 
 import {
   AdHocVariableFilter,
+  DataQueryRequest,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
   GetTagResponse,
   GrafanaTheme2,
   MetricFindValue,
@@ -35,6 +38,7 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -90,6 +94,8 @@ export interface DataTrailState extends SceneObjectState {
 export class DataTrail extends SceneObjectBase<DataTrailState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
 
+  private _scopesFacade: ScopesFacade;
+
   public constructor(state: Partial<DataTrailState>) {
     super({
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
@@ -112,8 +118,17 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       // preserve the otel join query
       otelJoinQuery: state.otelJoinQuery ?? '',
       showPreviews: true,
+      $behaviors: [
+        new ScopesFacade({
+          handler: (facade) => {
+            sceneGraph.getTimeRange(facade).onRefresh();
+          },
+        }),
+      ],
       ...state,
     });
+
+    this._scopesFacade = getClosestScopesFacade(this)!;
 
     this.addActivationHandler(this._onActivate.bind(this));
   }
@@ -192,6 +207,18 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     },
   });
+
+  public enrichDataRequest(): Partial<DataQueryRequest> {
+    return {
+      scopes: this._scopesFacade?.value,
+    };
+  }
+
+  public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
+    return {
+      scopes: this._scopesFacade?.value,
+    };
+  }
 
   /**
    * Assuming that the change in filter was already reported with a cause other than `'adhoc_filter'`,
@@ -312,7 +339,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
-      const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange);
+      const deploymentEnvironments = await getDeploymentEnvironments(
+        datasourceUid,
+        timeRange,
+        this._scopesFacade.value
+      );
       const hasOtelResources = otelTargets.jobs.length > 0 && otelTargets.instances.length > 0;
       if (
         otelResourcesVariable instanceof AdHocFiltersVariable &&
@@ -382,7 +413,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
   /**
    *  This function is used to update state and otel variables.
-   * 
+   *
    *  1. Set the otelResources adhoc tagKey and tagValues filter functions
       2. Get the otel join query for state and variable
       3. Update state with the following
@@ -396,14 +427,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
    * This function is called on start and when variables change.
    * On start will provide the deploymentEnvironments and hasOtelResources parameters.
    * In the variable change case, we will not provide these parameters. It is assumed that the
-   * data source has been checked for otel resources and standardization and the otel variables are enabled at this point.    
-   * @param datasourceUid 
-   * @param timeRange 
-   * @param otelDepEnvVariable 
-   * @param otelResourcesVariable 
-   * @param otelJoinQueryVariable 
-   * @param deploymentEnvironments 
-   * @param hasOtelResources 
+   * data source has been checked for otel resources and standardization and the otel variables are enabled at this point.
+   * @param datasourceUid
+   * @param timeRange
+   * @param otelDepEnvVariable
+   * @param otelResourcesVariable
+   * @param otelJoinQueryVariable
+   * @param deploymentEnvironments
+   * @param hasOtelResources
    */
   async updateOtelData(
     datasourceUid: string,
@@ -456,7 +487,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         values: GetTagResponse | MetricFindValue[];
       }> => {
         // apply filters here
-        let values = await datasourceHelper.getTagKeys({ filters });
+        let values = await datasourceHelper.getTagKeys({ filters, scopes: this._scopesFacade.value });
         values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
         return { replace: true, values };
       },
@@ -470,7 +501,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         // apply filters here
         // remove current selected filter if refiltering
         filters = filters.filter((f) => f.key !== filter.key);
-        const values = await datasourceHelper.getTagValues({ key: filter.key, filters });
+        const values = await datasourceHelper.getTagValues({
+          key: filter.key,
+          filters,
+          scopes: this._scopesFacade.value,
+        });
         return { replace: true, values };
       },
       hide: VariableHide.hideLabel,
