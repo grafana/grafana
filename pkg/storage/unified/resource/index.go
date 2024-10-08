@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/lang/en"
@@ -111,7 +112,7 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 	return nil
 }
 
-func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]map[string]interface{}, error) {
+func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]SearchSummary, error) {
 	if tenant == "" {
 		tenant = "default"
 	}
@@ -141,14 +142,29 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	}
 	hits := res.Hits
 
-	results := make([]map[string]interface{}, len(hits))
-	for key, hit := range hits {
-		hitResult := map[string]interface{}{}
+	results := make([]SearchSummary, len(hits))
+	for resKey, hit := range hits {
+		searchSummary := SearchSummary{}
+
+		// add common fields to search results
+		searchSummary.Kind = hit.Fields["kind"].(string)
+		searchSummary.Metadata.CreationTimestamp = hit.Fields["metadata.creationTimestamp"].(string)
+		searchSummary.Metadata.Uid = hit.Fields["metadata.uid"].(string)
+
+		// add indexed spec fields to search results under Spec
+		specResult := map[string]interface{}{}
 		for k, v := range hit.Fields {
-			hitResult[k] = v
+			if strings.HasPrefix(k, "spec.") {
+				// TODO should only include spec fields we care about in search results
+				specKey := strings.TrimPrefix(k, "spec.")
+				specResult[specKey] = v
+			}
+			searchSummary.Spec = specResult
 		}
-		results[key] = hitResult
+
+		results[resKey] = searchSummary
 	}
+
 	return results, nil
 }
 
@@ -156,11 +172,17 @@ func tenant(res *Resource) string {
 	return res.Metadata.Namespace
 }
 
+type SearchSummary struct {
+	Kind     string `json:"kind"`
+	Metadata `json:"metadata"`
+	Spec     map[string]interface{} `json:"spec"`
+}
+
 type Metadata struct {
 	Name              string
 	Namespace         string
-	Uid               string
-	CreationTimestamp string
+	Uid               string `json:"uid"`
+	CreationTimestamp string `json:"creationTimestamp"`
 	Labels            map[string]string
 	Annotations       map[string]string
 }
@@ -189,23 +211,23 @@ func createFileIndex() (bleve.Index, string, error) {
 func createIndexMappings() *mapping.IndexMappingImpl {
 	//Create mapping for the creationTimestamp field in the metadata
 	creationTimestampFieldMapping := bleve.NewDateTimeFieldMapping()
+	uidMapping := bleve.NewTextFieldMapping()
 	metaMapping := bleve.NewDocumentMapping()
 	metaMapping.AddFieldMappingsAt("creationTimestamp", creationTimestampFieldMapping)
+	metaMapping.AddFieldMappingsAt("uid", uidMapping)
 	metaMapping.Dynamic = false
 	metaMapping.Enabled = true
 
-	// Map spec.title (playlist specific)
-	nameFieldMapping := bleve.NewTextFieldMapping()
+	// Spec is different for all resources, so we create a dynamic mapping for it to index all fields (for now)
 	specMapping := bleve.NewDocumentMapping()
-	specMapping.AddFieldMappingsAt("title", nameFieldMapping)
-	specMapping.Dynamic = false
+	specMapping.Dynamic = true
 	specMapping.Enabled = true
 
 	//Create a sub-document mapping for the metadata field
 	objectMapping := bleve.NewDocumentMapping()
 	objectMapping.AddSubDocumentMapping("metadata", metaMapping)
 	objectMapping.AddSubDocumentMapping("spec", specMapping)
-	objectMapping.Dynamic = false
+	objectMapping.Dynamic = true
 	objectMapping.Enabled = true
 
 	// a generic reusable mapping for english text
