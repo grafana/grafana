@@ -672,6 +672,7 @@ func TestGetParentNames(t *testing.T) {
 			},
 			libraryElements: []libraryElement{
 				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
+				{UID: "libraryElementUID-1"},
 			},
 			expectedDashParentNames: []string{"", "Folder A", "Folder B"},
 			expectedFoldParentNames: []string{"Folder A"},

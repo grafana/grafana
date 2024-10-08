@@ -588,7 +588,9 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 		parentFolderUIDsSet[f.ParentUID] = struct{}{}
 	}
 	for _, libraryElement := range libraryElements {
-		parentFolderUIDsSet[*libraryElement.FolderUID] = struct{}{}
+		if libraryElement.FolderUID != nil {
+			parentFolderUIDsSet[*libraryElement.FolderUID] = struct{}{}
+		}
 	}
 	parentFolderUIDsSlice := make([]string, 0, len(parentFolderUIDsSet))
 	for parentFolderUID := range parentFolderUIDsSet {
@@ -610,7 +612,9 @@ func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedI
 		parentNamesByType[cloudmigration.FolderDataType][f.UID] = foldersUIDsToFolderName[f.ParentUID]
 	}
 	for _, libraryElement := range libraryElements {
-		parentNamesByType[cloudmigration.LibraryElementDataType][libraryElement.UID] = foldersUIDsToFolderName[*libraryElement.FolderUID]
+		if libraryElement.FolderUID != nil {
+			parentNamesByType[cloudmigration.LibraryElementDataType][libraryElement.UID] = foldersUIDsToFolderName[*libraryElement.FolderUID]
+		}
 	}
 
 	return parentNamesByType, err
