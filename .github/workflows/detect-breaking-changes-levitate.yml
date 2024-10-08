@@ -15,7 +15,7 @@ on:
 
 jobs:
   buildPR:
-    name: Build PR
+    name: Build PR packages artifacts
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -61,7 +61,7 @@ jobs:
           path: './pr/pr_built_packages.zip'
 
   buildBase:
-    name: Build Base
+    name: Build Base packages artifacts
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -109,7 +109,7 @@ jobs:
           path: './base/base_built_packages.zip'
 
   Detect:
-    name: Detect breaking changes
+    name: Detect breaking changes between PR and base
     runs-on: ubuntu-latest
     needs: ['buildPR', 'buildBase']
     env:
@@ -183,7 +183,7 @@ jobs:
 
 
   Report:
-    name: Report breaking changes in PR
+    name: Report breaking changes in PR comment
     runs-on: ubuntu-latest
     needs: ['Detect']
 
