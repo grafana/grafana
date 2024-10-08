@@ -47,6 +47,15 @@ func (d *DualWriterMode1) Create(ctx context.Context, in runtime.Object, createV
 	log := d.Log.WithValues("method", method)
 	ctx = klog.NewContext(ctx, log)
 
+	accIn, err := meta.Accessor(in)
+	if err != nil {
+		return nil, err
+	}
+
+	if accIn.GetUID() != "" {
+		return nil, fmt.Errorf("UID should not be present:: %v", accIn.GetUID())
+	}
+
 	startLegacy := time.Now()
 	created, err := d.Legacy.Create(ctx, in, createValidation, options)
 	d.recordLegacyDuration(err != nil, mode1Str, d.resource, method, startLegacy)
@@ -71,20 +80,18 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, in runtime
 	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage create timeout"))
 	defer cancel()
 
-	accIn, err := meta.Accessor(in)
+	accCreated, err := meta.Accessor(createdCopy)
 	if err != nil {
 		return err
 	}
 
-	if accIn.GetUID() != "" {
-		return fmt.Errorf("UID should not be present:: %v", accIn.GetUID())
-	}
+	accCreated.SetResourceVersion("")
 
 	startStorage := time.Now()
 	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
 	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
 	if errObjectSt != nil {
-		log.Error(err, "unable to create object in storage")
+		log.Error(errObjectSt, "unable to create object in storage")
 		cancel()
 	}
 	areEqual := Compare(storageObj, createdCopy)
