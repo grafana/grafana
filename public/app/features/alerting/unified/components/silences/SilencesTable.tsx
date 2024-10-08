@@ -12,6 +12,7 @@ import {
   LoadingPlaceholder,
   Stack,
   useStyles2,
+  withErrorBoundary,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
@@ -23,8 +24,10 @@ import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 
@@ -40,13 +43,11 @@ export interface SilenceTableItem extends Silence {
 
 type SilenceTableColumnProps = DynamicTableColumnProps<SilenceTableItem>;
 type SilenceTableItemProps = DynamicTableItemProps<SilenceTableItem>;
-interface Props {
-  alertManagerSourceName: string;
-}
 
 const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchOnFocus: true };
 
-const SilencesTable = ({ alertManagerSourceName }: Props) => {
+const SilencesTable = () => {
+  const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
   const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.PreviewSilencedInstances
   );
@@ -382,4 +383,12 @@ function useColumns(alertManagerSourceName: string) {
     return columns;
   }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported]);
 }
-export default SilencesTable;
+
+function SilencesTablePage() {
+  return (
+    <AlertmanagerPageWrapper navId="silences" accessType="instance">
+      <SilencesTable />
+    </AlertmanagerPageWrapper>
+  );
+}
+export default withErrorBoundary(SilencesTablePage, { style: 'page' });

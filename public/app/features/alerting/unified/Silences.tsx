@@ -12,7 +12,6 @@ import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/mat
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import ExistingSilenceEditor, { SilencesEditor } from './components/silences/SilencesEditor';
-import SilencesTable from './components/silences/SilencesTable';
 import { useSilenceNavData } from './hooks/useSilenceNavData';
 import { useAlertmanager } from './state/AlertmanagerContext';
 
@@ -27,9 +26,6 @@ const Silences = () => {
     <>
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
       <Switch>
-        <Route exact path="/alerting/silences">
-          <SilencesTable alertManagerSourceName={selectedAlertmanager} />
-        </Route>
         <Route exact path="/alerting/silence/new">
           <SilencesEditorComponent selectedAlertmanager={selectedAlertmanager} />
         </Route>

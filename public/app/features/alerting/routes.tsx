@@ -75,7 +75,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingSilenceRead,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () =>
+          import(
+            /* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/components/silences/SilencesTable'
+          )
       ),
     },
     {
@@ -87,7 +90,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingSilenceUpdate,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () =>
+          import(
+            /* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/components/silences/SilencesTable'
+          )
       ),
     },
     {
