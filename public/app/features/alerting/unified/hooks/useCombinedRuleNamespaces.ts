@@ -126,9 +126,10 @@ export function useCombinedRuleNamespaces(
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
-export function combineRulesNamespaces(
+export function combineRulesNamespace(
   rulesSource: RulesSource,
   promNamespaces: RuleNamespace[],
+  folderName: string, // we need to pass this because ruler rules don't have a folder name
   rulerRules?: RulerRulesConfigDTO
 ): CombinedRuleNamespace[] {
   const namespaces: Record<string, CombinedRuleNamespace> = {};
@@ -140,7 +141,7 @@ export function combineRulesNamespaces(
       name: namespaceName,
       groups: [],
     };
-    namespaces[namespaceName] = namespace;
+    namespaces[folderName] = namespace;
     addRulerGroupsToCombinedNamespace(namespace, groups);
   });
 

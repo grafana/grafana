@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { CombinedRule, RuleIdentifier, RulesSource, RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -10,7 +11,8 @@ import { getDataSourceByName } from '../utils/datasource';
 import * as ruleId from '../utils/rule-id';
 import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { attachRulerRulesToCombinedRules, combineRulesNamespaces } from './useCombinedRuleNamespaces';
+import { attachRulerRulesToCombinedRules, combineRulesNamespace } from './useCombinedRuleNamespaces';
+import { useFolder } from './useFolder';
 
 export function useCloudCombinedRulesMatching(
   ruleName: string,
@@ -116,6 +118,16 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
       refetchOnMountOrArgChange: true,
     }
   );
+  // in case of Grafana folder, we need to use the folder name instead of uid, as in promrules we don't use uid
+  const folder = useFolder(ruleLocation?.namespace);
+  const folderNameForGrafana = folder.folder?.title ?? '';
+  const folderParents = folder.folder?.parents ?? [];
+  const parentsPlusChild =
+    folderParents?.length > 0
+      ? [...folderParents.map((p) => p.title), folderNameForGrafana].join('/')
+      : folderNameForGrafana;
+
+  const folderName = ruleSourceName === GRAFANA_RULES_SOURCE_NAME ? parentsPlusChild : ruleLocation?.namespace;
 
   const [
     fetchRulerRuleGroup,
@@ -141,7 +153,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
 
     const rulerConfig = rulerRuleGroup ? { [ruleLocation.namespace]: [rulerRuleGroup] } : {};
 
-    const combinedNamespaces = combineRulesNamespaces(ruleSource, promRuleNs, rulerConfig);
+    const combinedNamespaces = combineRulesNamespace(ruleSource, promRuleNs, folderName ?? '', rulerConfig);
     const combinedRules = combinedNamespaces.flatMap((ns) => ns.groups).flatMap((group) => group.rules);
 
     const matchingRule = combinedRules.find((rule) =>
@@ -149,7 +161,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
     );
 
     return matchingRule;
-  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource, ruleLocation]);
+  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource, ruleLocation, folderName]);
 
   return {
     loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
