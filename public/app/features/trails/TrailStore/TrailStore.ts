@@ -40,7 +40,7 @@ export class TrailStore {
 
   constructor() {
     this.load();
-
+    this._lastModified = Date.now();
     const doSave = () => {
       console.log('calling doSave!');
       const serializedRecent = this._recent
