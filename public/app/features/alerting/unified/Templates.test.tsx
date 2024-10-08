@@ -6,7 +6,6 @@ import { render, screen, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
-import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
@@ -40,6 +39,15 @@ jest.mock('@grafana/ui', () => ({
   ),
 }));
 
+const successMock = jest.fn();
+jest.mock('app/core/copy/appNotification', () => {
+  return {
+    useAppNotification: () => {
+      return { success: successMock };
+    },
+  };
+});
+
 const ui = {
   templateForm: byRole('form', { name: 'Template form' }),
 };
@@ -57,7 +65,7 @@ beforeEach(() => {
 });
 
 const setup = (initialEntries: InitialEntry[]) => {
-  render(
+  return render(
     <Routes>
       <Route path="/alerting/notifications/templates/*" element={<Templates />} />
     </Routes>,
@@ -66,6 +74,7 @@ const setup = (initialEntries: InitialEntry[]) => {
     }
   );
 };
+
 describe('Templates routes', () => {
   it('allows duplication of template with spaces in name', async () => {
     setup([navUrl.duplicate('template%20with%20spaces')]);
@@ -117,22 +126,7 @@ describe('Templates K8s API', () => {
   });
 
   it('updates a template', async () => {
-    const { user } = render(
-      <Routes>
-        <Route
-          path="/alerting/notifications/templates/*"
-          element={
-            <>
-              <Templates />
-              <AppNotificationList />
-            </>
-          }
-        />
-      </Routes>,
-      {
-        historyOptions: { initialEntries: [navUrl.edit('k8s-custom-email-resource-name')] },
-      }
-    );
+    const { user } = setup([navUrl.edit('k8s-custom-email-resource-name')]);
 
     const form = await ui.templateForm.find();
 
@@ -143,9 +137,7 @@ describe('Templates K8s API', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(await screen.findByRole('status', { name: 'Template saved' })).toHaveTextContent(
-      'Template custom-email has been saved'
-    );
+    expect(successMock).toHaveBeenCalledWith('Template saved', 'Template custom-email has been saved');
 
     expect(ui.templateForm.query()).not.toBeInTheDocument();
   });
