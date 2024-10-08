@@ -23,6 +23,7 @@ const (
 	dbTraceBeginTx         = dbTracePrefix + "begin_tx"
 	dbTraceWithTx          = dbTracePrefix + "with_tx"
 	dbTracePingContext     = dbTracePrefix + "ping_context"
+	dbTraceTx              = dbTracePrefix + "transaction"
 
 	txTracePrefix          = "sql.db.tx."
 	txTraceExecContext     = txTracePrefix + "exec_context"
@@ -31,10 +32,15 @@ const (
 	txTraceCommit          = txTracePrefix + "commit"
 	txTraceRollback        = txTracePrefix + "rollback"
 
-	attrDriverName     = "driver_name"
-	attrServerVersion  = "server_version"
-	attrIsolationLevel = "isolation_level"
-	attrReadOnly       = "read_only"
+	attrDriverName      = "driver_name"
+	attrServerVersion   = "server_version"
+	attrIsolationLevel  = "isolation_level"
+	attrReadOnly        = "read_only"
+	attrTxTerminationOp = "termination_op"
+
+	attrValTxTerminationOpBegin    = "begin"
+	attrValTxTerminationOpCommit   = "commit"
+	attrValTxTerminationOpRollback = "rollback"
 )
 
 var (
@@ -91,6 +97,7 @@ func consumeAttributes(ctx context.Context) []attribute.KeyValue {
 
 type dbO11y struct {
 	db.DB
+	withTxFunc db.WithTxFunc
 	tracer     trace.Tracer
 	driverName string
 
@@ -98,14 +105,19 @@ type dbO11y struct {
 	dbServerVersion string
 }
 
-// NewInstrumentedDB ...
+// NewInstrumentedDB wraps the given db.DB, instrumenting it to provide
+// OTEL-based observability.
 func NewInstrumentedDB(d db.DB, tracer trace.Tracer) db.DB {
-	return &dbO11y{
+	// TODO: periodically report metrics for `Stats`, somhow?
+
+	ret := &dbO11y{
 		DB:              d,
 		tracer:          tracer,
 		driverName:      d.DriverName(),
 		dbServerVersion: "unknown",
 	}
+	ret.withTxFunc = db.NewWithTxFunc(ret.BeginTx)
+	return ret
 }
 
 func (x *dbO11y) init(ctx context.Context) {
@@ -127,12 +139,14 @@ func (x *dbO11y) init(ctx context.Context) {
 
 func (x *dbO11y) startSpan(ctx context.Context, name string) (context.Context, trace.Span) {
 	x.init(ctx)
-	ctx, span := x.tracer.Start(ctx, name, spanOptKindClient)
-	span.SetAttributes(consumeAttributes(ctx)...)
-	span.SetAttributes(
+
+	attrs := append(consumeAttributes(ctx),
 		attribute.String(attrDriverName, x.driverName),
 		attribute.String(attrServerVersion, x.dbServerVersion),
 	)
+
+	ctx, span := x.tracer.Start(ctx, name, spanOptKindClient,
+		trace.WithAttributes(attrs...))
 
 	return ctx, span
 }
@@ -162,41 +176,49 @@ func (x *dbO11y) QueryRowContext(ctx context.Context, query string, args ...any)
 }
 
 func (x *dbO11y) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
-	ctx, span := x.startSpan(ctx, dbTraceBeginTx)
+	parentSpanID := trace.SpanFromContext(ctx).SpanContext().SpanID().String()
+
+	// create a new span that will encompass the whole transaction as a single
+	// operation. This span will be ended if we fail in BEGIN, or when COMMIT or
+	// ROLLBACK are called on the returned instrumented db.Tx
+	txCtx, txSpan := x.startSpan(ctx, dbTraceTx)
+	setSpanTxOpts(txSpan, opts)
+
+	// make sure to end the transaction span if BeginTx later fails
+	var err error
+	defer func() {
+		if err != nil {
+			txSpan.SetAttributes(attribute.String(attrTxTerminationOp,
+				attrValTxTerminationOpBegin))
+			setSpanOutcome(txSpan, err)
+			txSpan.End()
+		}
+	}()
+
+	ret := txO11y{
+		// we only miss defining `tx` here, which is defined later
+		span: txSpan, // will only be used during COMMIT/ROLLBACK
+		tracerStartFunc: func(n string, o ...trace.SpanStartOption) trace.Span {
+			_, span := x.tracer.Start(txCtx, n, o...)
+			return span
+		},
+		parentSpanID: parentSpanID,
+	}
+
+	// start the span for BEGIN as a regular child span of the transaction span
+	ctx, span := ret.startSpan(ctx, dbTraceBeginTx)
 	defer span.End()
-	setSpanTxOpts(span, opts)
-	tx, err := x.DB.BeginTx(ctx, opts)
+	ret.tx, err = x.DB.BeginTx(ctx, opts) // set ret.tx that we were missing
 	setSpanOutcome(span, err)
 	if err != nil {
 		return nil, err
 	}
 
-	txx := txO11y{
-		Tx:              tx,
-		tracer:          x.tracer,
-		driverName:      x.driverName,
-		dbServerVersion: x.dbServerVersion,
-	}
-
-	// we don't hold a direct reference to the context of BeginTx. Instead, we
-	// create a closure that captures its only intended usage. This closure is
-	// used to create the span for Rollback and Commit, since those methods are
-	// the only ones that do not take a context argument
-	txx.finishTxSpan = func(name string) trace.Span {
-		_, span := txx.startSpan(ctx, name)
-		return span
-	}
-
-	return txx, nil
+	return ret, nil
 }
 
 func (x *dbO11y) WithTx(ctx context.Context, opts *sql.TxOptions, f db.TxFunc) error {
-	ctx, span := x.startSpan(ctx, dbTraceWithTx)
-	defer span.End()
-	setSpanTxOpts(span, opts)
-	err := x.DB.WithTx(ctx, opts, f)
-	setSpanOutcome(span, err)
-	return err
+	return x.withTxFunc(ctx, opts, f)
 }
 
 func (x *dbO11y) PingContext(ctx context.Context) error {
@@ -208,28 +230,106 @@ func (x *dbO11y) PingContext(ctx context.Context) error {
 }
 
 type txO11y struct {
-	db.Tx
-	finishTxSpan    func(string) trace.Span
-	tracer          trace.Tracer
-	driverName      string
-	dbServerVersion string
+	tx              db.Tx
+	span            trace.Span
+	tracerStartFunc func(string, ...trace.SpanStartOption) trace.Span
+	parentSpanID    string
 }
 
-func (x txO11y) startSpan(ctx context.Context, name string) (context.Context, trace.Span) {
-	ctx, span := x.tracer.Start(ctx, name, spanOptKindClient)
-	span.SetAttributes(consumeAttributes(ctx)...)
-	span.SetAttributes(
-		attribute.String(attrDriverName, x.driverName),
-		attribute.String(attrServerVersion, x.dbServerVersion),
-	)
+// startSpan returns a new span, and optionally a context.Context if
+// `optionalCtx` is not nil. It will be nil in the cases of the `Commit` and
+// `Rollback` methods, since they do not have a context.Context either. The
+// returned span will be a child span of the transaction span started at the
+// beginning of the transaction. If `optionalCtx`, then the returned span will
+// also be linked to the span found in that context if it differs from the one
+// used to create the transaction.
+//
+// Example operation with additional spans with current implementation:
+//
+//	parentSpan
+//	   |
+//	   +------------------+-----------------------------+
+//	   |                  |                             :
+//	   |                  v                             :
+//	   |               exampleSubSpan                   :
+//	   |                  |                             :
+//	   |                  +-------------+               :
+//	   |                  :             |               :
+//	   v                  :             v               :
+//	transactionSpan    (spanLink)    nonTxQuerySpan  (spanLink)
+//	   |                  :                             :
+//	   +------------------+-----------------------------+
+//	   |                  |                             |
+//	   v                  v                             v
+//	beginTxSpan        execSpan                      commitSpan
+//
+// Note that understanding what is being executed in the same transaction is
+// very clear because you just need to follow the solid lines, which denote a
+// parent-child relationship. We also know that the `execSpan` was originated in
+// `exampleSubSpan` because of the spanLink, but there is no chance that we get
+// confused and think that `nonTxQuerySpan` was part of the transaction (it is
+// not related in any manner). What we do here is to take make any transactional
+// db operation a child of the transaction span, which aligns with the OTEL
+// concept of a span being 'a unit of work'. In this sense, a transaction is our
+// unit of work. This allows us to clearly visualize important database
+// semantics within the OTEL framework. In OTEL, span links exist to associate
+// one span with one or more spans, implying a causal relationship. In our case,
+// we can see that while `execSpan` and `commitSpan` are part of the unit of
+// work called "database transaction", they actually have a different cause: the
+// `exampleSubSpan` for `execSpan` and `parentSpan` for `commitSpan`.
+//
+// For comparison, consider the following naïve alternative:
+//
+//	parentSpan
+//	   |
+//	   +------------------+-----------------------------+
+//	   |                  |                             |
+//	   v                  v                             v
+//	beginTxSpan      exampleSubSpan                  commitSpan
+//	                      |
+//	                      +-------------+
+//	                      |             |
+//	                      v             v
+//	                   execSpan      nonTxQuerySpan
+//
+// In this case, it is not straightforward to know what operations are part of
+// the transaction. When looking at the traces, it will be very easy to be
+// confused and think that `nonTxQuerySpan` was part of the transaction.
+func (x txO11y) startSpan(optionalCtx context.Context, name string) (context.Context, trace.Span) {
+	// minimum number of options for the span
+	startOpts := make([]trace.SpanStartOption, 0, 2)
+	startOpts = append(startOpts, spanOptKindClient)
 
-	return ctx, span
+	if optionalCtx != nil {
+		attrs := consumeAttributes(optionalCtx)
+		spanLink := trace.LinkFromContext(optionalCtx, attrs...)
+		if spanLink.SpanContext.SpanID().String() != x.parentSpanID {
+			// it only makes sense to create a link to the span in `optionalCtx`
+			// if it's not the same as the one used during BEGIN
+			startOpts = append(startOpts, trace.WithLinks(spanLink))
+
+		} else if len(attrs) > 0 {
+			// otherwise, we just add the extra attributes added with
+			// `SetAttributes`.
+			startOpts = append(startOpts, trace.WithAttributes(attrs...))
+		}
+	}
+
+	span := x.tracerStartFunc(name, startOpts...)
+
+	if optionalCtx != nil {
+		// we preserve the original intended context, we only override the span
+		// with the one we created
+		optionalCtx = trace.ContextWithSpan(optionalCtx, span)
+	}
+
+	return optionalCtx, span
 }
 
 func (x txO11y) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	ctx, span := x.startSpan(ctx, txTraceExecContext)
 	defer span.End()
-	res, err := x.Tx.ExecContext(ctx, query, args...)
+	res, err := x.tx.ExecContext(ctx, query, args...)
 	setSpanOutcome(span, err)
 
 	return res, err
@@ -238,7 +338,7 @@ func (x txO11y) ExecContext(ctx context.Context, query string, args ...any) (sql
 func (x txO11y) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	ctx, span := x.startSpan(ctx, txTraceQueryContext)
 	defer span.End()
-	rows, err := x.Tx.QueryContext(ctx, query, args...)
+	rows, err := x.tx.QueryContext(ctx, query, args...)
 	setSpanOutcome(span, err)
 
 	return rows, err
@@ -247,24 +347,32 @@ func (x txO11y) QueryContext(ctx context.Context, query string, args ...any) (*s
 func (x txO11y) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	ctx, span := x.startSpan(ctx, txTraceQueryRowContext)
 	defer span.End()
-	row := x.Tx.QueryRowContext(ctx, query, args...)
+	row := x.tx.QueryRowContext(ctx, query, args...)
 	setSpanOutcome(span, row.Err())
 	return row
 }
 
 func (x txO11y) Commit() error {
-	span := x.finishTxSpan(txTraceCommit)
+	x.span.SetAttributes(attribute.String(attrTxTerminationOp,
+		attrValTxTerminationOpCommit))
+	defer x.span.End()
+	_, span := x.startSpan(nil, txTraceCommit)
 	defer span.End()
-	err := x.Tx.Commit()
+	err := x.tx.Commit()
 	setSpanOutcome(span, err)
+	setSpanOutcome(x.span, err)
 	return err
 }
 
 func (x txO11y) Rollback() error {
-	span := x.finishTxSpan(txTraceRollback)
+	x.span.SetAttributes(attribute.String(attrTxTerminationOp,
+		attrValTxTerminationOpRollback))
+	defer x.span.End()
+	_, span := x.startSpan(nil, txTraceRollback)
 	defer span.End()
-	err := x.Tx.Rollback()
+	err := x.tx.Rollback()
 	setSpanOutcome(span, err)
+	setSpanOutcome(x.span, err)
 	return err
 }
 
@@ -279,9 +387,7 @@ func setSpanTxOpts(span trace.Span, opts *sql.TxOptions) {
 }
 
 func setSpanOutcome(span trace.Span, err error) {
-	if err == nil {
-		span.SetStatus(codes.Ok, "")
-	} else {
+	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "")
 	}
