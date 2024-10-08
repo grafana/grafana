@@ -181,7 +181,7 @@ const useTabQueryParam = () => {
   return [param, setParam] as const;
 };
 
-const ContactPointsPageContents = () => {
+export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [activeTab, setActiveTab] = useTabQueryParam();
 
