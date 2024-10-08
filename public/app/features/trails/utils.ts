@@ -24,7 +24,6 @@ import {
   SceneVariableState,
 } from '@grafana/scenes';
 import { getClosestScopesFacade } from 'app/features/scopes';
-import { PromResponse } from 'app/types/unified-alerting-dto';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 
@@ -204,6 +203,13 @@ export function limitAdhocProviders(
   });
 }
 
+export type SuggestionsResponse = {
+  data: string[];
+  status: 'success' | 'error';
+  error?: 'string';
+  warnings?: string[];
+};
+
 export async function callSuggestionsApi(
   dataSourceUid: string,
   timeRange: RawTimeRange,
@@ -212,9 +218,9 @@ export async function callSuggestionsApi(
   labelName: string | undefined,
   limit: number | undefined,
   requestId: string
-): Promise<FetchResponse<PromResponse<string[]>>> {
+): Promise<FetchResponse<SuggestionsResponse>> {
   return await lastValueFrom(
-    getBackendSrv().fetch<PromResponse<string[]>>({
+    getBackendSrv().fetch<SuggestionsResponse>({
       url: `/api/datasources/uid/${dataSourceUid}/resources/suggestions`,
       data: {
         labelName,
