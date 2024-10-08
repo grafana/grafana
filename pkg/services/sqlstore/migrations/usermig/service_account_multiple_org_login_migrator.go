@@ -82,8 +82,6 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
 }
 
 type ServiceAccountsDeduplicateOrgInLogin struct {
-	sess    *xorm.Session
-	dialect migrator.Dialect
 	migrator.MigrationBase
 }
 
@@ -92,14 +90,13 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) SQL(dialect migrator.Dialect) str
 }
 
 func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	p.sess = sess
-	p.dialect = mg.Dialect
+	dialect := mg.Dialect
 	var err error
 
 	// var logins []Login
-	switch p.dialect.DriverName() {
+	switch dialect.DriverName() {
 	case migrator.Postgres:
-		_, err = p.sess.Exec(`
+		_, err = sess.Exec(`
             UPDATE "user"
             SET login = 'sa-' || org_id::text || SUBSTRING(login FROM LENGTH('sa-' || org_id::text || '-' || org_id::text)+1)
             WHERE login IS NOT NULL 
@@ -107,7 +104,7 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
               AND login LIKE 'sa-' || org_id::text || '-' || org_id::text || '-%';
         `)
 	case migrator.MySQL:
-		_, err = p.sess.Exec(`
+		_, err = sess.Exec(`
             UPDATE user
             SET login = CONCAT('sa-', org_id, SUBSTRING(login, LENGTH(CONCAT('sa-', org_id, '-', org_id))+1))
             WHERE login IS NOT NULL
@@ -115,15 +112,15 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
                 AND login LIKE CONCAT('sa-', org_id, '-', org_id, '-%');
         `)
 	case migrator.SQLite:
-		_, err = p.sess.Exec(`
-            UPDATE ` + p.dialect.Quote("user") + `
+		_, err = sess.Exec(`
+            UPDATE ` + dialect.Quote("user") + `
             SET login = 'sa-' || CAST(org_id AS TEXT) || SUBSTRING(login, LENGTH('sa-'||CAST(org_id AS TEXT)||'-'||CAST(org_id AS TEXT))+1)
             WHERE login IS NOT NULL
                 AND is_service_account = 1
                 AND login LIKE 'sa-'||CAST(org_id AS TEXT)||'-'||CAST(org_id AS TEXT)||'-%';
         `)
 	default:
-		return fmt.Errorf("dialect not supported: %s", p.dialect)
+		return fmt.Errorf("dialect not supported: %s", dialect)
 	}
 
 	return err
