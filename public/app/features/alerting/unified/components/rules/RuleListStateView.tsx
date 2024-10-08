@@ -21,17 +21,17 @@ interface Props {
   namespaces: CombinedRuleNamespace[];
 }
 
-type GroupedRules = Record<PromAlertingRuleState, CombinedRule[]>;
+type GroupedRules = Map<PromAlertingRuleState, CombinedRule[]>;
 
 export const RuleListStateView = ({ namespaces }: Props) => {
   const styles = useStyles2(getStyles);
 
   const groupedRules = useMemo(() => {
-    const result: GroupedRules = {
-      [PromAlertingRuleState.Firing]: [],
-      [PromAlertingRuleState.Pending]: [],
-      [PromAlertingRuleState.Inactive]: [],
-    };
+    const result: GroupedRules = new Map([
+      [PromAlertingRuleState.Firing, []],
+      [PromAlertingRuleState.Pending, []],
+      [PromAlertingRuleState.Inactive, []],
+    ]);
 
     namespaces.forEach((namespace) =>
       namespace.groups.forEach((group) =>
@@ -40,21 +40,23 @@ export const RuleListStateView = ({ namespaces }: Props) => {
           // In this case, we shouldn't try to group these alerts in the state view
           // Even though we handle this at the API layer, this is a last catch point for any edge cases
           if (rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state) {
-            result[rule.promRule.state].push(rule);
+            result.get(rule.promRule.state)?.push(rule);
           }
         })
       )
     );
 
-    Object.values(result).forEach((rules) => rules.sort((a, b) => a.name.localeCompare(b.name)));
+    result.forEach((rules) => rules.sort((a, b) => a.name.localeCompare(b.name)));
 
     return result;
   }, [namespaces]);
 
+  const entries = groupedRules.entries();
+
   return (
     <ul className={styles.columnStack} role="tree">
-      {Object.entries(groupedRules).map(([state, rules]) => (
-        <RulesByState key={state} state={state as PromAlertingRuleState} rules={rules} />
+      {Array.from(entries).map(([state, rules]) => (
+        <RulesByState key={state} state={state} rules={rules} />
       ))}
     </ul>
   );
