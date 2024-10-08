@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -17,7 +17,9 @@ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/cons
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import Silences from './Silences';
+import NewSilencePage from './NewSilencePage';
+import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
+import SilencesTable from './components/silences/SilencesTable';
 import {
   MOCK_SILENCE_ID_EXISTING,
   MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
@@ -30,21 +32,21 @@ import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
-jest.mock('app/core/services/context_srv');
-
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useParams: jest.fn(),
-}));
-
 const TEST_TIMEOUT = 60000;
 
 const renderSilences = (location = '/alerting/silences/') => {
-  return render(<Silences />, {
-    historyOptions: {
-      initialEntries: [location],
-    },
-  });
+  return render(
+    <Routes>
+      <Route path="/alerting/silences" element={<SilencesTable />} />
+      <Route path="/alerting/silence/new" element={<NewSilencePage />} />
+      <Route path="/alerting/silence/:id/edit" element={<ExistingSilenceEditorPage />} />
+    </Routes>,
+    {
+      historyOptions: {
+        initialEntries: [location],
+      },
+    }
+  );
 };
 
 const dataSources = {
@@ -124,8 +126,7 @@ describe('Silences', () => {
   it(
     'loads and shows silences',
     async () => {
-      const user = userEvent.setup();
-      renderSilences();
+      const { user } = renderSilences();
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
 
@@ -174,8 +175,7 @@ describe('Silences', () => {
   it(
     'filters silences by matchers',
     async () => {
-      const user = userEvent.setup();
-      renderSilences();
+      const { user } = renderSilences();
 
       const queryBar = await ui.queryBar.find();
       await user.type(queryBar, 'foo=bar');
@@ -218,12 +218,12 @@ describe('Silence create/edit', () => {
   });
 
   it('Should not render createdBy if user is logged in and has a name', async () => {
-    renderSilences(baseUrlPath);
+    render(<NewSilencePage />);
     await waitFor(() => expect(ui.editor.createdBy.query()).not.toBeInTheDocument());
   });
   it('Should render createdBy if user is not logged or has no name', async () => {
     setUserLogged(false);
-    renderSilences(baseUrlPath);
+    render(<NewSilencePage />);
     await waitFor(() => expect(ui.editor.createdBy.get()).toBeInTheDocument());
   });
   it(
@@ -233,6 +233,7 @@ describe('Silence create/edit', () => {
       const matchersQueryString = matchersParams.map((matcher) => `matcher=${encodeURIComponent(matcher)}`).join('&');
 
       renderSilences(`${baseUrlPath}?${matchersQueryString}`);
+
       expect(await ui.editor.durationField.find()).toBeInTheDocument();
 
       const matchers = ui.editor.matchersField.queryAll();
@@ -260,8 +261,7 @@ describe('Silence create/edit', () => {
   it(
     'creates a new silence',
     async () => {
-      const user = userEvent.setup();
-      renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
+      const { user } = renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
       expect(await ui.editor.durationField.find()).toBeInTheDocument();
 
       const postRequest = waitForServerRequest(silenceCreateHandler());
@@ -320,20 +320,17 @@ describe('Silence create/edit', () => {
   });
 
   it('shows an error when existing silence cannot be found', async () => {
-    (useParams as jest.Mock).mockReturnValue({ id: 'foo-bar' });
     renderSilences('/alerting/silence/foo-bar/edit');
 
     expect(await ui.existingSilenceNotFound.find()).toBeInTheDocument();
   });
 
   it('shows an error when user cannot edit/recreate silence', async () => {
-    (useParams as jest.Mock).mockReturnValue({ id: MOCK_SILENCE_ID_LACKING_PERMISSIONS });
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_LACKING_PERMISSIONS}/edit`);
     expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
   });
 
   it('populates form with existing silence information', async () => {
-    (useParams as jest.Mock).mockReturnValue({ id: MOCK_SILENCE_ID_EXISTING });
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
 
     // Await the first value to be populated, after which we can expect that all of the other
@@ -344,7 +341,6 @@ describe('Silence create/edit', () => {
   });
 
   it('populates form with existing silence information that has __alert_rule_uid__', async () => {
-    (useParams as jest.Mock).mockReturnValue({ id: MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID });
     mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
     expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
@@ -358,11 +354,9 @@ describe('Silence create/edit', () => {
   it(
     'silences page should contain alertmanager parameter after creating a silence',
     async () => {
-      const user = userEvent.setup();
-
       const postRequest = waitForServerRequest(silenceCreateHandler());
 
-      renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
+      const { user } = renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
       await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
       await enterSilenceLabel(0, 'foo', MatcherOperator.equal, 'bar');

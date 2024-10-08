@@ -9,6 +9,7 @@ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/cons
 import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { SilencesEditor } from './components/silences/SilencesEditor';
 import { useAlertmanager } from './state/AlertmanagerContext';
 
@@ -24,7 +25,14 @@ const SilencesEditorComponent = () => {
   const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
 
   return (
-    <SilencesEditor formValues={formValues} alertManagerSourceName={selectedAlertmanager} ruleUid={potentialRuleUid} />
+    <>
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
+      <SilencesEditor
+        formValues={formValues}
+        alertManagerSourceName={selectedAlertmanager}
+        ruleUid={potentialRuleUid}
+      />
+    </>
   );
 };
 
