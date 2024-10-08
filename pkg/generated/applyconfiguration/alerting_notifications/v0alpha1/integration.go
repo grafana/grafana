@@ -5,20 +5,20 @@
 package v0alpha1
 
 import (
-	json "encoding/json"
+	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// IntegrationApplyConfiguration represents an declarative configuration of the Integration type for use
+// IntegrationApplyConfiguration represents a declarative configuration of the Integration type for use
 // with apply.
 type IntegrationApplyConfiguration struct {
-	DisableResolveMessage *bool            `json:"disableResolveMessage,omitempty"`
-	SecureFields          map[string]bool  `json:"SecureFields,omitempty"`
-	Settings              *json.RawMessage `json:"settings,omitempty"`
-	Type                  *string          `json:"type,omitempty"`
-	Uid                   *string          `json:"uid,omitempty"`
+	DisableResolveMessage *bool                  `json:"disableResolveMessage,omitempty"`
+	SecureFields          map[string]bool        `json:"secureFields,omitempty"`
+	Settings              *v0alpha1.Unstructured `json:"settings,omitempty"`
+	Type                  *string                `json:"type,omitempty"`
+	Uid                   *string                `json:"uid,omitempty"`
 }
 
-// IntegrationApplyConfiguration constructs an declarative configuration of the Integration type for use with
+// IntegrationApplyConfiguration constructs a declarative configuration of the Integration type for use with
 // apply.
 func Integration() *IntegrationApplyConfiguration {
 	return &IntegrationApplyConfiguration{}
@@ -49,7 +49,7 @@ func (b *IntegrationApplyConfiguration) WithSecureFields(entries map[string]bool
 // WithSettings sets the Settings field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Settings field is set to the value of the last call.
-func (b *IntegrationApplyConfiguration) WithSettings(value json.RawMessage) *IntegrationApplyConfiguration {
+func (b *IntegrationApplyConfiguration) WithSettings(value v0alpha1.Unstructured) *IntegrationApplyConfiguration {
 	b.Settings = &value
 	return b
 }

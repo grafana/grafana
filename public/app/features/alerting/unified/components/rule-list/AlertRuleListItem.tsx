@@ -29,7 +29,6 @@ interface AlertRuleListItemProps {
   isProvisioned?: boolean;
   lastEvaluation?: string;
   evaluationInterval?: string;
-  evaluationDuration?: number;
   labels?: Labels;
   instancesCount?: number;
   // used for alert rules that use simplified routing
@@ -79,9 +78,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
                   <EvaluationMetadata
                     lastEvaluation={lastEvaluation}
                     evaluationInterval={evaluationInterval}
-                    health={health}
                     state={state}
-                    error={error}
                   />
                   <MetaText icon="layers-alt">
                     <TextLink href={href + '?tab=instances'} variant="bodySmall" color="primary" inline={false}>
@@ -170,13 +167,11 @@ interface RecordingRuleListItemProps {
   href: string;
   error?: string;
   health?: RuleHealth;
-  recording?: boolean;
   state?: PromAlertingRuleState;
   labels?: Labels;
   isProvisioned?: boolean;
   lastEvaluation?: string;
   evaluationInterval?: string;
-  evaluationDuration?: number;
 }
 
 // @TODO split in to smaller re-usable bits
@@ -213,9 +208,7 @@ export const RecordingRuleListItem = ({
                 <EvaluationMetadata
                   lastEvaluation={lastEvaluation}
                   evaluationInterval={evaluationInterval}
-                  health={health}
                   state={state}
-                  error={error}
                 />
                 {!isEmpty(labels) && (
                   <MetaText icon="tag-alt">
@@ -258,8 +251,6 @@ interface EvaluationMetadataProps {
   lastEvaluation?: string;
   evaluationInterval?: string;
   state?: PromAlertingRuleState;
-  health?: RuleHealth;
-  error?: string; // if health is "error" this should have error details for us
 }
 
 function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: EvaluationMetadataProps) {

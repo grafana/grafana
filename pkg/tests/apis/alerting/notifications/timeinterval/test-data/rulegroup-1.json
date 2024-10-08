@@ -28,7 +28,8 @@
         "notification_settings": {
           "receiver": "grafana-default-email",
           "mute_time_intervals": [
-            "test-interval"
+            "test-interval",
+            "persisted-interval"
           ]
         }
       }

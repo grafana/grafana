@@ -1,15 +1,17 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getConfig } from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
+import { contextSrv } from '../../core/services/context_srv';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
@@ -24,17 +26,9 @@ import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { setAllSelection, useHasSelection } from './state';
 
-export interface BrowseDashboardsPageRouteParams {
-  uid?: string;
-  slug?: string;
-}
-
-export interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRouteParams> {}
-
 // New Browse/Manage/Search Dashboards views for nested folders
-
-const BrowseDashboardsPage = memo(({ match }: Props) => {
-  const { uid: folderUID } = match.params;
+const BrowseDashboardsPage = memo(() => {
+  const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
   const styles = useStyles2(getStyles);
@@ -87,7 +81,10 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const hasSelection = useHasSelection();
 
-  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO);
+  const { data: rootFolder } = useGetFolderQuery('general');
+  let folder = folderDTO ? folderDTO : rootFolder;
+  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
+  const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   const showEditTitle = canEditFolders && folderUID;
   const canSelect = canEditFolders || canEditDashboards;
@@ -111,6 +108,12 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     }
   };
 
+  const handleButtonClickToRecentlyDeleted = () => {
+    reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
+      origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
+    });
+  };
+
   return (
     <Page
       navId="dashboards/browse"
@@ -118,6 +121,15 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       onEditTitle={showEditTitle ? onEditTitle : undefined}
       actions={
         <>
+          {config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI && hasAdminRights && (
+            <LinkButton
+              variant="secondary"
+              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
+              onClick={handleButtonClickToRecentlyDeleted}
+            >
+              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
+            </LinkButton>
+          )}
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton

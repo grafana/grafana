@@ -4,16 +4,16 @@ import (
 	context "context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/authlib/claims"
 )
 
 type WriteAccessHooks struct {
 	// Check if a user has access to write folders
 	// When this is nil, no resources can have folders configured
-	Folder func(ctx context.Context, user identity.Requester, uid string) bool
+	Folder func(ctx context.Context, user claims.AuthInfo, uid string) bool
 
 	// When configured, this will make sure a user is allowed to save to a given origin
-	Origin func(ctx context.Context, user identity.Requester, origin string) bool
+	Origin func(ctx context.Context, user claims.AuthInfo, origin string) bool
 }
 
 type LifecycleHooks interface {
@@ -24,7 +24,7 @@ type LifecycleHooks interface {
 	Stop(context.Context) error
 }
 
-func (a *WriteAccessHooks) CanWriteFolder(ctx context.Context, user identity.Requester, uid string) error {
+func (a *WriteAccessHooks) CanWriteFolder(ctx context.Context, user claims.AuthInfo, uid string) error {
 	if a.Folder == nil {
 		return fmt.Errorf("writing folders is not supported")
 	}
@@ -34,7 +34,7 @@ func (a *WriteAccessHooks) CanWriteFolder(ctx context.Context, user identity.Req
 	return nil
 }
 
-func (a *WriteAccessHooks) CanWriteOrigin(ctx context.Context, user identity.Requester, uid string) error {
+func (a *WriteAccessHooks) CanWriteOrigin(ctx context.Context, user claims.AuthInfo, uid string) error {
 	if a.Origin == nil || uid == "UI" {
 		return nil // default to OK
 	}

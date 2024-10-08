@@ -5,7 +5,7 @@
 //
 exports[`better eslint`] = {
   value: `{
-    "e2e/scenes/utils/support/types.ts:5381": [
+    "e2e/old-arch/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "e2e/utils/support/types.ts:5381": [
@@ -44,9 +44,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"]
     ],
-    "packages/grafana-data/src/dataframe/dimensions.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-data/src/dataframe/processDataFrame.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -73,9 +70,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "19"]
     ],
     "packages/grafana-data/src/datetime/datemath.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-data/src/datetime/durationutil.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -91,32 +86,22 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "7"],
       [0, 0, 0, "Do not use any type assertions.", "8"]
     ],
-    "packages/grafana-data/src/events/EventBus.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "packages/grafana-data/src/events/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "packages/grafana-data/src/field/displayProcessor.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
-    "packages/grafana-data/src/field/fieldState.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-data/src/field/overrides/processors.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "packages/grafana-data/src/field/standardFieldConfigEditorRegistry.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -128,8 +113,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
     "packages/grafana-data/src/geo/layer.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/panel/PanelPlugin.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -159,9 +143,6 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/themes/createColors.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-data/src/transformations/fieldReducer.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-data/src/transformations/matchers/valueMatchers/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -170,9 +151,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/transformations/transformDataFrame.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-data/src/transformations/transformers/joinDataFrames.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/transformations/transformers/nulls/nullInsertThreshold.ts:5381": [
@@ -196,6 +174,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "packages/grafana-data/src/types/action.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
     "packages/grafana-data/src/types/annotations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -208,7 +191,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"]
     ],
     "packages/grafana-data/src/types/config.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -514,7 +498,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
-    "packages/grafana-runtime/src/services/LocationService.ts:5381": [
+    "packages/grafana-runtime/src/services/LocationService.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
@@ -542,9 +526,11 @@ exports[`better eslint`] = {
     "packages/grafana-runtime/src/services/pluginExtensions/usePluginComponent.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "packages/grafana-runtime/src/services/pluginExtensions/usePluginExtensions.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-runtime/src/utils/DataSourceWithBackend.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -586,6 +572,10 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
+    "packages/grafana-ui/src/components/Combobox/Combobox.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "packages/grafana-ui/src/components/ConfirmButton/ConfirmButton.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -832,8 +822,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/components/Table/TableCellInspector.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/components/Table/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -947,48 +936,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/uPlot/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/graveyard/Graph/Graph.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "packages/grafana-ui/src/graveyard/Graph/GraphContextMenu.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/graveyard/Graph/utils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/graveyard/GraphNG/GraphNG.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Do not use any type assertions.", "9"],
-      [0, 0, 0, "Do not use any type assertions.", "10"],
-      [0, 0, 0, "Do not use any type assertions.", "11"]
-    ],
-    "packages/grafana-ui/src/graveyard/GraphNG/hooks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/graveyard/GraphNG/nullInsertThreshold.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "packages/grafana-ui/src/graveyard/GraphNG/nullToUndefThreshold.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "packages/grafana-ui/src/graveyard/TimeSeries/utils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "packages/grafana-ui/src/options/builder/hideSeries.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1214,10 +1161,7 @@ exports[`better eslint`] = {
     ],
     "public/app/core/components/TagFilter/TagFilter.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/core/components/TimeSeries/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1279,14 +1223,6 @@ exports[`better eslint`] = {
     "public/app/core/navigation/RouterDebugger.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
-    ],
-    "public/app/core/navigation/testRoutes.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1377,6 +1313,17 @@ exports[`better eslint`] = {
     "public/app/core/utils/ticks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/features/actions/ActionEditorModalContent.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
+    "public/app/features/actions/ActionsInlineEditor.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
+    "public/app/features/actions/ParamsEditor.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/admin/AdminEditOrgPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -1708,8 +1655,7 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/contact-points/ContactPoints.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/contact-points/components/ContactPointsFilter.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1769,9 +1715,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
-    "public/app/features/alerting/unified/components/notification-policies/ContactPointSelector.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
     "public/app/features/alerting/unified/components/notification-policies/EditDefaultPolicyForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
@@ -1803,25 +1746,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"]
     ],
-    "public/app/features/alerting/unified/components/notification-policies/Policy.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "14"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "15"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "16"]
-    ],
     "public/app/features/alerting/unified/components/notification-policies/PromDurationDocs.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -1840,15 +1764,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
-    ],
-    "public/app/features/alerting/unified/components/receivers/DuplicateTemplateView.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "public/app/features/alerting/unified/components/receivers/EditReceiverView.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "public/app/features/alerting/unified/components/receivers/EditTemplateView.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/alerting/unified/components/receivers/GlobalConfigForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -1894,10 +1809,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/receivers/form/ChannelOptions.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/features/alerting/unified/components/receivers/form/ChannelSubForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -1974,8 +1888,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rule-editor/AnnotationsStep.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/CloudAlertPreview.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2170,8 +2083,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/SmartAlertTypeDetector.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2263,8 +2175,7 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rules/CloudRules.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/rules/EditRuleGroupModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2273,6 +2184,22 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
+    ],
+    "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx:5381": [
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"]
     ],
     "public/app/features/alerting/unified/components/rules/GrafanaRules.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -2325,22 +2252,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rules/RuleStats.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "public/app/features/alerting/unified/components/rules/RulesFilter.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"]
     ],
     "public/app/features/alerting/unified/components/rules/RulesGroup.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2502,9 +2413,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"]
-    ],
-    "public/app/features/alerting/unified/utils/rulerClient.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/utils/rules.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2714,6 +2622,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
+    "public/app/features/correlations/Forms/ConfigureCorrelationTargetForm.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
     "public/app/features/correlations/components/EmptyCorrelationsCTA.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
@@ -2721,6 +2634,10 @@ exports[`better eslint`] = {
     "public/app/features/correlations/components/Wizard/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"]
+    ],
+    "public/app/features/correlations/types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard-scene/embedding/EmbeddedDashboardTestPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -2739,8 +2656,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"]
     ],
     "public/app/features/dashboard-scene/inspect/HelpWizard/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/inspect/InspectDataTab.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -2800,10 +2716,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
-    "public/app/features/dashboard-scene/saving/DashboardSceneChangeTracker.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/features/dashboard-scene/saving/SaveDashboardAsForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -2837,12 +2749,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/saving/shared.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/dashboard-scene/scene/DashboardControls.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/dashboard-scene/scene/NavToolbarActions.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/dashboard-scene/scene/NavToolbarActions.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -2861,10 +2767,7 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/dashboard-scene/scene/RowRepeaterBehavior.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/dashboard-scene/scene/Scopes/ScopesInput.tsx:5381": [
+    "public/app/features/dashboard-scene/scene/PanelSearchLayout.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/scene/row-actions/RowActions.tsx:5381": [
@@ -2876,34 +2779,18 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
+    "public/app/features/dashboard-scene/scene/types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
     "public/app/features/dashboard-scene/serialization/angularMigration.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard-scene/serialization/buildNewDashboardSaveModel.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
     "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2922,8 +2809,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/dashboard-scene/settings/JsonModelEditView.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -3157,27 +3043,18 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/components/GenAI/GenAIHistory.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/dashboard/components/GenAI/MinimalisticPagination.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/dashboard/components/HelpWizard/HelpWizard.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/dashboard/components/Inspector/PanelInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3218,16 +3095,14 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/components/PanelEditor/getVisualizationOptions.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/components/PanelEditor/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -3266,21 +3141,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
-    "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveProvisionedDashboardForm.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -3292,9 +3163,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"]
-    ],
-    "public/app/features/dashboard/components/SaveDashboard/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/useDashboardSave.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3386,9 +3254,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/containers/SoloPanelPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "public/app/features/dashboard/dashgrid/PanelStateWrapper.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3776,8 +3641,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "7"]
     ],
     "public/app/features/dimensions/scale.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dimensions/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4133,7 +3997,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"]
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianReferences.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4320,9 +4186,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./TNil\`)", "3"],
       [0, 0, 0, "Do not re-export imported variable (\`./links\`)", "4"]
     ],
-    "public/app/features/explore/TraceView/components/types/trace.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/DraggableManagerDemo.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -4434,9 +4297,6 @@ exports[`better eslint`] = {
     "public/app/features/geo/utils/frameVectorSource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/gops/configuration-tracker/components/ConfigCard.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/gops/configuration-tracker/components/ConfigureIRM.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -4718,12 +4578,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
     "public/app/features/manage-dashboards/state/reducers.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4738,8 +4593,7 @@ exports[`better eslint`] = {
     "public/app/features/migrate-to-cloud/onprem/NameCell.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/notifications/StoredNotifications.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -4806,10 +4660,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/panel/panellinks/link_srv.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/playlist/PlaylistForm.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
@@ -4818,11 +4669,7 @@ exports[`better eslint`] = {
     "public/app/features/playlist/PlaylistTableRows.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/playlist/StartModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -4873,17 +4720,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/plugins/admin/components/InstallControls/InstallControlsWarning.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/plugins/admin/components/InstallControls/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./InstallControlsWarning\`)", "0"],
@@ -5011,18 +4853,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Do not use any type assertions.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Do not use any type assertions.", "12"]
+      [0, 0, 0, "Do not use any type assertions.", "6"]
     ],
-    "public/app/features/plugins/extensions/getPluginExtensions.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    "public/app/features/plugins/extensions/usePluginComponents.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/plugins/loader/sharedDependencies.ts:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -5186,6 +5022,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+    ],
+    "public/app/features/scopes/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./instance\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./ScopesDashboards\`)", "1"]
     ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -5418,13 +5258,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "10"],
       [0, 0, 0, "Do not use any type assertions.", "11"]
     ],
-    "public/app/features/trails/ActionTabs/AddToFiltersGraphAction.tsx:5381": [
+    "public/app/features/trails/Breakdown/AddToFiltersGraphAction.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/trails/ActionTabs/BreakdownScene.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+    "public/app/features/trails/Breakdown/types.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/trails/ActionTabs/utils.ts:5381": [
+    "public/app/features/trails/Breakdown/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/trails/DataTrailCard.tsx:5381": [
@@ -5432,8 +5272,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/trails/DataTrailSettings.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/trails/DataTrailsHistory.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -5444,9 +5283,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/trails/MetricScene.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/trails/MetricSelect/MetricSelectScene.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -5649,6 +5487,12 @@ exports[`better eslint`] = {
     ],
     "public/app/features/transformers/standardTransformers.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/transformers/suggestionsInput/SuggestionsInput.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/features/users/TokenRevokedModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -5894,8 +5738,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/alertmanager/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/azuremonitor/azureMetadata/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
@@ -6288,8 +6131,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/components/SimulationSchemaForm.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/components/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./StreamingClientEditor\`)", "0"],
@@ -6298,9 +6140,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/grafana-testdata-datasource/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/grafana-testdata-datasource/runStreams.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/webpack.config.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
@@ -6350,7 +6189,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/plugins/datasource/graphite/components/MetricTankMetaInspector.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
@@ -6359,8 +6198,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"],
       [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"]
+      [0, 0, 0, "Styles should be written using objects.", "9"]
     ],
     "public/app/plugins/datasource/graphite/components/TagsSection.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -6403,8 +6241,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "30"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "29"]
     ],
     "public/app/plugins/datasource/graphite/gfunc.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -6427,14 +6264,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
+      [0, 0, 0, "Do not use any type assertions.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Do not use any type assertions.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "19"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "16"]
     ],
     "public/app/plugins/datasource/graphite/lexer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6503,10 +6337,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/influxdb/influx_query_model.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/influxdb/influx_series.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6520,17 +6351,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"]
-    ],
-    "public/app/plugins/datasource/influxdb/migrations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "public/app/plugins/datasource/influxdb/query_part.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6546,8 +6367,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "13"]
     ],
     "public/app/plugins/datasource/influxdb/response_parser.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6562,9 +6382,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/jaeger/_importedDependencies/types/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./trace\`)", "0"]
     ],
-    "public/app/plugins/datasource/jaeger/_importedDependencies/types/trace.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/jaeger/components/QueryEditor.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
@@ -6575,9 +6392,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/jaeger/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/jaeger/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6660,9 +6474,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
-    "public/app/plugins/datasource/loki/streaming.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/loki/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`LokiQueryDirection\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`LokiQueryType\`)", "1"],
@@ -6698,9 +6509,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"]
-    ],
-    "public/app/plugins/datasource/opentsdb/migrations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/parca/QueryEditor/LabelsEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6773,12 +6581,8 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/tempo/resultTransformer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/plugins/datasource/tempo/webpack.config.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
@@ -6842,9 +6646,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/barchart/quadtree.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/panel/barchart/utils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/panel/candlestick/CandlestickPanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -6858,15 +6659,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`VizDisplayMode\`)", "5"],
       [0, 0, 0, "Do not re-export imported variable (\`CandlestickFieldMap\`)", "6"],
       [0, 0, 0, "Do not re-export imported variable (\`FieldConfig\`)", "7"]
-    ],
-    "public/app/plugins/panel/dashlist/styles.ts:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"]
     ],
     "public/app/plugins/panel/datagrid/utils.ts:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6991,12 +6783,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "15"],
       [0, 0, 0, "Do not use any type assertions.", "16"]
     ],
-    "public/app/plugins/panel/histogram/migrations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/panel/live/LiveChannelEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
+      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/plugins/panel/live/LivePanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -7110,17 +6898,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/plugins/panel/text/TextPanel.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/panel/text/TextPanelEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
+      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/plugins/panel/text/textPanelMigrationHandler.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7184,9 +6969,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "5"]
     ],
     "public/app/plugins/panel/xychart/AutoEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/panel/xychart/ManualEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -7211,12 +6995,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"]
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/plugins/panel/xychart/v2/migrations.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/xychart/v2/scatter.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -7237,9 +7019,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "15"],
       [0, 0, 0, "Do not use any type assertions.", "16"],
       [0, 0, 0, "Do not use any type assertions.", "17"]
-    ],
-    "public/app/plugins/panel/xychart/v2/utils.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/sdk.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`loadPluginCss\`)", "0"]
@@ -7266,9 +7045,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/types/dashboard.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7282,11 +7059,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
     "public/app/types/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
@@ -7330,12 +7103,23 @@ exports[`better eslint`] = {
     "public/app/types/unified-alerting-dto.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/swagger/SwaggerPage.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
+    "public/swagger/index.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/swagger/plugins.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
     "public/test/core/redux/reduxTester.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/test/core/thunk/thunkTester.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7343,9 +7127,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/test/global-jquery-shim.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7359,21 +7141,12 @@ exports[`better eslint`] = {
     "public/test/jest-setup.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/test/lib/common.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/test/specs/helpers.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ]
   }`
 };
@@ -7381,6 +7154,9 @@ exports[`better eslint`] = {
 exports[`no undocumented stories`] = {
   value: `{
     "packages/grafana-ui/src/components/ButtonCascader/ButtonCascader.story.tsx:5381": [
+      [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Combobox/Combobox.story.tsx:5381": [
       [0, 0, 0, "No undocumented stories are allowed, please add an .mdx file with some documentation", "5381"]
     ],
     "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.story.tsx:5381": [
@@ -7442,7 +7218,7 @@ exports[`no undocumented stories`] = {
 
 exports[`no gf-form usage`] = {
   value: `{
-    "e2e/scenes/utils/flows/addDataSource.ts:5381": [
+    "e2e/old-arch/utils/flows/addDataSource.ts:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "e2e/utils/flows/addDataSource.ts:5381": [
@@ -7593,37 +7369,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentInput.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "packages/grafana-ui/src/themes/GlobalStyles/legacySelect.ts:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
@@ -7780,7 +7525,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/features/query/components/QueryGroupOptions.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],

@@ -54,7 +54,7 @@ describe('pause rule', () => {
     expect(byText(/uninitialized/i).get()).toBeInTheDocument();
 
     await userEvent.click(byRole('button').get());
-    expect(await byText(/error: No rule with UID/i).find()).toBeInTheDocument();
+    expect(await byText(/error: no rule matching identifier/i).find()).toBeInTheDocument();
   });
 
   it('should be able to handle error', async () => {
@@ -76,7 +76,7 @@ describe('pause rule', () => {
 
 // this test component will cycle through the loading states
 const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
-  const [requestState, pauseRule] = usePauseRuleInGroup();
+  const [pauseRule, requestState] = usePauseRuleInGroup();
 
   const rulerRule = options.rulerRule ?? grafanaRulerRule;
   const rule = mockCombinedRule({

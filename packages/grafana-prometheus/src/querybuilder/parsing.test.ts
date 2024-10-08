@@ -514,7 +514,7 @@ describe('buildVisualQueryFromString', () => {
           text: 'afe}',
           from: 14,
           to: 18,
-          parentType: 'LabelMatcher',
+          parentType: 'UnquotedLabelMatcher',
         },
       ],
       query: {
@@ -780,6 +780,21 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [],
+      })
+    );
+  });
+
+  it('parses the group function as an aggregation', () => {
+    expect(buildVisualQueryFromString('group by (job) (go_goroutines)')).toEqual(
+      noErrors({
+        metric: 'go_goroutines',
+        labels: [],
+        operations: [
+          {
+            id: '__group_by',
+            params: ['job'],
+          },
+        ],
       })
     );
   });

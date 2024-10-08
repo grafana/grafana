@@ -470,6 +470,26 @@ def build_frontend_step():
         ],
     }
 
+def build_test_plugins_step():
+    """Build the test plugins used in e2e tests
+
+    Returns:
+      Drone step.
+    """
+    return {
+        "name": "build-test-plugins",
+        "image": images["node"],
+        "environment": {
+            "NODE_OPTIONS": "--max_old_space_size=8192",
+        },
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn e2e:plugin:build",
+        ],
+    }
+
 def update_package_json_version():
     """Updates the packages/ to use a version that has the build ID in it: 10.0.0pre -> 10.0.0-5432pre
 
@@ -553,7 +573,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
+            "go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m",
         ],
     }
 
@@ -707,6 +727,7 @@ def frontend_metrics_step(trigger = None):
     Returns:
       Drone step.
     """
+
     step = {
         "name": "publish-frontend-metrics",
         "image": images["node"],
@@ -773,6 +794,7 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         "image": images["cypress"],
         "depends_on": [
             "grafana-server",
+            "build-test-plugins",
         ],
         "environment": {
             "HOST": "grafana-server",
@@ -872,6 +894,7 @@ def playwright_e2e_tests_step():
         "image": images["node_deb"],
         "depends_on": [
             "grafana-server",
+            "build-test-plugins",
         ],
         "commands": [
             "npx wait-on@7.0.1 http://$HOST:$PORT",
@@ -1056,7 +1079,7 @@ def mysql_integration_tests_steps(hostname, version):
 def redis_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
+        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1081,7 +1104,7 @@ def remote_alertmanager_integration_tests_steps():
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
+        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1156,7 +1179,7 @@ def upload_packages_step(ver_mode, trigger = None):
         step = dict(step, when = trigger)
     return step
 
-def publish_grafanacom_step(ver_mode):
+def publish_grafanacom_step(ver_mode, depends_on = ["publish-linux-packages-deb", "publish-linux-packages-rpm"]):
     """Publishes Grafana packages to grafana.com.
 
     Args:
@@ -1164,6 +1187,7 @@ def publish_grafanacom_step(ver_mode):
         variable as the value for the --build-id option.
         TODO: is this actually used by the grafanacom subcommand? I think it might
         just use the environment variable directly.
+      depends_on: what other steps this one depends on (strings)
 
     Returns:
       Drone step.
@@ -1181,10 +1205,7 @@ def publish_grafanacom_step(ver_mode):
     return {
         "name": "publish-grafanacom",
         "image": images["publish"],
-        "depends_on": [
-            "publish-linux-packages-deb",
-            "publish-linux-packages-rpm",
-        ],
+        "depends_on": depends_on,
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
             "GCP_KEY": from_secret(gcp_grafanauploads_base64),
@@ -1244,7 +1265,8 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def retry_command(command, attempts = 5, delay = 60):
+# This retry will currently continue for 30 minutes until fail, unless successful.
+def retry_command(command, attempts = 60, delay = 30):
     return [
         "for i in $(seq 1 %d); do" % attempts,
         "    if %s; then" % command,
@@ -1281,7 +1303,7 @@ def verify_linux_DEB_packages_step(depends_on = []):
             'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
             'echo "Step 5: Installing Grafana..."',
             # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
-        ] + retry_command(install_command, attempts = 10) + [
+        ] + retry_command(install_command) + [
             'echo "Step 6: Verifying Grafana installation..."',
             'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
@@ -1307,7 +1329,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
         "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
     )
 
-    repo_install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
+    install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-RPM-packages",
@@ -1326,7 +1348,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             "dnf list available grafana-${TAG}",
             "if [ $? -eq 0 ]; then",
             '    echo "Grafana package found in repository. Installing from repo..."',
-        ] + retry_command(repo_install_command, attempts = 5) + [
+        ] + retry_command(install_command) + [
             '    echo "Verifying GPG key..."',
             "    rpm --import https://rpm.grafana.com/gpg.key",
             "    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana",

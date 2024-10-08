@@ -6,7 +6,8 @@ import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
  */
 export function addLegendOptions<T extends OptionsWithLegend>(
   builder: PanelOptionsEditorBuilder<T>,
-  includeLegendCalcs = true
+  includeLegendCalcs = true,
+  showLegend = true
 ) {
   builder
     .addBooleanSwitch({
@@ -14,7 +15,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       name: 'Visibility',
       category: ['Legend'],
       description: '',
-      defaultValue: true,
+      defaultValue: showLegend,
     })
     .addRadio({
       path: 'legend.displayMode',

@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -64,8 +63,8 @@ func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string
 }
 
 // GetPluginArchiveInfo returns the options for downloading the requested plugin (with optional `version`)
-func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginArchiveInfo, error) {
-	v, err := m.PluginVersion(pluginID, version, compatOpts)
+func (m *Manager) GetPluginArchiveInfo(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginArchiveInfo, error) {
+	v, err := m.PluginVersion(ctx, pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -78,18 +77,13 @@ func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version stri
 }
 
 // PluginVersion will return plugin version based on the requested information
-func (m *Manager) PluginVersion(pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
-	versions, err := m.grafanaCompatiblePluginVersions(pluginID, compatOpts)
+func (m *Manager) PluginVersion(ctx context.Context, pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
+	versions, err := m.grafanaCompatiblePluginVersions(ctx, pluginID, compatOpts)
 	if err != nil {
 		return VersionData{}, err
 	}
 
-	sysCompatOpts, exists := compatOpts.System()
-	if !exists {
-		return VersionData{}, errors.New("no system compatibility requirements set")
-	}
-
-	compatibleVer, err := SelectSystemCompatibleVersion(m.log, versions, pluginID, version, sysCompatOpts)
+	compatibleVer, err := SelectSystemCompatibleVersion(m.log, versions, pluginID, version, compatOpts)
 	if err != nil {
 		return VersionData{}, err
 	}
@@ -109,7 +103,7 @@ func (m *Manager) downloadURL(pluginID, version string) string {
 }
 
 // grafanaCompatiblePluginVersions will get version info from /api/plugins/$pluginID/versions
-func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts CompatOpts) ([]Version, error) {
+func (m *Manager) grafanaCompatiblePluginVersions(ctx context.Context, pluginID string, compatOpts CompatOpts) ([]Version, error) {
 	u, err := url.Parse(m.baseURL)
 	if err != nil {
 		return nil, err
@@ -117,7 +111,7 @@ func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts Co
 
 	u.Path = path.Join(u.Path, pluginID, "versions")
 
-	body, err := m.client.SendReq(u, compatOpts)
+	body, err := m.client.SendReq(ctx, u, compatOpts)
 	if err != nil {
 		return nil, err
 	}

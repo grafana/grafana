@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,6 +38,10 @@ type Rule interface {
 	Eval(eval *Evaluation) (bool, *Evaluation)
 	// Update sends a singal to change the definition of the rule.
 	Update(lastVersion RuleVersionAndPauseStatus) bool
+	// Type gives the type of the rule.
+	Type() ngmodels.RuleType
+	// Status indicates the status of the evaluating rule.
+	Status() ngmodels.RuleStatus
 }
 
 type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
@@ -55,7 +59,7 @@ func newRuleFactory(
 	evalFactory eval.EvaluatorFactory,
 	ruleProvider ruleProvider,
 	clock clock.Clock,
-	featureToggles featuremgmt.FeatureToggles,
+	rrCfg setting.RecordingRuleSettings,
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
@@ -71,11 +75,13 @@ func newRuleFactory(
 				maxAttempts,
 				clock,
 				evalFactory,
-				featureToggles,
+				rrCfg,
 				logger,
 				met,
 				tracer,
 				recordingWriter,
+				evalAppliedHook,
+				stopAppliedHook,
 			)
 		}
 		return newAlertRule(
@@ -170,6 +176,14 @@ func newAlertRule(
 		logger:               logger.FromContext(ctx),
 		tracer:               tracer,
 	}
+}
+
+func (a *alertRule) Type() ngmodels.RuleType {
+	return ngmodels.RuleTypeAlerting
+}
+
+func (a *alertRule) Status() ngmodels.RuleStatus {
+	return a.stateManager.GetStatusForRuleUID(a.key.OrgID, a.key.UID)
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
@@ -414,10 +428,11 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 			err = results.Error()
 		}
 
+		logger.Debug("Alert rule evaluated", "error", err, "duration", dur)
 		span.SetStatus(codes.Error, "rule evaluation failed")
 		span.RecordError(err)
 	} else {
-		logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
+		logger.Debug("Alert rule evaluated", "results", len(results), "duration", dur)
 		span.AddEvent("rule evaluated", trace.WithAttributes(
 			attribute.Int64("results", int64(len(results))),
 		))
@@ -503,6 +518,9 @@ func SchedulerUserFor(orgID int64) *user.SignedInUser {
 		Permissions: map[int64]map[string][]string{
 			orgID: {
 				datasources.ActionQuery: []string{
+					datasources.ScopeAll,
+				},
+				datasources.ActionRead: []string{
 					datasources.ScopeAll,
 				},
 			},

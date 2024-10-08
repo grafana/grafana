@@ -3,6 +3,8 @@ package idtest
 import (
 	"context"
 
+	authnlib "github.com/grafana/authlib/authn"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth"
 )
@@ -10,15 +12,15 @@ import (
 var _ auth.IDService = (*MockService)(nil)
 
 type MockService struct {
-	SignIdentityFn  func(ctx context.Context, identity identity.Requester) (string, error)
+	SignIdentityFn  func(ctx context.Context, identity identity.Requester) (string, *authnlib.Claims[authnlib.IDTokenClaims], error)
 	RemoveIDTokenFn func(ctx context.Context, identity identity.Requester) error
 }
 
-func (m *MockService) SignIdentity(ctx context.Context, identity identity.Requester) (string, error) {
+func (m *MockService) SignIdentity(ctx context.Context, identity identity.Requester) (string, *authnlib.Claims[authnlib.IDTokenClaims], error) {
 	if m.SignIdentityFn != nil {
 		return m.SignIdentityFn(ctx, identity)
 	}
-	return "", nil
+	return "", nil, nil
 }
 
 func (m *MockService) RemoveIDToken(ctx context.Context, identity identity.Requester) error {

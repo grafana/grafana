@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FieldErrors, FieldValues, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -83,19 +83,19 @@ export function ChannelSubForm<R extends ChannelValues>({
         name === fieldName('settings.integration_type') &&
         value === OnCallIntegrationType.ExistingIntegration
       ) {
-        setValue(fieldName('settings.url'), initialValues.settings['url']);
+        setValue(fieldName('settings.url'), initialValues.settings.url);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [selectedType, initialValues, setValue, fieldName, watch]);
 
-  const [_secureFields, setSecureFields] = useState(secureFields ?? {});
+  const [_secureFields, setSecureFields] = useState<Record<string, boolean | ''>>(secureFields ?? {});
 
   const onResetSecureField = (key: string) => {
     if (_secureFields[key]) {
-      const updatedSecureFields = { ...secureFields };
-      delete updatedSecureFields[key];
+      const updatedSecureFields = { ..._secureFields };
+      updatedSecureFields[key] = '';
       setSecureFields(updatedSecureFields);
       setValue(`${pathPrefix}.secureFields`, updatedSecureFields);
     }
@@ -262,7 +262,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1),
     border: `solid 1px ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
-    maxWidth: `${theme.breakpoints.values.xl}${theme.breakpoints.unit}`,
   }),
   topRow: css({
     display: 'flex',

@@ -132,25 +132,36 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       if (withLinks) {
         const timeZone = Array.isArray(this.props.timeZone) ? this.props.timeZone[0] : this.props.timeZone;
 
-        alignedFrame.fields.forEach((field) => {
-          field.getLinks = getLinksSupplier(
-            alignedFrame,
-            field,
-            {
-              ...field.state?.scopedVars,
-              __dataContext: {
-                value: {
-                  data: [alignedFrame],
-                  field: field,
-                  frame: alignedFrame,
-                  frameIndex: 0,
+        // for links gen we need to use original frames but with the aligned/joined data values
+        let linkFrames = frames.map((frame, frameIdx) => ({
+          ...frame,
+          fields: alignedFrame.fields.filter(
+            (field, fieldIdx) => fieldIdx === 0 || field.state?.origin?.frameIndex === frameIdx
+          ),
+          length: alignedFrame.length,
+        }));
+
+        linkFrames.forEach((linkFrame, frameIndex) => {
+          linkFrame.fields.forEach((field) => {
+            field.getLinks = getLinksSupplier(
+              linkFrame,
+              field,
+              {
+                ...field.state?.scopedVars,
+                __dataContext: {
+                  value: {
+                    data: linkFrames,
+                    field: field,
+                    frame: linkFrame,
+                    frameIndex,
+                  },
                 },
               },
-            },
-            replaceVariables,
-            timeZone,
-            dataLinkPostProcessor
-          );
+              replaceVariables,
+              timeZone,
+              dataLinkPostProcessor
+            );
+          });
         });
 
         // filter join field and fields.y

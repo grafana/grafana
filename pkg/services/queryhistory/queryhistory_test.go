@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -48,7 +49,7 @@ type scenarioContext struct {
 	initialResult QueryHistoryResponse
 }
 
-func testScenario(t *testing.T, desc string, isViewer bool, fn func(t *testing.T, sc scenarioContext)) {
+func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplorePermission bool, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
@@ -59,9 +60,10 @@ func testScenario(t *testing.T, desc string, isViewer bool, fn func(t *testing.T
 		ctx.Req.Header.Add("Content-Type", "application/json")
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		service := QueryHistoryService{
-			Cfg:   setting.NewCfg(),
-			store: sqlStore,
-			now:   time.Now,
+			Cfg:           setting.NewCfg(),
+			store:         sqlStore,
+			now:           time.Now,
+			accessControl: accesscontrolmock.New(),
 		}
 		service.Cfg.QueryHistoryEnabled = true
 		quotaService := quotatest.New(false, nil)
@@ -80,14 +82,22 @@ func testScenario(t *testing.T, desc string, isViewer bool, fn func(t *testing.T
 			role = org.RoleEditor
 		}
 
+		permissions := make(map[int64]map[string][]string)
+
+		if hasDatasourceExplorePermission {
+			permissions[testUserID] = make(map[string][]string)
+			permissions[testUserID]["datasources:explore"] = []string{}
+		}
+
 		usr := user.SignedInUser{
-			UserID:     testUserID,
-			Name:       "Signed In User",
-			Login:      "signed_in_user",
-			Email:      "signed.in.user@test.com",
-			OrgID:      testOrgID,
-			OrgRole:    role,
-			LastSeenAt: service.now(),
+			UserID:      testUserID,
+			Name:        "Signed In User",
+			Login:       "signed_in_user",
+			Email:       "signed.in.user@test.com",
+			OrgID:       testOrgID,
+			OrgRole:     role,
+			LastSeenAt:  service.now(),
+			Permissions: permissions,
 		}
 
 		_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{
@@ -113,7 +123,7 @@ func testScenario(t *testing.T, desc string, isViewer bool, fn func(t *testing.T
 func testScenarioWithQueryInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
-	testScenario(t, desc, false, func(t *testing.T, sc scenarioContext) {
+	testScenario(t, desc, false, false, func(t *testing.T, sc scenarioContext) {
 		command := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
 			Queries: simplejson.NewFromAny([]interface{}{
@@ -132,7 +142,7 @@ func testScenarioWithQueryInQueryHistory(t *testing.T, desc string, fn func(t *t
 func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
-	testScenario(t, desc, false, func(t *testing.T, sc scenarioContext) {
+	testScenario(t, desc, false, false, func(t *testing.T, sc scenarioContext) {
 		start := time.Now().Add(-3 * time.Second)
 		sc.service.now = func() time.Time { return start }
 		command1 := CreateQueryInQueryHistoryCommand{
@@ -193,7 +203,7 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 func testScenarioWithMixedQueriesInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
 	t.Helper()
 
-	testScenario(t, desc, false, func(t *testing.T, sc scenarioContext) {
+	testScenario(t, desc, false, false, func(t *testing.T, sc scenarioContext) {
 		start := time.Now()
 		sc.service.now = func() time.Time { return start }
 		command1 := CreateQueryInQueryHistoryCommand{

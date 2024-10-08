@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/grafana/authlib/authn"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/authlib/authn"
+	authClaims "github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -17,7 +19,6 @@ const (
 	mdLogin   = "grafana-login"
 	mdUserID  = "grafana-user-id"
 	mdUserUID = "grafana-user-uid"
-	mdOrgName = "grafana-org-name"
 	mdOrgID   = "grafana-org-id"
 	mdOrgRole = "grafana-org-role"
 )
@@ -72,11 +73,11 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return nil, fmt.Errorf("no login found in grpc metadata")
 	}
 
-	// The namespaced verisons have a "-" in the key
+	// The namespaced versions have a "-" in the key
 	// TODO, remove after this has been deployed to unified storage
 	if getter(mdUserID) == "" {
 		var err error
-		user.Type = identity.TypeUser
+		user.Type = authClaims.TypeUser
 		user.UserID, err = strconv.ParseInt(getter("grafana-userid"), 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("invalid user id: %w", err)
@@ -88,23 +89,22 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return user, nil
 	}
 
-	ns, err := identity.ParseTypedID(getter(mdUserID))
+	typ, id, err := identity.ParseTypeAndID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.Type = ns.Type()
-	user.UserID, err = ns.ParseInt()
+	user.Type = typ
+	user.UserID, err = strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	ns, err = identity.ParseTypedID(getter(mdUserUID))
+	_, id, err = identity.ParseTypeAndID(getter(mdUserUID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
-	user.UserUID = ns.ID()
+	user.UserUID = id
 
-	user.OrgName = getter(mdOrgName)
 	user.OrgID, err = strconv.ParseInt(getter(mdOrgID), 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid org id: %w", err)
@@ -144,20 +144,21 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 }
 
 func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
+	id, _ := user.GetInternalID()
+
 	return metadata.Pairs(
 		// This should be everything needed to recreate the user
 		mdToken, user.GetIDToken(),
 
 		// Or we can create it directly
-		mdUserID, user.GetID().String(),
+		mdUserID, user.GetID(),
 		mdUserUID, user.GetUID(),
-		mdOrgName, user.GetOrgName(),
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		mdOrgRole, string(user.GetOrgRole()),
 		mdLogin, user.GetLogin(),
 
 		// TODO, Remove after this is deployed to unified storage
-		"grafana-userid", user.GetID().ID(),
+		"grafana-userid", strconv.FormatInt(id, 10),
 		"grafana-useruid", user.GetRawIdentifier(),
 	)
 }

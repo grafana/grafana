@@ -8,7 +8,7 @@ comments: |
 
 A threshold is a value or limit you set for a metric that’s reflected visually when it’s met or exceeded. Thresholds are one way you can conditionally style and color your visualizations based on query results.
 
-Set the following options:
+For each threshold, set the following options:
 
 | Option          | Description                                                                          |
 | --------------- | ------------------------------------------------------------------------------------ |

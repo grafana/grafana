@@ -27,6 +27,7 @@ global.$ = global.jQuery = $;
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {
   angularSupportEnabled: true,
+  featureToggles: {},
 };
 global.grafanaBootData = {
   settings,
@@ -87,8 +88,6 @@ throwUnhandledRejections();
 
 // Used by useMeasure
 global.ResizeObserver = class ResizeObserver {
-  //callback: ResizeObserverCallback;
-
   constructor(callback: ResizeObserverCallback) {
     setTimeout(() => {
       callback(
@@ -104,8 +103,11 @@ global.ResizeObserver = class ResizeObserver {
               left: 100,
               right: 0,
             },
-            target: {},
-          } as ResizeObserverEntry,
+            target: {
+              // Needed for react-virtual to work in tests
+              getAttribute: () => 1,
+            },
+          } as unknown as ResizeObserverEntry,
         ],
         this
       );

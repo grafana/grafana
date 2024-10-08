@@ -399,3 +399,10 @@ func Errorf(span trace.Span, format string, args ...any) error {
 	err := fmt.Errorf(format, args...)
 	return Error(span, err)
 }
+
+var instrumentationScope = "github.com/grafana/grafana/pkg/infra/tracing"
+
+// Start only creates an OpenTelemetry span if the incoming context already includes a span.
+func Start(ctx context.Context, name string, attributes ...attribute.KeyValue) (context.Context, trace.Span) {
+	return trace.SpanFromContext(ctx).TracerProvider().Tracer(instrumentationScope).Start(ctx, name, trace.WithAttributes(attributes...))
+}

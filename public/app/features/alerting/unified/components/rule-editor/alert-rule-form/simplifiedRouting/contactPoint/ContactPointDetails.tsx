@@ -1,7 +1,7 @@
 import { Stack } from '@grafana/ui';
 
 import { ContactPointReceiverTitleRow } from '../../../../contact-points/ContactPoint';
-import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from '../../../../contact-points/useContactPoints';
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from '../../../../contact-points/constants';
 import { ReceiverConfigWithMetadata, getReceiverDescription } from '../../../../contact-points/utils';
 
 interface ContactPointDetailsProps {

@@ -68,26 +68,35 @@ type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
+	Name   string          `xorm:"name" json:"name"`
 	Type   MigrateDataType `xorm:"resource_type" json:"type"`
 	RefID  string          `xorm:"resource_uid" json:"refId"`
 	Status ItemStatus      `xorm:"status" json:"status"`
 	Error  string          `xorm:"error_string" json:"error"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
+	ParentName  string `xorm:"parent_name" json:"parentName"`
 }
 
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType        MigrateDataType = "DASHBOARD"
+	DatasourceDataType       MigrateDataType = "DATASOURCE"
+	FolderDataType           MigrateDataType = "FOLDER"
+	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
+	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	ContactPointType         MigrateDataType = "CONTACT_POINT"
+	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
+	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
+	MuteTimingType           MigrateDataType = "MUTE_TIMING"
 )
 
 type ItemStatus string
 
 const (
 	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
 )
@@ -141,6 +150,7 @@ type ListSnapshotsQuery struct {
 	SessionUID string
 	Page       int
 	Limit      int
+	Sort       string
 }
 
 type UpdateSnapshotCmd struct {
@@ -181,7 +191,8 @@ type Base64HGInstance struct {
 // GMS domain structs
 
 type MigrateDataRequest struct {
-	Items []MigrateDataRequestItem
+	Items           []MigrateDataRequestItem
+	ItemParentNames map[MigrateDataType]map[string](string)
 }
 
 type MigrateDataRequestItem struct {

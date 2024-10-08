@@ -379,7 +379,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.setState(stateUpdate);
   };
 
-  onOptionsChange = (options: any) => {
+  onOptionsChange = (options: object) => {
     this.props.panel.updateOptions(options);
   };
 
@@ -587,7 +587,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         hoverHeader={panelChromeProps.hasOverlayHeader()}
         displayMode={transparent ? 'transparent' : 'default'}
         onCancelQuery={panelChromeProps.onCancelQuery}
-        onOpenMenu={panelChromeProps.onOpenMenu}
         onFocus={() => this.setPanelAttention()}
         onMouseEnter={() => this.setPanelAttention()}
         onMouseMove={() => this.debouncedSetPanelAttention()}

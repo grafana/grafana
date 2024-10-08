@@ -1,3 +1,4 @@
+import { VariableRefresh } from '@grafana/data';
 import {
   DeepPartial,
   EmbeddedScene,
@@ -15,9 +16,9 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 import { DashboardDTO } from 'app/types';
 
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
@@ -103,9 +104,10 @@ interface SceneOptions {
   usePanelRepeater?: boolean;
   useRowRepeater?: boolean;
   throwError?: string;
+  variableRefresh?: VariableRefresh;
 }
 
-export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
+export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel) {
   const defaults = { usePanelRepeater: true, ...options };
 
   const withRepeat = new DashboardGridItem({
@@ -157,6 +159,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       { label: 'E', value: '5' },
     ].slice(0, options.numberOfOptions),
     throwError: defaults.throwError,
+    refresh: options.variableRefresh,
   });
 
   const rowRepeatVariable = new TestVariable({
@@ -182,8 +185,10 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     $variables: new SceneVariableSet({
       variables: [panelRepeatVariable, rowRepeatVariable],
     }),
-    body: new SceneGridLayout({
-      children: [row],
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [row],
+      }),
     }),
   });
 

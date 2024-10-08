@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../features/dashboard/dashboards/
   - ../panels/working-with-panels/organize-dashboard/
   - ../reference/dashboard_folders/
   - dashboard-folders/
@@ -20,7 +19,7 @@ labels:
 menuTitle: Manage dashboards
 title: Manage dashboards
 description: Learn about dashboard management and generative AI features for dashboards
-weight: 8
+weight: 300
 refs:
   build-dashboards:
     - pattern: /docs/grafana/
@@ -71,7 +70,7 @@ If you have permission to view all folders, you won't see a **Shared with me**.
 
 Folders help you organize and group dashboards, which is useful when you have many dashboards or multiple teams using the same Grafana instance.
 
-> **Before you begin:** Ensure you have Editor permissions or greater to create folders. For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
+> **Before you begin:** Ensure you have organization Editor permissions or greater to create root level folders or Edit or Admin access to a parent folder to create subfolders. For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
 
 **To create a dashboard folder:**
 

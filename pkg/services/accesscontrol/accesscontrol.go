@@ -3,8 +3,10 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -25,6 +27,12 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
+	// WithoutResolvers copies AccessControl without any configured resolvers.
+	// This is useful when we don't want to reuse any pre-configured resolvers
+	// for a authorization call.
+	WithoutResolvers() AccessControl
+	Check(ctx context.Context, req CheckRequest) (bool, error)
+	ListObjects(ctx context.Context, req ListObjectsRequest) ([]string, error)
 }
 
 type Service interface {
@@ -83,8 +91,8 @@ type SearchOptions struct {
 	Action       string
 	ActionSets   []string
 	Scope        string
-	TypedID      identity.TypedID // ID of the identity (ex: user:3, service-account:4)
-	wildcards    Wildcards        // private field computed based on the Scope
+	TypedID      string    // ID of the identity (ex: user:3, service-account:4)
+	wildcards    Wildcards // private field computed based on the Scope
 	RolePrefixes []string
 }
 
@@ -104,17 +112,16 @@ func (s *SearchOptions) Wildcards() []string {
 }
 
 func (s *SearchOptions) ComputeUserID() (int64, error) {
-	id, err := s.TypedID.ParseInt()
+	typ, id, err := identity.ParseTypeAndID(s.TypedID)
 	if err != nil {
 		return 0, err
 	}
 
-	// Validate namespace type is user or service account
-	if s.TypedID.Type() != identity.TypeUser && s.TypedID.Type() != identity.TypeServiceAccount {
-		return 0, fmt.Errorf("invalid type: %s", s.TypedID.Type())
+	if !claims.IsIdentityType(typ, claims.TypeUser, claims.TypeServiceAccount) {
+		return 0, fmt.Errorf("invalid type: %s", typ)
 	}
 
-	return id, nil
+	return strconv.ParseInt(id, 10, 64)
 }
 
 type SyncUserRolesCommand struct {
@@ -145,6 +152,12 @@ type DatasourcePermissionsService interface {
 
 type ServiceAccountPermissionsService interface {
 	PermissionsService
+}
+
+type ReceiverPermissionsService interface {
+	PermissionsService
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
+	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
 }
 
 type PermissionsService interface {

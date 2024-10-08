@@ -55,6 +55,233 @@
     },
     "pause": ""
   },
+  "alerting": {
+    "annotations": {
+      "description": "",
+      "title": ""
+    },
+    "central-alert-history": {
+      "details": {
+        "error": "",
+        "header": {
+          "alert-rule": "",
+          "instance": "",
+          "state": "",
+          "timestamp": ""
+        },
+        "loading": "",
+        "no-recognized-state": "",
+        "no-values": "",
+        "not-found": "",
+        "number-transitions": "",
+        "state": {
+          "alerting": "",
+          "error": "",
+          "no-data": "",
+          "normal": "",
+          "pending": ""
+        },
+        "state-transitions": "",
+        "unknown-event-state": "",
+        "unknown-rule": "",
+        "value-in-transition": ""
+      },
+      "error": "",
+      "filter": {
+        "clear": "",
+        "info": {
+          "label1": "",
+          "label2": "",
+          "label3": "",
+          "label4": ""
+        }
+      },
+      "filterBy": "",
+      "too-many-events": {
+        "text": "",
+        "title": ""
+      }
+    },
+    "common": {
+      "cancel": "",
+      "delete": "",
+      "edit": "",
+      "export": "",
+      "export-all": "",
+      "view": ""
+    },
+    "contact-point": "",
+    "contact-points": {
+      "create": "",
+      "delete-reasons": {
+        "heading": "",
+        "no-permissions": "",
+        "policies": "",
+        "provisioned": "",
+        "rules": ""
+      },
+      "delivery-duration": "",
+      "empty-state": {
+        "title": ""
+      },
+      "last-delivery-attempt": "",
+      "last-delivery-failed": "",
+      "no-delivery-attempts": "",
+      "no-integrations": "",
+      "only-firing": "",
+      "telegram": {
+        "parse-mode-warning-body": "",
+        "parse-mode-warning-title": ""
+      },
+      "used-by_other": "",
+      "used-by-rules_other": ""
+    },
+    "contactPointFilter": {
+      "label": ""
+    },
+    "list-view": {
+      "empty": {
+        "new-alert-rule": "",
+        "new-recording-rule": "",
+        "provisioning": ""
+      },
+      "section": {
+        "dataSourceManaged": {
+          "title": ""
+        },
+        "grafanaManaged": {
+          "export-rules": "",
+          "loading": "",
+          "new-recording-rule": "",
+          "title": ""
+        }
+      }
+    },
+    "manage-permissions": {
+      "button": "",
+      "title": ""
+    },
+    "mute_timings": {
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "mute-timings": {
+      "save": "",
+      "saving": ""
+    },
+    "policies": {
+      "default-policy": {
+        "description": "",
+        "title": ""
+      },
+      "generated-policies": "",
+      "metadata": {
+        "active-time": "",
+        "delivered-to": "",
+        "grouped-by": "",
+        "grouping": {
+          "none": "",
+          "single-group": ""
+        },
+        "inherited": "",
+        "mute-time": "",
+        "timingOptions": {
+          "groupInterval": {
+            "description": "",
+            "label": ""
+          },
+          "groupWait": {
+            "description": "",
+            "label": ""
+          },
+          "repeatInterval": {
+            "description": "",
+            "label": ""
+          }
+        },
+        "n-instances_other": ""
+      },
+      "new-child": "",
+      "new-policy": "",
+      "no-matchers": "",
+      "n-more-policies_other": ""
+    },
+    "provisioning": {
+      "badge-tooltip-provenance": "",
+      "badge-tooltip-standard": ""
+    },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": ""
+      },
+      "preview": "",
+      "previewCondition": ""
+    },
+    "rule-groups": {
+      "delete": {
+        "success": ""
+      },
+      "move": {
+        "success": ""
+      },
+      "rename": {
+        "success": ""
+      },
+      "update": {
+        "success": ""
+      }
+    },
+    "rule-state": {
+      "creating": "",
+      "deleting": "",
+      "paused": "",
+      "recording-rule": ""
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "",
+        "alert-title": ""
+      }
+    },
+    "rules": {
+      "add-rule": {
+        "success": ""
+      },
+      "delete-rule": {
+        "success": ""
+      },
+      "pause-rule": {
+        "success": ""
+      },
+      "resume-rule": {
+        "success": ""
+      },
+      "update-rule": {
+        "success": ""
+      }
+    },
+    "search": {
+      "property": {
+        "data-source": "",
+        "evaluation-group": "",
+        "labels": "",
+        "namespace": "",
+        "rule-health": "",
+        "rule-name": "",
+        "rule-type": "",
+        "state": ""
+      },
+      "save-query": ""
+    },
+    "simpleCondition": {
+      "alertCondition": "",
+      "ofQuery": {
+        "To": ""
+      }
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -68,6 +295,12 @@
       "message": ""
     }
   },
+  "bookmarks-page": {
+    "empty": {
+      "message": "",
+      "tip": ""
+    }
+  },
   "bouncing-loader": {
     "label": "正在加载"
   },
@@ -75,6 +308,7 @@
     "action": {
       "cancel-button": "取消",
       "cannot-move-folders": "",
+      "confirmation-text": "",
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
       "delete-modal-invalid-title": "无法删除文件夹",
@@ -90,6 +324,9 @@
       "move-modal-title": "移动",
       "moving": "正在移动...",
       "new-folder-name-required-phrase": "文件夹名称是必需项。"
+    },
+    "actions": {
+      "button-to-recently-deleted": ""
     },
     "counts": {
       "alertRule_other": "{{count}} 条警告规则",
@@ -127,6 +364,9 @@
       "search-placeholder": "搜索文件夹",
       "unknown-error": "未知错误"
     },
+    "hard-delete": {
+      "success": ""
+    },
     "manage-folder-nav": {
       "alert-rules": "警报规则",
       "dashboards": "仪表板",
@@ -140,21 +380,22 @@
     "no-results": {
       "clear": "清除搜索和筛选条件",
       "text": ""
-    }
-  },
-  "central-alert-history": {
-    "error": "",
-    "filter": {
-      "button": {
-        "clear": ""
-      },
-      "label": "",
-      "placeholder": ""
+    },
+    "soft-delete": {
+      "success": ""
     }
   },
   "clipboard-button": {
     "inline-toast": {
       "success": "已复制"
+    }
+  },
+  "combobox": {
+    "clear": {
+      "title": ""
+    },
+    "custom-value": {
+      "create": ""
     }
   },
   "command-palette": {
@@ -179,15 +420,27 @@
     }
   },
   "common": {
+    "apply": "",
+    "cancel": "",
+    "clear": "",
+    "close": "",
     "locale": {
       "default": "默认"
     },
-    "save": "保存"
+    "save": "保存",
+    "search": ""
+  },
+  "configuration-tracker": {
+    "config-card": {
+      "complete": ""
+    }
   },
   "connections": {
     "connect-data": {
       "category-header-label": "数据源",
-      "empty-message": ""
+      "empty-message": "",
+      "request-data-source": "",
+      "roadmap": ""
     },
     "search": {
       "placeholder": "搜索全部"
@@ -243,23 +496,30 @@
     },
     "source-form": {
       "control-required": "此字段是必填字段。",
-      "description": "您在目标查询中使用了以下变量：<1></1><2></2>数据点需要为所有变量提供作为字段或转换输出的值，以使关联按钮出现在可视化中。 <4></4>注意：并非每个变量都需要在下面明确定义。<7>logfmt</7> 等变换将为每个键/值对创建变量。",
-      "heading": "目标查询中使用的变量",
+      "description": "",
+      "description-external-pre": "",
+      "description-query-pre": "",
+      "external-title": "",
+      "heading-external": "",
+      "heading-query": "",
+      "query-title": "",
       "results-description": "此链接将显示在此字段的值旁边",
       "results-label": "结果字段",
       "results-required": "此字段是必填字段。",
       "source-description": "所选源数据源得到的结果有在面板中显示的链接",
       "source-label": "源",
-      "sub-text": "<0>定义哪些数据源将显示关联，以及哪些数据将取代先前定义的变量。</0>",
-      "title": "配置将链接到 {{dataSourceName}} 的数据源（第 3 步，共 3 步）。"
+      "sub-text": "<0>定义哪些数据源将显示关联，以及哪些数据将取代先前定义的变量。</0>"
     },
     "sub-title": "定义不同数据源中存在的数据如何相互关联。详细信息请参阅<2>文档<1></1></2>。",
     "target-form": {
       "control-rules": "此字段是必填字段。",
-      "sub-text": "<0>定义关联将链接到哪个数据源，以及点击关联时将会运行什么查询。</0>",
-      "target-description": "指定点击链接时查询哪个数据源",
+      "sub-text": "",
+      "target-description-external": "",
+      "target-description-query": "",
       "target-label": "目标",
-      "title": "设置关联的目标（第 2 步，共 3 步）"
+      "target-type-description": "",
+      "title": "设置关联的目标（第 2 步，共 3 步）",
+      "type-label": ""
     },
     "trans-details": {
       "logfmt-description": "使用 logfmt 解析提供的字段以获取变量",
@@ -422,6 +682,13 @@
       "title": "注释"
     },
     "dashboard-delete-button": "",
+    "delete-modal": {
+      "confirmation-text": "",
+      "delete-button": "",
+      "title": ""
+    },
+    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-text": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "自动刷新",
@@ -432,6 +699,8 @@
       "panel-options-graph-tooltip-description": "控制不同面板上的工具提示和悬停高亮行为。重新加载仪表板以使更改生效",
       "panel-options-graph-tooltip-label": "图表工具提示",
       "panel-options-label": "面板选项",
+      "panels-preload-description": "",
+      "panels-preload-label": "",
       "tags-label": "标签",
       "title": "概况",
       "title-label": "标题"
@@ -446,6 +715,14 @@
     },
     "permissions": {
       "title": "权限"
+    },
+    "provisioned-delete-modal": {
+      "confirm-button": "",
+      "text-1": "",
+      "text-2": "",
+      "text-3": "",
+      "text-link": "",
+      "title": ""
     },
     "settings": {
       "title": "设置"
@@ -468,6 +745,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "",
+      "angular-deprecation-description": "",
+      "angular-deprecation-heading": ""
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -509,18 +791,21 @@
       "message": ""
     }
   },
+  "embed": {
+    "share": {
+      "time-range-description": "",
+      "time-range-label": ""
+    }
+  },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": ""
+      }
+    }
+  },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
-    "add-to-library-modal": {
-      "auto-star": "",
-      "data-source-name": "",
-      "data-source-type": "",
-      "description": "",
-      "info": "",
-      "query": "",
-      "title": "",
-      "visibility": ""
-    },
     "logs": {
       "maximum-pinned-logs": "",
       "no-logs-found": "",
@@ -528,10 +813,34 @@
       "stop-scan": ""
     },
     "query-library": {
+      "add-edit-description": "",
+      "cancel": "",
+      "default-description": "",
       "delete-query": "",
       "delete-query-text": "",
       "delete-query-title": "",
-      "query-deleted": ""
+      "private": "",
+      "public": "",
+      "query-deleted": "",
+      "query-template-add-error": "",
+      "query-template-added": "",
+      "query-template-edit-error": "",
+      "query-template-edited": "",
+      "save": ""
+    },
+    "query-template-modal": {
+      "add-info": "",
+      "add-title": "",
+      "auto-star": "",
+      "data-source-name": "",
+      "description": "",
+      "edit-info": "",
+      "edit-title": "",
+      "query": "",
+      "visibility": ""
+    },
+    "query-template-modall": {
+      "data-source-type": ""
     },
     "rich-history": {
       "close-tooltip": "关闭查询历史记录",
@@ -562,7 +871,6 @@
       "edit-comment-tooltip": "编辑备注",
       "optional-description": "查询所完成操作的可选描述。",
       "query-comment-label": "查询备注",
-      "query-template-added": "",
       "query-text-label": "查询文本",
       "save-comment": "保存备注",
       "star-query-tooltip": "星标查询",
@@ -672,8 +980,36 @@
       "split-widen": "宽窗格"
     }
   },
+  "explore-metrics": {
+    "breakdown": {
+      "clearFilter": "",
+      "labelSelect": "",
+      "noMatchingValue": ""
+    },
+    "viewBy": ""
+  },
+  "export": {
+    "json": {
+      "cancel-button": "",
+      "copy-button": "",
+      "download-button": "",
+      "download-successful_toast_message": "",
+      "export-externally-label": "",
+      "info-text": "",
+      "title": ""
+    },
+    "menu": {
+      "export-as-json-label": "",
+      "export-as-json-tooltip": ""
+    }
+  },
   "folder-picker": {
     "loading": "正在加载文件夹..."
+  },
+  "gen-ai": {
+    "apply-suggestion": "",
+    "incomplete-request-error": "",
+    "send-custom-feedback": ""
   },
   "grafana-ui": {
     "drawer": {
@@ -693,6 +1029,9 @@
     },
     "spinner": {
       "aria-label": ""
+    },
+    "table": {
+      "copy": ""
     }
   },
   "graph": {
@@ -745,6 +1084,13 @@
     },
     "title": "快捷键"
   },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
+  },
   "inspector": {
     "query": {
       "collapse-all": "折叠全部",
@@ -754,6 +1100,141 @@
       "no-data": "尚未收集任何请求和响应。请点击刷新按钮",
       "refresh": "刷新"
     }
+  },
+  "ldap-drawer": {
+    "attributes-section": {
+      "description": "",
+      "email-label": "",
+      "label": "",
+      "member-of-label": "",
+      "name-label": "",
+      "surname-label": "",
+      "username-label": ""
+    },
+    "extra-security-section": {
+      "client-cert-label": "",
+      "client-cert-placeholder": "",
+      "client-cert-value-label": "",
+      "client-cert-value-placeholder": "",
+      "client-key-label": "",
+      "client-key-placeholder": "",
+      "client-key-value-label": "",
+      "client-key-value-placeholder": "",
+      "encryption-provider-base-64": "",
+      "encryption-provider-description": "",
+      "encryption-provider-file-path": "",
+      "encryption-provider-label": "",
+      "label": "",
+      "min-tls-version-description": "",
+      "min-tls-version-label": "",
+      "root-ca-cert-label": "",
+      "root-ca-cert-placeholder": "",
+      "root-ca-cert-value-label": "",
+      "root-ca-cert-value-placeholder": "",
+      "start-tls-description": "",
+      "start-tls-label": "",
+      "tls-ciphers-label": "",
+      "tls-ciphers-placeholder": "",
+      "use-ssl-description": "",
+      "use-ssl-label": "",
+      "use-ssl-tooltip": ""
+    },
+    "group-mapping": {
+      "grafana-admin": {
+        "description": "",
+        "label": ""
+      },
+      "group-dn": {
+        "description": "",
+        "label": ""
+      },
+      "org-id": {
+        "description": "",
+        "label": ""
+      },
+      "org-role": {
+        "label": ""
+      },
+      "remove": {
+        "button": ""
+      }
+    },
+    "group-mapping-section": {
+      "add": {
+        "button": ""
+      },
+      "description": "",
+      "group-search-base-dns-label": "",
+      "group-search-base-dns-placeholder": "",
+      "group-search-filter-description": "",
+      "group-search-filter-label": "",
+      "group-search-filter-user-attribute-description": "",
+      "group-search-filter-user-attribute-label": "",
+      "label": "",
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": ""
+    },
+    "misc-section": {
+      "allow-sign-up-descrition": "",
+      "allow-sign-up-label": "",
+      "label": "",
+      "port-description": "",
+      "port-label": "",
+      "timeout-description": "",
+      "timeout-label": ""
+    },
+    "title": ""
+  },
+  "ldap-settings-page": {
+    "advanced-settings-section": {
+      "edit-button": "",
+      "subtitle": "",
+      "title": ""
+    },
+    "alert": {
+      "discard-success": "",
+      "error-fetching": "",
+      "error-saving": "",
+      "error-validate-form": "",
+      "feature-flag-disabled": "",
+      "saved": ""
+    },
+    "bind-dn": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "bind-password": {
+      "label": ""
+    },
+    "buttons-section": {
+      "disable-button": "",
+      "discard-button": "",
+      "save-and-enable-button": "",
+      "save-button": ""
+    },
+    "documentation": "",
+    "host": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "login-form-alert": {
+      "description": "",
+      "title": ""
+    },
+    "search_filter": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "search-base-dns": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
+    },
+    "subtitle": "",
+    "title": ""
   },
   "library-panel": {
     "add-modal": {
@@ -776,6 +1257,7 @@
     "empty-state": {
       "message": ""
     },
+    "loading-panel-text": "",
     "modal": {
       "button-cancel": "",
       "button-view-panel1": "在 {{label}} 中查看面板...",
@@ -789,6 +1271,22 @@
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
       "success": "库面板已保存"
+    }
+  },
+  "link": {
+    "share": {
+      "config-alert-description": "",
+      "config-alert-title": "",
+      "config-description": "",
+      "copy-link-button": "",
+      "copy-to-clipboard": "",
+      "short-url-label": "",
+      "time-range-description": "",
+      "time-range-label": ""
+    },
+    "share-panel": {
+      "config-description": "",
+      "render-image": ""
     }
   },
   "login": {
@@ -817,7 +1315,22 @@
       "new-to-question": "初次使用 Grafana？"
     }
   },
+  "logs": {
+    "infinite-scroll": {
+      "older-logs": ""
+    }
+  },
   "migrate-to-cloud": {
+    "build-snapshot": {
+      "description": "",
+      "title": "",
+      "when-complete": ""
+    },
+    "building-snapshot": {
+      "description": "",
+      "description-eta": "",
+      "title": ""
+    },
     "can-i-move": {
       "body": "将此安装连接到云堆栈后，就可以上传数据源和仪表盘。",
       "link-title": "了解如何迁移其他设置",
@@ -844,6 +1357,12 @@
       "button": "将此实例迁移到云端",
       "header": "让我们管理你的 Grafana 堆栈"
     },
+    "delete-migration-token-confirm": {
+      "body": "",
+      "confirm-button": "",
+      "error-title": "",
+      "title": ""
+    },
     "disconnect-modal": {
       "body": "这将删除此安装中的迁移令牌。如果将来想上传更多资源，则需要输入新的迁移令牌。",
       "cancel": "取消",
@@ -861,7 +1380,7 @@
       "step-3": "系统将提示您输入迁移令牌。您可以从该屏幕生成一个。",
       "step-4": "在您自己管理的实例中，选择“上传所有内容”，以将数据源和仪表盘上传到此云堆栈。",
       "step-5": "如果某些数据源无法通过公共互联网运行，则需要在您自己管理的环境中安装专用数据源连接。",
-      "title": "如何开始"
+      "title": ""
     },
     "is-it-secure": {
       "body": "Grafana Labs 致力于维护最高标准的数据隐私和安全。通过实施行业标准的安全技术和程序，我们帮助保护客户的数据免遭未经授权的访问、使用或披露。",
@@ -869,12 +1388,18 @@
       "title": "它是否安全？"
     },
     "migrate-to-this-stack": {
-      "body": "您自己管理的 Grafana 实例中的一些配置可自动复制到此云堆栈中。",
+      "body": "",
       "link-title": "查看完整的迁移指南",
-      "title": "将配置迁移到此堆栈中"
+      "title": ""
+    },
+    "migrated-counts": {
+      "dashboards": "",
+      "datasources": "",
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
-      "body": "您自己管理的 Grafana 实例需要特殊的身份验证令牌才能安全地连接到该云堆栈。",
+      "delete-button": "",
       "delete-modal-body": "如果您已经在自己管理的安装中使用了此令牌，则该安装将无法再上传内容。",
       "delete-modal-cancel": "取消",
       "delete-modal-confirm": "删除",
@@ -890,8 +1415,23 @@
       "modal-field-description": "现在就复制令牌，因为您将无法再次看到它。丢失令牌后需要创建一个新令牌。",
       "modal-field-label": "令牌",
       "modal-title": "已创建迁移令牌",
-      "status": "",
-      "title": "迁移令牌"
+      "status": ""
+    },
+    "onprem": {
+      "cancel-snapshot-error-title": "",
+      "create-snapshot-error-title": "",
+      "disconnect-error-title": "",
+      "error-see-server-logs": "",
+      "get-session-error-title": "",
+      "get-snapshot-error-title": "",
+      "migration-finished-with-caveat-title": "",
+      "migration-finished-with-errors-body": "",
+      "migration-finished-with-warnings-body": "",
+      "snapshot-error-status-body": "",
+      "snapshot-error-status-title": "",
+      "success-message": "",
+      "success-title": "",
+      "upload-snapshot-error-title": ""
     },
     "pdc": {
       "body": "将您的数据源暴露在互联网上可能会引发安全问题。专用数据源连接 (PDC) 允许 Grafana Cloud 通过安全的网络隧道访问您的现有数据源。",
@@ -903,15 +1443,34 @@
       "link-title": "Grafana Cloud 价格",
       "title": "费用如何？"
     },
+    "public-preview": {
+      "button-text": "",
+      "message": "",
+      "title": ""
+    },
+    "resource-details": {
+      "dismiss-button": "",
+      "error-title": "",
+      "generic-title": "",
+      "missing-message": "",
+      "resource-summary": "",
+      "title": "",
+      "warning-title": ""
+    },
     "resource-status": {
       "error-details-button": "详情",
       "failed": "错误",
       "migrated": "上传到云端",
       "migrating": "正在上传...",
       "not-migrated": "尚未上传",
-      "unknown": "未知"
+      "unknown": "未知",
+      "warning": "",
+      "warning-details-button": ""
     },
     "resource-table": {
+      "dashboard-load-error": "",
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -919,20 +1478,31 @@
       "dashboard": "仪表板",
       "datasource": "数据源",
       "folder": "",
+      "library_element": "",
       "unknown": "未知"
     },
     "summary": {
+      "cancel-snapshot": "",
       "disconnect": "",
-      "disconnect-error-description": "",
-      "disconnect-error-title": "",
-      "run-migration-error-description": "",
-      "run-migration-error-title": "",
+      "errored-resource-count": "",
+      "page-loading": "",
+      "rebuild-snapshot": "",
+      "snapshot-date": "",
+      "snapshot-not-created": "",
       "start-migration": "",
-      "target-stack-title": ""
+      "successful-resource-count": "",
+      "target-stack-title": "",
+      "total-resource-count": "",
+      "upload-migration": ""
+    },
+    "support-types-disclosure": {
+      "text": ""
     },
     "token-status": {
       "active": "令牌已创建并激活",
-      "no-active": "无激活的令牌"
+      "no-active": "无激活的令牌",
+      "unknown": "",
+      "unknown-error": ""
     },
     "what-is-cloud": {
       "body": "Grafana Cloud 是一个完全托管的云托管观测平台，是云原生环境的理想选择。它拥有您所喜爱的 Grafana 的一切，而无需维护、升级和支持安装。",
@@ -972,8 +1542,8 @@
       "title": "通知渠道"
     },
     "alerting-groups": {
-      "subtitle": "查看来自 Alertmanager（警报管理器）实例的分组警报",
-      "title": "组"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-home": {
       "title": "首页"
@@ -1010,10 +1580,16 @@
     },
     "apps": {
       "subtitle": "扩展 Grafana 体验的应用插件",
-      "title": "应用"
+      "title": ""
     },
     "authentication": {
       "title": "身份验证"
+    },
+    "bookmarks": {
+      "title": ""
+    },
+    "bookmarks-empty": {
+      "title": ""
     },
     "collector": {
       "title": "收集器"
@@ -1095,6 +1671,9 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
+    "groupsync": {
+      "subtitle": ""
+    },
     "help": {
       "title": "帮助"
     },
@@ -1106,7 +1685,7 @@
       "title": "首页"
     },
     "incidents": {
-      "title": "事件"
+      "title": ""
     },
     "infrastructure": {
       "subtitle": "了解您基础设施的健康",
@@ -1212,6 +1791,13 @@
       "subtitle": "使用服务帐户在 Grafana 中运行自动化工作负载",
       "title": "服务帐户"
     },
+    "setup-guide": {
+      "title": ""
+    },
+    "shared-dashboard": {
+      "subtitle": "",
+      "title": ""
+    },
     "sign-out": {
       "title": "退出登录"
     },
@@ -1219,7 +1805,7 @@
       "title": "SLO"
     },
     "snapshots": {
-      "subtitle": "交互式、可公开获取的仪表板时间点表示",
+      "subtitle": "",
       "title": "快照"
     },
     "starred": {
@@ -1259,6 +1845,10 @@
     }
   },
   "navigation": {
+    "item": {
+      "add-bookmark": "",
+      "remove-bookmark": ""
+    },
     "kiosk": {
       "tv-alert": "按 ESC 退出 kiosk 模式"
     },
@@ -1266,6 +1856,7 @@
       "close": "关闭菜单",
       "dock": "停靠菜单",
       "list-label": "导航",
+      "open": "",
       "undock": "取消停靠菜单"
     },
     "toolbar": {
@@ -1289,6 +1880,17 @@
     "starred-dashboard": "仪表盘已加星标",
     "unstarred-dashboard": "仪表板未加星标"
   },
+  "oauth": {
+    "form": {
+      "server-discovery-action-button": "",
+      "server-discovery-modal-close": "",
+      "server-discovery-modal-loading": "",
+      "server-discovery-modal-submit": ""
+    },
+    "login": {
+      "error": ""
+    }
+  },
   "panel": {
     "header-menu": {
       "copy": "复制",
@@ -1311,6 +1913,10 @@
       "unlink-library-panel": "取消链接库面板",
       "view": "查看"
     }
+  },
+  "panel-search": {
+    "no-matches": "",
+    "unsupported-layout": ""
   },
   "playlist-edit": {
     "error-prefix": "加载播放列表时发生错误：",
@@ -1361,6 +1967,39 @@
     }
   },
   "plugins": {
+    "catalog": {
+      "update-all": {
+        "all-plugins-updated": "",
+        "available-header": "",
+        "button": "",
+        "cloud-update-message": "",
+        "error": "",
+        "error-status-text": "",
+        "header": "",
+        "installed-header": "",
+        "modal-confirmation": "",
+        "modal-dismiss": "",
+        "modal-in-progress": "",
+        "modal-title": "",
+        "name-header": "",
+        "update-header": "",
+        "update-status-text": ""
+      }
+    },
+    "details": {
+      "labels": {
+        "contactGrafanaLabs": "",
+        "dependencies": "",
+        "downloads": "",
+        "from": "",
+        "links": "",
+        "reportAbuse": "",
+        "signature": "",
+        "status": "",
+        "updatedAt": "",
+        "version": ""
+      }
+    },
     "empty-state": {
       "message": ""
     }
@@ -1404,13 +2043,16 @@
       "settings-title": "设置"
     },
     "configuration": {
+      "display-annotations-description": "",
       "display-annotations-label": "",
+      "enable-time-range-description": "",
       "enable-time-range-label": "",
       "settings-label": "",
       "success-pause": "",
       "success-resume": "",
       "success-update": "",
       "success-update-old": "",
+      "time-range-label": "",
       "time-range-tooltip": ""
     },
     "create-page": {
@@ -1419,8 +2061,7 @@
       "welcome-title": "欢迎使用公共仪表板 ！"
     },
     "delete-modal": {
-      "revoke-nonorphaned-body-text": "您确定要注销此网址吗？仪表板将不再公开。",
-      "revoke-orphaned-body-text": "孤立的公共仪表板将不再公开。",
+      "revoke-body-text": "",
       "revoke-title": "注销公共网址"
     },
     "email-sharing": {
@@ -1494,20 +2135,22 @@
       "success-delete-old": ""
     },
     "share-configuration": {
-      "access-label": "",
       "share-type-label": ""
     },
     "share-externally": {
       "copy-link-button": "",
       "email-share-type-option-description": "",
       "email-share-type-option-label": "",
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
       "pause-access-button": "",
       "pause-access-tooltip": "",
       "public-share-type-option-description": "",
       "public-share-type-option-label": "",
       "resume-access-button": "",
       "revoke-access-button": "",
-      "revoke-access-description": ""
+      "revoke-access-description": "",
+      "unsupported-data-source-alert-desc": ""
     },
     "sharing": {
       "success-creation": ""
@@ -1520,10 +2163,6 @@
       "revoke-button-tooltip": "撤销公共仪表板网址",
       "view-button-tooltip": "查看公共仪表板"
     },
-    "dashboard-title": {
-      "orphaned-title": "<0>孤立的公共仪表板</0>",
-      "orphaned-tooltip": "链接的仪表板已被删除"
-    },
     "empty-state": {
       "message": "",
       "more-info": ""
@@ -1534,10 +2173,12 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
+      "external-link": "",
       "loading-text": "加载中...",
       "open-dashboard-list-text": "打开仪表板列表",
       "public-dashboard-link": "公共仪表板网址",
-      "public-dashboard-setting": "公共仪表板设置"
+      "public-dashboard-setting": "公共仪表板设置",
+      "sharing-setting": ""
     },
     "delete-user-modal": {
       "delete-user-button-text": "删除用户",
@@ -1547,8 +2188,12 @@
       "revoke-user-access-modal-desc-line1": "您确定要注销对 {{email}} 的访问权限吗？",
       "revoke-user-access-modal-desc-line2": "此操作将立即注销 {{email}} 对所有公共仪表板的访问权限。"
     },
+    "delete-user-shared-dashboards-modal": {
+      "revoke-user-access-modal-desc-line2": ""
+    },
     "modal": {
-      "dashboard-modal-title": "公共仪表板"
+      "dashboard-modal-title": "公共仪表板",
+      "shared-dashboard-modal-title": ""
     },
     "table-header": {
       "activated-label": "已激活",
@@ -1560,7 +2205,10 @@
     }
   },
   "query-library": {
-    "delete-query-button": ""
+    "datasource-names": "",
+    "delete-query-button": "",
+    "query-template-get-error": "",
+    "search": ""
   },
   "query-operation": {
     "header": {
@@ -1571,6 +2219,7 @@
       "expand-row": "展开查询行",
       "hide-response": "",
       "remove-query": "删除查询",
+      "save-to-query-library": "",
       "show-response": "",
       "toggle-edit-mode": "切换文本编辑模式"
     },
@@ -1580,6 +2229,11 @@
     "buttons": {
       "delete": "",
       "restore": ""
+    },
+    "page": {
+      "no-deleted-dashboards": "",
+      "no-deleted-dashboards-text": "",
+      "no-search-result": ""
     },
     "permanently-delete-modal": {
       "confirm-text": "",
@@ -1592,7 +2246,13 @@
       "restore-button": "",
       "restore-loading": "",
       "title": "",
+      "folder-picker-text_other": "",
       "text_other": ""
+    }
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
     }
   },
   "refresh-picker": {
@@ -1623,8 +2283,30 @@
     },
     "dismissable-button": "关闭"
   },
+  "save-dashboards": {
+    "name-exists": {
+      "message-info": "",
+      "message-suggestion": "",
+      "title": ""
+    }
+  },
   "scopes": {
-    "filters": {
+    "dashboards": {
+      "collapse": "",
+      "expand": "",
+      "loading": "",
+      "noResultsForFilter": "",
+      "noResultsForFilterClear": "",
+      "noResultsForScopes": "",
+      "noResultsNoScopes": "",
+      "search": "",
+      "toggle": {
+        "collapse": "",
+        "disabled": "",
+        "expand": ""
+      }
+    },
+    "selector": {
       "apply": "",
       "cancel": "",
       "input": {
@@ -1633,18 +2315,14 @@
       },
       "title": ""
     },
-    "suggestedDashboards": {
-      "loading": "",
-      "search": "",
-      "toggle": {
-        "collapse": "",
-        "expand": ""
-      }
-    },
     "tree": {
       "collapse": "",
       "expand": "",
-      "headline": "",
+      "headline": {
+        "noResults": "",
+        "recommended": "",
+        "results": ""
+      },
       "search": ""
     }
   },
@@ -1679,6 +2357,11 @@
       "placeholder": "搜索仪表板"
     }
   },
+  "select": {
+    "select-menu": {
+      "selected-count": ""
+    }
+  },
   "service-accounts": {
     "empty-state": {
       "button-title": "",
@@ -1687,9 +2370,20 @@
       "title": ""
     }
   },
+  "share-dashboard": {
+    "menu": {
+      "export-json-title": "",
+      "share-externally-title": "",
+      "share-internally-title": "",
+      "share-snapshot-title": ""
+    },
+    "share-button": "",
+    "share-button-tooltip": ""
+  },
   "share-drawer": {
     "confirm-action": {
-      "back-arrow-button": ""
+      "back-arrow-button": "",
+      "cancel-button": ""
     }
   },
   "share-modal": {
@@ -1699,10 +2393,9 @@
     "embed": {
       "copy": "复制到剪贴板",
       "html": "嵌入 HTML",
-      "html-description": "可将以下 HTML 代码粘贴并纳入另一网页。除非启用了匿名访问，否则查看该页面的用户需要登录 Grafana 才能加载图表。",
-      "info": "生成用于对此面板嵌入 iframe 的 HTML。",
-      "time-range": "当前时间范围",
-      "time-range-description": "将当前相对时间范围转换为绝对时间范围"
+      "html-description": "",
+      "info": "",
+      "time-range": ""
     },
     "export": {
       "back-button": "返回到导出配置",
@@ -1770,6 +2463,23 @@
       "copy-button": "复制到剪贴板"
     }
   },
+  "share-panel": {
+    "drawer": {
+      "new-library-panel-title": "",
+      "share-embed-title": "",
+      "share-link-title": ""
+    },
+    "menu": {
+      "new-library-panel-title": "",
+      "share-embed-title": "",
+      "share-link-title": "",
+      "share-snapshot-title": ""
+    },
+    "new-library-panel": {
+      "cancel-button": "",
+      "create-button": ""
+    }
+  },
   "share-playlist": {
     "checkbox-description": "将调整面板高度以适应屏幕大小",
     "checkbox-label": "自动调整",
@@ -1791,8 +2501,27 @@
     }
   },
   "shared-dashboard": {
+    "delete-modal": {
+      "revoke-body-text": "",
+      "revoke-title": ""
+    },
     "fields": {
       "timezone-label": "时区"
+    }
+  },
+  "shared-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
     }
   },
   "shared-preferences": {
@@ -1837,6 +2566,26 @@
     },
     "external-badge": "外部",
     "name-column-header": "名称",
+    "share": {
+      "cancel-button": "",
+      "copy-link-button": "",
+      "delete-button": "",
+      "delete-description": "",
+      "delete-title": "",
+      "deleted-alert": "",
+      "expiration-label": "",
+      "info-alert": "",
+      "learn-more-button": "",
+      "local-button": "",
+      "name-label": "",
+      "new-snapshot-button": "",
+      "success-creation": "",
+      "success-delete": "",
+      "view-all-button": ""
+    },
+    "share-panel": {
+      "info-alert": ""
+    },
     "url-column-header": "快照网址",
     "view-button": "查看"
   },
@@ -1913,6 +2662,28 @@
       "select-search-input": "输入以搜索(国家、城市、缩写)"
     }
   },
+  "trails": {
+    "bookmarks": {
+      "empty-state": ""
+    },
+    "metric-overview": {
+      "description-label": "",
+      "labels": "",
+      "metric-attributes": "",
+      "no-description": "",
+      "type-label": "",
+      "unit-label": "",
+      "unknown-type": ""
+    },
+    "metric-select": {
+      "filter-by": "",
+      "otel-switch": ""
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "",
+      "show-previews-of-metric-graphs": ""
+    }
+  },
   "transformations": {
     "empty": {
       "add-transformation-body": "转换允许在显示可视化之前以各种方式更改数据。 <1></1>这包括合并数据、重命名字段、进行计算、格式化数据以便显示等等。",
@@ -1955,7 +2726,8 @@
   },
   "users-access-list": {
     "tabs": {
-      "public-dashboard-users-tab-title": "公共仪表板用户"
+      "public-dashboard-users-tab-title": "公共仪表板用户",
+      "shared-dashboard-users-tab-title": ""
     }
   },
   "variable": {

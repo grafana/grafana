@@ -51,7 +51,7 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 		len(cp.Pagerduty) + len(cp.OnCall) + len(cp.Pushover) + len(cp.Sensugo) +
 		len(cp.Sns) + len(cp.Slack) + len(cp.Teams) + len(cp.Telegram) +
 		len(cp.Threema) + len(cp.Victorops) + len(cp.Webhook) + len(cp.Wecom) +
-		len(cp.Webex)
+		len(cp.Webex) + len(cp.Mqtt)
 
 	integration := make([]*notify.GrafanaIntegrationConfig, 0, contactPointsLength)
 
@@ -100,6 +100,13 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 	}
 	for _, i := range cp.Line {
 		el, err := marshallIntegration(j, "line", i, i.DisableResolveMessage)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		integration = append(integration, el)
+	}
+	for _, i := range cp.Mqtt {
+		el, err := marshallIntegration(j, "mqtt", i, i.DisableResolveMessage)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -274,6 +281,11 @@ func parseIntegration(json jsoniter.API, result *definitions.ContactPoint, recei
 		if err = json.Unmarshal(data, &integration); err == nil {
 			result.Line = append(result.Line, integration)
 		}
+	case "mqtt":
+		integration := definitions.MqttIntegration{DisableResolveMessage: disable}
+		if err = json.Unmarshal(data, &integration); err == nil {
+			result.Mqtt = append(result.Mqtt, integration)
+		}
 	case "opsgenie":
 		integration := definitions.OpsgenieIntegration{DisableResolveMessage: disable}
 		if err = json.Unmarshal(data, &integration); err == nil {
@@ -386,6 +398,12 @@ func (c contactPointsExtension) UpdateStructDescriptor(structDescriptor *jsonite
 	if structDescriptor.Type == reflect2.TypeOf(definitions.OnCallIntegration{}) {
 		codec := &numberAsStringCodec{ignoreError: true}
 		desc := structDescriptor.GetField("MaxAlerts")
+		desc.Decoder = codec
+		desc.Encoder = codec
+	}
+	if structDescriptor.Type == reflect2.TypeOf(definitions.MqttIntegration{}) {
+		codec := &numberAsStringCodec{ignoreError: true}
+		desc := structDescriptor.GetField("QoS")
 		desc.Decoder = codec
 		desc.Encoder = codec
 	}

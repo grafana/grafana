@@ -5,15 +5,21 @@ import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
-import { fetchPromAndRulerRulesAction } from '../../state/actions';
-import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
+import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
+import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
+import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
+import { getRuleGroupLocationFromCombinedRule, isCloudRuleIdentifier } from '../../utils/rules';
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
-  const [_deleteState, deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const { waitForRemoval } = usePrometheusConsistencyCheck();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
@@ -29,12 +35,21 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         return;
       }
 
-      const location = getRuleGroupLocationFromCombinedRule(rule);
-      await deleteRuleFromGroup.execute(location, rule.rulerRule);
+      const ruleGroupIdentifier = getRuleGroupLocationFromCombinedRule(rule);
+      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, rule.rulerRule);
+
+      await deleteRuleFromGroup.execute(ruleGroupIdentifier, ruleIdentifier);
 
       // refetch rules for this rules source
       // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
-      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: location.dataSourceName }));
+      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroupIdentifier.dataSourceName }));
+
+      if (prometheusRulesPrimary && isCloudRuleIdentifier(ruleIdentifier)) {
+        await waitForRemoval(ruleIdentifier);
+      } else {
+        // Without this the delete popup will close and the user will still see the deleted rule
+        await dispatch(fetchRulerRulesAction({ rulesSourceName: ruleGroupIdentifier.dataSourceName }));
+      }
 
       dismissModal();
 
@@ -42,7 +57,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         locationService.replace('/alerting/list');
       }
     },
-    [deleteRuleFromGroup, dismissModal, redirectToListView]
+    [deleteRuleFromGroup, dismissModal, redirectToListView, waitForRemoval]
   );
 
   const modal = useMemo(

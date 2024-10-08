@@ -199,7 +199,7 @@ const getChangeLogItems = async (name, owner, sinceDate, to) => {
       hasLabel({ labels }, 'area/grafana/ui') ||
       hasLabel({ labels }, 'area/grafana/toolkit') ||
       hasLabel({ labels }, 'area/grafana/runtime');
-    const author = item.commits.nodes[0].commit.author.user.login;
+    const author = item.commits.nodes[0].commit.author.user?.login;
     return {
       repo: name,
       number,
@@ -285,7 +285,7 @@ ${items
       `- ${item.title.replace(/^([^:]*:)/gm, '**$1**')} ${
         item.repo === 'grafana-enterprise'
           ? '(Enterprise)'
-          : `${pullRequestLink(item.number)}, ${userLink(item.author)}`
+          : `${pullRequestLink(item.number)}${item.author ? ', ' + userLink(item.author) : ''}`
       }`
   )
   .join('\n')}

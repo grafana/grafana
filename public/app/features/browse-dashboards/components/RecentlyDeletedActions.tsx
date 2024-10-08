@@ -18,7 +18,7 @@ import { RestoreModal } from './RestoreModal';
 export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
-  const [, stateManager] = useRecentlyDeletedStateManager();
+  const [searchState, stateManager] = useRecentlyDeletedStateManager();
 
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
   const [deleteDashboard, { isLoading: isDeleteLoading }] = useHardDeleteDashboardMutation();
@@ -29,20 +29,34 @@ export function RecentlyDeletedActions() {
       .map(([uid]) => uid);
   }, [selectedItemsState.dashboard]);
 
+  const selectedDashboardOrigin: string[] = [];
+  if (searchState.result) {
+    for (const selectedDashboard of selectedDashboards) {
+      const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
+
+      // SQLSearcher changes the location from empty string to 'general' for items with no parent
+      // but the restore API doesn't work with 'general' folder UID, so we need to convert it back
+      // to an empty string
+      const location = searchState.result.view.fields.location.values[index];
+      const fixedLocation = location === GENERAL_FOLDER_UID ? '' : location;
+      selectedDashboardOrigin.push(fixedLocation);
+    }
+  }
+
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
     stateManager.doSearchWithDebounce();
   };
 
-  const onRestore = async () => {
+  const onRestore = async (restoreTarget: string) => {
     const resultsView = stateManager.state.result?.view.toArray();
     if (!resultsView) {
       return;
     }
 
     const promises = selectedDashboards.map((uid) => {
-      return restoreDashboard({ dashboardUID: uid });
+      return restoreDashboard({ dashboardUID: uid, targetFolderUID: restoreTarget });
     });
 
     await Promise.all(promises);
@@ -82,6 +96,7 @@ export function RecentlyDeletedActions() {
         component: RestoreModal,
         props: {
           selectedDashboards,
+          dashboardOrigin: selectedDashboardOrigin,
           onConfirm: onRestore,
           isLoading: isRestoreLoading,
         },

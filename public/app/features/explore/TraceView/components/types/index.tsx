@@ -12,15 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export {
-  TraceSpan,
-  TraceResponse,
-  Trace,
-  TraceProcess,
-  TraceKeyValuePair,
-  TraceLink,
-  CriticalPathSection,
-} from './trace';
+export { TraceSpan, TraceResponse, Trace, TraceProcess, TraceLink, CriticalPathSection } from './trace';
 export { SpanBarOptions, SpanBarOptionsData } from '../settings/SpanBarSettings';
 export { default as TTraceTimeline } from './TTraceTimeline';
 export { default as TNil } from './TNil';

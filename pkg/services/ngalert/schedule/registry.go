@@ -15,7 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-var errRuleDeleted = errors.New("rule deleted")
+var (
+	errRuleDeleted   = errors.New("rule deleted")
+	errRuleRestarted = errors.New("rule restarted")
+)
 
 type ruleFactory interface {
 	new(context.Context, *models.AlertRule) Rule
@@ -51,6 +54,14 @@ func (r *ruleRegistry) exists(key models.AlertRuleKey) bool {
 
 	_, ok := r.rules[key]
 	return ok
+}
+
+// get fetches a rule from the registry by key. It returns (rule, ok) where ok is false if the rule did not exist.
+func (r *ruleRegistry) get(key models.AlertRuleKey) (Rule, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	ru, ok := r.rules[key]
+	return ru, ok
 }
 
 // del removes pair that has specific key from the registry.

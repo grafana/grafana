@@ -19,7 +19,14 @@ describe('sanitizeUrl', () => {
   });
 });
 
-// write test to sanitize xss payloads using the sanitize function
+describe('sanitizeIframe', () => {
+  it('should sanitize iframe tags', () => {
+    const html = '<iframe src="javascript:alert(document.domain)"></iframe>';
+    const str = sanitizeTextPanelContent(html);
+    expect(str).toBe('<iframe src="about:blank" sandbox credentialless referrerpolicy=no-referrer></iframe>');
+  });
+});
+
 describe('sanitize', () => {
   it('should sanitize xss payload', () => {
     const html = '<script>alert(1)</script>';

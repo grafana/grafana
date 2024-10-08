@@ -30,6 +30,8 @@ if (data.changes.length > 0) {
   markdown += printSection('Changes', data.changes);
 }
 
-markdown += printAffectedPluginsSection(data);
+if (data.removals.length > 0 || data.changes.length > 0) {
+  markdown += printAffectedPluginsSection(data);
+}
 
 console.log(markdown);

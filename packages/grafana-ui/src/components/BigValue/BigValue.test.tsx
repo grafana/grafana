@@ -41,7 +41,7 @@ describe('BigValue', () => {
         />
       );
 
-      expect(screen.getByText('50%')).toBeInTheDocument();
+      expect(screen.getByText('0.5%')).toBeInTheDocument();
     });
 
     it('should render without percent change', () => {

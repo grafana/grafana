@@ -11,7 +11,6 @@ import {
   useUpdateMuteTiming,
   useValidateMuteTiming,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
-import { shouldUseK8sApi } from 'app/features/alerting/unified/components/mute-timings/util';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
@@ -60,16 +59,11 @@ const useDefaultValues = (muteTiming?: MuteTiming): MuteTimingFields => {
 const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
   const hookArgs = { alertmanager: selectedAlertmanager! };
-  const createTimeInterval = useCreateMuteTiming(hookArgs);
-  const updateTimeInterval = useUpdateMuteTiming(hookArgs);
+
+  const [createTimeInterval] = useCreateMuteTiming(hookArgs);
+  const [updateTimeInterval] = useUpdateMuteTiming(hookArgs);
   const validateMuteTiming = useValidateMuteTiming(hookArgs);
-  /**
-   * The k8s API approach does not support renaming an entity at this time,
-   * as it requires renaming all other references of this entity.
-   *
-   * For now, the cleanest solution is to disabled renaming the field in this scenario
-   */
-  const disableNameField = editMode && shouldUseK8sApi(selectedAlertmanager!);
+
   const styles = useStyles2(getStyles);
   const defaultValues = useDefaultValues(muteTiming);
 
@@ -79,13 +73,13 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
   const returnLink = makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'mute_timings' });
 
   const onSubmit = async (values: MuteTimingFields) => {
-    const timeInterval = createMuteTiming(values);
+    const interval = createMuteTiming(values);
 
     const updateOrCreate = async () => {
       if (editMode) {
-        return updateTimeInterval({ timeInterval, originalName: muteTiming?.metadata?.name || muteTiming!.name });
+        return updateTimeInterval.execute({ interval, originalName: muteTiming?.metadata?.name || muteTiming!.name });
       }
-      return createTimeInterval({ timeInterval });
+      return createTimeInterval.execute({ interval });
     };
 
     return updateOrCreate().then(() => {
@@ -106,14 +100,13 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
       {provisioned && <ProvisioningAlert resource={ProvisionedResource.MuteTiming} />}
       <FormProvider {...formApi}>
         <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
-          <FieldSet label={'Create mute timing'} disabled={provisioned || updating}>
+          <FieldSet disabled={provisioned || updating}>
             <Field
               required
               label="Name"
               description="A unique name for the mute timing"
               invalid={!!formApi.formState.errors?.name}
               error={formApi.formState.errors.name?.message}
-              disabled={disableNameField}
             >
               <Input
                 {...formApi.register('name', {

@@ -85,8 +85,9 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
     lineHeight: 1,
 
     input: {
+      height: '100%',
+      width: '100% !important',
       opacity: 0,
-      left: '-100vw',
       zIndex: -1000,
       position: 'absolute',
 

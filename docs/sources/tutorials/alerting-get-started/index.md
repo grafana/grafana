@@ -32,34 +32,60 @@ In this tutorial you will:
 - Set up an alert rule.
 - Receive firing and resolved alert notifications in a public webhook.
 
-Check out [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) if you want to learn more about alerts and notification routing.
-
-<!-- INTERACTIVE page intro.md END -->
-
-<!-- INTERACTIVE page step1.md START -->
-
-## Before you begin
-
-### Grafana Cloud users
-
-As a Grafana Cloud user, you don't have to install anything.
-
 <!-- INTERACTIVE ignore START -->
 
-Continue to [Create a contact point](#create-a-contact-point).
+{{< admonition type="tip" >}}
+
+Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
+
+{{< /admonition >}}
 
 <!-- INTERACTIVE ignore END -->
 
-### Grafana OSS users
+{{< docs/ignore >}}
 
-In order to run a Grafana stack locally, ensure you have the following applications installed.
+> Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
+
+{{< /docs/ignore >}}
+
+<!-- INTERACTIVE page intro.md END -->
+<!-- INTERACTIVE page step1.md START -->
+<!-- INTERACTIVE ignore START -->
+
+{{< docs/ignore >}}
+
+## Set up the Grafana stack
+
+{{< /docs/ignore >}}
+
+## Before you begin
+
+There are different ways you can follow along with this tutorial.
+
+### Grafana Cloud
+
+As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
+
+Continue to [Create a contact point](#create-a-contact-point).
+
+### Interactive learning environment
+
+Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
+
+It's a fully configured environment with all the dependencies already installed.
+
+### Grafana OSS
+
+If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-#### Set up the Grafana Stack (OSS users)
+#### Set up the Grafana stack (OSS users)
 
-To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
+<!-- INTERACTIVE ignore END -->
+
+To demonstrate the observation of data using the Grafana stack, download and run the following files.
 
 1. Clone the [tutorial environment repository](https://www.github.com/grafana/tutorial-environment).
 
@@ -120,19 +146,6 @@ To demonstrate the observation of data using the Grafana stack, download the fil
    If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
 
    {{< /docs/ignore >}}
-
-   <!-- INTERACTIVE ignore START -->
-
-   {{< admonition type="tip" >}}
-   Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
-
-   It's a fully configured environment with all the dependencies already installed.
-
-   ![Interactive](/media/docs/grafana/full-stack-ile.png)
-
-   Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
-   {{< /admonition >}}
-   <!-- INTERACTIVE ignore END -->
 
 <!-- INTERACTIVE page step1.md END -->
 <!-- INTERACTIVE page step2.md START -->
@@ -209,10 +222,11 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
 ### Set evaluation behavior
 
-An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines when an alert rule fires, and it’s based on two settings:
+The [alert rule evaluation](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines the conditions under which an alert rule triggers, based on the following settings:
 
-- **Evaluation group**: how frequently the alert rule is evaluated.
-- **Evaluation interval**: how long the condition must be met to start firing. This allows your data time to stabilize before triggering an alert, helping to reduce the frequency of unnecessary notifications.
+- **Evaluation group**: every alert rule is assigned to an evaluation group. You can assign the alert rule to an existing evaluation group or create a new one.
+- **Evaluation interval**: determines how frequently the alert rule is checked. For instance, the evaluation may occur every 10s, 30s, 1m, 10m, etc.
+- **Pending period**: how long the condition must be met to trigger the alert rule.
 
 To set up the evaluation:
 
@@ -265,16 +279,20 @@ By incrementing the threshold, the condition is no longer met, and after the eva
 
 ## Learn more
 
-Your learning journey continues in [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) where you will learn about alert instances and notification routing.
+<!-- INTERACTIVE ignore START -->
 
-## Summary
+{{< admonition type="tip" >}}
 
-In this tutorial, you have learned how to set up a contact point, create an alert, and send alert notifications to a public Webhook. By following these steps, you’ve gained a foundational understanding of how to leverage Grafana Alerting capabilities to monitor and respond to events of interest in your data.
+Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
 
-Feel free to experiment with different [contact points](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/) to customize your alert notifications and discover the configuration that best suits your needs.
+{{< /admonition >}}
 
-If you run into any problems, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
+<!-- INTERACTIVE ignore END -->
 
-Happy monitoring!
+{{< docs/ignore >}}
+
+Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
+
+{{< /docs/ignore >}}
 
 <!-- INTERACTIVE page finish.md END -->

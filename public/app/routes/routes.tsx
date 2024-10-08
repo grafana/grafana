@@ -1,12 +1,10 @@
-import { Redirect, RouteComponentProps } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
-import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
@@ -20,6 +18,7 @@ import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
+import { BookmarksPage } from '../core/components/Bookmarks/BookmarksPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
@@ -108,23 +107,19 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: DATASOURCES_ROUTES.List,
-      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSources} />,
+      component: () => <Navigate replace to={CONNECTIONS_ROUTES.DataSources} />,
     },
     {
       path: DATASOURCES_ROUTES.Edit,
-      component: (props: RouteComponentProps<{ uid: string }>) => (
-        <Redirect to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', props.match.params.uid)} />
-      ),
+      component: DataSourceEditRoute,
     },
     {
       path: DATASOURCES_ROUTES.Dashboards,
-      component: (props: RouteComponentProps<{ uid: string }>) => (
-        <Redirect to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', props.match.params.uid)} />
-      ),
+      component: DataSourceDashboardRoute,
     },
     {
       path: DATASOURCES_ROUTES.New,
-      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSourcesNew} />,
+      component: () => <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesNew} />,
     },
     {
       path: '/datasources/correlations',
@@ -220,7 +215,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/users',
       // Org users page has been combined with admin users
-      component: () => <Redirect to={'/admin/users'} />,
+      component: () => <Navigate replace to={'/admin/users'} />,
     },
     {
       path: '/org/users/invite',
@@ -293,11 +288,15 @@ export function getAppRoutes(): RouteDescriptor[] {
               () =>
                 import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/AuthProvidersListPage')
             )
-          : () => <Redirect to="/admin" />,
+          : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/authentication/ldap',
-      component: LdapPage,
+      component: config.featureToggles.ssoSettingsLDAP
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
+          )
+        : LdapPage,
     },
     {
       path: '/admin/authentication/:provider',
@@ -306,7 +305,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? SafeDynamicImport(
             () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
           )
-        : () => <Redirect to="/admin" />,
+        : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/settings',
@@ -332,7 +331,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users/edit/:id',
-      component: UserAdminPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
+      ),
     },
     {
       path: '/admin/orgs',
@@ -352,7 +353,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? SafeDynamicImport(
             () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
           )
-        : () => <Redirect to="/admin" />,
+        : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/storage/:path*',
@@ -377,7 +378,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     // LOGIN / SIGNUP
     {
       path: '/login',
-      component: LoginPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LoginPage" */ 'app/core/components/Login/LoginPage')
+      ),
       pageClass: 'login-page',
       chromeless: true,
     },
@@ -391,7 +394,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/verify',
       component: !config.verifyEmailEnabled
-        ? () => <Redirect to="/signup" />
+        ? () => <Navigate replace to="/signup" />
         : SafeDynamicImport(
             () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
           ),
@@ -401,7 +404,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/signup',
       component: config.disableUserSignUp
-        ? () => <Redirect to="/login" />
+        ? () => <Navigate replace to="/login" />
         : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
       pageClass: 'login-page',
       chromeless: true,
@@ -513,7 +516,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/bookmarks',
-      component: () => <NavLandingPage navId="bookmarks" />,
+      component: () => <BookmarksPage />,
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
@@ -548,4 +551,14 @@ export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
   ];
+}
+
+function DataSourceDashboardRoute() {
+  const { uid = '' } = useParams();
+  return <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', uid)} />;
+}
+
+function DataSourceEditRoute() {
+  const { uid = '' } = useParams();
+  return <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', uid)} />;
 }
