@@ -19,7 +19,7 @@ import { getTeamLoadingNav } from './state/navModel';
 import { getTeam } from './state/selectors';
 
 type TeamPageRouteParams = {
-  id: string;
+  uid: string;
   page?: string;
 };
 
@@ -32,26 +32,26 @@ enum PageTypes {
 const PAGES = ['members', 'settings', 'groupsync'];
 
 const teamSelector = createSelector(
-  [(state: StoreState) => state.team, (_: StoreState, teamId: string) => teamId],
-  (team, teamId) => getTeam(team, teamId)
+  [(state: StoreState) => state.team, (_: StoreState, teamUid: string) => teamUid],
+  (team, teamUid) => getTeam(team, teamUid)
 );
 
 const pageNavSelector = createSelector(
   [
     (state: StoreState) => state.navIndex,
     (_state: StoreState, pageName: string) => pageName,
-    (_state: StoreState, _pageName: string, teamId: string) => teamId,
+    (_state: StoreState, _pageName: string, teamUid: string) => teamUid,
   ],
-  (navIndex, pageName, teamId) => {
+  (navIndex, pageName, teamUid) => {
     const teamLoadingNav = getTeamLoadingNav(pageName);
-    return getNavModel(navIndex, `team-${pageName}-${teamId}`, teamLoadingNav).main;
+    return getNavModel(navIndex, `team-${pageName}-${teamUid}`, teamLoadingNav).main;
   }
 );
 
 const TeamPages = memo(() => {
   const isSyncEnabled = useRef(featureEnabled('teamsync'));
-  const { id: teamId = '', page } = useParams<TeamPageRouteParams>();
-  const team = useSelector((state) => teamSelector(state, teamId));
+  const { uid: teamUid = '', page } = useParams<TeamPageRouteParams>();
+  const team = useSelector((state) => teamSelector(state, teamUid));
 
   let defaultPage = 'members';
   // With RBAC the settings page will always be available
@@ -59,10 +59,10 @@ const TeamPages = memo(() => {
     defaultPage = 'settings';
   }
   const pageName = page ?? defaultPage;
-  const pageNav = useSelector((state) => pageNavSelector(state, pageName, teamId));
+  const pageNav = useSelector((state) => pageNavSelector(state, pageName, teamUid));
 
   const dispatch = useDispatch();
-  const { loading: isLoading } = useAsync(async () => dispatch(loadTeam(teamId)), [teamId]);
+  const { loading: isLoading } = useAsync(async () => dispatch(loadTeam(teamUid)), [teamUid]);
 
   const renderPage = () => {
     const currentPage = PAGES.includes(pageName) ? pageName : PAGES[0];
