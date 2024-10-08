@@ -40,35 +40,21 @@ function RecentExploration({ model }: Props) {
         <div className={styles.meta}>
           <Card.Meta separator={'|'}>{filters.map((f) => `${f.key}: ${f.value}`)}</Card.Meta>
         </div>
-        {/* maybe need to change gridArea */}
         <div className={styles.datasource}>
           <div className={styles.secondaryFont}>Datasource: </div>
           <div className={styles.primaryFont}>{datasource && getDataSourceName(datasource)}</div>
-          {/* Datasource: {datasource && getDataSourceName(datasource)} */}
         </div>
-        <Card.Actions className={styles.actions}>
-          <Stack gap={1} justifyContent={'space-between'} grow={1}>
-            {createdAt && (
-              <i className={styles.secondary}>
-                {' '}
-                {/* maybe change to styles.footer */}
-                <b>Date created:</b> {dateTimeFormat(createdAt, { format: 'LL' })}
-              </i>
-            )}
-          </Stack>
-        </Card.Actions>
+        <div className={styles.date}>
+          <div className={styles.secondaryFont}>Date created: </div>
+          <div className={styles.primaryFont}>{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}</div>
+        </div>
       </Card>
     </div>
-    // REACH TODO: add sparklines
   );
 }
 
 export function getStyles(theme: GrafanaTheme2) {
   return {
-    metricContainer: css({
-      // display: 'flex',
-      // alignItems: 'center',
-    }),
     metricLabel: css({
       display: 'inline',
       color: 'var(--text-secondary, rgba(204, 204, 220, 0.65))',
@@ -107,8 +93,10 @@ export function getStyles(theme: GrafanaTheme2) {
     datasource: css({
       gridArea: 'Description',
     }),
-    footer: css({
-      gridArea: 'Footer',
+    date: css({
+      // gridArea: 'Actions',
+      position: 'absolute',
+      bottom: '0px',
     }),
     meta: css({
       width: '100%',
