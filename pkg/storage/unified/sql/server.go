@@ -2,6 +2,8 @@ package sql
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	"github.com/grafana/authlib/claims"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -14,8 +16,22 @@ import (
 
 // Creates a new ResourceServer
 func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
+		Blob: resource.BlobConfig{
+			URL: apiserverCfg.Key("blob_url").MustString(""),
+		},
+	}
+
+	// Support local file blob
+	if strings.HasPrefix(opts.Blob.URL, "./data/") {
+		dir := strings.Replace(opts.Blob.URL, "./data", cfg.DataPath, 1)
+		err := os.MkdirAll(dir, 0700)
+		if err != nil {
+			return nil, err
+		}
+		opts.Blob.URL = "file:///" + dir
 	}
 
 	eDB, err := dbimpl.ProvideResourceDB(db, cfg, tracer)

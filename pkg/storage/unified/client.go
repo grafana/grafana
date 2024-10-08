@@ -28,9 +28,10 @@ func ProvideUnifiedStorageClient(
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := options.StorageOptions{
-		StorageType: options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy))),
-		DataPath:    apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
-		Address:     apiserverCfg.Key("address").MustString(""),
+		StorageType:  options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy))),
+		DataPath:     apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
+		Address:      apiserverCfg.Key("address").MustString(""), // client address
+		BlobStoreURL: apiserverCfg.Key("blob_url").MustString(""),
 	}
 
 	switch opts.StorageType {
@@ -53,6 +54,9 @@ func ProvideUnifiedStorageClient(
 		}
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
+			Blob: resource.BlobConfig{
+				URL: opts.BlobStoreURL,
+			},
 		})
 		if err != nil {
 			return nil, err
