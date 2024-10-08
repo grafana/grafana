@@ -23,12 +23,19 @@ type RouterWrapperProps = {
 };
 export function RouterWrapper(props: RouterWrapperProps) {
   const isSingleTopNav = config.featureToggles.singleTopNav;
+  const styles = useStyles2(getRouterStyles);
   return (
     <Router history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
           <ModalsContextProvider>
-            {isSingleTopNav && props.pageBanners.map((Banner, index) => <Banner key={index.toString()} />)}
+            {isSingleTopNav && props.pageBanners.length > 0 && (
+              <div className={styles.bannerContainer}>
+                {props.pageBanners.map((Banner, index) => (
+                  <Banner key={index.toString()} />
+                ))}
+              </div>
+            )}
             <AppChrome>
               <AngularRoot />
               <AppNotificationList />
@@ -47,6 +54,12 @@ export function RouterWrapper(props: RouterWrapperProps) {
     </Router>
   );
 }
+
+const getRouterStyles = (theme: GrafanaTheme2) => ({
+  bannerContainer: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
+});
 
 /**
  * Renders both the main app tree and a secondary sidecar app tree to show 2 apps at the same time in a resizable split
