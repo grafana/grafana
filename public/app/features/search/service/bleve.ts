@@ -18,7 +18,7 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } fro
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
 const loadingFrameName = 'Loading';
 
-const searchURI = 'api/search-v3';
+const searchURI = 'api/unified-search';
 
 type SearchAPIResponse = {
   frames: DataFrameJSON[];

@@ -17,8 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/searchV3"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/unifiedSearch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
@@ -53,11 +53,11 @@ var (
 	)
 )
 
-func ProvideService(search searchV2.SearchService, searchNext searchV3.SearchService, store store.StorageService, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(search searchV2.SearchService, searchNext unifiedSearch.SearchService, store store.StorageService, features featuremgmt.FeatureToggles) *Service {
 	return newService(search, searchNext, store, features)
 }
 
-func newService(search searchV2.SearchService, searchNext searchV3.SearchService, store store.StorageService, features featuremgmt.FeatureToggles) *Service {
+func newService(search searchV2.SearchService, searchNext unifiedSearch.SearchService, store store.StorageService, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
 		search:     search,
 		searchNext: searchNext,
@@ -72,7 +72,7 @@ func newService(search searchV2.SearchService, searchNext searchV3.SearchService
 // Service exists regardless of user settings
 type Service struct {
 	search     searchV2.SearchService
-	searchNext searchV3.SearchService
+	searchNext unifiedSearch.SearchService
 	store      store.StorageService
 	log        log.Logger
 	features   featuremgmt.FeatureToggles
@@ -216,5 +216,5 @@ func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataReque
 type requestModel struct {
 	QueryType  string                  `json:"queryType"`
 	Search     searchV2.DashboardQuery `json:"search,omitempty"`
-	SearchNext searchV3.Query          `json:"searchNext,omitempty"`
+	SearchNext unifiedSearch.Query     `json:"searchNext,omitempty"`
 }

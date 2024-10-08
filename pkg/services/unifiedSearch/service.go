@@ -1,4 +1,4 @@
-package searchV3
+package unifiedSearch
 
 import (
 	"context"

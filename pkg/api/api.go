@@ -307,7 +307,7 @@ func (hs *HTTPServer) registerRoutes() {
 		}
 
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-			apiRoute.Group("/search-v3", hs.SearchV3HTTPService.RegisterHTTPRoutes)
+			apiRoute.Group("/unified-search", hs.UnifiedSearchHTTPService.RegisterHTTPRoutes)
 		}
 
 		// current org
