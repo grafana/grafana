@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { BleveSearcher } from './bleve';
+import { UnifiedSearcher } from './unified';
 import { BlugeSearcher } from './bluge';
 import { FrontendSearcher } from './frontend';
 import { SQLSearcher } from './sql';
@@ -14,9 +14,9 @@ export function getGrafanaSearcher(): GrafanaSearcher {
     const useBluge = config.featureToggles.panelTitleSearch;
     searcher = useBluge ? new BlugeSearcher(sqlSearcher) : sqlSearcher;
 
-    const useBleve = config.featureToggles.unifiedStorageSearch;
-    if (useBleve) {
-      searcher = new BleveSearcher(sqlSearcher);
+    const useUnified = config.featureToggles.unifiedStorageSearch;
+    if (useUnified) {
+      searcher = new UnifiedSearcher(sqlSearcher);
     }
 
     if (useBluge && location.search.includes('do-frontend-query')) {

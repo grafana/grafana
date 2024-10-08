@@ -26,7 +26,7 @@ type SearchAPIResponse = {
 
 const folderViewSort = 'name_sort';
 
-export class BleveSearcher implements GrafanaSearcher {
+export class UnifiedSearcher implements GrafanaSearcher {
   constructor(private fallbackSearcher: GrafanaSearcher) {}
 
   async search(query: SearchQuery): Promise<QueryResponse> {
