@@ -285,3 +285,125 @@ func TestIntegrationServiceAccountMigration(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegrationServiceAccountDedupOrgMigration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	// Run initial migration to have a working DB
+	x := setupTestDB(t)
+
+	type migrationTestCase struct {
+		desc                string
+		serviceAccounts     []*user.User
+		wantServiceAccounts []*user.User
+	}
+	testCases := []migrationTestCase{
+		{
+			desc: "no change",
+			serviceAccounts: []*user.User{
+				{
+					ID:               1,
+					UID:              "u1",
+					Name:             "sa-1-nochange",
+					Login:            "sa-1-nochange",
+					Email:            "sa-1-nochange@example.org",
+					OrgID:            1,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+				{
+					ID:               2,
+					UID:              "u2",
+					Name:             "sa-2-nochange",
+					Login:            "sa-2-nochange",
+					Email:            "sa-2-nochange@example.org",
+					OrgID:            2,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+			},
+			wantServiceAccounts: []*user.User{
+				{
+					ID:    1,
+					Login: "sa-1-nochange",
+				},
+				{
+					ID:    2,
+					Login: "sa-2-nochange",
+				},
+			},
+		},
+		{
+			desc: "dedup org in login",
+			serviceAccounts: []*user.User{
+				{
+					ID:               3,
+					UID:              "u3",
+					Name:             "sa-1-dedup",
+					Login:            "sa-1-1-dedup",
+					Email:            "sa-1-dedup@example.org",
+					OrgID:            1,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+				{
+					ID:               4,
+					UID:              "u4",
+					Name:             "sa-6480-dedup",
+					Login:            "sa-6480-6480-dedup",
+					Email:            "sa-6480-dedup@example.org",
+					OrgID:            6480,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+			},
+			wantServiceAccounts: []*user.User{
+				{
+					ID:    3,
+					Login: "sa-1-dedup",
+				},
+				{
+					ID:    4,
+					Login: "sa-6480-dedup",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Remove migration and permissions
+			_, errDeleteMig := x.Exec(`DELETE FROM migration_log WHERE migration_id = ?`, usermig.DedupOrgInLogin)
+			require.NoError(t, errDeleteMig)
+
+			// insert service accounts
+			serviceAccoutsCount, err := x.Insert(tc.serviceAccounts)
+			require.NoError(t, err)
+			require.Equal(t, int64(len(tc.serviceAccounts)), serviceAccoutsCount)
+
+			// run the migration
+			usermigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("usermigration.test")})
+			usermigrator.AddMigration(usermig.DedupOrgInLogin, &usermig.ServiceAccountsDeduplicateOrgInLogin{})
+			errRunningMig := usermigrator.Start(false, 0)
+			require.NoError(t, errRunningMig)
+
+			// Check service accounts
+			resultingServiceAccounts := []user.User{}
+			err = x.Table("user").Find(&resultingServiceAccounts)
+			require.NoError(t, err)
+
+			for i := range tc.wantServiceAccounts {
+				for _, sa := range resultingServiceAccounts {
+					if sa.ID == tc.wantServiceAccounts[i].ID {
+						assert.Equal(t, tc.wantServiceAccounts[i].Login, sa.Login)
+					}
+				}
+			}
+		})
+	}
+}
