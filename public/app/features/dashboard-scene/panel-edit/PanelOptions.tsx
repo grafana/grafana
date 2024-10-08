@@ -67,7 +67,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
         }
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searchQuery, panel, fieldConfig]
+    [data, searchQuery, panel, fieldConfig]
   );
 
   const isSearching = searchQuery.length > 0;
