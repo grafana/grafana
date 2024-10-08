@@ -267,6 +267,12 @@ jobs:
           delete: true
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
+      - name: Echo message
+        if: steps.levitate-run.outputs.exit_code == 0
+        run: |
+          echo "No breaking changes detected. Deleting comment."
+          echo "${{ steps.levitate-run.outputs.message }}"
+
       # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
       - name: Post to Slack
         id: slack
