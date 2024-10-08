@@ -5442,7 +5442,12 @@
             "DASHBOARD",
             "DATASOURCE",
             "FOLDER",
-            "LIBRARY_ELEMENT"
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING"
           ]
         }
       }
@@ -8819,6 +8824,9 @@
           "teamId": {
             "type": "integer",
             "format": "int64"
+          },
+          "uid": {
+            "type": "string"
           }
         }
       }

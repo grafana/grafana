@@ -104,7 +104,7 @@ export const TeamList = ({
           }
 
           return (
-            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`} title="Edit team">
+            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.uid}`} title="Edit team">
               {value}
             </TextLink>
           );
@@ -182,7 +182,7 @@ export const TeamList = ({
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
                 <LinkButton
-                  href={`org/teams/edit/${original.id}`}
+                  href={`org/teams/edit/${original.uid}`}
                   aria-label={`Edit team ${original.name}`}
                   icon="pen"
                   size="sm"
@@ -194,7 +194,7 @@ export const TeamList = ({
                 aria-label={`Delete team ${original.name}`}
                 size="sm"
                 disabled={!canDelete}
-                onConfirm={() => deleteTeam(original.id)}
+                onConfirm={() => deleteTeam(original.uid)}
               />
             </Stack>
           );
