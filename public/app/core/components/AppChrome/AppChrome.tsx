@@ -4,7 +4,7 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationSearchToObject, locationService } from '@grafana/runtime';
-import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
+import { useStyles2, LinkButton, useTheme2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
@@ -77,6 +77,34 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
+  const content = (
+    <div className={contentClass}>
+      <div className={styles.panes}>
+        {!isSingleTopNav && menuDockedAndOpen && (
+          <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+        )}
+        {!state.chromeless && (
+          <div
+            className={cx(styles.scopesDashboardsContainer, {
+              [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
+            })}
+          >
+            <ScopesDashboards />
+          </div>
+        )}
+        <main
+          className={cx(styles.pageContainer, {
+            [styles.pageContainerMenuDocked]: !isSingleTopNav && (menuDockedAndOpen || isScopesDashboardsOpen),
+            [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+          })}
+          id="pageContent"
+        >
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
@@ -87,24 +115,36 @@ export function AppChrome({ children }: Props) {
         'main-view--chrome-hidden': state.chromeless,
       })}
     >
-      {!state.chromeless && (
+      {isSingleTopNav ? (
         <>
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          {isSingleTopNav && menuDockedAndOpen && (
-            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
-          )}
-          <header className={cx(styles.topNav, isSingleTopNav && menuDockedAndOpen && styles.topNavMenuDocked)}>
-            {isSingleTopNav ? (
-              <SingleTopBar
-                sectionNav={state.sectionNav.node}
-                pageNav={state.pageNav}
-                onToggleMegaMenu={handleMegaMenu}
-                onToggleKioskMode={chrome.onToggleKioskMode}
-              />
-            ) : (
-              <>
+          <Stack gap={0} grow={1}>
+            {menuDockedAndOpen && (
+              <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+            )}
+            <Stack gap={0} direction="column" grow={1}>
+              <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
+                <SingleTopBar
+                  sectionNav={state.sectionNav.node}
+                  pageNav={state.pageNav}
+                  onToggleMegaMenu={handleMegaMenu}
+                  onToggleKioskMode={chrome.onToggleKioskMode}
+                />
+              </header>
+              {content}
+            </Stack>
+          </Stack>
+        </>
+      ) : (
+        <>
+          {!state.chromeless && (
+            <>
+              <LinkButton className={styles.skipLink} href="#pageContent">
+                Skip to main content
+              </LinkButton>
+              <header className={styles.topNav}>
                 {!searchBarHidden && <TopSearchBar />}
                 <NavToolbar
                   searchBarHidden={searchBarHidden}
@@ -115,36 +155,12 @@ export function AppChrome({ children }: Props) {
                   onToggleMegaMenu={handleMegaMenu}
                   onToggleKioskMode={chrome.onToggleKioskMode}
                 />
-              </>
-            )}
-          </header>
+              </header>
+            </>
+          )}
+          {content}
         </>
       )}
-      <div className={contentClass}>
-        <div className={styles.panes}>
-          {!isSingleTopNav && menuDockedAndOpen && (
-            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
-          )}
-          {!state.chromeless && (
-            <div
-              className={cx(styles.scopesDashboardsContainer, {
-                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
-              })}
-            >
-              <ScopesDashboards />
-            </div>
-          )}
-          <main
-            className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-            })}
-            id="pageContent"
-          >
-            {children}
-          </main>
-        </div>
-      </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
@@ -187,7 +203,8 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
         zIndex: 2,
       },
       isSingleTopNav && {
-        height: '100%',
+        height: '100vh',
+        position: 'sticky',
         top: 0,
       }
     ),
