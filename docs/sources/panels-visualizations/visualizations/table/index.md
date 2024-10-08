@@ -73,9 +73,7 @@ They support various data types, including tables, time series, annotations, and
 The table visualization can even take multiple datasets and provide the option to switch between them.
 With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
-{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" alt="Table visualization" >}}
-
-<!--update! -->
+![Basic table visualization](/media/docs/grafana/panels-visualizations/screenshot-basic-table-v11.3.png)
 
 You can use a table visualization to show datasets such as:
 
@@ -195,12 +193,9 @@ You can sort multiple columns by holding the `Shift` key and clicking the column
 ## Dataset selector
 
 If the data queried contains multiple datasets, a table displays a drop-down list at the bottom, so you can select the dataset you want to visualize.
+This option is only available when you're editing the panel.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png" max-width="650px" alt="Table visualization with multiple datasets" class="docs-image--no-shadow" >}}
-
-<!--update -->
-
-<!-- is this only in edit mode? -->
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-multi-dataset-v11.3.png" max-width="650px" alt="Table visualization with multiple datasets" >}}
 
 ## Configuration options
 
@@ -264,9 +259,7 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 This cell type shows values rendered as a sparkline.
 You can show sparklines using the [Time series to table transformation](ref:time-series-to-table-transformation) on data with multiple time series to process it into a format the table can show.
 
-{{< figure src="/static/img/docs/tables/sparkline2.png" max-width="500px" alt="Sparkline" class="docs-image--no-shadow" >}}
-
-<!--update! -->
+![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
 <!-- do you have to use this transformation to make this cell type work at all with time series data? -->
 
@@ -277,9 +270,7 @@ You can also change the color of the sparkline by updating the [color scheme](re
 
 If thresholds are set, with this cell type, the field text is displayed in the appropriate threshold color.
 
-{{< figure src="/static/img/docs/tables/color-text.png" max-width="500px" alt="Color text" class="docs-image--no-shadow" >}}
-
-<!--update! -->
+{{< figure src="screenshot-table-colored-text-v11.3.png" max-width="650px" alt="Table with colored text cell type" >}}
 
 {{< admonition type="note" >}}
 This is an experimental feature.
