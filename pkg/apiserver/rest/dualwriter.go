@@ -119,6 +119,7 @@ func NewDualWriter(
 ) Storage {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
+	fmt.Println("MODE: ", mode)
 	switch mode {
 	case Mode0:
 		return legacy
@@ -126,7 +127,7 @@ func NewDualWriter(
 		// read and write only from legacy storage
 		return newDualWriterMode1(legacy, storage, metrics, resource)
 	case Mode2:
-		// write to both, read from storage but use legacy as backup
+		// write to both, read from storage but use legacy as backu
 		return newDualWriterMode2(legacy, storage, metrics, resource)
 	case Mode3:
 		// write to both, read from storage only

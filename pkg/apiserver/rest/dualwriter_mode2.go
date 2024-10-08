@@ -75,8 +75,17 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
+	createdCopy := createdFromLegacy.DeepCopyObject()
+
+	accCreated, err := meta.Accessor(createdCopy)
+	if err != nil {
+		return createdFromLegacy, err
+	}
+
+	accCreated.SetResourceVersion("")
+
 	startStorage := time.Now()
-	createdFromStorage, err := d.Storage.Create(ctx, in, createValidation, options)
+	createdFromStorage, err := d.Storage.Create(ctx, createdCopy, createValidation, options)
 	if err != nil {
 		log.WithValues("name").Error(err, "unable to create object in storage")
 		d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)

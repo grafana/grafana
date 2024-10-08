@@ -33,10 +33,10 @@ func TestMode2_Create(t *testing.T) {
 				name:  "creating an object in both the LegacyStorage and Storage",
 				input: exampleObj,
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil)
+					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
 				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil)
+					m.On("Create", mock.Anything, exampleObj, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
 			},
 			{
