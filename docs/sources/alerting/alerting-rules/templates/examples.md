@@ -15,11 +15,62 @@ labels:
 title: Examples of templating labels and annotations in alert rules
 menuTitle: Examples
 weight: 102
+refs:
+  labels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#labels
+  annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
 ---
 
 # Labels and annotations template examples
 
 This document is a compilation of common use cases for templating labels and annotations within Grafana alert rules. Templating allows you to dynamically generate values for both labels and annotations, making your alerts more flexible and context-aware. By leveraging variables from your metrics, you can create more informative and actionable alerts that improve both routing and response times.
+
+[Annotations](ref:annotations) add extra details to alert instances and are often used to provide helpful information for identifying the issue and guiding the response. A common use case for annotations is to show the specific query value or threshold that triggered the alert, or to highlight important labels like the environment, region, or priority.
+
+For example, you can create an annotation to display the specific instance and CPU value that caused the alert:
+
+```
+CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
+```
+
+This would result in a message like:
+
+```
+CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
+```
+
+This annotation provides useful information about which instance is affected and by how much.
+
+[Labels](ref:labels) determine how alerts are routed and managed for notifications, and they contribute that alert notifications reach the right teams at the right time.  If the labels returned by your queries don’t fully capture the necessary context, you can use templating to modify or enhance them.
+
+Here’s an example of templating a `severity` label based on the query value:
+
+```
+{{ if (gt $values.A.Value 90.0) -}}
+critical
+{{ else if (gt $values.A.Value 80.0) -}}
+high
+{{ else if (gt $values.A.Value 60.0) -}}
+medium
+{{ else -}}
+low
+{{- end }}
+```
+
+In this example, the severity of the alert is determined by the query value:
+- `critical` for values above 90,
+- `high` for values above 80,
+- `medium` for values above 60,
+- and `low` for anything below.
+
+You can then use the `severity` label to control how alerts are handled. For instance, you could send `critical` alerts immediately, while routing `low` severity alerts to a team for further investigation.
 
 Each example provided here is specifically applicable to alert rules (though syntax and functionality may differ from notification templates). For those seeking examples related to notification templates—which cover the formatting of alert messages sent to external systems—please refer to the [notification templates examples](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/) document.
 
