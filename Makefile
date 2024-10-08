@@ -18,6 +18,9 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
 
+# GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
+XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
+
 targets := $(shell echo '$(sources)' | tr "," " ")
 
 GO_INTEGRATION_TESTS := $(shell find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
@@ -302,6 +305,15 @@ golangci-lint: $(GOLANGCI_LINT)
 
 .PHONY: lint-go
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
+
+.PHONY: lint-go-diff
+lint-go-diff: $(GOLANGCI_LINT)
+	git diff --name-only remotes/origin/main | \
+		grep '\.go$$' | \
+		$(XARGSR) dirname | \
+		sort -u | \
+		sed 's,^,./,' | \
+		$(XARGSR) $(GOLANGCI_LINT) run --config .golangci.toml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
