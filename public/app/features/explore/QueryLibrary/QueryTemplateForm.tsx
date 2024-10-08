@@ -66,9 +66,7 @@ export const QueryTemplateForm = ({ onCancel, onSave, queryToAdd, templateData }
       .then(() => {
         getAppEvents().publish({
           type: AppEvents.alertSuccess.name,
-          payload: [
-            t('explore.query-library.query-template-added', 'Query template successfully added to the library'),
-          ],
+          payload: [t('explore.query-library.query-template-added', 'Query successfully saved to the library')],
         });
         return true;
       })
