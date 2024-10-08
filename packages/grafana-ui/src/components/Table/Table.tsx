@@ -1,3 +1,10 @@
+import {
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+} from '@tanstack/react-table';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAbsoluteLayout,
@@ -188,6 +195,39 @@ export const Table = memo((props: Props) => {
     toggleAllRowsExpanded,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
+  // Inputs
+  // filter X
+  // sort X
+  // pagination X
+
+  // absolute layout
+  // resize columns
+  // expanded
+
+  // Outputs
+  // getTableProps, no longer used
+  // headerGroups,
+  // footerGroups,
+  // rows,
+  // prepareRow,
+  // totalColumnsWidth,
+  // page,
+  // state,
+  // gotoPage,
+  // setPageSize,
+  // pageOptions,
+  // toggleAllRowsExpanded,
+
+  const tableInstance = useReactTable({
+    columns: options.columns,
+    data: options.data,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
+  console.log(tableInstance);
   const extendedState = state as GrafanaTableState;
   toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
 

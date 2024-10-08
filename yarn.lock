@@ -9146,6 +9146,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/react-table@npm:^8.20.5":
+  version: 8.20.5
+  resolution: "@tanstack/react-table@npm:8.20.5"
+  dependencies:
+    "@tanstack/table-core": "npm:8.20.5"
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 10/df67094795a0b7e4b34f73abe346443c2e806c572fea31b58759aa8ec5274f613e5e6941090eb16f861bda10d3088731bc6e7f15e5f90326db273bc55b9141ce
+  languageName: node
+  linkType: hard
+
 "@tanstack/react-virtual@npm:^3.5.1, @tanstack/react-virtual@npm:^3.9.0":
   version: 3.10.8
   resolution: "@tanstack/react-virtual@npm:3.10.8"
@@ -9155,6 +9167,13 @@ __metadata:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 10/40a5d6089908096634fec2aa0cd646ca47c044c745e1b0d190ecbf9905ad2e6266ccd56c2550ed92f47349954dc11eb6930beac1354441ce7c98af81c5454d3f
+  languageName: node
+  linkType: hard
+
+"@tanstack/table-core@npm:8.20.5":
+  version: 8.20.5
+  resolution: "@tanstack/table-core@npm:8.20.5"
+  checksum: 10/5408237920d5796951e925278edbbe76f71006627a4e3da248a810970256f75d973538fe7ae75a32155d4a25a95abc4fffaea337b5120f7940d7e664dc9da87f
   languageName: node
   linkType: hard
 
@@ -18959,6 +18978,7 @@ __metadata:
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
     "@swc/core": "npm:1.4.2"
     "@swc/helpers": "npm:0.5.13"
+    "@tanstack/react-table": "npm:^8.20.5"
     "@testing-library/dom": "npm:10.0.0"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:15.0.2"
