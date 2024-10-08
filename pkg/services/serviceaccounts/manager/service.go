@@ -26,7 +26,9 @@ const (
 )
 
 type ServiceAccountsService struct {
-	acService         accesscontrol.Service
+	acService   accesscontrol.Service
+	permissions accesscontrol.ServiceAccountPermissionsService
+
 	store             store
 	log               log.Logger
 	backgroundLog     log.Logger
@@ -44,7 +46,8 @@ func ProvideServiceAccountsService(
 	kvStore kvstore.KVStore,
 	userService user.Service,
 	orgService org.Service,
-	accesscontrolService accesscontrol.Service,
+	acService accesscontrol.Service,
+	permissions accesscontrol.ServiceAccountPermissionsService,
 ) (*ServiceAccountsService, error) {
 	serviceAccountsStore := database.ProvideServiceAccountsStore(
 		cfg,
@@ -55,13 +58,14 @@ func ProvideServiceAccountsService(
 		orgService,
 	)
 	s := &ServiceAccountsService{
-		acService:     accesscontrolService,
+		acService:     acService,
+		permissions:   permissions,
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),
 		backgroundLog: log.New("serviceaccounts.background"),
 	}
 
-	if err := RegisterRoles(accesscontrolService); err != nil {
+	if err := RegisterRoles(acService); err != nil {
 		s.log.Error("Failed to register roles", "error", err)
 	}
 
@@ -179,7 +183,10 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 	if err := sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID); err != nil {
 		return err
 	}
-	return sa.acService.DeleteUserPermissions(ctx, orgID, serviceAccountID)
+	if err := sa.acService.DeleteUserPermissions(ctx, orgID, serviceAccountID); err != nil {
+		return err
+	}
+	return sa.permissions.DeleteResourcePermissions(ctx, orgID, fmt.Sprintf("%d", serviceAccountID))
 }
 
 func (sa *ServiceAccountsService) EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error {
