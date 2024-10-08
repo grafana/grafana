@@ -222,11 +222,10 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	var children []*navtree.NavLink
 	// setup guide (a submenu item under Home)
 	children = append(children, &navtree.NavLink{
-		Id:         "home-setup-guide",
-		Text:       "Setup guide",
-		Url:        homeUrl + "/setup-guide",
-		Children:   []*navtree.NavLink{},
-		SortWeight: navtree.WeightHome,
+		Id:       "home-setup-guide",
+		Text:     "Setup guide",
+		Url:      homeUrl + "/setup-guide",
+		Children: []*navtree.NavLink{},
 	})
 	homeNode.Children = children
 
