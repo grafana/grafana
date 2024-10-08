@@ -361,7 +361,8 @@ interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
 
 const OpeningBracket = () => <span>{'{'}</span>;
 const ClosingBracket = () => <span>{'}'}</span>;
-const Quote = () => <span>&quot;</span>;
+const Quote = () => <span>{'&quot;'}</span>;
+const Equals = () => <span>{'='}</span>;
 
 const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   const styles = useStyles2(getStyles);
@@ -388,7 +389,7 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
                 {labels.map(([key, value], index) => (
                   <Text variant="body" key={uniqueId()}>
                     <span className={styles.expression.labelKey}>{key}</span>
-                    <span>=</span>
+                    <Equals />
                     <Quote />
                     <span className={styles.expression.labelValue}>{value}</span>
                     <Quote />
