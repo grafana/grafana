@@ -4,8 +4,9 @@ import { Navigate } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, Stack, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Trans } from '@grafana/ui/src/utils/i18n';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
@@ -88,16 +89,25 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           <div className={styles.column}>
             <Text variant="h4">Bookmarks</Text>
             <div className={styles.trailList}>
-              {getTrailStore().bookmarks.map((bookmark, index) => {
-                return (
-                  <DataTrailCard
-                    key={getBookmarkKey(bookmark)}
-                    bookmark={bookmark}
-                    onSelect={() => model.onSelectBookmark(index)}
-                    onDelete={() => onDelete(index)}
-                  />
-                );
-              })}
+              {getTrailStore().bookmarks.length ? (
+                getTrailStore().bookmarks.map((bookmark, index) => {
+                  return (
+                    <DataTrailCard
+                      key={getBookmarkKey(bookmark)}
+                      bookmark={bookmark}
+                      onSelect={() => model.onSelectBookmark(index)}
+                      onDelete={() => onDelete(index)}
+                    />
+                  );
+                })
+              ) : (
+                <EmptyState variant="call-to-action" message="" image={false}>
+                  <Trans i18nKey="trails.bookmarks.empty-state">
+                    You haven&apos;t created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your
+                    panels as bookmarks.
+                  </Trans>
+                </EmptyState>
+              )}
             </div>
           </div>
         </Stack>
