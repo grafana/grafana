@@ -75,6 +75,8 @@ With this versatility, it's the preferred visualization for viewing multiple dat
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" alt="Table visualization" >}}
 
+<!--update! -->
+
 You can use a table visualization to show datasets such as:
 
 - Common database queries like logs, traces, metrics
@@ -196,6 +198,8 @@ If the data queried contains multiple datasets, a table displays a drop-down lis
 
 {{< figure src="/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png" max-width="650px" alt="Table visualization with multiple datasets" class="docs-image--no-shadow" >}}
 
+<!--update -->
+
 <!-- is this only in edit mode? -->
 
 ## Configuration options
@@ -262,6 +266,8 @@ You can show sparklines using the [Time series to table transformation](ref:time
 
 {{< figure src="/static/img/docs/tables/sparkline2.png" max-width="500px" alt="Sparkline" class="docs-image--no-shadow" >}}
 
+<!--update! -->
+
 <!-- do you have to use this transformation to make this cell type work at all with time series data? -->
 
 You can customize sparklines with many of the same options as the [time series visualization](ref:time-series-panel) including line style and width, fill opacity, gradient mode, and more.
@@ -273,6 +279,8 @@ If thresholds are set, with this cell type, the field text is displayed in the a
 
 {{< figure src="/static/img/docs/tables/color-text.png" max-width="500px" alt="Color text" class="docs-image--no-shadow" >}}
 
+<!--update! -->
+
 {{< admonition type="note" >}}
 This is an experimental feature.
 {{< /admonition >}}
@@ -283,10 +291,14 @@ If thresholds are set, with this cell type, the field background is displayed in
 
 {{< figure src="/static/img/docs/tables/color-background.png" max-width="500px" alt="Color background" class="docs-image--no-shadow" >}}
 
+<!--update! -->
+
 - **Background display mode** - Choose between **Basic** and **Gradient**.
 - **Apply to entire row** - Toggle the switch on to apply the background color that's configured for the cell to the whole row.
 
 {{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
+
+<!--update! -->
 
 ##### Gauge
 
@@ -310,6 +322,7 @@ You can set three gauge display modes.
 | Retro LCD | The gauge is split up in small cells that are lit or unlit. {{< figure src="/static/img/docs/tables/lcd-gauge.png" max-width="200px" alt="LCD gauge" >}} |
 
 <!-- prettier-ignore-end -->
+<!--update -->
 
 ###### Value display
 
@@ -324,6 +337,7 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 | Hidden | {{< figure src="/static/img/docs/tables/hidden-mode.png" max-width="350px" alt="Hide Label" >}} |
 
 <!-- prettier-ignore-end -->
+<!--update -->
 
 ##### JSON View
 
@@ -337,6 +351,8 @@ If a value is an object the JSON view allowing browsing the JSON object will app
 If you have a field value that is an image URL or a base64 encoded image, this cell type displays it as an image.
 
 {{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" alt="Table hover" >}}
+
+<!--update! -->
 
 Set the following options:
 
