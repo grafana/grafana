@@ -210,10 +210,11 @@ func getData(wr *WatchEvent_Resource) (*Data, error) {
 
 func resource(we *WatchEvent) (*WatchEvent_Resource, error) {
 	rs := we.Resource
-	if rs == nil || rs.Value == nil || len(rs.Value) == 0 {
+	if rs == nil || len(rs.Value) == 0 {
+		// for updates/deletes
 		rs = we.Previous
 	}
-	if rs == nil {
+	if rs == nil || len(rs.Value) == 0 {
 		return nil, errors.New("resource not found")
 	}
 	return rs, nil
