@@ -73,7 +73,7 @@ They support various data types, including tables, time series, annotations, and
 The table visualization can even take multiple datasets and provide the option to switch between them.
 With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
-{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" alt="Table visualization" >}}
+{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" alt="Table visualization" >}}
 
 You can use a table visualization to show datasets such as:
 
