@@ -6568,6 +6568,9 @@
         "orientation": {
           "type": "string"
         },
+        "pdfShowTemplateVariables": {
+          "type": "boolean"
+        },
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
         }
@@ -8363,6 +8366,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "ExternalSessionId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "Id": {
           "type": "integer",
           "format": "int64"
@@ -8821,6 +8828,9 @@
           "teamId": {
             "type": "integer",
             "format": "int64"
+          },
+          "uid": {
+            "type": "string"
           }
         }
       }
