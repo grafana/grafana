@@ -218,12 +218,12 @@ describe('Silence create/edit', () => {
   });
 
   it('Should not render createdBy if user is logged in and has a name', async () => {
-    render(<NewSilencePage />);
+    renderSilences(baseUrlPath);
     await waitFor(() => expect(ui.editor.createdBy.query()).not.toBeInTheDocument());
   });
   it('Should render createdBy if user is not logged or has no name', async () => {
     setUserLogged(false);
-    render(<NewSilencePage />);
+    renderSilences(baseUrlPath);
     await waitFor(() => expect(ui.editor.createdBy.get()).toBeInTheDocument());
   });
   it(
@@ -233,7 +233,6 @@ describe('Silence create/edit', () => {
       const matchersQueryString = matchersParams.map((matcher) => `matcher=${encodeURIComponent(matcher)}`).join('&');
 
       renderSilences(`${baseUrlPath}?${matchersQueryString}`);
-
       expect(await ui.editor.durationField.find()).toBeInTheDocument();
 
       const matchers = ui.editor.matchersField.queryAll();
