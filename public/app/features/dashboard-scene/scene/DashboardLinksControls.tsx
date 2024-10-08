@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
+
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
+import { SceneTimeRangeLike } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import { Tooltip } from '@grafana/ui';
 import {
@@ -12,10 +15,31 @@ import { LINK_ICON_MAP } from '../settings/links/utils';
 
 export interface Props {
   links: DashboardLink[];
+  timeRange?: SceneTimeRangeLike;
   uid?: string;
 }
 
-export function DashboardLinksControls({ links, uid }: Props) {
+interface LinkInfo {
+  href: string;
+  title: string;
+  tooltip: string;
+}
+
+export function DashboardLinksControls({ links, uid, timeRange }: Props) {
+  const timeRangeState = timeRange?.useState();
+  const [linkInfos, setLinkInfos] = useState<Record<string, LinkInfo>>({});
+
+  useEffect(() => {
+    const newLinkInfo: Record<string, LinkInfo> = {};
+
+    links.forEach((link: DashboardLink) => {
+      const linkInfo = getLinkSrv().getAnchorInfo(link);
+      newLinkInfo[link.title] = linkInfo;
+    });
+
+    setLinkInfos(newLinkInfo);
+  }, [links, timeRangeState?.value]);
+
   if (!links || !uid) {
     return null;
   }
@@ -23,7 +47,7 @@ export function DashboardLinksControls({ links, uid }: Props) {
   return (
     <>
       {links.map((link: DashboardLink, index: number) => {
-        const linkInfo = getLinkSrv().getAnchorInfo(link);
+        const linkInfo = linkInfos[link.title] ?? getLinkSrv().getAnchorInfo(link);
         const key = `${link.title}-$${index}`;
 
         if (link.type === 'dashboards') {
