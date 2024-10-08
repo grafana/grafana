@@ -100,27 +100,75 @@ To template a label:
 
 ## Common use cases
 
-Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [Language page](ref:language).
+Below are some examples that address common use cases and some of the different approaches you can take with templating. You will see both annotation and label templates share functions and elements that help formatting the alert notifications. If you are unfamiliar with the templating language, check the [Language page](ref:language).
 
-### Print all labels, comma separated
+### Annotation examples
 
-To print all labels, comma separated, print the `$labels` variable:
+#### Displaying alert trigger details
 
-```
-{{ $labels }}
-```
+Annotations can provide additional context for alert responders by showing the details of what triggered the alert.
 
-For example, given an alert with the labels `alertname=High CPU usage`, `grafana_folder=CPU alerts` and `instance=server1`, this would print:
+Use case: Display the CPU usage of a specific instance that exceeded a threshold.
 
-```
-alertname=High CPU usage, grafana_folder=CPU alerts, instance=server1
+``` go
+CPU usage for {{ $labels.instance }} has exceeded {{ $values.A }} for the last 5 minutes.
 ```
 
-### Print all labels, one per line
+This would print:
+
+```
+CPU usage for Instance-1 has exceeded 81.23% for the last 5 minutes.
+```
+
+Elements introduced:
+<!-- add links to these elements -->
+- `$labels`: Used to access alert labels.
+- `$values`: Used to access the query values that triggered the alert.
+- `{{ }}`: Go templating syntax for embedding values within the template.
+
+#### Adding Alert Summary with Labels
+
+Annotations can also be used to provide a summary of key alert labels.
+
+Use case: Display a summary of the alert with important labels such as environment and alert severity.
+
+``` go
+Alert triggered in {{ $labels.environment }} with severity {{ $labels.severity }}
+```
+
+This would print:
+
+```
+Alert triggered in production with severity critical.
+```
+
+#### Summarizing Multiple Alerts in a Single Notification
+
+When multiple alerts are fired, an annotation can summarize them.
+
+Use case: List all instances that are affected when multiple alerts fire simultaneously.
+
+``` go
+The following instances have high CPU usage: {{ range .Alerts.Firing }} {{ .Labels.instance }} ({{ .Values.A }}%) {{ end }}
+```
+
+This would print:
+
+```
+The following instances have high CPU usage: Instance-1 (81.23%) Instance-2 (83.45%) Instance-3 (82.01%)
+```
+
+Elements introduced:
+
+`{{ range }}`: Introduces looping through alerts to display multiple instances.
+
+### Label examples
+
+#### Print all labels, one per line
 
 To print all labels, one per line, use a `range` to iterate over each key/value pair and print them individually. Here `$k` refers to the name and `$v` refers to the value of the current label:
 
-```
+``` go
 {{ range $k, $v := $labels -}}
 {{ $k }}={{ $v }}
 {{ end }}
@@ -134,11 +182,11 @@ grafana_folder=CPU alerts
 instance=server1
 ```
 
-### Print an individual label
+#### Print an individual label
 
 To print an individual label use the `index` function with the `$labels` variable:
 
-```
+``` go
 The host {{ index $labels "instance" }} has exceeded 80% CPU usage for the last 5 minutes
 ```
 
@@ -148,11 +196,11 @@ For example, given an alert with the labels `instance=server1`, this would print
 The host server1 has exceeded 80% CPU usage for the last 5 minutes
 ```
 
-### Print the value of a query
+#### Print the value of a query
 
 To print the value of an instant query you can print its Ref ID using the `index` function and the `$values` variable:
 
-```
+``` go
 {{ index $values "A" }}
 ```
 
@@ -164,15 +212,15 @@ For example, given an instant query that returns the value 81.2345, this will pr
 
 To print the value of a range query you must first reduce it from a time series to an instant vector with a reduce expression. You can then print the result of the reduce expression by using its Ref ID instead. For example, if the reduce expression takes the average of A and has the Ref ID B you would write:
 
-```
+``` go
 {{ index $values "B" }}
 ```
 
-### Print the humanized value of a query
+#### Print the humanized value of a query
 
 To print the humanized value of an instant query use the `humanize` function:
 
-```
+``` go
 {{ humanize (index $values "A").Value }}
 ```
 
@@ -188,21 +236,21 @@ To print the humanized value of a range query you must first reduce it from a ti
 {{ humanize (index $values "B").Value }}
 ```
 
-### Print the value of a query as a percentage
+#### Print the value of a query as a percentage
 
 To print the value of an instant query as a percentage use the `humanizePercentage` function:
 
-```
+``` go
 {{ humanizePercentage (index $values "A").Value }}
 ```
 
 This function expects the value to be a decimal number between 0 and 1. If the value is instead a decimal number between 0 and 100 you can either divide it by 100 in your query or using a math expression. If the query is a range query you must first reduce it from a time series to an instant vector with a reduce expression.
 
-### Set a severity from the value of a query
+#### Dinamically setting alert severity
 
 To set a severity label from the value of a query use an if statement and the greater than comparison function. Make sure to use decimals (`80.0`, `50.0`, `0.0`, etc) when doing comparisons against `$values` as text/template does not support type coercion. You can find a list of all the supported comparison functions [here](https://pkg.go.dev/text/template#hdr-Functions).
 
-```
+``` go
 {{ if (gt $values.A.Value 80.0) -}}
 high
 {{ else if (gt $values.A.Value 50.0) -}}
@@ -212,27 +260,61 @@ low
 {{- end }}
 ```
 
-### Firing and resolved alerts, with summary annotation
+Elements introduced:
 
-This is the Summary annotation for a rule that fires when disk usage of a database server exceeds 75%. It uses the instance label from the query to tell you which database server(s) are low on disk space.
+- `$values`: Used to access the query value that triggered the alert.
+- `{{ if }}`, `{{ else if }}`, `{{ end }}`: Introduces conditional logic in Go templating to set the severity label dynamically.
 
-```
-The database server {{ index $labels "instance" }} has exceeded 75% of available disk space, please resize the disk within the next 24 hours
+#### Labeling based on environment
+
+Use labels to differentiate alerts coming from various environments (e.g., production, staging, dev).
+
+Use case: Add a label that sets the environment based on the instance’s label.
+
+``` go
+{{ if eq $labels.instance "prod-server-1" }}production
+{{ else if eq $labels.instance "staging-server-1" }}staging
+{{ else }}development
+{{ end }}
 ```
 
-You can also show the amount of disk space used with the $values variable. For example, if your rule has a query called A that queries the disk space usage of all database servers and a Reduce expression called B that averages the result of query A, then you can use $values to show the average disk space usage for each database server.
+This would print:
 
+- For instance `prod-server-1`, the label would be `production`.
+- For `staging-server-1`, the label would be `staging`.
+- All other instances would be labeled `development`.
+
+#### Automatically Assigning Priority
+
+Automatically set a `priority` label based on both the alert condition and the importance of the instance.
+
+Use case: Assign a priority label that combines the instance’s importance with the query value.
+
+``` go
+{{ if and (eq $labels.instance "critical-server") (gt $values.A 90) }}P1
+{{ else if (gt $values.A 80) }}P2
+{{ else }}P3
+{{ end }}
 ```
-The database server {{ index $labels "instance" }} has exceeded 75% of available disk space. Disk space used is {{ index $values "B" }}%, please resize the disk within the next 24 hours
-```
+
+This would print:
+
+- For `critical-server` with a value over 90, the priority is `P1`.
+- For values over 80 but less than 90, the priority is `P2`.
+- Otherwise, the priority is `P3`.
+
+Elements introduced:
+
+- `{{ and }}`: Logical operator for combining conditions (e.g., checking both the instance and the query value).
+- `$labels`: Reference alert labels within the conditional logic.
 
 ## Legacy Alerting templates
 
-### Print all labels from a classic condition
-
-You cannot use `$labels` to print labels from the query if you are using classic conditions, and must use `$values` instead. The reason for this is classic conditions discard these labels to enforce uni-dimensional behavior (at most one alert per alert rule). If classic conditions didn't discard these labels, then queries that returned many time series would cause alerts to flap between firing and resolved constantly as the labels would change every time the alert rule was evaluated.
+For users working with Grafana's legacy alerting system, templates can still be utilized to extract useful information from alert conditions. However, it's important to note that you cannot use `$labels` to print labels from the query if you are using classic conditions, and must use `$values` instead. The reason for this is classic conditions discard these labels to enforce uni-dimensional behavior (at most one alert per alert rule). If classic conditions didn't discard these labels, then queries that returned many time series would cause alerts to flap between firing and resolved constantly as the labels would change every time the alert rule was evaluated.
 
 Instead, the `$values` variable contains the reduced values of all time series for all conditions that are firing. For example, if you have an alert rule with a query A that returns two time series, and a classic condition B with two conditions, then `$values` would contain `B0`, `B1`, `B2` and `B3`. If the classic condition B had just one condition, then `$values` would contain just `B0` and `B1`.
+
+### Print all labels from a classic condition
 
 To print all labels of all firing time series use the following template (make sure to replace `B` in the regular expression with the Ref ID of the classic condition if it's different):
 
