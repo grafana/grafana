@@ -445,6 +445,9 @@
                 "teamId": {
                   "format": "int64",
                   "type": "integer"
+                },
+                "uid": {
+                  "type": "string"
                 }
               },
               "type": "object"
@@ -12152,6 +12155,10 @@
             "type": "string"
           },
           "CreatedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "ExternalSessionId": {
             "format": "int64",
             "type": "integer"
           },
