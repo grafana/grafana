@@ -187,7 +187,6 @@ export class ContextSrv {
       return intervals.filter((str) => str !== '').filter(this.isAllowedInterval);
     }
 
-    console.log(intervals);
     return intervals;
   }
 
