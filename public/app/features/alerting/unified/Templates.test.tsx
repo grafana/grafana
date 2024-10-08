@@ -6,6 +6,7 @@ import { render, screen, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
@@ -39,15 +40,6 @@ jest.mock('@grafana/ui', () => ({
   ),
 }));
 
-const successMock = jest.fn();
-jest.mock('app/core/copy/appNotification', () => {
-  return {
-    useAppNotification: () => {
-      return { success: successMock };
-    },
-  };
-});
-
 const ui = {
   templateForm: byRole('form', { name: 'Template form' }),
 };
@@ -66,9 +58,12 @@ beforeEach(() => {
 
 const setup = (initialEntries: InitialEntry[]) => {
   return render(
-    <Routes>
-      <Route path="/alerting/notifications/templates/*" element={<Templates />} />
-    </Routes>,
+    <>
+      <AppNotificationList />
+      <Routes>
+        <Route path="/alerting/notifications/templates/*" element={<Templates />} />
+      </Routes>
+    </>,
     {
       historyOptions: { initialEntries },
     }
@@ -137,7 +132,9 @@ describe('Templates K8s API', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(successMock).toHaveBeenCalledWith('Template saved', 'Template custom-email has been saved');
+    expect(await screen.findByRole('status', { name: 'Template saved' })).toHaveTextContent(
+      'Template custom-email has been saved'
+    );
 
     expect(ui.templateForm.query()).not.toBeInTheDocument();
   });
