@@ -4,6 +4,7 @@ import { PluginExtensionAddedComponentConfig, PluginExtensionAddedLinkConfig } f
 import { reportInteraction } from '@grafana/runtime';
 
 import { getPluginExtensions } from './getPluginExtensions';
+import { log } from './logs/log';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { isReadOnlyProxy } from './utils';
@@ -13,6 +14,26 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+  };
+});
+
+jest.mock('./logs/log', () => {
+  const logMock = {
+    error: jest.fn(),
+    warning: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+  };
+
+  return {
+    ...jest.requireActual('./logs/log'),
+    log: {
+      ...logMock,
+      child: () => ({
+        ...logMock,
+        child: () => logMock,
+      }),
+    },
   };
 });
 
@@ -77,8 +98,9 @@ describe('getPluginExtensions()', () => {
       },
     };
 
-    global.console.warn = jest.fn();
     jest.mocked(reportInteraction).mockReset();
+    jest.mocked(log.warning).mockReset();
+    jest.mocked(log.error).mockReset();
   });
 
   test('should return the extensions for the given placement', async () => {
@@ -279,7 +301,7 @@ describe('getPluginExtensions()', () => {
     expect(context.title).toBe('New title from the context!');
   });
 
-  test('should catch errors in the configure() function and log them as warnings', async () => {
+  test('should catch errors in the configure() function and log them as error', async () => {
     link2.configure = jest.fn().mockImplementation(() => {
       throw new Error('Something went wrong!');
     });
@@ -291,8 +313,11 @@ describe('getPluginExtensions()', () => {
     }).not.toThrow();
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(global.console.warn).toHaveBeenCalledTimes(1);
-    expect(global.console.warn).toHaveBeenCalledWith('[Plugin Extensions] Something went wrong!');
+    expect(log.error).toHaveBeenCalledTimes(1);
+    expect(log.error).toHaveBeenCalledWith('Failed to configure link with title "Link 2"', {
+      message: 'Something went wrong!',
+      stack: expect.stringContaining('Error: Something went wrong!'),
+    });
   });
 
   test('should skip the link extension if the configure() function returns with an invalid path', async () => {
@@ -320,7 +345,7 @@ describe('getPluginExtensions()', () => {
 
     expect(link1.configure).toHaveBeenCalledTimes(1);
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(global.console.warn).toHaveBeenCalledTimes(2);
+    expect(log.error).toHaveBeenCalledTimes(2);
   });
 
   test('should skip the extension if any of the updated props returned by the configure() function are invalid', async () => {
@@ -336,7 +361,7 @@ describe('getPluginExtensions()', () => {
 
     expect(extensions).toHaveLength(0);
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(global.console.warn).toHaveBeenCalledTimes(1);
+    expect(log.error).toHaveBeenCalledTimes(1);
   });
 
   test('should skip the extension if the configure() function returns a promise', async () => {
@@ -347,7 +372,7 @@ describe('getPluginExtensions()', () => {
 
     expect(extensions).toHaveLength(0);
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(global.console.warn).toHaveBeenCalledTimes(1);
+    expect(log.error).toHaveBeenCalledTimes(1);
   });
 
   test('should skip (hide) the extension if the configure() function returns undefined', async () => {
@@ -357,7 +382,7 @@ describe('getPluginExtensions()', () => {
     const { extensions } = getPluginExtensions({ ...registries, extensionPointId: extensionPoint2 });
 
     expect(extensions).toHaveLength(0);
-    expect(global.console.warn).toHaveBeenCalledTimes(0); // As this is intentional, no warning should be logged
+    expect(log.warning).toHaveBeenCalledTimes(0); // As this is intentional, no warning should be logged
   });
 
   test('should pass event, context and helper to extension onClick()', async () => {
@@ -386,7 +411,7 @@ describe('getPluginExtensions()', () => {
     );
   });
 
-  test('should catch errors in async/promise-based onClick function and log them as warnings', async () => {
+  test('should catch errors in async/promise-based onClick function and log them as errors', async () => {
     link2.path = undefined;
     link2.onClick = jest.fn().mockRejectedValue(new Error('testing'));
 
@@ -400,10 +425,10 @@ describe('getPluginExtensions()', () => {
 
     expect(extensions).toHaveLength(1);
     expect(link2.onClick).toHaveBeenCalledTimes(1);
-    expect(global.console.warn).toHaveBeenCalledTimes(1);
+    expect(log.error).toHaveBeenCalledTimes(1);
   });
 
-  test('should catch errors in the onClick() function and log them as warnings', async () => {
+  test('should catch errors in the onClick() function and log them as errors', async () => {
     link2.path = undefined;
     link2.onClick = jest.fn().mockImplementation(() => {
       throw new Error('Something went wrong!');
@@ -417,8 +442,11 @@ describe('getPluginExtensions()', () => {
     extension.onClick?.({} as React.MouseEvent);
 
     expect(link2.onClick).toHaveBeenCalledTimes(1);
-    expect(global.console.warn).toHaveBeenCalledTimes(1);
-    expect(global.console.warn).toHaveBeenCalledWith('[Plugin Extensions] Something went wrong!');
+    expect(log.error).toHaveBeenCalledTimes(1);
+    expect(log.error).toHaveBeenCalledWith('Something went wrong!', {
+      message: 'Something went wrong!',
+      stack: expect.stringContaining('Error: Something went wrong!'),
+    });
   });
 
   test('should pass a read only context to the onClick() function', async () => {

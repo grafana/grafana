@@ -402,15 +402,18 @@ export function getLinkExtensionOnClick(
       if (isPromise(result)) {
         result.catch((error) => {
           if (error instanceof Error) {
-            log.error(error.message, { error: error.stack ?? error.message });
+            log.error(error.message, {
+              message: error.message,
+              stack: error.stack ?? '',
+            });
           }
         });
       }
     } catch (error) {
       if (error instanceof Error) {
         log.error(error.message, {
-          error: error.stack ?? '',
           message: error.message,
+          stack: error.stack ?? '',
         });
       }
     }
