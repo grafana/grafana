@@ -1,10 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 
-import { PageLayoutType } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  PageLayoutType,
+} from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, UrlSyncContextProvider } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
+  UrlSyncContextProvider,
+} from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
+import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
@@ -19,8 +31,24 @@ export interface DataTrailsAppState extends SceneObjectState {
 }
 
 export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
+  private _scopesFacade: ScopesFacade | null;
+
   public constructor(state: DataTrailsAppState) {
     super(state);
+
+    this._scopesFacade = getClosestScopesFacade(this);
+  }
+
+  public enrichDataRequest(): Partial<DataQueryRequest> {
+    return {
+      scopes: this._scopesFacade?.value,
+    };
+  }
+
+  public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
+    return {
+      scopes: this._scopesFacade?.value,
+    };
   }
 
   goToUrlForTrail(trail: DataTrail) {
@@ -84,6 +112,15 @@ export function getDataTrailsApp() {
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),
       home: new DataTrailsHome({}),
+      $behaviors: [
+        new ScopesFacade({
+          handler: (facade) => {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            const trail = (facade.parent as DataTrailsApp).state.trail;
+            sceneGraph.getTimeRange(trail).onRefresh();
+          },
+        }),
+      ],
     });
   }
 
