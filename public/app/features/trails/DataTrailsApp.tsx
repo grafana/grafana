@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -10,7 +10,6 @@ import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
@@ -32,11 +31,10 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
     const { trail, home } = model.useState();
 
     return (
-      <Switch>
+      <Routes>
         <Route
-          exact={true}
-          path={HOME_ROUTE}
-          render={() => (
+          path={'/'}
+          element={
             <Page
               navId="explore/metrics"
               layout={PageLayoutType.Standard}
@@ -45,10 +43,10 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
             >
               <home.Component model={home} />
             </Page>
-          )}
+          }
         />
-        <Route exact={true} path={TRAILS_ROUTE} render={() => <DataTrailView trail={trail} />} />
-      </Switch>
+        <Route path={'/trail'} element={<DataTrailView trail={trail} />} />
+      </Routes>
     );
   };
 }
