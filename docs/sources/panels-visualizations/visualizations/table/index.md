@@ -111,7 +111,7 @@ If you’re using a cell type such as sparkline or JSON, the data requirements m
 
 This example shows a basic dataset in which there's data for every table cell:
 
-```
+```csv
 Column1, Column2, Column3
 value1 , value2 , value3
 value4 , value5 , value6
@@ -120,7 +120,7 @@ value7 , value8 , value9
 
 If a cell is missing or the table column-row structure is not complete, as in the following example, the table visualization won’t display any of the data:
 
-```
+```csv
 Column1, Column2, Column3
 value1 , value2 , value3
 gap1   , gap2
