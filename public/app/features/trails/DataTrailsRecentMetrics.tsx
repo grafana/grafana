@@ -33,25 +33,16 @@ function RecentExploration({ model }: Props) {
   return (
     <div>
       <Card onClick={onSelect} className={styles.card}>
-        {/* <Box display="inline">
-          <Text element="p" textAlignment="left" color="secondary">
-            <Trans>Last metric: </Trans>
-          </Text>
-          <Text>
-            {metric ? metric : ''}
-          </Text>
-        </Box> */}
-        <div className={styles.metricContainer}>
+        <Card.Heading>
           <div className={styles.metricLabel}>Last metric:</div>
           <div className={styles.metricValue}>{metric}</div>
-        </div>
-        {/* <Card.Heading>Last metric: {metric}</Card.Heading> */}
+        </Card.Heading>
         <div className={styles.description}>
-          <Stack gap={1.5} wrap="wrap">
+          <Card.Meta separator={'|'}>
             {filters.map((f) => (
-              <Tag key={f.key} name={`${f.key}: ${f.value}`} colorIndex={12} /> // Labels / filters
+              `${f.key}: ${f.value}`
             ))}
-          </Stack>
+          </Card.Meta>
         </div>
         <Card.Actions className={styles.actions}>
           <Stack gap={1} justifyContent={'space-between'} grow={1}>
@@ -66,11 +57,6 @@ function RecentExploration({ model }: Props) {
           </Stack>
         </Card.Actions>
       </Card>
-      {/* <div>
-        Recent Exploration metric: {metric}, datasource: {datasource}, filters: {JSON.stringify(filters)}, createdAt:{' '}
-        {createdAt}, time range from: {$timeRange && $timeRange.state.from}, time range to:{' '}
-        {$timeRange && $timeRange.state.to}
-      </div> */}
     </div>
     // REACH TODO: add sparklines
   );
@@ -83,6 +69,7 @@ export function getStyles(theme: GrafanaTheme2) {
       // alignItems: 'center',
     }),
     metricLabel: css({
+      display: 'inline',
       color: 'var(--text-secondary, rgba(204, 204, 220, 0.65))',
       fontFamily: 'Inter',
       fontSize: '14px',
@@ -92,14 +79,15 @@ export function getStyles(theme: GrafanaTheme2) {
       // letterSpacing: '0.021px',
     }),
     metricValue: css({
+      display: 'inline',
       color: 'var(--text-primary, #CCCCDC)',
       fontFamily: 'Inter',
       fontSize: '14px',
       fontStyle: 'normal',
       fontWeight: 500,
+      marginLeft: '8px', // Add some space between the label and the value
       // lineHeight: '22px', /* 157.143% */
       // letterSpacing: '0.021px',
-      // marginLeft: '8px', // Add some space between the label and the value
     }),
     tag: css({
       maxWidth: '260px',
@@ -107,7 +95,7 @@ export function getStyles(theme: GrafanaTheme2) {
       textOverflow: 'ellipsis',
     }),
     card: css({
-      display: 'flex',
+      // display: 'flex',
       padding: theme.spacing(1),
       height: '100%',
     }),
@@ -120,7 +108,7 @@ export function getStyles(theme: GrafanaTheme2) {
       gridArea: 'Description',
       margin: theme.spacing(1, 0, 0),
       color: theme.colors.text.secondary,
-      lineHeight: theme.typography.body.lineHeight,
+      // lineHeight: theme.typography.body.lineHeight,
     }),
     actions: css({
       marginRight: theme.spacing(1),
