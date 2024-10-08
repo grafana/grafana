@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -52,8 +53,8 @@ func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
 }
 
 func ProvideService(
-	cfg *setting.Cfg, tracer tracing.Tracer,
-	sessionService auth.UserTokenService, usageStats usagestats.Service, registerer prometheus.Registerer,
+	cfg *setting.Cfg, tracer tracing.Tracer, sessionService auth.UserTokenService,
+	usageStats usagestats.Service, registerer prometheus.Registerer, authTokenService login.AuthInfoService,
 ) *Service {
 	s := &Service{
 		log:                    log.New("authn.service"),
@@ -64,6 +65,7 @@ func ProvideService(
 		tracer:                 tracer,
 		metrics:                newMetrics(registerer),
 		sessionService:         sessionService,
+		authTokenService:       authTokenService,
 		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
@@ -85,7 +87,8 @@ type Service struct {
 	tracer  tracing.Tracer
 	metrics *metrics
 
-	sessionService auth.UserTokenService
+	sessionService   auth.UserTokenService
+	authTokenService login.AuthInfoService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks *queue[authn.PostAuthHookFn]
@@ -238,7 +241,9 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", id.ID, "addr", addr, "error", err)
 	}
 
-	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: userID}, ip, r.HTTPRequest.UserAgent())
+	externalSession := s.resolveExternalSessionFromIdentity(ctx, id, userID)
+
+	sessionToken, err := s.sessionService.CreateToken(ctx, &auth.CreateTokenCommand{User: &user.User{ID: userID}, ClientIP: ip, UserAgent: r.HTTPRequest.UserAgent(), ExternalSession: externalSession})
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", id.ID, "err", err)
@@ -403,7 +408,8 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
-			}}, nil
+			},
+		}, nil
 	}
 
 	if claims.IsIdentityType(t, claims.TypeServiceAccount) {
@@ -415,7 +421,8 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
-			}}, nil
+			},
+		}, nil
 	}
 
 	resolver, ok := s.idenityResolverClients[string(t)]
@@ -481,4 +488,36 @@ func orgIDFromHeader(req *http.Request) int64 {
 		return 0
 	}
 	return id
+}
+
+func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identity *authn.Identity, userID int64) *auth.ExternalSession {
+	if identity.OAuthToken == nil {
+		return nil
+	}
+
+	info, err := s.authTokenService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{AuthId: identity.GetAuthID(), UserId: userID})
+	if err != nil {
+		s.log.FromContext(ctx).Info("Failed to get auth info", "error", err, "authID", identity.GetAuthID(), "userID", userID)
+		return nil
+	}
+
+	extSession := &auth.ExternalSession{
+		AuthModule: identity.GetAuthenticatedBy(),
+		UserAuthID: info.Id,
+		UserID:     userID,
+	}
+	extSession.AccessToken = identity.OAuthToken.AccessToken
+	extSession.RefreshToken = identity.OAuthToken.RefreshToken
+	extSession.ExpiresAt = identity.OAuthToken.Expiry
+
+	if idToken, ok := identity.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+		extSession.IDToken = idToken
+	}
+
+	// As of https://openid.net/specs/openid-connect-session-1_0.html
+	if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
+		extSession.SessionID = sessionState
+	}
+
+	return extSession
 }

@@ -2218,7 +2218,9 @@
     "datasource-names": "Datasource name(s):",
     "delete-query-button": "Delete query",
     "query-template-get-error": "Error attempting to get query template from the library: {{error}}",
-    "search": "Search by data source, query content or description"
+    "search": "Search by data source, query content or description",
+    "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
+    "user-names": "User name(s):"
   },
   "query-operation": {
     "header": {

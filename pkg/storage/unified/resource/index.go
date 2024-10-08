@@ -55,14 +55,10 @@ func (i *Index) Init(ctx context.Context) error {
 			}
 
 			var jsonDoc interface{}
-			err = json.Unmarshal(obj.Value, &jsonDoc)
 			if err != nil {
 				return err
 			}
 			err = shard.batch.Index(res.Metadata.Uid, jsonDoc)
-			if err != nil {
-				return err
-			}
 		}
 
 		for _, shard := range i.shards {
