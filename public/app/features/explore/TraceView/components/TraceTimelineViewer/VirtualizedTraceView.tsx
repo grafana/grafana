@@ -44,28 +44,26 @@ import {
   ViewedBoundsFunctionType,
 } from './utils';
 
-const getStyles = stylesFactory(() => {
-  return {
-    rowsWrapper: css`
-      width: 100%;
-    `,
-    row: css`
-      width: 100%;
-    `,
-    scrollToTopButton: css`
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      width: 40px;
-      height: 40px;
-      position: absolute;
-      bottom: 30px;
-      right: 30px;
-      z-index: 1;
-    `,
-  };
-});
+const getStyles = stylesFactory(() => ({
+  rowsWrapper: css({
+    width: '100%',
+  }),
+  row: css({
+    width: '100%',
+  }),
+  scrollToTopButton: css({
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '40px',
+    height: '40px',
+    position: 'absolute',
+    bottom: '30px',
+    right: '30px',
+    zIndex: 1,
+  }),
+}));
 
 type RowState = {
   isDetail: boolean;

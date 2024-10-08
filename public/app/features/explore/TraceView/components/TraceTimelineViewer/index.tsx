@@ -32,41 +32,39 @@ import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    TraceTimelineViewer: css`
-      label: TraceTimelineViewer;
-      border-bottom: 1px solid ${autoColor(theme, '#bbb')};
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  TraceTimelineViewer: css({
+    label: 'TraceTimelineViewer',
+    borderBottom: `1px solid ${autoColor(theme, '#bbb')}`,
 
-      & .json-markup {
-        line-height: 17px;
-        font-size: 13px;
-        font-family: monospace;
-        white-space: pre-wrap;
-      }
+    '& .json-markup': {
+      lineHeight: '17px',
+      fontSize: '13px',
+      fontFamily: 'monospace',
+      whiteSpace: 'pre-wrap',
+    },
 
-      & .json-markup-key {
-        font-weight: bold;
-      }
+    '& .json-markup-key': {
+      fontWeight: 'bold',
+    },
 
-      & .json-markup-bool {
-        color: ${autoColor(theme, 'firebrick')};
-      }
+    '& .json-markup-bool': {
+      color: autoColor(theme, 'firebrick'),
+    },
 
-      & .json-markup-string {
-        color: ${autoColor(theme, 'teal')};
-      }
+    '& .json-markup-string': {
+      color: autoColor(theme, 'teal'),
+    },
 
-      & .json-markup-null {
-        color: ${autoColor(theme, 'teal')};
-      }
+    '& .json-markup-null': {
+      color: autoColor(theme, 'teal'),
+    },
 
-      & .json-markup-number {
-        color: ${autoColor(theme, 'blue', 'black')};
-      }
-    `,
-  };
-});
+    '& .json-markup-number': {
+      color: autoColor(theme, 'blue', 'black'),
+    },
+  }),
+}));
 
 export type TProps = {
   findMatchesIDs: Set<string> | TNil;
