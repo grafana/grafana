@@ -1,7 +1,8 @@
 import { AdHocVariableFilter, RawTimeRange, Scope } from '@grafana/data';
-import { PromResponse } from 'app/types/unified-alerting-dto';
 
 import { callSuggestionsApi } from '../utils';
+
+const LIMIT_REACHED = 'results truncated due to limit';
 
 export async function getMetricNames(
   dataSourceUid: string,
@@ -9,7 +10,7 @@ export async function getMetricNames(
   scopes: Scope[],
   filters: AdHocVariableFilter[],
   limit?: number
-): Promise<PromResponse<string[]>> {
+) {
   const response = await callSuggestionsApi(
     dataSourceUid,
     timeRange,
@@ -20,5 +21,8 @@ export async function getMetricNames(
     'explore-metrics-names'
   );
 
-  return response.data;
+  return {
+    ...response.data,
+    limitReached: limit && !!response.data.warnings?.includes(LIMIT_REACHED),
+  };
 }
