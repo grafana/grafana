@@ -430,11 +430,10 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "pluginsFrontendSandbox",
-			Description:  "Enables the plugins frontend sandbox",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
+			Name:        "pluginsFrontendSandbox",
+			Description: "Enables the plugins frontend sandbox",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "frontendSandboxMonitorOnly",
@@ -1518,12 +1517,6 @@ var (
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:        "sandboxSettingsUI",
-			Description: "Enables the sandbox settings UI and API",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:        "pluginsSriChecks",

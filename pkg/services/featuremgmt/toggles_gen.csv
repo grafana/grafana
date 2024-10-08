@@ -56,7 +56,7 @@ faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
-pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,true
+pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false
 frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,true
 pluginsDetailsRightPanel,experimental,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
@@ -201,5 +201,4 @@ improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false
 useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,false,false
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
-sandboxSettingsUI,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
