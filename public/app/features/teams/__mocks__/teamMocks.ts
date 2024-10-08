@@ -1,5 +1,6 @@
-import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
 import { randomBytes } from 'crypto';
+
+import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
 
 function generateShortUid(): string {
   return randomBytes(3).toString('hex'); // Generate a short UID
