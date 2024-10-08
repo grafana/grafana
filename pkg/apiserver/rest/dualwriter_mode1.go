@@ -80,13 +80,6 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, in runtime
 		return fmt.Errorf("UID should not be present:: %v", accIn.GetUID())
 	}
 
-	accLegacy, err := meta.Accessor(createdCopy)
-	if err != nil {
-		return err
-	}
-
-	accIn.SetUID(accLegacy.GetUID())
-
 	startStorage := time.Now()
 	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
 	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
