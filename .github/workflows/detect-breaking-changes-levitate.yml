@@ -27,7 +27,7 @@ jobs:
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
 
       - name: Restore yarn cache
         uses: actions/cache@v4
@@ -75,7 +75,7 @@ jobs:
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
 
       - name: Restore yarn cache
         uses: actions/cache@v4
@@ -234,9 +234,9 @@ jobs:
               echo 'levitate_markdown<<EOF'
               cat levitate.md
               echo EOF
-            } >> $GITHUB_OUTPUT
+            } >> "$GITHUB_OUTPUT"
             else
-              echo "levitate_markdown=No breaking changes detected" >> $GITHUB_OUTPUT
+              echo "levitate_markdown=No breaking changes detected" >> "$GITHUB_OUTPUT"
             fi
 
 
@@ -358,5 +358,6 @@ jobs:
           if [ "${{ steps.levitate-run.outputs.exit_code }}" -ne 0 ]; then
             echo "Breaking changes detected. Please check the levitate report in your pull request. This workflow won't block merging."
           fi
+
           exit ${{ steps.levitate-run.outputs.exit_code }}
         shell: bash
