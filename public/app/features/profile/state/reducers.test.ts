@@ -90,13 +90,13 @@ describe('userReducer', () => {
         .givenReducer(userReducer, { ...initialUserState, teamsAreLoading: true })
         .whenActionIsDispatched(
           teamsLoaded({
-            teams: [getMockTeam(1, { permission: TeamPermissionLevel.Admin })],
+            teams: [getMockTeam(1, 'aaaaaa', { permission: TeamPermissionLevel.Admin })],
           })
         )
         .thenStateShouldEqual({
           ...initialUserState,
           teamsAreLoading: false,
-          teams: [getMockTeam(1, { permission: TeamPermissionLevel.Admin })],
+          teams: [getMockTeam(1, 'aaaaaa', { permission: TeamPermissionLevel.Admin })],
         });
     });
   });

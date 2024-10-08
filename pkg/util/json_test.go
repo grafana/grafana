@@ -153,3 +153,34 @@ func TestSearchJSONForEmail(t *testing.T) {
 		})
 	}
 }
+
+func TestSearchJSONForStringAttr(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		Name           string
+		SearchObject   any
+		AttributePath  string
+		ExpectedResult string
+	}{
+		{
+			Name: "Case insensitive contains using lower function from works correctly",
+			SearchObject: map[string]any{
+				"groups": []string{
+					"fOO",
+				},
+			},
+			AttributePath:  "contains(groups[*].lower(@) ,lower('FOO')) && 'success' || 'failure'",
+			ExpectedResult: "success",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.Name, func(t *testing.T) {
+			t.Parallel()
+			actualResult, err := util.SearchJSONForStringAttr(test.AttributePath, test.SearchObject)
+			require.NoError(t, err)
+			require.Equal(t, test.ExpectedResult, actualResult)
+		})
+	}
+}
