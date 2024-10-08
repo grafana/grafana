@@ -17,7 +17,14 @@ type IndexServer struct {
 }
 
 func (is IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	results, err := is.index.Search(ctx, req.Tenant, req.Query)
+	if err != nil {
+		return nil, err
+	}
 	res := &SearchResponse{}
+	for _, r := range results {
+		res.Items = append(res.Items, &ResourceWrapper{Value: []byte(r)})
+	}
 	return res, nil
 }
 

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/analysis/lang/en"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/google/uuid"
 )
@@ -52,7 +53,13 @@ func (i *Index) Init(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			err = shard.batch.Index(res.Metadata.Uid, obj)
+
+			var jsonDoc interface{}
+			err = json.Unmarshal(obj.Value, &jsonDoc)
+			if err != nil {
+				return err
+			}
+			err = shard.batch.Index(res.Metadata.Uid, jsonDoc)
 			if err != nil {
 				return err
 			}
@@ -99,6 +106,31 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 	return nil
 }
 
+func (i *Index) Search(ctx context.Context, tenant string, query string) ([]string, error) {
+	if tenant == "" {
+		tenant = "default"
+	}
+	shard, err := i.getShard(tenant)
+	if err != nil {
+		return nil, err
+	}
+	req := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
+	req.Fields = []string{"kind", "spec.title"}
+
+	res, err := shard.index.Search(req)
+	if err != nil {
+		return nil, err
+	}
+
+	hits := res.Hits
+	results := []string{}
+	for _, hit := range hits {
+		val := fmt.Sprintf("%s:%s", hit.Fields["kind"], hit.Fields["spec.title"])
+		results = append(results, val)
+	}
+	return results, nil
+}
+
 func tenant(res *Resource) string {
 	return res.Metadata.Namespace
 }
@@ -142,20 +174,31 @@ func createIndexMappings() *mapping.IndexMappingImpl {
 	metaMapping.AddFieldMappingsAt("name", nameFieldMapping)
 	metaMapping.AddFieldMappingsAt("creationTimestamp", creationTimestampFieldMapping)
 	metaMapping.Dynamic = false
+	metaMapping.Enabled = true
+
+	specMapping := bleve.NewDocumentMapping()
+	specMapping.AddFieldMappingsAt("title", nameFieldMapping)
+	specMapping.Dynamic = false
+	specMapping.Enabled = true
 
 	//Create a sub-document mapping for the metadata field
 	objectMapping := bleve.NewDocumentMapping()
 	objectMapping.AddSubDocumentMapping("metadata", metaMapping)
+	objectMapping.AddSubDocumentMapping("spec", specMapping)
+	objectMapping.Dynamic = false
+	objectMapping.Enabled = true
+
+	// a generic reusable mapping for english text
+	englishTextFieldMapping := bleve.NewTextFieldMapping()
+	englishTextFieldMapping.Analyzer = en.AnalyzerName
 
 	// Map top level fields - just kind for now
-	kindFieldMapping := bleve.NewTextFieldMapping()
-	objectMapping.AddFieldMappingsAt("kind", kindFieldMapping)
+	objectMapping.AddFieldMappingsAt("kind", englishTextFieldMapping)
 	objectMapping.Dynamic = false
 
 	// Create the index mapping
 	indexMapping := bleve.NewIndexMapping()
 	indexMapping.DefaultMapping = objectMapping
-	indexMapping.DefaultMapping.Dynamic = false
 
 	return indexMapping
 }

@@ -82,6 +82,13 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         description: 'Search for grafana resources',
       });
     }
+    if (config.featureToggles.unifiedStorageSearch) {
+      this.queryTypes.push({
+        label: 'Search (experimental)',
+        value: GrafanaQueryType.SearchNext,
+        description: 'Search for grafana resources',
+      });
+    }
     if (config.featureToggles.editPanelCSVDragAndDrop) {
       this.queryTypes.push({
         label: 'Spreadsheet or snapshot',
@@ -432,6 +439,16 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
+  onSearchNextChange = (search: SearchQuery) => {
+    const { query, onChange, onRunQuery } = this.props;
+
+    onChange({
+      ...query,
+      searchNext: search,
+    });
+    onRunQuery();
+  };
+
   render() {
     const query = {
       ...defaultQuery,
@@ -474,6 +491,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         {queryType === GrafanaQueryType.Snapshot && this.renderSnapshotQuery()}
         {queryType === GrafanaQueryType.Search && (
           <SearchEditor value={query.search ?? {}} onChange={this.onSearchChange} />
+        )}
+        {queryType === GrafanaQueryType.SearchNext && (
+          <SearchEditor value={query.searchNext ?? {}} onChange={this.onSearchNextChange} />
         )}
       </>
     );
