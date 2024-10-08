@@ -33,7 +33,7 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
-import { QueryLibraryMocks } from 'app/features/query-library';
+import { IdentityServiceMocks, QueryLibraryMocks } from 'app/features/query-library';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 
@@ -77,12 +77,12 @@ export function setupExplore(options?: SetupOptions): {
         data.totalCount = 0;
       } else if (req.url.startsWith('/api/query-history') && req.method === 'GET') {
         data.result = options?.queryHistory || {};
-      } else if (req.url.startsWith(QueryLibraryMocks.data.all.url)) {
-        data = QueryLibraryMocks.data.all.response;
+      } else if (req.url.startsWith(QueryLibraryMocks.data.url)) {
+        data = QueryLibraryMocks.data.response;
       }
       return of({ data });
     }),
-    get: jest.fn(),
+    get: jest.fn().mockResolvedValue(IdentityServiceMocks.data.response),
     patch: jest.fn().mockRejectedValue(undefined),
     post: jest.fn(),
     put: jest.fn().mockRejectedValue(undefined),

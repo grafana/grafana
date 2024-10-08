@@ -2218,7 +2218,9 @@
     "datasource-names": "Đäŧäşőūřčę ŉämę(ş):",
     "delete-query-button": "Đęľęŧę qūęřy",
     "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ qūęřy ŧęmpľäŧę ƒřőm ŧĥę ľįþřäřy: {{error}}",
-    "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ"
+    "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ",
+    "user-info-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ ūşęř įŉƒő ƒřőm ŧĥę ľįþřäřy: {{error}}",
+    "user-names": "Ůşęř ŉämę(ş):"
   },
   "query-operation": {
     "header": {
