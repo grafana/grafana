@@ -242,45 +242,63 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
-	resourceUIDs, err := dr.listUserResources(ctx, query)
+	resources, err := dr.listUserResources(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	if len(resourceUIDs) == 0 {
+	if len(resources.Folders) == 0 && len(resources.Resources) == 0 {
 		return []dashboards.DashboardSearchProjection{}, nil
 	}
 
-	query.DashboardUIDs = resourceUIDs
+	// Find dashboards in folders that user has access to
 	query.SkipAccessControlFilter = true
-	return dr.dashboardStore.FindDashboards(ctx, &query)
-}
-
-func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]string, error) {
-	tasks := make([]func() ([]string, error), 0)
-	var resourceTypes []string
-
-	// For some search types we need dashboards or folders only
-	switch query.Type {
-	case searchstore.TypeDashboard:
-		resourceTypes = []string{zanzana.TypeDashboard}
-	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
-		resourceTypes = []string{zanzana.TypeFolder}
-	default:
-		resourceTypes = []string{zanzana.TypeDashboard, zanzana.TypeFolder}
-	}
-
-	for _, resourceType := range resourceTypes {
-		tasks = append(tasks, func() ([]string, error) {
-			return dr.listAllowedResources(ctx, query, resourceType)
-		})
-	}
-
-	uids, err := runBatch(tasks)
+	query.FolderUIDs = resources.Folders
+	result, err := dr.dashboardStore.FindDashboards(ctx, &query)
 	if err != nil {
 		return nil, err
 	}
 
-	return uids, nil
+	// Run second query to find dashboards with direct permission assignments
+	rest := query.Limit - int64(len(result))
+	// skip if limit reached
+	if resources.Resources != nil && rest > 0 {
+		query.FolderUIDs = []string{}
+		query.DashboardUIDs = resources.Resources
+		query.Limit = rest
+		dashboardRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, dashboardRes...)
+	}
+
+	return result, err
+}
+
+type listResourcesResponse struct {
+	Folders   []string
+	Resources []string
+}
+
+func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) (*listResourcesResponse, error) {
+	availableFolders, err := dr.listAllowedResources(ctx, query, zanzana.TypeFolder)
+	if err != nil {
+		return nil, err
+	}
+
+	var availableDasboards []string
+	if query.Type == searchstore.TypeDashboard || (query.Type != searchstore.TypeFolder && query.Type != searchstore.TypeAlertFolder) {
+		availableDasboards, err = dr.listAllowedResources(ctx, query, zanzana.TypeDashboard)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	res := &listResourcesResponse{
+		Folders:   availableFolders,
+		Resources: availableDasboards,
+	}
+	return res, nil
 }
 
 func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
