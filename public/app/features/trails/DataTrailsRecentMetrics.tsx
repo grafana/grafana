@@ -37,20 +37,21 @@ function RecentExploration({ model }: Props) {
           <div className={styles.metricLabel}>Last metric:</div>
           <div className={styles.metricValue}>{metric}</div>
         </Card.Heading>
-        <div className={styles.description}>
-          <Card.Meta separator={'|'}>
-            {filters.map((f) => (
-              `${f.key}: ${f.value}`
-            ))}
-          </Card.Meta>
+        <div className={styles.meta}>
+          <Card.Meta separator={'|'}>{filters.map((f) => `${f.key}: ${f.value}`)}</Card.Meta>
+        </div>
+        {/* maybe need to change gridArea */}
+        <div className={styles.datasource}>
+          <div className={styles.secondaryFont}>Datasource: </div>
+          <div className={styles.primaryFont}>{datasource && getDataSourceName(datasource)}</div>
+          {/* Datasource: {datasource && getDataSourceName(datasource)} */}
         </div>
         <Card.Actions className={styles.actions}>
           <Stack gap={1} justifyContent={'space-between'} grow={1}>
-            <div className={styles.secondary}>
-              <b>Datasource:</b> {datasource && getDataSourceName(datasource)}
-            </div>
             {createdAt && (
               <i className={styles.secondary}>
+                {' '}
+                {/* maybe change to styles.footer */}
                 <b>Date created:</b> {dateTimeFormat(createdAt, { format: 'LL' })}
               </i>
             )}
@@ -103,15 +104,44 @@ export function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.secondary,
       fontSize: '12px',
     }),
-    description: css({
-      width: '100%',
+    datasource: css({
       gridArea: 'Description',
+    }),
+    footer: css({
+      gridArea: 'Footer',
+    }),
+    meta: css({
+      width: '100%',
+      gridArea: 'Meta',
       margin: theme.spacing(1, 0, 0),
       color: theme.colors.text.secondary,
       // lineHeight: theme.typography.body.lineHeight,
     }),
     actions: css({
       marginRight: theme.spacing(1),
+      // gridArea: 'Actions', // seems to do nothing
+    }),
+    primaryFont: css({
+      display: 'inline',
+      color: 'var(--text-primary, #CCCCDC)',
+      /* Body Small Bold */
+      fontFamily: 'Inter',
+      fontSize: '12px',
+      fontStyle: 'normal',
+      fontWeight: '500',
+      lineHeight: '18px' /* 150% */,
+      letterSpacing: '0.018px',
+    }),
+    secondaryFont: css({
+      display: 'inline',
+      color: 'var(--text-secondary, rgba(204, 204, 220, 0.65))',
+      /* Body Small */
+      fontFamily: 'Inter',
+      fontSize: '12px',
+      fontStyle: 'normal',
+      fontWeight: '400',
+      lineHeight: '18px' /* 150% */,
+      letterSpacing: '0.018px',
     }),
   };
 }
