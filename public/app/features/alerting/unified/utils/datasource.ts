@@ -205,24 +205,10 @@ export function getAllRulesSources(): RulesSource[] {
   const availableRulesSources: RulesSource[] = getRulesDataSources();
 
   if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
-    availableRulesSources.push(GRAFANA_RULES_SOURCE_NAME);
+    availableRulesSources.unshift(GRAFANA_RULES_SOURCE_NAME);
   }
 
   return availableRulesSources;
-}
-
-interface RulesSourceIdentifier {
-  uid: string;
-}
-
-export function getAllRulesSourcesIdentifiers(): RulesSourceIdentifier[] {
-  return getAllRulesSources().map((r) => {
-    if (isGrafanaRulesSource(r)) {
-      return { uid: 'grafana' };
-    } else {
-      return { uid: r.uid };
-    }
-  });
 }
 
 export function getRulesSourceName(rulesSource: RulesSource): string {

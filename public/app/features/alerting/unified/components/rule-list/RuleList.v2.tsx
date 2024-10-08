@@ -3,21 +3,30 @@ import { PropsWithChildren, ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack, Text, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Pagination, Stack, Text, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
+import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
-import { getAllRulesSourcesIdentifiers } from '../../utils/datasource';
+import { getAllRulesSources, isGrafanaRulesSource } from '../../utils/datasource';
+import { fromRule, hashRule, stringifyIdentifier } from '../../utils/rule-id';
+import { isAlertingRule } from '../../utils/rules';
+import { createRelativeUrl } from '../../utils/url';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import RulesFilter from '../rules/Filter/RulesFilter';
 
+import { AlertRuleListItem } from './AlertRuleListItem';
 import { DataSourceIcon } from './Namespace';
+import { ListGroup } from './components/ListGroup';
+import { ListSection } from './components/ListSection';
 
-// const noop = () => {};
+const noop = () => {};
+const { usePrometheusRuleNamespacesQuery } = alertRuleApi;
 
 const RuleList = withErrorBoundary(
   () => {
-    const dataSourceIdentifiers = getAllRulesSourcesIdentifiers();
+    const ruleSources = getAllRulesSources();
 
     return (
       // We don't want to show the Loading... indicator for the whole page.
@@ -25,9 +34,13 @@ const RuleList = withErrorBoundary(
       <AlertingPageWrapper navId="alert-list" isLoading={false} actions={null}>
         <RulesFilter onClear={() => {}} />
         <Stack direction="column" gap={1}>
-          {dataSourceIdentifiers.map((identifier) => (
-            <DataSourceLoader key={identifier.uid} uid={identifier.uid} />
-          ))}
+          {ruleSources.map((ruleSource) => {
+            if (isGrafanaRulesSource(ruleSource)) {
+              return <GrafanaDataSourceLoader key={ruleSource} />;
+            } else {
+              return <DataSourceLoader key={ruleSource.uid} uid={ruleSource.uid} name={ruleSource.name} />;
+            }
+          })}
           {/* <DataSourceSection name="Grafana" application={'grafana'}>
             <ListSection title="Namespace">
               <ListGroup name={'Group'} onToggle={noop}>
@@ -76,36 +89,141 @@ const RuleList = withErrorBoundary(
   { style: 'page' }
 );
 
+const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
+interface DataSourceLoaderProps {
+  name: string;
+  uid: string;
+}
+
+const GrafanaDataSourceLoader = () => {
+  // grab prom rules paginated
+  return <DataSourceSection name="Grafana" application="grafana"></DataSourceSection>;
+};
+
+// 1. grab BuildInfo
+const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
+  const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid });
+  let application: RulesSourceApplication | undefined;
+
+  if (dataSourceInfo?.dataSourceSettings.type === 'loki') {
+    application = 'loki';
+  } else {
+    application = dataSourceInfo?.features.application;
+  }
+
+  if (isLoading) {
+    return <DataSourceSection loader={<Skeleton width={250} height={16} />}></DataSourceSection>;
+  }
+
+  // 2. grab prometheus rule groups with max_groups if supported
+  if (dataSourceInfo) {
+    const rulerEnabled = Boolean(dataSourceInfo.rulerConfig);
+
+    return (
+      <DataSourceSection name={name} application={application}>
+        <PaginatedRuleGroupLoader
+          ruleSourceName={dataSourceInfo?.dataSourceSettings.name}
+          rulerEnabled={rulerEnabled}
+        />
+      </DataSourceSection>
+    );
+  }
+
+  return null;
+};
+
+interface PaginatedRuleGroupLoaderProps {
+  ruleSourceName: string;
+  rulerEnabled?: boolean;
+}
+
+function PaginatedRuleGroupLoader({ ruleSourceName, rulerEnabled = false }: PaginatedRuleGroupLoaderProps) {
+  const { data: ruleNamespaces = [] } = usePrometheusRuleNamespacesQuery({
+    ruleSourceName,
+    maxGroups: 25,
+    limitAlerts: 0,
+    excludeAlerts: true,
+  });
+
+  return (
+    <Stack direction="column">
+      {ruleNamespaces.map((namespace) => (
+        <ListSection key={namespace.name} title={namespace.name}>
+          {namespace.groups.map((group) => (
+            <ListGroup key={group.name} name={group.name} onToggle={noop} isOpen={true}>
+              {group.rules.map((rule) => {
+                const groupIdentifier: RuleGroupIdentifier = {
+                  dataSourceName: ruleSourceName,
+                  groupName: group.name,
+                  namespaceName: namespace.name,
+                };
+
+                return (
+                  <AlertRuleLoader
+                    key={hashRule(rule)}
+                    rule={rule}
+                    groupIdentifier={groupIdentifier}
+                    rulerEnabled={rulerEnabled}
+                  />
+                );
+              })}
+            </ListGroup>
+          ))}
+        </ListSection>
+      ))}
+      <Pagination currentPage={1} numberOfPages={0} onNavigate={noop} />
+    </Stack>
+  );
+}
+
+interface AlertRuleLoaderProps {
+  rule: Rule;
+  groupIdentifier: RuleGroupIdentifier;
+  rulerEnabled?: boolean;
+}
+
+function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertRuleLoaderProps) {
+  const { dataSourceName, namespaceName, groupName } = groupIdentifier;
+
+  const ruleIdentifier = fromRule(dataSourceName, namespaceName, groupName, rule);
+  const href = createViewLinkFromIdentifier(ruleIdentifier);
+
+  // 1. get the rule from the ruler API with "ruleWithLocation"
+  // 1.1 skip this if this datasource does not have a ruler
+  //
+  // 2.1 render action buttons
+  // 2.2 render provisioning badge and contact point metadata, etc.
+
+  return (
+    <AlertRuleListItem
+      name={rule.name}
+      href={href}
+      summary={isAlertingRule(rule) ? rule.annotations?.summary : undefined}
+      state={isAlertingRule(rule) ? rule.state : undefined}
+      health={rule.health}
+      error={rule.lastError}
+      labels={rule.labels}
+      isProvisioned={undefined}
+      instancesCount={undefined}
+      actions={rulerEnabled ? <Skeleton width={50} height={16} /> : null}
+      origin={undefined}
+    />
+  );
+}
+
+function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
+  const paramId = encodeURIComponent(stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(identifier.ruleSourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+}
+
 interface DataSourceSectionProps extends PropsWithChildren {
   name?: string;
   loader?: ReactNode;
   application?: RulesSourceApplication;
 }
-
-const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-
-interface DataSourceLoaderProps {
-  uid: string;
-}
-
-const DataSourceLoader = ({ uid }: DataSourceLoaderProps) => {
-  // 1. grab BuildInfo
-  const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid });
-  if (isLoading) {
-    return <DataSourceSection loader={<Skeleton width={250} height={8} />} />;
-  }
-
-  if (dataSourceInfo) {
-    const name = dataSourceInfo.dataSourceSettings.name;
-    const application = dataSourceInfo.features.application;
-
-    // 2. grab prometheus rule groups with max_groups if supported
-
-    return <DataSourceSection name={name} application={application}></DataSourceSection>;
-  }
-
-  return null;
-};
 
 const DataSourceSection = ({ name, application, children, loader }: DataSourceSectionProps) => {
   const styles = useStyles2(getStyles);
@@ -124,7 +242,7 @@ const DataSourceSection = ({ name, application, children, loader }: DataSourceSe
           </Stack>
         )}
       </div>
-      {children}
+      <div className={styles.itemsWrapper}>{children}</div>
     </div>
   );
 };
@@ -134,15 +252,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    border: `solid 1px ${theme.colors.border.weak}`,
-    padding: `${theme.spacing(0)} ${theme.spacing(0)}`,
-    borderRadius: theme.shape.radius.default,
+    // border: `solid 1px ${theme.colors.border.weak}`,
+    padding: `${theme.spacing(0)} ${theme.spacing(1)}`,
+    // borderRadius: theme.shape.radius.default,
+  }),
+  itemsWrapper: css({
+    position: 'relative',
+    marginLeft: theme.spacing(2),
+
+    '&:before': {
+      content: "''",
+      position: 'absolute',
+      height: '100%',
+
+      marginLeft: `-${theme.spacing(2)}`,
+      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    },
   }),
   dataSourceSectionTitle: css({
     background: theme.colors.background.secondary,
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
 
-    // border: `solid 1px ${theme.colors.border.weak}`,
+    border: `solid 1px ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
   }),
 });

@@ -50,9 +50,9 @@ const GroupHeader = (props: GroupProps) => {
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Stack alignItems="center" gap={1}>
+        <Stack alignItems="center" gap={0}>
           <IconButton
-            name={isOpen ? 'angle-right' : 'angle-down'}
+            name={isOpen ? 'angle-down' : 'angle-right'}
             onClick={onToggle}
             aria-label={t('common.collapse', 'Collapse')}
           />

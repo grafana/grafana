@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { CombinedRule, CombinedRuleNamespace, RuleHealth } from 'app/types/unified-alerting';
+import { CombinedRule, RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
@@ -34,7 +34,7 @@ interface AlertRuleListItemProps {
   evaluationInterval?: string;
   labels?: Labels;
   instancesCount?: number;
-  namespace?: CombinedRuleNamespace;
+  namespace?: string;
   group?: string;
   // used for alert rules that use simplified routing
   contactPoint?: string;
@@ -214,7 +214,7 @@ export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
 };
 
 interface RuleLocationProps {
-  namespace: CombinedRuleNamespace;
+  namespace: string;
   group: string;
 }
 
@@ -222,7 +222,7 @@ export const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
   <Stack direction="row" alignItems="center" gap={0.5}>
     <Icon size="xs" name="folder" />
     <Stack direction="row" alignItems="center" gap={0}>
-      {namespace.name}
+      {namespace}
       <Icon size="sm" name="angle-right" />
       {group}
     </Stack>
