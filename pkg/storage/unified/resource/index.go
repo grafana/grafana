@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"slices"
 	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/lang/en"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/google/uuid"
+	"golang.org/x/exp/slices"
 )
 
 type Shard struct {
@@ -152,13 +152,13 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 		searchSummary.Metadata.CreationTimestamp = hit.Fields["metadata.creationTimestamp"].(string)
 		searchSummary.Metadata.Uid = hit.Fields["metadata.uid"].(string)
 
-		// add indexed spec fields to search results under Spec
+		// add allowed indexed spec fields to search results
 		specResult := map[string]interface{}{}
 		for k, v := range hit.Fields {
 			if strings.HasPrefix(k, "spec.") {
 				mappedFields := specFieldMappings(searchSummary.Kind)
+				// should only include spec fields we care about in search results
 				if slices.Contains(mappedFields, k) {
-					// TODO should only include spec fields we care about in search results
 					specKey := strings.TrimPrefix(k, "spec.")
 					specResult[specKey] = v
 				}
@@ -183,12 +183,12 @@ type SearchSummary struct {
 }
 
 type Metadata struct {
-	name              string
-	namespace         string
+	Name              string
+	Namespace         string
 	Uid               string `json:"uid"`
 	CreationTimestamp string `json:"creationTimestamp"`
-	labels            map[string]string
-	annotations       map[string]string
+	Labels            map[string]string
+	Annotations       map[string]string
 }
 
 type Resource struct {
@@ -290,11 +290,13 @@ func fetchResourceTypes() []*ListOptions {
 	return items
 }
 
-func specFieldMappings(kind string) map[string][]string {
-	return map[string][]string{
-		"playlist": {
+func specFieldMappings(kind string) []string {
+	mappedFields := map[string][]string{
+		"Playlist": {
 			"spec.title",
 			"spec.interval",
 		},
 	}
+
+	return mappedFields[kind]
 }
