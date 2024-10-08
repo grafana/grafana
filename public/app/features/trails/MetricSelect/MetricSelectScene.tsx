@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
 
-import { GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -28,13 +28,15 @@ import {
 } from '@grafana/scenes';
 import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
+import { getSelectedScopes } from 'app/features/scopes';
 
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
-import { limitOtelMatchTerms } from '../otel/util';
+// TODO: fix this
+// import { limitOtelMatchTerms } from '../otel/util';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -220,45 +222,49 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       return;
     }
 
-    const matchTerms: string[] = [];
+    const filters: AdHocVariableFilter[] = [];
 
     const filtersVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
-    const hasFilters = filtersVar instanceof AdHocFiltersVariable && filtersVar.getValue()?.valueOf();
-    if (hasFilters) {
-      matchTerms.push(sceneGraph.interpolate(trail, '${filters}'));
+    const adhocFilters = filtersVar instanceof AdHocFiltersVariable ? (filtersVar?.state.filters ?? []) : [];
+    if (adhocFilters.length > 0) {
+      filters.push(...adhocFilters);
     }
 
     const metricSearchRegex = createPromRegExp(trail.state.metricSearch);
     if (metricSearchRegex) {
-      matchTerms.push(`__name__=~"${metricSearchRegex}"`);
+      filters.push({
+        key: '__name__',
+        operator: '=~',
+        value: metricSearchRegex,
+      });
     }
 
     let noOtelMetrics = false;
     let missingOtelTargets = false;
 
-    if (trail.state.useOtelExperience) {
-      const jobsList = trail.state.otelTargets?.jobs;
-      const instancesList = trail.state.otelTargets?.instances;
-      // no targets have this combination of filters so there are no metrics that can be joined
-      // show no metrics
-      if (jobsList && jobsList.length > 0 && instancesList && instancesList.length > 0) {
-        const otelMatches = limitOtelMatchTerms(matchTerms, jobsList, instancesList, missingOtelTargets);
+    // TODO: fix this
+    // if (trail.state.useOtelExperience) {
+    //   const jobsList = trail.state.otelTargets?.jobs;
+    //   const instancesList = trail.state.otelTargets?.instances;
+    //   // no targets have this combination of filters so there are no metrics that can be joined
+    //   // show no metrics
+    //   if (jobsList && jobsList.length > 0 && instancesList && instancesList.length > 0) {
+    //     const otelMatches = limitOtelMatchTerms(matchTerms, jobsList, instancesList, missingOtelTargets);
+    //
+    //     missingOtelTargets = otelMatches.missingOtelTargets;
+    //
+    //     matchTerms.push(otelMatches.jobsRegex);
+    //     matchTerms.push(otelMatches.instancesRegex);
+    //   } else {
+    //     noOtelMetrics = true;
+    //   }
+    // }
 
-        missingOtelTargets = otelMatches.missingOtelTargets;
-
-        matchTerms.push(otelMatches.jobsRegex);
-        matchTerms.push(otelMatches.instancesRegex);
-      } else {
-        noOtelMetrics = true;
-      }
-    }
-
-    const match = `{${matchTerms.join(',')}}`;
     const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
     this.setState({ metricNamesLoading: true, metricNamesError: undefined, metricNamesWarning: undefined });
 
     try {
-      const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
+      const response = await getMetricNames(datasourceUid, timeRange, getSelectedScopes(), filters, MAX_METRIC_NAMES);
       const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this));
       let metricNames = searchRegex
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
@@ -274,28 +280,19 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         metricNames = metricNames.filter((metric) => !prefixRegex || prefixRegex.test(metric));
       }
 
-      let metricNamesWarning = response.limitReached
-        ? `This feature will only return up to ${MAX_METRIC_NAMES} metric names for performance reasons. ` +
-          `This limit is being exceeded for the current data source. ` +
-          `Add search terms or label filters to narrow down the number of metric names returned.`
-        : undefined;
-
       // if there are no otel targets for otel resources, there will be no labels
       if (noOtelMetrics) {
         metricNames = [];
-        metricNamesWarning = undefined;
       }
 
-      if (missingOtelTargets) {
-        metricNamesWarning = `${metricNamesWarning ?? ''} The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`;
-      }
+      const metricNamesWarning = missingOtelTargets
+        ? `The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`
+        : undefined;
 
       let bodyLayout = this.state.body;
 
-      let rootGroupNode = this.state.rootGroup;
-
       // generate groups based on the search metrics input
-      rootGroupNode = await this.generateGroups(filteredMetricNames);
+      const rootGroupNode = await this.generateGroups(filteredMetricNames);
 
       this.setState({
         metricNames,
@@ -303,7 +300,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         body: bodyLayout,
         metricNamesLoading: false,
         metricNamesWarning,
-        metricNamesError: response.error,
+        metricNamesError: undefined,
       });
     } catch (err: unknown) {
       let error = 'Unknown error';
