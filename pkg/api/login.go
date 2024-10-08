@@ -255,7 +255,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 
 	hs.log.Debug("Got IP address from client address", "addr", addr, "ip", ip)
 	ctx := context.WithValue(c.Req.Context(), loginservice.RequestURIKey{}, c.Req.RequestURI)
-	userToken, err := hs.AuthTokenService.CreateToken(ctx, user, ip, c.Req.UserAgent())
+	userToken, err := hs.AuthTokenService.CreateToken(ctx, &auth.CreateTokenCommand{User: user, ClientIP: ip, UserAgent: c.Req.UserAgent()})
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to create auth token", err)
 	}
