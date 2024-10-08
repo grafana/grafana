@@ -19226,6 +19226,9 @@
         "orientation": {
           "type": "string"
         },
+        "pdfShowTemplateVariables": {
+          "type": "boolean"
+        },
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
         }
