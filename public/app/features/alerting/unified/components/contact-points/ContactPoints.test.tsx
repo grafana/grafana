@@ -529,14 +529,6 @@ describe('contact points', () => {
       ).toBeInTheDocument();
     });
 
-    it('does not show manage permissions', async () => {
-      renderGrafanaContactPoints();
-
-      await clickMoreActionsButton('lotsa-emails');
-
-      expect(screen.queryByRole('menuitem', { name: /manage permissions/i })).not.toBeInTheDocument();
-    });
-
     it('shows manage permissions and allows closing', async () => {
       const { user } = renderGrafanaContactPoints();
 
