@@ -434,11 +434,13 @@
     "clear": "Cľęäř",
     "close": "Cľőşę",
     "collapse": "Cőľľäpşę",
+    "edit": "Ēđįŧ",
     "locale": {
       "default": "Đęƒäūľŧ"
     },
     "save": "Ŝävę",
-    "search": "Ŝęäřčĥ"
+    "search": "Ŝęäřčĥ",
+    "view": "Vįęŵ"
   },
   "configuration-tracker": {
     "config-card": {

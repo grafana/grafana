@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { LinkButton, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
@@ -75,7 +76,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
         icon="eye"
         href={createViewLink(rulesSource, rule)}
       >
-        View
+        <Trans i18nKey="common.view">View</Trans>
       </LinkButton>
     );
   }
@@ -87,7 +88,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
 
     buttons.push(
       <LinkButton title="Edit" size={buttonSize} key="edit" variant="secondary" icon="pen" href={editURL}>
-        Edit
+        <Trans i18nKey="common.edit">Edit</Trans>
       </LinkButton>
     );
   }

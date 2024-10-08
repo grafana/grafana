@@ -434,11 +434,13 @@
     "clear": "Clear",
     "close": "Close",
     "collapse": "Collapse",
+    "edit": "Edit",
     "locale": {
       "default": "Default"
     },
     "save": "Save",
-    "search": "Search"
+    "search": "Search",
+    "view": "View"
   },
   "configuration-tracker": {
     "config-card": {
