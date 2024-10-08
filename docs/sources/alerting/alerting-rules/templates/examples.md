@@ -164,6 +164,26 @@ Elements introduced:
 
 ### Label examples
 
+#### Print an individual label
+
+To print an individual label use the `index` function with the `$labels` variable:
+
+``` go
+The host {{ index $labels "instance" }} has exceeded 80% CPU usage for the last 5 minutes
+```
+
+For example, given an alert with the labels `instance=server1`, this would print:
+
+```
+The host server1 has exceeded 80% CPU usage for the last 5 minutes
+```
+
+Elements introduced:
+
+<!-- link this to language ref -->
+
+- `{{ index }}`: Used to access specific elements from a map or slice, helping to extract label values.
+
 #### Print all labels, one per line
 
 To print all labels, one per line, use a `range` to iterate over each key/value pair and print them individually. Here `$k` refers to the name and `$v` refers to the value of the current label:
@@ -180,20 +200,6 @@ For example, given an alert with the labels `alertname=High CPU usage`, `grafana
 alertname=High CPU usage
 grafana_folder=CPU alerts
 instance=server1
-```
-
-#### Print an individual label
-
-To print an individual label use the `index` function with the `$labels` variable:
-
-``` go
-The host {{ index $labels "instance" }} has exceeded 80% CPU usage for the last 5 minutes
-```
-
-For example, given an alert with the labels `instance=server1`, this would print:
-
-```
-The host server1 has exceeded 80% CPU usage for the last 5 minutes
 ```
 
 #### Print the value of a query
@@ -264,6 +270,7 @@ Elements introduced:
 
 - `$values`: Used to access the query value that triggered the alert.
 - `{{ if }}`, `{{ else if }}`, `{{ end }}`: Introduces conditional logic in Go templating to set the severity label dynamically.
+- `{{ gt }}`: A function that checks if one value is greater than another, useful for implementing threshold logic.
 
 #### Labeling based on environment
 
@@ -283,6 +290,10 @@ This would print:
 - For instance `prod-server-1`, the label would be `production`.
 - For `staging-server-1`, the label would be `staging`.
 - All other instances would be labeled `development`.
+
+Elements introduced:
+
+- `{{ eq }}`: A function that checks if two values are equal, allowing you to customize messages based on the environment.
 
 #### Automatically assigning priority
 
