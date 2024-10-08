@@ -15,6 +15,9 @@ import (
 )
 
 func TestIntegrationServiceAccountMigration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	// Run initial migration to have a working DB
 	x := setupTestDB(t)
 
@@ -208,6 +211,43 @@ func TestIntegrationServiceAccountMigration(t *testing.T) {
 				{
 					ID:    10,
 					Login: "sa-2-extsvc-slug2",
+				},
+			},
+		},
+		{
+			desc: "avoid reapply of migration",
+			serviceAccounts: []*user.User{
+				{
+					ID:               11,
+					UID:              "u11",
+					Name:             "sa-1-extsvc-bug",
+					Login:            "sa-1-extsvc-bug",
+					Email:            "sa-1-extsvc-bug@org.com",
+					OrgID:            1,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+				{
+					ID:               12,
+					UID:              "u12",
+					Name:             "sa-2-extsvc-bug2",
+					Login:            "sa-2-extsvc-bug2",
+					Email:            "sa-2-extsvc-bug2@org.com",
+					OrgID:            2,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+			},
+			wantServiceAccounts: []*user.User{
+				{
+					ID:    11,
+					Login: "sa-1-extsvc-bug",
+				},
+				{
+					ID:    12,
+					Login: "sa-2-extsvc-bug2",
 				},
 			},
 		},

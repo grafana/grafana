@@ -35,32 +35,42 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
 	var err error
 	switch p.dialect.DriverName() {
 	case migrator.Postgres:
-		_, err = p.sess.Exec(`UPDATE "user"
-		SET login = 'sa-' || org_id::text || '-' || 
-		CASE 
-		  WHEN login LIKE 'sa-%' THEN SUBSTRING(login FROM 4) 
-		  ELSE login 
-		END 
-		WHERE login IS NOT NULL AND is_service_account = true;`,
-		)
+		_, err = p.sess.Exec(`
+            UPDATE "user"
+            SET login = 'sa-' || org_id::text || '-' || 
+                CASE 
+                    WHEN login LIKE 'sa-%' THEN SUBSTRING(login FROM 4) 
+                    ELSE login 
+                END 
+            WHERE login IS NOT NULL 
+              AND is_service_account = true
+              AND login NOT LIKE 'sa-' || org_id::text || '-%';
+        `)
 	case migrator.MySQL:
-		_, err = p.sess.Exec(`UPDATE user
-		SET login = CONCAT('sa-', CAST(org_id AS CHAR), '-',
-		CASE
-		  WHEN login LIKE 'sa-%' THEN SUBSTRING(login, 4)
-		  ELSE login
-		END)
-		WHERE login IS NOT NULL AND is_service_account = 1;`,
-		)
+		_, err = p.sess.Exec(`
+            UPDATE user
+            SET login = CONCAT('sa-', CAST(org_id AS CHAR), '-',
+                CASE
+                    WHEN login LIKE 'sa-%' THEN SUBSTRING(login, 4)
+                    ELSE login
+                END
+            )
+            WHERE login IS NOT NULL 
+              AND is_service_account = 1
+              AND login NOT LIKE CONCAT('sa-', org_id, '-%');
+        `)
 	case migrator.SQLite:
-		_, err = p.sess.Exec(`Update ` + p.dialect.Quote("user") + `
-		SET login = 'sa-' || CAST(org_id AS TEXT) || '-' ||
-		CASE
-			WHEN SUBSTR(login, 1, 3) = 'sa-' THEN SUBSTR(login, 4)
-			ELSE login
-		END
-		WHERE login IS NOT NULL AND is_service_account = 1;`,
-		)
+		_, err = p.sess.Exec(`
+            UPDATE ` + p.dialect.Quote("user") + `
+            SET login = 'sa-' || CAST(org_id AS TEXT) || '-' ||
+                CASE
+                    WHEN SUBSTR(login, 1, 3) = 'sa-' THEN SUBSTR(login, 4)
+                    ELSE login
+                END
+            WHERE login IS NOT NULL 
+              AND is_service_account = 1
+              AND login NOT LIKE 'sa-' || CAST(org_id AS TEXT) || '-%';
+        `)
 	default:
 		return fmt.Errorf("dialect not supported: %s", p.dialect)
 	}
