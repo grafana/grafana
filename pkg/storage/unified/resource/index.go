@@ -87,7 +87,12 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	if err != nil {
 		return err
 	}
-	err = shard.index.Index(res.Metadata.Uid, data.Value.Value)
+	var jsonDoc interface{}
+	err = json.Unmarshal(data.Value.Value, &jsonDoc)
+	if err != nil {
+		return err
+	}
+	err = shard.index.Index(res.Metadata.Uid, jsonDoc)
 	if err != nil {
 		return err
 	}
