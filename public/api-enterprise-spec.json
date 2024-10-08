@@ -3382,6 +3382,7 @@
       }
     },
     "CorrelationType": {
+      "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
       "type": "string"
     },
     "CreateAccessTokenResponseDTO": {
@@ -5416,6 +5417,12 @@
         "message": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
+        "parentName": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },
@@ -5434,7 +5441,13 @@
           "enum": [
             "DASHBOARD",
             "DATASOURCE",
-            "FOLDER"
+            "FOLDER",
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING"
           ]
         }
       }
@@ -6554,6 +6567,9 @@
         },
         "orientation": {
           "type": "string"
+        },
+        "pdfShowTemplateVariables": {
+          "type": "boolean"
         },
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
@@ -8350,6 +8366,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "ExternalSessionId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "Id": {
           "type": "integer",
           "format": "int64"
@@ -8808,6 +8828,9 @@
           "teamId": {
             "type": "integer",
             "format": "int64"
+          },
+          "uid": {
+            "type": "string"
           }
         }
       }

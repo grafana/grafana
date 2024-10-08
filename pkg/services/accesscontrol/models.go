@@ -173,10 +173,11 @@ type TeamRole struct {
 }
 
 type UserRole struct {
-	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
-	OrgID  int64 `json:"orgId" xorm:"org_id"`
-	RoleID int64 `json:"roleId" xorm:"role_id"`
-	UserID int64 `json:"userId" xorm:"user_id"`
+	ID              int64  `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID           int64  `json:"orgId" xorm:"org_id"`
+	RoleID          int64  `json:"roleId" xorm:"role_id"`
+	UserID          int64  `json:"userId" xorm:"user_id"`
+	GroupMappingUID string `json:"groupMappingUID" xorm:"group_mapping_uid"`
 
 	Created time.Time
 }
@@ -434,9 +435,14 @@ const (
 	ActionAlertingSilencesCreate = "alert.silences:create"
 	ActionAlertingSilencesWrite  = "alert.silences:write"
 
-	// Alerting Notification policies actions
+	// Alerting Notification actions (legacy)
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
+
+	// Alerting notifications template actions
+	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
+	ActionAlertingNotificationsTemplatesWrite  = "alert.notifications.templates:write"
+	ActionAlertingNotificationsTemplatesDelete = "alert.notifications.templates:delete"
 
 	// Alerting notifications time interval actions
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
@@ -450,6 +456,7 @@ const (
 	ActionAlertingReceiversCreate           = "alert.notifications.receivers:create"
 	ActionAlertingReceiversUpdate           = "alert.notifications.receivers:write"
 	ActionAlertingReceiversDelete           = "alert.notifications.receivers:delete"
+	ActionAlertingReceiversTest             = "alert.notifications.receivers:test"
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
@@ -579,4 +586,16 @@ var ApiKeyAccessEvaluator = EvalPermission(ActionAPIKeyRead)
 type QueryWithOrg struct {
 	OrgId  *int64 `json:"orgId"`
 	Global bool   `json:"global"`
+}
+
+type CheckRequest struct {
+	User     string
+	Relation string
+	Object   string
+}
+
+type ListObjectsRequest struct {
+	Type     string
+	Relation string
+	User     string
 }

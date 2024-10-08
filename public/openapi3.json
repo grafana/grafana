@@ -445,6 +445,9 @@
                 "teamId": {
                   "format": "int64",
                   "type": "integer"
+                },
+                "uid": {
+                  "type": "string"
                 }
               },
               "type": "object"
@@ -2621,6 +2624,14 @@
         ],
         "type": "object"
       },
+      "AlertRuleEditorSettings": {
+        "properties": {
+          "simplified_query_and_expressions_section": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "AlertRuleExport": {
         "properties": {
           "annotations": {
@@ -2740,6 +2751,14 @@
           "interval": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AlertRuleMetadata": {
+        "properties": {
+          "editor_settings": {
+            "$ref": "#/components/schemas/AlertRuleEditorSettings"
           }
         },
         "type": "object"
@@ -6025,6 +6044,9 @@
           "is_paused": {
             "type": "boolean"
           },
+          "metadata": {
+            "$ref": "#/components/schemas/AlertRuleMetadata"
+          },
           "namespace_uid": {
             "type": "string"
           },
@@ -6112,10 +6134,23 @@
       },
       "GettableRuleGroupConfig": {
         "properties": {
+          "align_evaluation_time_on_interval": {
+            "type": "boolean"
+          },
+          "evaluation_delay": {
+            "type": "string"
+          },
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "name": {
+            "type": "string"
+          },
+          "query_offset": {
             "type": "string"
           },
           "rules": {
@@ -7095,6 +7130,12 @@
           "message": {
             "type": "string"
           },
+          "name": {
+            "type": "string"
+          },
+          "parentName": {
+            "type": "string"
+          },
           "refId": {
             "type": "string"
           },
@@ -7112,7 +7153,13 @@
             "enum": [
               "DASHBOARD",
               "DATASOURCE",
-              "FOLDER"
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING"
             ],
             "type": "string"
           }
@@ -8309,6 +8356,9 @@
           "is_paused": {
             "type": "boolean"
           },
+          "metadata": {
+            "$ref": "#/components/schemas/AlertRuleMetadata"
+          },
           "no_data_state": {
             "enum": [
               "Alerting",
@@ -8347,15 +8397,34 @@
       },
       "PostableRuleGroupConfig": {
         "properties": {
+          "align_evaluation_time_on_interval": {
+            "type": "boolean"
+          },
+          "evaluation_delay": {
+            "type": "string"
+          },
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "name": {
+            "type": "string"
+          },
+          "query_offset": {
             "type": "string"
           },
           "rules": {
             "items": {
               "$ref": "#/components/schemas/PostableExtendedRuleNode"
+            },
+            "type": "array"
+          },
+          "source_tenants": {
+            "items": {
+              "type": "string"
             },
             "type": "array"
           }
@@ -9386,6 +9455,9 @@
           "orientation": {
             "type": "string"
           },
+          "pdfShowTemplateVariables": {
+            "type": "boolean"
+          },
           "timeRange": {
             "$ref": "#/components/schemas/ReportTimeRange"
           }
@@ -9822,10 +9894,23 @@
       },
       "RuleGroupConfigResponse": {
         "properties": {
+          "align_evaluation_time_on_interval": {
+            "type": "boolean"
+          },
+          "evaluation_delay": {
+            "type": "string"
+          },
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "name": {
+            "type": "string"
+          },
+          "query_offset": {
             "type": "string"
           },
           "rules": {
@@ -12070,6 +12155,10 @@
             "type": "string"
           },
           "CreatedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "ExternalSessionId": {
             "format": "int64",
             "type": "integer"
           },
@@ -15795,6 +15884,14 @@
             "in": "path",
             "name": "uid",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "in": "query",
+            "name": "sort",
             "schema": {
               "type": "string"
             }

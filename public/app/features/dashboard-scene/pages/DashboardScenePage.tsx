@@ -1,5 +1,7 @@
 // Libraries
 import { useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
+import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { UrlSyncContextProvider } from '@grafana/scenes';
@@ -16,13 +18,15 @@ import { DashboardPrompt } from '../saving/DashboardPrompt';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {}
+export interface Props
+  extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
 
-export function DashboardScenePage({ match, route, queryParams, history }: Props) {
+export function DashboardScenePage({ route, queryParams, history }: Props) {
+  const params = useParams();
+  const { type, slug, uid } = params;
+  const prevMatch = usePrevious({ params });
   const stateManager = getDashboardScenePageStateManager();
-
   const { dashboard, isLoading, loadError } = stateManager.useState();
-
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
 
@@ -30,14 +34,14 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   const comingFromExplore = useMemo(() => {
     return Boolean(store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.params.uid, match.params.slug, match.params.type]);
+  }, [uid, slug, type]);
 
   useEffect(() => {
-    if (route.routeName === DashboardRoutes.Normal && match.params.type === 'snapshot') {
-      stateManager.loadSnapshot(match.params.slug!);
+    if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
+      stateManager.loadSnapshot(slug!);
     } else {
       stateManager.loadDashboard({
-        uid: match.params.uid ?? '',
+        uid: uid ?? '',
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
         keepDashboardFromExploreInLocalStorage: false,
@@ -47,15 +51,7 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
     return () => {
       stateManager.clearState();
     };
-  }, [
-    stateManager,
-    match.params.uid,
-    route.routeName,
-    queryParams.folderUid,
-    routeReloadCounter,
-    match.params.slug,
-    match.params.type,
-  ]);
+  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, slug, type]);
 
   // Effect that handles explore->dashboards workflow
   useEffect(() => {
@@ -83,12 +79,10 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   }
 
   // Do not render anything when transitioning from one dashboard to another
-  if (
-    match.params.type !== 'snapshot' &&
-    match.params.uid &&
-    dashboard.state.uid !== match.params.uid &&
-    route.routeName !== DashboardRoutes.Home
-  ) {
+  // A bit tricky for transition to or from Home dashboard that does not have a uid in the url (but could have it in the dashboard model)
+  // if prevMatch is undefined we are going from normal route to home route or vice versa
+  if (type !== 'snapshot' && (!prevMatch || uid !== prevMatch?.params.uid)) {
+    console.log('skipping rendering');
     return null;
   }
 

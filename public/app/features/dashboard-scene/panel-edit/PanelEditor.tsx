@@ -2,18 +2,21 @@ import * as H from 'history';
 import { debounce } from 'lodash';
 
 import { NavIndex, PanelPlugin } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   PanelBuilders,
+  SceneDataTransformer,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
+  SceneQueryRunner,
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
 import { Panel } from '@grafana/schema/dist/esm/index.gen';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -54,6 +57,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _originalLayoutElementState!: DashboardGridItemState;
   private _layoutElement!: DashboardGridItem;
   private _originalSaveModel!: Panel;
+  private _changesHaveBeenMade = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -71,7 +75,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     return () => {
       if (layoutElement instanceof DashboardGridItem) {
-        layoutElement.editingCompleted();
+        layoutElement.editingCompleted(this.state.isDirty || this._changesHaveBeenMade);
       }
       if (deactivateParents) {
         deactivateParents();
@@ -182,13 +186,46 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _updateDataPane(plugin: PanelPlugin) {
     const skipDataQuery = plugin.meta.skipDataQuery;
 
-    if (skipDataQuery && this.state.dataPane) {
-      locationService.partial({ tab: null }, true);
-      this.setState({ dataPane: undefined });
+    const panel = this.state.panelRef.resolve();
+
+    if (skipDataQuery) {
+      if (this.state.dataPane) {
+        locationService.partial({ tab: null }, true);
+        this.setState({ dataPane: undefined });
+      }
+
+      // clean up data provider when switching from data to non data panel
+      if (panel.state.$data) {
+        panel.setState({
+          $data: undefined,
+        });
+      }
     }
 
-    if (!skipDataQuery && !this.state.dataPane) {
-      this.setState({ dataPane: PanelDataPane.createFor(this.getPanel()) });
+    if (!skipDataQuery) {
+      if (!this.state.dataPane) {
+        this.setState({ dataPane: PanelDataPane.createFor(this.getPanel()) });
+      }
+
+      // add data provider when switching from non data to data panel
+      if (!panel.state.$data) {
+        let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
+        if (!ds) {
+          ds = config.defaultDatasource;
+        }
+
+        panel.setState({
+          $data: new SceneDataTransformer({
+            $data: new SceneQueryRunner({
+              datasource: {
+                uid: ds,
+              },
+              queries: [{ refId: 'A' }],
+            }),
+            transformations: [],
+          }),
+        });
+      }
     }
   }
 
@@ -227,6 +264,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public dashboardSaved() {
     this.setOriginalState(this.state.panelRef);
     this.setState({ isDirty: false });
+
+    // Remember that we have done changes
+    this._changesHaveBeenMade = false;
   }
 
   public onSaveLibraryPanel = () => {

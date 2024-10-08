@@ -136,6 +136,7 @@ var (
 			Group:       AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversCreate},
+				{Action: accesscontrol.ActionAlertingReceiversTest},
 			},
 		},
 	}
@@ -153,22 +154,69 @@ var (
 		},
 	}
 
+	templatesReaderRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.templates:reader",
+			DisplayName: "Templates Reader",
+			Description: "Read all templates in Grafana alerting",
+			Group:       AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingNotificationsTemplatesRead},
+			},
+		},
+	}
+
+	templatesWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.templates:writer",
+			DisplayName: "Templates Writer",
+			Description: "Create, update, and delete all templates in Grafana alerting",
+			Group:       AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(templatesReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingNotificationsTemplatesWrite},
+				{Action: accesscontrol.ActionAlertingNotificationsTemplatesDelete},
+			}),
+		},
+	}
+
+	timeIntervalsReaderRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.time-intervals:reader",
+			DisplayName: "Time Intervals Reader",
+			Description: "Read all time intervals in Grafana alerting",
+			Group:       AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead},
+			},
+		},
+	}
+
+	timeIntervalsWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.time-intervals:writer",
+			DisplayName: "Time Intervals Writer",
+			Description: "Create, update, and delete all time intervals in Grafana alerting",
+			Group:       AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(timeIntervalsReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsWrite},
+				{Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsDelete},
+			}),
+		},
+	}
+
 	notificationsReaderRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.notifications:reader",
 			DisplayName: "Notifications Reader",
 			Description: "Read notification policies and contact points in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, templatesReaderRole.Role.Permissions, timeIntervalsReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsRead,
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalRead,
 					Scope:  datasources.ScopeAll,
-				},
-				{
-					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
 				},
 			}),
 		},
@@ -180,7 +228,7 @@ var (
 			DisplayName: "Notifications Writer",
 			Description: "Add, update, and delete contact points and notification policies in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, receiversWriterRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, receiversWriterRole.Role.Permissions, templatesWriterRole.Role.Permissions, timeIntervalsWriterRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsWrite,
 				},
@@ -312,7 +360,7 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole)
+		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole, timeIntervalsReaderRole, timeIntervalsWriterRole)
 	}
 
 	return service.DeclareFixedRoles(fixedRoles...)

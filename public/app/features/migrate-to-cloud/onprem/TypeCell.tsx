@@ -11,6 +11,8 @@ export function prettyTypeName(type: ResourceTableItem['type']) {
       return t('migrate-to-cloud.resource-type.dashboard', 'Dashboard');
     case 'FOLDER':
       return t('migrate-to-cloud.resource-type.folder', 'Folder');
+    case 'LIBRARY_ELEMENT':
+      return t('migrate-to-cloud.resource-type.library_element', 'Library Element');
     default:
       return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
   }
