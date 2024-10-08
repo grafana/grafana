@@ -18,6 +18,7 @@ import {
   getSelectorForShardValues,
   interpolateShardingSelector,
   isLogsQuery,
+  isQueryWithLineFilter,
 } from './queryUtils';
 import { LokiQuery } from './types';
 
@@ -82,6 +83,7 @@ function splitQueriesByStreamShard(
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, group: number, groups: ShardedQueryGroup[]) => {
     let nextGroupSize = groups[group].groupSize;
     const { shards, groupSize, cycle } = groups[group];
+    let retrying = false;
 
     if (subquerySubscription != null) {
       subquerySubscription.unsubscribe();
@@ -126,11 +128,13 @@ function splitQueriesByStreamShard(
       if (shards && cycle !== undefined && shards[cycle] === NO_SHARD_ATTEMPT) {
         debug(`Regular query attempt timed out. Retrying with sharding`);
         groups[group].cycle = cycle + 1;
+        retrying = true;
         runNextRequest(subscriber, group, groups);
         return true;
       } else if (groupSize !== undefined && groupSize > 1) {
         groups[group].groupSize = Math.floor(Math.sqrt(groupSize));
         debug(`Possible time out, new group size ${groups[group].groupSize}`);
+        retrying = true;
         runNextRequest(subscriber, group, groups);
         return true;
       }
@@ -152,6 +156,8 @@ function splitQueriesByStreamShard(
         },
         1000 * Math.pow(2, retries)
       ); // Exponential backoff
+
+      retrying = true;
 
       return true;
     };
@@ -183,6 +189,9 @@ function splitQueriesByStreamShard(
         mergedResponse = combineResponses(mergedResponse, partialResponse);
       },
       complete: () => {
+        if (retrying) {
+          return;
+        }
         subscriber.next(ensureMaxLines(mergedResponse, subRequest.targets));
         nextRequest();
       },
@@ -236,10 +245,17 @@ async function groupTargetsByQueryType(
   request: DataQueryRequest<LokiQuery>
 ) {
   const [logQueries, metricQueries] = partition(targets, (query) => isLogsQuery(query.expr));
+  const [lineFilterLogQueries, restLogQueries] = partition(logQueries, (query) => isQueryWithLineFilter(query.expr));
 
   const groups: ShardedQueryGroup[] = [];
 
-  for (const queries of [logQueries, metricQueries]) {
+  if (restLogQueries.length) {
+    groups.push({
+      targets: restLogQueries,
+    });
+  }
+
+  for (const queries of [lineFilterLogQueries, metricQueries]) {
     const selectorPartition = groupBy(queries, (query) => getSelectorForShardValues(query.expr));
     for (const selector in selectorPartition) {
       try {
