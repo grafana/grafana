@@ -19,7 +19,7 @@ import { AccessControlAction } from 'app/types';
 
 import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
-import SilencesTable from './components/silences/SilencesTable';
+import SilencesTablePage from './components/silences/SilencesTable';
 import {
   MOCK_SILENCE_ID_EXISTING,
   MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
@@ -37,7 +37,7 @@ const TEST_TIMEOUT = 60000;
 const renderSilences = (location = '/alerting/silences/') => {
   return render(
     <Routes>
-      <Route path="/alerting/silences" element={<SilencesTable />} />
+      <Route path="/alerting/silences" element={<SilencesTablePage />} />
       <Route path="/alerting/silence/new" element={<NewSilencePage />} />
       <Route path="/alerting/silence/:id/edit" element={<ExistingSilenceEditorPage />} />
     </Routes>,
