@@ -113,8 +113,9 @@ type MigrateDataResponseItemDTO struct {
 	// required:true
 	RefID string `json:"refId"`
 	// required:true
-	Status  ItemStatus `json:"status"`
-	Message string     `json:"message,omitempty"`
+	Status    ItemStatus `json:"status"`
+	Message   string     `json:"message,omitempty"`
+	ErrorCode string     `json:"error_code,omitempty"`
 }
 
 // swagger:enum MigrateDataType

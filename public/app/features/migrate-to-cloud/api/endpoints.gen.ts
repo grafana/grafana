@@ -164,6 +164,7 @@ export type CreateSnapshotResponseDto = {
   uid?: string;
 };
 export type MigrateDataResponseItemDto = {
+  error_code?: string;
   message?: string;
   name?: string;
   parentName?: string;

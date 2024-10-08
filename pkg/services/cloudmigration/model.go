@@ -68,11 +68,12 @@ type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
-	Name   string          `xorm:"name" json:"name"`
-	Type   MigrateDataType `xorm:"resource_type" json:"type"`
-	RefID  string          `xorm:"resource_uid" json:"refId"`
-	Status ItemStatus      `xorm:"status" json:"status"`
-	Error  string          `xorm:"error_string" json:"error"`
+	Name      string          `xorm:"name" json:"name"`
+	Type      MigrateDataType `xorm:"resource_type" json:"type"`
+	RefID     string          `xorm:"resource_uid" json:"refId"`
+	Status    ItemStatus      `xorm:"status" json:"status"`
+	Error     string          `xorm:"error_string" json:"error"`
+	ErrorCode string          `xorm:"error_code" json:"errorCode"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
 	ParentName  string `xorm:"parent_name" json:"parentName"`

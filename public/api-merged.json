@@ -16903,6 +16903,9 @@
         "status"
       ],
       "properties": {
+        "error_code": {
+          "type": "string"
+        },
         "message": {
           "type": "string"
         },

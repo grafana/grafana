@@ -36,12 +36,12 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
             </Trans>
           </Text>
 
-          {resource.message ? (
+          {resource.error_code ? (
             <>
               <Text element="p">{msgTitle}</Text>
 
               <Text element="p" weight="bold">
-                {resource.message}
+                {resource.error_code}
               </Text>
             </>
           ) : (
