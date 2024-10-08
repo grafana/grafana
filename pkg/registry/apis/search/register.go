@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strconv"
 
+	request2 "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -23,14 +25,17 @@ import (
 var _ builder.APIGroupBuilder = (*SearchAPIBuilder)(nil)
 
 type SearchAPIBuilder struct {
-	unified resource.ResourceClient
+	unified    resource.ResourceClient
+	namespacer request2.NamespaceMapper
 }
 
 func NewSearchAPIBuilder(
 	unified resource.ResourceClient,
+	cfg *setting.Cfg,
 ) (*SearchAPIBuilder, error) {
 	return &SearchAPIBuilder{
-		unified: unified,
+		unified:    unified,
+		namespacer: request2.GetNamespaceMapper(cfg),
 	}, nil
 }
 
@@ -38,11 +43,12 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	unified resource.ResourceClient,
+	cfg *setting.Cfg,
 ) (*SearchAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil, nil
 	}
-	builder, err := NewSearchAPIBuilder(unified)
+	builder, err := NewSearchAPIBuilder(unified, cfg)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
 }
@@ -76,6 +82,13 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
+					// get tenant
+					orgId, err := request2.OrgIDForList(r.Context())
+					if err != nil {
+						panic(err)
+					}
+					tenant := b.namespacer(orgId)
+
 					queryParams, err := url.ParseQuery(r.URL.RawQuery)
 					if err != nil {
 						panic(err)
@@ -92,6 +105,7 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					}
 
 					searchRequest := &resource.SearchRequest{
+						Tenant:    tenant,
 						Kind:      queryParams.Get("kind"),
 						QueryType: queryParams.Get("queryType"),
 						Query:     queryParams.Get("query"),
