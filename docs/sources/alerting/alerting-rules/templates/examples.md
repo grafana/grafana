@@ -126,7 +126,7 @@ Elements introduced:
 - `$values`: Used to access the query values that triggered the alert.
 - `{{ }}`: Go templating syntax for embedding values within the template.
 
-#### Adding Alert Summary with Labels
+#### Adding alert summary with labels
 
 Annotations can also be used to provide a summary of key alert labels.
 
@@ -142,7 +142,7 @@ This would print:
 Alert triggered in production with severity critical.
 ```
 
-#### Summarizing Multiple Alerts in a Single Notification
+#### Summarizing multiple alerts in a single notification
 
 When multiple alerts are fired, an annotation can summarize them.
 
@@ -284,7 +284,7 @@ This would print:
 - For `staging-server-1`, the label would be `staging`.
 - All other instances would be labeled `development`.
 
-#### Automatically Assigning Priority
+#### Automatically assigning priority
 
 Automatically set a `priority` label based on both the alert condition and the importance of the instance.
 
