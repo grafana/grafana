@@ -120,7 +120,7 @@ This would print:
 CPU usage for Instance-1 has exceeded 81.23% for the last 5 minutes.
 ```
 
-Elements introduced:
+Used functions and syntax:
 <!-- add links to these elements -->
 - `$labels`: Used to access alert labels.
 - `$values`: Used to access the query values that triggered the alert.
@@ -158,7 +158,7 @@ This would print:
 The following instances have high CPU usage: Instance-1 (81.23%) Instance-2 (83.45%) Instance-3 (82.01%)
 ```
 
-Elements introduced:
+Used functions and syntax:
 
 `{{ range }}`: Introduces looping through alerts to display multiple instances.
 
@@ -178,7 +178,7 @@ For example, given an alert with the labels `instance=server1`, this would print
 The host server1 has exceeded 80% CPU usage for the last 5 minutes
 ```
 
-Elements introduced:
+Used functions and syntax:
 
 <!-- link this to language ref -->
 
@@ -266,7 +266,7 @@ low
 {{- end }}
 ```
 
-Elements introduced:
+Used functions and syntax:
 
 - `$values`: Used to access the query value that triggered the alert.
 - `{{ if }}`, `{{ else if }}`, `{{ end }}`: Introduces conditional logic in Go templating to set the severity label dynamically.
@@ -291,7 +291,7 @@ This would print:
 - For `staging-server-1`, the label would be `staging`.
 - All other instances would be labeled `development`.
 
-Elements introduced:
+Used functions and syntax:
 
 - `{{ eq }}`: A function that checks if two values are equal, allowing you to customize messages based on the environment.
 
@@ -314,7 +314,7 @@ This would print:
 - For values over 80 but less than 90, the priority is `P2`.
 - Otherwise, the priority is `P3`.
 
-Elements introduced:
+Used functions and syntax:
 
 - `{{ and }}`: Logical operator for combining conditions (e.g., checking both the instance and the query value).
 - `$labels`: Reference alert labels within the conditional logic.
