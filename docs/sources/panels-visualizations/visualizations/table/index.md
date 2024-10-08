@@ -293,7 +293,8 @@ If thresholds are set, with this cell type, the field background is displayed in
 With this cell type, cells can be displayed as a graphical gauge, with several different presentation types controlled by the [gauge display mode](#gauge-display-mode) and the [value display](#value-display).
 
 {{< admonition type="note" >}}
-The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole dataset. If you don't want the max/min values to be pulled from the whole dataset, you can configure them for each column using [field overrides](#field-overrides).
+The maximum and minimum values of the gauges are configured automatically from the smallest and largest values in your whole dataset.
+If you don't want the max/min values to be pulled from the whole dataset, you can configure them for each column using [field overrides](#field-overrides).
 {{< /admonition >}}
 
 ###### Gauge display mode
@@ -345,7 +346,8 @@ Set the following options:
 #### Wrap text
 
 {{< admonition type="note" >}}
-Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default. We’d love hear from you about how this new feature is working. To provide feedback, you can open an issue in the [Grafana GitHub repository](https://github.com/grafana/grafana).
+Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.
+We’d love hear from you about how this new feature is working. To provide feedback, you can open an issue in the [Grafana GitHub repository](https://github.com/grafana/grafana).
 {{< /admonition >}}
 
 Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
@@ -357,7 +359,9 @@ This option is available for the following cell types: **Auto**, **Colored text*
 
 Enables value inspection from table cells. When the **Cell inspect value** switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer.
 
-The **Inspect value** drawer has two tabs, **Plain text** and **Code editor**. Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.
+The **Inspect value** drawer has two tabs, **Plain text** and **Code editor**.
+Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing.
+However, you can switch back and forth between tabs.
 
 This option is available for the following cell types: **Auto**, **Colored text**, **Colored background**, and **JSON View**.
 
