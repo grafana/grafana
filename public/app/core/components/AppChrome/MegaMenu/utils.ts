@@ -81,6 +81,7 @@ export const getActiveItem = (
   for (const navItem of navTree) {
     const isIdMatch = Boolean(navItem.id && navItem.id === id);
     const isTextUrlMatch = navItem.text === currentPage.text && navItem.url === currentPage.url;
+    console.log({navItem: navItem.id, currentPage: id})
 
     // ideally, we should only match on id
     // unfortunately it's not a required property of the interface, and there are some cases
