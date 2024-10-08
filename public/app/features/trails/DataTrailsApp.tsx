@@ -115,9 +115,11 @@ export function getDataTrailsApp() {
       $behaviors: [
         new ScopesFacade({
           handler: (facade) => {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const trail = (facade.parent as DataTrailsApp).state.trail;
-            sceneGraph.getTimeRange(trail).onRefresh();
+            const trail = facade.parent && 'trail' in facade.parent.state ? facade.parent.state.trail : undefined;
+
+            if (trail instanceof DataTrail) {
+              sceneGraph.getTimeRange(trail).onRefresh();
+            }
           },
         }),
       ],
