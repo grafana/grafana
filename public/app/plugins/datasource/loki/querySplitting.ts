@@ -14,10 +14,10 @@ import {
   TimeRange,
   LoadingState,
 } from '@grafana/data';
-import { combineResponses } from '@grafana/o11y-ds-frontend';
 
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
+import { combineResponses } from './mergeResponses';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { trackGroupedQueries } from './tracking';
@@ -87,6 +87,8 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
+    let retrying = false;
+
     if (subquerySubscription != null) {
       subquerySubscription.unsubscribe();
       subquerySubscription = null;
@@ -132,6 +134,8 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
         },
         1500 * Math.pow(2, retries)
       ); // Exponential backoff
+      
+      retrying = true;
 
       return true;
     };
@@ -163,6 +167,9 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
         mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
       },
       complete: () => {
+        if (retrying) {
+          return;
+        }
         subscriber.next(mergedResponse);
         nextRequest();
       },
