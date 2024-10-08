@@ -119,7 +119,6 @@ func NewDualWriter(
 ) Storage {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
-	fmt.Println("MODE: ", mode)
 	switch mode {
 	case Mode0:
 		return legacy
