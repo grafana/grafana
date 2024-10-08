@@ -2,7 +2,7 @@ package resource
 
 import (
 	"bytes"
-	context "context"
+	"context"
 	"errors"
 	"fmt"
 	"io"
