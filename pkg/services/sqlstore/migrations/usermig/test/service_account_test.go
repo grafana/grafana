@@ -222,7 +222,7 @@ func TestIntegrationServiceAccountMigration(t *testing.T) {
 					UID:              "u11",
 					Name:             "sa-1-extsvc-bug",
 					Login:            "sa-1-extsvc-bug",
-					Email:            "sa-1-extsvc-slug@org.com",
+					Email:            "sa-1-extsvc-bug@org.com",
 					OrgID:            1,
 					Created:          now,
 					Updated:          now,
@@ -242,12 +242,12 @@ func TestIntegrationServiceAccountMigration(t *testing.T) {
 			},
 			wantServiceAccounts: []*user.User{
 				{
-					ID:    9,
-					Login: "sa-1-extsvc-slug",
+					ID:    11,
+					Login: "sa-1-extsvc-bug",
 				},
 				{
-					ID:    10,
-					Login: "sa-2-extsvc-slug2",
+					ID:    12,
+					Login: "sa-2-extsvc-bug2",
 				},
 			},
 		},
