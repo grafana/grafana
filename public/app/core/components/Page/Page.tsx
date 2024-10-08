@@ -12,9 +12,11 @@ import {
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { ScopesDashboards } from 'app/features/scopes';
 
+import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
 import NativeScrollbar from '../NativeScrollbar';
 
 import { PageContents } from './PageContents';
@@ -69,10 +71,11 @@ export const Page: PageType = ({
   ...otherProps
 }) => {
   const isSingleTopNav = config.featureToggles.singleTopNav;
-  const [toolbar, setToolbar] = useState(toolbarProp);
-  const styles = useStyles2(getStyles);
-  const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
+  const { chromeless } = chrome.useState();
+  const [toolbar, setToolbar] = useState(toolbarProp);
+  const styles = useStyles2(getStyles, Boolean(chromeless));
+  const navModel = usePageNav(navId, oldNavProp);
 
   usePageTitle(navModel, pageNav);
 
@@ -94,40 +97,47 @@ export const Page: PageType = ({
     <PageContext.Provider value={{ setToolbar }}>
       <div className={cx(styles.wrapper, className)} {...otherProps}>
         {isSingleTopNav && toolbar && <PageToolbarActions>{toolbar}</PageToolbarActions>}
-        {layout === PageLayoutType.Standard && (
-          <NativeScrollbar
-            // This id is used by the image renderer to scroll through the dashboard
-            divId="page-scrollbar"
-            onSetScrollRef={onSetScrollRef}
-          >
-            <div className={styles.pageInner}>
-              {pageHeaderNav && (
-                <PageHeader
-                  actions={actions}
-                  onEditTitle={onEditTitle}
-                  navItem={pageHeaderNav}
-                  renderTitle={renderTitle}
-                  info={info}
-                  subTitle={subTitle}
-                />
-              )}
-              {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-              <div className={styles.pageContent}>{children}</div>
+        <Stack gap={0} minWidth={0} flex={1}>
+          {isSingleTopNav && (
+            <div className={styles.scopesDashboardsContainer}>
+              <ScopesDashboards />
             </div>
-          </NativeScrollbar>
-        )}
+          )}
+          {layout === PageLayoutType.Standard && (
+            <NativeScrollbar
+              // This id is used by the image renderer to scroll through the dashboard
+              divId="page-scrollbar"
+              onSetScrollRef={onSetScrollRef}
+            >
+              <div className={styles.pageInner}>
+                {pageHeaderNav && (
+                  <PageHeader
+                    actions={actions}
+                    onEditTitle={onEditTitle}
+                    navItem={pageHeaderNav}
+                    renderTitle={renderTitle}
+                    info={info}
+                    subTitle={subTitle}
+                  />
+                )}
+                {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
+                <div className={styles.pageContent}>{children}</div>
+              </div>
+            </NativeScrollbar>
+          )}
 
-        {layout === PageLayoutType.Canvas && (
-          <NativeScrollbar
-            // This id is used by the image renderer to scroll through the dashboard
-            divId="page-scrollbar"
-            onSetScrollRef={onSetScrollRef}
-          >
-            <div className={styles.canvasContent}>{children}</div>
-          </NativeScrollbar>
-        )}
+          {layout === PageLayoutType.Canvas && (
+            <NativeScrollbar
+              // This id is used by the image renderer to scroll through the dashboard
+              divId="page-scrollbar"
+              onSetScrollRef={onSetScrollRef}
+            >
+              <div className={styles.canvasContent}>{children}</div>
+            </NativeScrollbar>
+          )}
 
-        {layout === PageLayoutType.Custom && children}
+          {layout === PageLayoutType.Custom && children}
+        </Stack>
       </div>
     </PageContext.Provider>
   );
@@ -135,7 +145,7 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, isChromeless: boolean) => {
   return {
     wrapper: css({
       label: 'page-wrapper',
@@ -143,6 +153,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: '1 1 0',
       flexDirection: 'column',
       position: 'relative',
+      minWidth: 0,
     }),
     pageContent: css({
       label: 'page-content',
@@ -172,6 +183,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2),
       flexBasis: '100%',
       flexGrow: 1,
+    }),
+    scopesDashboardsContainer: css({
+      height: `calc(100vh - ${isChromeless ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+      position: 'sticky',
+      top: isChromeless ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2,
     }),
   };
 };

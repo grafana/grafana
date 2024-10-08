@@ -83,7 +83,7 @@ export function AppChrome({ children }: Props) {
         {!isSingleTopNav && menuDockedAndOpen && (
           <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
         )}
-        {!state.chromeless && (
+        {!isSingleTopNav && (
           <div
             className={cx(styles.scopesDashboardsContainer, {
               [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
@@ -95,7 +95,7 @@ export function AppChrome({ children }: Props) {
         <main
           className={cx(styles.pageContainer, {
             [styles.pageContainerMenuDocked]: !isSingleTopNav && (menuDockedAndOpen || isScopesDashboardsOpen),
-            [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+            [styles.pageContainerMenuDockedScopes]: !isSingleTopNav && menuDockedAndOpen && isScopesDashboardsOpen,
           })}
           id="pageContent"
         >
@@ -113,6 +113,7 @@ export function AppChrome({ children }: Props) {
       className={classNames('main-view', {
         'main-view--search-bar-hidden': searchBarHidden && !state.chromeless,
         'main-view--chrome-hidden': state.chromeless,
+        [styles.mainView]: isSingleTopNav,
       })}
     >
       {isSingleTopNav ? (
@@ -212,6 +213,9 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
         top: 0,
       }
     ),
+    mainView: css({
+      minHeight: '100vh',
+    }),
     scopesDashboardsContainer: css({
       position: 'fixed',
       height: `calc(100% - ${searchBarHidden || isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
@@ -257,6 +261,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      minWidth: 0,
     }),
     skipLink: css({
       position: 'fixed',
