@@ -610,11 +610,13 @@ func TestMode3_Update(t *testing.T) {
 				return
 			}
 
+			assert.NoError(t, err)
+
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
 			acc, err := meta.Accessor(obj)
 			assert.NoError(t, err)
-			assert.Equal(t, acc.GetResourceVersion(), "1")
+			assert.Equal(t, "1", acc.GetResourceVersion())
 		})
 	}
 }
