@@ -101,13 +101,7 @@ export const LdapSettingsPage = () => {
 
   const [isBindPasswordConfigured, setBindPasswordConfigured] = useState(false);
   const [mapKeyCertConfigured, setMapKeyCertConfigured] = useState<MapKeyCertConfigured>({
-    // values
-    rootCaCertValue: false,
-    clientCertValue: false,
     clientKeyCertValue: false,
-    // paths
-    rootCaCertPath: false,
-    clientCertPath: false,
     clientKeyCertPath: false,
   });
 
@@ -133,11 +127,7 @@ export const LdapSettingsPage = () => {
         serverConfig = payload.settings.config.servers[0];
       }
       setMapKeyCertConfigured({
-        rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
-        clientCertValue: isOptionDefined(serverConfig.client_cert_value),
         clientKeyCertValue: isOptionDefined(serverConfig.client_key_value),
-        rootCaCertPath: isOptionDefined(serverConfig.root_ca_cert),
-        clientCertPath: isOptionDefined(serverConfig.client_cert),
         clientKeyCertPath: isOptionDefined(serverConfig.client_key),
       });
       setBindPasswordConfigured(isOptionDefined(serverConfig.bind_password));
