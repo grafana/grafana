@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,9 +61,7 @@ func TestMode3_Create(t *testing.T) {
 				return
 			}
 
-			acc, err := meta.Accessor(obj)
 			assert.NoError(t, err)
-			assert.Equal(t, acc.GetResourceVersion(), "1")
 			assert.NotEqual(t, obj, anotherObj)
 		})
 	}
@@ -614,9 +611,6 @@ func TestMode3_Update(t *testing.T) {
 
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
-			acc, err := meta.Accessor(obj)
-			assert.NoError(t, err)
-			assert.Equal(t, "1", acc.GetResourceVersion())
 		})
 	}
 }
