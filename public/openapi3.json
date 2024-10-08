@@ -12158,6 +12158,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "ExternalSessionId": {
+            "format": "int64",
+            "type": "integer"
+          },
           "Id": {
             "format": "int64",
             "type": "integer"

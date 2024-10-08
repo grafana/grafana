@@ -40,8 +40,10 @@ type LDAPMock struct {
 	UserSearchError  error
 }
 
-var pingResult []*multildap.ServerStatus
-var pingError error
+var (
+	pingResult []*multildap.ServerStatus
+	pingError  error
+)
 
 func (m *LDAPMock) Ping() ([]*multildap.ServerStatus, error) {
 	return pingResult, pingError
@@ -105,7 +107,8 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:read": {"*"}}},
+			1: {"ldap.user:read": {"*"}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -170,7 +173,8 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:read": {"*"}}},
+			1: {"ldap.user:read": {"*"}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -239,7 +243,8 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:read": {"*"}}},
+			1: {"ldap.user:read": {"*"}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -324,7 +329,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:read": {"*"}}},
+			1: {"ldap.user:read": {"*"}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -378,7 +384,8 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.status:read": {}}},
+			1: {"ldap.status:read": {}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -417,7 +424,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:sync": {}}},
+			1: {"ldap.user:sync": {}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -452,7 +460,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:sync": {}}},
+			1: {"ldap.user:sync": {}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -488,7 +497,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:sync": {}}},
+			1: {"ldap.user:sync": {}},
+		},
 	})
 
 	res, err := server.Send(req)
@@ -521,7 +531,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
-			1: {"ldap.user:sync": {}}},
+			1: {"ldap.user:sync": {}},
+		},
 	})
 
 	res, err := server.Send(req)
