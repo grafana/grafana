@@ -56,7 +56,6 @@ describe('Pin nav items', () => {
     administrationIsPinned.within(() => {
       cy.get('[aria-label="Remove from Bookmarks"]').click({ force: true });
     });
-    // cy.reload();
     cy.wait(500);
     administrationIsPinned.should('not.exist');
   });
