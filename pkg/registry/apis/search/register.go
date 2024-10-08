@@ -107,9 +107,9 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 					// TODO need a nicer way of handling this
 					// the [][]byte response already contains the marshalled JSON, so we don't need to re-encode it
-					rawMessages := make([]json.RawMessage, len(res.GetSearchSummaries()))
-					for i, item := range res.GetSearchSummaries() {
-						rawMessages[i] = item
+					rawMessages := make([]json.RawMessage, len(res.GetItems()))
+					for i, item := range res.GetItems() {
+						rawMessages[i] = item.Value
 					}
 
 					w.Header().Set("Content-Type", "application/json")

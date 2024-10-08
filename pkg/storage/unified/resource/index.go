@@ -106,7 +106,7 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 	return nil
 }
 
-func (i *Index) Search(ctx context.Context, tenant string, query string) ([]string, error) {
+func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]map[string]interface{}, error) {
 	if tenant == "" {
 		tenant = "default"
 	}
@@ -114,25 +114,45 @@ func (i *Index) Search(ctx context.Context, tenant string, query string) ([]stri
 	if err != nil {
 		return nil, err
 	}
+
+	// Debug log indexed fields
+	fields, _ := shard.index.Fields()
+	i.s.log.Debug("Indexed fields: %v", fields)
+
+	// use 10 as a default limit for now
+	if limit == 0 {
+		limit = 10
+	}
+
 	req := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
-	req.Fields = []string{"kind", "spec.title"}
+	req.From = offset
+	req.Size = limit
+
+	req.Fields = []string{"*"} // return all indexed fields in search results
 
 	res, err := shard.index.Search(req)
 	if err != nil {
 		return nil, err
 	}
-
 	hits := res.Hits
-	results := []string{}
-	for _, hit := range hits {
-		val := fmt.Sprintf("%s:%s", hit.Fields["kind"], hit.Fields["spec.title"])
-		results = append(results, val)
+
+	results := make([]map[string]interface{}, len(hits))
+	for key, hit := range hits {
+		hitResult := map[string]interface{}{}
+		for k, v := range hit.Fields {
+			hitResult[k] = v
+		}
+		results[key] = hitResult
 	}
 	return results, nil
 }
 
 func tenant(res *Resource) string {
 	return res.Metadata.Namespace
+}
+
+type SearchSummary struct {
+	results [][]byte
 }
 
 type Metadata struct {
@@ -165,20 +185,16 @@ func createFileIndex() (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
-// This only index common fields: Kind, Name, and CreationTimestamp
-// The casing of the fields is important, it should match the casing of the fields in the struct that are indexed
 func createIndexMappings() *mapping.IndexMappingImpl {
-	//Create mapping for the name and creationTimestamp fields in the metadata
-	nameFieldMapping := bleve.NewTextFieldMapping()
-	nameFieldMapping.Store = true
+	//Create mapping for the creationTimestamp field in the metadata
 	creationTimestampFieldMapping := bleve.NewDateTimeFieldMapping()
-	creationTimestampFieldMapping.Store = true
 	metaMapping := bleve.NewDocumentMapping()
-	metaMapping.AddFieldMappingsAt("name", nameFieldMapping)
 	metaMapping.AddFieldMappingsAt("creationTimestamp", creationTimestampFieldMapping)
 	metaMapping.Dynamic = false
 	metaMapping.Enabled = true
 
+	// Map spec.title (playlist specific)
+	nameFieldMapping := bleve.NewTextFieldMapping()
 	specMapping := bleve.NewDocumentMapping()
 	specMapping.AddFieldMappingsAt("title", nameFieldMapping)
 	specMapping.Dynamic = false
