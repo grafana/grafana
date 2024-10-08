@@ -1,5 +1,17 @@
-import { AdHocVariableFilter, GetTagResponse, MetricFindValue, urlUtil } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { lastValueFrom } from 'rxjs';
+
+import {
+  AdHocVariableFilter,
+  GetTagResponse,
+  MetricFindValue,
+  RawTimeRange,
+  Scope,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
+  urlUtil,
+} from '@grafana/data';
+import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
+import { config, FetchResponse, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   sceneGraph,
@@ -11,6 +23,8 @@ import {
   SceneVariable,
   SceneVariableState,
 } from '@grafana/scenes';
+import { getClosestScopesFacade } from 'app/features/scopes';
+import { PromResponse } from 'app/types/unified-alerting-dto';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 
@@ -155,7 +169,9 @@ export function limitAdhocProviders(
       // as the series match[] parameter in Prometheus labels endpoint
       const filters = filtersVariable.state.filters;
       // call getTagKeys and truncate the response
-      const values = (await datasourceHelper.getTagKeys({ filters })).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      const values = (
+        await datasourceHelper.getTagKeys({ filters, scopes: getClosestScopesFacade(variable)?.value })
+      ).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
@@ -175,12 +191,54 @@ export function limitAdhocProviders(
       // remove current selected filter if updating a chosen filter
       const filters = filtersValues.filter((f) => f.key !== filter.key);
       // call getTagValues and truncate the response
-      const values = (await datasourceHelper.getTagValues({ key: filter.key, filters })).slice(
-        0,
-        MAX_ADHOC_VARIABLE_OPTIONS
-      );
+      const values = (
+        await datasourceHelper.getTagValues({
+          key: filter.key,
+          filters,
+          scopes: getClosestScopesFacade(variable)?.value,
+        })
+      ).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
   });
+}
+
+export async function callSuggestionsApi(
+  dataSourceUid: string,
+  timeRange: RawTimeRange,
+  scopes: Scope[],
+  adHocVariableFilters: AdHocVariableFilter[],
+  labelName: string | undefined,
+  limit: number | undefined,
+  requestId: string
+): Promise<FetchResponse<PromResponse<string[]>>> {
+  return await lastValueFrom(
+    getBackendSrv().fetch<PromResponse<string[]>>({
+      url: `/api/datasources/uid/${dataSourceUid}/resources/suggestions`,
+      data: {
+        labelName,
+        queries: [],
+        scopes: scopes.reduce<ScopeSpecFilter[]>((acc, scope) => {
+          acc.push(...scope.spec.filters);
+
+          return acc;
+        }, []),
+        adhocFilters: adHocVariableFilters.map((filter) => ({
+          key: filter.key,
+          operator: scopeFilterOperatorMap[filter.operator],
+          value: filter.value,
+          values: filter.values,
+        })),
+        start: getPrometheusTime(timeRange.from, false).toString(),
+        end: getPrometheusTime(timeRange.to, true).toString(),
+        limit,
+      },
+      requestId,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+  );
 }
