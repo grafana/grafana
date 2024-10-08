@@ -44,11 +44,10 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
       }
 
       let userDataList;
+      const userQtList = uniq(data.map((qt) => qt.user?.uid));
+      const usersParam = userQtList.map((user) => `key=${user}`).join('&');
       try {
-        const userQtList = uniq(data.map((qt) => qt.user?.uid));
-        const usersParam = userQtList.map((user) => `key=${user}`).join('&');
         userDataList = await getUserInfo(`?${usersParam}`);
-        setUserData(userDataList.display.map((user) => user.displayName));
       } catch (error) {
         getAppEvents().publish({
           type: AppEvents.alertError.name,
@@ -61,6 +60,8 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
         setIsRowsLoading(false);
         return;
       }
+
+      setUserData(userDataList.display.map((user) => user.displayName));
 
       const rowsPromises = data.map(async (queryTemplate: QueryTemplate, index: number) => {
         try {
