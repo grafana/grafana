@@ -160,7 +160,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2,
+      paddingTop: isSingleTopNav ? 0 : TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
       height: 'auto',
     }),
@@ -199,15 +199,23 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
     scopesDashboardsContainerDocked: css({
       left: MENU_WIDTH,
     }),
-    topNav: css({
-      display: 'flex',
-      position: 'fixed',
-      zIndex: theme.zIndex.navbarFixed,
-      left: 0,
-      right: 0,
-      background: theme.colors.background.primary,
-      flexDirection: 'column',
-    }),
+    topNav: css(
+      {
+        display: 'flex',
+        position: 'fixed',
+        zIndex: theme.zIndex.navbarFixed,
+        left: 0,
+        right: 0,
+        background: theme.colors.background.primary,
+        flexDirection: 'column',
+      },
+      isSingleTopNav && {
+        left: 'unset',
+        position: 'sticky',
+        right: 'unset',
+        top: 0,
+      }
+    ),
     topNavMenuDocked: css({
       left: MENU_WIDTH,
     }),

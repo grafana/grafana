@@ -5,7 +5,7 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { HistoryWrapper, locationService, LocationServiceProvider } from '@grafana/runtime';
+import { config, HistoryWrapper, locationService, LocationServiceProvider } from '@grafana/runtime';
 import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } from '@grafana/ui';
 
 import { AngularRoot } from '../angular/AngularRoot';
@@ -22,18 +22,18 @@ type RouterWrapperProps = {
   pageBanners: ComponentType[];
 };
 export function RouterWrapper(props: RouterWrapperProps) {
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   return (
     <Router history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
           <ModalsContextProvider>
+            {isSingleTopNav && props.pageBanners.map((Banner, index) => <Banner key={index.toString()} />)}
             <AppChrome>
               <AngularRoot />
               <AppNotificationList />
               <Stack gap={0} grow={1} direction="column">
-                {props.pageBanners.map((Banner, index) => (
-                  <Banner key={index.toString()} />
-                ))}
+                {!isSingleTopNav && props.pageBanners.map((Banner, index) => <Banner key={index.toString()} />)}
                 {props.routes}
               </Stack>
               {props.bodyRenderHooks.map((Hook, index) => (
