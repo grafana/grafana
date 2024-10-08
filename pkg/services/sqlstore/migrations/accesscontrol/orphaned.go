@@ -99,5 +99,4 @@ func (m *orphanedServiceAccountPermissions) exec(sess *xorm.Session, mg *migrato
 	}
 
 	return nil
-
 }
