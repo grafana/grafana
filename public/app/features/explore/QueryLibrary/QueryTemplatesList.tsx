@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniq, uniqBy } from 'lodash';
+import { compact, uniq, uniqBy } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -44,8 +44,8 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
       }
 
       let userDataList;
-      const userQtList = uniq(data.map((qt) => qt.user?.uid));
-      const usersParam = userQtList.map((user) => `key=${user}`).join('&');
+      const userQtList = uniq(compact(data.map((qt) => qt.user?.uid)));
+      const usersParam = userQtList.map((userUid) => `key=${encodeURIComponent(userUid)}`).join('&');
       try {
         userDataList = await getUserInfo(`?${usersParam}`);
       } catch (error) {
