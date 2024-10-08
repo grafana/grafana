@@ -102,9 +102,7 @@ describe('Combobox', () => {
       await userEvent.keyboard('{Enter}');
 
       expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
-      expect(onChangeHandler).toHaveBeenCalledWith(
-        expect.objectContaining({ label: 'custom value', value: 'custom value' })
-      );
+      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'custom value' }));
     });
 
     it('should proivde custom string when all options are numbers', async () => {
@@ -199,6 +197,26 @@ describe('Combobox', () => {
       //screen.debug();
       expect(firstItem).not.toBeInTheDocument();
       expect(item).toBeInTheDocument();
+    });
+
+    it('should allow custom value while async is being run', async () => {
+      const asyncOptions = jest.fn(async (searchTerm: string) => {
+        return new Promise((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
+      });
+
+      //@ts-ignore
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input, { delay: null });
+
+      await userEvent.type(input, 'fir', { delay: null });
+
+      jest.advanceTimersByTime(500); // Custom value while typing
+
+      const customItem = screen.queryByRole('option', { name: 'fir Create custom value' });
+
+      expect(customItem).toBeInTheDocument();
     });
   });
 });

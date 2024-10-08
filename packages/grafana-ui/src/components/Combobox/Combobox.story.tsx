@@ -142,7 +142,6 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
             { value: 'inputValue' },
             { value: 'option2' },
             { value: 'option3' },
-            { value: inputValue },
           ]).then((options) => {
             return new Promise((resolve) => {
               setTimeout(() => resolve(options), inputValue.length % 2 === 0 ? 200 : 1000); // Simulate promises that take longer time
@@ -154,6 +153,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
           action('onChange')(val);
           setValue(val?.value || null);
         }}
+        createCustomValue={args.createCustomValue}
       />
     </Field>
   );

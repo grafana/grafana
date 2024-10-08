@@ -155,14 +155,28 @@ export const Combobox = <T extends string | number>({
     defaultHighlightedIndex: selectedItemIndex ?? 0,
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
+      const customValueOption =
+        createCustomValue &&
+        inputValue &&
+        items.findIndex((opt) => opt.label === inputValue || opt.value === inputValue) === -1
+          ? {
+              // @ts-ignore Type casting needed to make this work when T is a number
+              value: inputValue as unknown as T,
+              description: t('combobox.custom-value.create', 'Create custom value'),
+            }
+          : null;
+
       if (isAsync) {
+        if (customValueOption) {
+          setItems([customValueOption]);
+        }
         latestRequestString.current = inputValue;
         setAsyncLoading(true);
         options(inputValue).then((opts) => {
           if (latestRequestString.current !== inputValue) {
             return;
           }
-          setItems(opts);
+          setItems(customValueOption ? [customValueOption, ...opts] : opts);
           setAsyncLoading(false);
         });
 
@@ -170,20 +184,10 @@ export const Combobox = <T extends string | number>({
       }
 
       const filteredItems = options.filter(itemFilter(inputValue));
-      if (createCustomValue && inputValue && filteredItems.findIndex((opt) => opt.label === inputValue) === -1) {
-        const customValueOption: ComboboxOption<T> = {
-          label: inputValue,
-          // @ts-ignore Type casting needed to make this work when T is a number
-          value: inputValue as unknown as T,
-          description: t('combobox.custom-value.create', 'Create custom value'),
-        };
 
-        setItems([...filteredItems, customValueOption]);
-        return;
-      } else {
-        setItems(filteredItems);
-      }
+      setItems(customValueOption ? [...filteredItems, customValueOption] : filteredItems);
     },
+
     onIsOpenChange: ({ isOpen }) => {
       // Default to displaying all values when opening
       if (isOpen && !isAsync) {
