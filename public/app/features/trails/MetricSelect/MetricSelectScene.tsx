@@ -280,19 +280,28 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         metricNames = metricNames.filter((metric) => !prefixRegex || prefixRegex.test(metric));
       }
 
+      let metricNamesWarning = response.limitReached
+        ? `This feature will only return up to ${MAX_METRIC_NAMES} metric names for performance reasons. ` +
+          `This limit is being exceeded for the current data source. ` +
+          `Add search terms or label filters to narrow down the number of metric names returned.`
+        : undefined;
+
       // if there are no otel targets for otel resources, there will be no labels
       if (noOtelMetrics) {
         metricNames = [];
+        metricNamesWarning = undefined;
       }
 
-      const metricNamesWarning = missingOtelTargets
-        ? `The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`
-        : undefined;
+      if (missingOtelTargets) {
+        metricNamesWarning = `${metricNamesWarning ?? ''} The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`;
+      }
 
       let bodyLayout = this.state.body;
 
+      let rootGroupNode = this.state.rootGroup;
+
       // generate groups based on the search metrics input
-      const rootGroupNode = await this.generateGroups(filteredMetricNames);
+      rootGroupNode = await this.generateGroups(filteredMetricNames);
 
       this.setState({
         metricNames,
@@ -300,7 +309,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         body: bodyLayout,
         metricNamesLoading: false,
         metricNamesWarning,
-        metricNamesError: undefined,
+        metricNamesError: response.error,
       });
     } catch (err: unknown) {
       let error = 'Unknown error';
