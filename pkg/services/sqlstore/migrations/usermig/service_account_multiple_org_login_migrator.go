@@ -9,12 +9,16 @@ import (
 
 const (
 	AllowSameLoginCrossOrgs = "update login field with orgid to allow for multiple service accounts with same name across orgs"
+	DedupOrgInLogin         = "update service accounts login field orgid to appear only once"
 )
 
 // Service accounts login were not unique per org. this migration is part of making it unique per org
 // to be able to create service accounts that are unique per org
 func AddServiceAccountsAllowSameLoginCrossOrgs(mg *migrator.Migrator) {
 	mg.AddMigration(AllowSameLoginCrossOrgs, &ServiceAccountsSameLoginCrossOrgs{})
+	// Before it was fixed, the previous migration introduced the org_id again in logins that already had it.
+	// This migration removes the duplicate org_id from the login.
+	mg.AddMigration(DedupOrgInLogin, &ServiceAccountsDeduplicateOrgInLogin{})
 }
 
 var _ migrator.CodeMigration = new(ServiceAccountsSameLoginCrossOrgs)
@@ -74,5 +78,50 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
 	default:
 		return fmt.Errorf("dialect not supported: %s", p.dialect)
 	}
+	return err
+}
+
+type ServiceAccountsDeduplicateOrgInLogin struct {
+	migrator.MigrationBase
+}
+
+func (p *ServiceAccountsDeduplicateOrgInLogin) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	dialect := mg.Dialect
+	var err error
+
+	// var logins []Login
+	switch dialect.DriverName() {
+	case migrator.Postgres:
+		_, err = sess.Exec(`
+            UPDATE "user"
+            SET login = 'sa-' || org_id::text || SUBSTRING(login FROM LENGTH('sa-' || org_id::text || '-' || org_id::text)+1)
+            WHERE login IS NOT NULL 
+              AND is_service_account = true
+              AND login LIKE 'sa-' || org_id::text || '-' || org_id::text || '-%';
+        `)
+	case migrator.MySQL:
+		_, err = sess.Exec(`
+            UPDATE user
+            SET login = CONCAT('sa-', org_id, SUBSTRING(login, LENGTH(CONCAT('sa-', org_id, '-', org_id))+1))
+            WHERE login IS NOT NULL
+                AND is_service_account = 1
+                AND login LIKE CONCAT('sa-', org_id, '-', org_id, '-%');
+        `)
+	case migrator.SQLite:
+		_, err = sess.Exec(`
+            UPDATE ` + dialect.Quote("user") + `
+            SET login = 'sa-' || CAST(org_id AS TEXT) || SUBSTRING(login, LENGTH('sa-'||CAST(org_id AS TEXT)||'-'||CAST(org_id AS TEXT))+1)
+            WHERE login IS NOT NULL
+                AND is_service_account = 1
+                AND login LIKE 'sa-'||CAST(org_id AS TEXT)||'-'||CAST(org_id AS TEXT)||'-%';
+        `)
+	default:
+		return fmt.Errorf("dialect not supported: %s", dialect)
+	}
+
 	return err
 }
