@@ -1520,6 +1520,12 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:        "sandboxSettingsUI",
+			Description: "Enables the sandbox settings UI and API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:        "pluginsSriChecks",
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,

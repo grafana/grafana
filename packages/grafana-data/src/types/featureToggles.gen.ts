@@ -220,5 +220,6 @@ export interface FeatureToggles {
   useSessionStorageForRedirection?: boolean;
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
+  sandboxSettingsUI?: boolean;
   pluginsSriChecks?: boolean;
 }

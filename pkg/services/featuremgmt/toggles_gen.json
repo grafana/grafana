@@ -2753,6 +2753,18 @@
     },
     {
       "metadata": {
+        "name": "sandboxSettingsUI",
+        "resourceVersion": "1728387052653",
+        "creationTimestamp": "2024-10-08T11:30:52Z"
+      },
+      "spec": {
+        "description": "Enables the sandbox settings UI and API",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "scenes",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-07-07T06:53:02Z",

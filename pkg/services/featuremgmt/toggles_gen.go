@@ -815,6 +815,10 @@ const (
 	// Enable unified storage search
 	FlagUnifiedStorageSearch = "unifiedStorageSearch"
 
+	// FlagSandboxSettingsUI
+	// Enables the sandbox settings UI and API
+	FlagSandboxSettingsUI = "sandboxSettingsUI"
+
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
