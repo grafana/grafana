@@ -214,7 +214,7 @@ If the data queried contains multiple datasets, a table displays a drop-down lis
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width.                                                                             |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.                                                                                                                                                            |
-| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Filter table columns](#turn-on-column-filtering).                                                                                               |
+| Column filter        | Temporarily change how column data is displayed. For example, show or hide specific values. For more information, refer to [Column filtering](#column-filtering).                                                                                                           |
 
 ### Table footer options
 
@@ -232,9 +232,9 @@ After you activate the table footer, make selections for the following options:
 Cell options allow you to control how data is displayed in a table.
 The options are:
 
-- [Cell type](#cell-type)
-- [Wrap text](#wrap-text)
-- [Cell value inspect](#cell-value-inspect)
+- [Cell type](#cell-type) - Control the default cell display settings.
+- [Wrap text](#wrap-text) - Wrap text in the cell that contains the longest content in your table.
+- [Cell value inspect](#cell-value-inspect) - Enables value inspection from table cells.
 
 #### Cell type
 
@@ -242,11 +242,7 @@ By default, Grafana automatically chooses display settings.
 You can override these settings by choosing one of the following cell types to control the default display for all fields.
 Additional configuration is available for some cell types.
 
-{{% admonition type="note" %}}
-If you set these in the Field tab, then the type will apply to all fields, including the time field. Many options will work best if you set them in the Override tab so that they can be restricted to one or more fields.
-{{% /admonition %}}
-
-<!-- the note above is referring to an option that no longer exists, but i'm not sure if it the note is still true in some way. -->
+If you want to apply a cell type to only some fields instead of all fields, you can do so using the **Cell options > Cell type** field override.
 
 | Cell type                                 | Description                                                                                                                                                                                                                                                                                                                                   |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -364,6 +360,8 @@ Enables value inspection from table cells. When the **Cell inspect value** switc
 The **Inspect value** drawer has two tabs, **Plain text** and **Code editor**. Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.
 
 This option is available for the following cell types: **Auto**, **Colored text**, **Colored background**, and **JSON View**.
+
+If you want to apply this setting to only some fields instead of all fields, you can do so using the **Cell options > Cell value inspect** field override.
 
 ### Standard options
 
