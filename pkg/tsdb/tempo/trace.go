@@ -180,7 +180,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, apiVers
 	if start == 0 || end == 0 {
 		tempoQuery = baseUrl
 	} else {
-		tempoQuery = fmt.Sprintf("%s/?start=%d&end=%d", baseUrl, start, end)
+		tempoQuery = fmt.Sprintf("%s?start=%d&end=%d", baseUrl, start, end)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", tempoQuery, nil)
