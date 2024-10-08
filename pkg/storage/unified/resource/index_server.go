@@ -139,14 +139,9 @@ func (f *indexWatchServer) Add(we *WatchEvent) error {
 }
 
 func (f *indexWatchServer) Delete(we *WatchEvent) error {
-	// TODO: this seems flakey. Does a delete have a Resource or Previous?
-	// both cases have happened ( maybe because Georges pr was reverted )
-	rs := we.Resource
-	if rs == nil {
-		rs = we.Previous
-	}
-	if rs == nil {
-		return errors.New("resource not found")
+	rs, err := resource(we)
+	if err != nil {
+		return err
 	}
 	data, err := getData(rs)
 	if err != nil {
@@ -160,7 +155,11 @@ func (f *indexWatchServer) Delete(we *WatchEvent) error {
 }
 
 func (f *indexWatchServer) Update(we *WatchEvent) error {
-	data, err := getData(we.Resource)
+	rs, err := resource(we)
+	if err != nil {
+		return err
+	}
+	data, err := getData(rs)
 	if err != nil {
 		return err
 	}
@@ -207,4 +206,16 @@ func getData(wr *WatchEvent_Resource) (*Data, error) {
 		Value:           wr.Value,
 	}
 	return &Data{Key: key, Value: value, Uid: r.Metadata.Uid}, nil
+}
+
+func resource(we *WatchEvent) (*WatchEvent_Resource, error) {
+	rs := we.Resource
+	if rs == nil || len(rs.Value) == 0 {
+		// for updates/deletes
+		rs = we.Previous
+	}
+	if rs == nil || len(rs.Value) == 0 {
+		return nil, errors.New("resource not found")
+	}
+	return rs, nil
 }
