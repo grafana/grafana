@@ -445,6 +445,9 @@
                 "teamId": {
                   "format": "int64",
                   "type": "integer"
+                },
+                "uid": {
+                  "type": "string"
                 }
               },
               "type": "object"
@@ -7130,6 +7133,9 @@
           "name": {
             "type": "string"
           },
+          "parentName": {
+            "type": "string"
+          },
           "refId": {
             "type": "string"
           },
@@ -7148,7 +7154,12 @@
               "DASHBOARD",
               "DATASOURCE",
               "FOLDER",
-              "LIBRARY_ELEMENT"
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING"
             ],
             "type": "string"
           }
@@ -9443,6 +9454,9 @@
           },
           "orientation": {
             "type": "string"
+          },
+          "pdfShowTemplateVariables": {
+            "type": "boolean"
           },
           "timeRange": {
             "$ref": "#/components/schemas/ReportTimeRange"
@@ -12141,6 +12155,10 @@
             "type": "string"
           },
           "CreatedAt": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "ExternalSessionId": {
             "format": "int64",
             "type": "integer"
           },
