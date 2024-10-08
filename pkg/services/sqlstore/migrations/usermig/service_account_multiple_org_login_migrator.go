@@ -96,11 +96,6 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
 	p.dialect = mg.Dialect
 	var err error
 
-	type Login struct {
-		ID    int64
-		Login string
-	}
-
 	// var logins []Login
 	switch p.dialect.DriverName() {
 	case migrator.Postgres:
