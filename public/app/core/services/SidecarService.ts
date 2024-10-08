@@ -5,9 +5,11 @@ import { config, locationService } from '@grafana/runtime';
 export class SidecarService {
   // The ID of the app plugin that is currently opened in the sidecar view
   private _activePluginId: BehaviorSubject<string | undefined>;
+  private _initialContext: BehaviorSubject<unknown | undefined>;
 
   constructor() {
     this._activePluginId = new BehaviorSubject<string | undefined>(undefined);
+    this._initialContext = new BehaviorSubject<unknown | undefined>(undefined);
   }
 
   private assertFeatureEnabled() {
@@ -23,21 +25,27 @@ export class SidecarService {
     return this._activePluginId.asObservable();
   }
 
-  openApp(pluginId: string) {
+  get initialContext() {
+    return this._initialContext.asObservable();
+  }
+
+  openApp(pluginId: string, context?: unknown) {
     if (!this.assertFeatureEnabled()) {
-      return false;
+      return;
     }
 
-    return this._activePluginId.next(pluginId);
+    this._activePluginId.next(pluginId);
+    this._initialContext.next(context);
   }
 
   closeApp(pluginId: string) {
     if (!this.assertFeatureEnabled()) {
-      return false;
+      return;
     }
 
     if (this._activePluginId.getValue() === pluginId) {
-      return this._activePluginId.next(undefined);
+      this._activePluginId.next(undefined);
+      this._initialContext.next(undefined);
     }
   }
 

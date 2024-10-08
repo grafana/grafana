@@ -6,17 +6,19 @@ import { SidecarService, sidecarService } from '../services/SidecarService';
 export const SidecarContext = createContext<SidecarService>(sidecarService);
 
 export function useSidecar() {
-  const activePluginId = useObservable(sidecarService.activePluginId);
-  const context = useContext(SidecarContext);
+  const service = useContext(SidecarContext);
+  const activePluginId = useObservable(service.activePluginId);
+  const initialContext = useObservable(service.initialContext);
 
-  if (!context) {
+  if (!service) {
     throw new Error('No SidecarContext found');
   }
 
   return {
     activePluginId,
-    openApp: (pluginId: string) => context.openApp(pluginId),
-    closeApp: (pluginId: string) => context.closeApp(pluginId),
-    isAppOpened: (pluginId: string) => context.isAppOpened(pluginId),
+    initialContext,
+    openApp: (pluginId: string, context?: unknown) => service.openApp(pluginId, context),
+    closeApp: (pluginId: string) => service.closeApp(pluginId),
+    isAppOpened: (pluginId: string) => service.isAppOpened(pluginId),
   };
 }
