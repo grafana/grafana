@@ -136,12 +136,4 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     const { randomize } = this.state;
     this.setState({ randomize: { ...randomize, [k]: !randomize[k] } });
   };
-
-  onPreviewDashboard = () => {
-    const { snapshot } = this.state;
-    if (snapshot) {
-      setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot });
-      global.open(config.appUrl + 'dashboard/new', '_blank');
-    }
-  };
 }

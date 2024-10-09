@@ -1,22 +1,13 @@
 import { MutableDataFrame } from '@grafana/data';
-import { DataQuery, defaultDashboard } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import * as api from 'app/features/dashboard/state/initDashboard';
 import { ExplorePanelData } from 'app/types';
 
 import { createEmptyQueryResponse } from '../../state/utils';
 
-import { setDashboardInLocalStorage } from './addToDashboard';
+import { buildDashboardPanelFromExploreState } from './addToDashboard';
 
-let mockDashboard = {} as unknown;
-jest.mock('app/features/dashboard/api/dashboard_api', () => ({
-  getDashboardAPI: () => ({
-    getDashboardDTO: () => {
-      return Promise.resolve(mockDashboard);
-    },
-  }),
-}));
-
-describe('addPanelToDashboard', () => {
+describe('buildDashboardPanelFromExploreState', () => {
   let spy: jest.SpyInstance;
   beforeAll(() => {
     spy = jest.spyOn(api, 'setDashboardToFetchFromLocalStorage');
@@ -26,92 +17,24 @@ describe('addPanelToDashboard', () => {
     jest.resetAllMocks();
   });
 
-  it('Correct datasource ref is used', async () => {
-    await setDashboardInLocalStorage({
+  it('Correct datasource ref is used', () => {
+    const result = buildDashboardPanelFromExploreState({
       queries: [],
       queryResponse: createEmptyQueryResponse(),
       datasource: { type: 'loki', uid: 'someUid' },
-      time: { from: 'now-1h', to: 'now' },
-    });
-    expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dashboard: expect.objectContaining({
-          panels: expect.arrayContaining([expect.objectContaining({ datasource: { type: 'loki', uid: 'someUid' } })]),
-        }),
-      })
-    );
-  });
-
-  it('Correct time range is used', async () => {
-    await setDashboardInLocalStorage({
-      queries: [],
-      queryResponse: createEmptyQueryResponse(),
-      datasource: { type: 'loki', uid: 'someUid' },
-      time: { from: 'now-10h', to: 'now' },
     });
 
-    expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dashboard: expect.objectContaining({
-          time: expect.objectContaining({ from: 'now-10h', to: 'now' }),
-        }),
-      })
-    );
+    expect(result.datasource).toEqual({ type: 'loki', uid: 'someUid' });
   });
 
-  it('All queries are correctly passed through', async () => {
+  it('All queries are correctly passed through', () => {
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
 
-    await setDashboardInLocalStorage({
-      queries,
-      queryResponse: createEmptyQueryResponse(),
-      time: { from: 'now-1h', to: 'now' },
-    });
-    expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dashboard: expect.objectContaining({
-          panels: expect.arrayContaining([expect.objectContaining({ targets: expect.arrayContaining(queries) })]),
-        }),
-      })
-    );
+    const result = buildDashboardPanelFromExploreState({ queries, queryResponse: createEmptyQueryResponse() });
+
+    expect(result.targets).toEqual(queries),
   });
-
-  it('Previous panels should not be removed', async () => {
-    const queries: DataQuery[] = [{ refId: 'A' }];
-    const existingPanel = { prop: 'this should be kept' };
-
-    // Set the mocked dashboard
-    mockDashboard = {
-      dashboard: {
-        ...defaultDashboard,
-        templating: { list: [] },
-        title: 'Previous panels should not be removed',
-        uid: 'someUid',
-        panels: [existingPanel],
-      },
-      meta: {},
-    };
-
-    await setDashboardInLocalStorage({
-      queries,
-      queryResponse: createEmptyQueryResponse(),
-      dashboardUid: 'someUid',
-      datasource: { type: '' },
-      time: { from: 'now-1h', to: 'now' },
-    });
-
-    expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dashboard: expect.objectContaining({
-          panels: expect.arrayContaining([
-            expect.objectContaining({ targets: expect.arrayContaining(queries) }),
-            existingPanel,
-          ]),
-        }),
-      })
-    );
-  });
-
+  
   describe('Setting visualization type', () => {
     describe('Defaults to table', () => {
       const cases: Array<[string, DataQuery[], ExplorePanelData]> = [
@@ -125,14 +48,8 @@ describe('addPanelToDashboard', () => {
       ];
 
       it.each(cases)('%s', async (_, queries, queryResponse) => {
-        await setDashboardInLocalStorage({ queries, queryResponse, time: { from: 'now-1h', to: 'now' } });
-        expect(spy).toHaveBeenCalledWith(
-          expect.objectContaining({
-            dashboard: expect.objectContaining({
-              panels: expect.arrayContaining([expect.objectContaining({ type: 'table' })]),
-            }),
-          })
-        );
+        const result = buildDashboardPanelFromExploreState({ queries, queryResponse });
+        expect(result.type).toBe('table');
       });
     });
 
@@ -157,14 +74,8 @@ describe('addPanelToDashboard', () => {
             [framesType]: [new MutableDataFrame({ refId: 'A', fields: [] })],
           };
 
-          await setDashboardInLocalStorage({ queries, queryResponse, time: { from: 'now-1h', to: 'now' } });
-          expect(spy).toHaveBeenCalledWith(
-            expect.objectContaining({
-              dashboard: expect.objectContaining({
-                panels: expect.arrayContaining([expect.objectContaining({ type: expectedPanel })]),
-              }),
-            })
-          );
+          const result = buildDashboardPanelFromExploreState({ queries, queryResponse });
+          expect(result.type).toBe(expectedPanel);
         }
       );
 
@@ -181,14 +92,8 @@ describe('addPanelToDashboard', () => {
           ],
         };
 
-        await setDashboardInLocalStorage({ queries, queryResponse, time: { from: 'now-1h', to: 'now' } });
-        expect(spy).toHaveBeenCalledWith(
-          expect.objectContaining({
-            dashboard: expect.objectContaining({
-              panels: expect.arrayContaining([expect.objectContaining({ type: 'someCustomPluginId' })]),
-            }),
-          })
-        );
+        const result = buildDashboardPanelFromExploreState({ queries, queryResponse });
+        expect(result.type).toBe('someCustomPluginId'); 
       });
     });
   });

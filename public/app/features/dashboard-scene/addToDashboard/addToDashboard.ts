@@ -40,7 +40,7 @@ export async function addToDashboard({
     meta: {},
     dashboard: {
       title: '',
-      uid: dashboardUid ?? '',
+      uid: '',
       panels: [panel],
       schemaVersion: DASHBOARD_SCHEMA_VERSION,
     },
