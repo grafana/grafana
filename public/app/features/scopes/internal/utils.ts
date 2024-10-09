@@ -44,6 +44,9 @@ export function getScopeNamesFromSelectedScopes(scopes: SelectedScope[]): string
   return scopes.map(({ scope }) => scope.metadata.name);
 }
 
+// helper func to get the selected/tree scopes together with their paths
+// needed to maintain selected scopes in tree for example when navigating
+// between categories or when loading scopes from URL to find the scope's path
 export function getScopesAndTreeScopesWithPaths(
   selectedScopes: SelectedScope[],
   treeScopes: TreeScope[],
