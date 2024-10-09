@@ -19,7 +19,7 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { ContactPoint } from './ContactPoint';
-import ContactPointsPageContents from './ContactPoints';
+import { ContactPointsPageContents } from './ContactPoints';
 import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
