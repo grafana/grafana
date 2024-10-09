@@ -129,7 +129,6 @@ export function useCombinedRuleNamespaces(
 export function combineRulesNamespace(
   rulesSource: RulesSource,
   promNamespaces: RuleNamespace[],
-  folderName: string, // we need to pass this because ruler rules don't have a folder name
   rulerRules?: RulerRulesConfigDTO
 ): CombinedRuleNamespace[] {
   const namespaces: Record<string, CombinedRuleNamespace> = {};
@@ -141,7 +140,7 @@ export function combineRulesNamespace(
       name: namespaceName,
       groups: [],
     };
-    namespaces[folderName] = namespace;
+    namespaces[namespaceName] = namespace;
     addRulerGroupsToCombinedNamespace(namespace, groups);
   });
 
