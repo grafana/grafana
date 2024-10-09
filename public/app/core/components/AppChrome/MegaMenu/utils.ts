@@ -98,7 +98,9 @@ export const getActiveItem = (
     }
   }
 
-  if (parentItem) {
+  // Do not search for the parent in the bookmarks section
+  const isInBookmarksSection = navTree[0]?.parentItem?.id === 'bookmarks';
+  if (parentItem && !isInBookmarksSection) {
     return getActiveItem(navTree, parentItem);
   }
 
