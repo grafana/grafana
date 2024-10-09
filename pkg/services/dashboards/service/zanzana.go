@@ -242,28 +242,38 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
-	resources, err := dr.listUserResources(ctx, query)
+	var result []dashboards.DashboardSearchProjection
+
+	allowedFolders, err := dr.listAllowedResources(ctx, query, zanzana.TypeFolder)
 	if err != nil {
 		return nil, err
-	}
-	if len(resources.Folders) == 0 && len(resources.Resources) == 0 {
-		return []dashboards.DashboardSearchProjection{}, nil
 	}
 
-	// Find dashboards in folders that user has access to
-	query.SkipAccessControlFilter = true
-	query.FolderUIDs = resources.Folders
-	result, err := dr.dashboardStore.FindDashboards(ctx, &query)
-	if err != nil {
-		return nil, err
+	if len(allowedFolders) > 0 {
+		// Find dashboards in folders that user has access to
+		query.SkipAccessControlFilter = true
+		query.FolderUIDs = allowedFolders
+		result, err = dr.dashboardStore.FindDashboards(ctx, &query)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// skip if limit reached
+	rest := query.Limit - int64(len(result))
+	if rest <= 0 {
+		return result, nil
 	}
 
 	// Run second query to find dashboards with direct permission assignments
-	rest := query.Limit - int64(len(result))
-	// skip if limit reached
-	if resources.Resources != nil && rest > 0 {
+	allowedDashboards, err := dr.listAllowedResources(ctx, query, zanzana.TypeDashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(allowedDashboards) > 0 {
 		query.FolderUIDs = []string{}
-		query.DashboardUIDs = resources.Resources
+		query.DashboardUIDs = allowedDashboards
 		query.Limit = rest
 		dashboardRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
 		if err != nil {
