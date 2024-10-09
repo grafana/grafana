@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { CombinedRule, Rule, RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { PromRuleType, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRulePluginOrigin } from '../utils/rules';
 

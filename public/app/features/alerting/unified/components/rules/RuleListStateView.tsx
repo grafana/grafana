@@ -10,12 +10,17 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { usePagination } from '../../hooks/usePagination';
 import { createViewLink } from '../../utils/misc';
 import { hashRule } from '../../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import {
+  getRuleGroupLocationFromCombinedRule,
+  getRulePluginOrigin,
+  isAlertingRule,
+  isGrafanaRulerRule,
+} from '../../utils/rules';
 import { AlertRuleListItem } from '../rule-list/AlertRuleListItem';
 import { ListSection } from '../rule-list/components/ListSection';
 import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
 
-import { RuleActionsButtons } from './RuleActionsButtons';
+import { ActionsLoader, RuleActionsButtons } from './RuleActionsButtons';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -97,12 +102,13 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
 
         const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
         const instancesCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
+        const groupIdentifier = getRuleGroupLocationFromCombinedRule(rule);
 
         if (!promRule) {
           return null;
         }
 
-        const originMeta = getRulePluginOrigin(rule);
+        const originMeta = getRulePluginOrigin(promRule);
 
         return (
           <AlertRuleListItem
@@ -118,7 +124,18 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
             instancesCount={instancesCount}
             namespace={rule.namespace.name}
             group={rule.group.name}
-            actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
+            actions={
+              rule.rulerRule ? (
+                <RuleActionsButtons
+                  compact
+                  rule={rule.rulerRule}
+                  promRule={promRule}
+                  groupIdentifier={groupIdentifier}
+                />
+              ) : (
+                <ActionsLoader />
+              )
+            }
             origin={originMeta}
           />
         );

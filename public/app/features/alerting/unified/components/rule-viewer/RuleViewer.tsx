@@ -19,6 +19,7 @@ import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import {
+  getRuleGroupLocationFromCombinedRule,
   getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
@@ -75,9 +76,10 @@ const RuleViewer = () => {
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
   const showError = hasError && !isPaused;
-  const ruleOrigin = getRulePluginOrigin(rule);
+  const ruleOrigin = rule.rulerRule ? getRulePluginOrigin(rule.rulerRule ?? rule.promRule) : undefined;
 
   const summary = annotations[Annotation.summary];
+  const groupIdentifier = getRuleGroupLocationFromCombinedRule(rule);
 
   return (
     <AlertingPageWrapper
@@ -94,7 +96,12 @@ const RuleViewer = () => {
           ruleOrigin={ruleOrigin}
         />
       )}
-      actions={<RuleActionsButtons rule={rule} showCopyLinkButton rulesSource={rule.namespace.rulesSource} />}
+      actions={
+        rule.rulerRule &&
+        rule.promRule && (
+          <RuleActionsButtons rule={rule.rulerRule} promRule={rule.promRule} groupIdentifier={groupIdentifier} />
+        )
+      }
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">

@@ -10,15 +10,9 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { getRulesSourceName } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
-import {
-  isAlertingRulerRule,
-  isFederatedRuleGroup,
-  isGrafanaRecordingRule,
-  isGrafanaRulerRule,
-  isPluginProvidedRule,
-} from '../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRecordingRule, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -195,13 +189,13 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
     loading,
   } = useIsRuleEditable(rulesSourceName, rule.rulerRule);
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
-  const canSilence = useCanSilence(rule);
+  const canSilence = useCanSilence(rule.rulerRule);
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
     const isFederated = isFederatedRuleGroup(rule.group);
     const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
-    const isPluginProvided = isPluginProvidedRule(rule);
+    const isPluginProvided = isPluginProvidedRule(rule.rulerRule);
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
     const immutableRule = isProvisioned || isFederated || isPluginProvided;

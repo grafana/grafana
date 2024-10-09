@@ -4,7 +4,7 @@ import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
-import { CombinedRule, Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
+import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
@@ -18,7 +18,7 @@ interface Props {
   identifier: RuleIdentifier;
   groupIdentifier: RuleGroupIdentifier;
   handleSilence: () => void;
-  handleDelete: (rule: CombinedRule) => void;
+  handleDelete: (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifier) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
@@ -76,7 +76,7 @@ const AlertRuleMenu = ({
 
   const menuItems = (
     <>
-      {canPause && <MenuItemPauseRule rule={rule} onPauseChange={onPauseChange} />}
+      {canPause && <MenuItemPauseRule rule={rule} groupIdentifier={groupIdentifier} onPauseChange={onPauseChange} />}
       {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}
       {/* {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />} */}
       {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
@@ -100,7 +100,7 @@ const AlertRuleMenu = ({
       {canDelete && (
         <>
           <Menu.Divider />
-          <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => handleDelete(rule)} />
+          <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => handleDelete(rule, groupIdentifier)} />
         </>
       )}
     </>

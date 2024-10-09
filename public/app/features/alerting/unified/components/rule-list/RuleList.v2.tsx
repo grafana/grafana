@@ -18,7 +18,7 @@ import { Spacer } from '../Spacer';
 import { WithReturnButton } from '../WithReturnButton';
 import RulesFilter from '../rules/Filter/RulesFilter';
 
-import { AlertRuleListItem, RecordingRuleListItem } from './AlertRuleListItem';
+import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './AlertRuleListItem';
 import { DataSourceIcon } from './Namespace';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
@@ -112,7 +112,7 @@ function PaginatedRuleGroupLoader({ ruleSourceName, rulerEnabled = false }: Pagi
       {ruleNamespaces.map((namespace) => (
         <ListSection key={namespace.name} title={namespace.name}>
           {namespace.groups.map((group) => (
-            <ListGroup key={group.name} name={group.name} onToggle={noop} isOpen={true}>
+            <ListGroup key={group.name} name={group.name} isOpen={true}>
               {group.rules.map((rule) => {
                 const groupIdentifier: RuleGroupIdentifier = {
                   dataSourceName: ruleSourceName,
@@ -164,7 +164,7 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
   //   actions = null;
   // } else {
   //   if (loading) {
-  //     actions = <Skeleton width={50} height={16} />;
+  //     actions = <ActionsLoader />;
   //   } else if (ruleWithLocation) {
   //     actions = (
   //       <RuleActionsButtons
@@ -210,6 +210,8 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
       />
     );
   }
+
+  return <UnknownRuleListItem rule={rule} groupIdentifier={groupIdentifier} />;
 }
 
 function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {

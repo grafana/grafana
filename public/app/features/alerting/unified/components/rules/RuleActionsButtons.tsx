@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { LinkButton, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -9,13 +10,12 @@ import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/s
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { useDispatch } from 'app/types';
-import { CombinedRule, RuleGroupIdentifier, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
+import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction, useAlertRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
+import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
-import { createViewLink } from '../../utils/misc';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
@@ -33,13 +33,12 @@ interface Props {
    * i.e. without text and using smaller button sizes
    */
   compact?: boolean;
-  showCopyLinkButton?: boolean;
 }
 
 /**
  * **Action** buttons to show for an alert rule - e.g. "View", "Edit", "More..."
  */
-export const RuleActionsButtons = ({ compact, showCopyLinkButton, rule, promRule, groupIdentifier }: Props) => {
+export const RuleActionsButtons = ({ compact, rule, promRule, groupIdentifier }: Props) => {
   const dispatch = useDispatch();
 
   const redirectToListView = compact ? false : true;
@@ -116,3 +115,5 @@ export const RuleActionsButtons = ({ compact, showCopyLinkButton, rule, promRule
     </Stack>
   );
 };
+
+export const ActionsLoader = () => <Skeleton width={50} height={16} />;
