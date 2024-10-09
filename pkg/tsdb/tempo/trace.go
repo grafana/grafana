@@ -51,6 +51,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	}
 
 	var apiVersion = TraceRequestApiVersionV2
+	//nolint:bodyclose
 	resp, traceBody, err := s.performTraceRequest(ctx, dsInfo, apiVersion, model, query, span)
 	if err != nil {
 		return result, err
@@ -59,6 +60,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	// If the endpoint is not found, try the v1 endpoint, we might be communicating with an older Tempo version
 	if resp.StatusCode == http.StatusNotFound {
 		apiVersion = TraceRequestApiVersionV1
+		//nolint:bodyclose
 		resp, traceBody, err = s.performTraceRequest(ctx, dsInfo, apiVersion, model, query, span)
 		if err != nil {
 			return result, err
