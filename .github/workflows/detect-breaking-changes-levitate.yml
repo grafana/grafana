@@ -282,7 +282,6 @@ jobs:
               "pr_link": "https://github.com/grafana/grafana/pull/${{ steps.levitate-run.outputs.pr_number }}",
               "pr_number": "${{ steps.levitate-run.outputs.pr_number }}",
               "job_link": "${{ steps.levitate-run.outputs.job_link }}",
-              "reporting_job_link": "${{ github.event.workflow_run.html_url }}",
               "message": "${{ steps.levitate-run.outputs.message }}"
             }
         env:
