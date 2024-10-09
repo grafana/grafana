@@ -93,7 +93,6 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 			span.SetStatus(codes.Error, err.Error())
 			return &backend.DataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.Query, err)
 		}
-
 	} else {
 		var tr tempopb.TraceByIDResponse
 		err = proto.Unmarshal(body, &tr)

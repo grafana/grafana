@@ -10,7 +10,6 @@ import (
 	commonv11 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 	v1 "github.com/grafana/tempo/pkg/tempopb/resource/v1"
 	tracev11 "github.com/grafana/tempo/pkg/tempopb/trace/v1"
-	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
@@ -219,7 +218,7 @@ func getAttributeVal(attr *commonv11.AnyValue) any {
 }
 
 func getSpanTags(span *tracev11.Span) []*KeyValue {
-	var tags []*KeyValue
+	tags := make([]*KeyValue, len(span.Attributes))
 	for _, attr := range span.Attributes {
 		tags = append(tags, &KeyValue{Key: attr.Key, Value: getAttributeVal(attr.Value)})
 	}
@@ -244,10 +243,6 @@ func getSpanKind(spanKind tracev11.Span_SpanKind) string {
 	}
 
 	return tagStr
-}
-
-func getTraceState(traceState pcommon.TraceState) string {
-	return traceState.AsRaw()
 }
 
 func spanEventsToLogs(events []*tracev11.Span_Event) []*TraceLog {
