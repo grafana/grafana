@@ -7,7 +7,11 @@ import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
 import { CacheRequestInfo, findDatapointStep, QueryCache } from './QueryCache';
-import { IncrementalStorageDataFrameScenarios, trimmedFirstPointInPromFrames } from './QueryCacheTestData';
+import {
+  differentDisplayNameFromDS,
+  trimmedFirstPointInPromFrames,
+  IncrementalStorageDataFrameScenarios,
+} from './QueryCacheTestData';
 
 // Will not interpolate vars!
 const interpolateStringTest = (query: PromQuery) => {
@@ -124,7 +128,7 @@ describe('QueryCache: Generic', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       firstFrames
@@ -148,7 +152,7 @@ describe('QueryCache: Generic', function () {
       secondRequest,
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       secondFrames
@@ -241,7 +245,7 @@ describe('QueryCache: Prometheus', function () {
         request,
         {
           requests: [], // unused
-          targSigs: targetSignatures,
+          targetSignatures: targetSignatures,
           shouldCache: true,
         },
         firstFrames
@@ -265,7 +269,7 @@ describe('QueryCache: Prometheus', function () {
         secondRequest,
         {
           requests: [], // unused
-          targSigs: targetSignatures,
+          targetSignatures: targetSignatures,
           shouldCache: true,
         },
         secondFrames
@@ -387,9 +391,9 @@ describe('QueryCache: Prometheus', function () {
       panelId: panelId,
     });
 
-    const requestInfo = {
+    const requestInfo: CacheRequestInfo<PromQuery> = {
       requests: [], // unused
-      targSigs: cache,
+      targetSignatures: cache,
       shouldCache: true,
     };
     const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
@@ -407,7 +411,7 @@ describe('QueryCache: Prometheus', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       secondFrames
@@ -430,7 +434,7 @@ describe('QueryCache: Prometheus', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       thirdFrames
@@ -537,7 +541,7 @@ describe('QueryCache: Prometheus', function () {
     request.targets[0].interval = '1m';
     const requestInfo: CacheRequestInfo<PromQuery> = {
       requests: [], // unused
-      targSigs: cache,
+      targetSignatures: cache,
       shouldCache: true,
     };
     const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
@@ -557,6 +561,87 @@ describe('QueryCache: Prometheus', function () {
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
+  });
+
+  it('should always use the newest config information', () => {
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+    });
+
+    // Initial request with custom legend info {{org}}-customLegend
+    const firstFrames = differentDisplayNameFromDS.first.dataFrames as unknown as DataFrame[];
+
+    // Second request with legend __auto which results having no displayNameFromDS
+    const secondFrames = differentDisplayNameFromDS.second.dataFrames as unknown as DataFrame[];
+
+    const cache = new Map<string, string>();
+    const interval = 15000;
+
+    // start time of scenario
+    const firstFrom = dateTime(new Date(1726829205000));
+    const firstTo = dateTime(new Date(1726829832515));
+    const firstRange: TimeRange = {
+      from: firstFrom,
+      to: firstTo,
+      raw: {
+        from: 'now-1h',
+        to: 'now',
+      },
+    };
+
+    const secondFrom = dateTime(new Date(1726829220000));
+    const secondTo = dateTime(new Date(1726829903931));
+    const secondRange: TimeRange = {
+      from: secondFrom,
+      to: secondTo,
+      raw: {
+        from: 'now-1h',
+        to: 'now',
+      },
+    };
+
+    // Signifier definition
+    const dashboardId = `dashid`;
+    const panelId = 200;
+    const targetIdentity = `${dashboardId}|${panelId}|A`;
+
+    const request = mockPromRequest({
+      range: firstRange,
+      dashboardUID: dashboardId,
+      panelId: panelId,
+      app: 'first_app',
+    });
+
+    const requestInfo: CacheRequestInfo<PromQuery> = {
+      requests: [], // unused
+      targetSignatures: cache,
+      shouldCache: true,
+    };
+    const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
+    cache.set(targetIdentity, targetSignature);
+
+    const firstQueryResult = storage.procFrames(request, requestInfo, firstFrames);
+
+    expect(firstQueryResult[0].fields[1].config.displayNameFromDS).toBeDefined();
+    expect(firstQueryResult[0].fields[1].config.displayNameFromDS).toEqual('rutgerkerkhoffdevuseast-customLegend');
+
+    const secondQueryResult = storage.procFrames(
+      mockPromRequest({
+        range: secondRange,
+        dashboardUID: dashboardId,
+        panelId: panelId,
+        app: 'second_app',
+      }),
+      {
+        requests: [], // unused
+        targetSignatures: cache,
+        shouldCache: true,
+      },
+      secondFrames
+    );
+
+    expect(secondQueryResult[0].fields[1].config.displayNameFromDS).not.toBeDefined();
   });
 });
 

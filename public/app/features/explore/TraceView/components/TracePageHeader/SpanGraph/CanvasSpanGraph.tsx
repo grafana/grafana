@@ -26,13 +26,13 @@ import renderIntoCanvas from './render-into-canvas';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    CanvasSpanGraph: css`
-      label: CanvasSpanGraph;
-      background: ${autoColor(theme, '#fafafa')};
-      height: 60px;
-      position: absolute;
-      width: 100%;
-    `,
+    CanvasSpanGraph: css({
+      label: 'CanvasSpanGraph',
+      background: autoColor(theme, '#fafafa'),
+      height: '60px',
+      position: 'absolute',
+      width: '100%',
+    }),
   };
 });
 
