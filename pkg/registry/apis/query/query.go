@@ -110,6 +110,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
 		if err != nil {
+			r.logger.Error("error reading query", "error", err)
 			err = errorsK8s.NewBadRequest("error reading query")
 			// TODO: can we wrap the error so details are not lost?!
 			// errutil.BadRequest(
@@ -122,15 +123,20 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
-			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) || errors.Is(err, datasources.ErrDatasourceMissingInfo) {
 				// TODO, can we wrap the error somehow?
+				r.logger.Error("datasource was not found", "error", err)
 				err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
 					Status:  metav1.StatusFailure,
 					Code:    http.StatusBadRequest, // the URL is found, but includes bad requests
 					Reason:  metav1.StatusReasonNotFound,
-					Message: "datasource not found",
+					Message: err.Error(),
 				}}
+				responder.Error(err)
+				return
 			}
+			// note this will return a 500 unless the error is already a metav1.StatusError
+			r.logger.Error("unexpected error while parsing query", "error", err)
 			responder.Error(err)
 			return
 		}
@@ -142,6 +148,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
+			// note this will return a 500 unless the error is already a metav1.StatusError
+			r.logger.Error("unexpected error when executing query", "error", err)
 			responder.Error(err)
 			return
 		}

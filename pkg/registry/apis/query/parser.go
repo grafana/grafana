@@ -13,6 +13,7 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 )
 
@@ -206,7 +207,7 @@ func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSo
 	}
 	if ds.Type == "" {
 		if ds.UID == "" {
-			return nil, fmt.Errorf("missing name/uid in data source reference")
+			return nil, datasources.ErrDatasourceMissingInfo
 		}
 		if ds.UID == expr.DatasourceType {
 			return ds, nil

@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	ErrDatasourceMissingInfo             = errors.New("datasource type and uid missing")
 	ErrDataSourceNotFound                = errors.New("data source not found")
 	ErrDataSourceNameExists              = errors.New("data source with the same name already exists")
 	ErrDataSourceUidExists               = errors.New("data source with the same uid already exists")
