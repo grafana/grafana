@@ -133,7 +133,9 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config, 
     return <LoadingPlaceholder text="Loading notifiers..." />;
   }
 
-  const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
+  const notifiers: Notifier[] = grafanaNotifiers
+  .filter(n => n.type !== 'oncall') // LOGZ.IO CHANGE :: DEV-46522 hide oncall notifier
+  .map((n) => {
     if (n.type === 'oncall') {
       return {
         dto: extendOnCallNotifierFeatures(n),

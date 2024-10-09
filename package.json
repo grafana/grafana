@@ -438,5 +438,8 @@
     "prettier@3.2.5": {
       "unplugged": true
     }
+  },
+  "volta": {
+    "node": "18.20.4"
   }
 }
