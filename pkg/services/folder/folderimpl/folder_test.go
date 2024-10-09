@@ -1932,10 +1932,12 @@ func TestFolderServiceGetFolder(t *testing.T) {
 	f := folders[1]
 
 	testCases := []struct {
-		name             string
-		svc              *Service
-		WithFullpath     bool
-		expectedFullpath string
+		name                 string
+		svc                  *Service
+		WithFullpath         bool
+		WithFullpathUIDs     bool
+		expectedFullpath     string
+		expectedFullpathUIDs string
 	}{
 		{
 			name:             "when flag is off",
@@ -1953,6 +1955,18 @@ func TestFolderServiceGetFolder(t *testing.T) {
 			svc:              &folderSvcOn,
 			WithFullpath:     true,
 			expectedFullpath: "get\\/folder-folder-0/get\\/folder-folder-1",
+		},
+		{
+			name:                 "when flag is on and WithFullpathUIDs is false",
+			svc:                  &folderSvcOn,
+			WithFullpathUIDs:     false,
+			expectedFullpathUIDs: "",
+		},
+		{
+			name:                 "when flag is on and WithFullpathUIDs is true",
+			svc:                  &folderSvcOn,
+			WithFullpathUIDs:     true,
+			expectedFullpathUIDs: "uidfor-0/uidfor-1",
 		},
 	}
 
@@ -2517,7 +2531,7 @@ func CreateSubtreeInStore(t *testing.T, store folder.Store, service *Service, de
 	for i := 0; i < depth; i++ {
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
 		cmd.Title = title
-		cmd.UID = util.GenerateShortUID()
+		cmd.UID = fmt.Sprintf("uidfor-%d", i)
 		cmd.OrgID = orgID
 		cmd.SignedInUser = &user.SignedInUser{OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}}}}
 
