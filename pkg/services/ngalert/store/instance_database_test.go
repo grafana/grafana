@@ -383,9 +383,12 @@ func TestIntegrationSaveAlertInstancesForRule(t *testing.T) {
 		const mainOrgID int64 = 1
 
 		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
-		key := models.AlertRuleKey{
-			OrgID: mainOrgID,
-			UID:   alertRule.UID,
+		key := models.AlertRuleKeyWithGroup{
+			AlertRuleKey: models.AlertRuleKey{
+				OrgID: mainOrgID,
+				UID:   alertRule.UID,
+			},
+			RuleGroup: "group1",
 		}
 		instances := []models.AlertInstance{
 			{
@@ -429,9 +432,12 @@ func TestIntegrationSaveAlertInstancesForRule(t *testing.T) {
 		const mainOrgID int64 = 1
 
 		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
-		key := models.AlertRuleKey{
-			OrgID: mainOrgID,
-			UID:   alertRule.UID,
+		key := models.AlertRuleKeyWithGroup{
+			AlertRuleKey: models.AlertRuleKey{
+				OrgID: mainOrgID,
+				UID:   alertRule.UID,
+			},
+			RuleGroup: "group1",
 		}
 
 		err := dbstore.SaveAlertInstancesForRule(ctx, key, []models.AlertInstance{})
@@ -453,9 +459,12 @@ func TestIntegrationSaveAlertInstancesForRule(t *testing.T) {
 		const mainOrgID int64 = 1
 
 		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
-		key := models.AlertRuleKey{
-			OrgID: mainOrgID,
-			UID:   alertRule.UID,
+		key := models.AlertRuleKeyWithGroup{
+			AlertRuleKey: models.AlertRuleKey{
+				OrgID: mainOrgID,
+				UID:   alertRule.UID,
+			},
+			RuleGroup: "group1",
 		}
 
 		instances := []models.AlertInstance{

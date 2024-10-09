@@ -56,7 +56,7 @@ func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...model
 	return nil
 }
 
-func (f *FakeInstanceStore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKey, instances []models.AlertInstance) error {
+func (f *FakeInstanceStore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -67,7 +67,7 @@ func (f *FakeInstanceStore) SaveAlertInstancesForRule(ctx context.Context, key m
 	return nil
 }
 
-func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
 	return nil
 }
 
