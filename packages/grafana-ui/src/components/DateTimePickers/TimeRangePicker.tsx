@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { memo, createRef, useState, useEffect, useMemo, useCallback } from 'react';
+import { memo, createRef, useState, useEffect, useCallback } from 'react';
+import usePrevious from 'react-use/lib/usePrevious';
 
 import {
   rangeUtil,
@@ -14,101 +15,19 @@ import {
   dateMath,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-// import uuid from 'uuid';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { getModalStyles } from '../Modal/getModalStyles';
-import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton';
+import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
+import { useTimeRangeContext } from './TimeRangeContext';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { TimeSyncButton } from './TimeSyncButton';
 import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
-// import { getAppEvents, TimePickerUpdatedEvent } from '@grafana/runtime';
-// import { time } from 'logfmt';
-
-type TimeRangeContextValue = {
-  syncedValue?: TimeRange;
-  synced: boolean;
-  syncPossible: boolean;
-  addPicker(): void;
-  removePicker(): void;
-  sync(value: TimeRange): void;
-  unSync(): void;
-  setValue(timeRange: TimeRange): void;
-};
-
-const TimeRangeContext = React.createContext<TimeRangeContextValue | undefined>(undefined);
-
-export function TimeRangeProvider({ children }: { children: React.ReactNode }) {
-  const [pickersCount, setPickersCount] = useState(0);
-  const [synced, setSynced] = useState(false);
-  const [syncedValue, setSyncedValue] = useState<TimeRange>();
-
-  const sync = useCallback((value: TimeRange) => {
-    setSynced(true);
-    setSyncedValue(value);
-  }, []);
-
-  const unSync = useCallback(() => {
-    setSynced(false);
-    setSyncedValue(undefined);
-  }, []);
-
-  const setValue = useCallback((value: TimeRange) => {
-    setSyncedValue(value);
-  }, []);
-
-  const contextVal = useMemo(() => {
-    return {
-      sync,
-      unSync,
-      setValue,
-      addPicker: () => setPickersCount(pickersCount + 1),
-      removePicker: () => setPickersCount(pickersCount - 1),
-      syncPossible: pickersCount > 1,
-      synced,
-      syncedValue,
-    };
-  }, [pickersCount, setValue, sync, unSync, synced, syncedValue]);
-
-  return <TimeRangeContext.Provider value={contextVal}>{children}</TimeRangeContext.Provider>;
-}
-
-function useTimeRangeContext(initialSyncValue?: TimeRange) {
-  const context = React.useContext(TimeRangeContext);
-
-  useEffect(() => {
-    if (context) {
-      context.addPicker();
-      if (initialSyncValue) {
-        context.sync(initialSyncValue);
-      }
-      return () => {
-        context.removePicker();
-      };
-    }
-    return () => {};
-  }, []);
-
-  return useMemo(() => {
-    if (!context) {
-      return context;
-    }
-
-    // We just remove the addPicker/removePicker as that is done automatically here
-    return {
-      sync: context.sync,
-      unSync: context.unSync,
-      setValue: context.setValue,
-      syncPossible: context.syncPossible,
-      synced: context.synced,
-      syncedValue: context.syncedValue,
-    };
-  }, [context]);
-}
 
 /** @public */
 export interface TimeRangePickerProps {
@@ -116,9 +35,15 @@ export interface TimeRangePickerProps {
   value: TimeRange;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
+
+  // If you handle sync state between pickers yourself use this prop to pass the sync button component. Otherwise
+  // a default one will show automatically if sync is possible
   timeSyncButton?: JSX.Element;
 
+  // Use to manually set the synced styles for the time range picker if you need to control the sync state yourself.
   isSynced?: boolean;
+
+  // Use to manually set the initial sync state for the time range picker. It will use the current value to sync.
   initialIsSynced?: boolean;
 
   onChange: (timeRange: TimeRange) => void;
@@ -152,7 +77,6 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onError,
     timeZone,
     fiscalYearStartMonth,
-    timeSyncButton,
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
@@ -164,60 +88,24 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     initialIsSynced,
   } = props;
 
-  const timeRangeContext = useTimeRangeContext(initialIsSynced && value ? value : undefined);
-
-  const usingTimeRangeContext = props.isSynced === undefined && timeRangeContext;
-
-  // const appEvents = getAppEvents();
-  // const propsIsSynced = props.isSynced;
-  const propsOnChange = props.onChange;
-  // const [isSynced, setIsSynced] = useState(!!initialIsSynced)
+  const { onChangeWithSync, isSynced, timeSyncButton } = useTimeSync({
+    initialIsSynced,
+    value,
+    onChangeProp: props.onChange,
+    isSyncedProp: props.isSynced,
+    timeSyncButtonProp: props.timeSyncButton,
+  });
 
   const onChange = (timeRange: TimeRange) => {
-    props.onChange(timeRange);
-    // if (propsIsSynced === undefined) {
-    //   appEvents.publish(new TimePickerUpdatedEvent({ timeRange, synced: isSynced }));
-    // }
-
-    if (usingTimeRangeContext && timeRangeContext?.synced) {
-      timeRangeContext?.setValue(timeRange);
-    }
-
+    onChangeWithSync(timeRange);
     setOpen(false);
   };
-
-  useEffect(() => {
-    if (
-      usingTimeRangeContext &&
-      timeRangeContext.synced &&
-      timeRangeContext.syncedValue &&
-      timeRangeContext.syncedValue !== value
-    ) {
-      propsOnChange(timeRangeContext.syncedValue);
-    }
-  }, [usingTimeRangeContext, timeRangeContext?.synced, timeRangeContext?.syncedValue, value, propsOnChange]);
 
   useEffect(() => {
     if (isOpen && onToolbarTimePickerClick) {
       onToolbarTimePickerClick();
     }
   }, [isOpen, onToolbarTimePickerClick]);
-
-  // useEffect(() => {
-  //   if (propsIsSynced !== undefined) {
-  //     return;
-  //   }
-  //
-  //   const sub = appEvents.subscribe(TimePickerUpdatedEvent, (event) => {
-  //     setIsSynced(event.payload.synced);
-  //     if (event.payload.synced) {
-  //       propsOnChange(event.payload.timeRange);
-  //     }
-  //   });
-  //   return () => {
-  //     sub.unsubscribe();
-  //   }
-  // }, [appEvents, propsIsSynced, propsOnChange]);
 
   const onToolbarButtonSwitch = () => {
     setOpen((prevState) => !prevState);
@@ -246,11 +134,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const { modalBackdrop } = useStyles2(getModalStyles);
   const hasAbsolute = !rangeUtil.isRelativeTime(value.raw.from) || !rangeUtil.isRelativeTime(value.raw.to);
 
-  // const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
-  let variant: ToolbarButtonVariant = props.isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
-  if (usingTimeRangeContext) {
-    variant = timeRangeContext?.synced ? 'active' : isOnCanvas ? 'canvas' : 'default';
-  }
+  const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
   const isFromAfterTo = value?.to?.isBefore(value.from);
   const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
@@ -314,14 +198,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         </div>
       )}
 
-      {usingTimeRangeContext
-        ? timeRangeContext?.syncPossible && (
-            <TimeSyncButton
-              isSynced={timeRangeContext.synced}
-              onClick={() => (timeRangeContext?.synced ? timeRangeContext.unSync() : timeRangeContext.sync(value))}
-            />
-          )
-        : timeSyncButton}
+      {timeSyncButton}
 
       {hasAbsolute && (
         <ToolbarButton
@@ -447,28 +324,87 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-interface TimeSyncButtonProps {
-  isSynced: boolean;
-  onClick: () => void;
-}
+// Handle the behaviour of the time sync button and syncing the time range between pickers. It also takes care of
+// backward compatibility with the manual controlled isSynced prop.
+function useTimeSync(options: {
+  initialIsSynced?: boolean;
+  value: TimeRange;
+  isSyncedProp?: boolean;
+  timeSyncButtonProp?: JSX.Element;
+  onChangeProp: (value: TimeRange) => void;
+}) {
+  const { value, onChangeProp, isSyncedProp, initialIsSynced, timeSyncButtonProp } = options;
+  const timeRangeContext = useTimeRangeContext(initialIsSynced && value ? value : undefined);
 
-function TimeSyncButton(props: TimeSyncButtonProps) {
-  const { onClick, isSynced } = props;
+  // Destructure to make it easier to use in hook deps
+  const timeRangeContextSynced = timeRangeContext?.synced;
+  const timeRangeContextSyncedValue = timeRangeContext?.syncedValue;
+  const timeRangeContextSyncFunc = timeRangeContext?.sync;
 
-  const syncTimesTooltip = () => {
-    const { isSynced } = props;
-    const tooltip = isSynced ? 'Unsync all views' : 'Sync all views to this time range';
-    return <>{tooltip}</>;
-  };
+  // This is to determine if we should use the context to sync or not. This is for backward compatibility so that
+  // Explore with multiple panes still works as it is controlling the sync state itself for now.
+  const usingTimeRangeContext = options.isSyncedProp === undefined && timeRangeContext;
 
-  return (
-    <Tooltip content={syncTimesTooltip} placement="bottom">
-      <ToolbarButton
-        icon="link"
-        variant={isSynced ? 'active' : 'canvas'}
-        aria-label={isSynced ? 'Synced times' : 'Unsynced times'}
-        onClick={onClick}
-      />
-    </Tooltip>
+  // Create new onChange that handles propagating the value to the context if possible and synced is true.
+  const onChangeWithSync = useCallback(
+    (timeRange: TimeRange) => {
+      onChangeProp(timeRange);
+      if (usingTimeRangeContext && timeRangeContextSynced) {
+        timeRangeContextSyncFunc?.(timeRange);
+      }
+    },
+    [onChangeProp, usingTimeRangeContext, timeRangeContextSyncFunc, timeRangeContextSynced]
   );
+
+  const prevValue = usePrevious(value);
+  const prevSyncedValue = usePrevious(timeRangeContext?.syncedValue);
+
+  // As timepicker is controlled component we need to sync the global sync value back to the parent with onChange
+  // handler whenever the outside global value changes. We do it here while checking if we are actually supposed
+  // to and making sure we don't go into a loop.
+  useEffect(() => {
+    // only react if we are actually synced
+    if (usingTimeRangeContext && timeRangeContextSynced) {
+      if (value !== prevValue && value !== timeRangeContextSyncedValue) {
+        // The value changed outside the picker. To keep the sync working we need to update the synced value.
+        timeRangeContextSyncFunc?.(value);
+      } else if (
+        timeRangeContextSyncedValue &&
+        timeRangeContextSyncedValue !== prevSyncedValue &&
+        timeRangeContextSyncedValue !== value
+      ) {
+        // The global synced value changed, so we need to update the picker value.
+        onChangeProp(timeRangeContextSyncedValue);
+      }
+    }
+  }, [
+    usingTimeRangeContext,
+    timeRangeContextSynced,
+    timeRangeContextSyncedValue,
+    timeRangeContextSyncFunc,
+    prevSyncedValue,
+    value,
+    prevValue,
+    onChangeProp,
+  ]);
+
+  // Decide if we are in synced state or not. This is complicated by the manual controlled isSynced prop that is used
+  // in Explore for now.
+  const isSynced = usingTimeRangeContext ? timeRangeContext?.synced : isSyncedProp;
+
+  // Again in Explore the sync button is controlled prop so here we also decide what kind of button to use.
+  const button = usingTimeRangeContext
+    ? timeRangeContext?.syncPossible && (
+        <TimeSyncButton
+          isSynced={timeRangeContext?.synced}
+          onClick={() => (timeRangeContext?.synced ? timeRangeContext.unSync() : timeRangeContext.sync(value))}
+        />
+      )
+    : timeSyncButtonProp;
+
+  return {
+    onChangeWithSync,
+    isSynced,
+    timeSyncButton: button,
+  };
 }
