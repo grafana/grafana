@@ -831,8 +831,8 @@
       "private": "Private",
       "public": "Public",
       "query-deleted": "Query deleted",
-      "query-template-add-error": "Error attempting to add this query to the library",
-      "query-template-added": "Query template successfully added to the library",
+      "query-template-add-error": "Error attempting to save this query to the library",
+      "query-template-added": "Query successfully saved to the library",
       "query-template-edit-error": "Error attempting to edit this query",
       "query-template-edited": "Query template successfully edited",
       "save": "Save"
