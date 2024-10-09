@@ -1,16 +1,11 @@
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { default as localStorageStore } from 'app/core/store';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
-import {
-  DASHBOARD_FROM_LS_KEY,
-  removeDashboardToFetchFromLocalStorage,
-} from 'app/features/dashboard/state/initDashboard';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
 import { getSelectedScopesNames } from 'app/features/scopes';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
@@ -63,21 +58,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard({
-    uid,
-    route,
-    urlFolderUid,
-    keepDashboardFromExploreInLocalStorage,
-  }: LoadDashboardOptions): Promise<DashboardDTO | null> {
-    const model = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
-
-    if (model) {
-      if (!keepDashboardFromExploreInLocalStorage) {
-        removeDashboardToFetchFromLocalStorage();
-      }
-      return model;
-    }
-
+  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
     const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
@@ -203,29 +184,20 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
-    const comingFromExplore = Boolean(
-      localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY) &&
-        options.keepDashboardFromExploreInLocalStorage === false
-    );
-
     this.setState({ dashboard: undefined, isLoading: true });
 
     const rsp = await this.fetchDashboard(options);
 
     const fromCache = this.getSceneFromCache(options.uid);
-
-    // When coming from Explore, skip returnning scene from cache
-    if (!comingFromExplore) {
-      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
-        return fromCache;
-      }
+    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+      return fromCache;
     }
 
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid && !comingFromExplore) {
+      if (options.uid) {
         this.setSceneCache(options.uid, scene);
       }
 

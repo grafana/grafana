@@ -1,14 +1,12 @@
 import { locationUtil, TimeRange } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import {
   removeDashboardToFetchFromLocalStorage,
   setDashboardToFetchFromLocalStorage,
 } from 'app/features/dashboard/state/initDashboard';
 import { DashboardDTO } from 'app/types';
-
-import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 
 export enum GenericError {
   UNKNOWN = 'unknown-error',
@@ -38,23 +36,15 @@ export async function addToDashboard({
   openInNewTab,
   timeRange,
 }: AddPanelToDashboardOptions): Promise<SubmissionError | undefined> {
-  let dto: DashboardDTO;
-
-  if (dashboardUid) {
-    try {
-      dto = await getDashboardAPI().getDashboardDTO(dashboardUid);
-    } catch (e) {
-      console.error(e);
-      return {
-        error: AddToDashboardError.FETCH_DASHBOARD,
-        message: 'Could not fetch dashboard information. Please try again.',
-      };
-    }
-  } else {
-    dto = await buildNewDashboardSaveModel();
-  }
-
-  dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
+  let dto: DashboardDTO = {
+    meta: {},
+    dashboard: {
+      title: '',
+      uid: dashboardUid ?? '',
+      panels: [panel],
+      schemaVersion: DASHBOARD_SCHEMA_VERSION,
+    },
+  };
 
   if (timeRange) {
     const raw = timeRange.raw;
@@ -74,6 +64,7 @@ export async function addToDashboard({
   }
 
   const dashboardURL = getDashboardURL(dashboardUid);
+
   if (!openInNewTab) {
     locationService.push(locationUtil.stripBaseFromUrl(dashboardURL));
     return;
