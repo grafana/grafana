@@ -222,7 +222,7 @@
     "redux-mock-store": "1.5.4",
     "rimraf": "6.0.1",
     "rudder-sdk-js": "2.48.19",
-    "sass": "1.79.3",
+    "sass": "1.79.4",
     "sass-loader": "16.0.2",
     "smtp-tester": "^2.1.0",
     "style-loader": "4.0.0",
