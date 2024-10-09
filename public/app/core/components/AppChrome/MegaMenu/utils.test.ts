@@ -14,6 +14,10 @@ const mockNavTree: NavModelItem[] = [
         text: 'Item with children',
         url: '/itemWithChildren',
         id: 'item-with-children',
+        parentItem: {
+          text: 'Bookmarks',
+          id: 'bookmarks',
+        },
       },
     ],
   },
