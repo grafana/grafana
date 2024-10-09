@@ -103,16 +103,12 @@ const unifiedRoutes: RouteDescriptor[] = [
   ...commonRoutes,
   {
     path: '/alerting',
-    component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
-    ),
+    component: () => <Redirect to={'/alerting/list'} />, // LOGZ.IO CHANGE :: DEV-46520 - DISABLE ALERTING HOME
   },
   {
     path: '/alerting/home',
     exact: false,
-    component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
-    ),
+    component: () => <Redirect to={'/alerting/list'} />, // LOGZ.IO CHANGE :: DEV-46520 - DISABLE ALERTING HOME
   },
   {
     path: '/alerting/list',
