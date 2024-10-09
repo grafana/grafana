@@ -260,6 +260,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		dashFolder.Fullpath = dashFolder.Title
+		dashFolder.FullpathUIDs = dashFolder.UID
 		return dashFolder, nil
 	}
 
@@ -282,7 +283,8 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	f.Version = dashFolder.Version
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		f.Fullpath = f.Title // set full path to the folder title (unescaped)
+		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
+		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
 	return f, err
