@@ -93,21 +93,34 @@ CPU usage for server1 has exceeded 80% for the last 5 minutes
 
 ### $values
 
-The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs.
+The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs (e.g, `A`, `B`, `C`, etc.).
 
-To print the value of the instant query with Ref ID A:
+Each Ref IDs, such as `$values.A`, has the following properties
+
+| Property | Type            | Description                                                  |
+| -------- | --------------- | ------------------------------------------------------------ |
+| `Value`  | Float           | The value returned by the instant query or expression.       |
+| `Labels` | Key/value pairs | The labels associated with the instance query or expression. |
+
+Here's the previous example printing now the value of the instant query with Ref ID `A`:
 
 ```
-{{ index $values "A" }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
+{{ $values.A.Value }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
 ```
 
-For example, given an alert with the labels `instance=server1` and an instant query with the value `81.2345`, this would print:
+If the alert has the label `instance=server1` and the query returns `81.2345`, the template would print:
 
 ```
 81.2345 CPU usage for instance1 over the last 5 minutes.
 ```
 
-If the query in Ref ID A is a range query rather than an instant query then add a reduce expression with Ref ID B and replace `(index $values "A")` with `(index $values "B")`:
+If the query in Ref ID `A` is a range query rather than an instant query then add a reduce expression with Ref ID `B` and replace `$values.A.Value` with `$values.B.Value`:
+
+```
+{{ $values.B.Value }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
+```
+
+Alternatively, you can use the `index()` function to retrieve the query value:
 
 ```
 {{ index $values "B" }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
