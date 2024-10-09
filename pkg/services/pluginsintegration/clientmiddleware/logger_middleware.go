@@ -93,6 +93,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 					"status", int(dr.Status),
 					"error", dr.Error,
 					"statusSource", dr.ErrorSource.String(),
+					"target", m.pluginTarget(ctx, req.PluginContext),
 				}
 				ctxLogger.Error("Partial data response error", logParams...)
 			}
