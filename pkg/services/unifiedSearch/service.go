@@ -161,6 +161,7 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	req := &resource.SearchRequest{Tenant: s.cfg.StackID, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From)}
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
+		s.logger.Error("Failed to search resources", "error", err)
 		response.Error = err
 		return response
 	}

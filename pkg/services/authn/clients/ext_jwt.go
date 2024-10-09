@@ -185,10 +185,10 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	return &authn.Identity{
 		ID:                         id,
 		UID:                        id,
+		Name:                       id,
 		Type:                       t,
 		OrgID:                      s.cfg.DefaultOrgID(),
 		AccessTokenClaims:          &accessTokenClaims,
-		IDTokenClaims:              nil,
 		AuthenticatedBy:            login.ExtendedJWTModule,
 		AuthID:                     accessTokenClaims.Subject,
 		AllowedKubernetesNamespace: accessTokenClaims.Rest.Namespace,
