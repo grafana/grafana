@@ -9,6 +9,7 @@ import (
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -63,7 +64,7 @@ type resourceDBProvider struct {
 	logQueries      bool
 }
 
-func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracing.Tracer) (p *resourceDBProvider, err error) {
+func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (p *resourceDBProvider, err error) {
 	// Resource API has other configs in its section besides database ones, so
 	// we prefix them with "db_". We use the database config from core Grafana
 	// as fallback, and as it uses a dedicated INI section, then keys are not
@@ -85,12 +86,12 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracin
 	// specific to Unified Storage
 	case dbType == dbTypePostgres:
 		p.registerMetrics = true
-		p.engine, err = getEnginePostgres(getter, tracer)
+		p.engine, err = getEnginePostgres(getter)
 		return p, err
 
 	case dbType == dbTypeMySQL:
 		p.registerMetrics = true
-		p.engine, err = getEngineMySQL(getter, tracer)
+		p.engine, err = getEngineMySQL(getter)
 		return p, err
 
 		// TODO: add support for SQLite
@@ -103,12 +104,12 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracin
 
 	case grafanaDBType == dbTypePostgres:
 		p.registerMetrics = true
-		p.engine, err = getEnginePostgres(fallbackGetter, tracer)
+		p.engine, err = getEnginePostgres(fallbackGetter)
 		return p, err
 
 	case grafanaDBType == dbTypeMySQL:
 		p.registerMetrics = true
-		p.engine, err = getEngineMySQL(fallbackGetter, tracer)
+		p.engine, err = getEngineMySQL(fallbackGetter)
 		return p, err
 
 	// TODO: add support for SQLite

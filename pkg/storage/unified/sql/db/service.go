@@ -5,6 +5,9 @@ import (
 	"database/sql"
 )
 
+//go:generate mockery --with-expecter --name DB
+//go:generate mockery --with-expecter --name Tx
+
 const (
 	DriverPostgres = "postgres"
 	DriverMySQL    = "mysql"
