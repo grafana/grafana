@@ -292,23 +292,6 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 	return resp.Msg.Names, nil
 }
 
-func (c *PyroscopeClient) AnalyzeQuery(ctx context.Context, start int64, end int64, query string) ([]any, any, error) {
-	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.AnalyzeQuery")
-	defer span.End()
-	resp, err := c.connectClient.AnalyzeQueryRequest(ctx, connect.NewRequest(&typesv1.AnalyzeQueryRequest{
-		Start: start,
-		End:   end,
-		Query: query,
-	}))
-	if err != nil {
-		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, err
-	}
-	return resp.Msg.QueryScopes, resp.Msg.QueryImpact, nil
-}
-
 func isPrivateLabel(label string) bool {
 	return strings.HasPrefix(label, "__")
 }

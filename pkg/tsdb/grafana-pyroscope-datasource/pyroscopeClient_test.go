@@ -134,3 +134,11 @@ func (f *FakePyroscopeConnectClient) SelectMergeProfile(ctx context.Context, c *
 func (f *FakePyroscopeConnectClient) SelectMergeSpanProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeSpanProfileRequest]) (*connect.Response[querierv1.SelectMergeSpanProfileResponse], error) {
 	panic("implement me")
 }
+
+func (f *FakePyroscopeConnectClient) AnalyzeQuery(ctx context.Context, c *connect.Request[querierv1.AnalyzeQueryRequest]) (*connect.Response[querierv1.AnalyzeQueryResponse], error) {
+	panic("implement me")
+}
+
+func (f *FakePyroscopeConnectClient) GetProfileStats(ctx context.Context, c *connect.Request[typesv1.GetProfileStatsRequest]) (*connect.Response[typesv1.GetProfileStatsResponse], error) {
+	panic("implement me")
+}
