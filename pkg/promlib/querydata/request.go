@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -67,6 +68,20 @@ func New(
 		httpMethod = http.MethodPost
 	}
 
+	queryTimeoutStr, err := maputil.GetStringOptional(jsonData, "queryTimeout")
+	if err != nil {
+		return nil, err
+	}
+
+	queryTimeout := 60 * time.Second
+	if queryTimeoutStr != "" {
+		queryTimeout, err = gtime.ParseDuration(queryTimeoutStr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	httpClient.Timeout = queryTimeout
 	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
 	// standard deviation sampler is the default for backwards compatibility
