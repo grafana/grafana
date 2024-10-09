@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	request2 "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -85,23 +86,23 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					// get tenant
 					orgId, err := request2.OrgIDForList(r.Context())
 					if err != nil {
-						panic(err)
+						response.Error(500, "failed to get orgId", err)
 					}
 					tenant := b.namespacer(orgId)
 
 					queryParams, err := url.ParseQuery(r.URL.RawQuery)
 					if err != nil {
-						panic(err)
+						response.Error(500, "failed to parse query params", err)
 					}
 
 					// get limit and offset from query params
 					limit := 0
 					offset := 0
 					if queryParams.Has("limit") {
-						limit, err = strconv.Atoi(queryParams.Get("limit"))
+						limit, _ = strconv.Atoi(queryParams.Get("limit"))
 					}
 					if queryParams.Has("offset") {
-						offset, err = strconv.Atoi(queryParams.Get("offset"))
+						offset, _ = strconv.Atoi(queryParams.Get("offset"))
 					}
 
 					searchRequest := &resource.SearchRequest{
@@ -115,7 +116,7 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 					res, err := b.unified.Search(r.Context(), searchRequest)
 					if err != nil {
-						panic(err)
+						response.Error(500, "search request failed", err)
 					}
 
 					// TODO need a nicer way of handling this
@@ -127,7 +128,7 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 					w.Header().Set("Content-Type", "application/json")
 					if err := json.NewEncoder(w).Encode(rawMessages); err != nil {
-						panic(err)
+						response.Error(500, "failed to json encode raw response", err)
 					}
 				},
 			},
