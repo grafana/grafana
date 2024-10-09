@@ -3,7 +3,12 @@ package search
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
+	"strconv"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	request2 "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -21,14 +26,17 @@ import (
 var _ builder.APIGroupBuilder = (*SearchAPIBuilder)(nil)
 
 type SearchAPIBuilder struct {
-	unified resource.ResourceClient
+	unified    resource.ResourceClient
+	namespacer request2.NamespaceMapper
 }
 
 func NewSearchAPIBuilder(
 	unified resource.ResourceClient,
+	cfg *setting.Cfg,
 ) (*SearchAPIBuilder, error) {
 	return &SearchAPIBuilder{
-		unified: unified,
+		unified:    unified,
+		namespacer: request2.GetNamespaceMapper(cfg),
 	}, nil
 }
 
@@ -36,11 +44,12 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	unified resource.ResourceClient,
+	cfg *setting.Cfg,
 ) (*SearchAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) || features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil, nil
 	}
-	builder, err := NewSearchAPIBuilder(unified)
+	builder, err := NewSearchAPIBuilder(unified, cfg)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
 }
@@ -73,17 +82,55 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					urlQuery := r.URL.Query().Get("query")
-					searchRequest := &resource.SearchRequest{Query: urlQuery}
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					// get tenant
+					orgId, err := request2.OrgIDForList(r.Context())
+					if err != nil {
+						response.Error(500, "failed to get orgId", err)
+					}
+					tenant := b.namespacer(orgId)
+
+					queryParams, err := url.ParseQuery(r.URL.RawQuery)
+					if err != nil {
+						response.Error(500, "failed to parse query params", err)
+					}
+
+					// get limit and offset from query params
+					limit := 0
+					offset := 0
+					if queryParams.Has("limit") {
+						limit, _ = strconv.Atoi(queryParams.Get("limit"))
+					}
+					if queryParams.Has("offset") {
+						offset, _ = strconv.Atoi(queryParams.Get("offset"))
+					}
+
+					searchRequest := &resource.SearchRequest{
+						Tenant:    tenant,
+						Kind:      queryParams.Get("kind"),
+						QueryType: queryParams.Get("queryType"),
+						Query:     queryParams.Get("query"),
+						Limit:     int64(limit),
+						Offset:    int64(offset),
+					}
+
 					res, err := b.unified.Search(r.Context(), searchRequest)
 					if err != nil {
-						panic(err)
+						response.Error(500, "search request failed", err)
 					}
-					if err := json.NewEncoder(w).Encode(res); err != nil {
-						panic(err)
+
+					// TODO need a nicer way of handling this
+					// the [][]byte response already contains the marshalled JSON, so we don't need to re-encode it
+					rawMessages := make([]json.RawMessage, len(res.GetItems()))
+					for i, item := range res.GetItems() {
+						rawMessages[i] = item.Value
 					}
-				}),
+
+					w.Header().Set("Content-Type", "application/json")
+					if err := json.NewEncoder(w).Encode(rawMessages); err != nil {
+						response.Error(500, "failed to json encode raw response", err)
+					}
+				},
 			},
 		},
 	}
