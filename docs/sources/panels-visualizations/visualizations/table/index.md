@@ -261,7 +261,6 @@ You can show sparklines using the [Time series to table transformation](ref:time
 
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
-
 You can customize sparklines with many of the same options as the [time series visualization](ref:time-series-panel) including line style and width, fill opacity, gradient mode, and more.
 You can also change the color of the sparkline by updating the [color scheme](ref:color-scheme) in the **Standard options** section of the panel configuration.
 
