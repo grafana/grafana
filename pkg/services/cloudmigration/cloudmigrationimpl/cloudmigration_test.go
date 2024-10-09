@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -673,6 +672,7 @@ func TestGetParentNames(t *testing.T) {
 			},
 			libraryElements: []libraryElement{
 				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
+				{UID: "libraryElementUID-1"},
 			},
 			expectedDashParentNames: []string{"", "Folder A", "Folder B"},
 			expectedFoldParentNames: []string{"Folder A"},

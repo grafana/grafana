@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/externalsession"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/signingkeys"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ssosettings"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
@@ -135,6 +136,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddOrphanedMigrations(mg)
 
 	accesscontrol.AddActionSetPermissionsMigrator(mg)
+
+	externalsession.AddMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

@@ -100,25 +100,6 @@ type ResourceServerOptions struct {
 	Now func() int64
 }
 
-type indexServer struct{}
-
-func (s indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	res := &SearchResponse{}
-	return res, nil
-}
-
-func (s indexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	return nil, nil
-}
-
-func (s indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	return nil, nil
-}
-
-func NewResourceIndexServer() ResourceIndexServer {
-	return indexServer{}
-}
-
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
@@ -705,6 +686,28 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 		return nil, err
 	}
 	return s.index.Origin(ctx, req)
+}
+
+// Index returns the search index. If the index is not initialized, it will be initialized.
+func (s *server) Index(ctx context.Context) (*Index, error) {
+	index := s.index.(*IndexServer)
+	if index.index == nil {
+		err := index.Init(ctx, s)
+		if err != nil {
+			return nil, err
+		}
+
+		err = index.Load(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		err = index.Watch(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return index.index, nil
 }
 
 // IsHealthy implements ResourceServer.

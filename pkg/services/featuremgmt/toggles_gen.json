@@ -2353,14 +2353,16 @@
     {
       "metadata": {
         "name": "pluginsFrontendSandbox",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-06-05T08:51:36Z"
+        "resourceVersion": "1728388793917",
+        "creationTimestamp": "2023-06-05T08:51:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-08 11:59:53.917243 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the plugins frontend sandbox",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true
+        "codeowner": "@grafana/plugins-platform-backend"
       }
     },
     {
