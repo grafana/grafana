@@ -33,6 +33,7 @@ type AlertInstanceManager interface {
 type StatePersister interface {
 	Async(ctx context.Context, cache *cache)
 	Sync(ctx context.Context, span trace.Span, states StateTransitions)
+	SyncRule(ctx context.Context, span trace.Span, ruleKey ngModels.AlertRuleKeyWithGroup, states StateTransitions)
 }
 
 // Sender is an optional callback intended for sending the states to an alertmanager.
@@ -57,7 +58,8 @@ type Manager struct {
 	applyNoDataAndErrorToAllStates bool
 	rulesPerRuleGroupLimit         int64
 
-	persister StatePersister
+	persister             StatePersister
+	useRuleStatePersister bool
 }
 
 type ManagerCfg struct {
@@ -75,6 +77,8 @@ type ManagerCfg struct {
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool
 	RulesPerRuleGroupLimit         int64
+	// If true, then SyncRule method of the StatePersister is called
+	UseRuleStatePersister bool
 
 	DisableExecution bool
 
@@ -108,6 +112,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
 		persister:                      statePersister,
+		useRuleStatePersister:          cfg.UseRuleStatePersister,
 		tracer:                         cfg.Tracer,
 	}
 
@@ -347,7 +352,11 @@ func (st *Manager) ProcessEvalResults(
 		statesToSend = st.updateLastSentAt(allChanges, evaluatedAt)
 	}
 
-	st.persister.Sync(ctx, span, allChanges)
+	if st.useRuleStatePersister {
+		st.persister.SyncRule(ctx, span, alertRule.GetKeyWithGroup(), allChanges)
+	} else {
+		st.persister.Sync(ctx, span, allChanges)
+	}
 	if st.historian != nil {
 		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
