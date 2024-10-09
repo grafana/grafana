@@ -32,14 +32,14 @@ var (
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaAppPlatformSquad,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:         "queryOverLive",
 			Description:  "Use Grafana Live WebSocket to execute backend queries",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaAppPlatformSquad,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:              "panelTitleSearch",
@@ -67,9 +67,10 @@ var (
 		{
 			Name:         "publicDashboardsScene",
 			Description:  "Enables public dashboard rendering using scenes",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaSharingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "lokiExperimentalStreaming",
@@ -429,11 +430,10 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "pluginsFrontendSandbox",
-			Description:  "Enables the plugins frontend sandbox",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
+			Name:        "pluginsFrontendSandbox",
+			Description: "Enables the plugins frontend sandbox",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "frontendSandboxMonitorOnly",
@@ -750,6 +750,12 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
+			Name:        "grafanaAPIServerTestingWithExperimentalAPIs",
+			Description: "Facilitate integration testing of experimental APIs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:            "datasourceQueryTypes",
 			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
 			Stage:           FeatureStageExperimental,
@@ -888,23 +894,26 @@ var (
 		{
 			Name:         "dashboardSceneForViewers",
 			Description:  "Enables dashboard rendering using Scenes for viewer roles",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSceneSolo",
 			Description:  "Enables rendering dashboards using scenes for solo panels",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "panelFilterVariable",
@@ -1051,6 +1060,12 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "onPremToCloudMigrationsAlerts",
+			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
 			Name:         "alertingSaveStatePeriodic",
@@ -1233,9 +1248,10 @@ var (
 		{
 			Name:         "notificationBanner",
 			Description:  "Enables the notification banner UI and API",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: false,
+			Expression:   "true",
 		},
 		{
 			Name:              "dashboardRestore",
@@ -1292,8 +1308,9 @@ var (
 		{
 			Name:        "pinNavItems",
 			Description: "Enables pinning of nav items",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:              "authZGRPCServer",
@@ -1311,12 +1328,12 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:              "ssoSettingsLDAP",
-			Description:       "Use the new SSO Settings API to configure LDAP",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			Name:            "ssoSettingsLDAP",
+			Description:     "Use the new SSO Settings API to configure LDAP",
+			Stage:           FeatureStagePublicPreview,
+			Owner:           identityAccessTeam,
+			AllowSelfServe:  true,
+			RequiresRestart: true,
 		},
 		{
 			Name:        "failWrongDSUID",
@@ -1404,6 +1421,13 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "alertingPrometheusRulesPrimary",
+			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "singleTopNav",
 			Description:  "Unifies the top search bar and breadcrumb bar into one",
 			Stage:        FeatureStageExperimental,
@@ -1485,6 +1509,20 @@ var (
 			Description: "Enables the new role picker drawer design",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
+		},
+		{
+			Name:              "unifiedStorageSearch",
+			Description:       "Enable unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:        "pluginsSriChecks",
+			Description: "Enables SRI checks for plugin assets",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 	}
 )

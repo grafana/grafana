@@ -228,7 +228,7 @@
     },
     "/access-control/roles/{roleUID}/assignments": {
       "get": {
-        "description": "Get role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
+        "description": "Get role assignments for the role with the given UID.\nDoes not include role assignments mapped through group attribute sync.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
         "tags": [
           "access_control",
           "enterprise"
@@ -582,7 +582,7 @@
         }
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nRoles mapped through group attribute sync are not impacted.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": [
           "access_control",
           "enterprise"
@@ -2600,6 +2600,12 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "name": "sort",
+            "in": "query"
           }
         ],
         "responses": {
@@ -12388,6 +12394,14 @@
         }
       }
     },
+    "AlertRuleEditorSettings": {
+      "type": "object",
+      "properties": {
+        "simplified_query_and_expressions_section": {
+          "type": "boolean"
+        }
+      }
+    },
     "AlertRuleExport": {
       "type": "object",
       "title": "AlertRuleExport is the provisioned file export of models.AlertRule.",
@@ -12508,6 +12522,14 @@
         "interval": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AlertRuleMetadata": {
+      "type": "object",
+      "properties": {
+        "editor_settings": {
+          "$ref": "#/definitions/AlertRuleEditorSettings"
         }
       }
     },
@@ -15793,6 +15815,9 @@
         "is_paused": {
           "type": "boolean"
         },
+        "metadata": {
+          "$ref": "#/definitions/AlertRuleMetadata"
+        },
         "namespace_uid": {
           "type": "string"
         },
@@ -15880,10 +15905,23 @@
     "GettableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
@@ -16868,6 +16906,12 @@
         "message": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
+        "parentName": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },
@@ -16886,7 +16930,13 @@
           "enum": [
             "DASHBOARD",
             "DATASOURCE",
-            "FOLDER"
+            "FOLDER",
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING"
           ]
         }
       }
@@ -18077,6 +18127,9 @@
         "is_paused": {
           "type": "boolean"
         },
+        "metadata": {
+          "$ref": "#/definitions/AlertRuleMetadata"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -18115,16 +18168,35 @@
     "PostableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -19154,6 +19226,9 @@
         "orientation": {
           "type": "string"
         },
+        "pdfShowTemplateVariables": {
+          "type": "boolean"
+        },
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
         }
@@ -19590,10 +19665,23 @@
     "RuleGroupConfigResponse": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
@@ -21842,6 +21930,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "ExternalSessionId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "Id": {
           "type": "integer",
           "format": "int64"
@@ -23072,6 +23164,9 @@
           "teamId": {
             "type": "integer",
             "format": "int64"
+          },
+          "uid": {
+            "type": "string"
           }
         }
       }

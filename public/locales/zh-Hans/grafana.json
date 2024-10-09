@@ -56,6 +56,10 @@
     "pause": ""
   },
   "alerting": {
+    "annotations": {
+      "description": "",
+      "title": ""
+    },
     "central-alert-history": {
       "details": {
         "error": "",
@@ -108,7 +112,18 @@
     },
     "contact-point": "",
     "contact-points": {
+      "create": "",
+      "delete-reasons": {
+        "heading": "",
+        "no-permissions": "",
+        "policies": "",
+        "provisioned": "",
+        "rules": ""
+      },
       "delivery-duration": "",
+      "empty-state": {
+        "title": ""
+      },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-delivery-attempts": "",
@@ -118,7 +133,8 @@
         "parse-mode-warning-body": "",
         "parse-mode-warning-title": ""
       },
-      "used-by_other": ""
+      "used-by_other": "",
+      "used-by-rules_other": ""
     },
     "contactPointFilter": {
       "label": ""
@@ -140,6 +156,10 @@
           "title": ""
         }
       }
+    },
+    "manage-permissions": {
+      "button": "",
+      "title": ""
     },
     "mute_timings": {
       "error-loading": {
@@ -192,6 +212,13 @@
       "badge-tooltip-provenance": "",
       "badge-tooltip-standard": ""
     },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": ""
+      },
+      "preview": "",
+      "previewCondition": ""
+    },
     "rule-groups": {
       "delete": {
         "success": ""
@@ -211,6 +238,12 @@
       "deleting": "",
       "paused": "",
       "recording-rule": ""
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "",
+        "alert-title": ""
+      }
     },
     "rules": {
       "add-rule": {
@@ -291,6 +324,9 @@
       "move-modal-title": "移动",
       "moving": "正在移动...",
       "new-folder-name-required-phrase": "文件夹名称是必需项。"
+    },
+    "actions": {
+      "button-to-recently-deleted": ""
     },
     "counts": {
       "alertRule_other": "{{count}} 条警告规则",
@@ -709,6 +745,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "",
+      "angular-deprecation-description": "",
+      "angular-deprecation-heading": ""
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1043,6 +1084,13 @@
     },
     "title": "快捷键"
   },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
+  },
   "inspector": {
     "query": {
       "collapse-all": "折叠全部",
@@ -1082,9 +1130,9 @@
       "root-ca-cert-label": "",
       "root-ca-cert-placeholder": "",
       "root-ca-cert-value-label": "",
+      "root-ca-cert-value-placeholder": "",
       "start-tls-description": "",
       "start-tls-label": "",
-      "tls-ciphers-description": "",
       "tls-ciphers-label": "",
       "tls-ciphers-placeholder": "",
       "use-ssl-description": "",
@@ -1116,8 +1164,8 @@
         "button": ""
       },
       "description": "",
-      "group-search-base-dns-description": "",
       "group-search-base-dns-label": "",
+      "group-search-base-dns-placeholder": "",
       "group-search-filter-description": "",
       "group-search-filter-label": "",
       "group-search-filter-user-attribute-description": "",
@@ -1160,15 +1208,10 @@
       "label": ""
     },
     "buttons-section": {
+      "disable-button": "",
       "discard-button": "",
       "save-and-enable-button": "",
       "save-button": ""
-    },
-    "discard-modal": {
-      "cancel-button": "",
-      "description": "",
-      "discard-button": "",
-      "title": ""
     },
     "documentation": "",
     "host": {
@@ -1187,7 +1230,8 @@
     },
     "search-base-dns": {
       "description": "",
-      "label": ""
+      "label": "",
+      "placeholder": ""
     },
     "subtitle": "",
     "title": ""
@@ -1351,7 +1395,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1423,6 +1468,9 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "dashboard-load-error": "",
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1430,6 +1478,7 @@
       "dashboard": "仪表板",
       "datasource": "数据源",
       "folder": "",
+      "library_element": "",
       "unknown": "未知"
     },
     "summary": {
@@ -1531,7 +1580,7 @@
     },
     "apps": {
       "subtitle": "扩展 Grafana 体验的应用插件",
-      "title": "应用"
+      "title": ""
     },
     "authentication": {
       "title": "身份验证"
@@ -1807,6 +1856,7 @@
       "close": "关闭菜单",
       "dock": "停靠菜单",
       "list-label": "导航",
+      "open": "",
       "undock": "取消停靠菜单"
     },
     "toolbar": {
@@ -1836,6 +1886,9 @@
       "server-discovery-modal-close": "",
       "server-discovery-modal-loading": "",
       "server-discovery-modal-submit": ""
+    },
+    "login": {
+      "error": ""
     }
   },
   "panel": {
@@ -1860,6 +1913,10 @@
       "unlink-library-panel": "取消链接库面板",
       "view": "查看"
     }
+  },
+  "panel-search": {
+    "no-matches": "",
+    "unsupported-layout": ""
   },
   "playlist-edit": {
     "error-prefix": "加载播放列表时发生错误：",
@@ -2148,7 +2205,12 @@
     }
   },
   "query-library": {
-    "delete-query-button": ""
+    "datasource-names": "",
+    "delete-query-button": "",
+    "query-template-get-error": "",
+    "search": "",
+    "user-info-get-error": "",
+    "user-names": ""
   },
   "query-operation": {
     "header": {
@@ -2314,7 +2376,6 @@
     "menu": {
       "export-json-title": "",
       "share-externally-title": "",
-      "share-internally-description": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
     },
@@ -2604,6 +2665,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": ""
+    },
     "metric-overview": {
       "description-label": "",
       "labels": "",

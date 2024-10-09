@@ -403,6 +403,10 @@ const (
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"
 
+	// FlagGrafanaAPIServerTestingWithExperimentalAPIs
+	// Facilitate integration testing of experimental APIs
+	FlagGrafanaAPIServerTestingWithExperimentalAPIs = "grafanaAPIServerTestingWithExperimentalAPIs"
+
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
@@ -562,6 +566,10 @@ const (
 	// FlagOnPremToCloudMigrations
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagOnPremToCloudMigrationsAlerts
+	// Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.
+	FlagOnPremToCloudMigrationsAlerts = "onPremToCloudMigrationsAlerts"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -751,6 +759,10 @@ const (
 	// Send dashboard and panel names to Loki when querying
 	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
 
+	// FlagAlertingPrometheusRulesPrimary
+	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
+	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
+
 	// FlagSingleTopNav
 	// Unifies the top search bar and breadcrumb bar into one
 	FlagSingleTopNav = "singleTopNav"
@@ -798,4 +810,12 @@ const (
 	// FlagRolePickerDrawer
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
+
+	// FlagUnifiedStorageSearch
+	// Enable unified storage search
+	FlagUnifiedStorageSearch = "unifiedStorageSearch"
+
+	// FlagPluginsSriChecks
+	// Enables SRI checks for plugin assets
+	FlagPluginsSriChecks = "pluginsSriChecks"
 )
