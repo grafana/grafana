@@ -49,7 +49,13 @@ func (m *orphanedServiceAccountPermissions) Exec(sess *xorm.Session, mg *migrato
 		return nil
 	}
 
-	// Then find all existing service accounts
+	return batch(len(ids), batchSize, func(start, end int) error {
+		return m.exec(sess, mg, ids[start:end])
+	})
+}
+
+func (m *orphanedServiceAccountPermissions) exec(sess *xorm.Session, mg *migrator.Migrator, ids []int64) error {
+	// get all service accounts from batch
 	raw := "SELECT u.id FROM " + mg.Dialect.Quote("user") + " AS u WHERE u.is_service_account AND u.id IN(?" + strings.Repeat(",?", len(ids)-1) + ")"
 	args := make([]any, 0, len(ids))
 	for _, id := range ids {
@@ -57,7 +63,7 @@ func (m *orphanedServiceAccountPermissions) Exec(sess *xorm.Session, mg *migrato
 	}
 
 	var existingIDs []int64
-	err = sess.SQL(raw, args...).Find(&existingIDs)
+	err := sess.SQL(raw, args...).Find(&existingIDs)
 	if err != nil {
 		return fmt.Errorf("failed to fetch existing service accounts: %w", err)
 	}

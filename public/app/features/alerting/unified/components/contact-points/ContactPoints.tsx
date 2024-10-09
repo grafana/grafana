@@ -12,6 +12,7 @@ import {
   TabContent,
   TabsBar,
   Text,
+  withErrorBoundary,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
@@ -24,6 +25,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import { ContactPoint } from './ContactPoint';
@@ -179,7 +181,7 @@ const useTabQueryParam = () => {
   return [param, setParam] as const;
 };
 
-const ContactPointsPageContents = () => {
+export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [activeTab, setActiveTab] = useTabQueryParam();
 
@@ -242,4 +244,12 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
   );
 };
 
-export default ContactPointsPageContents;
+function ContactPointsPage() {
+  return (
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+      <ContactPointsPageContents />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withErrorBoundary(ContactPointsPage, { style: 'page' });
