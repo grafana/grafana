@@ -4,6 +4,7 @@ import { PluginMeta } from '@grafana/data';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { PluginID } from '../components/PluginBridge';
+// LOGZ.IO CHANGE :: DEV-46522 disable the oncall grafana plugin
 import { SupportedPlugin } from '../types/pluginBridges';
 interface PluginBridgeHookResponse {
   loading: boolean;
@@ -13,9 +14,11 @@ interface PluginBridgeHookResponse {
 }
 
 export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
+  // LOGZ.IO CHANGE :: DEV-46522 disable the oncall grafana plugin
   if (plugin === SupportedPlugin.OnCall) {
     return { loading: false, installed: false};
   }
+  // LOGZ.IO CHANGE :: DEV-46522 disable the oncall grafana plugin. END
   const { loading, error, value } = useAsync(() => getPluginSettings(plugin, { showErrorAlert: false }));
 
   const installed = value && !error && !loading;

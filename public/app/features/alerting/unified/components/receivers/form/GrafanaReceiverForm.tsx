@@ -134,7 +134,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config, 
   }
 
   const notifiers: Notifier[] = grafanaNotifiers
-  .filter(n => n.type !== 'oncall') // LOGZ.IO CHANGE :: DEV-46522 hide oncall notifier
+  .filter(n => n.type !== 'oncall') // LOGZ.IO CHANGE :: DEV-46522 disable the oncall grafana plugin
   .map((n) => {
     if (n.type === 'oncall') {
       return {
