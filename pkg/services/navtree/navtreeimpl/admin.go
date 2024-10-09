@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// nolint: gocyclo
 func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink, error) {
 	var configNodes []*navtree.NavLink
 	ctx := c.Req.Context()
@@ -104,7 +105,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	// nolint: gocyclo
 	if s.cfg.Env == setting.Dev {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Extensions",
