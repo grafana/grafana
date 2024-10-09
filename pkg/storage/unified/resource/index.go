@@ -122,12 +122,8 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 		return nil, err
 	}
 
-	// Debug log indexed fields
-	fields, _ := shard.index.Fields()
-	i.s.log.Debug("Indexed fields: %v", fields)
-
 	// use 10 as a default limit for now
-	if limit == 0 {
+	if limit <= 0 {
 		limit = 10
 	}
 
