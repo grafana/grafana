@@ -21,7 +21,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const renderPage = (
-  path = ROUTES.Base,
+  path: string = ROUTES.Base,
   store = configureStore({ navIndex, plugins: getPluginsStateMock([]) })
 ): RenderResult => {
   return render(
