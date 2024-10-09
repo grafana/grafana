@@ -27,7 +27,6 @@ require (
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
 	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-release-guild
 	github.com/Masterminds/sprig/v3 v3.2.3 // @grafana/grafana-backend-group
-	github.com/Masterminds/squirrel v1.5.4 // indirect; @grafana/identity-access-team
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // @grafana/plugins-platform-backend
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.33.0 // @grafana/alerting-backend
@@ -130,7 +129,6 @@ require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/oapi-codegen/oapi-codegen/v2 v2.3.0 // @grafana/grafana-as-code
-	github.com/oklog/ulid/v2 v2.1.0 // indirect; @grafana/identity-access-team
 	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
 	github.com/openfga/api/proto v0.0.0-20240906203051-102620ef2a66 // @grafana/identity-access-team
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20240926131254-992b301a003f // @grafana/identity-access-team
@@ -224,6 +222,7 @@ require (
 	github.com/FZambia/eagle v0.1.0 // indirect
 	github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
+	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/RoaringBitmap/roaring v1.9.3 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
@@ -375,6 +374,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
