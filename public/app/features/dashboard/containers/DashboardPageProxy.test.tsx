@@ -1,4 +1,5 @@
 import { act, screen, waitFor } from '@testing-library/react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
@@ -80,14 +81,19 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   }),
 }));
 
-function setup(props: Partial<DashboardPageProxyProps>) {
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({}),
+}));
+
+function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
+  (useParams as jest.Mock).mockReturnValue({ uid: props.uid });
   return render(
     <DashboardPageProxy
       location={locationService.getLocation()}
       history={locationService.getHistory()}
       queryParams={{}}
       route={{ routeName: DashboardRoutes.Home, component: () => null, path: '/' }}
-      match={{ params: {}, isExact: true, path: '/', url: '/' }}
       {...props}
     />
   );
@@ -104,7 +110,6 @@ describe('DashboardPageProxy', () => {
       act(() => {
         setup({
           route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-          match: { params: {}, isExact: true, path: '/', url: '/' },
         });
       });
 
@@ -119,7 +124,7 @@ describe('DashboardPageProxy', () => {
       act(() => {
         setup({
           route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-          match: { params: { uid: 'abc-def' }, isExact: true, path: '/', url: '/' },
+          uid: 'abc-def',
         });
       });
 
@@ -140,7 +145,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            match: { params: { uid: '' }, isExact: true, path: '/', url: '/' },
+            uid: '',
           });
         });
 
@@ -154,7 +159,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            match: { params: { uid: 'abc-def' }, isExact: true, path: '/', url: '/' },
+            uid: 'abc-def',
           });
         });
         await waitFor(() => {
@@ -169,14 +174,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            match: {
-              params: {
-                uid: '',
-              },
-              isExact: true,
-              path: '/',
-              url: '/',
-            },
+            uid: '',
           });
         });
 
@@ -190,7 +188,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            match: { params: { uid: 'uid' }, isExact: true, path: '/', url: '/' },
+            uid: 'uid',
           });
         });
         await waitFor(() => {
@@ -203,7 +201,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            match: { params: { uid: 'wrongUID' }, isExact: true, path: '/', url: '/' },
+            uid: 'wrongUID',
           });
         });
         await waitFor(() => {

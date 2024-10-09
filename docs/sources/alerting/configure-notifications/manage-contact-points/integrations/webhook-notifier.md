@@ -152,6 +152,9 @@ To create your Webhook integration in Grafana Alerting, complete the following s
 1. From the Integration list, select **Webhook**.
 1. In the **URL** field, copy in your Webhook URL.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps

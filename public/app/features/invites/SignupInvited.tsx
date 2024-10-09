@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,7 +10,6 @@ import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { w3cStandardEmailValidator } from '../admin/utils';
 
@@ -32,10 +32,8 @@ const navModel = {
   },
 };
 
-export interface Props extends GrafanaRouteComponentProps<{ code: string }> {}
-
-export const SignupInvitedPage = ({ match }: Props) => {
-  const code = match.params.code;
+export const SignupInvitedPage = () => {
+  const { code } = useParams();
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
   const [invitedBy, setInvitedBy] = useState<string>();
