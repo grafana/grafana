@@ -40,7 +40,7 @@ function RecentExploration({ model }: Props) {
         <Card.Meta separator={'|'} className={styles.meta}>
           {filters.map((f) => (
             <span key={f.key}>
-              {f.key}: {f.value}
+              <div className={styles.secondaryFont}>{f.key}: </div> <div className={styles.primaryFont}>{f.value}</div>
             </span>
           ))}
         </Card.Meta>
@@ -92,6 +92,7 @@ export function getStyles(theme: GrafanaTheme2) {
       height: '152px',
       alignItems: 'start',
       marginBottom: 0,
+      border: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
     }),
     secondary: css({
       color: theme.colors.text.secondary,
@@ -101,9 +102,6 @@ export function getStyles(theme: GrafanaTheme2) {
       gridArea: 'Description',
     }),
     date: css({
-      // gridArea: 'Actions',
-      // position: 'absolute',
-      // bottom: '0px',
       border: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
       borderRadius: theme.shape.radius.default,
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
