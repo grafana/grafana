@@ -4048,7 +4048,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.1.1"
     rollup-plugin-node-externals: "npm:^7.1.3"
     rxjs: "npm:7.8.1"
-    sass: "npm:1.79.3"
+    sass: "npm:1.79.4"
     sass-loader: "npm:16.0.2"
     semver: "npm:7.6.3"
     style-loader: "npm:4.0.0"
@@ -19214,7 +19214,7 @@ __metadata:
     rimraf: "npm:6.0.1"
     rudder-sdk-js: "npm:2.48.19"
     rxjs: "npm:7.8.1"
-    sass: "npm:1.79.3"
+    sass: "npm:1.79.4"
     sass-loader: "npm:16.0.2"
     selecto: "npm:1.26.3"
     semver: "npm:7.6.3"
@@ -29181,16 +29181,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.79.3":
-  version: 1.79.3
-  resolution: "sass@npm:1.79.3"
+"sass@npm:1.79.4":
+  version: 1.79.4
+  resolution: "sass@npm:1.79.4"
   dependencies:
     chokidar: "npm:^4.0.0"
     immutable: "npm:^4.0.0"
     source-map-js: "npm:>=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: 10/9b83e91c44a4c5d738ded27fcd2c88260f5f407e49c6aab92f75a1f768831182a8f4f89f30e2599b74447451d6536ea6f3a55cac34c5ec00b45983d493732e5d
+  checksum: 10/82e2ee5c2e46c96818454c7d97bcfb5b36c1c27de3b1e705adad7a49a8b32226c5254cc4c8804f45db2b6aa018848973177274c2b1137d4caf7abb5cb7bbf8b9
   languageName: node
   linkType: hard
 
