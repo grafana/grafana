@@ -53,11 +53,17 @@ export class AddedComponentsRegistry extends Registry<
       }
 
       if (!config.description) {
-        configLog.error(`Could not register added component. Reason: Description is missing.`);
+        configLog.error(
+          `Could not register added component with title '${config.title}'. Reason: Description is missing.`
+        );
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedComponentMetaInfoMissing(pluginId, config)) {
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isAddedComponentMetaInfoMissing(pluginId, config, configLog)
+      ) {
         continue;
       }
 

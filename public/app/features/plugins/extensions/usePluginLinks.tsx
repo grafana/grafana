@@ -18,7 +18,6 @@ import {
   getReadOnlyProxy,
   isExtensionPointMetaInfoMissing,
   isGrafanaDevMode,
-  logWarning,
 } from './utils';
 import { isExtensionPointIdValid } from './validators';
 
@@ -36,9 +35,13 @@ export function usePluginLinks({
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
     const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
     const pluginId = pluginContext?.meta.id ?? '';
+    const pointLog = log.child({
+      pluginId,
+      extensionPointId,
+    });
 
     if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-      logWarning(
+      pointLog.warning(
         `Extension point usePluginLinks("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
       );
       return {
@@ -47,8 +50,8 @@ export function usePluginLinks({
       };
     }
 
-    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      logWarning(
+    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, pointLog)) {
+      pointLog.warning(
         `Invalid extension point. Reason: The extension point is not declared in the "plugin.json" file. ExtensionPointId: "${extensionPointId}"`
       );
       return {
@@ -79,9 +82,7 @@ export function usePluginLinks({
         extensionsByPlugin[pluginId] = 0;
       }
 
-      const linkLog = log.child({
-        pluginId,
-        extensionPointId,
+      const linkLog = pointLog.child({
         path: addedLink.path ?? '',
         title: addedLink.title,
         description: addedLink.description,

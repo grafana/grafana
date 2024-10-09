@@ -78,7 +78,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config)) {
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config, configLog)) {
         configLog.warning(`Did not register links from plugin ${pluginId} due to missing meta information.`);
         continue;
       }

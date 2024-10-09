@@ -5,6 +5,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { getPluginExtensions } from './getPluginExtensions';
 import { log } from './logs/log';
+import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { isReadOnlyProxy } from './utils';
@@ -18,22 +19,12 @@ jest.mock('@grafana/runtime', () => {
 });
 
 jest.mock('./logs/log', () => {
-  const logMock = {
-    error: jest.fn(),
-    warning: jest.fn(),
-    info: jest.fn(),
-    debug: jest.fn(),
-  };
+  const { createLogMock } = jest.requireActual('./logs/testUtils');
+  const original = jest.requireActual('./logs/log');
 
   return {
-    ...jest.requireActual('./logs/log'),
-    log: {
-      ...logMock,
-      child: () => ({
-        ...logMock,
-        child: () => logMock,
-      }),
-    },
+    ...original,
+    log: createLogMock(),
   };
 });
 
@@ -99,8 +90,7 @@ describe('getPluginExtensions()', () => {
     };
 
     jest.mocked(reportInteraction).mockReset();
-    jest.mocked(log.warning).mockReset();
-    jest.mocked(log.error).mockReset();
+    resetLogMock(log);
   });
 
   test('should return the extensions for the given placement', async () => {

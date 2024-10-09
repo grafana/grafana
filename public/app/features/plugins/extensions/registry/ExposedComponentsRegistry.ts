@@ -46,7 +46,7 @@ export class ExposedComponentsRegistry extends Registry<
 
       if (!id.startsWith(pluginId)) {
         pointIdLog.error(
-          `Could not register exposed component. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
+          `Could not register exposed component with '${id}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
         );
         continue;
       }
@@ -59,22 +59,26 @@ export class ExposedComponentsRegistry extends Registry<
 
       if (registry[id]) {
         pointIdLog.error(
-          `Could not register exposed component. Reason: An exposed component with the same id already exists.`
+          `Could not register exposed component with '${id}'. Reason: An exposed component with the same id already exists.`
         );
         continue;
       }
 
       if (!title) {
-        pointIdLog.error(`Could not register exposed component. Reason: Title is missing.`);
+        pointIdLog.error(`Could not register exposed component with id '${id}'. Reason: Title is missing.`);
         continue;
       }
 
       if (!description) {
-        pointIdLog.error(`Could not register exposed componen. Reason: Description is missing.`);
+        pointIdLog.error(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode() && isExposedComponentMetaInfoMissing(pluginId, config)) {
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog)
+      ) {
         continue;
       }
 
