@@ -183,7 +183,7 @@ describe('Combobox', () => {
       await userEvent.keyboard('ab', { delay: null }); // Second request
       jest.advanceTimersByTime(210); // Resolve the second request
 
-      let item = await screen.findByRole('option', { name: 'second' });
+      let item: HTMLElement | null = await screen.findByRole('option', { name: 'second' });
       let firstItem = screen.queryByRole('option', { name: 'first' });
 
       expect(item).toBeInTheDocument();
@@ -191,12 +191,11 @@ describe('Combobox', () => {
 
       jest.advanceTimersByTime(1100); // Resolve the first request
 
-      item = await screen.findByRole('option', { name: 'second' });
-      firstItem = screen.queryByRole('option', { name: 'first' });
+      item = screen.queryByRole('option', { name: 'first' });
+      firstItem = screen.queryByRole('option', { name: 'second' });
 
-      //screen.debug();
-      expect(firstItem).not.toBeInTheDocument();
-      expect(item).toBeInTheDocument();
+      expect(item).not.toBeInTheDocument();
+      expect(firstItem).toBeInTheDocument();
     });
 
     it('should allow custom value while async is being run', async () => {
