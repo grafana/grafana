@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/openfga/openfga/assets"
 	"github.com/openfga/openfga/pkg/storage"
 	"github.com/openfga/openfga/pkg/storage/mysql"
@@ -19,9 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 
 	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
-	zassets "github.com/grafana/grafana/pkg/services/authz/zanzana/store/assets"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/sqlite"
 )
 
 func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
@@ -32,22 +28,7 @@ func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, er
 
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
-		connStr := grafanaDBCfg.ConnectionString
-		// Initilize connection using xorm engine so we can reuse it for both migrations and data store
-		engine, err := xorm.NewEngine(grafanaDBCfg.Type, connStr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect to database: %w", err)
-		}
-
-		m := migrator.NewMigrator(engine, cfg)
-		if err := migration.RunWithMigrator(m, cfg, zassets.EmbedMigrations, zassets.SQLiteMigrationDir); err != nil {
-			return nil, fmt.Errorf("failed to run migrations: %w", err)
-		}
-
-		return sqlite.NewWithDB(engine.DB().DB, &sqlite.Config{
-			Config:       zanzanaDBCfg,
-			QueryRetries: grafanaDBCfg.QueryRetries,
-		})
+		panic("unsupported")
 	case migrator.MySQL:
 		// For mysql we need to pass parseTime parameter in connection string
 		connStr := grafanaDBCfg.ConnectionString + "&parseTime=true"
@@ -79,15 +60,7 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
-		if err := migration.RunWithMigrator(m, cfg, zassets.EmbedMigrations, zassets.SQLiteMigrationDir); err != nil {
-			return nil, fmt.Errorf("failed to run migrations: %w", err)
-		}
-
-		// FIXME(kalleep): We should work on getting sqlite implemtation merged upstream and replace this one
-		return sqlite.NewWithDB(db.GetEngine().DB().DB, &sqlite.Config{
-			Config:       zanzanaDBCfg,
-			QueryRetries: grafanaDBCfg.QueryRetries,
-		})
+		panic("unsupported")
 	case migrator.MySQL:
 		if err := migration.RunWithMigrator(m, cfg, assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
