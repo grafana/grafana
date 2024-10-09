@@ -52,7 +52,7 @@ func getDatasourceByUID(ctx *contextmodel.ReqContext, cache datasources.CacheSer
 			return nil, unexpectedDatasourceTypeError(ds.Type, "alertmanager")
 		}
 	case apimodels.LoTexRulerBackend:
-		if ds.Type != "loki" && ds.Type != "prometheus" {
+		if ds.Type != "loki" && ds.Type != "prometheus" && ds.Type != "grafana-amazonprometheus-datasource" {
 			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus")
 		}
 	default:
