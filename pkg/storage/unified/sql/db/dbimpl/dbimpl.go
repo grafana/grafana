@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/migrations"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/o11y"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
 )
 
 const (
@@ -149,7 +149,7 @@ func (p *resourceDBProvider) init(ctx context.Context) (db.DB, error) {
 	}
 
 	d := NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName())
-	d = o11y.NewInstrumentedDB(d, p.tracer)
+	d = otel.NewInstrumentedDB(d, p.tracer)
 
 	return d, nil
 }
