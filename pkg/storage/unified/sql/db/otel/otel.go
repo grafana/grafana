@@ -1,4 +1,4 @@
-package o11y
+package otel
 
 import (
 	"context"
@@ -44,7 +44,6 @@ const (
 )
 
 var (
-	emptyAttrsList    []attribute.KeyValue
 	spanOptKindClient = trace.WithSpanKind(trace.SpanKindClient)
 	defaultTxOpts     = new(sql.TxOptions)
 )
@@ -60,7 +59,7 @@ type ctxKey struct{}
 //	ctx = SetAttributes(attribute.String("query", "get user by id"))
 //	res, err := myTracedTx.QueryContext(ctx, getUserByIDSQL, userID)
 //
-//	// the following ExecContext operation will have an extra attribute
+//	// the following ExecContext operation will have a different extra attribute
 //	ctx = SetAttributes(attribute.String("query", "disable user"))
 //	err = myTracedTx.ExecContext(ctx, disableUserSQL, userID)
 //
@@ -95,7 +94,7 @@ func consumeAttributes(ctx context.Context) []attribute.KeyValue {
 	return ret
 }
 
-type dbO11y struct {
+type dbOtel struct {
 	db.DB
 	withTxFunc db.WithTxFunc
 	tracer     trace.Tracer
@@ -108,9 +107,9 @@ type dbO11y struct {
 // NewInstrumentedDB wraps the given db.DB, instrumenting it to provide
 // OTEL-based observability.
 func NewInstrumentedDB(d db.DB, tracer trace.Tracer) db.DB {
-	// TODO: periodically report metrics for `Stats`, somhow?
+	// TODO: periodically report metrics for stats returned by `db.Stats`
 
-	ret := &dbO11y{
+	ret := &dbOtel{
 		DB:              d,
 		tracer:          tracer,
 		driverName:      d.DriverName(),
@@ -120,7 +119,7 @@ func NewInstrumentedDB(d db.DB, tracer trace.Tracer) db.DB {
 	return ret
 }
 
-func (x *dbO11y) init(ctx context.Context) {
+func (x *dbOtel) init(ctx context.Context) {
 	x.initOnce.Do(func() {
 		row := x.DB.QueryRowContext(ctx, dbVersionDefaultSQL)
 		if row.Err() != nil {
@@ -137,7 +136,7 @@ func (x *dbO11y) init(ctx context.Context) {
 	})
 }
 
-func (x *dbO11y) startSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+func (x *dbOtel) startSpan(ctx context.Context, name string) (context.Context, trace.Span) {
 	x.init(ctx)
 
 	attrs := append(consumeAttributes(ctx),
@@ -151,7 +150,7 @@ func (x *dbO11y) startSpan(ctx context.Context, name string) (context.Context, t
 	return ctx, span
 }
 
-func (x *dbO11y) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+func (x *dbOtel) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	ctx, span := x.startSpan(ctx, dbTraceExecContext)
 	defer span.End()
 	res, err := x.DB.ExecContext(ctx, query, args...)
@@ -159,7 +158,7 @@ func (x *dbO11y) ExecContext(ctx context.Context, query string, args ...any) (sq
 	return res, err
 }
 
-func (x *dbO11y) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+func (x *dbOtel) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	ctx, span := x.startSpan(ctx, dbTraceQueryContext)
 	defer span.End()
 	rows, err := x.DB.QueryContext(ctx, query, args...)
@@ -167,7 +166,7 @@ func (x *dbO11y) QueryContext(ctx context.Context, query string, args ...any) (*
 	return rows, err
 }
 
-func (x *dbO11y) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+func (x *dbOtel) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	ctx, span := x.startSpan(ctx, dbTraceQueryRowContext)
 	defer span.End()
 	row := x.DB.QueryRowContext(ctx, query, args...)
@@ -175,7 +174,7 @@ func (x *dbO11y) QueryRowContext(ctx context.Context, query string, args ...any)
 	return row
 }
 
-func (x *dbO11y) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
+func (x *dbOtel) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
 	parentSpanID := trace.SpanFromContext(ctx).SpanContext().SpanID().String()
 
 	// create a new span that will encompass the whole transaction as a single
@@ -195,7 +194,7 @@ func (x *dbO11y) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error
 		}
 	}()
 
-	ret := txO11y{
+	ret := txOtel{
 		// we only miss defining `tx` here, which is defined later
 		span: txSpan, // will only be used during COMMIT/ROLLBACK
 		tracerStartFunc: func(n string, o ...trace.SpanStartOption) trace.Span {
@@ -217,11 +216,11 @@ func (x *dbO11y) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error
 	return ret, nil
 }
 
-func (x *dbO11y) WithTx(ctx context.Context, opts *sql.TxOptions, f db.TxFunc) error {
+func (x *dbOtel) WithTx(ctx context.Context, opts *sql.TxOptions, f db.TxFunc) error {
 	return x.withTxFunc(ctx, opts, f)
 }
 
-func (x *dbO11y) PingContext(ctx context.Context) error {
+func (x *dbOtel) PingContext(ctx context.Context) error {
 	ctx, span := x.startSpan(ctx, dbTracePingContext)
 	defer span.End()
 	err := x.DB.PingContext(ctx)
@@ -229,7 +228,7 @@ func (x *dbO11y) PingContext(ctx context.Context) error {
 	return err
 }
 
-type txO11y struct {
+type txOtel struct {
 	tx              db.Tx
 	span            trace.Span
 	tracerStartFunc func(string, ...trace.SpanStartOption) trace.Span
@@ -295,7 +294,7 @@ type txO11y struct {
 // In this case, it is not straightforward to know what operations are part of
 // the transaction. When looking at the traces, it will be very easy to be
 // confused and think that `nonTxQuerySpan` was part of the transaction.
-func (x txO11y) startSpan(optionalCtx context.Context, name string) (context.Context, trace.Span) {
+func (x txOtel) startSpan(optionalCtx context.Context, name string) (context.Context, trace.Span) {
 	// minimum number of options for the span
 	startOpts := make([]trace.SpanStartOption, 0, 2)
 	startOpts = append(startOpts, spanOptKindClient)
@@ -307,7 +306,6 @@ func (x txO11y) startSpan(optionalCtx context.Context, name string) (context.Con
 			// it only makes sense to create a link to the span in `optionalCtx`
 			// if it's not the same as the one used during BEGIN
 			startOpts = append(startOpts, trace.WithLinks(spanLink))
-
 		} else if len(attrs) > 0 {
 			// otherwise, we just add the extra attributes added with
 			// `SetAttributes`.
@@ -326,7 +324,7 @@ func (x txO11y) startSpan(optionalCtx context.Context, name string) (context.Con
 	return optionalCtx, span
 }
 
-func (x txO11y) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+func (x txOtel) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	ctx, span := x.startSpan(ctx, txTraceExecContext)
 	defer span.End()
 	res, err := x.tx.ExecContext(ctx, query, args...)
@@ -335,7 +333,7 @@ func (x txO11y) ExecContext(ctx context.Context, query string, args ...any) (sql
 	return res, err
 }
 
-func (x txO11y) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+func (x txOtel) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	ctx, span := x.startSpan(ctx, txTraceQueryContext)
 	defer span.End()
 	rows, err := x.tx.QueryContext(ctx, query, args...)
@@ -344,7 +342,7 @@ func (x txO11y) QueryContext(ctx context.Context, query string, args ...any) (*s
 	return rows, err
 }
 
-func (x txO11y) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+func (x txOtel) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	ctx, span := x.startSpan(ctx, txTraceQueryRowContext)
 	defer span.End()
 	row := x.tx.QueryRowContext(ctx, query, args...)
@@ -352,11 +350,11 @@ func (x txO11y) QueryRowContext(ctx context.Context, query string, args ...any) 
 	return row
 }
 
-func (x txO11y) Commit() error {
+func (x txOtel) Commit() error {
 	x.span.SetAttributes(attribute.String(attrTxTerminationOp,
 		attrValTxTerminationOpCommit))
 	defer x.span.End()
-	_, span := x.startSpan(nil, txTraceCommit)
+	_, span := x.startSpan(nil, txTraceCommit) //nolint:staticcheck
 	defer span.End()
 	err := x.tx.Commit()
 	setSpanOutcome(span, err)
@@ -364,11 +362,11 @@ func (x txO11y) Commit() error {
 	return err
 }
 
-func (x txO11y) Rollback() error {
+func (x txOtel) Rollback() error {
 	x.span.SetAttributes(attribute.String(attrTxTerminationOp,
 		attrValTxTerminationOpRollback))
 	defer x.span.End()
-	_, span := x.startSpan(nil, txTraceRollback)
+	_, span := x.startSpan(nil, txTraceRollback) //nolint:staticcheck
 	defer span.End()
 	err := x.tx.Rollback()
 	setSpanOutcome(span, err)
