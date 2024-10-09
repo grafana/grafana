@@ -306,7 +306,6 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 	id, _ := strconv.ParseInt(i.ID, 10, 64)
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
-		SAMLSession:    i.SAMLSession,
 		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
 		UserId:         id,

@@ -524,10 +524,7 @@ func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identi
 		return extSession
 	}
 
-	if identity.SAMLSession != nil {
-		extSession.SessionID = identity.SAMLSession.SessionIndex
-		extSession.NameID = identity.SAMLSession.NameID
-	}
+	extSession.SessionID = identity.SAMLSession.SessionIndex
 
 	return extSession
 }
