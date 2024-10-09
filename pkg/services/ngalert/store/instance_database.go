@@ -206,6 +206,20 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 	return err
 }
 
+// SaveAlertInstancesForRule saves multiple alert instances for the alert rule.
+// It does not start a transaction, so each instance is saved in a separate transaction,
+// to keep the current store behaviour when saving instances happens one by one.
+// This is done to avoid long transactions when there are many instances to save.
+func (st DBstore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKey, instances []models.AlertInstance) error {
+	for _, alertInstance := range instances {
+		if err := st.SaveAlertInstance(ctx, alertInstance); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
