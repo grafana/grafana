@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	//nolint:all
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/tempo/pkg/tempopb"
@@ -20,7 +21,6 @@ func TestTraceToFrame(t *testing.T) {
 		require.NoError(t, err)
 
 		var otTrace tempopb.Trace
-		//nolint:all
 		err = jsonpb.Unmarshal(jsonResponse, &otTrace)
 		require.NoError(t, err)
 

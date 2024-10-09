@@ -51,7 +51,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	}
 
 	var apiVersion = TraceRequestApiVersionV2
-	resp, body, err := s.performTraceRequest(ctx, dsInfo, apiVersion, model, query, span)
+	resp, traceBody, err := s.performTraceRequest(ctx, dsInfo, apiVersion, model, query, span)
 	if err != nil {
 		return result, err
 	}
@@ -59,7 +59,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	// If the endpoint is not found, try the v1 endpoint, we might be communicating with an older Tempo version
 	if resp.StatusCode == http.StatusNotFound {
 		apiVersion = TraceRequestApiVersionV1
-		resp, body, err = s.performTraceRequest(ctx, dsInfo, apiVersion, model, query, span)
+		resp, traceBody, err = s.performTraceRequest(ctx, dsInfo, apiVersion, model, query, span)
 		if err != nil {
 			return result, err
 		}
@@ -67,7 +67,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to get trace", "error", err, "function", logEntrypoint())
-		result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", *model.Query, resp.Status, string(body))
+		result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", *model.Query, resp.Status, string(traceBody))
 		span.RecordError(result.Error)
 		span.SetStatus(codes.Error, result.Error.Error())
 		return result, nil
@@ -77,7 +77,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	if apiVersion == TraceRequestApiVersionV1 {
 		var otTrace tempopb.Trace
-		err = proto.Unmarshal(body, &otTrace)
+		err = proto.Unmarshal(traceBody, &otTrace)
 
 		if err != nil {
 			ctxLogger.Error("Failed to convert tempo response to Otlp", "error", err, "function", logEntrypoint())
@@ -95,7 +95,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		}
 	} else {
 		var tr tempopb.TraceByIDResponse
-		err = proto.Unmarshal(body, &tr)
+		err = proto.Unmarshal(traceBody, &tr)
 
 		if err != nil {
 			ctxLogger.Error("Failed to convert tempo response to Otlp", "error", err, "function", logEntrypoint())
