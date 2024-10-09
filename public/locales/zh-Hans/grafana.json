@@ -1468,6 +1468,7 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "dashboard-load-error": "",
       "error-library-element-sub": "",
       "error-library-element-title": "",
       "unknown-datasource-title": "",
@@ -1914,6 +1915,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "",
     "unsupported-layout": ""
   },
   "playlist-edit": {
@@ -2372,7 +2374,6 @@
     "menu": {
       "export-json-title": "",
       "share-externally-title": "",
-      "share-internally-description": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
     },
@@ -2662,6 +2663,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": ""
+    },
     "metric-overview": {
       "description-label": "",
       "labels": "",

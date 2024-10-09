@@ -34,6 +34,7 @@ func ProvideUnifiedStorageClient(
 		DataPath:    apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
 		Address:     apiserverCfg.Key("address").MustString(""),
 	}
+	ctx := context.Background()
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
@@ -47,7 +48,7 @@ func ProvideUnifiedStorageClient(
 		if err != nil {
 			return nil, err
 		}
-		backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
+		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
 			Bucket: bucket,
 		})
 		if err != nil {
@@ -84,7 +85,7 @@ func ProvideUnifiedStorageClient(
 
 	// Use the local SQL
 	default:
-		server, err := sql.NewResourceServer(db, cfg, features, tracer)
+		server, err := sql.NewResourceServer(ctx, db, cfg, features, tracer)
 		if err != nil {
 			return nil, err
 		}

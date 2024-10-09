@@ -1478,6 +1478,7 @@
       "warning-details-button": "Đęŧäįľş"
     },
     "resource-table": {
+      "dashboard-load-error": "Ůŉäþľę ŧő ľőäđ đäşĥþőäřđ",
       "error-library-element-sub": "Ŀįþřäřy Ēľęmęŉŧ {ūįđ}",
       "error-library-element-title": "Ůŉäþľę ŧő ľőäđ ľįþřäřy ęľęmęŉŧ",
       "unknown-datasource-title": "Đäŧä şőūřčę {{datasourceUID}}",
@@ -1924,6 +1925,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "Ńő mäŧčĥęş ƒőūŉđ",
     "unsupported-layout": "Ůŉşūppőřŧęđ ľäyőūŧ"
   },
   "playlist-edit": {
@@ -2216,7 +2218,9 @@
     "datasource-names": "Đäŧäşőūřčę ŉämę(ş):",
     "delete-query-button": "Đęľęŧę qūęřy",
     "query-template-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ qūęřy ŧęmpľäŧę ƒřőm ŧĥę ľįþřäřy: {{error}}",
-    "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ"
+    "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ",
+    "user-info-get-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő ģęŧ ūşęř įŉƒő ƒřőm ŧĥę ľįþřäřy: {{error}}",
+    "user-names": "Ůşęř ŉämę(ş):"
   },
   "query-operation": {
     "header": {
@@ -2385,7 +2389,6 @@
     "menu": {
       "export-json-title": "Ēχpőřŧ äş ĴŜØŃ",
       "share-externally-title": "Ŝĥäřę ęχŧęřŉäľľy",
-      "share-internally-description": "Ŀįŉĸ şęŧŧįŉģş",
       "share-internally-title": "Ŝĥäřę įŉŧęřŉäľľy",
       "share-snapshot-title": "Ŝĥäřę şŉäpşĥőŧ"
     },
@@ -2675,6 +2678,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy þőőĸmäřĸş yęŧ. Ůşę ŧĥę Ēχpľőřę Męŧřįčş þőőĸmäřĸş ƒęäŧūřę ŧő şävę yőūř päŉęľş äş þőőĸmäřĸş."
+    },
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",
       "labels": "Ŀäþęľş",

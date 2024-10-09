@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import { SortByFn } from 'react-table';
 
-import { Column, InteractiveTable } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Column, InteractiveTable, useStyles2 } from '@grafana/ui';
 
 import ActionsCell from './ActionsCell';
 import { AddedByCell } from './AddedByCell';
@@ -34,12 +36,34 @@ type Props = {
 };
 
 export default function QueryTemplatesTable({ queryTemplateRows }: Props) {
+  const styles = useStyles2(getStyles);
   return (
     <InteractiveTable
       columns={columns}
       data={queryTemplateRows}
       getRowId={(row: { index: string }) => row.index}
       pageSize={20}
+      className={styles.table}
     />
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  table: css({
+    'tbody tr': {
+      position: 'relative',
+      backgroundColor: theme.colors.background.secondary,
+      borderCollapse: 'collapse',
+      borderBottom: 'unset',
+      overflow: 'hidden', // Ensure the row doesn't overflow and cause additonal scrollbars
+    },
+    /* Adds the pseudo-element for the lines between table rows */
+    'tbody tr::after': {
+      content: '""',
+      position: 'absolute',
+      inset: 'auto 0 0 0',
+      height: theme.spacing(0.5),
+      backgroundColor: theme.colors.background.primary,
+    },
+  }),
+});

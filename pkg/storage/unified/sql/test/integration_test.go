@@ -32,9 +32,8 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 
 	dbstore := infraDB.InitTestDB(t)
 	cfg := setting.NewCfg()
-	features := featuremgmt.WithFeatures()
 
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, nil)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
 

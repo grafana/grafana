@@ -326,6 +326,7 @@ message WatchEvent {
 
 message SearchRequest {
   string query = 1;
+  string tenant = 2;
 }
 
 message SearchResponse {
