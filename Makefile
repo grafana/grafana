@@ -17,6 +17,7 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GIT_BASE = remotes/origin/main
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -308,7 +309,7 @@ lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_F
 
 .PHONY: lint-go-diff
 lint-go-diff: $(GOLANGCI_LINT)
-	git diff --name-only remotes/origin/main | \
+	git diff --name-only $(GIT_BASE) | \
 		grep '\.go$$' | \
 		$(XARGSR) dirname | \
 		sort -u | \
