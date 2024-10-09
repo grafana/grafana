@@ -1,20 +1,24 @@
 // The ID of the main nav-tree item (the main item in the NavIndex)
 export const ROUTE_BASE_ID = 'connections';
 
-export const ROUTES = {
-  Base: `/${ROUTE_BASE_ID}`,
+export const RELATIVE_ROUTES = {
+  Base: '',
 
   // Data sources
-  DataSources: `/${ROUTE_BASE_ID}/datasources`,
-  DataSourcesNew: `/${ROUTE_BASE_ID}/datasources/new`,
-  DataSourcesEdit: `/${ROUTE_BASE_ID}/datasources/edit/:uid`,
-  DataSourcesDashboards: `/${ROUTE_BASE_ID}/datasources/edit/:uid/dashboards`,
+  DataSources: `/datasources`,
+  DataSourcesNew: `/datasources/new`,
+  DataSourcesEdit: `/datasources/edit/:uid`,
+  DataSourcesDashboards: `/datasources/edit/:uid/dashboards`,
 
   // Add new connection
-  AddNewConnection: `/${ROUTE_BASE_ID}/add-new-connection`,
-  DataSourcesDetails: `/${ROUTE_BASE_ID}/datasources/:id`,
+  AddNewConnection: `/add-new-connection`,
+  DataSourcesDetails: `/datasources/:id`,
 
   // Outdated
-  ConnectDataOutdated: `/${ROUTE_BASE_ID}/connect-data`,
-  YourConnectionsOutdated: `/${ROUTE_BASE_ID}/your-connections`,
+  ConnectDataOutdated: `/connect-data`,
+  YourConnectionsOutdated: `/your-connections`,
 } as const;
+
+export const ROUTES = Object.fromEntries(
+  Object.entries(RELATIVE_ROUTES).map(([key, value]) => [key, `/${ROUTE_BASE_ID}${value}`])
+);

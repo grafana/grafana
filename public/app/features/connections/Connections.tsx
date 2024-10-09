@@ -1,10 +1,9 @@
-import { Route, Switch, useLocation } from 'react-router-dom';
-import { Navigate } from 'react-router-dom-v5-compat';
+import { Navigate, Routes, Route, useLocation } from 'react-router-dom-v5-compat';
 
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
 import { StoreState, useSelector } from 'app/types';
 
-import { ROUTES } from './constants';
+import { RELATIVE_ROUTES as ROUTES } from './constants';
 import {
   AddNewConnectionPage,
   DataSourceDashboardsPage,
@@ -40,31 +39,31 @@ export default function Connections() {
         Dashboards: ROUTES.DataSourcesDashboards,
       }}
     >
-      <Switch>
+      <Routes>
         {/* Redirect to "Add new connection" by default */}
-        <Route exact sensitive path={ROUTES.Base} component={() => <Navigate replace to={ROUTES.AddNewConnection} />} />
-        <Route exact sensitive path={ROUTES.DataSources} component={DataSourcesListPage} />
-        <Route exact sensitive path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
-        <Route exact sensitive path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
-        <Route exact sensitive path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
-        <Route exact sensitive path={ROUTES.DataSourcesDashboards} component={DataSourceDashboardsPage} />
+        <Route caseSensitive path={'/'} element={<Navigate replace to={ROUTES.AddNewConnection} />} />
+        <Route caseSensitive path={ROUTES.DataSources} element={<DataSourcesListPage />} />
+        <Route caseSensitive path={ROUTES.DataSourcesNew} element={<NewDataSourcePage />} />
+        <Route caseSensitive path={ROUTES.DataSourcesDetails} element={<DataSourceDetailsPage />} />
+        <Route caseSensitive path={ROUTES.DataSourcesEdit} element={<EditDataSourcePage />} />
+        <Route caseSensitive path={ROUTES.DataSourcesDashboards} element={<DataSourceDashboardsPage />} />
 
         {/* "Add new connection" page - we don't register a route in case a plugin already registers a standalone page for it */}
         {!isAddNewConnectionPageOverridden && (
-          <Route exact sensitive path={ROUTES.AddNewConnection} component={AddNewConnectionPage} />
+          <Route caseSensitive path={ROUTES.AddNewConnection} element={<AddNewConnectionPage />} />
         )}
 
         {/* Redirect from earlier routes to updated routes */}
-        <Route exact path={ROUTES.ConnectDataOutdated} component={RedirectToAddNewConnection} />
+        <Route path={ROUTES.ConnectDataOutdated} element={<RedirectToAddNewConnection />} />
         <Route
           path={`${ROUTES.Base}/your-connections/:page`}
-          component={() => <Navigate replace to={`${ROUTES.Base}/:page`} />}
+          element={<Navigate replace to={`${ROUTES.Base}/:page`} />}
         />
-        <Route path={ROUTES.YourConnectionsOutdated} component={() => <Navigate replace to={ROUTES.DataSources} />} />
+        <Route path={ROUTES.YourConnectionsOutdated} element={<Navigate replace to={ROUTES.DataSources} />} />
 
         {/* Not found */}
-        <Route component={() => <Navigate replace to="/notfound" />} />
-      </Switch>
+        <Route element={<Navigate replace to="/notfound" />} />
+      </Routes>
     </DataSourcesRoutesContext.Provider>
   );
 }
