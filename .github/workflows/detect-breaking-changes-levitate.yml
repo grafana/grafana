@@ -3,7 +3,7 @@
 name: Levitate / Detect breaking changes in PR
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 on:
@@ -154,14 +154,10 @@ jobs:
           project_id: 'grafanalabs-global'
           install_components: 'bq'
 
-      - name: Get link for the Github Action job
+      - name: Get job URL
         id: job
-        uses: actions/github-script@v6
-        with:
-          script: |
-              const name = 'Detect breaking changes';
-              const script = require('./.github/workflows/scripts/pr-get-job-link.js')
-              await script({name, github, context, core})
+        run: |
+          echo "link=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
       - name: Detect breaking changes
         id: breaking-changes
@@ -173,7 +169,7 @@ jobs:
       - name: Persisting the check output
         run: |
             mkdir -p ./levitate
-            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
+            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
 
       - name: Upload check output as artifact
         uses: actions/upload-artifact@v4
@@ -277,12 +273,32 @@ jobs:
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && env.HAS_SECRETS
         uses: slackapi/slack-github-action@v1.26.0
         with:
-          payload: |
+          payload:  |
             {
-              "pr_link": "https://github.com/grafana/grafana/pull/${{ steps.levitate-run.outputs.pr_number }}",
-              "pr_number": "${{ steps.levitate-run.outputs.pr_number }}",
-              "job_link": "${{ steps.levitate-run.outputs.job_link }}",
-              "message": "${{ steps.levitate-run.outputs.message }}"
+              "channel": "C031SLFH6G0",
+              "text": "Possible breaking changes detected in PR #${{ github.event.pull_request.number }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*`grafana-data`* has possible breaking changes"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Job:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
+                    }
+                  ]
+                }
+              ]
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
