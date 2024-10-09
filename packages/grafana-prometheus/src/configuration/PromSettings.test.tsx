@@ -112,5 +112,12 @@ describe('PromSettings', () => {
       fireEvent.blur(input);
       expect(queryByText(countError)).toBeInTheDocument();
     });
+
+    it('should have a series endpoint configuration element', () => {
+      const options = defaultProps;
+
+      render(<PromSettings onOptionsChange={() => {}} options={options} />);
+      expect(screen.getByText('Use series endpoint')).toBeInTheDocument();
+    });
   });
 });
