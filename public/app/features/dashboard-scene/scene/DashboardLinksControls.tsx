@@ -15,7 +15,7 @@ import { LINK_ICON_MAP } from '../settings/links/utils';
 
 export interface Props {
   links: DashboardLink[];
-  timeRange?: SceneTimeRangeLike;
+  timeRange: SceneTimeRangeLike;
   uid?: string;
 }
 
@@ -26,19 +26,18 @@ interface LinkInfo {
 }
 
 export function DashboardLinksControls({ links, uid, timeRange }: Props) {
-  const timeRangeState = timeRange?.useState();
+  const timeRangeState = timeRange.useState();
   const [linkInfos, setLinkInfos] = useState<Record<string, LinkInfo>>({});
 
   useEffect(() => {
     const newLinkInfo: Record<string, LinkInfo> = {};
 
     links.forEach((link: DashboardLink) => {
-      const linkInfo = getLinkSrv().getAnchorInfo(link);
-      newLinkInfo[link.title] = linkInfo;
+      newLinkInfo[link.title] = getLinkSrv().getAnchorInfo(link);
     });
 
     setLinkInfos(newLinkInfo);
-  }, [links, timeRangeState?.value]);
+  }, [links, timeRangeState.value]);
 
   if (!links || !uid) {
     return null;
