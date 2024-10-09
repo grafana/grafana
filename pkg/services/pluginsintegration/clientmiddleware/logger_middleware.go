@@ -92,7 +92,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 					"refID", refID,
 					"status", int(dr.Status),
 					"error", dr.Error,
-					"statusSource", statusSourceFromPluginErrorSource(dr.ErrorSource),
+					"statusSource", dr.ErrorSource.String(),
 				}
 				ctxLogger.Error("Partial data response error", logParams...)
 			}
@@ -233,11 +233,4 @@ func (m *LoggerMiddleware) ConvertObjects(ctx context.Context, req *backend.Conv
 	})
 
 	return resp, err
-}
-
-func statusSourceFromPluginErrorSource(pluginErrorSource backend.ErrorSource) backend.ErrorSource {
-	if !pluginErrorSource.IsValid() {
-		return backend.DefaultErrorSource
-	}
-	return pluginErrorSource
 }
