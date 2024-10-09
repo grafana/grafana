@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
-import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack } from '@grafana/ui';
+import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack, Badge } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createQueryText } from 'app/core/utils/richHistory';
 import { useAllQueryTemplatesQuery } from 'app/features/query-library';
@@ -15,6 +15,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 import { QueryLibraryProps } from './QueryLibrary';
 import { queryLibraryTrackFilterDatasource } from './QueryLibraryAnalyticsEvents';
+import { QueryLibraryExpmInfo } from './QueryLibraryExpmInfo';
 import QueryTemplatesTable from './QueryTemplatesTable';
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
 import { searchQueryLibrary } from './utils/search';
@@ -23,6 +24,7 @@ interface QueryTemplatesListProps extends QueryLibraryProps {}
 
 export function QueryTemplatesList(props: QueryTemplatesListProps) {
   const { data, isLoading, error } = useAllQueryTemplatesQuery();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [datasourceFilters, setDatasourceFilters] = useState<Array<SelectableValue<string>>>(
     props.activeDatasources?.map((ds) => ({ value: ds, label: ds })) || []
@@ -163,6 +165,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
 
   return (
     <>
+      <QueryLibraryExpmInfo isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)} />
       <Stack gap={0.5}>
         <FilterInput
           className={styles.searchInput}
@@ -203,6 +206,15 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
           })}
           placeholder={'Filter queries for user name(s)'}
           aria-label={'Filter queries for user name(s)'}
+        />
+        <Badge
+          text=""
+          icon="info"
+          aria-label="info"
+          tooltip={'Click here for more informationn about Query library'}
+          color="blue"
+          style={{ cursor: 'pointer' }}
+          onClick={() => setIsModalOpen(true)}
         />
       </Stack>
       <QueryTemplatesTable queryTemplateRows={queryTemplateRows} />

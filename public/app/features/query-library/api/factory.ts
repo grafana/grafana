@@ -7,7 +7,7 @@ import { baseQuery } from './query';
 
 // Currently, we are loading all query templates
 // Organizations can have maximum of 1000 query templates
-const GET_LIMIT = 1000;
+export const QUERY_LIBRARY_GET_LIMIT = 1000;
 
 export const queryLibraryApi = createApi({
   baseQuery,
@@ -15,7 +15,7 @@ export const queryLibraryApi = createApi({
   endpoints: (builder) => ({
     allQueryTemplates: builder.query<QueryTemplate[], void>({
       query: () => ({
-        url: `?limit=${GET_LIMIT}`,
+        url: `?limit=${QUERY_LIBRARY_GET_LIMIT}`,
       }),
       transformResponse: convertDataQueryResponseToQueryTemplates,
       providesTags: ['QueryTemplatesList'],
