@@ -39,7 +39,6 @@ import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { BreakdownSearchReset, BreakdownSearchScene } from './BreakdownSearchScene';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
-import { breakdownPanelOptions } from './panelConfigs';
 import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
@@ -321,10 +320,6 @@ export function buildAllLayout(
       .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
 
-    vizPanel.addActivationHandler(() => {
-      vizPanel.onOptionsChange(breakdownPanelOptions);
-    });
-
     children.push(
       new SceneCSSGridItem({
         $behaviors: [yAxisSyncBehavior],
@@ -382,10 +377,6 @@ function buildNormalLayout(
       $behaviors: [yAxisSyncBehavior],
       body: vizPanel,
       isHidden,
-    });
-
-    vizPanel.addActivationHandler(() => {
-      vizPanel.onOptionsChange(breakdownPanelOptions);
     });
 
     return item;
