@@ -119,9 +119,9 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
     }
   );
   // in case of Grafana folder, we need to use the folder name instead of uid, as in promrules we don't use uid
-  const folder = useFolder(ruleLocation?.namespace);
-  const folderName =
-    ruleSourceName === GRAFANA_RULES_SOURCE_NAME && folder.folder
+	const isGrafanaRule = isGrafanaRulesSource(ruleSourceName);
+  const folder = useFolder(isGrafanaRule ? ruleLocation?.namespace : undefined);
+  const namespaceName =  isGrafanaRule && folder.folder
       ? stringifyFolder(folder.folder)
       : ruleLocation?.namespace;
 
