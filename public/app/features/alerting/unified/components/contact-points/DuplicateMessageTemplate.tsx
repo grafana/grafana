@@ -1,4 +1,4 @@
-import { RouteChildrenProps } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -12,13 +12,12 @@ import { TemplateForm } from '../receivers/TemplateForm';
 
 import { useGetNotificationTemplate, useNotificationTemplates } from './useNotificationTemplates';
 
-type Props = RouteChildrenProps<{ name: string }>;
-
 const notFoundComponent = <EntityNotFound entity="Notification template" />;
 
-const DuplicateMessageTemplate = ({ match }: Props) => {
+const DuplicateMessageTemplate = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const templateUid = match?.params.name ? decodeURIComponent(match?.params.name) : undefined;
+  const { name } = useParams<{ name: string }>();
+  const templateUid = name ? decodeURIComponent(name) : undefined;
 
   const {
     currentData: template,
