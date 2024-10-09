@@ -270,7 +270,7 @@ You can also change the color of the sparkline by updating the [color scheme](re
 
 If thresholds are set, with this cell type, the field text is displayed in the appropriate threshold color.
 
-{{< figure src="screenshot-table-colored-text-v11.3.png" max-width="650px" alt="Table with colored text cell type" >}}
+![Table with colored text cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-text-v11.3-2.png)
 
 {{< admonition type="note" >}}
 This is an experimental feature.
@@ -280,16 +280,12 @@ This is an experimental feature.
 
 If thresholds are set, with this cell type, the field background is displayed in the appropriate threshold color.
 
-{{< figure src="/static/img/docs/tables/color-background.png" max-width="500px" alt="Color background" class="docs-image--no-shadow" >}}
-
-<!--update! -->
+![Table with colored background cell type](/media/docs/grafana/panels-visualizations/screenshot-table-colored-bkgrnd-v11.3-2.png)
 
 - **Background display mode** - Choose between **Basic** and **Gradient**.
 - **Apply to entire row** - Toggle the switch on to apply the background color that's configured for the cell to the whole row.
 
-{{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
-
-<!--update! -->
+![Table with background cell color applied to row](/media/docs/grafana/panels-visualizations/screenshot-table-colored-row-v11.3.png)
 
 ##### Gauge
 
@@ -308,12 +304,11 @@ You can set three gauge display modes.
 
 | Option | Description |
 | ------ | ----------- |
-| Basic | Shows a simple gauge with the threshold levels defining the color of gauge. {{< figure src="/static/img/docs/tables/basic-gauge.png" max-width="200px" alt="Gradient gauge" >}} |
-| Gradient | The threshold levels define a gradient. {{< figure src="/static/img/docs/tables/gradient-gauge.png" max-width="200px" alt="Gradient gauge" >}} |
-| Retro LCD | The gauge is split up in small cells that are lit or unlit. {{< figure src="/static/img/docs/tables/lcd-gauge.png" max-width="200px" alt="LCD gauge" >}} |
+| Basic | Shows a simple gauge with the threshold levels defining the color of gauge. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-mode-basic-v11.3.png" alt="Table cell with basic gauge mode" >}} |
+| Gradient | The threshold levels define a gradient. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-mode-gradient-v11.3.png" alt="Table cell with gradient gauge mode" >}} |
+| Retro LCD | The gauge is split up in small cells that are lit or unlit. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-gauge-mode-retro-v11.3.png" alt="Table cell with retro LCD gauge mode" >}} |
 
 <!-- prettier-ignore-end -->
-<!--update -->
 
 ###### Value display
 
@@ -323,12 +318,11 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 
 | Option | Description |
 | ------ | ----------- |
-| Value color | {{< figure src="/static/img/docs/tables/value-color-mode.png" max-width="350px" alt="Color Label by Value" >}} |
-| Text color | {{< figure src="/static/img/docs/tables/text-color-mode.png" max-width="350px" alt="Color Label by theme color" >}} |
-| Hidden | {{< figure src="/static/img/docs/tables/hidden-mode.png" max-width="350px" alt="Hide Label" >}} |
+| Value color | Labels are colored by value. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-value-color-v11.3.png" alt="Table with labels in value color" >}} |
+| Text color | Labels match the theme text color. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-text-color-v11.3.png" alt="Table with labels in theme color" >}} |
+| Hidden | Labels are hidden. {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-labels-hidden-v11.3.png" alt="Table with labels hidden" >}} |
 
 <!-- prettier-ignore-end -->
-<!--update -->
 
 ##### JSON View
 
@@ -341,9 +335,7 @@ If a value is an object the JSON view allowing browsing the JSON object will app
 
 If you have a field value that is an image URL or a base64 encoded image, this cell type displays it as an image.
 
-{{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" alt="Table hover" >}}
-
-<!--update! -->
+![Table with image cell type](/media/docs/grafana/panels-visualizations/screenshot-table-cell-image-v11.3.png)
 
 Set the following options:
 
