@@ -690,7 +690,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		if err != nil {
 			return nil, err
 		}
-		f.Fullpath = f.Title + "/" + parent.Fullpath
+		// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
+		// Escape forward slashes in the title
+		title := strings.Replace(f.Title, "/", "\\/", -1)
+		f.Fullpath = title + "/" + parent.Fullpath
 		f.FullpathUIDs = f.UID + "/" + parent.FullpathUIDs
 	}
 

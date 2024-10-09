@@ -2,6 +2,7 @@ package folders
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -233,4 +234,23 @@ func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
 		return nil, err
 	}
 	return created, nil
+}
+
+func GetParentTitles(fullPath string) ([]string, error) {
+	// Find all forward slashes which aren't escaped
+	r, err := regexp.Compile(`[^\\](/)`)
+	if err != nil {
+		return nil, err
+	}
+	indices := r.FindAllStringIndex(fullPath, -1)
+
+	var start int
+	titles := []string{}
+	for _, i := range indices {
+		titles = append(titles, string(fullPath[start:i[0]+1]))
+		start = i[0] + 2
+	}
+
+	titles = append(titles, string(fullPath[start:]))
+	return titles, nil
 }

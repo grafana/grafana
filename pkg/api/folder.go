@@ -21,6 +21,7 @@ import (
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -886,8 +887,10 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return folderDTO, nil
 	}
 
-	// #TODO add support for escaped slashes
-	parentsFullPath := strings.Split(f.Fullpath, "/")
+	parentsFullPath, err := folders.GetParentTitles(f.Fullpath)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
 	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
 
 	// The first part of the path is the newly created folder which we don't need to include
