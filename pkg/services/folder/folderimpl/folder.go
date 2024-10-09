@@ -673,6 +673,27 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, err
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+		if f.ParentUID == "" {
+			return f, nil
+		}
+
+		// Fetch the parent since the permissions for fetching the newly created folder
+		// are not yet present for the user--this requires a call to ClearUserPermissionCache
+		parent, err := s.Get(ctx, &folder.GetFolderQuery{
+			UID:              &f.ParentUID,
+			OrgID:            f.OrgID,
+			WithFullpath:     true,
+			WithFullpathUIDs: true,
+			SignedInUser:     user,
+		})
+		if err != nil {
+			return nil, err
+		}
+		f.Fullpath = f.Title + "/" + parent.Fullpath
+		f.FullpathUIDs = f.UID + "/" + parent.FullpathUIDs
+	}
+
 	return f, nil
 }
 
