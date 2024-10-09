@@ -14,6 +14,7 @@ import { t } from '../../utils/i18n';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
 import 'rc-drawer/assets/index.css';
@@ -167,7 +168,14 @@ export function Drawer({
             </div>
           )}
           {typeof title !== 'string' && title}
-          {!scrollableContent ? content : <CustomScrollbar>{content}</CustomScrollbar>}
+          {/* {!scrollableContent ? content : <CustomScrollbar>{content}</CustomScrollbar>} */}
+          {!scrollableContent ? (
+            content
+          ) : (
+            <ScrollContainer overflowX="hidden" minHeight={0}>
+              {content}
+            </ScrollContainer>
+          )}
         </div>
       </FocusScope>
     </RcDrawer>
@@ -335,7 +343,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     content: css({
       padding: theme.spacing(2),
-      height: '100%',
+      // height: '100%',
       flexGrow: 1,
     }),
     tabsWrapper: css({

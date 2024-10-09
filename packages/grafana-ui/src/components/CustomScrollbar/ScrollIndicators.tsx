@@ -40,9 +40,9 @@ export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
         })}
       />
       <div className={styles.scrollContent}>
-        <div ref={scrollTopMarker} />
+        <div ref={scrollTopMarker} className={cx(styles.scrollMarker, styles.scrollTopMarker)} />
         {children}
-        <div ref={scrollBottomMarker} />
+        <div ref={scrollBottomMarker} className={cx(styles.scrollMarker, styles.scrollBottomMarker)} />
       </div>
       <div
         className={cx(styles.scrollIndicator, styles.scrollBottomIndicator, {
@@ -81,6 +81,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     scrollIndicatorVisible: css({
       opacity: 1,
+    }),
+    scrollMarker: css({
+      height: '1px',
+      left: 0,
+      pointerEvents: 'none',
+      position: 'absolute',
+      right: 0,
+    }),
+    scrollTopMarker: css({
+      top: 0,
+    }),
+    scrollBottomMarker: css({
+      bottom: 0,
     }),
   };
 };
