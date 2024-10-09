@@ -1,10 +1,11 @@
 {
-  "plugins": ["testing-library", "jest-dom"],
+  "plugins": ["testing-library", "jest-dom", "unicorn"],
   "extends": ["plugin:jest-dom/recommended"],
   "rules": {
     "dot-notation": "error",
     "prefer-const": "error",
     "react/no-unused-prop-types": "error",
+    "unicorn/no-unused-properties": "error",
   },
   "overrides": [
     {

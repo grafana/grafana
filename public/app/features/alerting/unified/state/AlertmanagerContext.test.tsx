@@ -13,11 +13,6 @@ import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/data
 
 import { AlertmanagerProvider, isAlertManagerWithConfigAPI, useAlertmanager } from './AlertmanagerContext';
 
-const grafanaAm: AlertManagerDataSource = {
-  name: GRAFANA_RULES_SOURCE_NAME,
-  imgUrl: '',
-};
-
 const externalAmProm: AlertManagerDataSource = {
   name: 'PrometheusAm',
   imgUrl: '',
@@ -60,7 +55,7 @@ describe('useAlertmanager', () => {
     );
 
     const { result } = renderHook(() => useAlertmanager(), { wrapper });
-    expect(result.current.selectedAlertmanager).toBe(grafanaAm.name);
+    expect(result.current.selectedAlertmanager).toBe(GRAFANA_RULES_SOURCE_NAME);
   });
 
   it('Should return alert manager included in the query param when available', () => {

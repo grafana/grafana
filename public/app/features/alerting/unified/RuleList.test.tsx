@@ -7,14 +7,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  DataSourceSrv,
-  getPluginLinkExtensions,
-  locationService,
-  setAppEvents,
-  setDataSourceSrv,
-  usePluginLinks,
-} from '@grafana/runtime';
+import { DataSourceSrv, locationService, setAppEvents, setDataSourceSrv, usePluginLinks } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { mockUserApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -71,7 +64,6 @@ setupPluginsExtensionsHook();
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
-  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
   usePluginLinksMock: jest.mocked(usePluginLinks),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
@@ -146,7 +138,6 @@ const ui = {
     more: byRole('button', { name: /More/ }),
   },
   moreActionItems: {
-    pause: byRole('menuitem', { name: /pause evaluation/i }),
     resume: byRole('menuitem', { name: /resume evaluation/i }),
   },
 };
