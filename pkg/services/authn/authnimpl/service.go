@@ -502,6 +502,7 @@ func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identi
 	}
 
 	extSession := &auth.ExternalSession{
+		AuthModule: identity.GetAuthenticatedBy(),
 		UserAuthID: info.Id,
 		UserID:     userID,
 	}
