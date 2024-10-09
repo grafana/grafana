@@ -207,6 +207,16 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     this.setState({ isPickerOpened: false });
   }
 
+  public toggleDashboardsPanel() {
+    const dashboards = this.state.dashboards?.resolve();
+
+    if (this.state.scopes.length) {
+      dashboards?.openPanel();
+    } else {
+      dashboards?.closePanel();
+    }
+  }
+
   public async updateScopes(treeScopes = this.state.treeScopes) {
     if (isEqual(treeScopes, getTreeScopesFromSelectedScopes(this.state.scopes))) {
       return;
@@ -358,6 +368,7 @@ export function ScopesSelectorSceneRenderer({ model }: SceneComponentProps<Scope
               onClick={() => {
                 model.closePicker();
                 model.updateScopes();
+                model.toggleDashboardsPanel();
               }}
             >
               <Trans i18nKey="scopes.selector.apply">Apply</Trans>
