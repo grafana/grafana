@@ -12,8 +12,10 @@ import {
   getResultApplicationsMimirSelect,
   getResultCloudDevRadio,
   getResultCloudOpsRadio,
+  getSelectedScope,
   getSelectorInput,
   getTreeHeadline,
+  getTreeScope,
   queryAllDashboard,
   queryDashboard,
   queryDashboardFolderExpand,
@@ -80,3 +82,8 @@ export const expectOldDashboardDTO = (scopes?: string[]) =>
   expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', scopes ? { scopes } : undefined);
 export const expectNewDashboardDTO = () =>
   expect(getMock).toHaveBeenCalledWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto');
+
+export const expectSelectedScopePath = (name: string, path: string[] | undefined) =>
+  expect(getSelectedScope(name)?.path).toEqual(path);
+export const expectTreeScopePath = (name: string, path: string[] | undefined) =>
+  expect(getTreeScope(name)?.path).toEqual(path);

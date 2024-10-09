@@ -36,6 +36,8 @@ import {
   expectResultCloudOpsSelected,
   expectScopesHeadline,
   expectScopesSelectorValue,
+  expectSelectedScopePath,
+  expectTreeScopePath,
 } from './utils/assertions';
 import { fetchNodesSpy, fetchScopeSpy, getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
@@ -243,5 +245,29 @@ describe('Tree', () => {
     await searchScopes('unknown');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectScopesHeadline('No results found for your query');
+  });
+
+  it('Updates the paths for scopes without paths on nodes fetching', async () => {
+    const selectedScopeName = 'grafana';
+    const unselectedScopeName = 'mimir';
+    const selectedScopeNameFromOtherGroup = 'dev';
+
+    await updateScopes([selectedScopeName, selectedScopeNameFromOtherGroup]);
+    expectSelectedScopePath(selectedScopeName, []);
+    expectTreeScopePath(selectedScopeName, []);
+    expectSelectedScopePath(unselectedScopeName, undefined);
+    expectTreeScopePath(unselectedScopeName, undefined);
+    expectSelectedScopePath(selectedScopeNameFromOtherGroup, []);
+    expectTreeScopePath(selectedScopeNameFromOtherGroup, []);
+
+    await openSelector();
+    await expandResultApplications();
+    const expectedPath = ['', 'applications', 'applications-grafana'];
+    expectSelectedScopePath(selectedScopeName, expectedPath);
+    expectTreeScopePath(selectedScopeName, expectedPath);
+    expectSelectedScopePath(unselectedScopeName, undefined);
+    expectTreeScopePath(unselectedScopeName, undefined);
+    expectSelectedScopePath(selectedScopeNameFromOtherGroup, []);
+    expectTreeScopePath(selectedScopeNameFromOtherGroup, []);
   });
 });
