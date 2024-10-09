@@ -9,6 +9,7 @@ import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { useRuleWithLocation } from '../../hooks/useCombinedRule';
 import { getAllRulesSources, isGrafanaRulesSource } from '../../utils/datasource';
 import { fromRule, hashRule, stringifyIdentifier } from '../../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule } from '../../utils/rules';
@@ -17,6 +18,7 @@ import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { Spacer } from '../Spacer';
 import { WithReturnButton } from '../WithReturnButton';
 import RulesFilter from '../rules/Filter/RulesFilter';
+import { RuleActionsButtons } from '../rules/RuleActionsButtons';
 
 import { AlertRuleListItem } from './AlertRuleListItem';
 import { DataSourceIcon } from './Namespace';
@@ -192,6 +194,7 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
   const href = createViewLinkFromIdentifier(ruleIdentifier);
   const originMeta = getRulePluginOrigin(rule);
 
+  const { loading, result: ruleWithLocation, error } = useRuleWithLocation({ ruleIdentifier });
   // 1. get the rule from the ruler API with "ruleWithLocation"
   // 1.1 skip this if this datasource does not have a ruler
   //
@@ -199,7 +202,24 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
   // 2.2 render provisioning badge and contact point metadata, etc.
 
   // @TODO use loading state of ruler rule here
-  const actions = rulerEnabled && !originMeta ? <Skeleton width={50} height={16} /> : null;
+  let actions: ReactNode;
+  if (!rulerEnabled) {
+    actions = null;
+  } else {
+    if (loading) {
+      actions = <Skeleton width={50} height={16} />;
+    } else if (ruleWithLocation) {
+      actions = (
+        <RuleActionsButtons
+          rule={ruleWithLocation.rule}
+          promRule={rule}
+          groupIdentifier={groupIdentifier}
+          compact
+          showCopyLinkButton={true}
+        />
+      );
+    }
+  }
 
   return (
     <AlertRuleListItem

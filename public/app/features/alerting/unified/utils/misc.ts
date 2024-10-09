@@ -6,9 +6,23 @@ import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
-import { alertInstanceKey, isGrafanaRulerRule } from 'app/features/alerting/unified/utils/rules';
+import {
+  alertInstanceKey,
+  isCloudRuleIdentifier,
+  isGrafanaRuleIdentifier,
+  isGrafanaRulerRule,
+  isPrometheusRuleIdentifier,
+} from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
+import {
+  Alert,
+  CombinedRule,
+  FilterState,
+  RuleGroupIdentifier,
+  RuleIdentifier,
+  RulesSource,
+  SilenceFilterState,
+} from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
@@ -55,13 +69,13 @@ export function createMuteTimingLink(muteTimingName: string, alertManagerSourceN
   });
 }
 
-export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string | undefined {
-  if (isCloudRulesSource(ruleSource)) {
+export function createShareLink(ruleIdentifier: RuleIdentifier): string | undefined {
+  if (isCloudRuleIdentifier(ruleIdentifier) || isPrometheusRuleIdentifier(ruleIdentifier)) {
     return createAbsoluteUrl(
-      `/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`
+      `/alerting/${encodeURIComponent(ruleIdentifier.ruleSourceName)}/${encodeURIComponent(escapePathSeparators(ruleIdentifier.ruleName))}/find`
     );
-  } else if (isGrafanaRulerRule(rule.rulerRule)) {
-    return createAbsoluteUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
+  } else if (isGrafanaRuleIdentifier(ruleIdentifier)) {
+    return createAbsoluteUrl(`/alerting/grafana/${ruleIdentifier.uid}/view`);
   }
 
   return;

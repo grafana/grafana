@@ -9,9 +9,10 @@ import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/s
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { useDispatch } from 'app/types';
-import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, RuleGroupIdentifier, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { AlertRuleAction, useAlertRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { createViewLink } from '../../utils/misc';
@@ -24,21 +25,21 @@ import { RedirectToCloneRule } from './CloneRule';
 export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
 
 interface Props {
-  rule: CombinedRule;
-  rulesSource: RulesSource;
+  rule: RulerRuleDTO;
+  promRule: Rule;
+  groupIdentifier: RuleGroupIdentifier;
   /**
    * Should we show the buttons in a "compact" state?
    * i.e. without text and using smaller button sizes
    */
   compact?: boolean;
-  showViewButton?: boolean;
   showCopyLinkButton?: boolean;
 }
 
 /**
  * **Action** buttons to show for an alert rule - e.g. "View", "Edit", "More..."
  */
-export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton, rule, rulesSource }: Props) => {
+export const RuleActionsButtons = ({ compact, showCopyLinkButton, rule, promRule, groupIdentifier }: Props) => {
   const dispatch = useDispatch();
 
   const redirectToListView = compact ? false : true;
@@ -50,39 +51,22 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
   >(undefined);
 
-  const { namespace, group, rulerRule } = rule;
+  const { namespaceName, groupName, dataSourceName } = groupIdentifier;
   const { hasActiveFilters } = useRulesFilter();
 
-  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const isProvisioned = isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance);
 
-  const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
+  const [editRuleSupported, editRuleAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Update);
 
   const canEditRule = editRuleSupported && editRuleAllowed;
 
   const buttons: JSX.Element[] = [];
   const buttonSize = compact ? 'sm' : 'md';
 
-  const sourceName = getRulesSourceName(rulesSource);
+  const identifier = ruleId.fromRulerRule(dataSourceName, namespaceName, groupName, rule);
 
-  const identifier = ruleId.fromCombinedRule(sourceName, rule);
-
-  if (showViewButton) {
-    buttons.push(
-      <LinkButton
-        title="View"
-        size={buttonSize}
-        key="view"
-        variant="secondary"
-        icon="eye"
-        href={createViewLink(rulesSource, rule)}
-      >
-        <Trans i18nKey="common.view">View</Trans>
-      </LinkButton>
-    );
-  }
-
-  if (rulerRule && canEditRule) {
-    const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
+  if (canEditRule) {
+    const identifier = ruleId.fromRulerRule(dataSourceName, namespaceName, groupName, rule);
 
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
@@ -99,9 +83,11 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
       <AlertRuleMenu
         buttonSize={buttonSize}
         rule={rule}
+        promRule={promRule}
+        groupIdentifier={groupIdentifier}
         identifier={identifier}
-        showCopyLinkButton={showCopyLinkButton}
-        handleDelete={() => showDeleteModal(rule)}
+        // showCopyLinkButton={showCopyLinkButton}
+        handleDelete={() => showDeleteModal(rule, groupIdentifier)}
         handleSilence={() => setShowSilenceDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
         onPauseChange={() => {
@@ -115,9 +101,9 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
         }}
       />
       {deleteModal}
-      {isGrafanaAlertingRule(rule.rulerRule) && showSilenceDrawer && (
+      {isGrafanaAlertingRule(rule) && showSilenceDrawer && (
         <AlertmanagerProvider accessType="instance">
-          <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
+          <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
         </AlertmanagerProvider>
       )}
       {redirectToClone?.identifier && (

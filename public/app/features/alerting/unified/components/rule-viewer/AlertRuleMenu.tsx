@@ -4,20 +4,20 @@ import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
-import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { CombinedRule, Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { AlertRuleAction, useAlertRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
-  rule: CombinedRule;
+  promRule: Rule;
+  rule: RulerRuleDTO;
   identifier: RuleIdentifier;
-  showCopyLinkButton?: boolean;
+  groupIdentifier: RuleGroupIdentifier;
   handleSilence: () => void;
   handleDelete: (rule: CombinedRule) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
@@ -30,9 +30,10 @@ interface Props {
  * dropdown menu
  */
 const AlertRuleMenu = ({
+  promRule,
   rule,
   identifier,
-  showCopyLinkButton,
+  groupIdentifier,
   handleSilence,
   handleDelete,
   handleDuplicateRule,
@@ -40,22 +41,22 @@ const AlertRuleMenu = ({
   buttonSize,
 }: Props) => {
   // check all abilities and permissions
-  const [pauseSupported, pauseAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Pause);
+  const [pauseSupported, pauseAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Pause);
   const canPause = pauseSupported && pauseAllowed;
 
-  const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
+  const [deleteSupported, deleteAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
 
-  const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
+  const [duplicateSupported, duplicateAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Duplicate);
   const canDuplicate = duplicateSupported && duplicateAllowed;
 
-  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
+  const [silenceSupported, silenceAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Silence);
   const canSilence = silenceSupported && silenceAllowed;
 
-  const [exportSupported, exportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
+  const [exportSupported, exportAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.ModifyExport);
   const canExport = exportSupported && exportAllowed;
 
-  const ruleExtensionLinks = useRulePluginLinkExtension(rule);
+  const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
 
@@ -63,21 +64,22 @@ const AlertRuleMenu = ({
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
    * We should show it in development mode
    */
-  const shouldShowDeclareIncidentButton =
-    (!isOpenSourceEdition() || isLocalDevEnv()) &&
-    isAlertingRule(rule.promRule) &&
-    rule.promRule.state === PromAlertingRuleState.Firing;
-  const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
+  // @TODO Migrate "declare incident button" to plugin links extensions
+  // const shouldShowDeclareIncidentButton =
+  //   (!isOpenSourceEdition() || isLocalDevEnv()) &&
+  //   isAlertingRulerRule(rule) &&
+  //   rule.promRule.state === PromAlertingRuleState.Firing;
+  const shareUrl = createShareLink(identifier);
 
   const showDivider =
-    [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) &&
-    [showCopyLinkButton, canExport].some(Boolean);
+    [canPause, canSilence, /*shouldShowDeclareIncidentButton,*/ canDuplicate].some(Boolean) &&
+    [canExport].some(Boolean);
 
   const menuItems = (
     <>
       {canPause && <MenuItemPauseRule rule={rule} onPauseChange={onPauseChange} />}
       {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}
-      {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
+      {/* {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />} */}
       {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
       {showDivider && <Menu.Divider />}
       {shareUrl && <Menu.Item label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />}

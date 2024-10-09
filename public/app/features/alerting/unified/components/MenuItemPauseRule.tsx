@@ -12,7 +12,7 @@ import { isLoading } from '../hooks/useAsync';
 import { stringifyErrorLike } from '../utils/misc';
 
 interface Props {
-  rule: CombinedRule;
+  rule: RulerRule;
   /**
    * Method invoked after the request to change the paused state has completed
    */
@@ -27,7 +27,7 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
   const notifyApp = useAppNotification();
   const [pauseRule, updateState] = usePauseRuleInGroup();
 
-  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+  const isPaused = isGrafanaRulerRule(rule) && isGrafanaRulerRulePaused(rule);
   const icon = isPaused ? 'play' : 'pause';
   const title = isPaused ? 'Resume evaluation' : 'Pause evaluation';
 
@@ -35,13 +35,13 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
    * Triggers API call to update the current rule to the new `is_paused` state
    */
   const setRulePause = async (newIsPaused: boolean) => {
-    if (!isGrafanaRulerRule(rule.rulerRule)) {
+    if (!isGrafanaRulerRule(rule)) {
       return;
     }
 
     try {
       const ruleGroupId = getRuleGroupLocationFromCombinedRule(rule);
-      const ruleUID = rule.rulerRule.grafana_alert.uid;
+      const ruleUID = rule.grafana_alert.uid;
 
       await pauseRule.execute(ruleGroupId, ruleUID, newIsPaused);
     } catch (error) {
