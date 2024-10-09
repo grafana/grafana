@@ -72,7 +72,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingSilenceRead,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () =>
+          import(
+            /* webpackChunkName: "SilencesTablePage" */ 'app/features/alerting/unified/components/silences/SilencesTable'
+          )
       ),
     },
     {
@@ -84,13 +87,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingSilenceUpdate,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () => import(/* webpackChunkName: "NewSilencePage" */ 'app/features/alerting/unified/NewSilencePage')
       ),
     },
     {
       path: '/alerting/silence/:id/edit',
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () =>
+          import(
+            /* webpackChunkName: "ExistingSilenceEditorPage" */ 'app/features/alerting/unified/components/silences/SilencesEditor'
+          )
       ),
     },
     {
