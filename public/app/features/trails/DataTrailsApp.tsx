@@ -10,6 +10,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
+import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
@@ -32,6 +33,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
 
     return (
       <Routes>
+        {/* The routes are relative to the HOME_ROUTE */}
         <Route
           path={'/'}
           element={
@@ -45,7 +47,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
             </Page>
           }
         />
-        <Route path={'/trail'} element={<DataTrailView trail={trail} />} />
+        <Route path={TRAILS_ROUTE.replace(HOME_ROUTE, '')} element={<DataTrailView trail={trail} />} />
       </Routes>
     );
   };
