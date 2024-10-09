@@ -235,17 +235,17 @@ function getStyles(theme: GrafanaTheme2) {
     startButton: css({
       fontWeight: theme.typography.fontWeightLight,
     }),
-    column: css({
-      display: 'flex',
-      flexGrow: 1,
-      flexDirection: 'column',
-      textAlign: 'center',
-      marginBottom: '20px', // Add 20px space below the text, currently not working/being applied
-    }),
+    // column: css({
+    //   display: 'flex',
+    //   flexGrow: 1,
+    //   flexDirection: 'column',
+    //   textAlign: 'center',
+    //   marginBottom: '20px', // Add 20px space below the text, currently not working/being applied
+    // }),
     trailList: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns
-      gap: '31px',
+      gap: theme.spacing(3),
       alignItems: 'stretch', // vertically center cards in their boxes
       justifyItems: 'center',
     }),
@@ -253,7 +253,7 @@ function getStyles(theme: GrafanaTheme2) {
       boxSizing: 'border-box',
       maxWidth: '318px',
       width: '100%', // Make the card take up the full width of the grid cell
-      height: '100%', // Make the card take up the full height of the grid cell
+      height: 'inherit', // Make the card take up the full height of the grid cell
       backgroundColor: theme.colors.background.secondary, // Ensure the background color takes up the whole space
     }),
     verticalLine: css({

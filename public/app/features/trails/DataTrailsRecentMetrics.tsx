@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, AdHocFiltersVariable, SceneObjectBase } from '@grafana/scenes';
-import { Card, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Card, useStyles2 } from '@grafana/ui';
 
 // import { getStyles } from './DataTrailCard';
 
@@ -31,25 +31,30 @@ function RecentExploration({ model }: Props) {
   const styles = useStyles2(getStyles);
   const { metric, datasource, filters, createdAt } = model.useState();
   return (
-    <div>
+    <>
       <Card onClick={onSelect} className={styles.card}>
         <Card.Heading>
           <div className={styles.metricLabel}>Last metric:</div>
           <div className={styles.metricValue}>{metric}</div>
         </Card.Heading>
-        <div className={styles.meta}>
-          <Card.Meta separator={'|'}>{filters.map((f) => `${f.key}: ${f.value}`)}</Card.Meta>
-        </div>
+        <Card.Meta separator={'|'} className={styles.meta}>
+          {filters.map((f) => (
+            <span key={f.key}>
+              {f.key}: {f.value}
+            </span>
+          ))}
+        </Card.Meta>
+        {/* </div> */}
         <div className={styles.datasource}>
           <div className={styles.secondaryFont}>Datasource: </div>
           <div className={styles.primaryFont}>{datasource && getDataSourceName(datasource)}</div>
         </div>
-        <div className={styles.date}>
-          <div className={styles.secondaryFont}>Date created: </div>
-          <div className={styles.primaryFont}>{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}</div>
-        </div>
       </Card>
-    </div>
+      <div className={styles.date}>
+        <div className={styles.secondaryFont}>Date created: </div>
+        <div className={styles.primaryFont}>{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}</div>
+      </div>
+    </>
   );
 }
 
@@ -75,6 +80,7 @@ export function getStyles(theme: GrafanaTheme2) {
       marginLeft: '8px', // Add some space between the label and the value
       // lineHeight: '22px', /* 157.143% */
       // letterSpacing: '0.021px',
+      wordBreak: 'break-all',
     }),
     tag: css({
       maxWidth: '260px',
@@ -82,9 +88,10 @@ export function getStyles(theme: GrafanaTheme2) {
       textOverflow: 'ellipsis',
     }),
     card: css({
-      // display: 'flex',
-      padding: theme.spacing(1),
-      height: '100%',
+      // padding: theme.spacing(1),
+      height: '152px',
+      alignItems: 'start',
+      marginBottom: 0,
     }),
     secondary: css({
       color: theme.colors.text.secondary,
@@ -95,14 +102,20 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     date: css({
       // gridArea: 'Actions',
-      position: 'absolute',
-      bottom: '0px',
+      // position: 'absolute',
+      // bottom: '0px',
+      border: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
+      borderRadius: theme.shape.radius.default,
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+      backgroundColor: theme.colors.background.primary,
     }),
     meta: css({
+      flexWrap: 'wrap',
       width: '100%',
       gridArea: 'Meta',
       margin: theme.spacing(1, 0, 0),
       color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
       // lineHeight: theme.typography.body.lineHeight,
     }),
     actions: css({
