@@ -42,12 +42,6 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   urlFolderUid?: string;
-  // A temporary approach not to clean the dashboard from local storage when navigating from Explore to Dashboard
-  // We currently need it as there are two flows of fetching dashboard. The legacy one (initDashboard), uses the new one(DashboardScenePageStateManager.fetch) where the
-  // removal of the dashboard from local storage is implemented. So in the old flow we wouldn't be able to early return dashboard from local storage, if we prematurely
-  // removed it when prefetching the dashboard in DashboardPageProxy.
-  // This property will be removed when the old flow (initDashboard) is removed.
-  keepDashboardFromExploreInLocalStorage?: boolean;
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {

@@ -36,7 +36,6 @@ export function DashboardScenePage({ route, queryParams, history }: Props) {
         uid: uid ?? '',
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
-        keepDashboardFromExploreInLocalStorage: false,
       });
     }
 
