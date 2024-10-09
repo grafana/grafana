@@ -140,10 +140,6 @@ export interface LdapPayload {
 }
 
 export interface MapKeyCertConfigured {
-  rootCaCertValue: boolean;
-  clientCertValue: boolean;
   clientKeyCertValue: boolean;
-  rootCaCertPath: boolean;
-  clientCertPath: boolean;
   clientKeyCertPath: boolean;
 }
