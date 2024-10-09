@@ -7,7 +7,7 @@ import { createAddedLinkConfig, logWarning } from '../../plugins/extensions/util
 import { changeCorrelationEditorDetails } from '../state/main';
 import { runQueries } from '../state/query';
 
-import { AddToDashboardForm } from './AddToDashboard/AddToDashboardForm';
+import { ExploreToDashboardPanel } from './AddToDashboard/ExploreToDashboardPanel';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
 
@@ -35,7 +35,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         onClick: (_, { context, openModal }) => {
           openModal({
             title: getAddToDashboardTitle(),
-            body: ({ onDismiss }) => <AddToDashboardForm onClose={onDismiss!} exploreId={context?.exploreId!} />,
+            body: ({ onDismiss }) => <ExploreToDashboardPanel onClose={onDismiss!} exploreId={context?.exploreId!} />,
           });
         },
       }),
