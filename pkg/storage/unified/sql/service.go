@@ -65,7 +65,7 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
-	authn, err := grpcutils.NewGrpcAuthenticator(cfg)
+	authn, err := grpcutils.NewGrpcAuthenticator(cfg, tracing)
 	if err != nil {
 		return nil, err
 	}

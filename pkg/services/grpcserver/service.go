@@ -73,7 +73,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 
 	var opts []grpc.ServerOption
 
-	namespaceAuthz := grpcutils.NewNamespaceAuthorizer(cfg)
+	namespaceAuthz := grpcutils.NewNamespaceAuthorizer(cfg, tracer)
 
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.

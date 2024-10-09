@@ -6,10 +6,11 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error) {
+func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
 	authCfg, err := ReadGrpcServerConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -33,6 +34,7 @@ func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error)
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{
 		authnlib.WithIDTokenAuthOption(true),
 		authnlib.WithKeyRetrieverOption(keyRetriever),
+		authnlib.WithTracerAuthOption(tracer),
 	}
 	if authCfg.Mode == ModeOnPrem {
 		grpcOpts = append(grpcOpts,
