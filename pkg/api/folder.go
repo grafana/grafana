@@ -21,7 +21,6 @@ import (
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -887,7 +886,7 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return folderDTO, nil
 	}
 
-	parentsFullPath, err := folders.GetParentTitles(f.Fullpath)
+	parentsFullPath, err := internalfolders.GetParentTitles(f.Fullpath)
 	if err != nil {
 		return dtos.Folder{}, err
 	}

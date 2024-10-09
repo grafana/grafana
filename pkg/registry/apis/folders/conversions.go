@@ -247,10 +247,10 @@ func GetParentTitles(fullPath string) ([]string, error) {
 	var start int
 	titles := []string{}
 	for _, i := range indices {
-		titles = append(titles, string(fullPath[start:i[0]+1]))
+		titles = append(titles, fullPath[start:i[0]+1])
 		start = i[0] + 2
 	}
 
-	titles = append(titles, string(fullPath[start:]))
+	titles = append(titles, fullPath[start:])
 	return titles, nil
 }
