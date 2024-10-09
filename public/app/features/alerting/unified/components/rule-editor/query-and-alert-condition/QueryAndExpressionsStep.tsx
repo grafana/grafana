@@ -39,7 +39,8 @@ import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
-import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
+// LOGZ.IO CHANGE :: DEV-46521 remove rule type switch
+// import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
 import {
   addExpressions,
@@ -431,12 +432,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               }}
             />
           </Field>
+          {/* 
+          // LOGZ.IO CHANGE :: DEV-46521 remove rule type switch
           <SmartAlertTypeDetector
             editingExistingRule={editingExistingRule}
             queries={queries}
             rulesSourcesWithRuler={rulesSourcesWithRuler}
             onClickSwitch={onClickSwitch}
-          />
+          /> */}
         </Stack>
       )}
 
@@ -468,12 +471,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               Add query
             </Button>
           </Tooltip>
+          {/* 
+          // LOGZ.IO CHANGE :: DEV-46521 remove rule type switch
           <SmartAlertTypeDetector
             editingExistingRule={editingExistingRule}
             rulesSourcesWithRuler={rulesSourcesWithRuler}
             queries={queries}
             onClickSwitch={onClickSwitch}
-          />
+          /> */}
           {/* Expression Queries */}
           <Stack direction="column" gap={0}>
             <Text element="h5">Expressions</Text>
