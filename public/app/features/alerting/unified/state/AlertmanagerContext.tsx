@@ -56,7 +56,6 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
 
   const sourceFromQuery = queryParams.get(ALERTMANAGER_NAME_QUERY_KEY);
   const sourceFromStore = store.get(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
-  // console.log('sss', sourceFromStore, sourceFromQuery);
   const defaultSource = GRAFANA_RULES_SOURCE_NAME;
 
   // This overrides AM in the store to be in sync with the one in the URL
