@@ -97,6 +97,7 @@ func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 	if err != nil {
 		s.log.Error("Failed to calculate module hash", "plugin", p.ID, "error", err)
 	}
+	mh += "broken"
 	s.moduleHashCache.Store(k, mh)
 	return mh
 }
