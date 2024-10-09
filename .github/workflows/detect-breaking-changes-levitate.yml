@@ -6,6 +6,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  id-token: write
+
 on:
   pull_request:
     paths:
@@ -154,22 +158,16 @@ jobs:
           project_id: 'grafanalabs-global'
           install_components: 'bq'
 
-      - name: Get job URL
-        id: job
-        run: |
-          echo "link=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-
       - name: Detect breaking changes
         id: breaking-changes
         run: ./scripts/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
-          GITHUB_JOB_LINK: ${{ steps.job.outputs.link }}
 
       - name: Persisting the check output
         run: |
             mkdir -p ./levitate
-            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
+            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
 
       - name: Upload check output as artifact
         uses: actions/upload-artifact@v4
@@ -215,15 +213,12 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
           script: |
-            const { data } = await github.rest.issues.listLabelsOnIssue({
-              issue_number: process.env.PR_NUMBER,
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            const labels = data.map(({ name }) => name);
-            const doesExist = labels.includes('levitate breaking change');
-
-            return doesExist ? 1 : 0;
+            return labels.some(label => label.name === 'levitate breaking change') ? 1 : 0
 
       # put the markdown into a variable
       - name: Levitate Markdown
@@ -267,22 +262,24 @@ jobs:
           delete: true
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
-      # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
-      - name: Post to Slack
+      - name: Send Slack Message via Payload
         id: slack
-        if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && env.HAS_SECRETS
-        uses: slackapi/slack-github-action@v1.26.0
+        if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && github.repository == 'grafana/grafana'
+        uses: grafana/shared-workflows/actions/send-slack-message@main
         with:
+          channel-id: "C031SLFH6G0"
           payload:  |
             {
               "channel": "C031SLFH6G0",
-              "text": "Possible breaking changes detected in PR #${{ github.event.pull_request.number }}",
+              "text": ":warning: Possible breaking changes detected in *PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} :warning:",
+              "icon_emoji": ":grot:",
+              "username": "Levitate Bot",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*`grafana-data`* has possible breaking changes"
+                    "text": "*grafana/grafana* repository has possible breaking changes"
                   }
                 },
                 {
@@ -300,9 +297,6 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
-          HAS_SECRETS: ${{ (github.repository == 'grafana/grafana' || secrets.SLACK_LEVITATE_WEBHOOK_URL != '') || '' }}
 
       # Add the label
       - name: Add "levitate breaking change" label
