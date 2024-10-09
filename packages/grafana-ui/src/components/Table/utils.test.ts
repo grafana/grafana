@@ -545,7 +545,8 @@ describe('Table utils', () => {
   });
 
   describe('guessLongestField', () => {
-    it('should guess the longest field correct if there are few records', () => {
+    // FLAKY TEST - https://drone.grafana.net/grafana/grafana/201232/1/5
+    it.skip('should guess the longest field correct if there are few records', () => {
       const data = getWrappableData(10);
       const config = {
         defaults: {
