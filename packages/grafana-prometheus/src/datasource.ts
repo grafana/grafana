@@ -111,6 +111,7 @@ export class PrometheusDatasource
   cacheLevel: PrometheusCacheLevel;
   cache: QueryCache<PromQuery>;
   metricNamesAutocompleteSuggestionLimit: number;
+  seriesEndpoint: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -136,6 +137,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
+    this.seriesEndpoint = instanceSettings.jsonData.seriesEndpoint ?? false;
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv);
@@ -183,6 +185,12 @@ export class PrometheusDatasource
   }
 
   hasLabelsMatchAPISupport(): boolean {
+    // users may choose the series endpoint as it has a POST method
+    // while the label values is only GET
+    if (this.seriesEndpoint) {
+      return false;
+    }
+
     return (
       // https://github.com/prometheus/prometheus/releases/tag/v2.24.0
       this._isDatasourceVersionGreaterOrEqualTo('2.24.0', PromApplication.Prometheus) ||
