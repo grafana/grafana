@@ -545,21 +545,23 @@ describe('Table utils', () => {
   });
 
   describe('guessLongestField', () => {
-    it('should guess the longest field correct if there are few records', () => {
-      const data = getWrappableData(10);
-      const config = {
-        defaults: {
-          custom: {
-            cellOptions: {
-              wrapText: true,
-            },
-          },
-        },
-      };
+    // FLAKY TEST - https://drone.grafana.net/grafana/grafana/201232/1/5
 
-      const longestField = guessLongestField(config, data);
-      expect(longestField?.name).toBe('Lorem 10');
-    });
+    // it('should guess the longest field correct if there are few records', () => {
+    //   const data = getWrappableData(10);
+    //   const config = {
+    //     defaults: {
+    //       custom: {
+    //         cellOptions: {
+    //           wrapText: true,
+    //         },
+    //       },
+    //     },
+    //   };
+    //
+    //   const longestField = guessLongestField(config, data);
+    //   expect(longestField?.name).toBe('Lorem 10');
+    // });
 
     it('should guess the longest field correctly if there are many records', () => {
       const data = getWrappableData(1000);
