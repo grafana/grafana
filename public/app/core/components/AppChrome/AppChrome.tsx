@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
-import { PropsWithChildren, useEffect } from 'react';
+import { PropsWithChildren, useEffect, useLayoutEffect } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationSearchToObject, locationService } from '@grafana/runtime';
@@ -29,13 +30,22 @@ export function AppChrome({ children }: Props) {
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
   const styles = useStyles2(getStyles, searchBarHidden);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
+  const location = useLocation();
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const scopesDashboardsState = useScopesDashboardsState();
   const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
-  const isSingleTopNav = config.featureToggles.singleTopNav;
+
+  // scroll to top of page after a page transition.
+  useLayoutEffect(() => {
+    if (isSingleTopNav) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [location.pathname, isSingleTopNav]);
+
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
