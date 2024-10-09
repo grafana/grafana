@@ -43,7 +43,7 @@
     "not IE 11"
   ],
   "dependencies": {
-    "@emotion/css": "11.13.0",
+    "@emotion/css": "11.13.4",
     "@grafana/data": "11.3.0-pre",
     "@grafana/ui": "11.3.0-pre",
     "@leeoniya/ufuzzy": "1.0.14",
@@ -56,9 +56,9 @@
     "tslib": "2.7.0"
   },
   "devDependencies": {
-    "@babel/core": "7.25.2",
-    "@babel/preset-env": "7.25.4",
-    "@babel/preset-react": "7.24.7",
+    "@babel/core": "7.25.7",
+    "@babel/preset-env": "7.25.7",
+    "@babel/preset-react": "7.25.7",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "15.3.0",
     "@testing-library/dom": "10.0.0",
@@ -67,8 +67,8 @@
     "@testing-library/user-event": "14.5.2",
     "@types/d3": "^7",
     "@types/jest": "^29.5.4",
-    "@types/lodash": "4.17.9",
-    "@types/node": "20.16.9",
+    "@types/lodash": "4.17.10",
+    "@types/node": "20.16.11",
     "@types/react": "18.3.3",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/tinycolor2": "1.4.6",

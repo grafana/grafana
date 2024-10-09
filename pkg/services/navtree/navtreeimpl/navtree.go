@@ -167,6 +167,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
 		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
 	}
+	// double-check and remove admin menu if empty
+	if sec := treeRoot.FindById(navtree.NavIDCfg); sec != nil && len(sec.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
+	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
 		treeRoot.AddSection(&navtree.NavLink{
@@ -351,11 +355,13 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 	dashboardChildNavs := []*navtree.NavLink{}
 
-	dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-		Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
-	})
-
 	if c.IsSignedIn {
+		if c.SignedInUser.HasRole(org.RoleViewer) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+			})
+		}
+
 		if s.cfg.SnapshotEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
@@ -383,7 +389,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestoreUI) && c.SignedInUser.GetOrgRole() == org.RoleAdmin {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestoreUI) && (c.SignedInUser.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",

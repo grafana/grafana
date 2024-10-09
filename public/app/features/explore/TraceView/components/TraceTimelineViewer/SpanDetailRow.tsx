@@ -32,43 +32,42 @@ import TimelineRow from './TimelineRow';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    expandedAccent: css`
-      cursor: pointer;
-      height: 100%;
-      overflow: hidden;
-      position: absolute;
-      width: 100%;
-      &::before {
-        border-left: 1px solid;
-        pointer-events: none;
-        width: 1000px;
-      }
-      &::after {
-        border-right: 1000px solid;
-        border-color: inherit;
-        cursor: pointer;
-        opacity: 0.2;
-      }
+    expandedAccent: css({
+      cursor: 'pointer',
+      height: '100%',
+      overflow: 'hidden',
+      position: 'absolute',
+      width: '100%',
+      '&::before': {
+        borderLeft: '1px solid',
+        pointerEvents: 'none',
+        width: '1000px',
+      },
+      '&::after': {
+        borderRight: '1000px solid',
+        borderColor: 'inherit',
+        cursor: 'pointer',
+        opacity: 0.2,
+      },
 
       /* border-color inherit must come AFTER other border declarations for accent */
-      &::before,
-      &::after {
-        border-color: inherit;
-        content: ' ';
-        position: absolute;
-        height: 100%;
-      }
+      '&::before, &::after': {
+        borderColor: 'inherit',
+        content: '" "',
+        position: 'absolute',
+        height: '100%',
+      },
 
-      &:hover::after {
-        opacity: 0.35;
-      }
-    `,
-    infoWrapper: css`
-      label: infoWrapper;
-      border: 1px solid ${autoColor(theme, '#d3d3d3')};
-      border-top: 3px solid;
-      padding: 0.75rem;
-    `,
+      '&:hover::after': {
+        opacity: 0.35,
+      },
+    }),
+    infoWrapper: css({
+      label: 'infoWrapper',
+      border: `1px solid ${autoColor(theme, '#d3d3d3')}`,
+      borderTop: '3px solid',
+      padding: '0.75rem',
+    }),
   };
 });
 

@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
 	"golang.org/x/exp/slices"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -81,8 +82,8 @@ func ProvideDashboardServiceImpl(
 		metrics:              newDashboardsMetrics(r),
 	}
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, fStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, fStore))
 
 	if err := folderSvc.RegisterService(dashSvc); err != nil {
 		return nil, err
@@ -716,7 +717,13 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	ctx, span := tracer.Start(ctx, "dashboards.service.SearchDashboards")
 	defer span.End()
 
-	res, err := dr.FindDashboards(ctx, query)
+	var res []dashboards.DashboardSearchProjection
+	var err error
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagZanzana) {
+		res, err = dr.FindDashboardsZanzana(ctx, query)
+	} else {
+		res, err = dr.FindDashboards(ctx, query)
+	}
 	if err != nil {
 		return nil, err
 	}

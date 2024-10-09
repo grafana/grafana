@@ -62,10 +62,11 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		ac := acmock.New()
-		db, _ := db.InitTestDBWithCfg(t)
+		db, cfg := db.InitTestDBWithCfg(t)
+		folderPermissions := acmock.NewMockedPermissionsService()
 		store := ProvideStore(db)
 		ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
-			featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+			featuremgmt.WithFeatures(), cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -97,6 +98,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			dashboardFolderStore: folderStore,
 			store:                nestedFolderStore,
 			features:             features,
+			cfg:                  cfg,
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 			db:                   db,
 			accessControl:        acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
@@ -439,6 +441,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
 		features:             featuresFlagOn,
+		cfg:                  cfg,
 		bus:                  b,
 		db:                   db,
 		accessControl:        ac,
@@ -494,7 +497,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac)
 			require.NoError(t, err)
 
-			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac)
+			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, serviceWithFlagOn.store, featuresFlagOn, ac)
 			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOn)
 			require.NoError(t, err)
 
@@ -554,6 +557,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				dashboardFolderStore: folderStore,
 				store:                nestedFolderStore,
 				features:             featuresFlagOff,
+				cfg:                  cfg,
 				bus:                  b,
 				db:                   db,
 				registry:             make(map[string]folder.RegistryService),
@@ -576,7 +580,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac)
 			require.NoError(t, err)
 
-			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac)
+			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, serviceWithFlagOff.store, featuresFlagOff, ac)
 			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOff)
 			require.NoError(t, err)
 
@@ -632,6 +636,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			log:                  slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 			dashboardFolderStore: folderStore,
 			features:             featuresFlagOff,
+			cfg:                  cfg,
 			bus:                  b,
 			db:                   db,
 			registry:             make(map[string]folder.RegistryService),
@@ -705,7 +710,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 					CanEditValue: true,
 				})
 
-				elementService := libraryelements.ProvideService(cfg, db, routeRegister, tc.service, tc.featuresFlag, ac)
+				elementService := libraryelements.ProvideService(cfg, db, routeRegister, tc.service, tc.service.store, tc.featuresFlag, ac)
 				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
@@ -810,6 +815,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		dashboardStore:       &dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		cfg:                  setting.NewCfg(),
 		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
 		tracer:               tracing.InitializeTracerForTest(),
@@ -847,6 +853,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		dashboardStore:       dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		cfg:                  cfg,
 		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
 		tracer:               tracing.InitializeTracerForTest(),
@@ -1479,6 +1486,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
 		features:             featuresFlagOn,
+		cfg:                  cfg,
 		bus:                  b,
 		db:                   db,
 		accessControl:        ac,
@@ -1901,6 +1909,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 			dashboardFolderStore: folderStore,
 			store:                nestedFolderStore,
 			features:             features,
+			cfg:                  cfg,
 			bus:                  b,
 			db:                   db,
 			accessControl:        ac,
@@ -1983,6 +1992,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
 		features:             featuresFlagOff,
+		cfg:                  cfg,
 		bus:                  b,
 		db:                   db,
 		accessControl:        ac,
@@ -2070,6 +2080,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
 		features:             features,
+		cfg:                  cfg,
 		bus:                  b,
 		db:                   db,
 		accessControl:        ac,
@@ -2533,6 +2544,7 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 		dashboardFolderStore: dashboardFolderStore,
 		store:                nestedFolderStore,
 		features:             features,
+		cfg:                  setting.NewCfg(),
 		accessControl:        ac,
 		db:                   db,
 		metrics:              newFoldersMetrics(nil),

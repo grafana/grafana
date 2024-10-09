@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -65,9 +66,11 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
+export type DashboardPageParams = { slug: string; uid: string; type: string; accessToken: string };
 export type Props = Themeable2 &
-  GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
-  ConnectedProps<typeof connector>;
+  Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> &
+  // The params returned from useParams are all optional, so we need to match that type here
+  ConnectedProps<typeof connector> & { params: Partial<DashboardPageParams> };
 
 export interface State {
   editPanel: PanelModel | null;
@@ -137,7 +140,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.initDashboard();
-    this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
+    this.forceRouteReloadCounter = (this.props.location.state as any)?.routeReloadCounter || 0;
   }
 
   componentWillUnmount() {
@@ -150,21 +153,21 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, match, queryParams } = this.props;
+    const { dashboard, params, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
     }
 
     this.props.initDashboard({
-      urlSlug: match.params.slug,
-      urlUid: match.params.uid,
-      urlType: match.params.type,
+      urlSlug: params.slug,
+      urlUid: params.uid,
+      urlType: params.type,
       urlFolderUid: queryParams.folderUid,
       panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
       fixUrl: true,
-      accessToken: match.params.accessToken,
+      accessToken: params.accessToken,
       keybindingSrv: this.context.keybindings,
     });
 
@@ -173,15 +176,15 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { dashboard, match, templateVarsChangedInUrl } = this.props;
-    const routeReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter;
+    const { dashboard, params, templateVarsChangedInUrl } = this.props;
+    const routeReloadCounter = (this.props.location.state as any)?.routeReloadCounter;
 
     if (!dashboard) {
       return;
     }
 
     if (
-      prevProps.match.params.uid !== match.params.uid ||
+      prevProps.params.uid !== params.uid ||
       (routeReloadCounter !== undefined && this.forceRouteReloadCounter !== routeReloadCounter)
     ) {
       this.initDashboard();
@@ -359,6 +362,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const { editPanel, viewPanel, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);
     const styles = getStyles(theme);
+    const isSingleTopNav = config.featureToggles.singleTopNav;
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -434,9 +438,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           layout={PageLayoutType.Canvas}
           className={pageClassName}
           onSetScrollRef={this.setScrollRef}
-        >
-          {showToolbar && (
-            <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+          toolbar={
+            isSingleTopNav ? (
               <DashNav
                 dashboard={dashboard}
                 title={dashboard.title}
@@ -444,6 +447,23 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                 isFullscreen={!!viewPanel}
                 kioskMode={kioskMode}
                 hideTimePicker={dashboard.timepicker.hidden}
+              />
+            ) : undefined
+          }
+        >
+          {showToolbar && (
+            <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+              <AppChromeUpdate
+                actions={
+                  <DashNav
+                    dashboard={dashboard}
+                    title={dashboard.title}
+                    folderTitle={dashboard.meta.folderTitle}
+                    isFullscreen={!!viewPanel}
+                    kioskMode={kioskMode}
+                    hideTimePicker={dashboard.timepicker.hidden}
+                  />
+                }
               />
             </header>
           )}
@@ -511,7 +531,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   if (!pageNav || dashboard.title !== pageNav.text || dashboard.meta.folderUrl !== pageNav.parentItem?.url) {
     pageNav = {
       text: dashboard.title,
-      url: locationUtil.getUrlForPartial(props.history.location, {
+      url: locationUtil.getUrlForPartial(props.location, {
         editview: null,
         editPanel: null,
         viewPanel: null,
@@ -521,7 +541,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
 
   if (props.route.routeName === DashboardRoutes.Path) {
     sectionNav = getRootContentNavModel();
-    const pageNav = getPageNavFromSlug(props.match.params.slug!);
+    const pageNav = getPageNavFromSlug(props.params.slug!);
     if (pageNav?.parentItem) {
       pageNav.parentItem = pageNav.parentItem;
     }
