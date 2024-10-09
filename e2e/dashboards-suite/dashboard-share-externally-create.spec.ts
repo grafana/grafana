@@ -22,7 +22,9 @@ describe('Shared dashboards', () => {
     e2e.pages.ShareDashboardDrawer.ShareExternally.container().should('not.exist');
   });
 
-  it('Create a shared dashboard and check API', () => {
+  // Skipping due to being a flaky test
+  // https://drone.grafana.net/grafana/grafana/201217/6/14
+  it.skip('Create a shared dashboard and check API', () => {
     openDashboard();
 
     // Open share externally drawer
