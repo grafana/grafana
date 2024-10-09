@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	alertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -41,6 +41,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	pluginStore pluginstore.Store,
+	alertingStore *alertstore.DBstore,
 	encryptionService encryption.Internal,
 	notificatonService *notifications.NotificationService,
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService,
@@ -60,6 +61,7 @@ func ProvideService(
 		SQLStore:                     sqlStore,
 		ac:                           ac,
 		pluginStore:                  pluginStore,
+		alertingStore:                alertingStore,
 		EncryptionService:            encryptionService,
 		NotificationService:          notificatonService,
 		newDashboardProvisioner:      dashboards.New,
@@ -137,6 +139,7 @@ type ProvisioningServiceImpl struct {
 	orgService                   org.Service
 	ac                           accesscontrol.AccessControl
 	pluginStore                  pluginstore.Store
+	alertingStore                *alertstore.DBstore
 	EncryptionService            encryption.Internal
 	NotificationService          *notifications.NotificationService
 	log                          log.Logger
@@ -260,16 +263,9 @@ func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) erro
 
 func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error {
 	alertingPath := filepath.Join(ps.Cfg.ProvisioningPath, "alerting")
-	st := store.DBstore{
-		Cfg:              ps.Cfg.UnifiedAlerting,
-		SQLStore:         ps.SQLStore,
-		Logger:           ps.log,
-		FolderService:    nil, // we don't use it yet
-		DashboardService: ps.dashboardService,
-	}
 	ruleService := provisioning.NewAlertRuleService(
-		st,
-		st,
+		ps.alertingStore,
+		ps.alertingStore,
 		ps.folderService,
 		//ps.dashboardService,
 		ps.quotaService,
@@ -278,26 +274,26 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ps.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
 		ps.log,
-		notifier.NewCachedNotificationSettingsValidationService(&st),
+		notifier.NewCachedNotificationSettingsValidationService(ps.alertingStore),
 		alertingauthz.NewRuleService(ps.ac),
 	)
-	configStore := legacy_storage.NewAlertmanagerConfigStore(&st)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore)
 	receiverSvc := notifier.NewReceiverService(
 		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
 		configStore,
-		st,
-		st,
+		ps.alertingStore,
+		ps.alertingStore,
 		ps.secretService,
 		ps.SQLStore,
 		ps.log,
 		ps.resourcePermissions,
 	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
-		st, ps.SQLStore, receiverSvc, ps.log, &st, ps.resourcePermissions)
+		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
-		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
-	mutetimingsService := provisioning.NewMuteTimingService(configStore, st, &st, ps.log, &st)
-	templateService := provisioning.NewTemplateService(configStore, st, &st, ps.log)
+		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
+	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.alertingStore, ps.alertingStore, ps.log, ps.alertingStore)
+	templateService := provisioning.NewTemplateService(configStore, ps.alertingStore, ps.alertingStore, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
 		RuleService:                *ruleService,
