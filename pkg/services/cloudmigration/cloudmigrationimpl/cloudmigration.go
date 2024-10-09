@@ -839,7 +839,7 @@ func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []
 			// if the plugin is not found, it means it was uninstalled, meaning it wasn't core
 			if !p.IsCorePlugin() || !found {
 				r.Status = cloudmigration.ItemStatusWarning
-				r.ErrorCode = "ONLY_CORE_DATA_SOURCES" // TODO define error code
+				r.ErrorCode = cloudmigration.ErrOnlyCoreDataSources
 				r.Error = "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack."
 			}
 
