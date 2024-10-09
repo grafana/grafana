@@ -15,6 +15,16 @@ jest.mock('../../utils/measureText', () => {
 });
 
 describe('AutoSizeInput', () => {
+  it('should support default Input API', () => {
+    const onChange = jest.fn();
+    render(<AutoSizeInput onChange={onChange} value="" />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+    fireEvent.change(input, { target: { value: 'foo' } });
+
+    expect(onChange).toHaveBeenCalled();
+  });
+
   it('should have default minWidth when empty', () => {
     render(<AutoSizeInput />);
 
