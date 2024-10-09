@@ -4,6 +4,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   getFilteredRowModel,
+  getGroupedRowModel,
+  getExpandedRowModel,
 } from '@tanstack/react-table';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -181,7 +183,7 @@ export const Table = memo((props: Props) => {
   }, [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer, hasUniqueId, data]);
 
   const {
-    getTableProps,
+    // getTableProps,
     headerGroups,
     footerGroups,
     rows,
@@ -190,9 +192,9 @@ export const Table = memo((props: Props) => {
     page,
     state,
     gotoPage,
-    setPageSize,
-    pageOptions,
-    toggleAllRowsExpanded,
+    // setPageSize,
+    // pageOptions,
+    // toggleAllRowsExpanded,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
   // Inputs
@@ -225,9 +227,17 @@ export const Table = memo((props: Props) => {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
-  console.log(tableInstance);
+  // const rows = tableInstance.getRowModel().rows;
+  const pageOptions = tableInstance.getPageOptions();
+  const setPageSize = tableInstance.setPageSize;
+  // const headerGroups = tableInstance.getHeaderGroups();
+  const toggleAllRowsExpanded = tableInstance.getToggleAllRowsExpandedHandler();
+  // const footerGroups = tableInstance.getFooterGroups;
+
   const extendedState = state as GrafanaTableState;
   toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
 
@@ -338,14 +348,7 @@ export const Table = memo((props: Props) => {
   const longestField = guessLongestField(fieldConfig, data);
 
   return (
-    <div
-      {...getTableProps()}
-      className={tableStyles.table}
-      aria-label={ariaLabel}
-      role="table"
-      ref={tableDivRef}
-      style={{ width, height }}
-    >
+    <div className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef} style={{ width, height }}>
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && (
