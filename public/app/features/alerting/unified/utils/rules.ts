@@ -172,10 +172,8 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule: CombinedRule): RulePluginOrigin | undefined {
-  // com.grafana.origin=plugin/<plugin-identifier>
-  // Prom and Mimir do not support dots in label names 😔
-  const origin = rule.labels[GRAFANA_ORIGIN_LABEL];
+export function getRulePluginOrigin(rule: Rule | CombinedRule): RulePluginOrigin | undefined {
+  const origin = rule.labels?.[GRAFANA_ORIGIN_LABEL];
   if (!origin) {
     return undefined;
   }

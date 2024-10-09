@@ -3,7 +3,7 @@ import { PropsWithChildren, ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Pagination, Stack, Text, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { LinkButton, Pagination, Stack, Text, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -11,9 +11,11 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { getAllRulesSources, isGrafanaRulesSource } from '../../utils/datasource';
 import { fromRule, hashRule, stringifyIdentifier } from '../../utils/rule-id';
-import { isAlertingRule } from '../../utils/rules';
+import { getRulePluginOrigin, isAlertingRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { Spacer } from '../Spacer';
+import { WithReturnButton } from '../WithReturnButton';
 import RulesFilter from '../rules/Filter/RulesFilter';
 
 import { AlertRuleListItem } from './AlertRuleListItem';
@@ -121,7 +123,7 @@ const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
     const rulerEnabled = Boolean(dataSourceInfo.rulerConfig);
 
     return (
-      <DataSourceSection name={name} application={application}>
+      <DataSourceSection name={name} application={application} uid={uid}>
         <PaginatedRuleGroupLoader
           ruleSourceName={dataSourceInfo?.dataSourceSettings.name}
           rulerEnabled={rulerEnabled}
@@ -188,12 +190,16 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
 
   const ruleIdentifier = fromRule(dataSourceName, namespaceName, groupName, rule);
   const href = createViewLinkFromIdentifier(ruleIdentifier);
+  const originMeta = getRulePluginOrigin(rule);
 
   // 1. get the rule from the ruler API with "ruleWithLocation"
   // 1.1 skip this if this datasource does not have a ruler
   //
   // 2.1 render action buttons
   // 2.2 render provisioning badge and contact point metadata, etc.
+
+  // @TODO use loading state of ruler rule here
+  const actions = rulerEnabled && !originMeta ? <Skeleton width={50} height={16} /> : null;
 
   return (
     <AlertRuleListItem
@@ -206,8 +212,8 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
       labels={rule.labels}
       isProvisioned={undefined}
       instancesCount={undefined}
-      actions={rulerEnabled ? <Skeleton width={50} height={16} /> : null}
-      origin={undefined}
+      actions={actions}
+      origin={originMeta}
     />
   );
 }
@@ -220,12 +226,13 @@ function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: str
 }
 
 interface DataSourceSectionProps extends PropsWithChildren {
+  uid?: string;
   name?: string;
   loader?: ReactNode;
   application?: RulesSourceApplication;
 }
 
-const DataSourceSection = ({ name, application, children, loader }: DataSourceSectionProps) => {
+const DataSourceSection = ({ uid, name, application, children, loader }: DataSourceSectionProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -238,6 +245,17 @@ const DataSourceSection = ({ name, application, children, loader }: DataSourceSe
               <Text variant="body" weight="bold">
                 {name}
               </Text>
+            )}
+            <Spacer />
+            {uid && (
+              <WithReturnButton
+                title="alert rules"
+                component={
+                  <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${uid}`}>
+                    Configure
+                  </LinkButton>
+                }
+              />
             )}
           </Stack>
         )}
@@ -258,14 +276,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   itemsWrapper: css({
     position: 'relative',
-    marginLeft: theme.spacing(2),
+    marginLeft: theme.spacing(1.5),
 
     '&:before': {
       content: "''",
       position: 'absolute',
       height: '100%',
 
-      marginLeft: `-${theme.spacing(2)}`,
+      marginLeft: `-${theme.spacing(1.5)}`,
       borderLeft: `solid 1px ${theme.colors.border.weak}`,
     },
   }),

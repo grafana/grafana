@@ -65,7 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `solid 1px ${theme.colors.border.weak}`,
     borderBottom: 'none',
 
-    marginLeft: theme.spacing(2),
+    marginLeft: theme.spacing(1.5),
 
     // '&:before': {
     //   content: "''",
