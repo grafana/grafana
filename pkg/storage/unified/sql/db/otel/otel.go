@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"sync"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -121,6 +122,21 @@ func NewInstrumentedDB(d db.DB, tracer trace.Tracer) db.DB {
 
 func (x *dbOtel) init(ctx context.Context) {
 	x.initOnce.Do(func() {
+		// there is a chance that the context of the first operation run on the
+		// `*dbOtel` has a very soon deadline, is cancelled by the client while
+		// we use it, or is even already done. This would cause this operation,
+		// which is run only once, to fail and we would no longer be able to
+		// know the database details. Thus, we impose a long timeout that we
+		// know is very likely to succeed, since getting the server version
+		// should be nearly a nop. We could instead create a new context with
+		// timeout from context.Background(), but we opt to derive one from the
+		// provided context just in case any value in it would be meaningful to
+		// the downstream implementation in `x.DB`.
+		const timeout = 5 * time.Second
+		ctx = context.WithoutCancel(ctx)
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
 		row := x.DB.QueryRowContext(ctx, dbVersionDefaultSQL)
 		if row.Err() != nil {
 			row = x.DB.QueryRowContext(ctx, dbVersionSQLiteSQL)
