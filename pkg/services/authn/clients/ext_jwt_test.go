@@ -228,6 +228,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         "this-uid",
 				UID:                        "this-uid",
+				Name:                       "this-uid",
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaims,
@@ -246,6 +247,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         "this-uid",
 				UID:                        "this-uid",
+				Name:                       "this-uid",
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWildcard,
@@ -343,6 +345,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         "this-uid",
 				UID:                        "this-uid",
+				Name:                       "this-uid",
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWithStackSet,
@@ -369,6 +372,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         "this-uid",
 				UID:                        "this-uid",
+				Name:                       "this-uid",
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWithDeprecatedStackClaimSet,
