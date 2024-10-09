@@ -7,30 +7,28 @@ import { DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
-  alertInstanceKey,
-  isCloudRuleIdentifier,
-  isGrafanaRuleIdentifier,
-  isGrafanaRulerRule,
-  isPrometheusRuleIdentifier,
+    alertInstanceKey,
+    isCloudRuleIdentifier,
+    isGrafanaRuleIdentifier,
+    isPrometheusRuleIdentifier
 } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
-  Alert,
-  CombinedRule,
-  FilterState,
-  RuleGroupIdentifier,
-  RuleIdentifier,
-  RulesSource,
-  SilenceFilterState,
+    Alert,
+    CombinedRule,
+    FilterState,
+    RuleIdentifier,
+    RulesSource,
+    SilenceFilterState
 } from 'app/types/unified-alerting';
 import {
-  GrafanaAlertState,
-  PromAlertingRuleState,
-  mapStateWithReasonToBaseState,
+    GrafanaAlertState,
+    PromAlertingRuleState,
+    mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
-import { getRulesSourceName, isCloudRulesSource } from './datasource';
+import { getRulesSourceName } from './datasource';
 import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';

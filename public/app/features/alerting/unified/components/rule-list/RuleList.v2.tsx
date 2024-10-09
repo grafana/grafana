@@ -9,18 +9,16 @@ import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
-import { useRuleWithLocation } from '../../hooks/useCombinedRule';
 import { getAllRulesSources, isGrafanaRulesSource } from '../../utils/datasource';
 import { fromRule, hashRule, stringifyIdentifier } from '../../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule } from '../../utils/rules';
+import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { Spacer } from '../Spacer';
 import { WithReturnButton } from '../WithReturnButton';
 import RulesFilter from '../rules/Filter/RulesFilter';
-import { RuleActionsButtons } from '../rules/RuleActionsButtons';
 
-import { AlertRuleListItem } from './AlertRuleListItem';
+import { AlertRuleListItem, RecordingRuleListItem } from './AlertRuleListItem';
 import { DataSourceIcon } from './Namespace';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
@@ -45,47 +43,6 @@ const RuleList = withErrorBoundary(
               return <DataSourceLoader key={ruleSource.uid} uid={ruleSource.uid} name={ruleSource.name} />;
             }
           })}
-          {/* <DataSourceSection name="Grafana" application={'grafana'}>
-            <ListSection title="Namespace">
-              <ListGroup name={'Group'} onToggle={noop}>
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-              </ListGroup>
-              <ListGroup name={'Group 2'} onToggle={noop}>
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-              </ListGroup>
-            </ListSection>
-            <ListSection title="Namespace 2">
-              <ListGroup name={'Group'} onToggle={noop}>
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-                <AlertRuleListItem name={'My rule'} href={''} />
-              </ListGroup>
-            </ListSection>
-            <Pagination currentPage={1} numberOfPages={0} onNavigate={noop} />
-          </DataSourceSection>
-
-          <DataSourceSection name="Mimir Data Source" application={PromApplication.Mimir}>
-            <ListSection title="Namespace">
-              <ListGroup name={'Group'} onToggle={noop}>
-                <AlertRuleListItem name={'My rule'} href={''} />
-              </ListGroup>
-            </ListSection>
-          </DataSourceSection>
-
-          <DataSourceSection name="Loki Data Source" application="loki">
-            <ListSection title="Namespace">
-              <ListGroup name={'Group'} onToggle={noop}>
-                <AlertRuleListItem name={'My rule'} href={''} />
-              </ListGroup>
-            </ListSection>
-          </DataSourceSection> */}
         </Stack>
       </AlertingPageWrapper>
     );
@@ -194,48 +151,65 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
   const href = createViewLinkFromIdentifier(ruleIdentifier);
   const originMeta = getRulePluginOrigin(rule);
 
-  const { loading, result: ruleWithLocation, error } = useRuleWithLocation({ ruleIdentifier });
+  // const { loading, result: ruleWithLocation, error } = useRuleWithLocation({ ruleIdentifier });
   // 1. get the rule from the ruler API with "ruleWithLocation"
   // 1.1 skip this if this datasource does not have a ruler
   //
   // 2.1 render action buttons
   // 2.2 render provisioning badge and contact point metadata, etc.
 
-  // @TODO use loading state of ruler rule here
-  let actions: ReactNode;
-  if (!rulerEnabled) {
-    actions = null;
-  } else {
-    if (loading) {
-      actions = <Skeleton width={50} height={16} />;
-    } else if (ruleWithLocation) {
-      actions = (
-        <RuleActionsButtons
-          rule={ruleWithLocation.rule}
-          promRule={rule}
-          groupIdentifier={groupIdentifier}
-          compact
-          showCopyLinkButton={true}
-        />
-      );
-    }
+  // let actions: ReactNode;
+
+  // if (!rulerEnabled) {
+  //   actions = null;
+  // } else {
+  //   if (loading) {
+  //     actions = <Skeleton width={50} height={16} />;
+  //   } else if (ruleWithLocation) {
+  //     actions = (
+  //       <RuleActionsButtons
+  //         rule={ruleWithLocation.rule}
+  //         promRule={rule}
+  //         groupIdentifier={groupIdentifier}
+  //         compact
+  //         showCopyLinkButton={true}
+  //       />
+  //     );
+  //   }
+  // }
+
+  if (isAlertingRule(rule)) {
+    return (
+      <AlertRuleListItem
+        name={rule.name}
+        href={href}
+        summary={rule.annotations?.summary}
+        state={rule.state}
+        health={rule.health}
+        error={rule.lastError}
+        labels={rule.labels}
+        isProvisioned={undefined}
+        instancesCount={undefined}
+        actions={null}
+        origin={originMeta}
+      />
+    );
   }
 
-  return (
-    <AlertRuleListItem
-      name={rule.name}
-      href={href}
-      summary={isAlertingRule(rule) ? rule.annotations?.summary : undefined}
-      state={isAlertingRule(rule) ? rule.state : undefined}
-      health={rule.health}
-      error={rule.lastError}
-      labels={rule.labels}
-      isProvisioned={undefined}
-      instancesCount={undefined}
-      actions={actions}
-      origin={originMeta}
-    />
-  );
+  if (isRecordingRule(rule)) {
+    return (
+      <RecordingRuleListItem
+        name={rule.name}
+        href={href}
+        health={rule.health}
+        error={rule.lastError}
+        labels={rule.labels}
+        isProvisioned={undefined}
+        actions={null}
+        origin={originMeta}
+      />
+    );
+  }
 }
 
 function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {

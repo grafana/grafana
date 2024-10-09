@@ -5,13 +5,12 @@ import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItem
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
 import { CombinedRule, Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction, useAlertRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
-import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
+import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
+import { createShareLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { createRelativeUrl } from '../../utils/url';
-import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
   promRule: Rule;

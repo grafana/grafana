@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
 import { ReactNode } from 'react';
 
@@ -90,7 +89,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     }
   }
 
-  if (!isEmpty(labels)) {
+  if (labelsSize(labels) > 0) {
     metadata.push(
       <MetaText icon="tag-alt">
         <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
@@ -137,6 +136,39 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     />
   );
 };
+
+type RecordingRuleListItemProps = Omit<AlertRuleListItemProps, 'summary' | 'state' | 'instancesCount' | 'contactPoint'>;
+
+export function RecordingRuleListItem({
+  name,
+  href,
+  health,
+  isProvisioned,
+  error,
+  isPaused,
+  origin,
+}: RecordingRuleListItemProps) {
+  return (
+    <ListItem
+      title={
+        <Stack direction="row" alignItems="center">
+          <TextLink href={href} inline={false}>
+            {name}
+          </TextLink>
+          {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
+          {/* show provisioned badge only when it also doesn't have plugin origin */}
+          {isProvisioned && !origin && <ProvisioningBadge />}
+          {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
+          {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
+        </Stack>
+      }
+      description={<Summary error={error} />}
+      icon={<RuleListIcon recording={true} health={health} isPaused={isPaused} />}
+      actions={null}
+      meta={[]}
+    />
+  );
+}
 
 interface SummaryProps {
   content?: string;
