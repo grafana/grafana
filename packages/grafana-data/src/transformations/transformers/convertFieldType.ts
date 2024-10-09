@@ -258,7 +258,7 @@ function fieldToComplexField(field: Field): Field {
  */
 export function ensureTimeField(field: Field, dateFormat?: string): Field {
   const firstValueTypeIsNumber = typeof field.values[0] === 'number';
-  // if the format is unix seconds or milliseconds, we still want to apply it
+  // if the format is unix seconds, we don't want to skip formatting
   const isUnixSecondsFormat = dateFormat === 'X';
 
   if (field.type === FieldType.time && firstValueTypeIsNumber) {
