@@ -206,7 +206,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? SafeDynamicImport(
             () => import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
           )
-        : () => <Redirect to="/admin" />,
+        : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/access',
