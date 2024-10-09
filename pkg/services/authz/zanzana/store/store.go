@@ -70,7 +70,7 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.Op
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
-		return sqlite.New(sqliteConnectionString(grafanaDBCfg.ConnectionString), zanzanaDBCfg)
+		return sqlite.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
 	case migrator.MySQL:
 		m := migrator.NewMigrator(db.GetEngine(), cfg)
 		if err := migration.RunWithMigrator(m, cfg, assets.EmbedMigrations, assets.MySQLMigrationDir); err != nil {
