@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 const (
@@ -285,32 +284,6 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	return result, err
 }
 
-type listResourcesResponse struct {
-	Folders   []string
-	Resources []string
-}
-
-func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) (*listResourcesResponse, error) {
-	availableFolders, err := dr.listAllowedResources(ctx, query, zanzana.TypeFolder)
-	if err != nil {
-		return nil, err
-	}
-
-	var availableDasboards []string
-	if query.Type == searchstore.TypeDashboard || (query.Type != searchstore.TypeFolder && query.Type != searchstore.TypeAlertFolder) {
-		availableDasboards, err = dr.listAllowedResources(ctx, query, zanzana.TypeDashboard)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	res := &listResourcesResponse{
-		Folders:   availableFolders,
-		Resources: availableDasboards,
-	}
-	return res, nil
-}
-
 func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
 	res, err := dr.ac.ListObjects(ctx, accesscontrol.ListObjectsRequest{
 		User:     query.SignedInUser.GetUID(),
@@ -338,37 +311,4 @@ func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query 
 	}
 
 	return resourceUIDs, nil
-}
-
-func runBatch(tasks []func() ([]string, error)) ([]string, error) {
-	var wg sync.WaitGroup
-	tasksNum := len(tasks)
-	resChan := make(chan []string, tasksNum)
-	errChan := make(chan error, tasksNum)
-
-	for _, task := range tasks {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			res, err := task()
-			resChan <- res
-			errChan <- err
-		}()
-	}
-
-	wg.Wait()
-	close(resChan)
-	close(errChan)
-
-	for err := range errChan {
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	result := make([]string, 0)
-	for res := range resChan {
-		result = append(result, res...)
-	}
-	return result, nil
 }

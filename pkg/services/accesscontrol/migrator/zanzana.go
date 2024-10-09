@@ -39,7 +39,6 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
 		folderTreeCollector(store),
-		// dashboardFolderCollector(store),
 		basicRolesCollector(store),
 		customRolesCollector(store),
 		basicRoleAssignemtCollector(store),
@@ -240,47 +239,6 @@ func folderTreeCollector(store db.DB) TupleCollector {
 					User:     zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(f.OrgID, 10), ""),
 				}
 			}
-			tuples[collectorID] = append(tuples[collectorID], tuple)
-		}
-
-		return nil
-	}
-}
-
-// dashboardFolderCollector collects information about dashboards parent folders
-func dashboardFolderCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.dashboardFolderCollector")
-		defer span.End()
-
-		const collectorID = "folder"
-		query := `
-			SELECT org_id, uid, folder_uid, is_folder FROM dashboard
-			WHERE is_folder = ` + store.GetDialect().BooleanStr(false) + `
-			AND folder_uid IS NOT NULL
-		`
-		type dashboard struct {
-			OrgID     int64  `xorm:"org_id"`
-			UID       string `xorm:"uid"`
-			ParentUID string `xorm:"folder_uid"`
-		}
-
-		var dashboards []dashboard
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&dashboards)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		for _, d := range dashboards {
-			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, d.ParentUID, "", strconv.FormatInt(d.OrgID, 10)),
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeDashboard, d.UID, "", strconv.FormatInt(d.OrgID, 10)),
-				Relation: zanzana.RelationParent,
-			}
-
 			tuples[collectorID] = append(tuples[collectorID], tuple)
 		}
 
