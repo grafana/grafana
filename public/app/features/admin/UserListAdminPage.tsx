@@ -79,7 +79,6 @@ const UserListAdminPageUnConnected = ({
             autoFocus={true}
             value={query}
             onChange={changeQuery}
-            escapeRegex={false}
           />
           <RadioButtonGroup
             options={[

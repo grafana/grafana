@@ -8,12 +8,24 @@ import (
 	"errors"
 	"io"
 	"mime/quotedprintable"
+	"regexp"
 	"strings"
 
 	"golang.org/x/crypto/pbkdf2"
 )
 
 const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
+var specialChars = []string{"(", "[", "{", "}", "]", ")", "\\", "|", "*", "+", "-", ".", "?", "<", ">", "#", "&", "^", "$"}
+
+// Build a regex pattern to match special characters
+var specialMatcher = `([\` + strings.Join(specialChars, `\`) + `])`
+
+// Regex to escape special characters
+var specialCharEscape = regexp.MustCompile(specialMatcher)
+
+// Regex to unescape special characters
+var specialCharUnescape = regexp.MustCompile(`(\\)` + specialMatcher)
 
 // GetRandomString generates a random alphanumeric string of the specified length,
 // optionally using only specified characters
@@ -98,4 +110,20 @@ func DecodeQuotedPrintable(encodedValue string) string {
 		return encodedValue
 	}
 	return string(decodedBytes)
+}
+
+// EscapeStringForRegex Escapes special characters in the string
+func EscapeStringForRegex(value string) string {
+	if value == "" {
+		return value
+	}
+	return specialCharEscape.ReplaceAllString(value, `\$1`)
+}
+
+// UnEscapeStringFromRegex Unescapes previously escaped special characters
+func UnEscapeStringFromRegex(value string) string {
+	if value == "" {
+		return value
+	}
+	return specialCharUnescape.ReplaceAllString(value, `$2`)
 }
