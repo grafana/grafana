@@ -255,6 +255,8 @@ This app registration will be used as a Service Account to retrieve more informa
 | `User.Read`      | Delegated   | No                     | Granted |
 | `User.Read.All`  | Application | Yes                    | Granted |
 
+The following table shows what the permissions look like from the Azure AD portal:
+
 {{< figure src="/media/docs/grafana/saml/graph-api-app-permissions.png" caption="Screen shot of the permissions listed in Azure AD for the App registration" >}}
 
 #### Generate a client secret
