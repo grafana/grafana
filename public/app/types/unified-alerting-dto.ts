@@ -201,6 +201,7 @@ export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
   expression?: string;
+  instant?: boolean;
 }
 
 export interface AlertQuery<T = AlertDataQuery | ExpressionQuery> {

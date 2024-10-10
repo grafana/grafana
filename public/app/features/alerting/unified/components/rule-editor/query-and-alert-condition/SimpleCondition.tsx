@@ -20,7 +20,7 @@ export const SIMPLE_CONDITION_REDUCER_ID = 'B';
 export const SIMPLE_CONDITION_THRESHOLD_ID = 'C';
 
 export interface SimpleCondition {
-  whenField: string;
+  whenField?: string;
   evaluator: {
     params: number[];
     type: EvalFunction;
@@ -104,15 +104,17 @@ export const SimpleConditionEditor = ({
           </Text>
         </header>
         <InlineFieldRow className={styles.condition.container}>
-          <InlineField label="WHEN">
-            <Select
-              options={reducerTypes}
-              value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
-              onChange={onReducerTypeChange}
-              width={20}
-            />
-          </InlineField>
-          <InlineField label="OF QUERY">
+          {simpleCondition.whenField && (
+            <InlineField label="WHEN">
+              <Select
+                options={reducerTypes}
+                value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
+                onChange={onReducerTypeChange}
+                width={20}
+              />
+            </InlineField>
+          )}
+          <InlineField label={simpleCondition.whenField ? 'OF QUERY' : 'WHEN QUERY'}>
             <Stack direction="row" gap={1} alignItems="center">
               <ButtonSelect
                 className={styles.buttonSelectText}
@@ -219,7 +221,7 @@ export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<
   );
   const conditionsFromThreshold = thresholdExpression?.model.conditions ?? [];
   return {
-    whenField: reduceExpression?.model.reducer ?? ReducerID.last,
+    whenField: reduceExpression?.model.reducer,
     evaluator: {
       params: [...conditionsFromThreshold[0]?.evaluator?.params] ?? [0],
       type: conditionsFromThreshold[0]?.evaluator?.type ?? EvalFunction.IsAbove,
