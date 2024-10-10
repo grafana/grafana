@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/blevesearch/bleve/v2/analysis/lang/en"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"golang.org/x/exp/slices"
 )
 
@@ -25,6 +25,7 @@ type Index struct {
 	shards map[string]Shard
 	opts   Opts
 	s      *server
+	log    log.Logger
 }
 
 func NewIndex(s *server, opts Opts) *Index {
@@ -32,6 +33,7 @@ func NewIndex(s *server, opts Opts) *Index {
 		s:      s,
 		opts:   opts,
 		shards: make(map[string]Shard),
+		log:    log.New("unifiedstorage.search.index"),
 	}
 	return idx
 }
@@ -121,6 +123,11 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	if err != nil {
 		return nil, err
 	}
+	docCount, err := shard.index.DocCount()
+	if err != nil {
+		return nil, err
+	}
+	i.log.Info("got index for tenant", "tenant", tenant, "docCount", docCount)
 
 	// use 10 as a default limit for now
 	if limit <= 0 {
@@ -133,11 +140,14 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 
 	req.Fields = []string{"*"} // return all indexed fields in search results
 
+	i.log.Info("searching index", "query", query, "tenant", tenant)
 	res, err := shard.index.Search(req)
 	if err != nil {
 		return nil, err
 	}
 	hits := res.Hits
+
+	i.log.Info("got search results", "hits", hits)
 
 	results := make([]SearchSummary, len(hits))
 	for resKey, hit := range hits {
