@@ -723,6 +723,14 @@ const (
 	// Enables the passing of scopes to dashboards fetching in Grafana
 	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
 
+	// FlagPassTimeRangeToDashboardApi
+	// Enables the passing of time range to dashboards fetching in Grafana
+	FlagPassTimeRangeToDashboardApi = "passTimeRangeToDashboardApi"
+
+	// FlagPassFiltersToDashboardApi
+	// Enables the passing of filters to dashboards fetching in Grafana
+	FlagPassFiltersToDashboardApi = "passFiltersToDashboardApi"
+
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
 	FlagAlertingApiServer = "alertingApiServer"
