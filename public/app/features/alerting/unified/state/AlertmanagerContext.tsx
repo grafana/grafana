@@ -1,10 +1,10 @@
 import * as React from 'react';
 
+import { locationService } from '@grafana/runtime';
 import store from 'app/core/store';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
-import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import {
   AlertManagerDataSource,
@@ -30,7 +30,8 @@ interface Props extends React.PropsWithChildren {
 }
 
 const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: Props) => {
-  const [queryParams, updateQueryParams] = useURLSearchParams();
+  const queryParams = locationService.getSearch();
+  const updateQueryParams = locationService.partial;
   const allAvailableAlertManagers = useAlertManagersByPermission(accessType);
   const availableAlertManagers = allAvailableAlertManagers.availableInternalDataSources.concat(
     allAvailableAlertManagers.availableExternalDataSources
