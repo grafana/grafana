@@ -20,6 +20,7 @@ import {
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -47,8 +48,8 @@ import {
   ignoreHiddenQueries,
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
-import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import * as ruleId from '../../../utils/rule-id';
+import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
@@ -384,14 +385,16 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
     };
   }
 
-  return ignoreHiddenQueries({
-    ...getDefaultFormValues(),
-    ...ruleFromQueryParams,
-    annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
-    queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-    type: type || RuleFormType.grafana,
-    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
-  });
+  return setInstantOrRange(
+    ignoreHiddenQueries({
+      ...getDefaultFormValues(),
+      ...ruleFromQueryParams,
+      annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
+      queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
+      type: type || RuleFormType.grafana,
+      evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    })
+  );
 }
 
 function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
@@ -399,6 +402,30 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
     ...getDefaultFormValues(),
     ...rule,
   });
+}
+
+function setInstantOrRange(values: RuleFormValues): RuleFormValues {
+  return {
+    ...values,
+    queries: values.queries?.map((query) => {
+      if (!isExpressionQuery(query.model)) {
+        // data query
+        const defaultToInstant =
+          query.model.datasource?.type === 'loki' || query.model.datasource?.type === 'prometheus';
+        const isInstant =
+          'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
+        return {
+          ...query,
+          model: {
+            ...query.model,
+            instant: isInstant,
+            range: !isInstant, // we cannot have both instant and range queries in alerting
+          },
+        };
+      }
+      return query;
+    }),
+  };
 }
 
 function storeInLocalStorageValues(values: RuleFormValues) {
