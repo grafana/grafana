@@ -46,6 +46,7 @@ func (i *Index) Init(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		i.log.Info("initial indexing resources", "count", len(list.Items))
 
 		for _, obj := range list.Items {
 			res, err := getResource(obj.Value)
@@ -57,6 +58,8 @@ func (i *Index) Init(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+
+			i.log.Info("indexing resource for tenant", "res", res, "tenant", tenant(res))
 
 			var jsonDoc interface{}
 			err = json.Unmarshal(obj.Value, &jsonDoc)
@@ -87,6 +90,7 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 		return err
 	}
 	tenant := tenant(res)
+	i.log.Info("indexing resource for tenant", "res", res, "tenant", tenant)
 	shard, err := i.getShard(tenant)
 	if err != nil {
 		return err
