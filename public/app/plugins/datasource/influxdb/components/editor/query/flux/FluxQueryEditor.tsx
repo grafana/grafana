@@ -12,6 +12,7 @@ import {
   MonacoEditor,
   Segment,
   Themeable2,
+  monacoTypes,
   withTheme2,
 } from '@grafana/ui/src';
 
@@ -27,6 +28,8 @@ interface Props extends Themeable2 {
   // and then we can probably remove the datasource attribute.
   datasource: InfluxDatasource;
 }
+
+const INFLUX_COMMENT_TYPE = '//';
 
 const samples: Array<SelectableValue<string>> = [
   { label: 'Show buckets', description: 'List the available buckets (table)', value: 'buckets()' },
@@ -162,6 +165,10 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
     setTimeout(() => editor.layout(), 100);
   };
 
+  languageConfiguration: monacoTypes.languages.LanguageConfiguration = {
+    comments: { lineComment: INFLUX_COMMENT_TYPE },
+  };
+
   render() {
     const { query, theme } = this.props;
     const styles = getStyles(theme);
@@ -179,6 +186,7 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
           height={'100%'}
           containerStyles={styles.editorContainerStyles}
           language="sql"
+          languageConfiguration={this.languageConfiguration}
           value={query.query || ''}
           onBlur={this.onFluxQueryChange}
           onSave={this.onFluxQueryChange}
