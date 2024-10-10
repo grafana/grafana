@@ -15,6 +15,7 @@ export const ImageCell = (props: TableCellProps) => {
     cellOptions.type === TableCellDisplayMode.Image ? cellOptions : { title: undefined, alt: undefined };
   const displayValue = field.display!(cell.value);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasActions = Boolean(actions?.length);
 
   // The image element
   const img = (
@@ -29,10 +30,9 @@ export const ImageCell = (props: TableCellProps) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {/* If there are no links we simply render the image */}
-      {!hasLinks && img}
-      {/* Otherwise render data links with image */}
-      {hasLinks && (
+      {/* If there are data links/actions, we render them with image */}
+      {/* Otherwise we simply render the image */}
+      {hasLinks || hasActions ? (
         <DataLinksContextMenu
           style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
           links={() => getCellLinks(field, row) || []}
@@ -60,6 +60,8 @@ export const ImageCell = (props: TableCellProps) => {
             }
           }}
         </DataLinksContextMenu>
+      ) : (
+        img
       )}
     </div>
   );

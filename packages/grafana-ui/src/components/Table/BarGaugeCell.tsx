@@ -56,6 +56,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
   };
 
   const hasLinks = Boolean(getLinks().length);
+  const hasActions = Boolean(actions?.length);
   const alignmentFactors = getAlignmentFactor(field, displayValue, cell.row.index);
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
@@ -84,12 +85,13 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {hasLinks && (
+      {hasLinks || hasActions ? (
         <DataLinksContextMenu links={getLinks} actions={actions} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
+      ) : (
+        renderComponent({})
       )}
-      {!hasLinks && renderComponent({})}
     </div>
   );
 };

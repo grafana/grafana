@@ -30,13 +30,13 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   }
 
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasActions = Boolean(actions?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
       <div className={cx(tableStyles.cellText, txt)}>
-        {!hasLinks && <div className={tableStyles.cellText}>{displayValue}</div>}
-        {hasLinks && (
+        {hasLinks || hasActions ? (
           <DataLinksContextMenu links={() => getCellLinks(field, row) || []} actions={actions}>
             {(api) => {
               if (api.openMenu) {
@@ -50,6 +50,8 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
               }
             }}
           </DataLinksContextMenu>
+        ) : (
+          <div className={tableStyles.cellText}>{displayValue}</div>
         )}
       </div>
       {inspectEnabled && <CellActions {...props} previewMode={TableCellInspectorMode.code} />}
