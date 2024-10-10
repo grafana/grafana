@@ -243,6 +243,7 @@ func ldflags(opts BuildOpts) (string, error) {
 	}
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp))
 	b.WriteString(fmt.Sprintf(" -X main.buildBranch=%s", buildBranch))
+	b.WriteString(` -X "google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"`)
 	if v := os.Getenv("LDFLAGS"); v != "" {
 		b.WriteString(fmt.Sprintf(" -extldflags \"%s\"", v))
 	}
