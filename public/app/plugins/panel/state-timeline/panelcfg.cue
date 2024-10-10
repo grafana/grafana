@@ -37,6 +37,8 @@ composableKinds: PanelCfg: {
 					mergeValues?: bool | *true
 					//Controls value alignment on the timelines
 					alignValue?: ui.TimelineValueAlignment & (*"left" | _)
+					//Controls name alignment
+					alignName?: ui.TimelineNameAlignment & (*"left" | _)
 					//Enables pagination when > 0
 					perPage?: number & >=1 | *20
 				} @cuetsy(kind="interface")

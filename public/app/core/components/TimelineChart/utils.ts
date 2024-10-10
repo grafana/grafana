@@ -31,6 +31,7 @@ import {
   TimelineValueAlignment,
   HideableFieldConfig,
   MappingType,
+  TimelineNameAlignment,
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
@@ -48,6 +49,7 @@ interface UPlotConfigOptions {
   colWidth?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
+  alignName?: TimelineNameAlignment;
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
@@ -81,6 +83,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   colWidth,
   showValue,
   alignValue,
+  alignName,
   mergeValues,
   getValueColor,
   hoverMulti,
@@ -174,7 +177,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
-    placement: AxisPlacement.Left,
+    placement: alignName === 'right' ? AxisPlacement.Right : AxisPlacement.Left,
     splits: coreConfig.ySplits,
     values: coreConfig.yValues,
     grid: { show: false },
