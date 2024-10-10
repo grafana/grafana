@@ -161,7 +161,8 @@ func (s *AuthService) initKeySet() error {
 			client: &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
-						Renegotiation: tls.RenegotiateFreelyAsClient,
+						Renegotiation:      tls.RenegotiateFreelyAsClient,
+						InsecureSkipVerify: s.Cfg.JWTAuth.TlsSkipVerify,
 					},
 					Proxy: http.ProxyFromEnvironment,
 					DialContext: (&net.Dialer{
