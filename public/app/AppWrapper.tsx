@@ -55,23 +55,12 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   renderRoute = (route: RouteDescriptor) => {
-    const roles = route.roles ? route.roles() : [];
     return (
       <Route
         caseSensitive={route.sensitive === undefined ? false : route.sensitive}
         path={route.path}
         key={route.path}
-        render={(props: RouteComponentProps) => {
-          const location = locationService.getLocation();
-          // TODO[Router]: test this logic
-          if (roles?.length) {
-            if (!roles.some((r: string) => contextSrv.hasRole(r))) {
-              return <Navigate replace to="/" />;
-            }
-          }
-
-          return <GrafanaRoute {...props} route={route} location={location} />;
-        }}
+        element={<RouteElement route={route} />}
       />
     );
   };
@@ -134,6 +123,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
 const RouteElement = ({ route, ...props }: any) => {
   const roles = route.roles ? route.roles() : [];
   const navigate = useNavigate();
+  const location = locationService.getLocation();
   // TODO[Router]: test this logic
   if (roles?.length) {
     if (!roles.some((r: string) => contextSrv.hasRole(r))) {
@@ -142,5 +132,5 @@ const RouteElement = ({ route, ...props }: any) => {
     }
   }
 
-  return <GrafanaRoute {...props} route={route} />;
+  return <GrafanaRoute {...props} route={route} location={location} />;
 };
