@@ -23,6 +23,7 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
+const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
@@ -197,6 +198,15 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/plugins',
       component: () => <NavLandingPage navId="cfg/plugins" />,
+    },
+    {
+      path: '/admin/extensions',
+      navId: 'extensions',
+      component: isDevEnv
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
+          )
+        : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/access',
