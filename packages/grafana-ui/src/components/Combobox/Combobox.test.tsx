@@ -201,19 +201,19 @@ describe('Combobox', () => {
     });
 
     it('should allow custom value while async is being run', async () => {
-      const asyncOptions = jest.fn(async (searchTerm: string) => {
-        return new Promise((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
+      const asyncOptions = jest.fn(async () => {
+        return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
       });
 
-      //@ts-ignore
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
 
       const input = screen.getByRole('combobox');
       await userEvent.click(input, { delay: null });
 
-      await userEvent.type(input, 'fir', { delay: null });
-
-      jest.advanceTimersByTime(500); // Custom value while typing
+      await act(async () => {
+        await userEvent.type(input, 'fir', { delay: null });
+        jest.advanceTimersByTime(500); // Custom value while typing
+      });
 
       const customItem = screen.queryByRole('option', { name: 'fir Create custom value' });
 
