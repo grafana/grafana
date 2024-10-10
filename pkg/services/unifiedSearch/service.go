@@ -3,6 +3,7 @@ package unifiedSearch
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -158,7 +159,8 @@ func (s *StandardSearchService) doQuery(ctx context.Context, signedInUser *user.
 func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ string) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
-	req := &resource.SearchRequest{Tenant: s.cfg.StackID, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From)}
+	tenantId := fmt.Sprintf("stacks-%s", s.cfg.StackID)
+	req := &resource.SearchRequest{Tenant: tenantId, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From)}
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
 		s.logger.Error("Failed to search resources", "error", err)
