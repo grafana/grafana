@@ -293,7 +293,8 @@ export const RowsList = (props: RowsListProps) => {
           headerGroups[0].headers[seriesIndex],
           osContext,
           pxLineHeight,
-          tableStyles.rowHeight
+          tableStyles.rowHeight,
+          tableStyles.cellPadding
         );
         style.height = bbox.height;
       }
@@ -379,7 +380,8 @@ export const RowsList = (props: RowsListProps) => {
         headerGroups[0].headers[seriesIndex],
         osContext,
         pxLineHeight,
-        tableStyles.rowHeight
+        tableStyles.rowHeight,
+        tableStyles.cellPadding
       ).height;
     }
 
@@ -397,22 +399,29 @@ export const RowsList = (props: RowsListProps) => {
   // Key the virtualizer for expanded rows
   const expandedKey = Object.keys(tableState.expanded).join('|');
 
+  // It's a hack for text wrapping.
+  // VariableSizeList component didn't know that we manually set row height.
+  // So we need to reset the list when the rows high changes.
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.resetAfterIndex(0);
+    }
+  }, [rows, listRef]);
+
   return (
-    <>
-      <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
-        <VariableSizeList
-          // This component needs an unmount/remount when row height, page changes, or expanded rows change
-          key={`${rowHeight}${pageIndex}${expandedKey}`}
-          height={listHeight}
-          itemCount={itemCount}
-          itemSize={getItemSize}
-          width={'100%'}
-          ref={listRef}
-          style={{ overflow: undefined }}
-        >
-          {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
-        </VariableSizeList>
-      </CustomScrollbar>
-    </>
+    <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
+      <VariableSizeList
+        // This component needs an unmount/remount when row height, page changes, or expanded rows change
+        key={`${rowHeight}${pageIndex}${expandedKey}`}
+        height={listHeight}
+        itemCount={itemCount}
+        itemSize={getItemSize}
+        width={'100%'}
+        ref={listRef}
+        style={{ overflow: undefined }}
+      >
+        {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
+      </VariableSizeList>
+    </CustomScrollbar>
   );
 };

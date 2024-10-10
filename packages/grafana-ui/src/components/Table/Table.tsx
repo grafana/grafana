@@ -295,13 +295,15 @@ export const Table = memo((props: Props) => {
   }
 
   // Try to determine the longet field
+  // TODO: do we wrap only one field?
+  // What if there are multiple fields with long text?
   const longestField = guessLongestField(fieldConfig, data);
   let textWrapField = undefined;
   if (fieldConfig !== undefined) {
     data.fields.forEach((field) => {
       fieldConfig.overrides.forEach((override) => {
-        const m = getFieldMatcher(override.matcher);
-        if (m(field, data, [data])) {
+        const matcher = getFieldMatcher(override.matcher);
+        if (matcher(field, data, [data])) {
           for (const property of override.properties) {
             if (property.id === 'custom.cellOptions' && property.value.wrapText) {
               textWrapField = field;
