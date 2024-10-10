@@ -42,7 +42,6 @@ type ExternalUserInfo struct {
 }
 
 type SAMLSession struct {
-	AuthID       string
 	NameID       string
 	SessionIndex string
 }
