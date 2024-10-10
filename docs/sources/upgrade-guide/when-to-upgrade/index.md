@@ -9,6 +9,7 @@ title: Strategies for upgrading your self-managed Grafana instance
 menuTitle: Strategies for upgrading your self-managed Grafana instance
 weight: 1000
 ---
+
 # Strategies for upgrading your self-managed Grafana instance
 
 At Grafana Labs we believe in shipping features early and often, and in recent years we’ve doubled down on that philosophy.
@@ -39,20 +40,19 @@ We provide release documentation in multiple places to address different needs:
 - [**Upgrade guides**](https://grafana.com/docs/grafana/latest/upgrade-guide/?pg=blog&plcmt=body-txt) instruct you on how to upgrade to a newer minor or major version.
 - And finally, a [**changelog**](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) is generated for every release (major, minor, patching, security) and outlines all changes included in that release.
 
-
 ## When to expect releases
 
 Currently, Grafana is on a monthly release cycle, with release types rotating every other month between minor or patching. For example, here’s a look at what scheduled releases to expect for the remainder of 2024:
 
-| **Anticipated release date** | **Grafana versions** | **Release type**        |
-|------------------------------|------------------------|-----------------------|
-| May 14, 2024                 | 11                     | Major and patching    |
-| June 25, 2024                | 11.1                   | Minor and patching    |
-| July 23, 2024                | 11.1.x                 | Patching              |
-| Aug. 27, 2024                | 11.2                   | Minor and patching    |
-| Sept. 24, 2024               | 11.2.x                 | Patching              |
-| Oct. 22, 2024                | 11.3                   | Minor and patching    |
-| November/December 2024       | To be determined       | To be determined      |
+| **Anticipated release date** | **Grafana versions** | **Release type**   |
+| ---------------------------- | -------------------- | ------------------ |
+| May 14, 2024                 | 11                   | Major and patching |
+| June 25, 2024                | 11.1                 | Minor and patching |
+| July 23, 2024                | 11.1.x               | Patching           |
+| Aug. 27, 2024                | 11.2                 | Minor and patching |
+| Sept. 24, 2024               | 11.2.x               | Patching           |
+| Oct. 22, 2024                | 11.3                 | Minor and patching |
+| November/December 2024       | To be determined     | To be determined   |
 
 ### A few important notes
 
@@ -72,19 +72,17 @@ For self-managed Grafana (both Enterprise and OSS), the support for versions is 
 
 Here is an overview of projected version support through 2024:
 
-| **Version**  | **Release date** | **Support end of life (EOL)** |
-|--------------|------------------|-------------------------------|
-| 10.3         | January 2024      | October 2024                  |
-| 10.4 (Last minor of 10.0) | March 2024 | June 2025 (extended support)  |
-| 11.0         | May 2024         | February 2025                 |
-| 11.1         | June 2024        | March 2025                    |
-| 11.2         | August 2024 (tentative) | May 2025 (tentative)       |
-
+| **Version**               | **Release date**        | **Support end of life (EOL)** |
+| ------------------------- | ----------------------- | ----------------------------- |
+| 10.3                      | January 2024            | October 2024                  |
+| 10.4 (Last minor of 10.0) | March 2024              | June 2025 (extended support)  |
+| 11.0                      | May 2024                | February 2025                 |
+| 11.1                      | June 2024               | March 2025                    |
+| 11.2                      | August 2024 (tentative) | May 2025 (tentative)          |
 
 {{< admonition type="note" >}}
 Grafana 9.5.x was the last supported minor for the 9.0 major release and is no longer supported as of July 2024.
 {{< /admonition >}}
-
 
 ## How are these versions supported?
 
