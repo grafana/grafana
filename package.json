@@ -124,7 +124,7 @@
     "@types/lucene": "^2",
     "@types/node": "20.16.11",
     "@types/node-forge": "^1",
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.5.0",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.4",
     "@types/react": "18.3.3",
