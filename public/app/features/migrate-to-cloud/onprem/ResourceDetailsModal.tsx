@@ -9,29 +9,21 @@ interface ResourceDetailsModalProps {
   onClose: () => void;
 }
 
-const resourceErrorMessages: { [key: string]: string } = {
-  DATASOURCE_NAME_CONFLICT:
-    'There is a data source with the same name in the target instance. Rename one of them and try again.',
-  DASHBOARD_ALREADY_MANAGED:
-    'Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.',
-  LIBRARY_ELEMENT_NAME_CONFLICT:
-    'There is a library element with the same name in the target instance. Rename one of them and try again.',
-  UNSUPPORTED_DATA_TYPE: 'Migration of this data type is not currently supported.',
-  RESOURCE_CONFLICT:
-    'There is a resource conflict with the target instance. Please check the Grafana server logs for more details.',
-  UNEXPECTED_STATUS_CODE:
-    'There has been an error while migrating. Please check the Grafana server logs for more details.',
-  ONLY_CORE_DATA_SOURCES:
-    'Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.',
-  INTERNAL_SERVICE_ERROR:
-    'There has been an error while migrating. Please check the Grafana server logs for more details.',
-  GENERIC_ERROR: 'There has been an error while migrating. Please check the cloud migration logs for more information.',
+const resourceErrorMessage: { [key: string]: string } = {
+  DATASOURCE_NAME_CONFLICT: t('migrate-to-cloud.resource-details.error-messages.datasource-name-conflict', ''),
+  DASHBOARD_ALREADY_MANAGED: t('migrate-to-cloud.resource-details.error-messages.dashboard-already-managed', ''),
+  LIBRARY_ELEMENT_NAME_CONFLICT: t(
+    'migrate-to-cloud.resource-details.error-messages.library-element-name-conflict',
+    ''
+  ),
+  UNSUPPORTED_DATA_TYPE: t('migrate-to-cloud.resource-details.error-messages.unsupported-data-type', ''),
+  RESOURCE_CONFLICT: t('migrate-to-cloud.resource-details.error-messages.resource-conflict', ''),
+  UNEXPECTED_STATUS_CODE: t('migrate-to-cloud.resource-details.error-messages.unexpected-error', ''),
+  ONLY_CORE_DATA_SOURCES: t('migrate-to-cloud.resource-details.error-messages.only-core-data-sources', ''),
+  INTERNAL_SERVICE_ERROR: t('migrate-to-cloud.resource-details.error-messages.unexpected-error', ''),
+  GENERIC_ERROR: t('migrate-to-cloud.resource-details.error-messages.generic-error', ''),
   // Other error codes should be added here
 };
-
-function getResourceErrorMessage(errorCode: string): string {
-  return resourceErrorMessages[errorCode];
-}
 
 export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
   const { resource, onClose } = props;
@@ -66,9 +58,10 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
               <Text element="p">{msgTitle}</Text>
 
               <Text element="p" weight="bold">
-                {getResourceErrorMessage(resource.errorCode || '') ||
-                  resource.message ||
-                  'There has been an error while migrating. Please check the cloud migration logs for more information.'}
+                <Trans i18nKey={resourceErrorMessage[resource.errorCode || '']}>
+                  {/* {resource.message ||
+                  'There has been an error while migrating. Please check the cloud migration logs for more information.'} */}
+                </Trans>
               </Text>
             </>
           ) : (

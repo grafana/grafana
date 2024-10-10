@@ -575,7 +575,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 
 		// Log the errors for resources with errors at migration
 		for _, resource := range resources {
-			if resource.Status == cloudmigration.ItemStatusError && (resource.ErrorCode != "" || resource.Error != "") {
+			if resource.Status == cloudmigration.ItemStatusError && resource.Error != "" {
 				s.log.Error("Could not migrate resource", "resourceID", resource.RefID, "error", resource.Error)
 			}
 		}

@@ -22,20 +22,6 @@ const (
 	ItemStatusError ItemStatus = "ERROR"
 )
 
-type ResourceErrorCode string
-
-const (
-	ErrDatasourceNameConflict     ResourceErrorCode = "DATASOURCE_NAME_CONFLICT"
-	ErrDashboardAlreadyManaged    ResourceErrorCode = "DASHBOARD_ALREADY_MANAGED"
-	ErrLibraryElementNameConflict ResourceErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
-	ErrUnsupportedDataType        ResourceErrorCode = "UNSUPPORTED_DATA_TYPE"
-	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
-	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
-	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ResourceErrorCode = "ONLY_CORE_DATA_SOURCES"
-	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
-)
-
 type MigrateDataResponseDTO struct {
 	RunUID string                       `json:"uid"`
 	Items  []MigrateDataResponseItemDTO `json:"items"`

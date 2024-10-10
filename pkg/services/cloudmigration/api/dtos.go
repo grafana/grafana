@@ -113,9 +113,9 @@ type MigrateDataResponseItemDTO struct {
 	// required:true
 	RefID string `json:"refId"`
 	// required:true
-	Status    ItemStatus        `json:"status"`
-	Message   string            `json:"message,omitempty"`
-	ErrorCode ResourceErrorCode `json:"errorCode,omitempty"`
+	Status    ItemStatus    `json:"status"`
+	Message   string        `json:"message,omitempty"`
+	ErrorCode ItemErrorCode `json:"errorCode,omitempty"`
 }
 
 // swagger:enum MigrateDataType
@@ -145,19 +145,7 @@ const (
 )
 
 // swagger:enum ResourceErrorCode
-type ResourceErrorCode string
-
-const (
-	ErrDatasourceNameConflict     ResourceErrorCode = "DATASOURCE_NAME_CONFLICT"
-	ErrDashboardAlreadyManaged    ResourceErrorCode = "DASHBOARD_ALREADY_MANAGED"
-	ErrLibraryElementNameConflict ResourceErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
-	ErrUnsupportedDataType        ResourceErrorCode = "UNSUPPORTED_DATA_TYPE"
-	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
-	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
-	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ResourceErrorCode = "ONLY_CORE_DATA_SOURCES"
-	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
-)
+type ItemErrorCode = cloudmigration.ResourceErrorCode
 
 // swagger:parameters getCloudMigrationRun
 type GetMigrationRunParams struct {
