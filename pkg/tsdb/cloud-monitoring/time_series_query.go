@@ -75,6 +75,9 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 				return err
 			}
 		}
+		// Ensure the time field is named correctly
+		timeField := frame.Fields[0]
+		timeField.Name = data.TimeSeriesTimeFieldName
 	}
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
