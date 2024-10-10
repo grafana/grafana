@@ -47,8 +47,8 @@ import {
   ignoreHiddenQueries,
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
-import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import * as ruleId from '../../../utils/rule-id';
+import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
@@ -234,6 +234,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       <Stack justifyContent="flex-end" alignItems="center">
         {existing && (
           <Button
+            data-testid="save-rule"
             variant="primary"
             type="button"
             size="sm"
@@ -245,6 +246,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           </Button>
         )}
         <Button
+          data-testid="save-rule-and-exit"
           variant="primary"
           type="button"
           size="sm"

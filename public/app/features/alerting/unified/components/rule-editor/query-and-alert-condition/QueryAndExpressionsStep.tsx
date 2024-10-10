@@ -718,7 +718,7 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
 
   return (
     <Dropdown overlay={newMenu}>
-      <Button variant="secondary">
+      <Button variant="secondary" data-testid={'add-expression-button'}>
         Add expression
         <Icon name="angle-down" />
       </Button>
