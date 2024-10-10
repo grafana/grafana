@@ -221,4 +221,5 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   pluginsSriChecks?: boolean;
+  serverAdminElevatedOrgPrivileges?: boolean;
 }

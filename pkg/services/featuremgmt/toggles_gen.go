@@ -818,4 +818,8 @@ const (
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
+
+	// FlagServerAdminElevatedOrgPrivileges
+	// Enables treating server admins as org admins for all orgs
+	FlagServerAdminElevatedOrgPrivileges = "serverAdminElevatedOrgPrivileges"
 )

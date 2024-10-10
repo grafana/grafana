@@ -44,7 +44,7 @@ type PermissionsFilter interface {
 	With() (string, []any)
 	Where() (string, []any)
 
-	buildClauses()
+	buildClauses(elevateServerAdmin bool)
 	nestedFoldersSelectors(permSelector string, permSelectorArgs []any, leftTable string, Col string, rightTableCol string, orgID int64) (string, []any)
 }
 
@@ -129,7 +129,7 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 		}
 	}
-	f.buildClauses()
+	f.buildClauses(features.IsEnabled(context.Background(), featuremgmt.FlagServerAdminElevatedOrgPrivileges))
 	return f
 }
 
@@ -157,7 +157,7 @@ func (f *accessControlDashboardPermissionFilter) hasRequiredActions() bool {
 	return false
 }
 
-func (f *accessControlDashboardPermissionFilter) buildClauses() {
+func (f *accessControlDashboardPermissionFilter) buildClauses(elevateServerAdmin bool) {
 	if f.user == nil || f.user.IsNil() || !f.hasRequiredActions() {
 		f.where = clause{string: "(1 = 0)"}
 		return
@@ -171,7 +171,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	}
 
 	orgID := f.user.GetOrgID()
-	filter, params := accesscontrol.UserRolesFilter(orgID, userID, f.user.GetTeams(), accesscontrol.GetOrgRoles(f.user))
+	filter, params := accesscontrol.UserRolesFilter(orgID, userID, f.user.GetTeams(), accesscontrol.GetOrgRoles(f.user, elevateServerAdmin))
 	rolesFilter := " AND role_id IN(SELECT id FROM role " + filter + ") "
 	var args []any
 	builder := strings.Builder{}
