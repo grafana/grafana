@@ -40,6 +40,31 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-a-label
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-a-label
+  reference-labels:
+    - pattern: /docs/grafana/
+      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#labels
+  reference-values:
+    - pattern: /docs/grafana/
+      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
+  reference-:
+    - pattern: /docs/grafana/
+      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#
+  reference-:
+    - pattern: /docs/grafana/
+      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#
+  language-print:
+    - pattern: /docs/grafana/
+      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#print
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#print
+
 ---
 
 # Labels and annotations template examples
@@ -116,9 +141,9 @@ CPU usage for Instance-1 has exceeded 81.23% for the last 5 minutes.
 
 Used functions and syntax:
 <!-- add links to these elements -->
-- `$labels`: Used to access alert labels.
-- `$values`: Used to access the query values that triggered the alert.
-- `{{ }}`: Go templating syntax for embedding values within the template.
+- [`$labels`](ref:reference-labels): Used to access alert labels.
+- [`$values`](ref:reference-values): Used to access the query values that triggered the alert.
+- [`{{ }}`](ref:language-print): Go templating syntax for embedding values within the template.
 
 #### Adding alert summary with labels
 
