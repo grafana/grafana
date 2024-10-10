@@ -5,7 +5,7 @@ import { TooltipDisplayMode } from '@grafana/ui';
 import { CommonVizParams } from './types';
 
 export function percentilesGraphBuilder({ title, unit }: CommonVizParams) {
-  return PanelBuilders.timeseries() //
+  return PanelBuilders.timeseries()
     .setTitle(title)
     .setUnit(unit)
     .setCustomFieldConfig('fillOpacity', 9)
