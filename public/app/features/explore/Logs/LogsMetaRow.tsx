@@ -15,7 +15,7 @@ import {
   CustomTransformOperator,
   Labels,
 } from '@grafana/data';
-import {DataFrame, Field} from '@grafana/data/';
+import { DataFrame, Field } from '@grafana/data/';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -93,7 +93,6 @@ export const LogsMetaRow = memo(
               row.dataFrame.fields.forEach((field: Field) => {
                 if (field.name === "Time" && field.type === "time") {
                   field.values = field.values.map(value => dateTimeFormat(value, { defaultWithMS: true }))
-                  console.log(field.values)
                 }
               })
               dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
