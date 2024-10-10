@@ -283,8 +283,12 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
+	// FlagDatasourceAPIServers
+	// Expose some datasources as apiservers.
+	FlagDatasourceAPIServers = "datasourceAPIServers"
+
 	// FlagGrafanaAPIServerWithExperimentalAPIs
-	// Register experimental APIs with the k8s API server
+	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
@@ -399,6 +403,10 @@ const (
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"
 
+	// FlagGrafanaAPIServerTestingWithExperimentalAPIs
+	// Facilitate integration testing of experimental APIs
+	FlagGrafanaAPIServerTestingWithExperimentalAPIs = "grafanaAPIServerTestingWithExperimentalAPIs"
+
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
@@ -428,7 +436,7 @@ const (
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
-	// Enables Team LBAC for datasources to apply team headers to the client requests
+	// Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagCachingOptimizeSerializationMemoryUsage
@@ -558,6 +566,10 @@ const (
 	// FlagOnPremToCloudMigrations
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
+
+	// FlagOnPremToCloudMigrationsAlerts
+	// Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.
+	FlagOnPremToCloudMigrationsAlerts = "onPremToCloudMigrationsAlerts"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -703,10 +715,6 @@ const (
 	// Throws an error if a datasource has an invalid UIDs
 	FlagFailWrongDSUID = "failWrongDSUID"
 
-	// FlagDatabaseReadReplica
-	// Use a read replica for some database queries.
-	FlagDatabaseReadReplica = "databaseReadReplica"
-
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
@@ -727,10 +735,6 @@ const (
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
 
-	// FlagBodyScrolling
-	// Adjusts Page to make body the scrollable element
-	FlagBodyScrolling = "bodyScrolling"
-
 	// FlagCloudwatchMetricInsightsCrossAccount
 	// Enables cross account observability for Cloudwatch Metric Insights query builder
 	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
@@ -739,9 +743,9 @@ const (
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagBackgroundPluginInstaller
-	// Enable background plugin installer
-	FlagBackgroundPluginInstaller = "backgroundPluginInstaller"
+	// FlagAlertingFilterV2
+	// Enable the new alerting search experience
+	FlagAlertingFilterV2 = "alertingFilterV2"
 
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
@@ -754,6 +758,10 @@ const (
 	// FlagLokiSendDashboardPanelNames
 	// Send dashboard and panel names to Loki when querying
 	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
+
+	// FlagAlertingPrometheusRulesPrimary
+	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
+	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
 
 	// FlagSingleTopNav
 	// Unifies the top search bar and breadcrumb bar into one
@@ -771,6 +779,10 @@ const (
 	// Used in Explore Logs to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 
+	// FlagHomeSetupGuide
+	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
+	FlagHomeSetupGuide = "homeSetupGuide"
+
 	// FlagAppPlatformAccessTokens
 	// Enables the use of access tokens for the App Platform
 	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
@@ -782,4 +794,28 @@ const (
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
+
+	// FlagAlertingQueryAndExpressionsStepMode
+	// Enables step mode for alerting queries and expressions
+	FlagAlertingQueryAndExpressionsStepMode = "alertingQueryAndExpressionsStepMode"
+
+	// FlagImprovedExternalSessionHandling
+	// Enable improved support for external sessions in Grafana
+	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
+
+	// FlagUseSessionStorageForRedirection
+	// Use session storage for handling the redirection after login
+	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
+
+	// FlagRolePickerDrawer
+	// Enables the new role picker drawer design
+	FlagRolePickerDrawer = "rolePickerDrawer"
+
+	// FlagUnifiedStorageSearch
+	// Enable unified storage search
+	FlagUnifiedStorageSearch = "unifiedStorageSearch"
+
+	// FlagPluginsSriChecks
+	// Enables SRI checks for plugin assets
+	FlagPluginsSriChecks = "pluginsSriChecks"
 )

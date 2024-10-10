@@ -31,9 +31,8 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 
 	dbstore := infraDB.InitTestDB(t)
 	cfg := setting.NewCfg()
-	features := featuremgmt.WithFeatures()
 
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, nil)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)
 
@@ -328,12 +327,12 @@ func TestClientServer(t *testing.T) {
 	dbstore := infraDB.InitTestDB(t)
 
 	cfg := setting.NewCfg()
-	cfg.GRPCServerAddress = "localhost:0"
+	cfg.GRPCServerAddress = "localhost:0" // get a free address
 	cfg.GRPCServerNetwork = "tcp"
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideService(cfg, features, dbstore, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil)
 	require.NoError(t, err)
 	var client resource.ResourceStoreClient
 

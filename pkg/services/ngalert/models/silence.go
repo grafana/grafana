@@ -75,7 +75,7 @@ func SilencePermissions() [3]SilencePermission {
 }
 
 // SilencePermissionSet represents a set of permissions for a silence.
-type SilencePermissionSet map[SilencePermission]bool
+type SilencePermissionSet map[SilencePermission]bool // TODO: Implement using PermissionSet[SilencePermission]
 
 // Clone returns a deep copy of the permission set.
 func (p SilencePermissionSet) Clone() SilencePermissionSet {

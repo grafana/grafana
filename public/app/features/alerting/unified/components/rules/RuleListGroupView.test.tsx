@@ -2,7 +2,7 @@ import { waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { setPluginExtensionsHook } from '@grafana/runtime';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -20,8 +20,8 @@ const ui = {
   cloudRulesHeading: byRole('heading', { name: 'Data source-managed' }),
 };
 
-setPluginExtensionsHook(() => ({
-  extensions: [],
+setPluginLinksHook(() => ({
+  links: [],
   isLoading: false,
 }));
 

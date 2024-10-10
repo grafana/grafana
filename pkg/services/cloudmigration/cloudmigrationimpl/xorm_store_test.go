@@ -3,7 +3,6 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/base64"
-	"slices"
 	"strconv"
 	"testing"
 
@@ -110,61 +109,6 @@ func Test_DeleteMigrationSession(t *testing.T) {
 	})
 }
 */
-
-func Test_CreateMigrationRun(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("creates a session run and retrieves it from db", func(t *testing.T) {
-		cmr := cloudmigration.CloudMigrationSnapshot{
-			SessionUID: "asdfg",
-			Status:     cloudmigration.SnapshotStatusFinished,
-		}
-
-		createResp, err := s.CreateMigrationRun(ctx, cmr)
-		require.NoError(t, err)
-		require.NotEmpty(t, createResp)
-
-		getMRResp, err := s.GetMigrationStatus(ctx, createResp)
-		require.NoError(t, err)
-		require.Equal(t, cmr.Status, getMRResp.Status)
-	})
-}
-
-func Test_GetMigrationStatus(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("gets a migration status by uid", func(t *testing.T) {
-		getMRResp, err := s.GetMigrationStatus(ctx, "poiuy")
-		require.NoError(t, err)
-		require.Equal(t, "poiuy", getMRResp.UID)
-	})
-
-	t.Run("returns error if migration run was not found", func(t *testing.T) {
-		getMRResp, err := s.GetMigrationStatus(ctx, "fake_uid")
-		require.ErrorIs(t, cloudmigration.ErrMigrationRunNotFound, err)
-		require.Equal(t, int64(0), getMRResp.ID)
-		require.Equal(t, "", getMRResp.UID)
-	})
-}
-
-func Test_GetMigrationStatusList(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("gets migration status list from db", func(t *testing.T) {
-		list, err := s.GetMigrationStatusList(ctx, "qwerty")
-		require.NoError(t, err)
-		require.Equal(t, 2, len(list))
-	})
-
-	t.Run("returns no error if migration was not found, just empty list", func(t *testing.T) {
-		list, err := s.GetMigrationStatusList(ctx, "fake_migration")
-		require.NoError(t, err)
-		require.Equal(t, 0, len(list))
-	})
-}
 
 func Test_SnapshotManagement(t *testing.T) {
 	_, s := setUpTest(t)
@@ -283,8 +227,6 @@ func Test_SnapshotResources(t *testing.T) {
 }
 
 func TestGetSnapshotList(t *testing.T) {
-	t.Parallel()
-
 	_, s := setUpTest(t)
 	// Taken from setUpTest
 	sessionUID := "qwerty"
@@ -298,9 +240,46 @@ func TestGetSnapshotList(t *testing.T) {
 		for _, snapshot := range snapshots {
 			ids = append(ids, snapshot.UID)
 		}
-		slices.Sort(ids)
 
 		// There are 3 snapshots in the db but only 2 of them belong to this specific session.
+		assert.Equal(t, []string{"poiuy", "lkjhg"}, ids)
+	})
+
+	t.Run("returns only one snapshot that belongs to a session", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 1})
+		require.NoError(t, err)
+		assert.Len(t, snapshots, 1)
+	})
+
+	t.Run("return no snapshots if limit is set to 0", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 0})
+		require.NoError(t, err)
+		assert.Empty(t, snapshots)
+	})
+
+	t.Run("returns paginated snapshot that belongs to a session", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 2, Limit: 1})
+		require.NoError(t, err)
+
+		ids := make([]string, 0)
+		for _, snapshot := range snapshots {
+			ids = append(ids, snapshot.UID)
+		}
+
+		// Return paginated snapshot of the 2 belonging to this specific session
+		assert.Equal(t, []string{"lkjhg"}, ids)
+	})
+
+	t.Run("returns desc sorted list of snapshots that belong to a session", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100, Sort: "latest"})
+		require.NoError(t, err)
+
+		ids := make([]string, 0)
+		for _, snapshot := range snapshots {
+			ids = append(ids, snapshot.UID)
+		}
+
+		// Return desc sorted snapshots belonging to this specific session
 		assert.Equal(t, []string{"lkjhg", "poiuy"}, ids)
 	})
 
@@ -325,12 +304,59 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 }
 
+func TestDecryptToken(t *testing.T) {
+	t.Parallel()
+
+	_, s := setUpTest(t)
+	ctx := context.Background()
+
+	t.Run("with an nil session, it returns a `migration not found` error", func(t *testing.T) {
+		t.Parallel()
+
+		var cm *cloudmigration.CloudMigrationSession
+
+		require.ErrorIs(t, s.decryptToken(ctx, cm), cloudmigration.ErrMigrationNotFound)
+	})
+
+	t.Run("with an empty auth token, it returns a `token not found` error", func(t *testing.T) {
+		t.Parallel()
+
+		var cm cloudmigration.CloudMigrationSession
+
+		require.ErrorIs(t, s.decryptToken(ctx, &cm), cloudmigration.ErrTokenNotFound)
+	})
+
+	t.Run("with an invalid base64 auth token, it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		cm := cloudmigration.CloudMigrationSession{
+			AuthToken: "invalid-base64-",
+		}
+
+		require.Error(t, s.decryptToken(ctx, &cm))
+	})
+
+	t.Run("with a valid base64 auth token, it decrypts it and overrides the auth token field", func(t *testing.T) {
+		t.Parallel()
+
+		rawAuthToken := "raw-and-fake"
+		encodedAuthToken := base64.StdEncoding.EncodeToString([]byte(rawAuthToken))
+
+		cm := cloudmigration.CloudMigrationSession{
+			AuthToken: encodedAuthToken,
+		}
+
+		require.NoError(t, s.decryptToken(ctx, &cm))
+		require.Equal(t, rawAuthToken, cm.AuthToken)
+	})
+}
+
 func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	testDB := db.InitTestDB(t)
 	s := &sqlStore{
 		db:             testDB,
 		secretsService: fakeSecrets.FakeSecretsService{},
-		secretsStore:   secretskv.NewFakeSQLSecretsKVStore(t),
+		secretsStore:   secretskv.NewFakeSQLSecretsKVStore(t, testDB),
 	}
 	ctx := context.Background()
 
@@ -355,7 +381,7 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 			cloud_migration_snapshot (session_uid, uid, created, updated, finished, status)
 		VALUES
 			('qwerty', 'poiuy', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('qwerty', 'lkjhg', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
 			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
 		`,
 	)

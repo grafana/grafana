@@ -62,6 +62,8 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
       flexDirection: 'row',
       background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
       position: 'sticky',
+      paddingTop: theme.spacing(1),
+      marginTop: `-${theme.spacing(1)}`,
       top: `${chromeHeaderHeight + 70}px`,
       zIndex: 10,
     }),

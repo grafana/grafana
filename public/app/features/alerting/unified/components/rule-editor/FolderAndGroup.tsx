@@ -211,6 +211,7 @@ export function FolderAndGroup({
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}
+            htmlFor="group"
           >
             <Controller
               render={({ field: { ref, ...field }, fieldState }) => (
@@ -356,6 +357,7 @@ function EvaluationGroupCreationModal({
   const { watch } = useFormContext<RuleFormValues>();
 
   const evaluateEveryId = 'eval-every-input';
+  const evaluationGroupNameId = 'new-eval-group-name';
   const [groupName, folderName] = watch(['group', 'folder.title']);
 
   const groupRules =
@@ -392,8 +394,11 @@ function EvaluationGroupCreationModal({
         <form onSubmit={handleSubmit(() => onSubmit())}>
           <Field
             label={
-              <Label htmlFor={'group'} description="A group evaluates all its rules over the same evaluation interval.">
-                Evaluation group
+              <Label
+                htmlFor={evaluationGroupNameId}
+                description="A group evaluates all its rules over the same evaluation interval."
+              >
+                Evaluation group name
               </Label>
             }
             error={formState.errors.group?.message}
@@ -403,7 +408,7 @@ function EvaluationGroupCreationModal({
               data-testid={selectors.components.AlertRules.newEvaluationGroupName}
               className={styles.formInput}
               autoFocus={true}
-              id={'group'}
+              id={evaluationGroupNameId}
               placeholder="Enter a name"
               {...register('group', { required: { value: true, message: 'Required.' } })}
             />
@@ -411,29 +416,27 @@ function EvaluationGroupCreationModal({
 
           <Field
             error={formState.errors.evaluateEvery?.message}
-            invalid={Boolean(formState.errors.evaluateEvery) ? true : undefined}
             label={
               <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
                 Evaluation interval
               </Label>
             }
+            invalid={Boolean(formState.errors.evaluateEvery)}
           >
-            <Stack direction="column">
-              <Input
-                data-testid={selectors.components.AlertRules.newEvaluationGroupInterval}
-                className={styles.formInput}
-                id={evaluateEveryId}
-                placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
-                {...register(
-                  'evaluateEvery',
-                  evaluateEveryValidationOptions<{ group: string; evaluateEvery: string }>(groupRules)
-                )}
-              />
-              <Stack direction="row" alignItems="flex-end">
-                <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />
-              </Stack>
-            </Stack>
+            <Input
+              data-testid={selectors.components.AlertRules.newEvaluationGroupInterval}
+              className={styles.formInput}
+              id={evaluateEveryId}
+              placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
+              {...register(
+                'evaluateEvery',
+                evaluateEveryValidationOptions<{ group: string; evaluateEvery: string }>(groupRules)
+              )}
+            />
           </Field>
+
+          <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />
+
           <Modal.ButtonRow>
             <Button variant="secondary" type="button" onClick={onCancel}>
               Cancel

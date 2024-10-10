@@ -10,18 +10,20 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
-	"google.golang.org/protobuf/proto"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
-const trace_prefix = "sql.resource."
+const tracePrefix = "sql.resource."
+const defaultPollingInterval = 100 * time.Millisecond
 
 type Backend interface {
 	resource.StorageBackend
@@ -30,8 +32,9 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider db.DBProvider
-	Tracer     trace.Tracer
+	DBProvider      db.DBProvider
+	Tracer          trace.Tracer
+	PollingInterval time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -43,12 +46,17 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
+	pollingInterval := opts.PollingInterval
+	if pollingInterval == 0 {
+		pollingInterval = defaultPollingInterval
+	}
 	return &backend{
-		done:       ctx.Done(),
-		cancel:     cancel,
-		log:        log.New("sql-resource-server"),
-		tracer:     opts.Tracer,
-		dbProvider: opts.DBProvider,
+		done:            ctx.Done(),
+		cancel:          cancel,
+		log:             log.New("sql-resource-server"),
+		tracer:          opts.Tracer,
+		dbProvider:      opts.DBProvider,
+		pollingInterval: pollingInterval,
 	}, nil
 }
 
@@ -70,6 +78,7 @@ type backend struct {
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
+	pollingInterval time.Duration
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -111,7 +120,7 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	_, span := b.tracer.Start(ctx, trace_prefix+"WriteEvent")
+	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
 	switch event.Type {
@@ -127,7 +136,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 }
 
 func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, trace_prefix+"Create")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
@@ -180,12 +189,11 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 		return nil
 	})
-
 	return newVersion, err
 }
 
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, trace_prefix+"Update")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"Update")
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
@@ -244,7 +252,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, trace_prefix+"Delete")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"Delete")
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
@@ -296,7 +304,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
-	_, span := b.tracer.Start(ctx, trace_prefix+".Read")
+	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
 	defer span.End()
 
 	// TODO: validate key ?
@@ -331,7 +339,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	_, span := b.tracer.Start(ctx, trace_prefix+"List")
+	_, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
@@ -512,8 +520,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 }
 
 func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan<- *resource.WrittenEvent) {
-	interval := 100 * time.Millisecond // TODO make this configurable
-	t := time.NewTicker(interval)
+	t := time.NewTicker(b.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
 
@@ -526,7 +533,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
 				b.log.Error("get the latest resource version", "err", err)
-				t.Reset(interval)
+				t.Reset(b.pollingInterval)
 				continue
 			}
 			for group, items := range grv {
@@ -543,14 +550,16 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 					next, err := b.poll(ctx, group, resource, since[group][resource], stream)
 					if err != nil {
 						b.log.Error("polling for resource", "err", err)
-						t.Reset(interval)
+						t.Reset(b.pollingInterval)
 						continue
 					}
-					since[group][resource] = next
+					if next > since[group][resource] {
+						since[group][resource] = next
+					}
 				}
 			}
 
-			t.Reset(interval)
+			t.Reset(b.pollingInterval)
 		}
 	}
 }
@@ -600,7 +609,7 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 }
 
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, trace_prefix+"poll")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
 
 	var records []*historyPollResponse
@@ -625,6 +634,10 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			return nextRV, fmt.Errorf("missing key in response")
 		}
 		nextRV = rec.ResourceVersion
+		prevRV := rec.PreviousRV
+		if prevRV == nil {
+			*prevRV = int64(0)
+		}
 		stream <- &resource.WrittenEvent{
 			WriteEvent: resource.WriteEvent{
 				Value: rec.Value,
@@ -634,7 +647,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 					Resource:  rec.Key.Resource,
 					Name:      rec.Key.Name,
 				},
-				Type: resource.WatchEvent_Type(rec.Action),
+				Type:       resource.WatchEvent_Type(rec.Action),
+				PreviousRV: *prevRV,
 			},
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
@@ -661,15 +675,16 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// if there wasn't a row associated with the given resource, we create one with
-		// version 1
+		// version 2 to match the etcd behavior.
 		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
-			SQLTemplate: sqltemplate.New(d),
-			Group:       key.Group,
-			Resource:    key.Resource,
+			SQLTemplate:     sqltemplate.New(d),
+			Group:           key.Group,
+			Resource:        key.Resource,
+			resourceVersion: &resourceVersion{1},
 		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}
-		return 1, nil
+		return 2, nil
 	}
 
 	if err != nil {
