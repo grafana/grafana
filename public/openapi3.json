@@ -915,6 +915,19 @@
         },
         "description": "(empty)"
       },
+      "getGroupRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/RoleDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getGroupsResponse": {
         "content": {
           "application/json": {
@@ -19228,6 +19241,46 @@
           }
         },
         "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ]
+      }
+    },
+    "/groupsync/groups/{group_id}/roles": {
+      "get": {
+        "operationId": "getGroupRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getGroupRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "tags": [
           "group_attribute_sync",
           "enterprise"

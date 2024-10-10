@@ -1132,6 +1132,44 @@
         }
       }
     },
+    "/groupsync/groups/{group_id}/roles": {
+      "get": {
+        "tags": [
+          "group_attribute_sync",
+          "enterprise"
+        ],
+        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
+        "operationId": "getGroupRoles",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "group_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getGroupRolesResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/groupsync/mappings": {
       "get": {
         "tags": [
@@ -9521,6 +9559,15 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/getGroupMappings"
+      }
+    },
+    "getGroupRolesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/RoleDTO"
+        }
       }
     },
     "getGroupsResponse": {
