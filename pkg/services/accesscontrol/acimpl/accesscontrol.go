@@ -130,6 +130,7 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 
 		a.log.Debug("evaluating zanzana", "user", tupleKey.User, "relation", tupleKey.Relation, "object", tupleKey.Object)
 		allowed, err := a.Check(ctx, accesscontrol.CheckRequest{
+			// Namespace: claims.OrgNamespaceFormatter(user.GetOrgID()),
 			User:     tupleKey.User,
 			Relation: tupleKey.Relation,
 			Object:   tupleKey.Object,
@@ -230,25 +231,30 @@ func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckReques
 		Object:   req.Object,
 	}
 
-	ns, err := claims.ParseNamespace(req.Namespace)
-	if err != nil {
-		return false, err
-	}
-
-	contextualTuple := &openfgav1.TupleKey{
-		User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
-		Relation: zanzana.RelationParent,
-		Object:   req.Object,
-	}
-
 	in := &openfgav1.CheckRequest{
 		TupleKey: key,
-		ContextualTuples: &openfgav1.ContextualTupleKeys{
+	}
+
+	// Add contextual tuple with parent folder
+	if req.Parent != "" {
+		ns, err := claims.ParseNamespace(req.Namespace)
+		if err != nil {
+			return false, err
+		}
+
+		contextualTuple := &openfgav1.TupleKey{
+			User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
+			Relation: zanzana.RelationParent,
+			Object:   req.Object,
+		}
+
+		in.ContextualTuples = &openfgav1.ContextualTupleKeys{
 			TupleKeys: []*openfgav1.TupleKey{
 				contextualTuple,
 			},
-		},
+		}
 	}
+
 	res, err := a.zclient.Check(ctx, in)
 	if err != nil {
 		return false, err
