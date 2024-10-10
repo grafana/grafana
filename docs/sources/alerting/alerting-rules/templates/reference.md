@@ -93,7 +93,7 @@ CPU usage for server1 has exceeded 80% for the last 5 minutes
 
 ### $values
 
-The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs (e.g, `A`, `B`, `C`, etc.).
+The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs (e.g, `A`, `B`, `C`, etc.). It does not contain the results of range queries, as they can return hundreds or thousands of rows.
 
 Each Ref IDs, such as `$values.A`, has the following properties
 
@@ -126,25 +126,23 @@ Alternatively, you can use the `index()` function to retrieve the query value:
 {{ index $values "B" }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
 ```
 
-### $value
+#### $value
 
-The `$value` variable is a string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule. It does not contain the results of range queries, as these can return anywhere from 10s to 10,000s of rows or metrics. If it did, for especially large queries a single alert could use 10s of MBs of memory and Grafana would run out of memory very quickly.
+The `$value` variable is a string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule.
 
-To print the `$value` variable in the summary you would write something like this:
+This example prints the `$value` variable:
 
 ```
 {{ $value }}: CPU usage has exceeded 80% for the last 5 minutes.
 ```
 
-And would look something like this:
+It would display something like this:
 
 ```
 [ var='A' labels={instance=instance1} value=81.234 ]: CPU usage has exceeded 80% for the last 5 minutes.
 ```
 
-Here `var='A'` refers to the instant query with Ref ID A, `labels={instance=instance1}` refers to the labels, and `value=81.234` refers to the average CPU usage over the last 5 minutes.
-
-If you want to print just some of the string instead of the full string then use the [$values](#values) variable. It contains the same information as `$value`, but in a structured table, and is much easier to use then writing a regular expression to match just the text you want.
+Instead, we recommend using [$values](#values), which contains the same information as `$value` but is structured in an easier-to-use table format.
 
 ## Functions
 
