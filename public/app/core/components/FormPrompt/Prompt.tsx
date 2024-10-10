@@ -1,10 +1,11 @@
+import history from 'history';
 import { useEffect, useCallback } from 'react';
 
 import { locationService } from '@grafana/runtime';
 
 interface PromptProps {
   when: boolean;
-  message: string | ((location: { pathname: string }) => string);
+  message: string | ((location: history.Location) => string);
 }
 
 export const Prompt = ({ when, message }: PromptProps) => {
@@ -16,7 +17,7 @@ export const Prompt = ({ when, message }: PromptProps) => {
       if (!when) {
         return undefined;
       }
-      const msg = typeof message === 'function' ? message({ pathname: currentLocation.pathname }) : message;
+      const msg = typeof message === 'function' ? message(currentLocation) : message;
       event.preventDefault();
       event.returnValue = msg;
       return msg;
