@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -216,6 +218,14 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 // If the users has list access, all receiver settings will be removed from the response. This option is for backwards compatibility with the v1/receivers endpoint
 // and should be removed when FGAC is fully implemented.
 func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListReceiversQuery, user identity.Requester) ([]*models.Receiver, error) { // TODO: Remove this method with FGAC.
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.list", trace.WithAttributes(
+		attribute.Int64("query_org_id", q.OrgID),
+		attribute.StringSlice("query_names", q.Names),
+		attribute.Int("query_limit", q.Limit),
+		attribute.Int("query_offset", q.Offset),
+	))
+	defer span.End()
+
 	listAccess, err := rs.authz.HasList(ctx, user)
 	if err != nil {
 		return nil, err
@@ -232,6 +242,11 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 	}
 	postables := revision.GetReceivers(uids)
 
+	span.AddEvent("Loaded receivers", trace.WithAttributes(
+		attribute.String("concurrency_token", revision.ConcurrencyToken),
+		attribute.Int("count", len(postables)),
+	))
+
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
 		return nil, err
@@ -247,6 +262,10 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 		if err != nil {
 			return nil, err
 		}
+
+		span.AddEvent("Applied access control filter", trace.WithAttributes(
+			attribute.Int("count", len(receivers)),
+		))
 	}
 
 	// Remove settings.
@@ -264,6 +283,12 @@ func (rs *ReceiverService) ListReceivers(ctx context.Context, q models.ListRecei
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
 func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance definitions.Provenance, version string, orgID int64, user identity.Requester) error {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.delete", trace.WithAttributes(
+		attribute.String("receiver_uid", uid),
+		attribute.String("receiver_version", version),
+	))
+	defer span.End()
+
 	if err := rs.authz.AuthorizeDeleteByUID(ctx, user, uid); err != nil {
 		return err
 	}
@@ -328,7 +353,13 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	})
 }
 
-func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (*models.Receiver, error) {
+func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (result *models.Receiver, err error) {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.create", trace.WithAttributes(
+		attribute.String("receiver", r.Name),
+		attribute.StringSlice("integrations", r.GetIntegrationTypes()),
+	))
+	defer span.End()
+
 	if err := rs.authz.AuthorizeCreate(ctx, user); err != nil {
 		return nil, err
 	}
@@ -338,6 +369,8 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
+	span.AddEvent("Loaded Alertmanager configuration", trace.WithAttributes(attribute.String("concurrency_token", revision.ConcurrencyToken)))
+
 	createdReceiver := r.Clone()
 	err = createdReceiver.Encrypt(rs.encryptor(ctx))
 	if err != nil {
@@ -345,6 +378,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	}
 
 	if err := createdReceiver.Validate(rs.decryptor(ctx)); err != nil {
+		span.RecordError(err)
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
@@ -368,15 +402,26 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	result, err := PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
+	result, err = PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
 	if err != nil {
 		return nil, err
 	}
+	span.AddEvent("Created a new receiver", trace.WithAttributes(
+		attribute.String("uid", result.UID),
+		attribute.String("version", result.Version),
+	))
 	return result, nil
 }
 
 func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
-	// TODO: To support receiver renaming, we need to consider permissions on old and new UID since UIDs are tied to names.
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.update", trace.WithAttributes(
+		attribute.String("receiver", r.Name),
+		attribute.String("uid", r.UID),
+		attribute.String("version", r.Version),
+		attribute.StringSlice("integrations", r.GetIntegrationTypes()),
+	))
+	defer span.End()
+
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
 	}
@@ -398,6 +443,14 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
+
+	span.AddEvent("Loaded current receiver", trace.WithAttributes(
+		attribute.String("concurrency_token", revision.ConcurrencyToken),
+		attribute.String("receiver", existing.Name),
+		attribute.String("uid", existing.UID),
+		attribute.String("version", existing.Version),
+		attribute.StringSlice("integrations", existing.GetIntegrationTypes()),
+	))
 
 	// Check optimistic concurrency.
 	err = rs.checkOptimisticConcurrency(existing, r.Version)
@@ -666,6 +719,13 @@ func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []mode
 }
 
 func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.rename-dependent-resources", trace.WithAttributes(
+		attribute.String("oldName", oldName),
+		attribute.String("newName", newName),
+		attribute.String("receiver_provenance", string(receiverProvenance)),
+	))
+	defer span.End()
+
 	validate := validation.ValidateProvenanceOfDependentResources(receiverProvenance)
 	// if there are no references to the old time interval, exit
 	updatedRoutes := legacy_storage.RenameReceiverInRoute(oldName, newName, route)
@@ -683,7 +743,12 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		return err
 	}
 	if !canUpdate || len(invalidProvenance) > 0 {
-		return makeErrReceiverDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
+		err := makeErrReceiverDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
+		span.RecordError(err, trace.WithAttributes(
+			attribute.Bool("invalid_route_provenance", canUpdate),
+			attribute.Int("invalid_rule_provenances", len(invalidProvenance)),
+		))
+		return err
 	}
 	if len(affected) > 0 || updatedRoutes > 0 {
 		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
