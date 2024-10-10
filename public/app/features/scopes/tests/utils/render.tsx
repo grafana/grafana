@@ -12,7 +12,6 @@ import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../../instance';
 import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
 import { initialSelectorState } from '../../internal/ScopesSelectorScene';
-import { DASHBOARDS_OPENED_KEY } from '../../internal/const';
 
 import { clearMocks } from './actions';
 
@@ -160,7 +159,6 @@ export async function resetScenes() {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
   scopesSelectorScene?.setState(initialSelectorState);
-  localStorage.removeItem(DASHBOARDS_OPENED_KEY);
   scopesDashboardsScene?.setState(getInitialDashboardsState());
   cleanup();
 }

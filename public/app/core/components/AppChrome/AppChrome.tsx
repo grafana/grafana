@@ -34,7 +34,9 @@ export function AppChrome({ children }: Props) {
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const scopesDashboardsState = useScopesDashboardsState();
-  const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
+  const isScopesDashboardsOpen = Boolean(
+    scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened && !scopesDashboardsState?.isReadOnly
+  );
   const isSingleTopNav = config.featureToggles.singleTopNav;
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
