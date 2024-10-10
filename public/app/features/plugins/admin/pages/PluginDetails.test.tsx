@@ -1,7 +1,6 @@
-import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Route } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getDefaultNormalizer, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
+import { Routes, Route } from 'react-router-dom-v5-compat';
+import { render } from 'test/test-utils';
 
 import {
   PluginErrorCode,
@@ -11,7 +10,7 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
@@ -65,19 +64,19 @@ const renderPluginDetails = (
     pageId?: PluginTabIds;
     pluginsStateOverride?: ReducerState;
   } = {}
-): RenderResult => {
+) => {
   const plugin = getCatalogPluginMock(pluginOverride);
   const { id } = plugin;
   const store = configureStore({
     plugins: pluginsStateOverride || getPluginsStateMock([plugin]),
   });
 
-  locationService.push({ pathname: `/plugins/${id}`, search: pageId ? `?page=${pageId}` : '' });
-
   return render(
-    <TestProvider store={store}>
-      <Route path="/plugins/:pluginId" component={PluginDetailsPage} />
-    </TestProvider>
+    <Routes>
+      <Route path="/plugins/:pluginId" element={<PluginDetailsPage />} />
+    </Routes>,
+
+    { store, historyOptions: { initialEntries: [`/plugins/${id}${pageId ? `?page=${pageId}` : ''}`] } }
   );
 };
 
@@ -445,7 +444,7 @@ describe('Plugin details page', () => {
       // @ts-ignore
       api.uninstallPlugin = jest.fn();
 
-      const { queryByText, getByRole, findByRole } = renderPluginDetails({
+      const { queryByText, getByRole, findByRole, user } = renderPluginDetails({
         id,
         name: 'Akumuli',
         isInstalled: true,
@@ -468,14 +467,14 @@ describe('Plugin details page', () => {
       expect(await findByRole('tab', { name: PluginTabLabels.OVERVIEW })).toBeInTheDocument();
 
       // Open the confirmation modal
-      await userEvent.click(getByRole('button', { name: /uninstall/i }));
+      await user.click(getByRole('button', { name: /uninstall/i }));
 
       expect(queryByText('Uninstall Akumuli')).toBeInTheDocument();
       expect(queryByText('Are you sure you want to uninstall this plugin?')).toBeInTheDocument();
       expect(api.uninstallPlugin).toHaveBeenCalledTimes(0);
 
       // Confirm the uninstall
-      await userEvent.click(getByRole('button', { name: /confirm/i }));
+      await user.click(getByRole('button', { name: /confirm/i }));
       expect(api.uninstallPlugin).toHaveBeenCalledTimes(1);
       expect(api.uninstallPlugin).toHaveBeenCalledWith(id);
 
@@ -647,7 +646,7 @@ describe('Plugin details page', () => {
         },
       });
 
-      const { queryByText, getByRole } = renderPluginDetails({
+      const { queryByText, getByRole, user } = renderPluginDetails({
         id,
         name,
         isInstalled: true,
@@ -658,7 +657,7 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
 
       // Click on "Enable"
-      await userEvent.click(getByRole('button', { name: /enable/i }));
+      await user.click(getByRole('button', { name: /enable/i }));
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
@@ -687,7 +686,7 @@ describe('Plugin details page', () => {
         },
       });
 
-      const { queryByText, getByRole } = renderPluginDetails({
+      const { queryByText, getByRole, user } = renderPluginDetails({
         id,
         name,
         isInstalled: true,
@@ -698,7 +697,7 @@ describe('Plugin details page', () => {
       await waitFor(() => queryByText('Uninstall'));
 
       // Click on "Disable"
-      await userEvent.click(getByRole('button', { name: /disable/i }));
+      await user.click(getByRole('button', { name: /disable/i }));
 
       // Check if the API request was initiated
       expect(api.updatePluginSettings).toHaveBeenCalledTimes(1);
