@@ -63,8 +63,8 @@ refs:
   language-print:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#print
+    - pattern:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#print
-
 ---
 
 # Labels and annotations template examples
