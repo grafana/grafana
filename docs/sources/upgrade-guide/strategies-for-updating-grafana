@@ -38,7 +38,7 @@ We provide release documentation in multiple places to address different needs:
 - [**Upgrade guides**](https://grafana.com/docs/grafana/latest/upgrade-guide/?pg=blog&plcmt=body-txt) instruct you on how to upgrade to a newer minor or major version.
 - And finally, a [**changelog**](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) is generated for every release (major, minor, patching, security) and outlines all changes included in that release.
 
-So now that you know what is included in our release types, we can talk about …
+So now that you know what is included in our release types, we can talk about…
 
 ## When to expect releases
 
