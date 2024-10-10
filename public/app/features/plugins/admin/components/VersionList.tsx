@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -6,18 +7,31 @@ import { useStyles2 } from '@grafana/ui';
 import { getLatestCompatibleVersion } from '../helpers';
 import { Version } from '../types';
 
+import { VersionInstallButton } from './VersionInstallButton';
+
 interface Props {
+  pluginId: string;
   versions?: Version[];
   installedVersion?: string;
 }
 
-export const VersionList = ({ versions = [], installedVersion }: Props) => {
+export const VersionList = ({ pluginId, versions = [], installedVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
+
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  useEffect(() => {
+    setIsInstalling(false);
+  }, [installedVersion]);
 
   if (versions.length === 0) {
     return <p>No version history was found.</p>;
   }
+
+  const onInstallClick = () => {
+    setIsInstalling(true);
+  };
 
   return (
     <table className={styles.table}>
@@ -26,6 +40,7 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
           <th>Version</th>
           <th>Last updated</th>
           <th>Grafana Dependency</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -48,6 +63,17 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
               </td>
               {/* Dependency */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
+
+              {/* Install button */}
+              <td>
+                <VersionInstallButton
+                  pluginId={pluginId}
+                  version={version}
+                  installedVersion={installedVersion}
+                  onClick={onInstallClick}
+                  disabled={isInstalledVersion || isInstalling}
+                />
+              </td>
             </tr>
           );
         })}
@@ -74,4 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   currentVersion: css`
     font-weight: ${theme.typography.fontWeightBold};
   `,
+  spinner: css({
+    marginLeft: theme.spacing(1),
+  }),
 });
