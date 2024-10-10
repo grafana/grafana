@@ -219,10 +219,10 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     this.setState({ isPickerOpened: false });
   }
 
-  public toggleDashboardsPanel() {
+  private toggleDashboardsPanel(scopes: SelectedScope[]) {
     const dashboards = this.state.dashboards?.resolve();
 
-    if (this.state.scopes.length) {
+    if (scopes.length > 0) {
       dashboards?.openPanel();
     } else {
       dashboards?.closePanel();
@@ -244,6 +244,8 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     const scopes = await fetchSelectedScopes(treeScopes);
 
     this.setState({ scopes, isLoadingScopes: false });
+
+    this.toggleDashboardsPanel(scopes);
   }
 
   public resetDirtyScopeNames() {
@@ -380,7 +382,6 @@ export function ScopesSelectorSceneRenderer({ model }: SceneComponentProps<Scope
               onClick={() => {
                 model.closePicker();
                 model.updateScopes();
-                model.toggleDashboardsPanel();
               }}
             >
               <Trans i18nKey="scopes.selector.apply">Apply</Trans>
