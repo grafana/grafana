@@ -198,7 +198,6 @@ export interface FeatureToggles {
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
-  dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
