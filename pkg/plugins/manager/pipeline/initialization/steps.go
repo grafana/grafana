@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // BackendClientInit implements an InitializeFunc for initializing a backend plugin process.
@@ -21,20 +22,22 @@ type BackendClientInit struct {
 	envVarProvider  envvars.Provider
 	backendProvider plugins.BackendFactoryProvider
 	log             log.Logger
+	tracer          trace.Tracer
 }
 
 // BackendClientInitStep returns a new InitializeFunc for registering a backend plugin process.
 func BackendClientInitStep(envVarProvider envvars.Provider,
-	backendProvider plugins.BackendFactoryProvider) InitializeFunc {
-	return newBackendProcessRegistration(envVarProvider, backendProvider).Initialize
+	backendProvider plugins.BackendFactoryProvider, tracer trace.Tracer) InitializeFunc {
+	return newBackendProcessRegistration(envVarProvider, backendProvider, tracer).Initialize
 }
 
 func newBackendProcessRegistration(envVarProvider envvars.Provider,
-	backendProvider plugins.BackendFactoryProvider) *BackendClientInit {
+	backendProvider plugins.BackendFactoryProvider, tracer trace.Tracer) *BackendClientInit {
 	return &BackendClientInit{
 		backendProvider: backendProvider,
 		envVarProvider:  envVarProvider,
 		log:             log.New("plugins.backend.registration"),
+		tracer:          tracer,
 	}
 }
 
@@ -49,7 +52,7 @@ func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (
 		// this will ensure that the env variables are calculated every time a plugin is started
 		envFunc := func() []string { return b.envVarProvider.PluginEnvVars(ctx, p) }
 
-		if backendClient, err := backendFactory(p.ID, p.Logger(), envFunc); err != nil {
+		if backendClient, err := backendFactory(p.ID, p.Logger(), b.tracer, envFunc); err != nil {
 			return nil, err
 		} else {
 			p.RegisterClient(backendClient)
