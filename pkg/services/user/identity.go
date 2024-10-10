@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -50,6 +51,19 @@ type SignedInUser struct {
 
 	// When other settings are not deterministic, this value is used
 	FallbackType claims.IdentityType
+}
+
+type IdentityTypes []claims.IdentityType
+
+func (it IdentityTypes) String() string {
+	var b strings.Builder
+	for i, t := range it {
+		b.WriteString(string(t))
+		if i != len(it)-1 {
+			b.WriteString(", ")
+		}
+	}
+	return b.String()
 }
 
 // Access implements claims.AuthInfo.
@@ -100,6 +114,14 @@ func (u *SignedInUser) GetIdentityType() claims.IdentityType {
 // IsIdentityType implements Requester.
 func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(u.GetIdentityType(), expected...)
+}
+
+// GetInternalIDForIdentityType wraps GetInternalID() to first guard against allowed identity types
+func (u *SignedInUser) GetInternalIDForIdentityType(expected ...claims.IdentityType) (int64, error) {
+	if !u.IsIdentityType(expected...) {
+		return 0, ErrIncorrectIdentityType.Build(ErrIncorrectIdentityTypeData(expected, u.GetIdentityType()))
+	}
+	return u.GetInternalID()
 }
 
 // GetName implements identity.Requester.

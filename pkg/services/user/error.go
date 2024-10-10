@@ -3,7 +3,12 @@ package user
 import (
 	"errors"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+)
+
+const (
+	incorrectIdentityTypeMsg = `identity type must be one of {{ .Public.types }}; received {{ .Public.actual }}`
 )
 
 var (
@@ -22,5 +27,15 @@ var (
 	ErrEmptyUsernameAndEmail = errutil.BadRequest(
 		"user.empty-username-and-email", errutil.WithPublicMessage("Need to specify either username or email"),
 	)
-	ErrPasswordMissmatch = errutil.BadRequest("user.password-missmatch", errutil.WithPublicMessage("Invalid old password"))
+	ErrPasswordMissmatch     = errutil.BadRequest("user.password-missmatch", errutil.WithPublicMessage("Invalid old password"))
+	ErrIncorrectIdentityType = errutil.Internal("user.incorrect-identity-type").MustTemplate(incorrectIdentityTypeMsg)
 )
+
+func ErrIncorrectIdentityTypeData(expected []claims.IdentityType, actual claims.IdentityType) errutil.TemplateData {
+	return errutil.TemplateData{
+		Public: map[string]any{
+			"types":  IdentityTypes(expected).String(),
+			"actual": string(actual),
+		},
+	}
+}
