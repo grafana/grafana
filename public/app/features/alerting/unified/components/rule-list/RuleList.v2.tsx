@@ -74,7 +74,7 @@ const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
   }
 
   if (isLoading) {
-    return <DataSourceSection loader={<Skeleton width={250} height={16} />}></DataSourceSection>;
+    return <DataSourceSection loader={<Skeleton width={250} height={16} />} />;
   }
 
   // 2. grab prometheus rule groups with max_groups if supported
@@ -82,24 +82,31 @@ const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
     const rulerEnabled = Boolean(dataSourceInfo.rulerConfig);
 
     return (
-      <DataSourceSection name={name} application={application} uid={uid}>
-        <PaginatedRuleGroupLoader
-          ruleSourceName={dataSourceInfo?.dataSourceSettings.name}
-          rulerEnabled={rulerEnabled}
-        />
-      </DataSourceSection>
+      <PaginatedDataSourceLoader
+        ruleSourceName={dataSourceInfo?.dataSourceSettings.name}
+        rulerEnabled={rulerEnabled}
+        uid={uid}
+        name={name}
+        application={application}
+      />
     );
   }
 
   return null;
 };
 
-interface PaginatedRuleGroupLoaderProps {
+interface PaginatedDataSourceLoaderProps extends Pick<DataSourceSectionProps, 'application' | 'uid' | 'name'> {
   ruleSourceName: string;
   rulerEnabled?: boolean;
 }
 
-function PaginatedRuleGroupLoader({ ruleSourceName, rulerEnabled = false }: PaginatedRuleGroupLoaderProps) {
+function PaginatedDataSourceLoader({
+  ruleSourceName,
+  rulerEnabled = false,
+  name,
+  uid,
+  application,
+}: PaginatedDataSourceLoaderProps) {
   const { data: ruleNamespaces = [], isLoading } = usePrometheusRuleNamespacesQuery({
     ruleSourceName,
     maxGroups: 25,
@@ -108,40 +115,42 @@ function PaginatedRuleGroupLoader({ ruleSourceName, rulerEnabled = false }: Pagi
   });
 
   return (
-    <Stack direction="column" gap={1}>
-      {ruleNamespaces.map((namespace) => (
-        <ListSection
-          key={namespace.name}
-          title={
-            <Stack direction="row" gap={1} alignItems="center">
-              <Icon name="folder" /> {namespace.name}
-            </Stack>
-          }
-        >
-          {namespace.groups.map((group) => (
-            <ListGroup key={group.name} name={group.name} isOpen={false}>
-              {group.rules.map((rule) => {
-                const groupIdentifier: RuleGroupIdentifier = {
-                  dataSourceName: ruleSourceName,
-                  groupName: group.name,
-                  namespaceName: namespace.name,
-                };
+    <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
+      <Stack direction="column" gap={1}>
+        {ruleNamespaces.map((namespace) => (
+          <ListSection
+            key={namespace.name}
+            title={
+              <Stack direction="row" gap={1} alignItems="center">
+                <Icon name="folder" /> {namespace.name}
+              </Stack>
+            }
+          >
+            {namespace.groups.map((group) => (
+              <ListGroup key={group.name} name={group.name} isOpen={false}>
+                {group.rules.map((rule) => {
+                  const groupIdentifier: RuleGroupIdentifier = {
+                    dataSourceName: ruleSourceName,
+                    groupName: group.name,
+                    namespaceName: namespace.name,
+                  };
 
-                return (
-                  <AlertRuleLoader
-                    key={hashRule(rule)}
-                    rule={rule}
-                    groupIdentifier={groupIdentifier}
-                    rulerEnabled={rulerEnabled}
-                  />
-                );
-              })}
-            </ListGroup>
-          ))}
-        </ListSection>
-      ))}
-      {!isLoading && <Pagination currentPage={1} numberOfPages={0} onNavigate={noop} />}
-    </Stack>
+                  return (
+                    <AlertRuleLoader
+                      key={hashRule(rule)}
+                      rule={rule}
+                      groupIdentifier={groupIdentifier}
+                      rulerEnabled={rulerEnabled}
+                    />
+                  );
+                })}
+              </ListGroup>
+            ))}
+          </ListSection>
+        ))}
+        {!isLoading && <Pagination currentPage={1} numberOfPages={0} onNavigate={noop} />}
+      </Stack>
+    </DataSourceSection>
   );
 }
 
@@ -256,9 +265,18 @@ interface DataSourceSectionProps extends PropsWithChildren {
   loader?: ReactNode;
   application?: RulesSourceApplication;
   isLoading?: boolean;
+  description?: ReactNode;
 }
 
-const DataSourceSection = ({ uid, name, application, children, loader, isLoading = false }: DataSourceSectionProps) => {
+const DataSourceSection = ({
+  uid,
+  name,
+  application,
+  children,
+  loader,
+  isLoading = false,
+  description = null,
+}: DataSourceSectionProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -273,6 +291,12 @@ const DataSourceSection = ({ uid, name, application, children, loader, isLoading
                 <Text variant="body" weight="bold">
                   {name}
                 </Text>
+              )}
+              {description && (
+                <>
+                  {'·'}
+                  {description}
+                </>
               )}
               <Spacer />
               {uid && (
