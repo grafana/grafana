@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	golog "log"
 	"os"
 	"strings"
 
@@ -217,7 +218,7 @@ func createFileIndex() (bleve.Index, string, error) {
 	indexPath := fmt.Sprintf("%s%s.bleve", os.TempDir(), uuid.New().String())
 	index, err := bleve.New(indexPath, createIndexMappings())
 	if err != nil {
-		log.Fatalf("Failed to create index: %v", err)
+		golog.Fatalf("Failed to create index: %v", err)
 	}
 	return index, indexPath, err
 }
