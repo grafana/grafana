@@ -269,7 +269,7 @@ _Generally available in all editions of Grafana_
 
 [Documentation](https://grafana.com/developers/plugin-tools/reference-plugin-json#roles)
 
-We're excited to announce that plugins can now leverage [Grafana's role based access control](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/#about-rbac) to define their own roles and permissions in order to control access to their routes.
+We're excited to announce that plugins can now leverage [Grafana's role based access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/#about-rbac) to define their own roles and permissions in order to control access to their routes.
 
 To define roles and their default assignments, plugin developers need to add a `roles` section to their `plugin.json` file. Grafana will automatically register these roles and assign them to the corresponding basic roles: `Viewer`, `Editor`, `Admin`, and `Grafana Admin`.
 
