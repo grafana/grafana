@@ -198,7 +198,8 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashb
 					User:      query.SignedInUser.GetUID(),
 					Relation:  "read",
 					Object:    zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
-					Parent:    d.FolderUID,
+					// Always pass parentn folder for the correct check
+					Parent: d.FolderUID,
 				}
 
 				allowed, err := dr.ac.Check(ctx, req)
