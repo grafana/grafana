@@ -56,6 +56,10 @@
     "pause": ""
   },
   "alerting": {
+    "annotations": {
+      "description": "",
+      "title": ""
+    },
     "central-alert-history": {
       "details": {
         "error": "",
@@ -108,7 +112,18 @@
     },
     "contact-point": "",
     "contact-points": {
+      "create": "",
+      "delete-reasons": {
+        "heading": "",
+        "no-permissions": "",
+        "policies": "",
+        "provisioned": "",
+        "rules": ""
+      },
       "delivery-duration": "",
+      "empty-state": {
+        "title": ""
+      },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-delivery-attempts": "",
@@ -119,7 +134,9 @@
         "parse-mode-warning-title": ""
       },
       "used-by_one": "",
-      "used-by_other": ""
+      "used-by_other": "",
+      "used-by-rules_one": "",
+      "used-by-rules_other": ""
     },
     "contactPointFilter": {
       "label": ""
@@ -141,6 +158,10 @@
           "title": ""
         }
       }
+    },
+    "manage-permissions": {
+      "button": "",
+      "title": ""
     },
     "mute_timings": {
       "error-loading": {
@@ -195,6 +216,13 @@
       "badge-tooltip-provenance": "",
       "badge-tooltip-standard": ""
     },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": ""
+      },
+      "preview": "",
+      "previewCondition": ""
+    },
     "rule-groups": {
       "delete": {
         "success": ""
@@ -214,6 +242,12 @@
       "deleting": "",
       "paused": "",
       "recording-rule": ""
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "",
+        "alert-title": ""
+      }
     },
     "rules": {
       "add-rule": {
@@ -244,6 +278,12 @@
         "state": ""
       },
       "save-query": ""
+    },
+    "simpleCondition": {
+      "alertCondition": "",
+      "ofQuery": {
+        "To": ""
+      }
     }
   },
   "annotations": {
@@ -288,6 +328,9 @@
       "move-modal-title": "Déplacer",
       "moving": "Déplacement...",
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier."
+    },
+    "actions": {
+      "button-to-recently-deleted": ""
     },
     "counts": {
       "alertRule_one": "{{count}} règle d'alerte",
@@ -462,23 +505,30 @@
     },
     "source-form": {
       "control-required": "Ce champ est obligatoire.",
-      "description": "Vous avez utilisé les variables suivantes dans la requête cible: : <1></1><2></2>Un point de données doit fournir des valeurs à toutes les variables en tant que champs ou en tant que résultat de transformations pour faire apparaître le bouton de corrélation dans la visualisation. <4></4>Remarque : toutes les variables ne doivent pas être explicitement définies ci-dessous. Une transformation telle que <7>logfmt</7> créera des variables pour chaque paire clé/valeur.",
-      "heading": "Variables utilisées dans la requête cible",
+      "description": "",
+      "description-external-pre": "",
+      "description-query-pre": "",
+      "external-title": "",
+      "heading-external": "",
+      "heading-query": "",
+      "query-title": "",
       "results-description": "Le lien apparaîtra à côté de la valeur de ce champ",
       "results-label": "Champ résultats",
       "results-required": "Ce champ est obligatoire.",
       "source-description": "Les résultats de la source de données source sélectionnée ont des liens affichés dans le panneau",
       "source-label": "Source",
-      "sub-text": "<0>Définissez quelle source de données affichera la corrélation et quelles données remplaceront les variables précédemment définies.</0>",
-      "title": "Configurer la source de données qui sera liée à {{dataSourceName}} (Étape 3 sur 3)"
+      "sub-text": "<0>Définissez quelle source de données affichera la corrélation et quelles données remplaceront les variables précédemment définies.</0>"
     },
     "sub-title": "Définissez comment les données provenant de différentes sources de données se rapportent l’une à l’autre. En savoir plus dans la <2>documentation<1></1></2>",
     "target-form": {
       "control-rules": "Ce champ est obligatoire.",
-      "sub-text": "<0>Définissez la source de données vers laquelle la corrélation renverra, et la requête qui sera exécutée en cliquant sur la corrélation.</0>",
-      "target-description": "Spécifiez quelle source de données est interrogée lorsqu'on clique sur le lien",
+      "sub-text": "",
+      "target-description-external": "",
+      "target-description-query": "",
       "target-label": "Cible",
-      "title": "Configurez la cible pour la corrélation (Étape 2 sur 3)"
+      "target-type-description": "",
+      "title": "Configurez la cible pour la corrélation (Étape 2 sur 3)",
+      "type-label": ""
     },
     "trans-details": {
       "logfmt-description": "Analyser le champ fourni avec logfmt pour récupérer les variables",
@@ -704,6 +754,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "",
+      "angular-deprecation-description": "",
+      "angular-deprecation-heading": ""
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -1038,6 +1093,13 @@
     },
     "title": "Raccourcis"
   },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
+  },
   "inspector": {
     "query": {
       "collapse-all": "Tout réduire",
@@ -1077,9 +1139,9 @@
       "root-ca-cert-label": "",
       "root-ca-cert-placeholder": "",
       "root-ca-cert-value-label": "",
+      "root-ca-cert-value-placeholder": "",
       "start-tls-description": "",
       "start-tls-label": "",
-      "tls-ciphers-description": "",
       "tls-ciphers-label": "",
       "tls-ciphers-placeholder": "",
       "use-ssl-description": "",
@@ -1111,8 +1173,8 @@
         "button": ""
       },
       "description": "",
-      "group-search-base-dns-description": "",
       "group-search-base-dns-label": "",
+      "group-search-base-dns-placeholder": "",
       "group-search-filter-description": "",
       "group-search-filter-label": "",
       "group-search-filter-user-attribute-description": "",
@@ -1134,9 +1196,7 @@
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
-      "edit": {
-        "button": ""
-      },
+      "edit-button": "",
       "subtitle": "",
       "title": ""
     },
@@ -1157,15 +1217,10 @@
       "label": ""
     },
     "buttons-section": {
-      "discard": {
-        "button": ""
-      },
-      "save": {
-        "button": ""
-      },
-      "save-and-enable": {
-        "button": ""
-      }
+      "disable-button": "",
+      "discard-button": "",
+      "save-and-enable-button": "",
+      "save-button": ""
     },
     "documentation": "",
     "host": {
@@ -1184,7 +1239,8 @@
     },
     "search-base-dns": {
       "description": "",
-      "label": ""
+      "label": "",
+      "placeholder": ""
     },
     "subtitle": "",
     "title": ""
@@ -1349,7 +1405,8 @@
     "migrated-counts": {
       "dashboards": "",
       "datasources": "",
-      "folders": ""
+      "folders": "",
+      "library_elements": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1421,6 +1478,9 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "dashboard-load-error": "",
+      "error-library-element-sub": "",
+      "error-library-element-title": "",
       "unknown-datasource-title": "",
       "unknown-datasource-type": ""
     },
@@ -1428,6 +1488,7 @@
       "dashboard": "Tableau de bord",
       "datasource": "Source de données",
       "folder": "",
+      "library_element": "",
       "unknown": "Inconnu"
     },
     "summary": {
@@ -1529,7 +1590,7 @@
     },
     "apps": {
       "subtitle": "Plugins d'application qui prolongent l'expérience Grafana",
-      "title": "Applications"
+      "title": ""
     },
     "authentication": {
       "title": "Authentification"
@@ -1740,6 +1801,9 @@
       "subtitle": "Utiliser des comptes de service pour exécuter des charges de travail automatisées dans Grafana",
       "title": "Comptes de service"
     },
+    "setup-guide": {
+      "title": ""
+    },
     "shared-dashboard": {
       "subtitle": "",
       "title": ""
@@ -1802,6 +1866,7 @@
       "close": "Fermer le menu",
       "dock": "Ancrer le menu",
       "list-label": "Navigation",
+      "open": "",
       "undock": "Ancrer le menu"
     },
     "toolbar": {
@@ -1831,6 +1896,9 @@
       "server-discovery-modal-close": "",
       "server-discovery-modal-loading": "",
       "server-discovery-modal-submit": ""
+    },
+    "login": {
+      "error": ""
     }
   },
   "panel": {
@@ -1855,6 +1923,10 @@
       "unlink-library-panel": "Dissocier le panneau Bibliothèque",
       "view": "Afficher"
     }
+  },
+  "panel-search": {
+    "no-matches": "",
+    "unsupported-layout": ""
   },
   "playlist-edit": {
     "error-prefix": "Erreur lors du chargement de la playlist :",
@@ -1912,13 +1984,16 @@
         "button": "",
         "cloud-update-message": "",
         "error": "",
+        "error-status-text": "",
         "header": "",
         "installed-header": "",
         "modal-confirmation": "",
         "modal-dismiss": "",
+        "modal-in-progress": "",
         "modal-title": "",
         "name-header": "",
-        "update-header": ""
+        "update-header": "",
+        "update-status-text": ""
       }
     },
     "details": {
@@ -2140,7 +2215,12 @@
     }
   },
   "query-library": {
-    "delete-query-button": ""
+    "datasource-names": "",
+    "delete-query-button": "",
+    "query-template-get-error": "",
+    "search": "",
+    "user-info-get-error": "",
+    "user-names": ""
   },
   "query-operation": {
     "header": {
@@ -2309,7 +2389,6 @@
     "menu": {
       "export-json-title": "",
       "share-externally-title": "",
-      "share-internally-description": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
     },
@@ -2599,6 +2678,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": ""
+    },
     "metric-overview": {
       "description-label": "",
       "labels": "",

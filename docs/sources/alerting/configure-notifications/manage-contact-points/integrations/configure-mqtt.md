@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: MQTT notifier
 title: Configure the MQTT notifier for Alerting
-weight: 80
+weight: 0
 ---
 
 # Configure the MQTT notifier for Alerting
@@ -33,7 +33,11 @@ To configure the MQTT integration for Alerting, complete the following steps.
 1. Enter the MQTT topic name in the **Topic** field.
 1. In **Optional MQTT settings**, specify additional settings for the MQTT integration if needed.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
    A test alert notification should be sent to the MQTT broker.
+
 1. Click **Save** contact point.
 
 The integration sends data in JSON format by default. You can change that using **Message format** field in the **Optional MQTT settings** section. There are two supported formats:

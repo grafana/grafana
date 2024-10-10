@@ -52,6 +52,12 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+	{
+		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
 }
 
 func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
@@ -78,6 +84,7 @@ func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerCha
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
 		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
+		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false
 
@@ -170,9 +177,13 @@ func InstallAPIs(
 			// Get the option from custom.ini/command line
 			// when missing this will default to mode zero (legacy only)
 			var mode = grafanarest.DualWriterMode(0)
+
+			var dualWriterPeriodicDataSyncJobEnabled bool
+
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
+				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
 			}
 
 			// Force using storage only -- regardless of internal synchronization state
@@ -198,7 +209,7 @@ func InstallAPIs(
 			default:
 			}
 
-			if storageOpts.DualWriterDataSyncJobEnabled[key] {
+			if dualWriterPeriodicDataSyncJobEnabled {
 				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, requestInfo)
 			}
 

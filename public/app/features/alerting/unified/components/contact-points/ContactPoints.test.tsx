@@ -1,9 +1,10 @@
 import { MemoryHistoryBuildOptions } from 'history';
 import { ComponentProps, ReactNode } from 'react';
-import { render, screen, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { flushMicrotasks, testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
+import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -14,7 +15,7 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { ContactPoint } from './ContactPoint';
-import ContactPointsPageContents from './ContactPoints';
+import { ContactPointsPageContents } from './ContactPoints';
 import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
@@ -40,7 +41,7 @@ import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } 
  */
 const server = setupMswServer();
 
-const renderWithProvider = (
+export const renderWithProvider = (
   children: ReactNode,
   historyOptions?: MemoryHistoryBuildOptions,
   providerProps?: Partial<ComponentProps<typeof AlertmanagerProvider>>
@@ -58,10 +59,30 @@ const basicContactPoint: ContactPointWithMetadata = {
   grafana_managed_receiver_configs: [],
 };
 
-const attemptDeleteContactPoint = async (name: string) => {
+const contactPointWithEverything: ContactPointWithMetadata = {
+  ...basicContactPoint,
+  metadata: {
+    annotations: {
+      [K8sAnnotations.InUseRules]: '3',
+      [K8sAnnotations.InUseRoutes]: '1',
+      [K8sAnnotations.AccessAdmin]: 'true',
+      [K8sAnnotations.AccessDelete]: 'true',
+      [K8sAnnotations.AccessWrite]: 'true',
+    },
+  },
+};
+
+const clickMoreActionsButton = async (name: string) => {
   const user = userEvent.setup();
   const moreActions = await screen.findByRole('button', { name: `More actions for contact point "${name}"` });
   await user.click(moreActions);
+  await flushMicrotasks();
+};
+
+const attemptDeleteContactPoint = async (name: string) => {
+  const user = userEvent.setup();
+
+  await clickMoreActionsButton(name);
 
   const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
   await user.click(deleteButton);
@@ -83,7 +104,7 @@ describe('contact points', () => {
       test('loads contact points tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=contact_points'] });
 
-        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
 
       test('loads templates tab', async () => {
@@ -95,13 +116,13 @@ describe('contact points', () => {
       test('defaults to contact points tab with invalid query param', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=foo_bar'] });
 
-        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with no query param', async () => {
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
     });
 
@@ -186,16 +207,6 @@ describe('contact points', () => {
       await attemptDeleteContactPoint('lotsa-emails');
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
-
-    it('should disable edit button', async () => {
-      renderWithProvider(<ContactPoint contactPoint={basicContactPoint} disabled={true} />);
-
-      const moreActions = screen.getByRole('button', { name: /More/ });
-      expect(moreActions).toBeEnabled();
-
-      const editAction = screen.getByTestId('edit-action');
-      expect(editAction).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('should show warning when no receivers are configured', async () => {
@@ -394,8 +405,9 @@ describe('contact points', () => {
   });
 
   describe('alertingApiServer enabled', () => {
+    testWithFeatureToggles(['alertingApiServer']);
+
     beforeEach(() => {
-      config.featureToggles.alertingApiServer = true;
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsWrite,
@@ -427,6 +439,110 @@ describe('contact points', () => {
       renderGrafanaContactPoints();
 
       return expect(attemptDeleteContactPoint('provisioned-contact-point')).rejects.toBeTruthy();
+    });
+
+    it('renders number of alert rules and policies and does not permit deletion', async () => {
+      const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithEverything} />);
+
+      expect(screen.getByText(/used by 3 alert rule/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 1 notification policy/i)).toBeInTheDocument();
+
+      await clickMoreActionsButton(contactPointWithEverything.name);
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      expect(deleteButton).toBeDisabled();
+      await user.hover(deleteButton);
+
+      expect(await screen.findByText(/Contact point is referenced by one or more alert rules/i)).toBeInTheDocument();
+      expect(
+        await screen.findByText(/Contact point is referenced by one or more notification policies/i)
+      ).toBeInTheDocument();
+    });
+
+    it('does not permit deletion when contact point is only referenced by a rule', async () => {
+      const contactPointWithRule: ContactPointWithMetadata = {
+        ...basicContactPoint,
+        metadata: {
+          annotations: {
+            [K8sAnnotations.InUseRules]: '1',
+          },
+        },
+      };
+      const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithRule} />);
+
+      expect(screen.getByText(/used by 1 alert rule/i)).toBeInTheDocument();
+
+      await clickMoreActionsButton(contactPointWithEverything.name);
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      expect(deleteButton).toBeDisabled();
+      await user.hover(deleteButton);
+
+      expect(await screen.findByText(/Contact point is referenced by one or more alert rules/i)).toBeInTheDocument();
+    });
+
+    it('does not permit deletion when lacking permissions to delete', async () => {
+      grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
+      const contactPointWithoutPermissions: ContactPointWithMetadata = {
+        ...contactPointWithEverything,
+        metadata: {
+          annotations: {
+            [K8sAnnotations.AccessDelete]: 'false',
+          },
+        },
+      };
+
+      const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithoutPermissions} />);
+
+      await clickMoreActionsButton(contactPointWithEverything.name);
+
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      await waitFor(() => expect(deleteButton).toBeDisabled());
+
+      await user.hover(deleteButton);
+
+      expect(
+        await screen.findByText(/You do not have the required permission to delete this contact point/i)
+      ).toBeInTheDocument();
+    });
+
+    it('allows deletion when there are no rules or policies referenced, and user has permission', async () => {
+      grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
+      const contactPointWithoutPermissions: ContactPointWithMetadata = {
+        ...contactPointWithEverything,
+        metadata: {
+          annotations: {
+            [K8sAnnotations.AccessDelete]: 'false',
+          },
+        },
+      };
+
+      const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithoutPermissions} />);
+
+      await clickMoreActionsButton(contactPointWithEverything.name);
+
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      await waitFor(() => expect(deleteButton).toBeDisabled());
+
+      await user.hover(deleteButton);
+
+      expect(
+        await screen.findByText(/You do not have the required permission to delete this contact point/i)
+      ).toBeInTheDocument();
+    });
+
+    it('shows manage permissions and allows closing', async () => {
+      const { user } = renderGrafanaContactPoints();
+
+      await clickMoreActionsButton('lotsa-emails');
+
+      await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
+
+      const permissionsDialog = await screen.findByRole('dialog', { name: /drawer title manage permissions/i });
+
+      expect(permissionsDialog).toBeInTheDocument();
+      expect(await screen.findByRole('table')).toBeInTheDocument();
+
+      await user.click(within(permissionsDialog).getAllByRole('button', { name: /close/i })[0]);
+      expect(permissionsDialog).not.toBeInTheDocument();
     });
   });
 });
