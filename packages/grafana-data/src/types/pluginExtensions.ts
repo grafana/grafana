@@ -185,8 +185,8 @@ export enum PluginExtensionPoints {
 }
 
 export type QueryToAppPluginContext = {
-  datasource: DataSourceRef;
-  query: DataQuery;
+  datasource?: DataSourceRef | null;
+  query?: DataQuery;
 };
 
 export type PluginExtensionPanelContext = {

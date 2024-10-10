@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { first } from 'lodash';
 
-import { DataQuery, DataSourceRef, PluginExtensionPoints } from '@grafana/data';
+import { DataQuery, PluginExtensionPoints } from '@grafana/data';
 import { QueryToAppPluginContext } from '@grafana/data/src/types/pluginExtensions';
 import { usePluginLinks } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
@@ -17,7 +17,7 @@ const moreButtonStyle = css({
 export const AppLinks = ({ query }: Props) => {
   const context: QueryToAppPluginContext = {
     query,
-    datasource: query.datasource as DataSourceRef,
+    datasource: query.datasource,
   };
 
   const links = usePluginLinks({
@@ -25,7 +25,7 @@ export const AppLinks = ({ query }: Props) => {
     context,
   });
 
-  if (!context.datasource || links.links.length === 0) {
+  if (links.links.length === 0) {
     return undefined;
   }
 
