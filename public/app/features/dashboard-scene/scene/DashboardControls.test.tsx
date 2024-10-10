@@ -1,22 +1,40 @@
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 
+import { toUtc } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneDataLayerControls, SceneVariableSet, TextBoxVariable, VariableValueSelectors } from '@grafana/scenes';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 
+const mockGetAnchorInfo = jest.fn((link) => ({
+  href: `/dashboard/${link.title}`,
+  title: link.title,
+  tooltip: link.tooltip || null,
+}));
+
+// Mock the getLinkSrv function
+jest.mock('app/features/panel/panellinks/link_srv', () => ({
+  getLinkSrv: jest.fn(() => ({
+    getAnchorInfo: mockGetAnchorInfo,
+  })),
+}));
+
 describe('DashboardControls', () => {
   describe('Given a standard scene', () => {
     it('should initialize with default values', () => {
-      const scene = buildTestScene();
+      const { controls: scene } = buildTestScene();
       expect(scene.state.variableControls).toEqual([]);
       expect(scene.state.timePicker).toBeDefined();
       expect(scene.state.refreshPicker).toBeDefined();
     });
 
     it('should return if time controls are hidden', () => {
-      const scene = buildTestScene({ hideTimeControls: false, hideVariableControls: false, hideLinksControls: false });
+      const { controls: scene } = buildTestScene({
+        hideTimeControls: false,
+        hideVariableControls: false,
+        hideLinksControls: false,
+      });
       expect(scene.hasControls()).toBeTruthy();
       scene.setState({ hideTimeControls: true });
       expect(scene.hasControls()).toBeTruthy();
@@ -27,14 +45,14 @@ describe('DashboardControls', () => {
 
   describe('Component', () => {
     it('should render', () => {
-      const scene = buildTestScene();
+      const { controls: scene } = buildTestScene();
       expect(() => {
         render(<scene.Component model={scene} />);
       }).not.toThrow();
     });
 
     it('should render visible controls', async () => {
-      const scene = buildTestScene({
+      const { controls: scene } = buildTestScene({
         variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
       });
       const renderer = render(<scene.Component model={scene} />);
@@ -47,7 +65,7 @@ describe('DashboardControls', () => {
     });
 
     it('should render with hidden controls', async () => {
-      const scene = buildTestScene({
+      const { controls: scene } = buildTestScene({
         hideTimeControls: true,
         hideVariableControls: true,
         hideLinksControls: true,
@@ -61,13 +79,13 @@ describe('DashboardControls', () => {
 
   describe('UrlSync', () => {
     it('should return keys', () => {
-      const scene = buildTestScene();
+      const { controls: scene } = buildTestScene();
       // @ts-expect-error
       expect(scene._urlSync.getKeys()).toEqual(['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks']);
     });
 
     it('should not return url state for hide flags', () => {
-      const scene = buildTestScene();
+      const { controls: scene } = buildTestScene();
       expect(scene.getUrlState()).toEqual({});
       scene.setState({
         hideTimeControls: true,
@@ -78,7 +96,7 @@ describe('DashboardControls', () => {
     });
 
     it('should update from url', () => {
-      const scene = buildTestScene();
+      const { controls: scene } = buildTestScene();
       scene.updateFromUrl({
         '_dash.hideTimePicker': 'true',
         '_dash.hideVariables': 'true',
@@ -98,7 +116,11 @@ describe('DashboardControls', () => {
     });
 
     it('should not override state if no new state comes from url', () => {
-      const scene = buildTestScene({ hideTimeControls: true, hideVariableControls: true, hideLinksControls: true });
+      const { controls: scene } = buildTestScene({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+      });
       scene.updateFromUrl({});
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
@@ -106,7 +128,11 @@ describe('DashboardControls', () => {
     });
 
     it('should not call setState if no changes', () => {
-      const scene = buildTestScene({ hideTimeControls: true, hideVariableControls: true, hideLinksControls: true });
+      const { controls: scene } = buildTestScene({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+      });
       const setState = jest.spyOn(scene, 'setState');
 
       scene.updateFromUrl({
@@ -118,9 +144,34 @@ describe('DashboardControls', () => {
       expect(setState).toHaveBeenCalledTimes(0);
     });
   });
+
+  it('Should update link hrefs when time range changes', () => {
+    const { controls, dashboard } = buildTestScene();
+    render(<controls.Component model={controls} />);
+
+    //clear initial calls to getAnchorInfo
+    mockGetAnchorInfo.mockClear();
+
+    act(() => {
+      // Update time range
+      dashboard.state.$timeRange?.setState({
+        value: {
+          from: toUtc('2021-01-01'),
+          to: toUtc('2021-01-02'),
+          raw: { from: toUtc('2020-01-01'), to: toUtc('2020-01-02') },
+        },
+      });
+    });
+
+    //expect getAnchorInfo to be called after time range change
+    expect(mockGetAnchorInfo).toHaveBeenCalledTimes(1);
+  });
 });
 
-function buildTestScene(state?: Partial<DashboardControlsState>): DashboardControls {
+function buildTestScene(state?: Partial<DashboardControlsState>): {
+  dashboard: DashboardScene;
+  controls: DashboardControls;
+} {
   const variable = new TextBoxVariable({
     name: 'A',
     label: 'A',
@@ -155,5 +206,5 @@ function buildTestScene(state?: Partial<DashboardControlsState>): DashboardContr
   dashboard.activate();
   variable.activate();
 
-  return dashboard.state.controls as DashboardControls;
+  return { dashboard, controls: dashboard.state.controls as DashboardControls };
 }
