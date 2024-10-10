@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -28,12 +29,13 @@ var (
 
 var resource = iamv0.TeamResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore) *LegacyStore {
-	return &LegacyStore{store}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
+	return &LegacyStore{store, ac}
 }
 
 type LegacyStore struct {
 	store legacy.LegacyIdentityStore
+	ac    claims.AccessClient
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -60,47 +62,37 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	ns, err := request.NamespaceInfoFrom(ctx, true)
+	res, err := common.List(
+		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.Team], error) {
+			found, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
+				Pagination: p,
+			})
+
+			if err != nil {
+				return nil, err
+			}
+
+			teams := make([]iamv0.Team, 0, len(found.Teams))
+			for _, t := range found.Teams {
+				teams = append(teams, toTeamObject(t, ns))
+			}
+
+			return &common.ListResponse[iamv0.Team]{
+				Items:    teams,
+				RV:       found.RV,
+				Continue: found.Continue,
+			}, nil
+		},
+	)
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list teams: %w", err)
 	}
 
-	rsp, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
-		OrgID:      ns.OrgID,
-		Pagination: common.PaginationFromListOptions(options),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	list := &iamv0.TeamList{}
-	for _, team := range rsp.Teams {
-		item := iamv0.Team{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              team.UID,
-				Namespace:         ns.Value,
-				CreationTimestamp: metav1.NewTime(team.Created),
-				ResourceVersion:   strconv.FormatInt(team.Updated.UnixMilli(), 10),
-			},
-			Spec: iamv0.TeamSpec{
-				Title: team.Name,
-				Email: team.Email,
-			},
-		}
-		meta, err := utils.MetaAccessor(&item)
-		if err != nil {
-			return nil, err
-		}
-		meta.SetUpdatedTimestamp(&team.Updated)
-		meta.SetOriginInfo(&utils.ResourceOriginInfo{
-			Name: "SQL",
-			Path: strconv.FormatInt(team.ID, 10),
-		})
-		list.Items = append(list.Items, item)
-	}
-
-	list.ListMeta.Continue = common.OptionalFormatInt(rsp.Continue)
-	list.ListMeta.ResourceVersion = common.OptionalFormatInt(rsp.RV)
+	list := &iamv0.TeamList{Items: res.Items}
+	list.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
+	list.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
 
 	return list, nil
 }
@@ -136,8 +128,9 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0.Team {
 			ResourceVersion:   strconv.FormatInt(t.Updated.UnixMilli(), 10),
 		},
 		Spec: iamv0.TeamSpec{
-			Title: t.Name,
-			Email: t.Email,
+			Title:      t.Name,
+			Email:      t.Email,
+			InternalID: t.ID,
 		},
 	}
 	meta, _ := utils.MetaAccessor(&obj)
