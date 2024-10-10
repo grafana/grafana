@@ -53,6 +53,7 @@ export interface FieldDisplay {
 
   // Expose to the original values for delayed inspection (DataLinks etc)
   view?: DataFrameView;
+  frames?: DataFrame[];
   colIndex?: number; // The field column index
   rowIndex?: number; // only filled in when the value is from a row (ie, not a reduction)
   getLinks?: () => LinkModel[];
