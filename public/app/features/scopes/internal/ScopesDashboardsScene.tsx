@@ -10,7 +10,6 @@ import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 import { ScopesSelectorScene } from './ScopesSelectorScene';
 import { fetchDashboards } from './api';
-import { DASHBOARDS_OPENED_KEY } from './const';
 import { SuggestedDashboardsFoldersMap } from './types';
 import { filterFolders, getScopeNamesFromSelectedScopes, groupDashboards } from './utils';
 
@@ -36,7 +35,7 @@ export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, '
   filteredFolders: {},
   forScopeNames: [],
   isLoading: false,
-  isPanelOpened: localStorage.getItem(DASHBOARDS_OPENED_KEY) === 'true',
+  isPanelOpened: false,
   isEnabled: false,
   scopesSelected: false,
   searchQuery: '',
@@ -150,12 +149,10 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   public openPanel() {
     this.fetchDashboards();
     this.setState({ isPanelOpened: true });
-    localStorage.setItem(DASHBOARDS_OPENED_KEY, JSON.stringify(true));
   }
 
   public closePanel() {
     this.setState({ isPanelOpened: false });
-    localStorage.setItem(DASHBOARDS_OPENED_KEY, JSON.stringify(false));
   }
 
   public enable() {
