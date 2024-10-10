@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
 
 // NewLoggerMiddleware creates a new backend.HandlerMiddleware that will
@@ -61,7 +60,7 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pCtx backend.PluginCo
 	if err != nil {
 		logParams = append(logParams, "error", err)
 	}
-	logParams = append(logParams, "statusSource", pluginrequestmeta.StatusSourceFromContext(ctx))
+	logParams = append(logParams, "statusSource", backend.ErrorSourceFromContext(ctx))
 
 	if status > instrumentationutils.RequestStatusOK {
 		logFunc = ctxLogger.Error
@@ -93,7 +92,8 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 					"refID", refID,
 					"status", int(dr.Status),
 					"error", dr.Error,
-					"statusSource", pluginrequestmeta.StatusSourceFromPluginErrorSource(dr.ErrorSource),
+					"statusSource", dr.ErrorSource.String(),
+					"target", m.pluginTarget(ctx, req.PluginContext),
 				}
 				ctxLogger.Error("Partial data response error", logParams...)
 			}

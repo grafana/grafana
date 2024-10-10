@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
 
 const (
@@ -90,7 +89,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationMs))
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationS))
 
-				counter := mw.pluginMetrics.pluginRequestCounter.WithLabelValues(pluginID, string(tc.expEndpoint), instrumentationutils.RequestStatusOK.String(), string(backendplugin.TargetUnknown), string(pluginrequestmeta.DefaultStatusSource))
+				counter := mw.pluginMetrics.pluginRequestCounter.WithLabelValues(pluginID, string(tc.expEndpoint), instrumentationutils.RequestStatusOK.String(), string(backendplugin.TargetUnknown), string(backend.DefaultErrorSource))
 				require.Equal(t, 1.0, testutil.ToFloat64(counter))
 				for _, m := range []string{metricRequestDurationMs, metricRequestDurationS} {
 					require.NoError(t, checkHistogram(promRegistry, m, map[string]string{
@@ -155,12 +154,11 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	}))
 	metricsMw := newMetricsMiddleware(promRegistry, pluginsRegistry)
 	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(
-		NewPluginRequestMetaMiddleware(),
 		backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 			metricsMw.BaseHandler = backend.NewBaseHandler(next)
 			return metricsMw
 		}),
-		NewStatusSourceMiddleware(),
+		backend.NewErrorSourceMiddleware(),
 	))
 
 	t.Run("Metrics", func(t *testing.T) {
@@ -185,12 +183,12 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 		for _, tc := range []struct {
 			name            string
 			responses       map[string]backend.DataResponse
-			expStatusSource pluginrequestmeta.StatusSource
+			expStatusSource backend.ErrorSource
 		}{
 			{
 				"Default status source for ok responses should be plugin",
 				map[string]backend.DataResponse{"A": okResponse},
-				pluginrequestmeta.StatusSourcePlugin,
+				backend.ErrorSourcePlugin,
 			},
 			{
 				"Plugin errors should have higher priority than downstream errors",
@@ -198,12 +196,12 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 					"A": pluginErrorResponse,
 					"B": downstreamErrorResponse,
 				},
-				pluginrequestmeta.StatusSourcePlugin,
+				backend.ErrorSourcePlugin,
 			},
 			{
 				"Errors without ErrorSource should be reported as plugin status source",
 				map[string]backend.DataResponse{"A": legacyErrorResponse},
-				pluginrequestmeta.StatusSourcePlugin,
+				backend.ErrorSourcePlugin,
 			},
 			{
 				"Downstream errors should have higher priority than ok responses",
@@ -211,7 +209,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 					"A": okResponse,
 					"B": downstreamErrorResponse,
 				},
-				pluginrequestmeta.StatusSourceDownstream,
+				backend.ErrorSourceDownstream,
 			},
 			{
 				"Plugin errors should have higher priority than ok responses",
@@ -219,7 +217,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 					"A": okResponse,
 					"B": pluginErrorResponse,
 				},
-				pluginrequestmeta.StatusSourcePlugin,
+				backend.ErrorSourcePlugin,
 			},
 			{
 				"Legacy errors should have higher priority than ok responses",
@@ -227,7 +225,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 					"A": okResponse,
 					"B": legacyErrorResponse,
 				},
-				pluginrequestmeta.StatusSourcePlugin,
+				backend.ErrorSourcePlugin,
 			},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
@@ -242,7 +240,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 				}
 				_, err := cdt.MiddlewareHandler.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
 				require.NoError(t, err)
-				ctxStatusSource := pluginrequestmeta.StatusSourceFromContext(cdt.QueryDataCtx)
+				ctxStatusSource := backend.ErrorSourceFromContext(cdt.QueryDataCtx)
 				require.Equal(t, tc.expStatusSource, ctxStatusSource)
 			})
 		}
