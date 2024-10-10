@@ -128,10 +128,16 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     },
   },
   operator: (options, ctx) => (outerSource) => {
-    const operator =
-      options && options.timeSeries !== false
-        ? ensureColumnsTransformer.operator(null, ctx)
-        : noopTransformer.operator({}, ctx);
+    const mode = options.mode ?? CalculateFieldMode.ReduceRow;
+
+    const asTimeSeries = options.timeSeries !== false;
+    const isBinaryFixed = mode === CalculateFieldMode.BinaryOperation && options.binary?.right.fixed != null;
+
+    const needsSingleFrame = asTimeSeries && !isBinaryFixed;
+
+    const operator = needsSingleFrame
+      ? ensureColumnsTransformer.operator(null, ctx)
+      : noopTransformer.operator({}, ctx);
 
     if (options.alias != null) {
       options.alias = ctx.interpolate(options.alias);
@@ -140,7 +146,6 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
     return outerSource.pipe(
       operator,
       map((data) => {
-        const mode = options.mode ?? CalculateFieldMode.ReduceRow;
         let creator: ValuesCreator | undefined = undefined;
 
         switch (mode) {
