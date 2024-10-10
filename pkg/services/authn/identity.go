@@ -64,6 +64,8 @@ type Identity struct {
 	Groups []string
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
+	// SAMLSession is the SAML session information.
+	SAMLSession *login.SAMLSession
 	// SessionToken is the session token used to authenticate the entity.
 	SessionToken *usertoken.UserToken
 	// ClientParams are hints for the auth service on how to handle the identity.

@@ -491,7 +491,7 @@ func orgIDFromHeader(req *http.Request) int64 {
 }
 
 func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identity *authn.Identity, userID int64) *auth.ExternalSession {
-	if identity.OAuthToken == nil {
+	if identity.OAuthToken == nil && identity.SAMLSession == nil {
 		return nil
 	}
 
@@ -506,18 +506,26 @@ func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identi
 		UserAuthID: info.Id,
 		UserID:     userID,
 	}
-	extSession.AccessToken = identity.OAuthToken.AccessToken
-	extSession.RefreshToken = identity.OAuthToken.RefreshToken
-	extSession.ExpiresAt = identity.OAuthToken.Expiry
 
-	if idToken, ok := identity.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
-		extSession.IDToken = idToken
+	if identity.OAuthToken != nil {
+		extSession.AccessToken = identity.OAuthToken.AccessToken
+		extSession.RefreshToken = identity.OAuthToken.RefreshToken
+		extSession.ExpiresAt = identity.OAuthToken.Expiry
+
+		if idToken, ok := identity.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+			extSession.IDToken = idToken
+		}
+
+		// As of https://openid.net/specs/openid-connect-session-1_0.html
+		if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
+			extSession.SessionID = sessionState
+		}
+
+		return extSession
 	}
 
-	// As of https://openid.net/specs/openid-connect-session-1_0.html
-	if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
-		extSession.SessionID = sessionState
-	}
+	extSession.SessionID = identity.SAMLSession.SessionIndex
+	extSession.NameID = identity.SAMLSession.NameID
 
 	return extSession
 }
