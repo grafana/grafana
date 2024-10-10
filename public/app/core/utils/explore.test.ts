@@ -1,5 +1,6 @@
 import { DataSourceApi, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
@@ -151,6 +152,18 @@ describe('getExploreUrl', () => {
     expect(url).toMatch(/replaced%20testDs2%20prom/g);
     expect(interpolateMockLoki).toBeCalled();
     expect(interpolateMockProm).toBeCalled();
+  });
+
+  describe('subpath', () => {
+    beforeAll(() => {
+      config.appSubUrl = 'subpath';
+    });
+    afterAll(() => {
+      config.appSubUrl = '';
+    });
+    it('should work with sub path', async () => {
+      expect(await getExploreUrl(args)).toMatch(/subpath\/explore/g);
+    });
   });
 });
 

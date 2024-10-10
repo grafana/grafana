@@ -22,7 +22,7 @@ import {
   toURLRange,
   urlUtil,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
@@ -94,7 +94,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   const exploreState = JSON.stringify({
     [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
   });
-  return urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
+  return urlUtil.renderUrl(`${config.appSubUrl}/explore`, { panes: exploreState, schemaVersion: 1 });
 }
 
 export function requestIdGenerator(exploreId: string) {
