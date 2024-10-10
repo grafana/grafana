@@ -13,6 +13,7 @@ export const initialUserState: PerconaUserState = {
   alertingTourCompleted: true,
   isAuthorized: false,
   isPlatformUser: false,
+  snoozedPmmVersion: '',
 };
 
 const perconaUserSlice = createSlice({
@@ -59,6 +60,16 @@ export const setProductTourCompleted = createAsyncThunk(
   'percona/setProductTourCompleted',
   async (productTourCompleted: boolean, thunkAPI): Promise<UserDetails> => {
     const res = await UserService.setProductTourCompleted(productTourCompleted);
+    const details = toUserDetailsModel(res);
+    thunkAPI.dispatch(setUserDetails(details));
+    return details;
+  }
+);
+
+export const setSnoozedVersion = createAsyncThunk(
+  'percona/setProductTourCompleted',
+  async (version: string, thunkAPI): Promise<UserDetails> => {
+    const res = await UserService.setSnoozedVersion(version);
     const details = toUserDetailsModel(res);
     thunkAPI.dispatch(setUserDetails(details));
     return details;

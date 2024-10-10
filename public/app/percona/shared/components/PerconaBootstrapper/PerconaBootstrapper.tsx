@@ -14,7 +14,9 @@ import {
   fetchUserStatusAction,
   setAuthorized,
 } from 'app/percona/shared/core/reducers/user/user';
+import { getUpdatesInfo } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { Telemetry } from '../../../ui-events/components/Telemetry';
 import usePerconaTour from '../../core/hooks/tour';
@@ -27,11 +29,13 @@ import { getStyles } from './PerconaBootstrapper.styles';
 import { PerconaBootstrapperProps } from './PerconaBootstrapper.types';
 import PerconaNavigation from './PerconaNavigation/PerconaNavigation';
 import PerconaTourBootstrapper from './PerconaTour';
+import PerconaUpdateVersion from './PerconaUpdateVersion/PerconaUpdateVersion';
 
 // This component is only responsible for populating the store with Percona's settings initially
 export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
   const dispatch = useAppDispatch();
   const { setSteps, startTour: startPerconaTour, endTour } = usePerconaTour();
+  const { updateAvailable, isLoading: isLoadingUpdates, showUpdateModal } = useSelector(getUpdatesInfo);
   const [modalIsOpen, setModalIsOpen] = useState(true);
   const [showTour, setShowTour] = useState(false);
   const styles = useStyles2(getStyles);
@@ -104,49 +108,54 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
       {isSignedIn && <Telemetry />}
       <PerconaNavigation />
       <PerconaTourBootstrapper />
-      {isSignedIn && showTour && (
-        <Modal onDismiss={dismissModal} isOpen={modalIsOpen} title={Messages.title}>
-          <div className={styles.iconContainer}>
-            <Icon type="mono" name={theme.isLight ? 'pmm-logo-light' : 'pmm-logo'} className={styles.svg} />
-          </div>
-          <p>
-            <strong>{Messages.pmm}</strong>
-            {Messages.pmmIs}
-          </p>
-          <p>
-            {Messages.pmmEnables}
-            <ul className={styles.list}>
-              <li>{Messages.spotCriticalPerformance}</li>
-              <li>{Messages.ensureDbPerformance}</li>
-              <li>{Messages.backup}</li>
-            </ul>
-          </p>
-          <p>
-            {Messages.moreInfo}
-            <a
-              href="https://per.co.na/pmm_documentation"
-              target="_blank"
-              rel="noreferrer noopener"
-              className={styles.docsLink}
-            >
-              {Messages.pmmOnlineHelp}
-            </a>
-            .
-          </p>
-          <HorizontalGroup justify="center" spacing="md">
-            <Button onClick={startTour} size="lg" className={styles.callToAction}>
-              {Messages.startTour}
-            </Button>
-          </HorizontalGroup>
-          <HorizontalGroup justify="flex-end" spacing="md">
-            <Button variant="secondary" onClick={finishTour}>
-              {Messages.skip}
-            </Button>
-            <Button variant="secondary" onClick={() => setModalIsOpen(false)}>
-              {Messages.checkLater}
-            </Button>
-          </HorizontalGroup>
-        </Modal>
+      {updateAvailable && showUpdateModal && !isLoadingUpdates ? (
+        <PerconaUpdateVersion />
+      ) : (
+        isSignedIn &&
+        showTour && (
+          <Modal onDismiss={dismissModal} isOpen={modalIsOpen} title={Messages.title}>
+            <div className={styles.iconContainer}>
+              <Icon type="mono" name={theme.isLight ? 'pmm-logo-light' : 'pmm-logo'} className={styles.svg} />
+            </div>
+            <p>
+              <strong>{Messages.pmm}</strong>
+              {Messages.pmmIs}
+            </p>
+            <p>
+              {Messages.pmmEnables}
+              <ul className={styles.list}>
+                <li>{Messages.spotCriticalPerformance}</li>
+                <li>{Messages.ensureDbPerformance}</li>
+                <li>{Messages.backup}</li>
+              </ul>
+            </p>
+            <p>
+              {Messages.moreInfo}
+              <a
+                href="https://per.co.na/pmm_documentation"
+                target="_blank"
+                rel="noreferrer noopener"
+                className={styles.docsLink}
+              >
+                {Messages.pmmOnlineHelp}
+              </a>
+              .
+            </p>
+            <HorizontalGroup justify="center" spacing="md">
+              <Button onClick={startTour} size="lg" className={styles.callToAction}>
+                {Messages.startTour}
+              </Button>
+            </HorizontalGroup>
+            <HorizontalGroup justify="flex-end" spacing="md">
+              <Button variant="secondary" onClick={finishTour}>
+                {Messages.skip}
+              </Button>
+              <Button variant="secondary" onClick={() => setModalIsOpen(false)}>
+                {Messages.checkLater}
+              </Button>
+            </HorizontalGroup>
+          </Modal>
+        )
       )}
     </>
   );

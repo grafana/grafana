@@ -22,6 +22,10 @@ export const UserService = {
     const payload: UserDetailsPutPayload = { alerting_tour_completed: completed };
     return await api.put('/v1/users/me', payload);
   },
+  async setSnoozedVersion(version: string): Promise<UserDetailsResponse> {
+    const payload: UserDetailsPutPayload = { snoozed_pmm_version: version };
+    return await api.put('/v1/users/me', payload);
+  },
   async getUsersList(): Promise<UserListResponse> {
     return await api.get('/v1/users');
   },

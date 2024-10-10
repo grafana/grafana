@@ -1,6 +1,6 @@
 import { CheckUpdatesResponse } from 'app/percona/shared/services/updates/Updates.types';
 
-import { CheckUpdatesPayload } from './updates.types';
+import { CheckUpdatesPayload, CheckUpdatesChangeLogs, CheckUpdatesChangeLogsResponse } from './updates.types';
 
 export const responseToPayload = (response: CheckUpdatesResponse): CheckUpdatesPayload => ({
   installed: response.installed
@@ -21,3 +21,17 @@ export const responseToPayload = (response: CheckUpdatesResponse): CheckUpdatesP
   latestNewsUrl: response.latest_news_url,
   updateAvailable: !!response.update_available,
 });
+
+export const mapUpdatesChangeLogs = (response: CheckUpdatesChangeLogsResponse): CheckUpdatesChangeLogs => {
+  const responseMapping = response.updates.map((item) => ({
+    version: item.version,
+    tag: item.tag,
+    timestamp: item.timestamp,
+    releaseNotesUrl: item.release_notes_url,
+    releaseNotesText: item.release_notes_text,
+  }));
+  return {
+    lastCheck: response.last_check,
+    updates: responseMapping,
+  };
+};
