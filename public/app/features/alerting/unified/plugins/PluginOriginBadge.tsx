@@ -1,31 +1,35 @@
 import { useAsync } from 'react-use';
 
-import { Badge, Tooltip } from '@grafana/ui';
+import { Badge, IconSize, Tooltip } from '@grafana/ui';
+import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 
 import { getPluginSettings } from '../../../plugins/pluginSettings';
 
 interface PluginOriginBadgeProps {
   pluginId: string;
+  size?: IconSize;
 }
 
-export function PluginOriginBadge({ pluginId }: PluginOriginBadgeProps) {
-  const { value: pluginMeta } = useAsync(() => getPluginSettings(pluginId));
+export function PluginOriginBadge({ pluginId, size = 'md' }: PluginOriginBadgeProps) {
+  const { value: pluginMeta, loading } = useAsync(() => getPluginSettings(pluginId));
 
-  const logo = pluginMeta?.info.logos?.small;
+  if (loading) {
+    return null;
+  }
+
+  if (!pluginMeta) {
+    return null;
+  }
+
+  const logo = pluginMeta.info.logos?.small;
+  const pluginName = pluginMeta.name;
+  const imageSize = getSvgSize(size);
 
   const badgeIcon = logo ? (
-    <img src={logo} alt={pluginMeta?.name} style={{ width: '20px', height: '20px' }} />
+    <img src={logo} alt={pluginName} height={imageSize} />
   ) : (
     <Badge text={pluginId} color="orange" />
   );
 
-  const tooltipContent = pluginMeta
-    ? `This rule is managed by the ${pluginMeta?.name} plugin`
-    : `This rule is managed by a plugin`;
-
-  return (
-    <Tooltip content={tooltipContent}>
-      <div>{badgeIcon}</div>
-    </Tooltip>
-  );
+  return <Tooltip content={`This rule is managed by the ${pluginName} plugin`}>{badgeIcon}</Tooltip>;
 }

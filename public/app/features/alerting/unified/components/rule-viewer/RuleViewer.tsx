@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink } from '@grafana/ui';
 import { t, Trans } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -243,15 +242,14 @@ interface TitleProps {
 }
 
 export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
-  const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
   const isRecordingRule = ruleType === PromRuleType.Recording;
   const returnTo = queryParams.returnTo ? String(queryParams.returnTo) : '/alerting/list';
 
   return (
-    <div className={styles.title}>
+    <Stack direction="row" gap={1} minWidth={0} alignItems="center">
       <LinkButton variant="secondary" icon="angle-left" href={returnTo} />
-      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} />}
+      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}
       </Text>
@@ -264,7 +262,7 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
           {isRecordingRule && <RecordingBadge health={health} />}
         </>
       )}
-    </div>
+    </Stack>
   );
 };
 
@@ -398,22 +396,19 @@ function usePageNav(rule: CombinedRule) {
   };
 }
 
-const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
+export const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
   return chain(stats)
-    .pick([AlertInstanceTotalState.Alerting, AlertInstanceTotalState.Pending, AlertInstanceTotalState.Normal])
+    .pick([
+      AlertInstanceTotalState.Alerting,
+      AlertInstanceTotalState.Pending,
+      AlertInstanceTotalState.Normal,
+      AlertInstanceTotalState.NoData,
+      AlertInstanceTotalState.Error,
+    ])
     .values()
     .sum()
     .value();
 };
-
-const getStyles = () => ({
-  title: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 0,
-  }),
-});
 
 function isValidRunbookURL(url: string) {
   const isRelative = url.startsWith('/');

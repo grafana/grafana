@@ -8,7 +8,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
-import { LogMessages, logInfo, trackRuleListNavigation } from '../../Analytics';
+import { logInfo, LogMessages, trackRuleListNavigation } from '../../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
@@ -115,24 +115,26 @@ const RuleListV1 = () => {
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
     <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
-      <RuleListErrors />
-      <RulesFilter onClear={onFilterCleared} />
-      {hasAlertRulesCreated && (
-        <Stack direction="row" alignItems="center">
-          {view === 'groups' && hasActiveFilters && (
-            <Button
-              icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-              variant="secondary"
-              onClick={() => setExpandAll(!expandAll)}
-            >
-              {expandAll ? 'Collapse all' : 'Expand all'}
-            </Button>
-          )}
-          <RuleStats namespaces={filteredNamespaces} />
-        </Stack>
-      )}
-      {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-      {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+      <Stack direction="column">
+        <RuleListErrors />
+        <RulesFilter onClear={onFilterCleared} />
+        {hasAlertRulesCreated && (
+          <Stack direction="row" alignItems="center">
+            {view === 'groups' && hasActiveFilters && (
+              <Button
+                icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
+                variant="secondary"
+                onClick={() => setExpandAll(!expandAll)}
+              >
+                {expandAll ? 'Collapse all' : 'Expand all'}
+              </Button>
+            )}
+          </Stack>
+        )}
+        <RuleStats namespaces={filteredNamespaces} />
+        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
+        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+      </Stack>
     </AlertingPageWrapper>
   );
 };
