@@ -207,10 +207,6 @@ describe('AlertRule abilities', () => {
 
     expect(result.current).toMatchSnapshot();
   });
-
-  it('should not allow certain actions for provisioned rules', () => {});
-
-  it('should not allow certain actions for federated rules', () => {});
 });
 
 function createAlertmanagerWrapper(alertmanagerSourceName: string) {

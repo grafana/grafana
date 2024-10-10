@@ -12,6 +12,7 @@
       "extends": ["plugin:testing-library/react"],
       "rules": {
         "testing-library/prefer-user-event": "error",
+        "jest/expect-expect": ["error", { "assertFunctionNames": ["expect*", "reducerTester"] }],
       },
     },
   ],
