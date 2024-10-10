@@ -155,7 +155,7 @@ func NewMultiOrgAlertmanager(
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		reg, exist := moa.metrics.GetOrCreateOrgRegistry(orgID)
 		if exist {
-			return nil, errors.New(fmt.Sprintf("registry is already registered for org - %d, don't register again", orgID))
+			return nil, fmt.Errorf("registry is already registered for org - %d, don't register again", orgID)
 		}
 		m := metrics.NewAlertmanagerMetrics(reg)
 		stateStore := NewFileStore(orgID, kvStore)
