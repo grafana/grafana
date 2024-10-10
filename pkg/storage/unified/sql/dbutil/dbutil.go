@@ -10,9 +10,31 @@ import (
 	"strings"
 	"text/template"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+const (
+	otelAttrBaseKey         = "dbutil_"
+	otelAttrTemplateNameKey = otelAttrBaseKey + "template_name"
+	otelAttrQueryKey        = otelAttrBaseKey + "query"
+	otelAttrDialectKey      = otelAttrBaseKey + "dialect"
+	otelAttrNumArgsKey      = otelAttrBaseKey + "num_args"
+	otelAttrDestColNamesKey = otelAttrBaseKey + "dest_col_names"
+)
+
+func withOtelAttrs(ctx context.Context, tmpl *template.Template, req sqltemplate.SQLTemplate, query string, argsLen int) context.Context {
+	return otel.SetAttributes(ctx,
+		attribute.String(otelAttrTemplateNameKey, tmpl.Name()),
+		attribute.String(otelAttrQueryKey, query),
+		attribute.String(otelAttrDialectKey, req.DialectName()),
+		attribute.Int(otelAttrNumArgsKey, argsLen),
+		attribute.StringSlice(otelAttrNumArgsKey, req.GetColNames()),
+	)
+}
 
 // SQLError is an error returned by the database, which includes additionally
 // debugging information about what was sent to the database.
@@ -91,13 +113,15 @@ func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 	}
 	query := sqltemplate.FormatSQL(rawQuery)
 
-	res, err := x.ExecContext(ctx, query, req.GetArgs()...)
+	args := req.GetArgs()
+	ctx = withOtelAttrs(ctx, tmpl, req, query, len(args))
+	res, err := x.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, SQLError{
 			Err:          err,
 			CallType:     "Exec",
 			TemplateName: tmpl.Name(),
-			arguments:    req.GetArgs(),
+			arguments:    args,
 			Query:        query,
 			RawQuery:     rawQuery,
 		}
@@ -120,13 +144,15 @@ func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template,
 	}
 	query := sqltemplate.FormatSQL(rawQuery)
 
-	rows, err := x.QueryContext(ctx, query, req.GetArgs()...)
+	args := req.GetArgs()
+	ctx = withOtelAttrs(ctx, tmpl, req, query, len(args))
+	rows, err := x.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, SQLError{
 			Err:          err,
 			CallType:     "Query",
 			TemplateName: tmpl.Name(),
-			arguments:    req.GetArgs(),
+			arguments:    args,
 			ScanDest:     req.GetScanDest(),
 			Query:        query,
 			RawQuery:     rawQuery,
