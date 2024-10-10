@@ -103,6 +103,7 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"allowed_groups":             section.Key("allowed_groups").Value(),
 		"signout_redirect_url":       section.Key("signout_redirect_url").Value(),
 		"org_mapping":                section.Key("org_mapping").Value(),
+		"org_mapping_regex":          section.Key("org_mapping_regex").Value(),
 		"org_attribute_path":         section.Key("org_attribute_path").Value(),
 	}
 
