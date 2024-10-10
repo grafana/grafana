@@ -329,6 +329,9 @@
       "moving": "Verschieben...",
       "new-folder-name-required-phrase": "Ordnername ist erforderlich."
     },
+    "actions": {
+      "button-to-recently-deleted": ""
+    },
     "counts": {
       "alertRule_one": "{{count}} Alarmierungsregel",
       "alertRule_other": "{{count}} Alarmierungsregeln",
@@ -1090,6 +1093,13 @@
     },
     "title": "Shortcuts"
   },
+  "help-wizard": {
+    "download-snapshot": "",
+    "github-comment": "",
+    "preview-snapshot": "",
+    "support-bundle": "",
+    "troubleshooting-help": ""
+  },
   "inspector": {
     "query": {
       "collapse-all": "Alle einklappen",
@@ -1468,6 +1478,7 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "dashboard-load-error": "",
       "error-library-element-sub": "",
       "error-library-element-title": "",
       "unknown-datasource-title": "",
@@ -1855,6 +1866,7 @@
       "close": "Menü schließen",
       "dock": "Menü andocken",
       "list-label": "Navigation",
+      "open": "",
       "undock": "Menü abdocken"
     },
     "toolbar": {
@@ -1913,6 +1925,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "",
     "unsupported-layout": ""
   },
   "playlist-edit": {
@@ -2205,7 +2218,9 @@
     "datasource-names": "",
     "delete-query-button": "",
     "query-template-get-error": "",
-    "search": ""
+    "search": "",
+    "user-info-get-error": "",
+    "user-names": ""
   },
   "query-operation": {
     "header": {
@@ -2374,7 +2389,6 @@
     "menu": {
       "export-json-title": "",
       "share-externally-title": "",
-      "share-internally-description": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
     },
@@ -2664,6 +2678,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": ""
+    },
     "metric-overview": {
       "description-label": "",
       "labels": "",
