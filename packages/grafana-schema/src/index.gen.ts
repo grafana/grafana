@@ -73,6 +73,7 @@ export type {
   VariableModel,
   DataSourceRef,
   DataTransformerConfig,
+  TimeOption,
   TimePickerConfig,
   Panel,
   FieldConfigSource,
