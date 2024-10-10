@@ -1830,6 +1830,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			BaseInterval: time.Second * 10,
 		},
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	user := &user.SignedInUser{
 		OrgID: 1,

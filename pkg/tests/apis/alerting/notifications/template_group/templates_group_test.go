@@ -13,7 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -355,7 +357,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
 	created, err := adminClient.Create(ctx, &v0alpha1.TemplateGroup{
@@ -579,7 +581,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	require.NoError(t, err)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{
 		Name: template2.Spec.Title,
