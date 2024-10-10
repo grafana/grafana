@@ -1,12 +1,12 @@
 ---
-description: Strategies for updating your self-hosted Grafana instance
+description: Strategies for upgrading your self-hosted Grafana instance
 keywords:
   - grafana
   - configuration
   - documentation
   - upgrade
-title: Strategies for updating your self-hosted Grafana instance
-menuTitle: Strategies for updating your self-hosted Grafana instance
+title: Strategies for upgrading your self-hosted Grafana instance
+menuTitle: Strategies for upgrading your self-hosted Grafana instance
 weight: 1000
 ---
 # Upgrade with confidence: strategies for updating your self-hosted Grafana instance
