@@ -57,6 +57,8 @@ describe('Dashboards list', () => {
   it('Closes container when no scopes are selected', async () => {
     await updateScopes(['mimir']);
     expectDashboardsOpen();
+    await updateScopes(['mimir', 'loki']);
+    expectDashboardsOpen();
     await updateScopes([]);
     expectDashboardsClosed();
   });
