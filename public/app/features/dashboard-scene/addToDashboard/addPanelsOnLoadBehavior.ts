@@ -1,3 +1,4 @@
+import { SceneTimeRange } from '@grafana/scenes';
 import { default as localStorageStore } from 'app/core/store';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
@@ -18,6 +19,14 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
     for (const panel of model.panels) {
       const gridItem = buildGridItemForPanel(panel);
       scene.addPanel(gridItem.state.body);
+    }
+
+    if (dto.dashboard.time) {
+      const newTimeRange = new SceneTimeRange({ from: dto.dashboard.time.from, to: dto.dashboard.time.to });
+      const timeRange = scene.state.$timeRange;
+      if (timeRange) {
+        timeRange.onTimeRangeChange(newTimeRange.state.value);
+      }
     }
   }
 
