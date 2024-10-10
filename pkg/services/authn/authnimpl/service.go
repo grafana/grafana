@@ -525,6 +525,7 @@ func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identi
 	}
 
 	extSession.SessionID = identity.SAMLSession.SessionIndex
+	extSession.NameID = identity.SAMLSession.NameID
 
 	return extSession
 }
