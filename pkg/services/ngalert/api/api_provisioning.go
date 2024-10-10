@@ -124,7 +124,8 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 }
 
 func (srv *ProvisioningSrv) RouteResetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), alerting_models.ProvenanceAPI)
+	provenance := determineProvenance(c)
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), alerting_models.Provenance(provenance))
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to reset notification policy tree", err)
 	}
