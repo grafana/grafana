@@ -3,7 +3,18 @@ import { PropsWithChildren, ReactNode, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, LinkButton, Pagination, Stack, Text, useStyles2, withErrorBoundary } from '@grafana/ui';
+import {
+  Dropdown,
+  Icon,
+  IconButton,
+  LinkButton,
+  Menu,
+  Pagination,
+  Stack,
+  Text,
+  useStyles2,
+  withErrorBoundary,
+} from '@grafana/ui';
 import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -127,7 +138,28 @@ function PaginatedDataSourceLoader({
             }
           >
             {namespace.groups.map((group) => (
-              <ListGroup key={group.name} name={group.name} isOpen={false}>
+              <ListGroup
+                key={group.name}
+                name={group.name}
+                isOpen={false}
+                actions={
+                  <>
+                    <Dropdown
+                      overlay={
+                        <Menu>
+                          <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
+                          <Menu.Item label="Re-order rules" icon="flip" />
+                          <Menu.Divider />
+                          <Menu.Item label="Export" icon="download-alt" />
+                          <Menu.Item label="Delete" icon="trash-alt" destructive />
+                        </Menu>
+                      }
+                    >
+                      <IconButton name="ellipsis-h" aria-label="rule group actions" />
+                    </Dropdown>
+                  </>
+                }
+              >
                 {group.rules.map((rule) => {
                   const groupIdentifier: RuleGroupIdentifier = {
                     dataSourceName: ruleSourceName,
