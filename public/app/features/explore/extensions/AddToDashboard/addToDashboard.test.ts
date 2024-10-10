@@ -1,8 +1,6 @@
-import { MutableDataFrame } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
+import { DataQuery, LoadingState } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types';
-
-import { createEmptyQueryResponse } from '../../state/utils';
 
 import { buildDashboardPanelFromExploreState } from './addToDashboard';
 
@@ -91,3 +89,23 @@ describe('buildDashboardPanelFromExploreState', () => {
     });
   });
 });
+
+function createEmptyQueryResponse(): ExplorePanelData {
+  return {
+    state: LoadingState.NotStarted,
+    series: [],
+    timeRange: getDefaultTimeRange(),
+    graphFrames: [],
+    logsFrames: [],
+    traceFrames: [],
+    nodeGraphFrames: [],
+    flameGraphFrames: [],
+    customFrames: [],
+    tableFrames: [],
+    rawPrometheusFrames: [],
+    rawPrometheusResult: null,
+    graphResult: null,
+    logsResult: null,
+    tableResult: null,
+  };
+}

@@ -14,8 +14,8 @@ describe('addToDashboard', () => {
     jest.resetAllMocks();
   });
 
-  it('Should save dashboard with new panel in local storage', async () => {
-    await addToDashboard({
+  it('Should save dashboard with new panel in local storage', () => {
+    addToDashboard({
       panel: {
         type: 'table',
         gridPos: { x: 0, y: 0, w: 12, h: 12 },
@@ -28,8 +28,8 @@ describe('addToDashboard', () => {
     expect(panel.options).toEqual({ showHeader: true });
   });
 
-  it('Correct time range is used', async () => {
-    await addToDashboard({
+  it('Correct time range is used', () => {
+    addToDashboard({
       panel: { type: 'table' },
       timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-5m', to: 'now' } },
     });
