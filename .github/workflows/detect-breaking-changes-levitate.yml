@@ -310,7 +310,7 @@ jobs:
                   "elements": [
                     {
                       "type": "mrkdwn",
-                      "text": "${{ steps.levitate-run.outputs.levitate_mrkdwn }}"
+                      "text": "${{ steps.levitate-markdown.outputs.levitate_mrkdwn }}"
                     }
                   ]
                 }
