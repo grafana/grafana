@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
@@ -19,7 +18,7 @@ import {
 } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions, ToolbarActions } from '../scene/NavToolbarActions';
+import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -89,7 +88,6 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const canSave = dashboard.useState().meta.canSave;
     const { jsonText } = model.useState();
-    const isSingleTopNav = config.featureToggles.singleTopNav;
 
     const onSave = async (overwrite: boolean) => {
       const result = await onSaveDashboard(dashboard, JSON.parse(model.state.jsonText), {
@@ -176,13 +174,8 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       );
     }
     return (
-      <Page
-        navModel={navModel}
-        pageNav={pageNav}
-        layout={PageLayoutType.Standard}
-        toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
-      >
-        {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+        <NavToolbarActions dashboard={dashboard} />
         <div className={styles.wrapper}>
           <Trans i18nKey="dashboard-settings.json-editor.subtitle">
             The JSON model below is the data structure that defines the dashboard. This includes dashboard settings,

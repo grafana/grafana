@@ -25,8 +25,6 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   layout?: PageLayoutType;
   /** Can be used to get the scroll container element to access scroll position */
   onSetScrollRef?: (ref: ScrollRefElement) => void;
-  /** Set a page-level toolbar */
-  toolbar?: React.ReactNode;
 }
 
 export interface PageInfoItem {

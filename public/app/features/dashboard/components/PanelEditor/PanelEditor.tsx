@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Button,
   HorizontalGroup,
@@ -432,7 +432,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   render() {
     const { initDone, uiState, theme, sectionNav, pageNav, className, updatePanelEditorUIState } = this.props;
-    const isSingleTopNav = config.featureToggles.singleTopNav;
     const styles = getStyles(theme, this.props);
 
     if (!initDone) {
@@ -446,17 +445,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         data-testid={selectors.components.PanelEditor.General.content}
         layout={PageLayoutType.Custom}
         className={className}
-        toolbar={
-          isSingleTopNav ? (
-            <ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>
-          ) : undefined
-        }
       >
-        {!isSingleTopNav && (
-          <AppChromeUpdate
-            actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>}
-          />
-        )}
+        <AppChromeUpdate
+          actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>}
+        />
         <div className={styles.wrapper}>
           <div className={styles.verticalSplitPanesWrapper}>
             {!uiState.isPanelOptionsVisible ? (

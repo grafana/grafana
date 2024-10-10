@@ -11,7 +11,7 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 
 import { SettingsPageProps } from './types';
 
-export function JsonEditorSettings({ dashboard, sectionNav, toolbar }: SettingsPageProps) {
+export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps) {
   const dashboardSaveModel = dashboard.getSaveModelClone();
   const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboardSaveModel, null, 2));
   const pageNav = sectionNav.node.parentItem;
@@ -24,7 +24,7 @@ export function JsonEditorSettings({ dashboard, sectionNav, toolbar }: SettingsP
   const styles = useStyles2(getStyles);
 
   return (
-    <Page navModel={sectionNav} pageNav={pageNav} toolbar={toolbar}>
+    <Page navModel={sectionNav} pageNav={pageNav}>
       <div className={styles.wrapper}>
         <Trans i18nKey="dashboard-settings.json-editor.subtitle">
           The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
