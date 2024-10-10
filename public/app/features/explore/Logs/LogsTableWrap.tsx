@@ -14,6 +14,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
+import { InlineSwitch } from '@grafana/ui';
 import { InlineField, Select, Themeable2 } from '@grafana/ui/';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
@@ -24,6 +25,8 @@ import { LogsTableMultiSelect } from './LogsTableMultiSelect';
 import { fuzzySearch } from './utils/uFuzzy';
 
 interface Props extends Themeable2 {
+  wrapLogMessage: boolean;
+  setWrapLogMessage: (event: React.ChangeEvent<HTMLInputElement>) => void;
   logsFrames: DataFrame[];
   width: number;
   timeZone: string;
@@ -486,32 +489,45 @@ export function LogsTableWrap(props: Props) {
     }
   };
 
+  const getWrappedFieldName = () => {
+    const activeColumns = Object.keys(columnsWithMeta).filter(
+      (columnName) => columnsWithMeta[columnName].active && columnsWithMeta[columnName].type !== 'TIME_FIELD'
+    );
+
+    if (activeColumns.find((activeColumn) => activeColumn === logsFrame?.bodyField.name)) {
+      return logsFrame?.bodyField.name;
+    }
+
+    activeColumns.sort((a, b) => (columnsWithMeta?.[a]?.index ?? 0) - (columnsWithMeta?.[b]?.index ?? 0));
+
+    if (activeColumns.length) {
+      return activeColumns[0];
+    }
+
+    return 'N/A';
+  };
+
   return (
     <>
-      <div>
+      <div className={styles.optionsWrapper}>
         {logsFrames.length > 1 && (
-          <div>
-            <InlineField
-              label="Select query"
-              htmlFor="explore_logs_table_frame_selector"
-              labelWidth={22}
-              tooltip="Select a query to visualize in the table."
-            >
-              <Select
-                inputId={'explore_logs_table_frame_selector'}
-                aria-label={'Select query by name'}
-                value={currentDataFrame.refId}
-                options={logsFrames.map((frame) => {
-                  return {
-                    label: frame.refId,
-                    value: frame.refId,
-                  };
-                })}
-                onChange={onFrameSelectorChange}
-              />
-            </InlineField>
-          </div>
+          <InlineField label="Select query" labelWidth={22} tooltip="Select a query to visualize in the table.">
+            <Select
+              aria-label={'Select query by name'}
+              value={currentDataFrame.refId}
+              options={logsFrames.map((frame) => {
+                return {
+                  label: frame.refId,
+                  value: frame.refId,
+                };
+              })}
+              onChange={onFrameSelectorChange}
+            />
+          </InlineField>
         )}
+        <InlineField label={`Wrap ${getWrappedFieldName()}`} transparent>
+          <InlineSwitch value={props.wrapLogMessage} onChange={props.setWrapLogMessage} transparent />
+        </InlineField>
       </div>
       <div className={styles.wrapper}>
         <Resizable
@@ -533,6 +549,7 @@ export function LogsTableWrap(props: Props) {
           </section>
         </Resizable>
         <LogsTable
+          wrapLogsMessage={props.wrapLogMessage}
           logsFrame={logsFrame}
           onClickFilterLabel={props.onClickFilterLabel}
           onClickFilterOutLabel={props.onClickFilterOutLabel}
@@ -557,6 +574,9 @@ const normalize = (value: number, total: number): number => {
 function getStyles(theme: GrafanaTheme2, height: number, width: number) {
   return {
     wrapper: css({
+      display: 'flex',
+    }),
+    optionsWrapper: css({
       display: 'flex',
     }),
     sidebar: css({
