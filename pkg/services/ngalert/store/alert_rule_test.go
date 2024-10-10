@@ -115,14 +115,14 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 	t.Run("should emit event when rules are updated", func(t *testing.T) {
 		rule := createRule(t, store, gen)
-		called := make(chan struct{})
+		called := false
 		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
 			event, ok := msg.(*RuleChangeEvent)
 			require.True(t, ok)
 			require.NotNil(t, event)
 			require.Len(t, event.RuleKeys, 1)
 			require.Equal(t, rule.GetKey(), event.RuleKeys[0])
-			close(called)
+			called = true
 			return nil
 		}
 
@@ -133,12 +133,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 			New:      *newRule,
 		}})
 		require.NoError(t, err)
-		// wait at most 500 milliseconds for the event to be published
-		select {
-		case <-called:
-		case <-time.After(500 * time.Millisecond):
-			t.Fatal("event was not emitted")
-		}
+		require.True(t, called)
 	})
 }
 
@@ -635,24 +630,19 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 
 	t.Run("should emit event when rules are deleted", func(t *testing.T) {
 		rule := createRule(t, store, gen)
-		called := make(chan struct{})
+		called := false
 		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
 			event, ok := msg.(*RuleChangeEvent)
 			require.True(t, ok)
 			require.NotNil(t, event)
 			require.Len(t, event.RuleKeys, 1)
 			require.Equal(t, rule.GetKey(), event.RuleKeys[0])
-			close(called)
+			called = true
 			return nil
 		}
 		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, rule.UID)
 		require.NoError(t, err)
-		// wait at most 500 milliseconds for the event to be published
-		select {
-		case <-called:
-		case <-time.After(500 * time.Millisecond):
-			t.Fatal("event was not emitted")
-		}
+		require.True(t, called)
 	})
 }
 
@@ -851,26 +841,21 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
 		rule := gen.Generate()
-		called := make(chan struct{})
+		called := false
 		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
 			event, ok := msg.(*RuleChangeEvent)
 			require.True(t, ok)
 			require.NotNil(t, event)
 			require.Len(t, event.RuleKeys, 1)
 			require.Equal(t, rule.GetKey(), event.RuleKeys[0])
-			close(called)
+			called = true
 			return nil
 		}
 
 		rules, err := store.InsertAlertRules(context.Background(), []models.AlertRule{rule})
 		require.NoError(t, err)
 		require.Len(t, rules, 1)
-		// wait at most 500 milliseconds for the event to be published
-		select {
-		case <-called:
-		case <-time.After(500 * time.Millisecond):
-			t.Fatal("event was not emitted")
-		}
+		require.True(t, called)
 	})
 }
 
