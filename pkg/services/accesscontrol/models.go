@@ -173,10 +173,11 @@ type TeamRole struct {
 }
 
 type UserRole struct {
-	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
-	OrgID  int64 `json:"orgId" xorm:"org_id"`
-	RoleID int64 `json:"roleId" xorm:"role_id"`
-	UserID int64 `json:"userId" xorm:"user_id"`
+	ID              int64  `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID           int64  `json:"orgId" xorm:"org_id"`
+	RoleID          int64  `json:"roleId" xorm:"role_id"`
+	UserID          int64  `json:"userId" xorm:"user_id"`
+	GroupMappingUID string `json:"groupMappingUID" xorm:"group_mapping_uid"`
 
 	Created time.Time
 }

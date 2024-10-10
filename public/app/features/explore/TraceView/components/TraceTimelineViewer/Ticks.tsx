@@ -24,34 +24,32 @@ import { TNil } from '../types';
 
 import { formatDuration } from './utils';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    Ticks: css`
-      label: Ticks;
-      pointer-events: none;
-    `,
-    TicksTick: css`
-      label: TicksTick;
-      position: absolute;
-      height: 100%;
-      width: 1px;
-      background: ${autoColor(theme, '#d8d8d8')};
-      &:last-child {
-        width: 0;
-      }
-    `,
-    TicksTickLabel: css`
-      label: TicksTickLabel;
-      left: 0.25rem;
-      position: absolute;
-    `,
-    TicksTickLabelEndAnchor: css`
-      label: TicksTickLabelEndAnchor;
-      left: initial;
-      right: 0.25rem;
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  Ticks: css({
+    label: 'Ticks',
+    pointerEvents: 'none',
+  }),
+  TicksTick: css({
+    label: 'TicksTick',
+    position: 'absolute',
+    height: '100%',
+    width: '1px',
+    background: autoColor(theme, '#d8d8d8'),
+    '&:last-child': {
+      width: 0,
+    },
+  }),
+  TicksTickLabel: css({
+    label: 'TicksTickLabel',
+    left: '0.25rem',
+    position: 'absolute',
+  }),
+  TicksTickLabelEndAnchor: css({
+    label: 'TicksTickLabelEndAnchor',
+    left: 'initial',
+    right: '0.25rem',
+  }),
+});
 
 type TicksProps = {
   endTime?: number | TNil;

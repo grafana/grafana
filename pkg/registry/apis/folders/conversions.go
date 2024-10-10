@@ -2,6 +2,7 @@ package folders
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -50,13 +51,49 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructu
 	return obj
 }
 
-func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
+func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *folder.Folder {
+	// #TODO reduce duplication of the different conversion functions
 	spec := item.Object["spec"].(map[string]any)
-	return &folder.Folder{
-		UID:   item.GetName(),
-		Title: spec["title"].(string),
-		// #TODO add other fields
+	uid := item.GetName()
+	title := spec["title"].(string)
+
+	meta, err := utils.MetaAccessor(&item)
+	if err != nil {
+		return nil
 	}
+
+	id, err := getLegacyID(meta)
+	if err != nil {
+		return nil
+	}
+
+	created, err := getCreated(meta)
+	if err != nil {
+		return nil
+	}
+
+	// avoid panic
+	var createdTime time.Time
+	if created != nil {
+		createdTime = created.Local()
+	}
+
+	f := &folder.Folder{
+		UID:       uid,
+		Title:     title,
+		ID:        id,
+		ParentUID: meta.GetFolder(),
+		// #TODO add created by field if necessary
+		// CreatedBy: meta.GetCreatedBy(),
+		// UpdatedBy: meta.GetCreatedBy(),
+		URL:          getURL(meta, title),
+		Created:      createdTime,
+		Updated:      createdTime,
+		OrgID:        orgID,
+		Fullpath:     meta.GetFullPath(),
+		FullpathUIDs: meta.GetFullPathUIDs(),
+	}
+	return f
 }
 
 func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder, error) {
@@ -149,6 +186,12 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
 	}
+	if v.Fullpath != "" {
+		meta.SetFullPath(v.Fullpath)
+	}
+	if v.FullpathUIDs != "" {
+		meta.SetFullPathUIDs(v.FullpathUIDs)
+	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
 }
@@ -191,4 +234,23 @@ func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
 		return nil, err
 	}
 	return created, nil
+}
+
+func GetParentTitles(fullPath string) ([]string, error) {
+	// Find all forward slashes which aren't escaped
+	r, err := regexp.Compile(`[^\\](/)`)
+	if err != nil {
+		return nil, err
+	}
+	indices := r.FindAllStringIndex(fullPath, -1)
+
+	var start int
+	titles := []string{}
+	for _, i := range indices {
+		titles = append(titles, fullPath[start:i[0]+1])
+		start = i[0] + 2
+	}
+
+	titles = append(titles, fullPath[start:])
+	return titles, nil
 }

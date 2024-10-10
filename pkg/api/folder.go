@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -700,7 +701,7 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	}
 
 	fk8s.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-	folderDTO, err := fk8s.newToFolderDto(c, *out)
+	folderDTO, err := fk8s.newToFolderDto(c, *out, c.SignedInUser.GetOrgID())
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
@@ -795,10 +796,11 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 	errhttp.Write(c.Req.Context(), err, c.Resp)
 }
 
-func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured) (dtos.Folder, error) {
+func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured, orgID int64) (dtos.Folder, error) {
+	// #TODO revisit how/where we get orgID
 	ctx := c.Req.Context()
 
-	f := internalfolders.UnstructuredToLegacyFolder(item)
+	f := internalfolders.UnstructuredToLegacyFolder(item, orgID)
 
 	fDTO, err := internalfolders.UnstructuredToLegacyFolderDTO(item)
 	if err != nil {
@@ -817,8 +819,8 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return userID, nil
 	}
 
-	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
-		g, err := guardian.NewByFolder(c.Req.Context(), f, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	toDTO := func(fold *folder.Folder, checkCanView bool) (dtos.Folder, error) {
+		g, err := guardian.NewByFolder(c.Req.Context(), fold, c.SignedInUser.GetOrgID(), c.SignedInUser)
 		if err != nil {
 			return dtos.Folder{}, err
 		}
@@ -830,6 +832,8 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 
 		// Finding creator and last updater of the folder
 		updater, creator := anonString, anonString
+		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
+		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
 		if len(fDTO.CreatedBy) > 0 {
 			id, err := toID(fDTO.CreatedBy)
 			if err != nil {
@@ -845,7 +849,7 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 			updater = fk8s.getUserLogin(ctx, id)
 		}
 
-		acMetadata, _ := fk8s.getFolderACMetadata(c, f)
+		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
 
 		if checkCanView {
 			canView, _ := g.CanView()
@@ -865,6 +869,9 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		fDTO.CreatedBy = creator
 		fDTO.UpdatedBy = updater
 		fDTO.AccessControl = acMetadata
+		fDTO.OrgID = f.OrgID
+		// #TODO version doesn't seem to be used--confirm or set it properly
+		fDTO.Version = 1
 
 		return *fDTO, nil
 	}
@@ -875,24 +882,37 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
-	// TODO: handle parents
-	/*
-		parents, err := fk8s.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
-		if err != nil {
-			// log the error instead of failing
-			fk8s.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
-		}
+	if len(f.Fullpath) == 0 || len(f.FullpathUIDs) == 0 {
+		return folderDTO, nil
+	}
 
-		folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
-		for _, f := range parents {
-			DTO, err := toDTO(f, true)
-			if err != nil {
-				// fk8s.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
-				continue
-			}
-			folderDTO.Parents = append(folderDTO.Parents, DTO)
-		}
-	*/
+	parentsFullPath, err := internalfolders.GetParentTitles(f.Fullpath)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
+	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
+
+	// The first part of the path is the newly created folder which we don't need to include
+	// in the parents field
+	if len(parentsFullPath) < 2 || len(parentsFullPathUIDs) < 2 {
+		return folderDTO, nil
+	}
+
+	parents := []dtos.Folder{}
+	for i, v := range parentsFullPath[1:] {
+		slug := slugify.Slugify(v)
+		uid := parentsFullPathUIDs[1:][i]
+		url := dashboards.GetFolderURL(uid, slug)
+
+		parents = append(parents, dtos.Folder{
+			UID:   uid,
+			OrgID: c.SignedInUser.GetOrgID(),
+			Title: v,
+			URL:   url,
+		})
+	}
+
+	folderDTO.Parents = parents
 
 	return folderDTO, nil
 }
@@ -914,20 +934,20 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		return nil, nil
 	}
 
+	if len(f.FullpathUIDs) == 0 {
+		return map[string]bool{}, nil
+	}
+
+	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
+	// The first part of the path is the newly created folder which we don't need to check here
+	if len(parentsFullPathUIDs) < 2 {
+		return map[string]bool{}, nil
+	}
+
 	folderIDs := map[string]bool{f.UID: true}
-
-	// TODO: handle parents
-	/*
-		parents, err := fk8s.folderService.GetParents(c.Req.Context(), folder.GetParentsQuery{UID: f.UID, OrgID: c.SignedInUser.GetOrgID()})
-		if err != nil {
-			return nil, err
-		}
-
-		folderIDs := map[string]bool{f.UID: true}
-		for _, p := range parents {
-			folderIDs[p.UID] = true
-		}
-	*/
+	for _, uid := range parentsFullPathUIDs[1:] {
+		folderIDs[uid] = true
+	}
 
 	allMetadata := getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
 	metadata := map[string]bool{}
