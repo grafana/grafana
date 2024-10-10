@@ -188,6 +188,7 @@ export function escapeFilter(value: string) {
  */
 export function escapeFilterValue(value: string) {
   value = value.replace(/\\/g, '\\\\');
+  value = value.replace(/\//g, '\\/');
   return lucene.phrase.escape(value);
 }
 
