@@ -33,6 +33,7 @@ type AlertInstanceManager interface {
 type StatePersister interface {
 	Async(ctx context.Context, cache *cache)
 	Sync(ctx context.Context, span trace.Span, states StateTransitions)
+	SyncRule(ctx context.Context, span trace.Span, ruleKey ngModels.AlertRuleKeyWithGroup, states StateTransitions)
 }
 
 // Sender is an optional callback intended for sending the states to an alertmanager.
@@ -57,7 +58,8 @@ type Manager struct {
 	applyNoDataAndErrorToAllStates bool
 	rulesPerRuleGroupLimit         int64
 
-	persister StatePersister
+	persister             StatePersister
+	useRuleStatePersister bool
 }
 
 type ManagerCfg struct {
@@ -75,6 +77,8 @@ type ManagerCfg struct {
 	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
 	ApplyNoDataAndErrorToAllStates bool
 	RulesPerRuleGroupLimit         int64
+	// If true, then SyncRule method of the StatePersister is called
+	UseRuleStatePersister bool
 
 	DisableExecution bool
 
@@ -108,6 +112,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
 		persister:                      statePersister,
+		useRuleStatePersister:          cfg.UseRuleStatePersister,
 		tracer:                         cfg.Tracer,
 	}
 
@@ -240,7 +245,7 @@ func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprin
 // DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
 // to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
 // history.
-func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, reason string) []StateTransition {
+func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKeyWithGroup, reason string) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
 
@@ -290,7 +295,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
 func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []StateTransition {
-	ruleKey := rule.GetKey()
+	ruleKey := rule.GetKeyWithGroup()
 	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
 
 	if rule == nil || st.historian == nil || len(transitions) == 0 {
@@ -347,7 +352,11 @@ func (st *Manager) ProcessEvalResults(
 		statesToSend = st.updateLastSentAt(allChanges, evaluatedAt)
 	}
 
-	st.persister.Sync(ctx, span, allChanges)
+	if st.useRuleStatePersister {
+		st.persister.SyncRule(ctx, span, alertRule.GetKeyWithGroup(), allChanges)
+	} else {
+		st.persister.Sync(ctx, span, allChanges)
+	}
 	if st.historian != nil {
 		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}

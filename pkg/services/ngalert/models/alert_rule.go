@@ -464,6 +464,11 @@ type AlertRuleKeyWithVersion struct {
 	AlertRuleKey `xorm:"extends"`
 }
 
+type AlertRuleKeyWithGroup struct {
+	RuleGroup    string
+	AlertRuleKey `xorm:"extends"`
+}
+
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
 	ID int64
@@ -515,6 +520,11 @@ func (s AlertRuleGroupKeySorter) Less(i, j int) bool { return s.by(&s.keys[i], &
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
+}
+
+// GetKeyWithGroup returns the alert definitions identifier
+func (alertRule *AlertRule) GetKeyWithGroup() AlertRuleKeyWithGroup {
+	return AlertRuleKeyWithGroup{AlertRuleKey: alertRule.GetKey(), RuleGroup: alertRule.RuleGroup}
 }
 
 // GetGroupKey returns the identifier of a group the rule belongs to

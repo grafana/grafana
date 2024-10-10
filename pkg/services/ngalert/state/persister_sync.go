@@ -34,6 +34,10 @@ func (a *SyncStatePersister) Async(_ context.Context, _ *cache) {
 	a.log.Debug("Async: No-Op")
 }
 
+func (a *SyncStatePersister) SyncRule(_ context.Context, _ trace.Span, _ ngModels.AlertRuleKeyWithGroup, _ StateTransitions) {
+	a.log.Debug("SyncRule: No-Op")
+}
+
 // Sync persists the state transitions to the database. It deletes stale states and saves the current states.
 func (a *SyncStatePersister) Sync(ctx context.Context, span trace.Span, allStates StateTransitions) {
 	staleStates := allStates.StaleStates()

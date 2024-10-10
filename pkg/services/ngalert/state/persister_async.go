@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type AsyncStatePersister struct {
@@ -66,4 +67,8 @@ func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache) error 
 
 func (a *AsyncStatePersister) Sync(_ context.Context, _ trace.Span, _ StateTransitions) {
 	a.log.Debug("Sync: No-Op")
+}
+
+func (a *AsyncStatePersister) SyncRule(_ context.Context, _ trace.Span, _ models.AlertRuleKeyWithGroup, _ StateTransitions) {
+	a.log.Debug("SyncRule: No-Op")
 }
