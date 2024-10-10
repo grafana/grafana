@@ -12,7 +12,7 @@ products:
   - enterprise
   - oss
 title: What's new in Grafana v11.3
-weight: -44
+weight: -45
 ---
 
 <!-- vale GoogleWe = NO -->
@@ -20,7 +20,7 @@ weight: -44
 
 # What’s new in Grafana v11.3
 
-Welcome to Grafana 11.3!
+Welcome to Grafana 11.3! In this release, we've made a number of significant updates and improvements. Scenes-powered dashboards are now generally available and the Explore Logs plugin is now installed by default. The dashboard experience has also improved in other ways including the ability to trigger API calls from any canvas element with the new **Actions** option and an update to transformations so you can apply calculations to dynamic fields. We've also simplified the alert setup experience, added customizable announcement banners, and added role-based access to plugins.
 
 <!-- {{< youtube id="s6IYpILVDSM" >}} -->
 
@@ -32,21 +32,21 @@ For even more detail about all the changes in this release, refer to the [change
 
 _Generally available in all editions of Grafana_
 
-For the past few months we've been working on a major update of our **Dashboards** architecture and migrated it to the Scenes library. This migration provides us with more stable, dynamic, and flexible dashboards as well as setting the foundation for what we envision the future of Grafana dashboards will be. Here are two of the improvements that are being introduced as part of this work:
+For the past few months we've been working on a major update of our **Dashboards** architecture and migrated it to the Scenes library. This migration provides us with more stable, dynamic, and flexible dashboards as well as setting the foundation for what we envision the future of Grafana dashboards will be. Here are four of the improvements that are being introduced as part of this work:
 
-### Edit mode
+**Edit mode**
 
 It can be difficult to efficiently navigate through the visually cluttered options during the dashboard editing process. With the introduction of the edit mode, we aim to provide an easier way to discover and interact with the dashboard edit experience.
 
-### Fixed positioning of template variables and time picker
+**Fixed positioning of template variables and time picker**
 
 We moved the time picker into the dashboard canvas and now, together with template variables, it will stick to the top as you scroll through your dashboard. This has historically been a very [requested feature](https://github.com/grafana/grafana/issues/11166) that we're very happy to be able to finally roll out!
 
-### Timezone parameter in Grafana URL
+**Timezone parameter in Grafana URL**
 
 We've added a new URL parameter `tz`. This allows sharing dashboards with a selected time zone, ensuring that the receiver views it in the intended time zone regardless of their local settings.
 
-### Kiosk mode displays dashboard controls
+**Kiosk mode displays dashboard controls**
 
 When playing a playlist or displaying a dashboard in full screen, controls are now shown by default. These controls include the time and refresh picker, variables, annotations, and links.
 
@@ -87,7 +87,7 @@ We've improved the inspect value experience in table visualizations with the add
 
 When the **Cell inspect value** switch is toggled on, clicking the inspect icon in a cell opens the drawer. Grafana attempts to automatically detect the type of data in the cell and opens the drawer with the associated tab showing. However, you can switch back and forth between tabs.
 
-![Inspect value drawer opened to Plain text tab](/media/docs/grafana/panels-visualizations/screenshot-cell-inspect-11.3.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-cell-inspect-11.3.png" max-width="650px" alt="Inspect value drawer opened to Plain text tab" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#cell-value-inspect)
 
@@ -131,7 +131,7 @@ We've made a helpful update to the **Binary operation** mode of the **Add field 
 
 When you set up a binary operation calculation, there's a new **All number fields** option available to select. Use this to apply a mathematical operator to multiple number fields simultaneously. This feature is particularly useful when you're scaling or offsetting data containing multiple, dynamically named fields, allowing the transformation to be applied when dealing with unknown field names.
 
-{{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-3-all-number-fields-binary-operation.png" alt="Binary operation calculation being applied to all number fields" >}}
+{{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-3-all-number-fields-binary-operation.png" max-width="650px" alt="Binary operation calculation being applied to all number fields" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
 
@@ -165,7 +165,7 @@ Grafana Enterprise and OSS:
 
 To use this feature, enable the `alertingQueryAndExpressionsStepMode` feature toggle.
 
-{{< figure src="/media/docs/alerting/simple-query-form.png" alt="Image shows the alert creation form in simple mode" >}}
+{{< figure src="/media/docs/alerting/simple-query-form.png" max-width="700px" alt="Image shows the alert creation form in simple mode" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/)
 
@@ -221,7 +221,7 @@ By default, only organization administrators can create announcement banners. Yo
 
 To use the Announcement banner in self-managed Grafana, turn on the `notificationBanner` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) in Grafana v11.3 or newer.
 
-{{< figure src="/media/docs/grafana/grafana-announcement-banner.png" caption="Announcement banner configuration page." alt="Announcement banner configuration page" >}}
+{{< figure src="/media/docs/grafana/grafana-announcement-banner.png" max-width="650px" caption="Announcement banner configuration page." alt="Announcement banner configuration page" >}}
 
 ## Improved subfolder creation flow
 
@@ -253,7 +253,7 @@ We intend to further extend this new layout with consistent links for all plugin
 
 _Available in public preview in all editions of Grafana_
 
-![Advanced LDAP settings.](/media/docs/grafana/2024-10-04-sso_ldap_2.png)
+{{< figure src="/media/docs/grafana/2024-10-04-sso_ldap_2.png" max-width="700px" alt="Advanced LDAP settings" >}}
 
 At Grafana, we're comminited to ease of use, and we've now introduced a new screen to set up your LDAP server as an Identity Provider.
 
