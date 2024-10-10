@@ -573,6 +573,13 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 			s.log.Error("error applying plugin warnings, please open a bug report: %w", err)
 		}
 
+		// Log the errors for resources with errors at migration
+		for _, resource := range resources {
+			if resource.Status == cloudmigration.ItemStatusError && resource.Error != "" {
+				s.log.Error("Could not migrate resource", "resourceID", resource.RefID, "error", resource.Error)
+			}
+		}
+
 		// We need to update the snapshot in our db before reporting anything
 		if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 			UID:       snapshot.UID,
@@ -832,6 +839,7 @@ func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []
 			// if the plugin is not found, it means it was uninstalled, meaning it wasn't core
 			if !p.IsCorePlugin() || !found {
 				r.Status = cloudmigration.ItemStatusWarning
+				r.ErrorCode = cloudmigration.ErrOnlyCoreDataSources
 				r.Error = "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack."
 			}
 

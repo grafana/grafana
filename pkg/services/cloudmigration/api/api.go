@@ -390,6 +390,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 			RefID:      results[i].RefID,
 			Status:     ItemStatus(results[i].Status),
 			Message:    results[i].Error,
+			ErrorCode:  ItemErrorCode(results[i].ErrorCode),
 			ParentName: results[i].ParentName,
 		}
 	}
