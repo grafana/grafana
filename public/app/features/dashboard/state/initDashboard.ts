@@ -50,13 +50,6 @@ async function fetchDashboard(
   dispatch: ThunkDispatch,
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
-  // When creating new or adding panels to a dashboard from explore we load it from local storage
-  const model = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
-  if (model) {
-    removeDashboardToFetchFromLocalStorage();
-    return model;
-  }
-
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
@@ -184,13 +177,14 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
-
     const versionBeforeMigration = dashDTO?.dashboard?.version;
 
     // returns null if there was a redirect or error
     if (!dashDTO) {
       return;
     }
+
+    addPanelsFromLocalStorage(dashDTO);
 
     // set initializing state
     dispatch(dashboardInitServices());
@@ -306,4 +300,20 @@ export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
 
 export function removeDashboardToFetchFromLocalStorage() {
   store.delete(DASHBOARD_FROM_LS_KEY);
+}
+
+function addPanelsFromLocalStorage(model: DashboardDTO) {
+  // When creating new or adding panels to a dashboard from explore we load it from local storage
+  const fromLS = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+  if (fromLS) {
+    if (fromLS.dashboard.panels) {
+      model.dashboard.panels = fromLS.dashboard.panels.concat(model.dashboard.panels);
+    }
+
+    if (fromLS.dashboard.time) {
+      model.dashboard.time = fromLS.dashboard.time;
+    }
+
+    removeDashboardToFetchFromLocalStorage();
+  }
 }

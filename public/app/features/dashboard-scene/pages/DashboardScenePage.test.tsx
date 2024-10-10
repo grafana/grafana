@@ -267,20 +267,6 @@ describe('DashboardScenePage', () => {
     });
   });
 
-  it('is in edit mode when coming from explore to an existing dashboard', async () => {
-    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard, meta: { slug: '123' } });
-
-    setup();
-
-    await waitForDashboardToRender();
-
-    const panelAMenu = await screen.findByLabelText('Menu for panel with title Panel A');
-    expect(panelAMenu).toBeInTheDocument();
-    await userEvent.click(panelAMenu);
-    const editMenuItem = await screen.findAllByText('Edit');
-    expect(editMenuItem).toHaveLength(1);
-  });
-
   describe('home page', () => {
     it('should render the dashboard when the route is home', async () => {
       (useParams as jest.Mock).mockReturnValue({});

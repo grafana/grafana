@@ -18,6 +18,7 @@ import {
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setPluginExtensionsHook } from '@grafana/runtime';
+import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
@@ -257,6 +258,7 @@ jest.mock('app/core/store', () => ({
   get: jest.fn(),
   getObject: jest.fn((_a, b) => b),
   setObject: jest.fn(),
+  delete: jest.fn(),
 }));
 
 const store = jest.requireMock('app/core/store');
@@ -665,9 +667,14 @@ describe('PanelDataQueriesTab', () => {
 
         it('should load last used data source if no data source specified for a panel', async () => {
           store.exists.mockReturnValue(true);
-          store.getObject.mockReturnValue({
-            dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
-            datasourceUid: 'gdev-testdata',
+          store.getObject.mockImplementation((key: string, def: unknown) => {
+            if (key === PANEL_EDIT_LAST_USED_DATASOURCE) {
+              return {
+                dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
+                datasourceUid: 'gdev-testdata',
+              };
+            }
+            return def;
           });
 
           const { queriesTab } = await setupScene('panel-5');

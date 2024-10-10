@@ -159,11 +159,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private _changeTracker: DashboardSceneChangeTracker;
 
   /**
-   * Flag to indicate if the user came from Explore
-   */
-  private _fromExplore = false;
-
-  /**
    * A reference to the scopes facade
    */
   private _scopesFacade: ScopesFacade | null;
@@ -244,8 +239,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  public onEnterEditMode = (fromExplore = false) => {
-    this._fromExplore = fromExplore;
+  public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
     this._initialUrlState = locationService.getLocation();
@@ -334,10 +328,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     locationService.replace(locationUtil.stripBaseFromUrl(url));
 
-    if (this._fromExplore) {
-      this.cleanupStateFromExplore();
-    }
-
     if (restoreInitialState) {
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
@@ -355,18 +345,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // Disable grid dragging
     this.state.body.editModeChanged(false);
-  }
-
-  private cleanupStateFromExplore() {
-    this._fromExplore = false;
-    // When coming from explore but discarding changes, remove the panel that explore is potentially adding.
-    if (this._initialSaveModel?.panels) {
-      this._initialSaveModel.panels = this._initialSaveModel.panels.slice(1);
-    }
-
-    if (this._initialState) {
-      this._initialState.body.cleanUpStateFromExplore?.();
-    }
   }
 
   public canDiscard() {
@@ -482,6 +460,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.onEnterEditMode();
     }
 
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
+    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
+    vizPanel.clearParent();
+
     this.state.body.addPanel(vizPanel);
   }
 
@@ -532,7 +514,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     panel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     panel.clearParent();
 
-    this.state.body.addPanel(panel);
+    this.addPanel(panel);
 
     store.delete(LS_PANEL_COPY_KEY);
   }
