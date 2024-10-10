@@ -92,10 +92,6 @@ Each example provided here is specifically applicable to alert rules (though syn
 
 If you are using classic conditions, refer to [legacy alerting templates](#legacy-alerting-templates) for more information.
 
-## How to template annotations and labels
-
-Templates are added to annotations and labels in the configuration menu of alert rules. See the detailed step by step guide.
-
 ## Common use cases
 
 Below are some examples that address common use cases and some of the different approaches you can take with templating. You will see both annotation and label templates share functions and elements that help formatting the alert notifications. If you are unfamiliar with the templating language, check the [Language page](ref:language).
