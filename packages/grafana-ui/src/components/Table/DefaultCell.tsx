@@ -26,6 +26,7 @@ export const DefaultCell = (props: TableCellProps) => {
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasActions = Boolean(actions?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
   const [hover, setHover] = useState(false);
   let value: string | ReactElement;
@@ -94,9 +95,7 @@ export const DefaultCell = (props: TableCellProps) => {
       onMouseLeave={showActions ? onMouseLeave : undefined}
       className={cellStyle}
     >
-      {!hasLinks && (isStringValue ? `${value}` : <div className={tableStyles.cellText}>{value}</div>)}
-
-      {hasLinks && (
+      {hasLinks || hasActions ? (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []} actions={actions}>
           {(api) => {
             if (api.openMenu) {
@@ -113,6 +112,10 @@ export const DefaultCell = (props: TableCellProps) => {
             }
           }}
         </DataLinksContextMenu>
+      ) : isStringValue ? (
+        `${value}`
+      ) : (
+        <div className={tableStyles.cellText}>{value}</div>
       )}
 
       {hover && showActions && (

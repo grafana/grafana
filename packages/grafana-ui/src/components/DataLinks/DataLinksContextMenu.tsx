@@ -23,7 +23,9 @@ export interface DataLinksContextMenuApi {
 }
 
 export const DataLinksContextMenu = ({ children, links, actions, style }: DataLinksContextMenuProps) => {
-  const itemsGroup: MenuItemsGroup[] = [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
+  const itemsGroup: MenuItemsGroup[] = [
+    { items: linkModelToContextMenuItems(links), label: Boolean(links().length) ? 'Data links' : '' },
+  ];
   const hasActions = Boolean(actions?.length);
   if (hasActions) {
     itemsGroup.push({ items: actionModelToContextMenuItems(actions!), label: 'Actions' });
@@ -53,7 +55,7 @@ export const DataLinksContextMenu = ({ children, links, actions, style }: DataLi
     cursor: 'context-menu',
   });
 
-  if (linksCounter > 1) {
+  if (linksCounter > 1 || hasActions) {
     return (
       <WithContextMenu renderMenuItems={renderMenuGroupItems}>
         {({ openMenu }) => {
