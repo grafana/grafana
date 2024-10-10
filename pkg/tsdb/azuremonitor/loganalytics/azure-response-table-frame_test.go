@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +56,7 @@ func TestLogTableToFrame(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadTestFileWithNumber(t, tt.testFile)
-			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, dataquery.ResultFormatTable)
+			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, dataquery.ResultFormatTable, false)
 			appendErrorNotice(frame, res.Error)
 			require.NoError(t, err)
 
@@ -112,13 +114,69 @@ func TestTraceTableToFrame(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadTestFileWithNumber(t, tt.testFile)
-			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", tt.queryType, tt.resultFormat)
+			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", tt.queryType, tt.resultFormat, false)
 			appendErrorNotice(frame, res.Error)
 			require.NoError(t, err)
 
 			testdata.CheckGoldenFrame(t, "../testdata", fmt.Sprintf("%s.%s", tt.testFile, strings.ReplaceAll(tt.name, " ", "-")), frame)
 		})
 	}
+}
+
+func TestLargeLogsResponse(t *testing.T) {
+	t.Run("large logs response with limit enabled", func(t *testing.T) {
+		res := AzureLogAnalyticsResponse{
+			Tables: []types.AzureResponseTable{
+				{Name: "PrimaryResult",
+					Columns: []struct {
+						Name string `json:"name"`
+						Type string `json:"type"`
+					}{
+						{Name: "value", Type: "int"},
+					}},
+			},
+		}
+		rows := [][]any{}
+		for i := 0; i <= 30000; i++ {
+			rows = append(rows, []any{json.Number(strconv.Itoa(i))})
+		}
+		res.Tables[0].Rows = rows
+		resultFormat := dataquery.ResultFormatLogs
+		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, resultFormat, false)
+		appendErrorNotice(frame, res.Error)
+		require.NoError(t, err)
+		require.Equal(t, frame.Rows(), 30000)
+		require.Len(t, frame.Meta.Notices, 1)
+		require.Equal(t, frame.Meta.Notices[0], data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     "The number of results in the result set has been limited to 30,000.",
+		})
+	})
+
+	t.Run("large logs response with limit disabled", func(t *testing.T) {
+		res := AzureLogAnalyticsResponse{
+			Tables: []types.AzureResponseTable{
+				{Name: "PrimaryResult",
+					Columns: []struct {
+						Name string `json:"name"`
+						Type string `json:"type"`
+					}{
+						{Name: "value", Type: "int"},
+					}},
+			},
+		}
+		rows := [][]any{}
+		for i := 0; i < 40000; i++ {
+			rows = append(rows, []any{json.Number(strconv.Itoa(i))})
+		}
+		res.Tables[0].Rows = rows
+		resultFormat := dataquery.ResultFormatLogs
+		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, resultFormat, true)
+		appendErrorNotice(frame, res.Error)
+		require.NoError(t, err)
+		require.Equal(t, frame.Rows(), 40000)
+		require.Nil(t, frame.Meta.Notices)
+	})
 }
 
 func loadTestFileWithNumber(t *testing.T, name string) AzureLogAnalyticsResponse {
