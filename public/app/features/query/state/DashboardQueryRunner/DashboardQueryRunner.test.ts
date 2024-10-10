@@ -208,7 +208,7 @@ describe('DashboardQueryRunnerImpl', () => {
         expect: (results) => {
           // should have one alert state, one snapshot, one legacy and one next gen result
           // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
-          expect(results).toEqual({ annotations: [] });
+          expect(results).toEqual({ alertState: undefined, annotations: [], correlations: [] });
           expect(annotationQueryMock).toHaveBeenCalledTimes(1);
           expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
           expect(dispatchMock).toHaveBeenCalledTimes(1);
@@ -446,5 +446,6 @@ function getExpectedForAllResult(): DashboardQueryRunnerResult {
         type: 'Test',
       },
     ],
+    correlations: [],
   };
 }

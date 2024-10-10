@@ -1,10 +1,17 @@
 import { act, screen } from '@testing-library/react';
 import { useEffectOnce } from 'react-use';
+import { Subject } from 'rxjs';
 import { render } from 'test/test-utils';
 
 import { TextBoxVariableModel } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
+import {
+  createDashboardQueryRunner,
+  DashboardQueryRunnerFactoryArgs,
+  setDashboardQueryRunnerFactory,
+} from 'app/features/query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { emptyResult } from 'app/features/query/state/DashboardQueryRunner/utils';
 import { GetVariables } from 'app/features/variables/state/selectors';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardMeta } from 'app/types';
@@ -36,6 +43,14 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 });
 
 function setup(props: Props) {
+  setDashboardQueryRunnerFactory(() => ({
+    getResult: emptyResult,
+    run: () => undefined,
+    cancel: () => undefined,
+    cancellations: () => new Subject(),
+    destroy: () => undefined,
+  }));
+  createDashboardQueryRunner({} as DashboardQueryRunnerFactoryArgs);
   return render(<DashboardGrid {...props} />);
 }
 

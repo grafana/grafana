@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, getVariableUsageInfo, GrafanaTheme2 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-
-import { getVariableUsageInfo } from '../../explore/utils/links';
 
 import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
@@ -62,9 +61,11 @@ export const ConfigureCorrelationSourceForm = () => {
 
   const currentTargetQuery = getValues('config.target');
   const currentType = getValues('type');
-  const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
-    (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
-  );
+  const variables = getVariableUsageInfo(
+    currentTargetQuery,
+    {},
+    getTemplateSrv().replace.bind(getTemplateSrv())
+  ).variables.map((variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : ''));
   const dataSourceName = getDatasourceSrv().getInstanceSettings(getValues('targetUID'))?.name;
 
   const formText = getFormText(currentType, dataSourceName);

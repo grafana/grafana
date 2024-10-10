@@ -1,4 +1,4 @@
-import { first, uniqBy } from 'lodash';
+import { first } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -19,11 +19,13 @@ import {
   DataLinkPostProcessor,
   ExploreUrlState,
   urlUtil,
+  VariableInterpolation,
+  getTransformationVars,
+  getVariableUsageInfo,
 } from '@grafana/data';
-import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getTransformationVars } from 'app/features/correlations/transformations';
 import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
@@ -40,17 +42,6 @@ const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
  * be passed back to the visualization.
  */
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilter];
-
-/**
- * This extension of the LinkModel was done to support correlations, which need the variables' names
- * and values split out for display purposes
- *
- * Correlations are internal links only so the variables property will always be defined (but possibly empty)
- * for internal links and undefined for non-internal links
- */
-export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables: VariableInterpolation[];
-}
 
 const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 
@@ -109,7 +100,7 @@ export const getFieldLinksForExplore = (options: {
   dataFrame?: DataFrame;
   // if not provided, field.config.links are used
   linksToProcess?: DataLink[];
-}): ExploreFieldLinkModel[] => {
+}): LinkModel[] => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
   const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
@@ -158,7 +149,7 @@ export const getFieldLinksForExplore = (options: {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
 
-    const fieldLinks = links.map((link) => {
+    const fieldLinks: Array<LinkModel | undefined> = links.map((link) => {
       let internalLinkSpecificVars: ScopedVars = {};
       if (link.meta?.transformations) {
         link.meta?.transformations.forEach((transformation) => {
@@ -177,8 +168,9 @@ export const getFieldLinksForExplore = (options: {
         });
       }
 
+      const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
       const allVars = { ...scopedVars, ...internalLinkSpecificVars };
-      const variableData = getVariableUsageInfo(link, allVars);
+      const variableData = getVariableUsageInfo(link, allVars, replaceFn);
       let variables: VariableInterpolation[] = [];
 
       // if the link has no variables (static link), add it with the right key but an empty value so we know what field the static link is associated with
@@ -191,7 +183,7 @@ export const getFieldLinksForExplore = (options: {
       if (variableData.allVariablesDefined) {
         if (!link.internal) {
           const replace: InterpolateFunction = (value, vars) =>
-            getTemplateSrv().replace(value, { ...vars, ...allVars, ...scopedVars });
+            replaceFn(value, { ...vars, ...allVars, ...scopedVars });
 
           const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
           if (!linkModel.title) {
@@ -226,7 +218,7 @@ export const getFieldLinksForExplore = (options: {
         return undefined;
       }
     });
-    return fieldLinks.filter((link): link is ExploreFieldLinkModel => !!link);
+    return fieldLinks.filter((link): link is LinkModel => !!link);
   }
   return [];
 };
@@ -275,62 +267,6 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
     },
     [range, splitOpenFn]
   );
-}
-
-// See https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
-const builtInVariables = [
-  '__from',
-  '__to',
-  '__interval',
-  '__interval_ms',
-  '__org',
-  '__user',
-  '__range',
-  '__rate_interval',
-  '__timeFilter',
-  'timeFilter',
-  // These are only applicable in dashboards so should not affect this for Explore
-  // '__dashboard',
-  //'__name',
-];
-
-/**
- * Use variable map from templateSrv to determine if all variables have values
- * @param query
- * @param scopedVars
- */
-export function getVariableUsageInfo(
-  query: object,
-  scopedVars: ScopedVars
-): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
-  let variables: VariableInterpolation[] = [];
-  const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
-  // This adds info to the variables array while interpolating
-  replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
-  variables = uniqBy(variables, 'variableName');
-  return {
-    variables: variables,
-    allVariablesDefined: variables
-      // We filter out builtin variables as they should be always defined but sometimes only later, like
-      // __range_interval which is defined in prometheus at query time.
-      .filter((v) => !builtInVariables.includes(v.variableName))
-      .every((variable) => variable.found),
-  };
-}
-
-// Recursively get all strings from an object into a simple list with space as separator.
-function getStringsFromObject(obj: Object): string {
-  let acc = '';
-  let k: keyof typeof obj;
-
-  for (k in obj) {
-    if (typeof obj[k] === 'string') {
-      acc += ' ' + obj[k];
-    } else if (typeof obj[k] === 'object') {
-      acc += ' ' + getStringsFromObject(obj[k]);
-    }
-  }
-  return acc;
 }
 
 type StateEntry = [string, ExploreItemState];

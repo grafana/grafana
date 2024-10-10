@@ -353,14 +353,9 @@ export class PanelQueryRunner {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
-
-    let panelData = observable;
     const dataSupport = this.dataConfigSource.getDataSupport();
-
-    if (dataSupport.alertStates || dataSupport.annotations) {
-      const panel = this.dataConfigSource as unknown as PanelModel;
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panel.id));
-    }
+    const panel = this.dataConfigSource as unknown as PanelModel;
+    const panelData = mergePanelAndDashData(dataSupport, observable, getDashboardQueryRunner().getResult(panel.id));
 
     this.subscription = panelData.subscribe({
       next: (data) => {

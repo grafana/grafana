@@ -9,6 +9,7 @@ import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
 import { DashboardModel } from '../../../dashboard/state';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
+import { CorrelationsWorker } from './CorrelationsWorker';
 import { SnapshotWorker } from './SnapshotWorker';
 import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 import {
@@ -34,6 +35,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
       new UnifiedAlertStatesWorker(),
       new SnapshotWorker(),
       new AnnotationsWorker(),
+      new CorrelationsWorker(),
     ]
   ) {
     this.run = this.run.bind(this);
@@ -59,7 +61,8 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
       map((result) => {
         const annotations = getAnnotationsByPanelId(result.annotations, panelId);
         const alertState = result.alertStates.find((res) => Boolean(panelId) && res.panelId === panelId);
-        return { annotations: dedupAnnotations(annotations), alertState };
+        const correlations = result.correlations;
+        return { annotations: dedupAnnotations(annotations), alertState, correlations };
       })
     );
   }
@@ -80,6 +83,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
         // choosing reduce to minimize re-renders
         acc.annotations = acc.annotations.concat(value.annotations);
         acc.alertStates = acc.alertStates.concat(value.alertStates);
+        acc.correlations = acc.correlations.concat(value.correlations);
         return acc;
       }),
       finalize(() => {
@@ -90,7 +94,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
 
     const timerSubscription = new Subscription();
     const timerObservable = timer(200).pipe(
-      mapTo({ annotations: [], alertStates: [] }),
+      mapTo({ annotations: [], alertStates: [], correlations: [] }),
       takeUntil(resultObservable),
       finalize(() => {
         timerSubscription.unsubscribe(); // important to avoid memory leaks

@@ -132,6 +132,13 @@ export {
 
 // Field
 export {
+  builtInVariablesGlobal,
+  builtInVariables,
+  safeStringifyValue,
+  getTransformationVars,
+  getVariableUsageInfo,
+} from './field/correlationUtils';
+export {
   getFieldColorModeForField,
   getFieldColorMode,
   fieldColorModeRegistry,
@@ -596,6 +603,7 @@ export {
 } from './types/plugin';
 export {
   type InterpolateFunction,
+  type EnhancedInterpolateFunction,
   type PanelPluginMeta,
   type PanelData,
   type PanelProps,
@@ -797,6 +805,7 @@ export {
   type LinkTarget,
   type LinkModel,
   type LinkModelSupplier,
+  type VariableInterpolation,
   VariableOrigin,
   type VariableSuggestion,
   VariableSuggestionsScope,

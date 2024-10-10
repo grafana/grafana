@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
-import { DataSourceInstanceSettings, PluginType, ScopedVars } from '@grafana/data';
-import { FetchResponse, getBackendSrv, setBackendSrv, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
+import { DataSourceInstanceSettings, PluginType, ScopedVars, VariableInterpolation } from '@grafana/data';
+import { FetchResponse, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import InfluxDatasource from '../datasource';
 import { InfluxOptions, InfluxVersion } from '../types';
