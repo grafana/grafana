@@ -13,6 +13,8 @@ import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
+import { TOP_BAR_LEVEL_HEIGHT } from '../types';
+
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
@@ -27,7 +29,8 @@ export interface Props extends DOMAttributes {
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const navTree = useSelector((state) => state.navBarTree);
-    const styles = useStyles2(getStyles);
+    const isSingleTopNav = Boolean(config.featureToggles.singleTopNav);
+    const styles = useStyles2(getStyles, isSingleTopNav);
     const location = useLocation();
     const { chrome } = useGrafana();
     const dispatch = useDispatch();
@@ -114,7 +117,7 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        {config.featureToggles.singleTopNav ? (
+        {isSingleTopNav ? (
           <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
         ) : (
           <div className={styles.mobileHeader}>
@@ -166,11 +169,11 @@ export const MegaMenu = memo(
 
 MegaMenu.displayName = 'MegaMenu';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, isSingleTopNav: boolean) => ({
   content: css({
     display: 'flex',
     flexDirection: 'column',
-    height: '100%',
+    height: isSingleTopNav ? `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)` : '100%',
     minHeight: 0,
     position: 'relative',
   }),
