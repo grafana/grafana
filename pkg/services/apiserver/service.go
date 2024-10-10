@@ -160,7 +160,6 @@ func ProvideService(
 		serverLockService: serverLockService,
 		unified:           unified,
 	}
-
 	// This will be used when running as a dskit service
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
@@ -292,7 +291,7 @@ func (s *service) start(ctx context.Context) error {
 	} else {
 		// Use unified storage client
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(
-			s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+			s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.features)
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -319,7 +318,7 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService,
+		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService, s.features,
 	)
 	if err != nil {
 		return err

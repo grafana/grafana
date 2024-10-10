@@ -75,6 +75,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 			resource:       dashboard.DashboardResourceInfo,
 			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
 			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
+			features:       features,
 		},
 		reg: reg,
 	}
