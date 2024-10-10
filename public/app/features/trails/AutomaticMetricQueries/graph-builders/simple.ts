@@ -1,5 +1,5 @@
 import { PanelBuilders } from '@grafana/scenes';
-import { SortOrder } from '@grafana/schema/dist/esm/index';
+import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 
 import { CommonVizParams } from './types';
