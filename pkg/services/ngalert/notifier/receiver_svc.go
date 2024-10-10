@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -47,6 +48,7 @@ type ReceiverService struct {
 	log                    log.Logger
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
 	resourcePermissions    ac.ReceiverPermissionsService
+	tracer                 tracing.Tracer
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -99,6 +101,7 @@ func NewReceiverService(
 	xact transactionManager,
 	log log.Logger,
 	resourcePermissions ac.ReceiverPermissionsService,
+	tracer tracing.Tracer,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -110,6 +113,7 @@ func NewReceiverService(
 		log:                    log,
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
 		resourcePermissions:    resourcePermissions,
+		tracer:                 tracer,
 	}
 }
 

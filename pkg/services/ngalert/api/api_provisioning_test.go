@@ -1894,7 +1894,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
-
+	tracer := tracing.InitializeTracerForTest()
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
@@ -1905,6 +1905,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.xact,
 		env.log,
 		ngalertfakes.NewFakeReceiverPermissionsService(),
+		tracer,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
