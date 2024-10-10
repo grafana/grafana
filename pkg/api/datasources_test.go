@@ -227,60 +227,41 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 // Using a team HTTP header whose name matches the name specified for auth proxy header should fail
 func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 	tenantID := "1234"
+	jsonDataWithTeamHttpHeaders := simplejson.New()
+	jsonDataWithTeamHttpHeaders.Set("teamHttpHeaders", datasources.TeamHTTPHeaders{
+		Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
+			{
+				Header: "X-Prom-Label-Policy",
+				Value:  "Bad value",
+			},
+		}},
+	})
 	testcases := []struct {
-		desc string
-		data datasources.TeamHTTPHeaders
-		want int
+		desc   string
+		addCmd datasources.AddDataSourceCommand
+		want   int
 	}{
 		{
-			desc: "We should only allow for headers being X-Prom-Label-Policy",
-			data: datasources.TeamHTTPHeaders{
-				Headers: datasources.TeamHeaders{
-					tenantID: []datasources.TeamHTTPHeader{
-						{
-							Header: "Authorization",
-							Value:  "foo!=bar",
-						},
-					},
-				}},
-			want: 400,
+			desc: "Should fail when trying to add teamHttpHeaders",
+			addCmd: datasources.AddDataSourceCommand{
+				Name:     "Test",
+				URL:      "localhost:5432",
+				Access:   "direct",
+				Type:     "test",
+				JsonData: jsonDataWithTeamHttpHeaders,
+			},
+			want: http.StatusForbidden,
 		},
 		{
-			desc: "Allowed header but no team id",
-			data: datasources.TeamHTTPHeaders{
-				Headers: datasources.TeamHeaders{"": []datasources.TeamHTTPHeader{
-					{
-						Header: "X-Prom-Label-Policy",
-						Value:  "foo=bar",
-					},
-				},
-				}},
-			want: 400,
-		},
-		{
-			desc: "Allowed team id and header name with invalid header values ",
-			data: datasources.TeamHTTPHeaders{
-				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
-					{
-						Header: "X-Prom-Label-Policy",
-						Value:  "Bad value",
-					},
-				},
-				}},
-			want: 400,
-		},
-		// Complete valid case, with team id, header name and header value
-		{
-			desc: "Allowed header and header values ",
-			data: datasources.TeamHTTPHeaders{
-				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
-					{
-						Header: "X-Prom-Label-Policy",
-						Value:  `1234:{ name!="value",foo!~"bar" }`,
-					},
-				},
-				}},
-			want: 200,
+			desc: "Should be allowed to update teamHttpHeaders",
+			addCmd: datasources.AddDataSourceCommand{
+				Name:     "Test",
+				URL:      "localhost:5432",
+				Access:   "direct",
+				Type:     "test",
+				JsonData: simplejson.New(),
+			},
+			want: http.StatusOK,
 		},
 	}
 	for _, tc := range testcases {
@@ -300,16 +281,8 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
 			hs.Cfg.AuthProxy.Enabled = true
 
-			jsonData := simplejson.New()
-			jsonData.Set("teamHttpHeaders", tc.data)
 			sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-				c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-					Name:     "Test",
-					URL:      "localhost:5432",
-					Access:   "direct",
-					Type:     "test",
-					JsonData: jsonData,
-				})
+				c.Req.Body = mockRequestBody(tc.addCmd)
 				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{
 					{Action: datasources.ActionPermissionsWrite, Scope: datasources.ScopeAll},
 				})
@@ -489,35 +462,6 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 				assert.Equal(t, tt.expectedCode, res.StatusCode)
 				require.NoError(t, res.Body.Close())
 			}
-		})
-	}
-}
-
-func TestValidateLBACHeader(t *testing.T) {
-	testcases := []struct {
-		desc            string
-		teamHeaderValue string
-		want            bool
-	}{
-		{
-			desc:            "Should allow valid header",
-			teamHeaderValue: `1234:{ name!="value",foo!~"bar" }`,
-			want:            true,
-		},
-		{
-			desc:            "Should allow valid selector",
-			teamHeaderValue: `1234:{ name!="value",foo!~"bar/baz.foo" }`,
-			want:            true,
-		},
-		{
-			desc:            "Should return false for incorrect header value",
-			teamHeaderValue: `1234:!="value",foo!~"bar" }`,
-			want:            false,
-		},
-	}
-	for _, tc := range testcases {
-		t.Run(tc.desc, func(t *testing.T) {
-			assert.Equal(t, tc.want, validateLBACHeader(tc.teamHeaderValue))
 		})
 	}
 }
