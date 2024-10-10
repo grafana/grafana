@@ -1478,6 +1478,7 @@
       "warning-details-button": ""
     },
     "resource-table": {
+      "dashboard-load-error": "",
       "error-library-element-sub": "",
       "error-library-element-title": "",
       "unknown-datasource-title": "",
@@ -2217,7 +2218,9 @@
     "datasource-names": "",
     "delete-query-button": "",
     "query-template-get-error": "",
-    "search": ""
+    "search": "",
+    "user-info-get-error": "",
+    "user-names": ""
   },
   "query-operation": {
     "header": {
@@ -2386,7 +2389,6 @@
     "menu": {
       "export-json-title": "",
       "share-externally-title": "",
-      "share-internally-description": "",
       "share-internally-title": "",
       "share-snapshot-title": ""
     },
@@ -2676,6 +2678,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": ""
+    },
     "metric-overview": {
       "description-label": "",
       "labels": "",
