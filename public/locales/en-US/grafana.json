@@ -1225,6 +1225,7 @@
     "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
+      "error": "Server host is a required field",
       "label": "Server host",
       "placeholder": "example: 127.0.0.1"
     },
@@ -1234,11 +1235,13 @@
     },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
+      "error": "Search filter is a required field",
       "label": "Search filter",
       "placeholder": "example: cn=%s"
     },
     "search-base-dns": {
       "description": "An array of base dns to search through.",
+      "error": "Search base DNS is a required field",
       "label": "Search base DNS",
       "placeholder": "example: dc=grafana,dc=org"
     },

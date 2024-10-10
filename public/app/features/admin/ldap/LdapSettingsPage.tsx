@@ -298,7 +298,7 @@ export const LdapSettingsPage = () => {
                 <Field
                   label={t('ldap-settings-page.host.label', 'Server host')}
                   required={true}
-                  error={'Server host is a required field'}
+                  error={t('ldap-settings-page.host.error', 'Server host is a required field')}
                   invalid={isInvalidField('host')}
                   description={t(
                     'ldap-settings-page.host.description',
@@ -342,7 +342,7 @@ export const LdapSettingsPage = () => {
                   label={t('ldap-settings-page.search_filter.label', 'Search filter')}
                   required={true}
                   invalid={isInvalidField('search_filter')}
-                  error={'Search filter is a required field'}
+                  error={t('ldap-settings-page.search_filter.error', 'Search filter is a required field')}
                   description={t(
                     'ldap-settings-page.search_filter.description',
                     'LDAP search filter used to locate specific entries within the directory.'
@@ -359,7 +359,7 @@ export const LdapSettingsPage = () => {
                   label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS')}
                   required={true}
                   invalid={isInvalidField('search_base_dns')}
-                  error={'Search base DNS is a required field'}
+                  error={t('ldap-settings-page.search-base-dns.error', 'Search base DNS is a required field')}
                   description={t(
                     'ldap-settings-page.search-base-dns.description',
                     'An array of base dns to search through.'
