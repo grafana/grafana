@@ -118,3 +118,8 @@ func TranslateFixedRole(role string) string {
 	role = strings.ReplaceAll(role, ".", "_")
 	return role
 }
+
+// Translate "read" for the dashboard into "dashboard_read" for folder
+func TranslateToFolderRelation(relation, objectType string) string {
+	return fmt.Sprintf("%s_%s", objectType, relation)
+}

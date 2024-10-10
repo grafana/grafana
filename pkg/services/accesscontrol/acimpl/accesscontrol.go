@@ -3,11 +3,14 @@ package acimpl
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -127,6 +130,7 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 
 		a.log.Debug("evaluating zanzana", "user", tupleKey.User, "relation", tupleKey.Relation, "object", tupleKey.Object)
 		allowed, err := a.Check(ctx, accesscontrol.CheckRequest{
+			// Namespace: claims.OrgNamespaceFormatter(user.GetOrgID()),
 			User:     tupleKey.User,
 			Relation: tupleKey.Relation,
 			Object:   tupleKey.Object,
@@ -226,12 +230,44 @@ func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckReques
 		Relation: req.Relation,
 		Object:   req.Object,
 	}
-	in := &openfgav1.CheckRequest{TupleKey: key}
+
+	in := &openfgav1.CheckRequest{
+		TupleKey: key,
+	}
+
+	// Check direct access to resource first
 	res, err := a.zclient.Check(ctx, in)
 	if err != nil {
 		return false, err
 	}
-	return res.Allowed, err
+
+	// no need to check folder access
+	if res.Allowed || req.Parent == "" {
+		return res.Allowed, nil
+	}
+
+	// Check access through the parent folder
+	ns, err := claims.ParseNamespace(req.Namespace)
+	if err != nil {
+		return false, err
+	}
+
+	folderKey := &openfgav1.CheckRequestTupleKey{
+		User:     req.User,
+		Relation: zanzana.TranslateToFolderRelation(req.Relation, req.ObjectType),
+		Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
+	}
+
+	folderReq := &openfgav1.CheckRequest{
+		TupleKey: folderKey,
+	}
+
+	folderRes, err := a.zclient.Check(ctx, folderReq)
+	if err != nil {
+		return false, err
+	}
+
+	return folderRes.Allowed, nil
 }
 
 func (a *AccessControl) ListObjects(ctx context.Context, req accesscontrol.ListObjectsRequest) ([]string, error) {
