@@ -40,10 +40,14 @@ var (
 	sqlResourceHistoryPoll     = mustTemplate("resource_history_poll.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
-	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
-	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
-	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
-	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
+	sqlResourceVersionGet        = mustTemplate("resource_version_get.sql")
+	sqlResourceVersionLockShards = mustTemplate("resource_version_lock_shards.sql")
+	// TODO: Add a test for this.
+	sqlResourceVersionMin         = mustTemplate("resource_version_min.sql")
+	sqlResourceVersionUpdate      = mustTemplate("resource_version_update.sql")
+	sqlResourceVersionBatchUpdate = mustTemplate("resource_version_batch_update.sql")
+	sqlResourceVersionInsert      = mustTemplate("resource_version_insert.sql")
+	sqlResourceVersionList        = mustTemplate("resource_version_list.sql")
 )
 
 // TxOptions.
@@ -190,6 +194,17 @@ func (r sqlResourceUpdateRVRequest) Validate() error {
 	return nil // TODO
 }
 
+type sqlResourceBatchUpdateRVRequest struct {
+	sqltemplate.SQLTemplate
+	GUID            string
+	ResourceVersion int64
+	Shards          []int
+}
+
+func (r sqlResourceBatchUpdateRVRequest) Validate() error {
+	return nil // TODO
+}
+
 // resource_version table requests.
 type resourceVersionResponse struct {
 	ResourceVersion int64
@@ -207,6 +222,7 @@ type groupResourceVersion struct {
 
 type sqlResourceVersionUpsertRequest struct {
 	sqltemplate.SQLTemplate
+	Shard           int
 	Group, Resource string
 	ResourceVersion int64
 }
@@ -217,6 +233,7 @@ func (r sqlResourceVersionUpsertRequest) Validate() error {
 
 type sqlResourceVersionGetRequest struct {
 	sqltemplate.SQLTemplate
+	Shard           int
 	Group, Resource string
 	ReadOnly        bool
 	Response        *resourceVersionResponse
@@ -230,6 +247,19 @@ func (r sqlResourceVersionGetRequest) Results() (*resourceVersionResponse, error
 		ResourceVersion: r.Response.ResourceVersion,
 		CurrentEpoch:    r.Response.CurrentEpoch,
 	}, nil
+}
+
+type sqlResourceVersionLockShardsRequest struct {
+	sqltemplate.SQLTemplate
+	Group, Resource string
+	Shard           string
+}
+
+func (r sqlResourceVersionLockShardsRequest) Validate() error {
+	return nil // TODO
+}
+func (r sqlResourceVersionLockShardsRequest) Results() (string, error) {
+	return r.Shard, nil
 }
 
 type sqlResourceVersionListRequest struct {
