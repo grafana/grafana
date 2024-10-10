@@ -17217,12 +17217,12 @@ __metadata:
   linkType: hard
 
 "eslint-scope@npm:^8.0.0":
-  version: 8.0.2
-  resolution: "eslint-scope@npm:8.0.2"
+  version: 8.1.0
+  resolution: "eslint-scope@npm:8.1.0"
   dependencies:
     esrecurse: "npm:^4.3.0"
     estraverse: "npm:^5.2.0"
-  checksum: 10/d17c2e1ff4d3a98911414a954531078db912e2747d6da8ea4cafd16d0526e32086c676ce9aeaffb3ca0ff695fc951ac3169d7f08a0b42962db683dff126cc95b
+  checksum: 10/4c34a12fbeb0677822a9e93e81f2027e39e6f27557c17bc1e5ff76debbd41e748c3673517561792bda9e276245f89fbfd9b0b24fcec3b33a04ee2196729b3489
   languageName: node
   linkType: hard
 
