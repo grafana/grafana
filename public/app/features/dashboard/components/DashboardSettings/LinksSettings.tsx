@@ -10,7 +10,7 @@ import { SettingsPageProps } from './types';
 
 export type LinkSettingsMode = 'list' | 'new' | 'edit';
 
-export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPageProps) {
+export function LinksSettings({ dashboard, sectionNav, editIndex, toolbar }: SettingsPageProps) {
   const [isNew, setIsNew] = useState<boolean>(false);
 
   const onGoBack = () => {
@@ -44,7 +44,7 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
   }
 
   return (
-    <Page navModel={sectionNav} pageNav={pageNav}>
+    <Page navModel={sectionNav} pageNav={pageNav} toolbar={toolbar}>
       {!isEditing && <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
       {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIndex} onGoBack={onGoBack} />}
     </Page>

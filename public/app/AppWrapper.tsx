@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -55,12 +55,23 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   renderRoute = (route: RouteDescriptor) => {
+    const roles = route.roles ? route.roles() : [];
     return (
       <Route
         caseSensitive={route.sensitive === undefined ? false : route.sensitive}
         path={route.path}
         key={route.path}
-        element={<RouteElement route={route} />}
+        render={(props: RouteComponentProps) => {
+          const location = locationService.getLocation();
+          // TODO[Router]: test this logic
+          if (roles?.length) {
+            if (!roles.some((r: string) => contextSrv.hasRole(r))) {
+              return <Navigate replace to="/" />;
+            }
+          }
+
+          return <GrafanaRoute {...props} route={route} location={location} />;
+        }}
       />
     );
   };
