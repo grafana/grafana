@@ -1,6 +1,13 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
-import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
+import {
+  PluginSignatureStatus,
+  dateTimeParse,
+  PluginError,
+  PluginType,
+  PluginErrorCode,
+  PluginDependencies,
+} from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
 import configCore, { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -153,6 +160,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     angularDetected,
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
+    hasPluginDependency: hasPluginDependencies(plugin.json?.dependencies),
+    isDependency: isDependencyPlugin(id),
   };
 }
 
@@ -203,6 +212,8 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
+    isDependency: isDependencyPlugin(id),
+    hasPluginDependency: hasPluginDependencies(plugin.dependencies),
   };
 }
 
@@ -266,7 +277,15 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
+    isDependency: isDependencyPlugin(id),
+    hasPluginDependency: local
+      ? hasPluginDependencies(local.dependencies)
+      : hasPluginDependencies(remote?.json?.dependencies),
   };
+}
+
+function hasPluginDependencies(pd: PluginDependencies | undefined): boolean {
+  return Boolean(pd?.plugins && pd?.plugins?.length > 0);
 }
 
 export const getExternalManageLink = (pluginId: string) => `${config.pluginCatalogURL}${pluginId}`;
@@ -386,6 +405,11 @@ export function isManagedPlugin(id: string) {
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
   return pluginCatalogManagedPlugins?.includes(id);
+}
+
+export function isDependencyPlugin(id: string): boolean {
+  const { pluginDependants } = config;
+  return Boolean(pluginDependants && pluginDependants[id]);
 }
 
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {

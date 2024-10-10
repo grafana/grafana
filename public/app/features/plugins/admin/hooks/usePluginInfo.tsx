@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
@@ -64,7 +65,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   }
   const hasNoDependencyInfo = !grafanaDependency && (!pluginDependencies || !pluginDependencies.length);
 
-  if (!hasNoDependencyInfo) {
+  if (!hasNoDependencyInfo && !config.featureToggles.pluginsDetailsRightPanel) {
     info.push({
       label: t('plugins.details.labels.dependencies', 'Dependencies'),
       value: <PluginDetailsHeaderDependencies plugin={plugin} grafanaDependency={grafanaDependency} />,

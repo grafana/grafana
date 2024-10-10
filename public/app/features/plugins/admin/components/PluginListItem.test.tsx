@@ -59,6 +59,8 @@ describe('PluginListItem', () => {
     isPublished: true,
     isManaged: false,
     isPreinstalled: { found: false, withVersion: false },
+    hasPluginDependency: false,
+    isDependency: false,
   };
 
   /** As Grid */

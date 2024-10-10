@@ -64,6 +64,8 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isUpdatingFromInstance?: boolean;
   iam?: IdentityAccessManagement;
   isProvisioned?: boolean;
+  hasPluginDependency: boolean;
+  isDependency: boolean;
 }
 
 export interface CatalogPluginDetails {

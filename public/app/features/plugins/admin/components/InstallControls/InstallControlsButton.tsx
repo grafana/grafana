@@ -108,6 +108,31 @@ export function InstallControlsButton({
     }
   };
 
+  const onUninstallPluginDependency = async (pluginId: string) => {
+    hideConfirmModal();
+    trackPluginUninstalled(trackingProps);
+    await uninstall(pluginId);
+    if (!errorUninstalling) {
+      // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
+      const activePageId = queryParams.page;
+      const isViewingAppConfigPage = activePageId !== PluginTabIds.OVERVIEW && activePageId !== PluginTabIds.VERSIONS;
+      if (isViewingAppConfigPage) {
+        locationService.replace(`${location.pathname}?page=${PluginTabIds.OVERVIEW}`);
+      }
+
+      let successMessage = `Uninstalled ${pluginId}`;
+      if (config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall) {
+        successMessage = 'Uninstall requested, this may take a few minutes.';
+      }
+
+      appEvents.emit(AppEvents.alertSuccess, [successMessage]);
+      if (plugin.type === 'app') {
+        dispatch(removePluginFromNavTree({ pluginID: pluginId }));
+        setNeedReload?.(false);
+      }
+    }
+  };
+
   const onUpdate = async () => {
     reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME);
 
@@ -127,20 +152,42 @@ export function InstallControlsButton({
     uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
   }
 
+  let uninstallToolTipText = '';
+  if (plugin.isDependency) {
+    if (config.pluginDependants && config.pluginDependants[plugin.id]) {
+      const dependencyOf = config.pluginDependants[plugin.id].map((dep) => dep.pluginName);
+      disableUninstall = true;
+      uninstallTitle = `Dependent plugins must be removed first: ${dependencyOf.join(', ')}`;
+    }
+  }
+
   if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
       <>
         <ConfirmModal
           isOpen={isConfirmModalVisible}
           title={`Uninstall ${plugin.name}`}
-          body="Are you sure you want to uninstall this plugin?"
+          body={
+            <>
+              <p>
+                Are you sure you want to uninstall <strong>{plugin.name}</strong>?
+              </p>
+              {plugin.hasPluginDependency && ( // replace with richer dependency info
+                <Stack alignItems="flex-start" width="auto" height="auto">
+                  <Button variant="destructive" onClick={() => onUninstallPluginDependency('grafana-piechart-panel')}>
+                    {uninstallBtnText} plugin dependency {'grafana-piechart-panel'}
+                  </Button>
+                </Stack>
+              )}
+            </>
+          }
           confirmText="Confirm"
           icon="exclamation-triangle"
           onConfirm={onUninstall}
           onDismiss={hideConfirmModal}
         />
         <Stack alignItems="flex-start" width="auto" height="auto">
-          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
+          <Button variant="destructive" onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
         </Stack>
@@ -166,7 +213,13 @@ export function InstallControlsButton({
             {isInstalling ? 'Updating' : 'Update'}
           </Button>
         )}
-        <Button variant="destructive" disabled={disableUninstall} onClick={onUninstall} title={uninstallTitle}>
+        <Button
+          variant="destructive"
+          disabled={disableUninstall}
+          onClick={showConfirmModal}
+          title={uninstallTitle}
+          tooltip={uninstallToolTipText}
+        >
           {uninstallBtnText}
         </Button>
       </Stack>
