@@ -9,7 +9,7 @@
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
     "@swc/core": "1.4.2",
-    "@types/eslint": "8.56.10",
+    "@types/eslint": "9.6.1",
     "copy-webpack-plugin": "12.0.2",
     "eslint": "8.57.0",
     "eslint-webpack-plugin": "4.2.0",

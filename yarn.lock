@@ -3889,7 +3889,7 @@ __metadata:
   dependencies:
     "@grafana/tsconfig": "npm:^2.0.0"
     "@swc/core": "npm:1.4.2"
-    "@types/eslint": "npm:8.56.10"
+    "@types/eslint": "npm:9.6.1"
     copy-webpack-plugin: "npm:12.0.2"
     eslint: "npm:8.57.0"
     eslint-webpack-plugin: "npm:4.2.0"
@@ -3948,7 +3948,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3": "npm:7.4.3"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/eslint": "npm:8.56.10"
+    "@types/eslint": "npm:9.6.1"
     "@types/jest": "npm:29.5.13"
     "@types/jquery": "npm:3.5.31"
     "@types/lodash": "npm:4.17.10"
@@ -9897,7 +9897,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/eslint@npm:*, @types/eslint@npm:8.56.10, @types/eslint@npm:^8.56.10":
+"@types/eslint@npm:*, @types/eslint@npm:9.6.1":
+  version: 9.6.1
+  resolution: "@types/eslint@npm:9.6.1"
+  dependencies:
+    "@types/estree": "npm:*"
+    "@types/json-schema": "npm:*"
+  checksum: 10/719fcd255760168a43d0e306ef87548e1e15bffe361d5f4022b0f266575637acc0ecb85604ac97879ee8ae83c6a6d0613b0ed31d0209ddf22a0fe6d608fc56fe
+  languageName: node
+  linkType: hard
+
+"@types/eslint@npm:^8.56.10":
   version: 8.56.10
   resolution: "@types/eslint@npm:8.56.10"
   dependencies:
@@ -18980,7 +18990,7 @@ __metadata:
     "@types/d3-scale-chromatic": "npm:3.0.3"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/diff": "npm:^5"
-    "@types/eslint": "npm:8.56.10"
+    "@types/eslint": "npm:9.6.1"
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/file-saver": "npm:2.0.7"
     "@types/glob": "npm:^8.0.0"
