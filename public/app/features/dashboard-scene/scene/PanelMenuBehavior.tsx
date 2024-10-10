@@ -17,6 +17,7 @@ import { t } from 'app/core/internationalization';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
@@ -218,11 +219,15 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       }
     }
 
-    moreSubMenu.push({
-      text: t('panel.header-menu.new-alert-rule', `New alert rule`),
-      iconClassName: 'bell',
-      onClick: (e) => onCreateAlert(panel),
-    });
+    const isCreateAlertMenuOptionAvailable = getCreateAlertInMenuAvailability();
+
+    if (isCreateAlertMenuOptionAvailable) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+        iconClassName: 'bell',
+        onClick: (e) => onCreateAlert(panel),
+      });
+    }
 
     if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
