@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { logInfo, LogMessages } from '../../Analytics';
@@ -81,7 +80,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   fixMargin: css({
     marginBottom: 0,
   }),

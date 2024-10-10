@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { Expression } from '../expressions/Expression';
@@ -18,7 +18,6 @@ interface Props {
   queries: AlertQuery[];
   onRemoveExpression: (refId: string) => void;
   onUpdateRefId: (oldRefId: string, newRefId: string) => void;
-  onUpdateExpressionType: (refId: string, type: ExpressionQueryType) => void;
   onUpdateQueryExpression: (query: ExpressionQuery) => void;
 }
 
@@ -29,7 +28,6 @@ export const ExpressionsEditor = ({
   panelData,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType,
   onUpdateQueryExpression,
 }: Props) => {
   const expressionQueries = useMemo(() => {
@@ -60,7 +58,6 @@ export const ExpressionsEditor = ({
             onSetCondition={onSetCondition}
             onRemoveExpression={onRemoveExpression}
             onUpdateRefId={onUpdateRefId}
-            onUpdateExpressionType={onUpdateExpressionType}
             onChangeQuery={onUpdateQueryExpression}
           />
         );

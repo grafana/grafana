@@ -82,7 +82,7 @@ const RuleEditor = () => {
     }
 
     if (identifier) {
-      return <ExistingRuleEditor key={id} identifier={identifier} id={id} />;
+      return <ExistingRuleEditor key={id} identifier={identifier} />;
     }
 
     if (copyFromIdentifier) {

@@ -50,7 +50,6 @@ interface Props {
   index: number;
   thresholds: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
-  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -71,7 +70,6 @@ export const QueryWrapper = ({
   queries,
   thresholds,
   thresholdsType,
-  onChangeThreshold,
   condition,
   onSetCondition,
   onChangeQueryOptions,
@@ -130,6 +128,8 @@ export const QueryWrapper = ({
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
   function HeaderExtras({
     query,
+    // TODO: Use and display the error, as this is otherwise unused
+    // eslint-disable-next-line no-unused-vars
     error,
     index,
     isAdvancedMode = true,

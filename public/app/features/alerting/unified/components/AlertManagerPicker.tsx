@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, ComponentProps } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
@@ -53,7 +53,7 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   field: css({
     margin: 0,
   }),
