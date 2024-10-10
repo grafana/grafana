@@ -125,9 +125,7 @@ Below are some examples that address common use cases and some of the different 
 
 #### Displaying alert trigger details
 
-Annotations can provide additional context for alert responders by showing the details of what triggered the alert.
-
-Use case: Display the CPU usage of a specific instance that exceeded a threshold.
+Annotations can provide additional context for alert responders by showing the details of what triggered the alert. For example, to display the CPU usage of a specific instance that exceeded a threshold, use the following template:
 
 ``` go
 CPU usage for {{ $labels.instance }} has exceeded {{ $values.A }} for the last 5 minutes.
@@ -147,9 +145,7 @@ Used functions and syntax:
 
 #### Adding alert summary with labels
 
-Annotations can also be used to provide a summary of key alert labels.
-
-Use case: Display a summary of the alert with important labels such as environment and alert severity.
+Annotations can also be used to provide a summary of key alert labels, such as the environment and alert severity. For instance, you can display a summary of the alert with important labels like so:
 
 ``` go
 Alert triggered in {{ $labels.environment }} with severity {{ $labels.severity }}
@@ -163,9 +159,7 @@ Alert triggered in production with severity critical.
 
 #### Summarizing multiple alerts in a single notification
 
-When multiple alerts are fired, an annotation can summarize them.
-
-Use case: List all instances that are affected when multiple alerts fire simultaneously.
+When multiple alerts are fired, an annotation can summarize them by listing all affected instances. For example, to list all instances with high CPU usage when multiple alerts fire simultaneously:
 
 ``` go
 The following instances have high CPU usage: {{ range .Alerts.Firing }} {{ .Labels.instance }} ({{ .Values.A }}%) {{ end }}
@@ -293,9 +287,7 @@ Used functions and syntax:
 
 #### Labeling based on environment
 
-Use labels to differentiate alerts coming from various environments (e.g., production, staging, dev).
-
-Use case: Add a label that sets the environment based on the instance’s label.
+You can use labels to differentiate alerts coming from various environments (e.g., production, staging, dev). For example, you may want to add a label that sets the environment based on the instance’s label. Here’s how you can template it:
 
 ``` go
 {{ if eq $labels.instance "prod-server-1" }}production
@@ -316,9 +308,7 @@ Used functions and syntax:
 
 #### Automatically assigning priority
 
-Automatically set a `priority` label based on both the alert condition and the importance of the instance.
-
-Use case: Assign a priority label that combines the instance’s importance with the query value.
+You can automatically set a priority label based on both the alert condition and the importance of the instance. This approach allows you to combine the instance's importance with the query value to determine the appropriate priority level:
 
 ``` go
 {{ if and (eq $labels.instance "critical-server") (gt $values.A 90) }}P1
