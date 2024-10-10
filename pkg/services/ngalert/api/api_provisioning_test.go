@@ -140,7 +140,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 
 			t.Run("PUT returns 500", func(t *testing.T) {
@@ -164,7 +163,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 		})
 	})

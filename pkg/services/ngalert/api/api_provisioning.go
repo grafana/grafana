@@ -84,7 +84,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 		return ErrResp(http.StatusNotFound, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusOK, policies)
@@ -117,7 +117,7 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
