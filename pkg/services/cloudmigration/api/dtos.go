@@ -144,8 +144,20 @@ const (
 	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
-// swagger:enum ResourceErrorCode
-type ItemErrorCode = cloudmigration.ResourceErrorCode
+// swagger:enum ItemErrorCode
+type ItemErrorCode string
+
+const (
+	ErrDatasourceNameConflict     ItemErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDashboardAlreadyManaged    ItemErrorCode = "DASHBOARD_ALREADY_MANAGED"
+	ErrLibraryElementNameConflict ItemErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
+	ErrUnsupportedDataType        ItemErrorCode = "UNSUPPORTED_DATA_TYPE"
+	ErrResourceConflict           ItemErrorCode = "RESOURCE_CONFLICT"
+	ErrUnexpectedStatus           ItemErrorCode = "UNEXPECTED_STATUS_CODE"
+	ErrInternalServiceError       ItemErrorCode = "INTERNAL_SERVICE_ERROR"
+	ErrOnlyCoreDataSources        ItemErrorCode = "ONLY_CORE_DATA_SOURCES"
+	ErrGeneric                    ItemErrorCode = "GENERIC_ERROR"
+)
 
 // swagger:parameters getCloudMigrationRun
 type GetMigrationRunParams struct {

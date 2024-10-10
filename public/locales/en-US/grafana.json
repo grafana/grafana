@@ -1,5 +1,14 @@
 {
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
+  "{resourceErrorMessage[resource": {
+    "errorCode || ''] || resource": {
+      "message || 'There has been an error while migrating": {
+        " Please check the cloud migration logs for more information": {
+          "'}": "{resourceErrorMessage[resource.errorCode || ''] || resource.message || 'There has been an error while migrating. Please check the cloud migration logs for more information.'}"
+        }
+      }
+    }
+  },
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -1460,22 +1469,22 @@
     },
     "resource-details": {
       "dismiss-button": "OK",
+      "error-messages": {
+        "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
+        "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
+        "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
+        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
+        "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
+        "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "unsupported-data-type": "Migration of this data type is not currently supported."
+      },
       "error-title": "Unable to migrate this resource:",
       "generic-title": "Resource migration details:",
       "missing-message": "No message provided.",
       "resource-summary": "{{refId}} ({{typeName}})",
       "title": "Migration resource details",
-      "warning-title": "Resource migrated with a warning:",
-      "error-messages": {
-        "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
-        "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
-        "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
-        "unsupported-data-type": "Migration of this data type is not currently supported.",
-        "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
-        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
-        "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
-        "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information."
-      }
+      "warning-title": "Resource migrated with a warning:"
     },
     "resource-status": {
       "error-details-button": "Details",

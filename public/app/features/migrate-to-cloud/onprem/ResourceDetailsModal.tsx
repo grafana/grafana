@@ -9,21 +9,45 @@ interface ResourceDetailsModalProps {
   onClose: () => void;
 }
 
-const resourceErrorMessage: { [key: string]: string } = {
-  DATASOURCE_NAME_CONFLICT: t('migrate-to-cloud.resource-details.error-messages.datasource-name-conflict', ''),
-  DASHBOARD_ALREADY_MANAGED: t('migrate-to-cloud.resource-details.error-messages.dashboard-already-managed', ''),
+const getResourceErrorMessage = (): { [key: string]: string } => ({
+  DATASOURCE_NAME_CONFLICT: t(
+    'migrate-to-cloud.resource-details.error-messages.datasource-name-conflict',
+    'There is a data source with the same name in the target instance. Rename one of them and try again.'
+  ),
+  DASHBOARD_ALREADY_MANAGED: t(
+    'migrate-to-cloud.resource-details.error-messages.dashboard-already-managed',
+    'Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.'
+  ),
   LIBRARY_ELEMENT_NAME_CONFLICT: t(
     'migrate-to-cloud.resource-details.error-messages.library-element-name-conflict',
-    ''
+    'There is a library element with the same name in the target instance. Rename one of them and try again.'
   ),
-  UNSUPPORTED_DATA_TYPE: t('migrate-to-cloud.resource-details.error-messages.unsupported-data-type', ''),
-  RESOURCE_CONFLICT: t('migrate-to-cloud.resource-details.error-messages.resource-conflict', ''),
-  UNEXPECTED_STATUS_CODE: t('migrate-to-cloud.resource-details.error-messages.unexpected-error', ''),
-  ONLY_CORE_DATA_SOURCES: t('migrate-to-cloud.resource-details.error-messages.only-core-data-sources', ''),
-  INTERNAL_SERVICE_ERROR: t('migrate-to-cloud.resource-details.error-messages.unexpected-error', ''),
-  GENERIC_ERROR: t('migrate-to-cloud.resource-details.error-messages.generic-error', ''),
+  UNSUPPORTED_DATA_TYPE: t(
+    'migrate-to-cloud.resource-details.error-messages.unsupported-data-type',
+    'Migration of this data type is not currently supported.'
+  ),
+  RESOURCE_CONFLICT: t(
+    'migrate-to-cloud.resource-details.error-messages.resource-conflict',
+    'There is a resource conflict with the target instance. Please check the Grafana server logs for more details.'
+  ),
+  ONLY_CORE_DATA_SOURCES: t(
+    'migrate-to-cloud.resource-details.error-messages.only-core-data-sources',
+    'Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.'
+  ),
+  UNEXPECTED_STATUS_CODE: t(
+    'migrate-to-cloud.resource-details.error-messages.unexpected-error',
+    'There has been an error while migrating. Please check the Grafana server logs for more details.'
+  ),
+  INTERNAL_SERVICE_ERROR: t(
+    'migrate-to-cloud.resource-details.error-messages.unexpected-error',
+    'There has been an error while migrating. Please check the Grafana server logs for more details.'
+  ),
+  GENERIC_ERROR: t(
+    'migrate-to-cloud.resource-details.error-messages.generic-error',
+    'There has been an error while migrating. Please check the cloud migration logs for more information.'
+  ),
   // Other error codes should be added here
-};
+});
 
 export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
   const { resource, onClose } = props;
@@ -31,6 +55,7 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
   const refId = resource?.refId;
   const typeName = resource && prettyTypeName(resource.type);
   const hasError = resource?.errorCode || resource?.message;
+  const resourceError = getResourceErrorMessage();
 
   let msgTitle = t('migrate-to-cloud.resource-details.generic-title', 'Resource migration details:');
   if (resource?.status === 'ERROR') {
@@ -58,9 +83,10 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
               <Text element="p">{msgTitle}</Text>
 
               <Text element="p" weight="bold">
-                <Trans i18nKey={resourceErrorMessage[resource.errorCode || '']}>
-                  {/* {resource.message ||
-                  'There has been an error while migrating. Please check the cloud migration logs for more information.'} */}
+                <Trans i18nKey={resourceError[resource.errorCode || '']}>
+                  {resourceError[resource.errorCode || ''] ||
+                    resource.message ||
+                    'There has been an error while migrating. Please check the cloud migration logs for more information.'}
                 </Trans>
               </Text>
             </>
