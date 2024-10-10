@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
@@ -181,7 +181,13 @@ export enum PluginExtensionPoints {
   DataSourceConfig = 'grafana/datasources/config',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  QueryToAppPlugin = 'grafana/query/query-to-app-plugin',
 }
+
+export type QueryToAppPluginContext = {
+  datasource: DataSourceRef;
+  query: DataQuery;
+};
 
 export type PluginExtensionPanelContext = {
   pluginId: string;
