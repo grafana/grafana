@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -82,7 +82,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
-  const uidFromParams = routeParams.id;
+  const uidFromParams = routeParams.id || '';
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 

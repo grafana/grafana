@@ -1,10 +1,10 @@
-import { render, renderHook, screen, within } from '@testing-library/react';
+import { renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { first, noop } from 'lodash';
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { Routes, Route } from 'react-router-dom-v5-compat';
+import { render } from 'test/test-utils';
 
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import {
   AlertmanagerGroup,
@@ -345,13 +345,17 @@ describe('Policy', () => {
   });
 });
 
+// Doesn't matter which path the routes use, it just needs to match the initialEntries history entry to render the element
 const renderPolicy = (element: JSX.Element) =>
   render(
-    <Router history={locationService.getHistory()}>
-      <CompatRouter>
-        <AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>
-      </CompatRouter>
-    </Router>
+    <Routes>
+      <Route path={'/'} element={<AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>} />
+    </Routes>,
+    {
+      historyOptions: {
+        initialEntries: ['/'],
+      },
+    }
   );
 
 const eq = MatcherOperator.equal;

@@ -1,4 +1,4 @@
-import { Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -35,11 +35,17 @@ export const ui = {
 };
 
 export function renderRuleEditor(identifier?: string, recording = false) {
-  return render(<Route path={['/alerting/new/:type', '/alerting/:id/edit']} component={RuleEditor} />, {
-    historyOptions: {
-      initialEntries: [
-        identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ? 'recording' : 'alerting'}`,
-      ],
-    },
-  });
+  return render(
+    <Routes>
+      <Route path={'/alerting/new/:type'} element={<RuleEditor />} />
+      <Route path={'/alerting/:id/edit'} element={<RuleEditor />} />
+    </Routes>,
+    {
+      historyOptions: {
+        initialEntries: [
+          identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ? 'recording' : 'alerting'}`,
+        ],
+      },
+    }
+  );
 }
