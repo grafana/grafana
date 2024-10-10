@@ -465,7 +465,7 @@ func (s *Storage) GuaranteedUpdate(
 			return apierrors.NewNotFound(s.gr, req.Key.Name)
 		}
 
-		updatedObj, _, err = tryUpdate(existingObj, res)
+		updatedObj, _, err = tryUpdate(existingObj.DeepCopyObject(), res)
 		if err != nil {
 			if attempt >= MaxUpdateAttempts {
 				return err
