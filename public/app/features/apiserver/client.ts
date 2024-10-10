@@ -129,7 +129,7 @@ export class DatasourceAPIVersions {
         // e.g. org-plugin-datasource uses org-plugin.datasource.grafana.app
         if (!id.endsWith('-datasource')) {
           if (!id.includes('-')) {
-            // workaroud for Grafana plugins that don't include the org either
+            // workaround for Grafana plugins that don't include the org either
             // e.g. testdata uses testdata.datasource.grafana.app
             apiVersions[`grafana-${id}-datasource`] = group.preferredVersion.version;
           } else {
