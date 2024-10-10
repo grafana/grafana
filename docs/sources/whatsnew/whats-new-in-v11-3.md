@@ -165,7 +165,7 @@ Grafana Enterprise and OSS:
 
 To use this feature, enable the `alertingQueryAndExpressionsStepMode` feature toggle.
 
-{{< figure src="/media/docs/alerting/simple-query-form.png" max-width="700px" alt="Image shows the alert creation form in simple mode" >}}
+{{< figure src="/media/docs/alerting/screenshot-simple-query-form-v11.3.png" max-width="800px" alt="Image shows the alert creation form in simple mode" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/)
 
