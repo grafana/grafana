@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,16 +28,18 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type RESTOptionsGetter struct {
 	client   resource.ResourceClient
 	original storagebackend.Config
+	features featuremgmt.FeatureToggles
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config, features featuremgmt.FeatureToggles) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:   client,
 		original: original,
+		features: features,
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, features featuremgmt.FeatureToggles) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
@@ -52,6 +55,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
+		features,
 	), nil
 }
 
@@ -59,7 +63,8 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
 func NewRESTOptionsGetterForFile(path string,
-	originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+	originalStorageConfig storagebackend.Config,
+	features featuremgmt.FeatureToggles) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
@@ -86,6 +91,7 @@ func NewRESTOptionsGetterForFile(path string,
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
+		features,
 	), nil
 }
 
@@ -122,7 +128,12 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
+			if r.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectSupport) {
+				return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
+					trigger, indexers, LargeObjectSupportEnabled)
+			}
+			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
+				trigger, indexers, LargeObjectSupportDisabled)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,

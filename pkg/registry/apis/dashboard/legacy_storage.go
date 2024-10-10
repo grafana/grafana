@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -18,7 +19,8 @@ type dashboardStorage struct {
 	access         legacy.DashboardAccess
 	tableConverter rest.TableConvertor
 
-	server resource.ResourceServer
+	server   resource.ResourceServer
+	features featuremgmt.FeatureToggles
 }
 
 func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (grafanarest.LegacyStorage, error) {
@@ -44,6 +46,7 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 	client := resource.NewLocalResourceClient(server)
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client,
 		defaultOpts.StorageConfig.Config,
+		s.features,
 	)
 
 	return grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)

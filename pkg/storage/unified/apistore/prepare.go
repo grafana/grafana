@@ -46,11 +46,14 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(user.GetUID())
 
 	var buf bytes.Buffer
-	err = s.codec.Encode(newObject, &buf)
-	if err != nil {
+	if err = s.codec.Encode(newObject, &buf); err != nil {
 		return nil, err
 	}
-	return s.handleLargeResources(ctx, obj, buf)
+
+	if s.largeObjectSupport {
+		return s.handleLargeResources(ctx, obj, buf)
+	}
+	return buf.Bytes(), nil
 }
 
 // Called on update
@@ -86,11 +89,13 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 	var buf bytes.Buffer
-	err = s.codec.Encode(updateObject, &buf)
-	if err != nil {
+	if err = s.codec.Encode(updateObject, &buf); err != nil {
 		return nil, err
 	}
-	return s.handleLargeResources(ctx, obj, buf)
+	if s.largeObjectSupport {
+		return s.handleLargeResources(ctx, obj, buf)
+	}
+	return buf.Bytes(), nil
 }
 
 func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {

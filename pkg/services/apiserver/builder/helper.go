@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -165,6 +166,7 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
+	features featuremgmt.FeatureToggles,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
