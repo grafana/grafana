@@ -371,6 +371,131 @@ func TestIntegrationFullSync(t *testing.T) {
 	})
 }
 
+func TestIntegrationSaveAlertInstancesForRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	t.Run("can save multiple instances for rule", func(t *testing.T) {
+		ctx := context.Background()
+		_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+		const mainOrgID int64 = 1
+
+		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+		key := models.AlertRuleKey{
+			OrgID: mainOrgID,
+			UID:   alertRule.UID,
+		}
+		instances := []models.AlertInstance{
+			{
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleOrgID:  key.OrgID,
+					RuleUID:    key.UID,
+					LabelsHash: "hash1",
+				},
+				CurrentState:  models.InstanceStateFiring,
+				CurrentReason: string(models.InstanceStateError),
+				Labels:        models.InstanceLabels{"test": "value1"},
+			},
+			{
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleOrgID:  key.OrgID,
+					RuleUID:    key.UID,
+					LabelsHash: "hash2",
+				},
+				CurrentState:  models.InstanceStateNormal,
+				CurrentReason: string(models.InstanceStateError),
+				Labels:        models.InstanceLabels{"test": "value2"},
+			},
+		}
+
+		err := dbstore.SaveAlertInstancesForRule(ctx, key, instances)
+		require.NoError(t, err)
+
+		listQuery := &models.ListAlertInstancesQuery{
+			RuleOrgID: key.OrgID,
+			RuleUID:   key.UID,
+		}
+		freshInstances, err := dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+		require.Len(t, freshInstances, len(instances))
+	})
+
+	t.Run("can handle empty instances slice", func(t *testing.T) {
+		ctx := context.Background()
+		_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+		const mainOrgID int64 = 1
+
+		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+		key := models.AlertRuleKey{
+			OrgID: mainOrgID,
+			UID:   alertRule.UID,
+		}
+
+		err := dbstore.SaveAlertInstancesForRule(ctx, key, []models.AlertInstance{})
+		require.NoError(t, err)
+
+		listQuery := &models.ListAlertInstancesQuery{
+			RuleOrgID: key.OrgID,
+			RuleUID:   key.UID,
+		}
+		freshInstances, err := dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+		require.Empty(t, freshInstances)
+	})
+
+	t.Run("does not save invalid instances", func(t *testing.T) {
+		ctx := context.Background()
+		_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+		const mainOrgID int64 = 1
+
+		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+		key := models.AlertRuleKey{
+			OrgID: mainOrgID,
+			UID:   alertRule.UID,
+		}
+
+		instances := []models.AlertInstance{
+			{
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleOrgID:  key.OrgID,
+					RuleUID:    key.UID,
+					LabelsHash: "hash1",
+				},
+				CurrentState:  models.InstanceStateFiring,
+				CurrentReason: string(models.InstanceStateError),
+				Labels:        models.InstanceLabels{"test": "value1"},
+			},
+			{
+				// Invalid instance (missing RuleUID)
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleOrgID:  key.OrgID,
+					LabelsHash: "hash2",
+				},
+				CurrentState:  models.InstanceStateNormal,
+				CurrentReason: string(models.InstanceStateError),
+				Labels:        models.InstanceLabels{"test": "value2"},
+			},
+		}
+
+		err := dbstore.SaveAlertInstancesForRule(ctx, key, instances)
+		require.Error(t, err)
+
+		listQuery := &models.ListAlertInstancesQuery{
+			RuleOrgID: key.OrgID,
+			RuleUID:   key.UID,
+		}
+		freshInstances, err := dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+		require.Len(t, freshInstances, 1)
+
+		require.Equal(t, "hash1", freshInstances[0].LabelsHash)
+	})
+}
+
 func generateTestAlertInstance(orgID int64, ruleID string) models.AlertInstance {
 	return models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{

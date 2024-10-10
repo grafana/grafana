@@ -13,6 +13,7 @@ type InstanceStore interface {
 	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
 	SaveAlertInstance(ctx context.Context, instance models.AlertInstance) error
 	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
+	SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKey, instances []models.AlertInstance) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
 	FullSync(ctx context.Context, instances []models.AlertInstance) error
 }
