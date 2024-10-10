@@ -300,6 +300,7 @@ export function GrafanaEvaluationBehavior({
                 <GrafanaAlertStatePicker
                   {...field}
                   // LOGZ.IO GRAFANA CHANGE :: disable edit of error state handling
+                  disabled
                   inputId="exec-err-state-input"
                   width={42}
                   includeNoData={false}
