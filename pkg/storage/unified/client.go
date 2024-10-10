@@ -5,17 +5,19 @@ import (
 	"fmt"
 	"path/filepath"
 
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 // This adds a UnifiedStorage client into the wire dependency tree
@@ -73,7 +75,13 @@ func ProvideUnifiedStorageClient(
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewResourceClient(conn), nil
+
+		// Create a client instance
+		client, err := newResourceClient(conn, cfg)
+		if err != nil {
+			return nil, err
+		}
+		return client, nil
 
 	// Use the local SQL
 	default:
@@ -83,4 +91,16 @@ func ProvideUnifiedStorageClient(
 		}
 		return resource.NewLocalResourceClient(server), nil
 	}
+}
+
+func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (resource.ResourceClient, error) {
+	clientConfig, err := grpcutils.ReadGrpcClientConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if clientConfig.Mode == grpcutils.ModeCloud {
+		return resource.NewCloudResourceClient(conn, cfg)
+	}
+	return resource.NewGRPCResourceClient(conn)
 }

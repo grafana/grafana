@@ -11,12 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 var (
@@ -65,7 +65,10 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
-	authn := &grpc.Authenticator{}
+	authn, err := grpcutils.NewGrpcAuthenticator(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	s := &service{
 		cfg:           cfg,
