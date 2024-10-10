@@ -237,7 +237,9 @@ jobs:
             if [ -f "levitate-mrkdwn.md" ]; then
             {
               echo 'levitate_mrkdwn<<EOF'
+              # convert newlines to \n so slack can render them
               sed -z 's/\n/\\n/g' levitate-mrkdwn.md | tr -d '\n'
+              echo "" # importnat, guarantees EOF will be read
               echo EOF
             } >> "$GITHUB_OUTPUT"
             else
