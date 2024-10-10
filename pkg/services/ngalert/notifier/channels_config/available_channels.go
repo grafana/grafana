@@ -8,6 +8,7 @@ import (
 	alertingMqtt "github.com/grafana/alerting/receivers/mqtt"
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
 	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
+	alertingSns "github.com/grafana/alerting/receivers/sns"
 	alertingTemplates "github.com/grafana/alerting/templates"
 )
 
@@ -1604,6 +1605,56 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 							InputType:    InputTypeText,
 							Placeholder:  "",
 							PropertyName: "role_arn",
+						},
+						{
+							Label:       "Authentication Type",
+							Description: "",
+							Element:     ElementTypeSelect,
+							SelectOptions: []SelectOption{
+								{
+									Value: alertingSns.AuthTypeDefault,
+									Label: "Default",
+								},
+								{
+									Value: alertingSns.AuthTypeSharedCreds,
+									Label: "Shared Credentials",
+								},
+								{
+									Value: alertingSns.AuthTypeEC2IAMRole,
+									Label: "EC2 IAM Role",
+								},
+								{
+									Value: alertingSns.AuthTypeKeys,
+									Label: "Keys",
+								},
+								{
+									Value: alertingSns.AuthTypeGrafanaAssumeRole,
+									Label: "Grafana Assume Role",
+								},
+							},
+							PropertyName: "authType",
+						},
+						{
+							Label:        "Session Token",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "session_token",
+							Secure:       true,
+						},
+						{
+							Label:        "Endpoint",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "endpoint",
+						},
+						{
+							Label:        "External ID",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "externalId",
 						},
 					},
 				},
