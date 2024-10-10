@@ -325,8 +325,16 @@ message WatchEvent {
 }
 
 message SearchRequest {
+  // query string for chosen implementation (currently just bleve)
   string query = 1;
-  string tenant = 2;
+  // default to bleve
+  string queryType = 2;
+  string tenant = 3;
+  // resource kind (playlists, dashboards, etc)
+  string kind = 4;
+  // pagination support
+  int64 limit = 5;
+  int64 offset = 6;
 }
 
 message SearchResponse {
