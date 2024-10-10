@@ -1,30 +1,32 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode } from 'react';
+import { PropsWithChildren, ReactNode, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, Pagination, Stack, Text, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Icon, LinkButton, Pagination, Stack, Text, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { getAllRulesSources, isGrafanaRulesSource } from '../../utils/datasource';
-import { fromRule, hashRule, stringifyIdentifier } from '../../utils/rule-id';
+import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { Spacer } from '../Spacer';
 import { WithReturnButton } from '../WithReturnButton';
 import RulesFilter from '../rules/Filter/RulesFilter';
+import { ActionsLoader, RuleActionsButtons } from '../rules/RuleActionsButtons';
 
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './AlertRuleListItem';
 import { DataSourceIcon } from './Namespace';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
+import { LoadingIndicator } from './components/RuleGroup';
 
 const noop = () => {};
-const { usePrometheusRuleNamespacesQuery } = alertRuleApi;
+const { usePrometheusRuleNamespacesQuery, useGetRuleGroupForNamespaceQuery } = alertRuleApi;
 
 const RuleList = withErrorBoundary(
   () => {
@@ -58,11 +60,9 @@ interface DataSourceLoaderProps {
 }
 
 const GrafanaDataSourceLoader = () => {
-  // grab prom rules paginated
-  return <DataSourceSection name="Grafana" application="grafana"></DataSourceSection>;
+  return <DataSourceSection name="Grafana" application="grafana" isLoading={true}></DataSourceSection>;
 };
 
-// 1. grab BuildInfo
 const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
   const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid });
   let application: RulesSourceApplication | undefined;
@@ -100,7 +100,7 @@ interface PaginatedRuleGroupLoaderProps {
 }
 
 function PaginatedRuleGroupLoader({ ruleSourceName, rulerEnabled = false }: PaginatedRuleGroupLoaderProps) {
-  const { data: ruleNamespaces = [] } = usePrometheusRuleNamespacesQuery({
+  const { data: ruleNamespaces = [], isLoading } = usePrometheusRuleNamespacesQuery({
     ruleSourceName,
     maxGroups: 25,
     limitAlerts: 0,
@@ -108,11 +108,18 @@ function PaginatedRuleGroupLoader({ ruleSourceName, rulerEnabled = false }: Pagi
   });
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={1}>
       {ruleNamespaces.map((namespace) => (
-        <ListSection key={namespace.name} title={namespace.name}>
+        <ListSection
+          key={namespace.name}
+          title={
+            <Stack direction="row" gap={1} alignItems="center">
+              <Icon name="folder" /> {namespace.name}
+            </Stack>
+          }
+        >
           {namespace.groups.map((group) => (
-            <ListGroup key={group.name} name={group.name} isOpen={true}>
+            <ListGroup key={group.name} name={group.name} isOpen={false}>
               {group.rules.map((rule) => {
                 const groupIdentifier: RuleGroupIdentifier = {
                   dataSourceName: ruleSourceName,
@@ -133,7 +140,7 @@ function PaginatedRuleGroupLoader({ ruleSourceName, rulerEnabled = false }: Pagi
           ))}
         </ListSection>
       ))}
-      <Pagination currentPage={1} numberOfPages={0} onNavigate={noop} />
+      {!isLoading && <Pagination currentPage={1} numberOfPages={0} onNavigate={noop} />}
     </Stack>
   );
 }
@@ -151,32 +158,54 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
   const href = createViewLinkFromIdentifier(ruleIdentifier);
   const originMeta = getRulePluginOrigin(rule);
 
-  // const { loading, result: ruleWithLocation, error } = useRuleWithLocation({ ruleIdentifier });
+  // @TODO work with context API to propagate rulerConfig and such
+  const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ rulesSourceName: dataSourceName });
+
+  // @TODO refactor this to use a separate hook (useRuleWithLocation() and useCombinedRule() seems to introduce infinite loading / recursion)
+  const {
+    isLoading,
+    data: rulerRuleGroup,
+    error,
+  } = useGetRuleGroupForNamespaceQuery(
+    {
+      namespace: namespaceName,
+      group: groupName,
+      rulerConfig: dataSourceInfo?.rulerConfig!,
+    },
+    { skip: !dataSourceInfo?.rulerConfig }
+  );
+
+  const rulerRule = useMemo(() => {
+    if (!rulerRuleGroup) {
+      return;
+    }
+
+    return rulerRuleGroup.rules.find((rule) =>
+      equal(fromRulerRule(dataSourceName, namespaceName, groupName, rule), ruleIdentifier)
+    );
+  }, [dataSourceName, groupName, namespaceName, ruleIdentifier, rulerRuleGroup]);
+
   // 1. get the rule from the ruler API with "ruleWithLocation"
   // 1.1 skip this if this datasource does not have a ruler
   //
   // 2.1 render action buttons
   // 2.2 render provisioning badge and contact point metadata, etc.
 
-  // let actions: ReactNode;
+  const actions = useMemo(() => {
+    if (!rulerEnabled) {
+      return null;
+    }
 
-  // if (!rulerEnabled) {
-  //   actions = null;
-  // } else {
-  //   if (loading) {
-  //     actions = <ActionsLoader />;
-  //   } else if (ruleWithLocation) {
-  //     actions = (
-  //       <RuleActionsButtons
-  //         rule={ruleWithLocation.rule}
-  //         promRule={rule}
-  //         groupIdentifier={groupIdentifier}
-  //         compact
-  //         showCopyLinkButton={true}
-  //       />
-  //     );
-  //   }
-  // }
+    if (isLoading) {
+      return <ActionsLoader />;
+    }
+
+    if (rulerRule) {
+      return <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />;
+    }
+
+    return null;
+  }, [groupIdentifier, isLoading, rule, rulerEnabled, rulerRule]);
 
   if (isAlertingRule(rule)) {
     return (
@@ -190,7 +219,7 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
         labels={rule.labels}
         isProvisioned={undefined}
         instancesCount={undefined}
-        actions={null}
+        actions={actions}
         origin={originMeta}
       />
     );
@@ -226,50 +255,46 @@ interface DataSourceSectionProps extends PropsWithChildren {
   name?: string;
   loader?: ReactNode;
   application?: RulesSourceApplication;
+  isLoading?: boolean;
 }
 
-const DataSourceSection = ({ uid, name, application, children, loader }: DataSourceSectionProps) => {
+const DataSourceSection = ({ uid, name, application, children, loader, isLoading = false }: DataSourceSectionProps) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.dataSourceSection}>
-      <div className={styles.dataSourceSectionTitle}>
-        {loader ?? (
-          <Stack alignItems="center">
-            {application && <DataSourceIcon application={application} />}
-            {name && (
-              <Text variant="body" weight="bold">
-                {name}
-              </Text>
-            )}
-            <Spacer />
-            {uid && (
-              <WithReturnButton
-                title="alert rules"
-                component={
-                  <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${uid}`}>
-                    Configure
-                  </LinkButton>
-                }
-              />
-            )}
-          </Stack>
-        )}
-      </div>
+    <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
+        {isLoading && <LoadingIndicator />}
+        <div className={styles.dataSourceSectionTitle}>
+          {loader ?? (
+            <Stack alignItems="center">
+              {application && <DataSourceIcon application={application} />}
+              {name && (
+                <Text variant="body" weight="bold">
+                  {name}
+                </Text>
+              )}
+              <Spacer />
+              {uid && (
+                <WithReturnButton
+                  title="alert rules"
+                  component={
+                    <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${uid}`}>
+                      Configure
+                    </LinkButton>
+                  }
+                />
+              )}
+            </Stack>
+          )}
+        </div>
+      </Stack>
       <div className={styles.itemsWrapper}>{children}</div>
-    </div>
+    </Stack>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  dataSourceSection: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    // border: `solid 1px ${theme.colors.border.weak}`,
-    padding: `${theme.spacing(0)} ${theme.spacing(1)}`,
-    // borderRadius: theme.shape.radius.default,
-  }),
   itemsWrapper: css({
     position: 'relative',
     marginLeft: theme.spacing(1.5),

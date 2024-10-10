@@ -75,6 +75,16 @@ export const EvaluationGroupLoader = ({
   );
 };
 
+export const LoadingIndicator = () => {
+  const [ref, { width }] = useMeasure<HTMLDivElement>();
+
+  return (
+    <div ref={ref}>
+      <LoadingBar width={width} />
+    </div>
+  );
+};
+
 const GroupLoadingIndicator = () => {
   const [ref, { width }] = useMeasure<HTMLDivElement>();
 
