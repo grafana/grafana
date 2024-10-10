@@ -228,7 +228,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
-    const query = generateQueryFromAdHocFilters(options.filters);
+    const query = generateQueryFromAdHocFilters(options.filters, this.languageProvider);
     return this.tagValuesQuery(options.key, query);
   }
 
@@ -383,7 +383,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           if (target) {
             const appliedQuery = this.applyVariables(target, options.scopedVars);
             subQueries.push(
-              this.handleMetricsSummaryQuery(appliedQuery, generateQueryFromFilters(appliedQuery.filters), options)
+              this.handleMetricsSummaryQuery(
+                appliedQuery,
+                generateQueryFromFilters(appliedQuery.filters, this.languageProvider),
+                options
+              )
             );
           }
         }
@@ -393,7 +397,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           : targets.traceqlSearch;
         if (traceqlSearchTargets.length > 0) {
           const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
-          const queryValueFromFilters = generateQueryFromFilters(appliedQuery.filters);
+          const queryValueFromFilters = generateQueryFromFilters(appliedQuery.filters, this.languageProvider);
 
           reportInteraction('grafana_traces_traceql_search_queried', {
             datasourceType: 'tempo',
@@ -831,7 +835,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     const appliedQuery = this.applyVariables(query, {});
-    return generateQueryFromFilters(appliedQuery.filters);
+    return generateQueryFromFilters(appliedQuery.filters, this.languageProvider);
   }
 }
 

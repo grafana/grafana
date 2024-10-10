@@ -23,7 +23,7 @@ export function QueryEditor(props: Props) {
   const styles = useStyles2(getStyles);
   const query = defaults(props.query, defaultQuery);
   const [showCopyFromSearchButton, setShowCopyFromSearchButton] = useState(() => {
-    const genQuery = generateQueryFromFilters(query.filters || []);
+    const genQuery = generateQueryFromFilters(query.filters || [], props.datasource.languageProvider);
     return genQuery === query.query || genQuery === '{}';
   });
 
@@ -51,7 +51,7 @@ export function QueryEditor(props: Props) {
               props.onClearResults();
               props.onChange({
                 ...query,
-                query: generateQueryFromFilters(query.filters || []),
+                query: generateQueryFromFilters(query.filters || [], props.datasource.languageProvider),
               });
               setShowCopyFromSearchButton(true);
             }}

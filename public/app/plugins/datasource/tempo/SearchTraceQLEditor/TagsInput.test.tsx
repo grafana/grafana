@@ -43,7 +43,7 @@ describe('TagsInput', () => {
         jest.advanceTimersByTime(1000);
       });
       await waitFor(() => {
-        expect(screen.getByText('foo')).toBeInTheDocument();
+        expect(screen.getByText('rootServiceName')).toBeInTheDocument();
         expect(screen.getByText('bar')).toBeInTheDocument();
       });
     });
