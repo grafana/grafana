@@ -2,10 +2,10 @@ package v0alpha1
 
 // Defines values for MatcherType.
 const (
-	MatcherTypeEmpty      MatcherType = "!="
-	MatcherTypeEqual      MatcherType = "="
-	MatcherTypeEqualTilde MatcherType = "=~"
-	MatcherTypeN1         MatcherType = "!~"
+	MatcherTypeNotEqual      MatcherType = "!="
+	MatcherTypeEqual         MatcherType = "="
+	MatcherTypeEqualRegex    MatcherType = "=~"
+	MatcherTypeNotEqualRegex MatcherType = "!~"
 )
 
 // Matcher defines model for Matcher.
