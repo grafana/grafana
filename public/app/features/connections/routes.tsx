@@ -7,7 +7,6 @@ export function getRoutes(): RouteDescriptor[] {
   return [
     {
       path: `/${ROUTE_BASE_ID}`,
-      exact: false,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "Connections"*/ 'app/features/connections/Connections')
       ),

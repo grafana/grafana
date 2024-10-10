@@ -19,6 +19,5 @@ export interface RouteDescriptor {
   /** Can be used like an id for the route if the same component is used by many routes */
   routeName?: string;
   chromeless?: boolean;
-  exact?: boolean;
   sensitive?: boolean;
 }

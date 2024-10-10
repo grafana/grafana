@@ -20,7 +20,6 @@ export function getAppPluginRoutes(): RouteDescriptor[] {
 
       return {
         path,
-        exact: false, // route everything under this path to the plugin, so it can define more routes under this path
         sensitive: isSensitive,
         component: () => <AppRootPage pluginId={navItem.pluginId} pluginNavSection={pluginNavSection} />,
       };
@@ -32,7 +31,6 @@ export function getAppPluginRoutes(): RouteDescriptor[] {
     // Fallback route for plugins that don't have any pages under includes
     {
       path: '/a/:pluginId',
-      exact: false, // route everything under this path to the plugin, so it can define more routes under this path
       component: () => <AppRootPage pluginNavSection={navIndex.home} />,
     },
   ];
