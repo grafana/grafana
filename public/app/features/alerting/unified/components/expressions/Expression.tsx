@@ -4,7 +4,7 @@ import { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { Alert, AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -359,6 +359,11 @@ interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
   index: number;
 }
 
+const OpeningBracket = () => <span>{'{'}</span>;
+const ClosingBracket = () => <span>{'}'}</span>;
+const Quote = () => <span>{'&quot;'}</span>;
+const Equals = () => <span>{'='}</span>;
+
 const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   const styles = useStyles2(getStyles);
 
@@ -377,23 +382,26 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
         <div className={styles.expression.resultLabel} title={title}>
-          <span>{hasLabels ? '' : name}</span>
-          {hasLabels && (
-            <>
-              <span>{'{'}</span>
-              {labels.map(([key, value], index) => (
-                <span key={uniqueId()}>
-                  <span className={styles.expression.labelKey}>{key}</span>
-                  <span>=</span>
-                  <span>&quot;</span>
-                  <span className={styles.expression.labelValue}>{value}</span>
-                  <span>&quot;</span>
-                  {index < labels.length - 1 && <span>, </span>}
-                </span>
-              ))}
-              <span>{'}'}</span>
-            </>
-          )}
+          <Text variant="code">
+            {hasLabels ? (
+              <>
+                <OpeningBracket />
+                {labels.map(([key, value], index) => (
+                  <Text variant="body" key={uniqueId()}>
+                    <span className={styles.expression.labelKey}>{key}</span>
+                    <Equals />
+                    <Quote />
+                    <span className={styles.expression.labelValue}>{value}</span>
+                    <Quote />
+                    {index < labels.length - 1 && <span>, </span>}
+                  </Text>
+                ))}
+                <ClosingBracket />
+              </>
+            ) : (
+              <span className={styles.expression.labelKey}>{title}</span>
+            )}
+          </Text>
         </div>
         <div className={styles.expression.resultValue}>{value}</div>
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
