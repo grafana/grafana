@@ -51,12 +51,14 @@ while IFS=" " read -r -a package; do
   # Record the output, maybe with some additional information
   STATUS=$?
   CURRENT_REPORT=$(node ./scripts/levitate-parse-json-report.js)
+  CURRENT_REPORT_MRKDWN=$(node ./scripts/levitate-parse-json-report-to-mrkdwn.js)
   # Final exit code
   # (non-zero if any of the packages failed the checks)
   if [ "$STATUS" -gt 0 ]; then
     EXIT_CODE=1
     GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes<br />"
     GITHUB_LEVITATE_MARKDOWN+="<h3>${PACKAGE_PATH}</h3>${CURRENT_REPORT}<br>"
+    GITHUB_LEVITATE_MKRDWN+="##${PACKAGE_PATH}\n${CURRENT_REPORT_MRKDWN}\n"
   fi
 
 done <<<"$PACKAGES"
@@ -66,6 +68,7 @@ echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
 echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
+echo "$GITHUB_LEVITATE_MKRDWN" >./levitate/levitate-mrkdwn.md
 
 # We will exit the workflow accordingly at another step
 exit 0

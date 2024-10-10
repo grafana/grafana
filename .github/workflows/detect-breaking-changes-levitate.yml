@@ -234,6 +234,16 @@ jobs:
               echo "levitate_markdown=No breaking changes detected" >> "$GITHUB_OUTPUT"
             fi
 
+            if [ -f "levitate-mrkdwn.md" ]; then
+            {
+              echo 'levitate_mrkdwn<<EOF'
+              cat levitate-mrkdwn.md
+              echo EOF
+            } >> "$GITHUB_OUTPUT"
+            else
+              echo "levitate_mrkdwn=No breaking changes detected" >> "$GITHUB_OUTPUT"
+            fi
+
 
       # Comment on the PR
       - name: Comment on PR
@@ -279,7 +289,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*grafana/grafana* repository has possible breaking changes"
+                    "text": ":warning: *grafana/grafana* has possible breaking changes <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}> :warning:"
                   }
                 },
                 {
@@ -287,11 +297,20 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>"
+                      "text": "*Go to PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>"
                     },
                     {
                       "type": "mrkdwn",
-                      "text": "*Job:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
+                      "text": "*Go to Job:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
+                    }
+                  ]
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "${{ steps.levitate-run.outputs.levitate_mrkdwn }}"
                     }
                   ]
                 }
