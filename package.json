@@ -171,7 +171,7 @@
     "cypress-recurse": "^1.35.3",
     "esbuild": "0.24.0",
     "esbuild-loader": "4.2.2",
-    "esbuild-plugin-browserslist": "^0.14.0",
+    "esbuild-plugin-browserslist": "^0.15.0",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-import": "^2.26.0",
