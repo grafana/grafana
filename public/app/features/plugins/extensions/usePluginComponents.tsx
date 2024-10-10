@@ -8,7 +8,8 @@ import {
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
-import { isExtensionPointMetaInfoMissing, isGrafanaDevMode, logWarning } from './utils';
+import { log } from './logs/log';
+import { isExtensionPointMetaInfoMissing, isGrafanaDevMode } from './utils';
 import { isExtensionPointIdValid } from './validators';
 
 // Returns an array of component extensions for the given extension point
@@ -26,9 +27,13 @@ export function usePluginComponents<Props extends object = {}>({
     const components: Array<React.ComponentType<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
+    const pointLog = log.child({
+      pluginId,
+      extensionPointId,
+    });
 
     if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-      logWarning(
+      pointLog.warning(
         `Extension point usePluginComponents("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
       );
       return {
@@ -37,8 +42,8 @@ export function usePluginComponents<Props extends object = {}>({
       };
     }
 
-    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      logWarning(
+    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, pointLog)) {
+      pointLog.warning(
         `usePluginComponents("${extensionPointId}") - The extension point is missing from the "plugin.json" file.`
       );
       return {

@@ -13,6 +13,8 @@ import { config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { log } from './logs/log';
+import { createLogMock } from './logs/testUtils';
 import {
   deepFreeze,
   handleErrorsInFn,
@@ -441,7 +443,7 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent);
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
 
       render(<Component />);
 
@@ -451,7 +453,7 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should pass the properties into the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent);
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
 
       render(<Component audience="folks" />);
 
@@ -461,7 +463,6 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('isAddedLinkMetaInfoMissing()', () => {
-    let consoleWarnSpy: jest.SpyInstance;
     const originalApps = config.apps;
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
@@ -495,7 +496,6 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       config.apps = {
         [pluginId]: appPluginConfig,
       };
@@ -506,63 +506,75 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
 
-      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig);
+      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
 
       expect(returnValue).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(0);
+      expect(log.warning).toHaveBeenCalledTimes(0);
     });
 
     it('should return TRUE and log a warning if the app config is not found', () => {
+      const log = createLogMock();
       delete config.apps[pluginId];
 
-      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig);
+      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch("couldn't find app plugin");
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch("couldn't find app plugin");
     });
 
     it('should return TRUE and log a warning if the link has no meta-info in the plugin.json', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.addedLinks = [];
 
-      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig);
+      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('not registered in the plugin.json');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('not registered in the plugin.json');
     });
 
     it('should return TRUE and log a warning if the "targets" do not match', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
 
-      const returnValue = isAddedLinkMetaInfoMissing(pluginId, {
-        ...extensionConfig,
-        targets: [PluginExtensionPoints.DashboardPanelMenu, PluginExtensionPoints.ExploreToolbarAction],
-      });
+      const returnValue = isAddedLinkMetaInfoMissing(
+        pluginId,
+        {
+          ...extensionConfig,
+          targets: [PluginExtensionPoints.DashboardPanelMenu, PluginExtensionPoints.ExploreToolbarAction],
+        },
+        log
+      );
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('"targets" don\'t match');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"targets" don\'t match');
     });
 
     it('should return TRUE and log a warning if the "description" does not match', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
 
-      const returnValue = isAddedLinkMetaInfoMissing(pluginId, {
-        ...extensionConfig,
-        description: 'Link description UPDATED',
-      });
+      const returnValue = isAddedLinkMetaInfoMissing(
+        pluginId,
+        {
+          ...extensionConfig,
+          description: 'Link description UPDATED',
+        },
+        log
+      );
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('"description" doesn\'t match');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });
   });
 
   describe('isAddedComponentMetaInfoMissing()', () => {
-    let consoleWarnSpy: jest.SpyInstance;
     const originalApps = config.apps;
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
@@ -597,7 +609,6 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       config.apps = {
         [pluginId]: appPluginConfig,
       };
@@ -608,63 +619,75 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
 
-      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig);
+      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
 
       expect(returnValue).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(0);
+      expect(log.warning).toHaveBeenCalledTimes(0);
     });
 
     it('should return TRUE and log a warning if the app config is not found', () => {
+      const log = createLogMock();
       delete config.apps[pluginId];
 
-      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig);
+      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch("couldn't find app plugin");
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch("couldn't find app plugin");
     });
 
     it('should return TRUE and log a warning if the Component has no meta-info in the plugin.json', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.addedComponents = [];
 
-      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig);
+      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('not registered in the plugin.json');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('not registered in the plugin.json');
     });
 
     it('should return TRUE and log a warning if the "targets" do not match', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
 
-      const returnValue = isAddedComponentMetaInfoMissing(pluginId, {
-        ...extensionConfig,
-        targets: [PluginExtensionPoints.ExploreToolbarAction],
-      });
+      const returnValue = isAddedComponentMetaInfoMissing(
+        pluginId,
+        {
+          ...extensionConfig,
+          targets: [PluginExtensionPoints.ExploreToolbarAction],
+        },
+        log
+      );
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('"targets" don\'t match');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"targets" don\'t match');
     });
 
     it('should return TRUE and log a warning if the "description" does not match', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
 
-      const returnValue = isAddedComponentMetaInfoMissing(pluginId, {
-        ...extensionConfig,
-        description: 'UPDATED',
-      });
+      const returnValue = isAddedComponentMetaInfoMissing(
+        pluginId,
+        {
+          ...extensionConfig,
+          description: 'UPDATED',
+        },
+        log
+      );
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('"description" doesn\'t match');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });
   });
 
   describe('isExposedComponentMetaInfoMissing()', () => {
-    let consoleWarnSpy: jest.SpyInstance;
     const originalApps = config.apps;
     const pluginId = 'myorg-extensions-app';
     const appPluginConfig = {
@@ -699,7 +722,6 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       config.apps = {
         [pluginId]: appPluginConfig,
       };
@@ -710,69 +732,80 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
 
-      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig);
+      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
 
       expect(returnValue).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(0);
+      expect(log.warning).toHaveBeenCalledTimes(0);
     });
 
     it('should return TRUE and log a warning if the app config is not found', () => {
+      const log = createLogMock();
       delete config.apps[pluginId];
 
-      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig);
+      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch("couldn't find app plugin");
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch("couldn't find app plugin");
     });
 
     it('should return TRUE and log a warning if the exposed component has no meta-info in the plugin.json', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.exposedComponents = [];
 
-      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig);
+      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('not registered in the plugin.json');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('not registered in the plugin.json');
     });
 
     it('should return TRUE and log a warning if the title does not match', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
 
-      const returnValue = isExposedComponentMetaInfoMissing(pluginId, {
-        ...exposedComponentConfig,
-        title: 'UPDATED',
-      });
+      const returnValue = isExposedComponentMetaInfoMissing(
+        pluginId,
+        {
+          ...exposedComponentConfig,
+          title: 'UPDATED',
+        },
+        log
+      );
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('"title" doesn\'t match');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"title" doesn\'t match');
     });
 
     it('should return TRUE and log a warning if the "description" does not match', () => {
+      const log = createLogMock();
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
 
-      const returnValue = isExposedComponentMetaInfoMissing(pluginId, {
-        ...exposedComponentConfig,
-        description: 'UPDATED',
-      });
+      const returnValue = isExposedComponentMetaInfoMissing(
+        pluginId,
+        {
+          ...exposedComponentConfig,
+          description: 'UPDATED',
+        },
+        log
+      );
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('"description" doesn\'t match');
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });
   });
 
   describe('isExposedComponentDependencyMissing()', () => {
-    let consoleWarnSpy: jest.SpyInstance;
     let pluginContext: PluginContextType;
     const pluginId = 'myorg-extensions-app';
     const exposedComponentId = `${pluginId}/component/v1`;
 
     beforeEach(() => {
-      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       pluginContext = {
         meta: {
           id: pluginId,
@@ -806,35 +839,37 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
+      const log = createLogMock();
       pluginContext.meta.dependencies?.extensions.exposedComponents.push(exposedComponentId);
 
-      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext);
+      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext, log);
 
       expect(returnValue).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(0);
+      expect(log.warning).toHaveBeenCalledTimes(0);
     });
 
     it('should return TRUE and log a warning if the dependencies are missing', () => {
+      const log = createLogMock();
       delete pluginContext.meta.dependencies;
 
-      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext);
+      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch(`Using exposed component "${exposedComponentId}"`);
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch(`Using exposed component "${exposedComponentId}"`);
     });
 
     it('should return TRUE and log a warning if the exposed component id is not specified in the list of dependencies', () => {
-      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext);
+      const log = createLogMock();
+      const returnValue = isExposedComponentDependencyMissing(exposedComponentId, pluginContext, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch(`Using exposed component "${exposedComponentId}"`);
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch(`Using exposed component "${exposedComponentId}"`);
     });
   });
 
   describe('isExtensionPointMetaInfoMissing()', () => {
-    let consoleWarnSpy: jest.SpyInstance;
     let pluginContext: PluginContextType;
     const pluginId = 'myorg-extensions-app';
     const extensionPointId = `${pluginId}/extension-point/v1`;
@@ -845,7 +880,6 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     beforeEach(() => {
-      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       pluginContext = {
         meta: {
           id: pluginId,
@@ -885,20 +919,22 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return FALSE if the meta-info in the plugin.json is correct', () => {
+      const log = createLogMock();
       pluginContext.meta.extensions?.extensionPoints.push(extensionPointConfig);
 
-      const returnValue = isExtensionPointMetaInfoMissing(extensionPointId, pluginContext);
+      const returnValue = isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, log);
 
       expect(returnValue).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(0);
+      expect(log.warning).toHaveBeenCalledTimes(0);
     });
 
     it('should return TRUE and log a warning if the extension point id is not recorded in the plugin.json', () => {
-      const returnValue = isExtensionPointMetaInfoMissing(extensionPointId, pluginContext);
+      const log = createLogMock();
+      const returnValue = isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, log);
 
       expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch(`Extension point "${extensionPointId}"`);
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch(`Extension point "${extensionPointId}"`);
     });
   });
 });

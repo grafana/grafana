@@ -4143,6 +4143,24 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/scenes-react@npm:5.19.1":
+  version: 5.19.1
+  resolution: "@grafana/scenes-react@npm:5.19.1"
+  dependencies:
+    "@grafana/e2e-selectors": "npm:^11.0.0"
+    "@grafana/scenes": "npm:5.19.1"
+    react-use: "npm:17.4.0"
+  peerDependencies:
+    "@grafana/data": ^11.0.0
+    "@grafana/runtime": ^11.0.0
+    "@grafana/schema": ^11.0.0
+    "@grafana/ui": ^11.0.0
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10/a4efd256a02ba4d7418ca412e5f03439684ce531188606a762ce7252a5235f8a3dcf14fd51058b30b7c9c4510f5a7c931958f619811170684b97d9db9294dca1
+  languageName: node
+  linkType: hard
+
 "@grafana/scenes@npm:5.19.1":
   version: 5.19.1
   resolution: "@grafana/scenes@npm:5.19.1"
@@ -18949,6 +18967,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
     "@grafana/scenes": "npm:5.19.1"
+    "@grafana/scenes-react": "npm:5.19.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -24275,7 +24294,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nano-css@npm:^5.6.1, nano-css@npm:^5.6.2":
+"nano-css@npm:^5.3.1, nano-css@npm:^5.6.1, nano-css@npm:^5.6.2":
   version: 5.6.2
   resolution: "nano-css@npm:5.6.2"
   dependencies:
@@ -28026,6 +28045,31 @@ __metadata:
     react: ">=16.13"
     react-dom: ">=16.13"
   checksum: 10/0da4fcec48b640e25b9189ebc43612c58652cd2ebea67a755e097ebfff19f6cfd9b0a19b47498e957fa5faf34ab7b77852a063b286f28925afaa24e573a7903d
+  languageName: node
+  linkType: hard
+
+"react-use@npm:17.4.0":
+  version: 17.4.0
+  resolution: "react-use@npm:17.4.0"
+  dependencies:
+    "@types/js-cookie": "npm:^2.2.6"
+    "@xobotyi/scrollbar-width": "npm:^1.9.5"
+    copy-to-clipboard: "npm:^3.3.1"
+    fast-deep-equal: "npm:^3.1.3"
+    fast-shallow-equal: "npm:^1.0.0"
+    js-cookie: "npm:^2.2.1"
+    nano-css: "npm:^5.3.1"
+    react-universal-interface: "npm:^0.6.2"
+    resize-observer-polyfill: "npm:^1.5.1"
+    screenfull: "npm:^5.1.0"
+    set-harmonic-interval: "npm:^1.0.1"
+    throttle-debounce: "npm:^3.0.1"
+    ts-easing: "npm:^0.2.0"
+    tslib: "npm:^2.1.0"
+  peerDependencies:
+    react: ^16.8.0  || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0  || ^17.0.0 || ^18.0.0
+  checksum: 10/98566c4817b00251107824743ea9dff41f167b548bd5f249f6eb9e2ec09388a2de1e89988e4432cead3f8aa83cf706e0255db8a20c0615768c670751973d2761
   languageName: node
   linkType: hard
 

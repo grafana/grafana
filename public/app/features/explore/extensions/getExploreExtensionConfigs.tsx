@@ -3,7 +3,8 @@ import { contextSrv } from 'app/core/core';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
-import { createAddedLinkConfig, logWarning } from '../../plugins/extensions/utils';
+import { log } from '../../plugins/extensions/logs/log';
+import { createAddedLinkConfig } from '../../plugins/extensions/utils';
 import { changeCorrelationEditorDetails } from '../state/main';
 import { runQueries } from '../state/query';
 
@@ -54,7 +55,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
       }),
     ];
   } catch (error) {
-    logWarning(`Could not configure extensions for Explore due to: "${error}"`);
+    log.warning(`Could not configure extensions for Explore due to: "${error}"`);
     return [];
   }
 }
