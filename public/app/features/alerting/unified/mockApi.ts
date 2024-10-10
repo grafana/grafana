@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
+import { Scenario, getAdditionalScenarioHandlers } from 'test/mock-api/scenarios';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
@@ -297,5 +298,18 @@ export function setupMswServer() {
 
   return server;
 }
+
+/**
+ * Make the mock server use additional handlers that are required for each of the specified scenarios
+ *
+ * e.g. if you want only one alertmanager to be available, and no populated silences, you could use the following:
+ * ```
+ * setupScenarios(['internalAlertmanager', 'noSilences']);
+ * ```
+ */
+export const setupScenarios = (scenarioNames: Scenario[]) => {
+  const scenarios = getAdditionalScenarioHandlers(scenarioNames);
+  server.use(...scenarios);
+};
 
 export default server;
