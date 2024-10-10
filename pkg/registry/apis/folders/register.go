@@ -154,7 +154,9 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			if !attr.IsResourceRequest() || attr.GetName() == "" {
+			verb := attr.GetVerb()
+			name := attr.GetName()
+			if (!attr.IsResourceRequest()) || (name == "" && verb != "create") {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
@@ -165,14 +167,20 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 
 			action := dashboards.ActionFoldersRead
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(attr.GetName())
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
 
 			// "get" is used for sub-resources with GET http (parents, access, count)
-			switch attr.GetVerb() {
+			switch verb {
 			case "patch":
 				fallthrough
 			case "create":
-				fallthrough
+				action = dashboards.ActionFoldersCreate
+				evaluator := accesscontrol.EvalPermission(action)
+				ok, err := b.accessControl.Evaluate(ctx, user, evaluator)
+				if ok {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "folder", err
 			case "update":
 				action = dashboards.ActionFoldersWrite
 			case "deletecollection":
