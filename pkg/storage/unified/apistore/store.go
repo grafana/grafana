@@ -94,7 +94,7 @@ func NewStorage(
 		getKey: keyParser,
 
 		versioner: &storage.APIObjectVersioner{},
-		// Explicitly disable large object support.
+
 		largeObjectSupport: largeObjectSupport,
 	}
 
