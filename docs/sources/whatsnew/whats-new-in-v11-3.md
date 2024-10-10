@@ -135,6 +135,20 @@ When you set up a binary operation calculation, there's a new **All number field
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
 
+## Explore Logs
+
+### Explore Logs plugin installed by default
+
+<!-- #proj-explorelogs-dev -->
+
+_Generally available in all editions of Grafana_
+
+**Explore Logs** is a plugin that lets you automatically visualize and explore your logs without having to write queries. It makes finding spikes in your log volume, filtering your logs and pinpointing problematic log lines a lot easier and more smooth.
+
+While **Explore Logs** is [GA in cloud](https://grafana.com/blog/2024/09/24/queryless-metrics-logs-traces-profiles/#explore-logs) and installed by default already, with Grafana v11.3.0 it will be automatically installed on your on-prem instance as well. This will let you use Explore Logs alongside **Explore Metrics**.
+
+This is configured by the [`preinstall` configuration parameter](https://github.com/grafana/grafana/blob/9ece88d5852dceb90f83271e66902eece24f908f/conf/defaults.ini#L1748) in your Grafana configuration. For more information about Explore logs, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/logs/).
+
 ## Alerting
 
 ### Simplified query section for alert rule creation
@@ -246,3 +260,52 @@ At Grafana, we're comminited to ease of use, and we've now introduced a new scre
 The new user interface makes it much clearer what each option does, and setting up the various configurations is now more transparent. Also, you no longer need to restart the Grafana instance for the new settings to take effect.
 
 This feature is available in Public Preview by enabling the feature toggle `ssoSettingsLDAP`.
+
+### RBAC for Plugins
+
+<!-- Gabriel Mabille -->
+
+_Generally available in all editions of Grafana_
+
+[Documentation](https://grafana.com/developers/plugin-tools/reference-plugin-json#roles)
+
+We're excited to announce that plugins can now leverage [Grafana's role based access control](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/#about-rbac) to define their own roles and permissions in order to control access to their routes.
+
+To define roles and their default assignments, plugin developers need to add a `roles` section to their `plugin.json` file. Grafana will automatically register these roles and assign them to the corresponding basic roles: `Viewer`, `Editor`, `Admin`, and `Grafana Admin`.
+
+Following is an example of defining two RBAC plugin roles and assigning them to Admins and Viewers (and thus Editors and Admins) by default:
+
+```json
+"roles": [
+  {
+    "role": {
+      "name": "Patents Reader",
+      "description": "Read patents",
+      "permissions": [
+        {"action": "grafana-appwithrbac-app.patents:read"}
+      ]
+    },
+    "grants": ["Admin"]
+  },
+  {
+    "role": {
+      "name": "Research papers Reader",
+      "description": "Read research papers",
+      "permissions": [
+        {"action": "grafana-appwithrbac-app.papers:read"}
+      ]
+    },
+    "grants": ["Viewer"]
+  }
+]
+```
+
+Protecting `includes` and `routes` is also straight forward, and can be done through the new `action` and `reqAction` field of these sections of the `plugin.json` file.
+
+**Plugin example**
+
+If you’d like to test this and explore RBAC for plugins further, refer to this [plugin example](https://github.com/grafana/grafana-plugin-examples/blob/main/examples/app-with-rbac/README.md) for guidance.
+
+**Known limitation**
+
+Plugins permissions are currently restricted to actions without scopes.
