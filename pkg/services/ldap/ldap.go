@@ -93,55 +93,77 @@ func New(config *ServerConfig, cfg *Config) IServer {
 	}
 }
 
-// Dial dials in the LDAP
-// TODO: decrease cyclomatic complexity
+// Dial dials in the LDAP, establishes a connection to the specified hosts.
 func (server *Server) Dial() error {
 	certPool, err := getRootCACertPool(*server.Config)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get root CA cert pool: %w", err)
 	}
 
 	clientCert, err := getClientCert(*server.Config)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get client cert: %w", err)
 	}
 
 	timeout := time.Duration(server.Config.Timeout) * time.Second
-
 	for _, host := range strings.Split(server.Config.Host, " ") {
 		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
 		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
+
 		if server.Config.UseSSL {
-			tlsCfg := &tls.Config{
-				InsecureSkipVerify: server.Config.SkipVerifySSL,
-				ServerName:         host,
-				RootCAs:            certPool,
-				MinVersion:         server.Config.MinTLSVersionID,
-				CipherSuites:       server.Config.TLSCipherIDs,
-			}
-			if len(clientCert.Certificate) > 0 {
-				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
-			}
-			if server.Config.StartTLS {
-				server.Connection, err = dialWithTimeout("tcp", address, timeout)
-				if err == nil {
-					if err = server.Connection.StartTLS(tlsCfg); err == nil {
-						return nil
-					}
-				}
-			} else {
-				server.Connection, err = dialTLSWithTimeout("tcp", address, tlsCfg, timeout)
+			if err := server.connectWithTLS(address, certPool, clientCert, host, timeout); err == nil {
+				return nil
 			}
 		} else {
-			server.Connection, err = dialWithTimeout("tcp", address, timeout)
-		}
-
-		if err == nil {
-			return nil
+			if err := server.connectWithoutTLS(address, timeout); err == nil {
+				return nil
+			}
 		}
 	}
-	return err
+	return fmt.Errorf("failed to connect to any host: %w", err)
+}
+
+// connectWithTLS establishes a TLS connection to the specified address.
+func (server *Server) connectWithTLS(address string, certPool *x509.CertPool, clientCert tls.Certificate, host string, timeout time.Duration) error {
+	tlsCfg := &tls.Config{
+		InsecureSkipVerify: server.Config.SkipVerifySSL,
+		ServerName:         host,
+		RootCAs:            certPool,
+		MinVersion:         server.Config.MinTLSVersionID,
+		CipherSuites:       server.Config.TLSCipherIDs,
+	}
+	if len(clientCert.Certificate) > 0 {
+		tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
+	}
+
+	if server.Config.StartTLS {
+		conn, err := dialWithTimeout("tcp", address, timeout)
+		if err != nil {
+			return fmt.Errorf("dialing %s: %w", address, err)
+		}
+		if err := conn.StartTLS(tlsCfg); err != nil {
+			return fmt.Errorf("failed to start TLS on %s: %w", address, err)
+		}
+		server.Connection = conn
+	} else {
+		conn, err := dialTLSWithTimeout("tcp", address, tlsCfg, timeout)
+		if err != nil {
+			return fmt.Errorf("dialing TLS %s: %w", address, err)
+		}
+		server.Connection = conn
+	}
+	return nil
+}
+
+// connectWithoutTLS establishes a plain TCP connection to the specified address.
+func (server *Server) connectWithoutTLS(address string, timeout time.Duration) error {
+	conn, err := dialWithTimeout("tcp", address, timeout)
+	if err != nil {
+		return fmt.Errorf("dialing %s: %w", address, err)
+	}
+	server.Connection = conn
+	return nil
 }
 
 // dialWithTimeout applies the specified timeout
