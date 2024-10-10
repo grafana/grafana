@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Combobox, ComboboxOption } from './Combobox';
@@ -189,7 +189,9 @@ describe('Combobox', () => {
       expect(item).toBeInTheDocument();
       expect(firstItem).not.toBeInTheDocument();
 
-      jest.advanceTimersByTime(1100); // Resolve the first request
+      await act(() => {
+        jest.advanceTimersByTime(1100); // Resolve the first request
+      });
 
       item = screen.queryByRole('option', { name: 'first' });
       firstItem = screen.queryByRole('option', { name: 'second' });
