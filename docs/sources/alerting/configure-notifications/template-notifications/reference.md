@@ -45,7 +45,7 @@ By default, Grafana provides predefined templates to format notification message
 
 You can also customize your notifications with custom templates, which are based on the [Go template language](ref:template-language).
 
-This documentation lists the data available for use in notification templates. It's important to remember that [a single notification can group multiple alerts](ref:alert-grouping) to reduce the number of alerts you receive.
+This documentation lists the data available for use in notification templates.
 
 ## Notification Data
 
@@ -58,12 +58,14 @@ In notification templates, dot (`.`) is initialized with the following data:
 | `Alerts`            | [][Alert](#alert) | List of all firing and resolved alerts in this notification                                          |
 | `Alerts.Firing`     | [][Alert](#alert) | List of all firing alerts in this notification                                                       |
 | `Alerts.Resolved`   | [][Alert](#alert) | List of all resolved alerts in this notification                                                     |
-| `GroupLabels`       | [KV](#kv)         | The labels that group these alerts in this notification                                              |
+| `GroupLabels`       | [KV](#kv)         | The labels that group these alerts in this notification based on the `Group by` option               |
 | `CommonLabels`      | [KV](#kv)         | The labels common to all alerts in this notification                                                 |
 | `CommonAnnotations` | [KV](#kv)         | The annotations common to all alerts in this notification                                            |
 | `ExternalURL`       | string            | A link to Grafana, or the Alertmanager that sent this notification if using an external Alertmanager |
 
-This example prints all notification data available from dot (`.`):
+It's important to remember that [a single notification can group multiple alerts](ref:alert-grouping) to reduce the number of alerts you receive.
+
+`Alerts` is an array that includes all the alerts in the notification. Here's an example that prints all available notification data from dot (`.`):
 
 ```
 {{ define "custom_template" }}
