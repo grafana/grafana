@@ -147,11 +147,19 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   }
 
   public openPanel() {
+    if (this.state.isPanelOpened) {
+      return;
+    }
+
     this.fetchDashboards();
     this.setState({ isPanelOpened: true });
   }
 
   public closePanel() {
+    if (!this.state.isPanelOpened) {
+      return;
+    }
+
     this.setState({ isPanelOpened: false });
   }
 
