@@ -695,10 +695,10 @@ describe('ElasticDatasource', () => {
                 expect(query).toBe('foo:"bar" AND -key:"value"');
                 break;
               case '=~':
-                expect(query).toBe('foo:"bar" AND key:/value/');
+                expect(query).toBe('foo:"bar" AND key:"value"');
                 break;
               case '!~':
-                expect(query).toBe('foo:"bar" AND -key:/value/');
+                expect(query).toBe('foo:"bar" AND -key:"value"');
                 break;
               case '>':
                 expect(query).toBe('foo:"bar" AND key:>value');
@@ -734,13 +734,13 @@ describe('ElasticDatasource', () => {
       it('should correctly add ad hoc filters when query is not empty', () => {
         const query = ds.addAdHocFilters('foo:"bar" AND test:"test1"', filters);
         expect(query).toBe(
-          'foo:"bar" AND test:"test1" AND bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1'
+          'foo:"bar" AND test:"test1" AND bar:"baz" AND -job:"grafana" AND service:"service" AND count:>1'
         );
       });
 
       it('should correctly add ad hoc filters when query is  empty', () => {
         const query = ds.addAdHocFilters('', filters);
-        expect(query).toBe('bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1');
+        expect(query).toBe('bar:"baz" AND -job:"grafana" AND service:"service" AND count:>1');
       });
     });
   });
