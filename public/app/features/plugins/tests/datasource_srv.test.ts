@@ -341,10 +341,17 @@ describe('datasource_srv', () => {
       expect(list[0].name).toBe('mmm');
     });
 
-    it('Can get get list and filter by pluginId', () => {
-      const list = dataSourceSrv.getList({ pluginId: 'jaeger' });
-      expect(list[0].name).toBe('Jaeger');
-      expect(list.length).toBe(1);
+    describe('get list filtered by plugin Id', () => {
+      it('should list all data sources for specified plugin id', () => {
+        const list = dataSourceSrv.getList({ pluginId: 'jaeger' });
+        expect(list.length).toBe(1);
+        expect(list[0].name).toBe('Jaeger');
+      });
+
+      it('should not include runtime datasources in list', () => {
+        const list = dataSourceSrv.getList({ pluginId: 'grafana-runtime-datasource' });
+        expect(list.length).toBe(0);
+      });
     });
 
     it('Can get get list and filter by an alias', () => {
