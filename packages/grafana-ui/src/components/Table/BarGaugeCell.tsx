@@ -24,7 +24,7 @@ const defaultScale: ThresholdsConfig = {
 };
 
 export const BarGaugeCell = (props: TableCellProps) => {
-  const { field, innerWidth, tableStyles, cell, cellProps, row } = props;
+  const { field, innerWidth, tableStyles, cell, cellProps, row, actions } = props;
   const displayValue = field.display!(cell.value);
   const cellOptions = getCellOptions(field);
 
@@ -85,7 +85,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
       {hasLinks && (
-        <DataLinksContextMenu links={getLinks} style={{ display: 'flex', width: '100%' }}>
+        <DataLinksContextMenu links={getLinks} actions={actions} style={{ display: 'flex', width: '100%' }}>
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       )}

@@ -17,8 +17,8 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
-
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height, actions } =
+    props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
 
@@ -97,7 +97,7 @@ export const DefaultCell = (props: TableCellProps) => {
       {!hasLinks && (isStringValue ? `${value}` : <div className={tableStyles.cellText}>{value}</div>)}
 
       {hasLinks && (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+        <DataLinksContextMenu links={() => getCellLinks(field, row) || []} actions={actions}>
           {(api) => {
             if (api.openMenu) {
               return (

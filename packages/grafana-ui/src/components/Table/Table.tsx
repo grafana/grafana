@@ -58,6 +58,7 @@ export const Table = memo((props: Props) => {
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
     fieldConfig,
+    getActions,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -116,7 +117,7 @@ export const Table = memo((props: Props) => {
   // React-table column definitions
   const memoizedColumns = useMemo(
     () => getColumns(data, width, columnMinWidth, hasNestedData, footerItems, isCountRowsSet),
-    [data, width, columnMinWidth, footerItems, hasNestedData, isCountRowsSet]
+    [data, width, columnMinWidth, hasNestedData, footerItems, isCountRowsSet]
   );
 
   // we need a ref to later store the `toggleAllRowsExpanded` function, returned by `useTable`.
@@ -335,6 +336,7 @@ export const Table = memo((props: Props) => {
                 enableSharedCrosshair={enableSharedCrosshair}
                 initialRowIndex={initialRowIndex}
                 longestField={longestField}
+                getActions={getActions}
               />
             </div>
           ) : (

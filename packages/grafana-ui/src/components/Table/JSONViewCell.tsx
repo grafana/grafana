@@ -11,7 +11,7 @@ import { TableCellInspectorMode } from './TableCellInspector';
 import { TableCellProps } from './types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
-  const { cell, tableStyles, cellProps, field, row } = props;
+  const { cell, tableStyles, cellProps, field, row, actions } = props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const txt = css({
     cursor: 'pointer',
@@ -37,7 +37,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
       <div className={cx(tableStyles.cellText, txt)}>
         {!hasLinks && <div className={tableStyles.cellText}>{displayValue}</div>}
         {hasLinks && (
-          <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+          <DataLinksContextMenu links={() => getCellLinks(field, row) || []} actions={actions}>
             {(api) => {
               if (api.openMenu) {
                 return (

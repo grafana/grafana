@@ -23,7 +23,7 @@ import { usePanelContext } from '../PanelChrome';
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
-import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
+import { CellColors, GetActionsFunction, TableFieldOptions, TableFilterActionCallback } from './types';
 import {
   calculateAroundPointThreshold,
   getCellColors,
@@ -53,6 +53,7 @@ interface RowsListProps {
   initialRowIndex?: number;
   headerGroups: HeaderGroup[];
   longestField?: Field;
+  getActions?: GetActionsFunction;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -78,6 +79,7 @@ export const RowsList = (props: RowsListProps) => {
     initialRowIndex = undefined,
     headerGroups,
     longestField,
+    getActions,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -337,32 +339,34 @@ export const RowsList = (props: RowsListProps) => {
               rowExpanded={rowExpanded}
               textWrapped={textWrapField !== undefined}
               height={Number(style.height)}
+              getActions={getActions}
             />
           ))}
         </div>
       );
     },
     [
-      cellHeight,
-      data,
-      nestedDataField,
-      onCellFilterAdded,
-      onRowHover,
-      onRowLeave,
-      prepareRow,
       rowIndexForPagination,
       rows,
+      prepareRow,
       tableState.expanded,
-      tableStyles,
-      textWrapField,
-      theme.components.table.rowSelected,
-      theme.typography.fontSize,
-      theme.typography.body.lineHeight,
-      timeRange,
-      width,
+      nestedDataField,
       rowBg,
+      textWrapField,
+      tableStyles,
+      onRowLeave,
+      width,
+      cellHeight,
+      theme.components.table.rowSelected,
+      theme.typography.body.lineHeight,
+      theme.typography.fontSize,
+      data,
       headerGroups,
       osContext,
+      onRowHover,
+      onCellFilterAdded,
+      timeRange,
+      getActions,
     ]
   );
 
