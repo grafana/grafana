@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../fundamentals/notifications/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/
+  - ../fundamentals/notifications/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
   - ../contact-points/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/message-templating/
   - ../alert-rules/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-rules/message-templating/
   - ../unified-alerting/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/message-templating/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/templates/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/templates/
 description: Use templating to customize, format, and reuse alert notification messages. Create more flexible and informative alert notification messages by incorporating dynamic content, such as metric values, labels, and other contextual information.
 keywords:
   - grafana
@@ -33,9 +33,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
   templating-labels-annotations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
   notification-message-reference:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
@@ -48,9 +48,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
   create-notification-templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
 ---
 
 # Templates
@@ -120,7 +120,10 @@ For more details on how to template annotations, refer to [Template annotations 
 
 [Labels](ref:labels) are used to differentiate one alert instance from all other alert instances, as the set of labels uniquely identifies an alert instance. Notification policies and silences use labels to handle alert instances.
 
-Template labels when you need to improve or change how alerts are uniquely identified. This is helpful if the labels you get from your query aren't detailed enough.
+You can also template labels based on query results. This is helpful if the labels you get from your query aren't detailed enough. For instance:
+
+- Add a new label to change how alerts are identified and grouped into different alert groups.
+- Add a new label used by notification policies or silences to manage how the alert is handled.
 
 Here’s an example of templating a `severity` label based on the query value:
 
@@ -135,8 +138,6 @@ medium
 low
 {{- end }}
 ```
-
-Avoid using query values in labels, as this may result in the creation of numerous alerts when only one is needed. Use annotation to inform about the query value instead.
 
 For more details on how to template labels, refer to [Template annotations and labels](ref:templating-labels-annotations).
 
