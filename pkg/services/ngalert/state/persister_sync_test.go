@@ -139,7 +139,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 				CreatedAt: time.Now().Add(2 * time.Minute),
 				ExpiresAt: time.Now().Add(3 * time.Minute),
 			},
-			Annotations: ngmodels.GenerateAlertLabels(4, "annotations_"),
+			Annotations: NewSyncLabels(ngmodels.GenerateAlertLabels(4, "annotations_")),
 			Labels:      ngmodels.GenerateAlertLabels(4, "labels_"),
 			Values: map[string]float64{
 				"A1": 11.0,

@@ -220,7 +220,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
 				LastEvaluationTime:   entry.LastEvalTime,
-				Annotations:          annotations,
+				Annotations:          NewSyncLabels(annotations),
 				ResultFingerprint:    resultFp,
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
@@ -401,11 +401,8 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
 		if len(transitions) > 0 {
 			for _, t := range transitions {
-				if t.State.Annotations == nil {
-					t.State.Annotations = make(map[string]string)
-				}
-				t.State.Annotations["datasource_uid"] = datasourceUIDs.String()
-				t.State.Annotations["ref_id"] = refIds.String()
+				t.State.Annotations.Set("datasource_uid", datasourceUIDs.String())
+				t.State.Annotations.Set("ref_id", refIds.String())
 			}
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
