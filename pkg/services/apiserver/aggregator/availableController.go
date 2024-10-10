@@ -36,6 +36,7 @@ import (
 	informers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	listers "k8s.io/kube-aggregator/pkg/client/listers/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers"
+	availabilitymetrics "k8s.io/kube-aggregator/pkg/controllers/status/metrics"
 )
 
 type certKeyFunc func() ([]byte, []byte)
@@ -69,6 +70,7 @@ type AvailableConditionController struct {
 	cache map[string]map[string][]string
 	// this lock protects operations on the above cache
 	cacheLock sync.RWMutex
+	metrics   *availabilitymetrics.Metrics
 }
 
 // NewAvailableConditionController returns a new AvailableConditionController.
@@ -79,6 +81,7 @@ func NewAvailableConditionController(
 	proxyTransportDial *transport.DialHolder,
 	proxyCurrentCertKeyContent certKeyFunc,
 	serviceResolver ServiceResolver,
+	metrics *availabilitymetrics.Metrics,
 ) (*AvailableConditionController, error) {
 	c := &AvailableConditionController{
 		apiServiceClient:   apiServiceClient,
@@ -94,6 +97,7 @@ func NewAvailableConditionController(
 		),
 		proxyTransportDial:         proxyTransportDial,
 		proxyCurrentCertKeyContent: proxyCurrentCertKeyContent,
+		metrics:                    metrics,
 	}
 
 	// resync on this one because it is low cardinality and rechecking the actual discovery
@@ -124,6 +128,7 @@ func NewAvailableConditionController(
 func (c *AvailableConditionController) sync(key string) error {
 	originalAPIService, err := c.apiServiceLister.Get(key)
 	if apierrors.IsNotFound(err) {
+		c.metrics.ForgetAPIService(key)
 		return nil
 	}
 	if err != nil {
@@ -285,6 +290,9 @@ func (c *AvailableConditionController) sync(key string) error {
 // updateAPIServiceStatus only issues an update if a change is detected.  We have a tight resync loop to quickly detect dead
 // apiservices. Doing that means we don't want to quickly issue no-op updates.
 func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService, newAPIService *apiregistrationv1.APIService) (*apiregistrationv1.APIService, error) {
+	// update this metric on every sync operation to reflect the actual state
+	c.metrics.SetUnavailableGauge(newAPIService)
+
 	if equality.Semantic.DeepEqual(originalAPIService.Status, newAPIService.Status) {
 		return newAPIService, nil
 	}
@@ -310,6 +318,7 @@ func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService
 		return nil, err
 	}
 
+	c.metrics.SetUnavailableCounter(originalAPIService, newAPIService)
 	return newAPIService, nil
 }
 

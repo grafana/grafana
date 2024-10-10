@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/klog/v2"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
@@ -43,6 +44,7 @@ import (
 	apiregistrationInformers "k8s.io/kube-aggregator/pkg/client/informers/externalversions/apiregistration/v1"
 	"k8s.io/kube-aggregator/pkg/controllers"
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
+	availabilitymetrics "k8s.io/kube-aggregator/pkg/controllers/status/metrics"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -53,6 +55,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
+
+// making sure we only register metrics once into legacy registry
+var registerIntoLegacyRegistryOnce sync.Once
 
 func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	if devMode {
@@ -260,6 +265,21 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		}
 	}
 
+	// create shared (remote and local) availability metrics
+	// TODO: decouple from legacyregistry
+
+	metrics := availabilitymetrics.New()
+	//
+	registerIntoLegacyRegistryOnce.Do(func() {
+		fmt.Printf("Tomato: %v", metrics)
+		fmt.Printf("Potato: %v", reg)
+		err = metrics.Register(legacyregistry.Register, legacyregistry.CustomRegister)
+		// reg.Register(metrics)
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	availableController, err := NewAvailableConditionController(
 		aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(),
 		externalNamesInformer,
@@ -267,6 +287,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		nil,
 		proxyCurrentCertKeyContentFunc,
 		completedConfig.ExtraConfig.ServiceResolver,
+		metrics,
 	)
 	if err != nil {
 		return nil, err
