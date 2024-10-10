@@ -302,7 +302,13 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 				}
 			}
 		}
-
+		if len(keys) > 0 {
+			go func() {
+				_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+					RuleKeys: keys,
+				})
+			}()
+		}
 		return nil
 	})
 }
@@ -347,13 +353,6 @@ func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string
 		affectedRows = rows
 		if affectedRows > 0 {
 			st.Logger.Info("Deleted old alert_rule_version(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
-		}
-		if len(keys) > 0 {
-			go func() {
-				_ = st.Bus.Publish(ctx, &RuleChangeEvent{
-					RuleKeys: keys,
-				})
-			}()
 		}
 		return nil
 	})
