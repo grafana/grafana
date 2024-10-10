@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	golog "log"
 	"os"
 	"strings"
 
@@ -12,6 +12,7 @@ import (
 	"github.com/blevesearch/bleve/v2/analysis/lang/en"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"golang.org/x/exp/slices"
 )
 
@@ -25,6 +26,7 @@ type Index struct {
 	shards map[string]Shard
 	opts   Opts
 	s      *server
+	log    log.Logger
 }
 
 func NewIndex(s *server, opts Opts) *Index {
@@ -32,6 +34,7 @@ func NewIndex(s *server, opts Opts) *Index {
 		s:      s,
 		opts:   opts,
 		shards: make(map[string]Shard),
+		log:    log.New("unifiedstorage.search.index"),
 	}
 	return idx
 }
@@ -44,6 +47,7 @@ func (i *Index) Init(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		i.log.Info("initial indexing resources", "count", len(list.Items))
 
 		for _, obj := range list.Items {
 			res, err := getResource(obj.Value)
@@ -55,6 +59,8 @@ func (i *Index) Init(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+
+			i.log.Info("indexing resource for tenant", "res", res, "tenant", tenant(res))
 
 			var jsonDoc interface{}
 			err = json.Unmarshal(obj.Value, &jsonDoc)
@@ -85,6 +91,7 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 		return err
 	}
 	tenant := tenant(res)
+	i.log.Info("indexing resource for tenant", "res", res, "tenant", tenant)
 	shard, err := i.getShard(tenant)
 	if err != nil {
 		return err
@@ -121,6 +128,11 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	if err != nil {
 		return nil, err
 	}
+	docCount, err := shard.index.DocCount()
+	if err != nil {
+		return nil, err
+	}
+	i.log.Info("got index for tenant", "tenant", tenant, "docCount", docCount)
 
 	// use 10 as a default limit for now
 	if limit <= 0 {
@@ -133,11 +145,14 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 
 	req.Fields = []string{"*"} // return all indexed fields in search results
 
+	i.log.Info("searching index", "query", query, "tenant", tenant)
 	res, err := shard.index.Search(req)
 	if err != nil {
 		return nil, err
 	}
 	hits := res.Hits
+
+	i.log.Info("got search results", "hits", hits)
 
 	results := make([]SearchSummary, len(hits))
 	for resKey, hit := range hits {
@@ -203,7 +218,7 @@ func createFileIndex() (bleve.Index, string, error) {
 	indexPath := fmt.Sprintf("%s%s.bleve", os.TempDir(), uuid.New().String())
 	index, err := bleve.New(indexPath, createIndexMappings())
 	if err != nil {
-		log.Fatalf("Failed to create index: %v", err)
+		golog.Fatalf("Failed to create index: %v", err)
 	}
 	return index, indexPath, err
 }
