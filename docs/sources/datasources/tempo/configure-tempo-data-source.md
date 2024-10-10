@@ -381,7 +381,6 @@ apiVersion: 1
 datasources:
   - name: Tempo
     type: tempo
-    uid: EbPG8fYoz
     url: http://localhost:3200
     access: proxy
     basicAuth: false
