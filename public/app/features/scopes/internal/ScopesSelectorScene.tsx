@@ -219,16 +219,6 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     this.setState({ isPickerOpened: false });
   }
 
-  private toggleDashboardsPanel(scopes: SelectedScope[]) {
-    const dashboards = this.state.dashboards?.resolve();
-
-    if (scopes.length > 0) {
-      dashboards?.openPanel();
-    } else {
-      dashboards?.closePanel();
-    }
-  }
-
   public async updateScopes(treeScopes = this.state.treeScopes) {
     if (isEqual(treeScopes, getTreeScopesFromSelectedScopes(this.state.scopes))) {
       return;
@@ -244,8 +234,6 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     const scopes = await fetchSelectedScopes(treeScopes);
 
     this.setState({ scopes, isLoadingScopes: false });
-
-    this.toggleDashboardsPanel(scopes);
   }
 
   public resetDirtyScopeNames() {
