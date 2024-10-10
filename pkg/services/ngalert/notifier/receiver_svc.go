@@ -151,12 +151,12 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if q.Decrypt {
 		err := rcv.Decrypt(rs.decryptor(ctx))
 		if err != nil {
-			rs.log.Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
+			rs.log.FromContext(ctx).Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
 		}
 	} else {
 		err := rcv.Encrypt(rs.encryptor(ctx))
 		if err != nil {
-			rs.log.Warn("Failed to encrypt secure settings", "name", rcv.Name, "error", err)
+			rs.log.FromContext(ctx).Warn("Failed to encrypt secure settings", "name", rcv.Name, "error", err)
 		}
 	}
 
@@ -199,12 +199,12 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		if q.Decrypt {
 			err := rcv.Decrypt(rs.decryptor(ctx))
 			if err != nil {
-				rs.log.Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
+				rs.log.FromContext(ctx).Warn("Failed to decrypt secure settings", "name", rcv.Name, "error", err)
 			}
 		} else {
 			err := rcv.Encrypt(rs.encryptor(ctx))
 			if err != nil {
-				rs.log.Warn("Failed to encrypt secure settings", "name", rcv.Name, "error", err)
+				rs.log.FromContext(ctx).Warn("Failed to encrypt secure settings", "name", rcv.Name, "error", err)
 			}
 		}
 	}
@@ -313,6 +313,8 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
+	logger := rs.log.FromContext(ctx).New("receiver", existing.Name, "uid", uid, "version", version, "integrations", existing.GetIntegrationTypes())
+
 	// Check optimistic concurrency.
 	// Optimistic concurrency is optional for delete operations, but we still check it if a version is provided.
 	if version != "" {
@@ -321,7 +323,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 			return err
 		}
 	} else {
-		rs.log.Debug("Ignoring optimistic concurrency check because version was not provided", "receiver", existing.Name, "operation", "delete")
+		logger.Debug("Ignoring optimistic concurrency check because version was not provided", "operation", "delete")
 	}
 
 	if err := rs.provenanceValidator(existing.Provenance, models.Provenance(callerProvenance)); err != nil {
@@ -335,22 +337,28 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	}
 
 	if usedByRoutes || len(usedByRules) > 0 {
+		logger.Warn("Cannot delete receiver because it is used", "used_by_routes", usedByRoutes, "used_by_rules", len(usedByRules))
 		return makeReceiverInUseErr(usedByRoutes, usedByRules)
 	}
 
 	revision.DeleteReceiver(uid)
 
-	return rs.xact.InTransaction(ctx, func(ctx context.Context) error {
+	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err = rs.cfgStore.Save(ctx, revision, orgID)
 		if err != nil {
 			return err
 		}
 		err = rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, uid)
 		if err != nil {
-			rs.log.Error("Could not delete receiver permissions", "receiver", existing.Name, "error", err)
+			logger.Error("Could not delete receiver permissions", "error", err)
 		}
 		return rs.deleteProvenances(ctx, orgID, existing.Integrations)
 	})
+	if err != nil {
+		return err
+	}
+	logger.Info("Deleted receiver")
+	return nil
 }
 
 func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (result *models.Receiver, err error) {
@@ -410,6 +418,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		attribute.String("uid", result.UID),
 		attribute.String("version", result.Version),
 	))
+	rs.log.FromContext(ctx).Info("Created a new receiver", "receiver", result.Name, "uid", result.UID, "fingerprint", result.Version, "integrations", result.GetIntegrationTypes())
 	return result, nil
 }
 
@@ -425,6 +434,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
 	}
+
+	logger := rs.log.FromContext(ctx).New("receiver", r.Name, "uid", r.UID, "version", r.Version, "integrations", r.GetIntegrationTypes())
+	logger.Debug("Updating receiver")
 
 	revision, err := rs.cfgStore.Get(ctx, orgID)
 	if err != nil {
@@ -497,7 +509,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 				return err
 			}
 			if permissionsUpdated > 0 {
-				rs.log.FromContext(ctx).Info("Moved custom receiver permissions", "oldName", existing.Name, "newName", r.Name, "count", permissionsUpdated)
+				logger.Info("Moved custom receiver permissions", "oldName", existing.Name, "count", permissionsUpdated)
 			}
 			if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(existing.Name)); err != nil {
 				return err
@@ -522,6 +534,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
+	logger.Info("Updated receiver", "new_version", result.Version)
 	return result, nil
 }
 
