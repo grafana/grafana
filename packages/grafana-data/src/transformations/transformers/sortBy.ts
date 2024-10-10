@@ -25,7 +25,7 @@ export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = 
   name: 'Sort by',
   description: 'Sort fields in a frame.',
   defaultOptions: {
-    fields: {},
+    sort: [],
   },
 
   /**
