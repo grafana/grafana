@@ -16,9 +16,6 @@ const (
 // to be able to create service accounts that are unique per org
 func AddServiceAccountsAllowSameLoginCrossOrgs(mg *migrator.Migrator) {
 	mg.AddMigration(AllowSameLoginCrossOrgs, &ServiceAccountsSameLoginCrossOrgs{})
-	// Before it was fixed, the previous migration introduced the org_id again in logins that already had it.
-	// This migration removes the duplicate org_id from the login.
-	mg.AddMigration(DedupOrgInLogin, &ServiceAccountsDeduplicateOrgInLogin{})
 }
 
 var _ migrator.CodeMigration = new(ServiceAccountsSameLoginCrossOrgs)

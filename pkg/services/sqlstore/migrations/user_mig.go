@@ -158,6 +158,9 @@ func addUserMigrations(mg *Migrator) {
 	// Service accounts login were not unique per org. this migration is part of making it unique per org
 	// to be able to create service accounts that are unique per org
 	mg.AddMigration(usermig.AllowSameLoginCrossOrgs, &usermig.ServiceAccountsSameLoginCrossOrgs{})
+	// Before it was fixed, the previous migration introduced the org_id again in logins that already had it.
+	// This migration removes the duplicate org_id from the login.
+	mg.AddMigration(usermig.DedupOrgInLogin, &usermig.ServiceAccountsDeduplicateOrgInLogin{})
 
 	// Users login and email should be in lower case
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
