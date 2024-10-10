@@ -8,7 +8,11 @@ let ctxFontStyle = '';
  */
 export function getCanvasContext() {
   if (!_context) {
-    _context = document.createElement('canvas').getContext('2d')!;
+    const canvas = document.createElement('canvas');
+    canvas.height = 50;
+    canvas.width = 1000;
+    _context = canvas.getContext('2d')!;
+    document.body.appendChild(canvas);
   }
   return _context;
 }
@@ -28,8 +32,11 @@ export function measureText(text: string, fontSize: number, fontWeight = 400): T
   const context = getCanvasContext();
 
   if (ctxFontStyle !== fontStyle) {
+    console.log('setting font style', fontStyle);
     context.font = ctxFontStyle = fontStyle;
   }
+
+  context.fillText(text, 0, 25);
 
   const metrics = context.measureText(text);
 

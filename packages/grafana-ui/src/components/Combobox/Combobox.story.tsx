@@ -3,10 +3,15 @@ import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
 import React, { ComponentProps, useEffect, useState } from 'react';
 
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { measureText } from '../../utils/measureText';
 import { Alert } from '../Alert/Alert';
+import { Divider } from '../Divider/Divider';
 import { Field } from '../Forms/Field';
+import { Select } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
+import { getComboboxStyles, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT } from './getComboboxStyles';
 
 const chance = new Chance();
 
@@ -73,7 +78,6 @@ async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: chance.sentence({ words: index % 5 }),
     value: chance.guid(),
-    //description: chance.sentence(),
   }));
 }
 
@@ -88,7 +92,6 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
         setIsLoading(false);
         setOptions(options);
         setValue(options[5].value);
-        console.log("I've set stuff");
       });
     }, 1000);
   }, [numberOfOptions]);
@@ -104,6 +107,141 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
         action('onChange')(opt);
       }}
     />
+  );
+};
+
+const SelectComparisonStory: StoryFn<typeof Combobox> = (args) => {
+  const [comboboxValue, setComboboxValue] = useState(args.value);
+  const theme = useTheme2();
+  const styles = useStyles2(getComboboxStyles);
+
+  const selectedOption = args.options.find((opt) => opt.value === comboboxValue);
+  const selectedLabel = selectedOption?.label || selectedOption?.value;
+  const textToMeasure = typeof selectedLabel === 'number' ? selectedLabel.toString() : (selectedLabel ?? '');
+  //console.log(measureText(textToMeasure, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width);
+  return (
+    <div style={{ border: '1px solid ' + theme.colors.border.weak, padding: 16 }}>
+      <Field label="Combobox with explicit size (25)">
+        <Combobox
+          id="combobox-explicit-size"
+          width={25}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+      {/* <Field label="Combobox with default size">
+        <Combobox
+          id="combobox-default-size"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field> */}
+
+      {/* <Field label="Select with default size">
+        <Select
+          id="select-default-size"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Divider />
+
+      
+
+      <Field label="Select with explicit size (25)">
+        <Select
+          id="select-explicit-size"
+          width={25}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Divider />
+
+      <Field label="Combobox with auto width, minWidth 15">
+        <Combobox
+          id="combobox-auto-size"
+          width="auto"
+          minWidth={15}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with auto width">
+        <Select
+          id="select-auto-size"
+          width="auto"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Combobox with auto width, minWidth 15, empty value">
+        <Combobox
+          id="combobox-auto-size-empty"
+          width="auto"
+          minWidth={15}
+          value={null}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with auto width, empty value">
+        <Select
+          id="select-auto-size-empty"
+          width="auto"
+          value={null}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field> */}
+
+      <Divider />
+      <div>
+        measureText:
+        <br />
+        text to measure:{' '}
+        <span className={styles.optionLabel} style={{ backgroundColor: 'tomato' }}>
+          {textToMeasure}
+        </span>
+        <br />
+        size: {measureText(textToMeasure, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width}px
+      </div>
+    </div>
   );
 };
 
@@ -128,6 +266,13 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
   args: {
     createCustomValue: true,
   },
+};
+
+export const ComparisonToSelect: StoryObj<PropsAndCustomArgs> = {
+  args: {
+    numberOfOptions: 100,
+  },
+  render: SelectComparisonStory,
 };
 
 export default meta;
