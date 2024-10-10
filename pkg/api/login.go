@@ -359,7 +359,7 @@ func (hs *HTTPServer) samlEnabled() bool {
 }
 
 func (hs *HTTPServer) samlName() string {
-	return hs.SettingsProvider.KeyValue("auth.saml", "name").MustString("SAML")
+	return hs.authnService.GetClientConfig(authn.ClientSAML).GetDisplayName()
 }
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {

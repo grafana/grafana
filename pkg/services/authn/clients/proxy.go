@@ -112,6 +112,10 @@ func (c *Proxy) IsEnabled() bool {
 	return c.cfg.AuthProxy.Enabled
 }
 
+func (a *Proxy) GetConfig() authn.AuthenticationClientConfig {
+	return nil
+}
+
 // See if we have cached the user id, in that case we can fetch the signed-in user and skip sync.
 // Error here means that we could not find anything in cache, so we can proceed as usual
 func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *authn.Request) (*authn.Identity, error) {

@@ -22,8 +22,10 @@ var (
 	errDeviceLimit = errutil.Unauthorized("anonymous.device-limit-reached", errutil.WithPublicMessage("Anonymous device limit reached. Contact Administrator"))
 )
 
-var _ authn.ContextAwareClient = new(Anonymous)
-var _ authn.IdentityResolverClient = new(Anonymous)
+var (
+	_ authn.ContextAwareClient     = new(Anonymous)
+	_ authn.IdentityResolverClient = new(Anonymous)
+)
 
 type Anonymous struct {
 	cfg               *setting.Cfg
@@ -63,6 +65,10 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 
 func (a *Anonymous) IsEnabled() bool {
 	return a.cfg.AnonymousEnabled
+}
+
+func (a *Anonymous) GetConfig() authn.AuthenticationClientConfig {
+	return nil
 }
 
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {

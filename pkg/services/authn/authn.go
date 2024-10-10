@@ -86,6 +86,15 @@ type Authenticator interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 }
 
+type AuthenticationClientConfig interface {
+	// GetDisplayName returns the display name of the client
+	GetDisplayName() string
+	// IsAutoLoginEnabled returns true if the client has auto login enabled
+	IsAutoLoginEnabled() bool
+	// IsSingleLogoutEnabled returns true if the client has single logout enabled
+	IsSingleLogoutEnabled() bool
+}
+
 type Service interface {
 	Authenticator
 	// RegisterPostAuthHook registers a hook with a priority that is called after a successful authentication.
@@ -120,6 +129,8 @@ type Service interface {
 	// - "saml" = "auth.client.saml"
 	// - "github" = "auth.client.github"
 	IsClientEnabled(client string) bool
+
+	GetClientConfig(client string) AuthenticationClientConfig
 }
 
 type IdentitySynchronizer interface {
@@ -132,6 +143,8 @@ type Client interface {
 	Name() string
 	// IsEnabled returns the enabled status of the client
 	IsEnabled() bool
+	// GetConfig returns the client configuration
+	GetConfig() AuthenticationClientConfig
 }
 
 // ContextAwareClient is an optional interface that auth client can implement.

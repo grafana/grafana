@@ -85,6 +85,10 @@ func (s *Session) IsEnabled() bool {
 	return true
 }
 
+func (s *Session) GetConfig() authn.AuthenticationClientConfig {
+	return nil
+}
+
 func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
 	if s.cfg.LoginCookieName == "" {
 		return false

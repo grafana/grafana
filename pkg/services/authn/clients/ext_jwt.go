@@ -96,6 +96,10 @@ func (s *ExtendedJWT) IsEnabled() bool {
 	return s.cfg.ExtJWTAuth.Enabled
 }
 
+func (s *ExtendedJWT) GetConfig() authn.AuthenticationClientConfig {
+	return nil
+}
+
 func (s *ExtendedJWT) authenticateAsUser(
 	idTokenClaims authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
@@ -150,7 +154,8 @@ func (s *ExtendedJWT) authenticateAsUser(
 				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
-		}}, nil
+		},
+	}, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {

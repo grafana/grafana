@@ -27,9 +27,11 @@ var (
 	errAPIKeyOrgMismatch = errutil.Unauthorized("api-key.organization-mismatch", errutil.WithPublicMessage("API key does not belong to the requested organization"))
 )
 
-var _ authn.HookClient = new(APIKey)
-var _ authn.ContextAwareClient = new(APIKey)
-var _ authn.IdentityResolverClient = new(APIKey)
+var (
+	_ authn.HookClient             = new(APIKey)
+	_ authn.ContextAwareClient     = new(APIKey)
+	_ authn.IdentityResolverClient = new(APIKey)
+)
 
 const (
 	metaKeyID           = "keyID"
@@ -87,6 +89,10 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 func (s *APIKey) IsEnabled() bool {
 	return true
+}
+
+func (s *APIKey) GetConfig() authn.AuthenticationClientConfig {
+	return nil
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {

@@ -24,6 +24,10 @@ func (i *IdentityClient) IsEnabled() bool {
 	return true
 }
 
+func (i *IdentityClient) GetConfig() authn.AuthenticationClientConfig {
+	return nil
+}
+
 func (i *IdentityClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	return i.identity, nil
 }

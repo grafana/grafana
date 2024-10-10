@@ -8,9 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var (
-	errBadForm = errutil.BadRequest("form-auth.invalid", errutil.WithPublicMessage("bad login data"))
-)
+var errBadForm = errutil.BadRequest("form-auth.invalid", errutil.WithPublicMessage("bad login data"))
 
 var _ authn.Client = new(Form)
 
@@ -41,4 +39,8 @@ func (c *Form) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ident
 
 func (c *Form) IsEnabled() bool {
 	return true
+}
+
+func (c *Form) GetConfig() authn.AuthenticationClientConfig {
+	return nil
 }

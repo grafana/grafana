@@ -13,9 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-var (
-	errInvalidRenderKey = errutil.Unauthorized("render-auth.invalid-key", errutil.WithPublicMessage("Invalid Render Key"))
-)
+var errInvalidRenderKey = errutil.Unauthorized("render-auth.invalid-key", errutil.WithPublicMessage("Invalid Render Key"))
 
 const (
 	renderCookieName = "renderKey"
@@ -65,6 +63,10 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 func (c *Render) IsEnabled() bool {
 	return true
+}
+
+func (c *Render) GetConfig() authn.AuthenticationClientConfig {
+	return nil
 }
 
 func (c *Render) Test(ctx context.Context, r *authn.Request) bool {

@@ -60,8 +60,10 @@ func fromSocialErr(err *connectors.SocialError) error {
 	return errutil.Unauthorized("auth.oauth.userinfo.failed", errutil.WithPublicMessage(err.Error())).Errorf("%w", err)
 }
 
-var _ authn.LogoutClient = new(OAuth)
-var _ authn.RedirectClient = new(OAuth)
+var (
+	_ authn.LogoutClient   = new(OAuth)
+	_ authn.RedirectClient = new(OAuth)
+)
 
 func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
@@ -201,6 +203,15 @@ func (c *OAuth) IsEnabled() bool {
 	}
 
 	return provider.Enabled
+}
+
+func (c *OAuth) GetConfig() authn.AuthenticationClientConfig {
+	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if provider == nil {
+		return nil
+	}
+
+	return provider
 }
 
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
