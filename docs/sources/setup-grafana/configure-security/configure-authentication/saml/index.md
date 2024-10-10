@@ -231,20 +231,33 @@ This app registration will be used as a Service Account to retrieve more informa
 
 1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Azure AD account.
 1. In the left-hand navigation pane, select the Azure Active Directory service, and then select **App registrations**.
-1. Select **New registration**.
+1. Click the **New registration** button.
 1. In the **Register an application** pane, enter a name for the application.
 1. In the **Supported account types** section, select the account types that can use the application.
 1. In the **Redirect URI** section, select Web and enter `https://localhost/login/azuread`.
-1. Select **Register**.
+1. Click the **Register** button.
 
 #### Set up permissions for the application
 
 1. In the overview pane, look for **API permissions** section and select **Add a permission**.
 1. In the **Request API permissions** pane, select **Microsoft Graph**, and click **Application permissions**.
 1. In the **Select permissions** pane, under the **GroupMember** section, select **GroupMember.Read.All**.
+1. In the **Select permissions** pane, under the **User** section, select **User.Read.All**.
+1. Click the **Add permissions** button at the bottom of the page.
+1. In the **Request API permissions** pane, select **Microsoft Graph**, and click **Delegated permissions**.
 1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
-1. Select **Add permissions** at the bottom of the page.
+1. Click the **Add permissions** button at the bottom of the page.
 1. In the **API permissions** section, select **Grant admin consent for <your-organization>**.
+
+The following table shows what the permissions look like from the Azure AD portal:
+
+| Permissions name | Type        | Admin consent required | Status  |
+| ---------------- | ----------- | ---------------------- | ------- |
+| `Group.Read.All` | Application | Yes                    | Granted |
+| `User.Read`      | Delegated   | No                     | Granted |
+| `User.Read.All`  | Application | Yes                    | Granted |
+
+{{< figure src="/media/docs/grafana/saml/graph-api-app-permissions.png" caption="Screen shot of the permissions listed in Azure AD for the App registration" >}}
 
 #### Generate a client secret
 
