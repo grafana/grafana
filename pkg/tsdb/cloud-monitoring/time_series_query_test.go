@@ -170,5 +170,4 @@ func TestTimeSeriesQuery(t *testing.T) {
 		frames := res.Frames
 		assert.Equal(t, gdata.TimeSeriesTimeFieldName, frames[0].Fields[0].Name)
 	})
-
 }
