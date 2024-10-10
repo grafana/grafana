@@ -51,7 +51,7 @@ func PackageName(grafana, distro, arch, version, ext string, musl bool, raspberr
 	}
 
 	if v.BuildMetadata != "" {
-		versionString += "+" + v.Prerelease
+		versionString += "+" + v.BuildMetadata
 	}
 
 	if musl {
