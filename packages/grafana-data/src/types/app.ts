@@ -50,6 +50,8 @@ export interface AppRootProps<T extends KeyValue = KeyValue> {
    * @deprecated Use react-router instead
    */
   path: string;
+
+  initialContext?: unknown;
 }
 
 export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta<T> {
