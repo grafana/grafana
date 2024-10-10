@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"math"
 	"sync"
 	"time"
@@ -20,6 +21,10 @@ import (
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
+
+// TODO: Make this configurable
+var NumberOfShards = 100
+var contentionTime = 10 * time.Millisecond
 
 const trace_prefix = "sql.resource."
 const defaultPollingInterval = 100 * time.Millisecond
@@ -118,9 +123,58 @@ func (b *backend) Stop(_ context.Context) error {
 	return nil
 }
 
-func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
+func (b *backend) IncreaseRVs(ctx context.Context, resource string, group string, shard int, resourceVersion int64) error {
+	// Lock the shards for update
+	return b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceVersionLockShards, sqlResourceVersionLockShardsRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Resource:    resource,
+			Group:       group,
+		})
+		if err != nil {
+			return fmt.Errorf("lock shards: %w", err)
+		}
+		if rows != nil {
+			defer func() {
+				if err := rows.Close(); err != nil {
+					b.log.Warn("IncreaseRVs error closing rows", "error", err)
+				}
+			}()
+		}
+		shards := make([]int, 0)
+		for rows.Next() {
+			var shard int
+			if err := rows.Scan(&shard); err != nil {
+				return fmt.Errorf("scan shard: %w", err)
+			}
+			shards = append(shards, shard)
+		}
+		if len(shards) == 0 {
+			return nil
+		}
+		// batch update the resource version
+		if _, err := dbutil.Exec(ctx, tx, sqlResourceVersionBatchUpdate, sqlResourceBatchUpdateRVRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Shards:      shards,
+		}); err != nil {
+			return fmt.Errorf("batch update resource version: %w", err)
+		}
+		return nil
+	})
+}
+func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (rv int64, err error) {
 	_, span := b.tracer.Start(ctx, trace_prefix+"WriteEvent")
 	defer span.End()
+
+	defer func() {
+		if err != nil {
+			return
+		}
+		err := b.IncreaseRVs(ctx, event.Key.Resource, event.Key.Group, computeShard(event.Key.Namespace), rv)
+		if err != nil {
+			b.log.Error("failed to increase resource version", "error", err)
+		}
+	}()
 	// TODO: validate key ?
 	switch event.Type {
 	case resource.WatchEvent_ADDED:
@@ -349,7 +403,7 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 
 	// TODO: add support for RemainingItemCount
 
-	if req.ResourceVersion > 0 || req.NextPageToken != "" {
+	if req.Options.Key.Namespace == "" || req.ResourceVersion > 0 || req.NextPageToken != "" {
 		return b.listAtRevision(ctx, req, cb)
 	}
 	return b.listLatest(ctx, req, cb)
@@ -420,11 +474,15 @@ func (b *backend) listLatest(ctx context.Context, req *resource.ListRequest, cb 
 	if req.ResourceVersion > 0 {
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
+	if req.Options.Key.Namespace != "" {
+		// Namespace queries are only valid within a single shard
+		return 0, fmt.Errorf("namespace is not supported in this mode")
+	}
 
 	iter := &listIter{}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
-		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
+		iter.listRV, err = fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource, req.Options.Key.Namespace)
 		if err != nil {
 			return err
 		}
@@ -468,6 +526,33 @@ func (b *backend) listAtRevision(ctx context.Context, req *resource.ListRequest,
 		if req.ResourceVersion != 0 && req.ResourceVersion != iter.listRV {
 			return 0, apierrors.NewBadRequest("request resource version does not math token")
 		}
+	}
+	if req.Options.Key.Namespace == "" {
+		resp := new(resourceVersionResponse)
+		err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+			// For cross namespace queries, we need to get the minimum RV across all shards.
+			// This means that the List request will be slighly lagging behind the actual state.
+			// If we want to support ReadAfterWrite consistency, we can:
+			// 1. Fetch the Max RV from the resource table
+			// 2. Wait for the MinRV to catch up the initial MaxRV.
+			// 3. Use iter.listRV as the MaxRV.
+			_, err := dbutil.QueryRow(ctx, tx, sqlResourceVersionMin, sqlResourceVersionGetRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Group:       req.Options.Key.Group,
+				Resource:    req.Options.Key.Resource,
+				Response:    resp,
+			})
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil
+			} else if err != nil {
+				return fmt.Errorf("get resource version: %w", err)
+			}
+			return nil
+		})
+		if err != nil {
+			return 0, err
+		}
+		iter.listRV = resp.ResourceVersion
 	}
 	if iter.listRV < 1 {
 		return 0, apierrors.NewBadRequest("expecting an explicit resource version query")
@@ -544,6 +629,9 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 					if _, ok := since[group][resource]; !ok {
 						since[group][resource] = 0
 					}
+					// TODO
+					// Before we poll, we could/should also attempt to bump the RVs for the resources
+					// To the max(RV). This will ensure we fetch as many events as possible
 
 					// Poll for new events
 					next, err := b.poll(ctx, group, resource, since[group][resource], stream)
@@ -578,7 +666,6 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	since := groupResourceRV{}
 	for _, grv := range grvs {
 		if since[grv.Group] == nil {
@@ -591,11 +678,12 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 }
 
 // fetchLatestRV returns the current maximum RV in the resource table
-func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
+func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource, namespace string) (int64, error) {
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),
 		Group:       group,
 		Resource:    resource,
+		Shard:       computeShard(namespace),
 		ReadOnly:    true,
 		Response:    new(resourceVersionResponse),
 	})
@@ -652,28 +740,43 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			// Timestamp:  , // TODO: add timestamp
 		}
 	}
-
 	return nextRV, nil
 }
+
+// computeShard returns a shard number based on the namespace.
+func computeShard(namespace string) int {
+	h := fnv.New32a()
+	h.Write([]byte(namespace))
+	return int(h.Sum32()) % NumberOfShards
+}
+
+// TODO: move this to a more appropriate place. This is a temporary solution to ensure we can insert into the resource_version table.
+var mu = sync.Mutex{}
 
 // resourceVersionAtomicInc atomically increases the version of a kind within a transaction.
 // TODO: Ideally we should attempt to update the RV in the resource and resource_history tables
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
 func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
+
+	shard := computeShard(key.Namespace)
+	mu.Lock()
 	// 1. Lock to row and prevent concurrent updates until the transaction is committed.
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
 		SQLTemplate: sqltemplate.New(d),
+		Shard:       shard,
 		Group:       key.Group,
 		Resource:    key.Resource,
 
 		Response: new(resourceVersionResponse), ReadOnly: false, // This locks the row for update
 	})
 
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && res.ResourceVersion == 0) {
 		// if there wasn't a row associated with the given resource, then we create it.
+		defer mu.Unlock()
 		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionUpsertRequest{
 			SQLTemplate: sqltemplate.New(d),
+			Shard:       shard,
 			Group:       key.Group,
 			Resource:    key.Resource,
 		}); err != nil {
@@ -681,19 +784,23 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 		}
 		res, err = dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
 			SQLTemplate: sqltemplate.New(d),
+			Shard:       shard,
 			Group:       key.Group,
 			Resource:    key.Resource,
 			Response:    new(resourceVersionResponse),
-			ReadOnly:    true, // This locks the row for update
+			ReadOnly:    true,
 		})
 		if err != nil {
 			return 0, fmt.Errorf("fetching RV after read")
 		}
 		return res.ResourceVersion, nil
 	} else if err != nil {
+		defer mu.Unlock()
 		return 0, fmt.Errorf("lock the resource version: %w", err)
 	}
-
+	mu.Unlock()
+	// Simulate contention by sleeping for a bit // TODO: make this configurable for testing, it's not needed in production
+	time.Sleep(contentionTime)
 	// 2. Update the RV
 	// Most times, the RV is the current microsecond timestamp generated on the sql server (to avoid clock skew).
 	// In rare occasion, the server clock might go back in time. In those cases, we simply increment the
@@ -702,6 +809,7 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 
 	_, err = dbutil.Exec(ctx, x, sqlResourceVersionUpdate, sqlResourceVersionUpsertRequest{
 		SQLTemplate:     sqltemplate.New(d),
+		Shard:           shard,
 		Group:           key.Group,
 		Resource:        key.Resource,
 		ResourceVersion: nextRV,

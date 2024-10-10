@@ -2,6 +2,8 @@ package test
 
 import (
 	"context"
+	"math/rand/v2"
+	"strconv"
 	"testing"
 	"time"
 
@@ -26,7 +28,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
+func newServer(t testing.TB, ctx context.Context) (sql.Backend, resource.ResourceServer) {
 	t.Helper()
 
 	dbstore := infraDB.InitTestDB(t)
@@ -42,7 +44,7 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 	require.NoError(t, err)
 	require.NotNil(t, ret)
 
-	err = ret.Init(testutil.NewDefaultTestContext(t))
+	err = ret.Init(ctx)
 	require.NoError(t, err)
 
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
@@ -54,6 +56,33 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 	require.NotNil(t, server)
 
 	return ret, server
+}
+
+func BenchmarkWriteEvent(b *testing.B) {
+	ctx := context.TODO()
+	backend, _ := newServer(b, context.TODO())
+
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		ns := strconv.Itoa(rand.IntN(100000))
+		var i int
+		for pb.Next() {
+			backend.WriteEvent(ctx, resource.WriteEvent{
+				Type:  resource.WatchEvent_ADDED,
+				Value: []byte("{}"),
+				Key: &resource.ResourceKey{
+					Namespace: ns,
+					Group:     "group",
+					Resource:  "resource",
+					Name:      "item" + strconv.Itoa(i),
+				},
+			})
+
+			i += 1
+		}
+	})
+	b.StopTimer()
+
 }
 
 func TestIntegrationBackendHappyPath(t *testing.T) {
@@ -73,8 +102,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := identity.WithRequester(context.Background(), testUserA)
-	backend, server := newServer(t)
-
+	backend, server := newServer(t, testutil.NewDefaultTestContext(t))
 	stream, err := backend.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
 	require.NoError(t, err)
 	var rv1, rv2, rv3, rv4, rv5 int64
@@ -176,7 +204,7 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	backend, _ := newServer(t)
+	backend, _ := newServer(t, testutil.NewDefaultTestContext(t))
 
 	// Create a few resources before initing the watch
 	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
@@ -201,7 +229,7 @@ func TestIntegrationBackendList(t *testing.T) {
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	backend, server := newServer(t)
+	backend, server := newServer(t, testutil.NewDefaultTestContext(t))
 
 	// Create a few resources before starting the watch
 	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
@@ -337,6 +365,7 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
+
 func TestClientServer(t *testing.T) {
 	if infraDB.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
