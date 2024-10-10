@@ -1,6 +1,5 @@
 import { MutableDataFrame } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import * as api from 'app/features/dashboard/state/initDashboard';
 import { ExplorePanelData } from 'app/types';
 
 import { createEmptyQueryResponse } from '../../state/utils';
@@ -8,11 +7,6 @@ import { createEmptyQueryResponse } from '../../state/utils';
 import { buildDashboardPanelFromExploreState } from './addToDashboard';
 
 describe('buildDashboardPanelFromExploreState', () => {
-  let spy: jest.SpyInstance;
-  beforeAll(() => {
-    spy = jest.spyOn(api, 'setDashboardToFetchFromLocalStorage');
-  });
-
   afterEach(() => {
     jest.resetAllMocks();
   });

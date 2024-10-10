@@ -177,14 +177,14 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
-    addPanelsFromLocalStorage(dashDTO);
-
     const versionBeforeMigration = dashDTO?.dashboard?.version;
 
     // returns null if there was a redirect or error
     if (!dashDTO) {
       return;
     }
+
+    addPanelsFromLocalStorage(dashDTO);
 
     // set initializing state
     dispatch(dashboardInitServices());
