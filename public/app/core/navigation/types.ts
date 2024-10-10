@@ -1,11 +1,12 @@
+import { Location } from 'history';
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
 
 import { UrlQueryMap } from '@grafana/data';
 
-export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> extends RouteComponentProps<T> {
+export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> {
   route: RouteDescriptor;
   queryParams: Q;
+  location: Location;
 }
 
 export type GrafanaRouteComponent<T extends {} = any> = React.ComponentType<GrafanaRouteComponentProps<T>>;
