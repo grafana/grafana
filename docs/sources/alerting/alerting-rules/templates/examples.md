@@ -42,27 +42,27 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-a-label
   reference-labels:
     - pattern: /docs/grafana/
-      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#labels
   reference-values:
     - pattern: /docs/grafana/
-      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
   reference-:
     - pattern: /docs/grafana/
-      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#
   reference-:
     - pattern: /docs/grafana/
-      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#
   language-print:
     - pattern: /docs/grafana/
-      destination: /grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#print
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#print
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#print
 
 ---
