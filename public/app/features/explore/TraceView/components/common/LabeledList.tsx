@@ -23,37 +23,39 @@ import { autoColor } from '../Theme';
 
 const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
   return {
-    LabeledList: css`
-      label: LabeledList;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      ${divider &&
-      `
-        margin-right: -8px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-      `}
-    `,
-    LabeledListItem: css`
-      label: LabeledListItem;
-      display: inline-block;
-      ${divider &&
-      `
-        border-right: 1px solid ${autoColor(theme, '#ddd')};
-        padding: 0 8px;
-      `}
-    `,
-    LabeledListLabel: css`
-      label: LabeledListLabel;
-      color: ${theme.isLight ? '#999' : '#666'};
-      margin-right: 0.25rem;
-    `,
-    LabeledListValue: css`
-      label: LabeledListValue;
-      ${!divider && `margin-right: 0.55rem;`}
-    `,
+    LabeledList: css({
+      label: 'LabeledList',
+      listStyle: 'none',
+      margin: 0,
+      padding: 0,
+      ...(divider
+        ? {
+            marginRight: '-8px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end',
+          }
+        : {}),
+    }),
+    LabeledListItem: css({
+      label: 'LabeledListItem',
+      display: 'inline-block',
+      ...(divider
+        ? {
+            borderRight: `1px solid ${autoColor(theme, '#ddd')}`,
+            padding: '0 8px',
+          }
+        : {}),
+    }),
+    LabeledListLabel: css({
+      label: 'LabeledListLabel',
+      color: theme.isLight ? '#999' : '#666',
+      marginRight: '0.25rem',
+    }),
+    LabeledListValue: css({
+      label: 'LabeledListValue',
+      marginRight: divider ? undefined : '0.55rem',
+    }),
   };
 };
 

@@ -445,6 +445,9 @@
                 "teamId": {
                   "format": "int64",
                   "type": "integer"
+                },
+                "uid": {
+                  "type": "string"
                 }
               },
               "type": "object"
@@ -2621,6 +2624,14 @@
         ],
         "type": "object"
       },
+      "AlertRuleEditorSettings": {
+        "properties": {
+          "simplified_query_and_expressions_section": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "AlertRuleExport": {
         "properties": {
           "annotations": {
@@ -2740,6 +2751,14 @@
           "interval": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AlertRuleMetadata": {
+        "properties": {
+          "editor_settings": {
+            "$ref": "#/components/schemas/AlertRuleEditorSettings"
           }
         },
         "type": "object"
@@ -4026,6 +4045,7 @@
         "type": "object"
       },
       "CorrelationType": {
+        "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
         "type": "string"
       },
       "CounterResetHint": {
@@ -6024,6 +6044,9 @@
           "is_paused": {
             "type": "boolean"
           },
+          "metadata": {
+            "$ref": "#/components/schemas/AlertRuleMetadata"
+          },
           "namespace_uid": {
             "type": "string"
           },
@@ -6111,10 +6134,23 @@
       },
       "GettableRuleGroupConfig": {
         "properties": {
+          "align_evaluation_time_on_interval": {
+            "type": "boolean"
+          },
+          "evaluation_delay": {
+            "type": "string"
+          },
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "name": {
+            "type": "string"
+          },
+          "query_offset": {
             "type": "string"
           },
           "rules": {
@@ -7094,6 +7130,12 @@
           "message": {
             "type": "string"
           },
+          "name": {
+            "type": "string"
+          },
+          "parentName": {
+            "type": "string"
+          },
           "refId": {
             "type": "string"
           },
@@ -7111,7 +7153,13 @@
             "enum": [
               "DASHBOARD",
               "DATASOURCE",
-              "FOLDER"
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING"
             ],
             "type": "string"
           }
@@ -8308,6 +8356,9 @@
           "is_paused": {
             "type": "boolean"
           },
+          "metadata": {
+            "$ref": "#/components/schemas/AlertRuleMetadata"
+          },
           "no_data_state": {
             "enum": [
               "Alerting",
@@ -8346,15 +8397,34 @@
       },
       "PostableRuleGroupConfig": {
         "properties": {
+          "align_evaluation_time_on_interval": {
+            "type": "boolean"
+          },
+          "evaluation_delay": {
+            "type": "string"
+          },
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "name": {
+            "type": "string"
+          },
+          "query_offset": {
             "type": "string"
           },
           "rules": {
             "items": {
               "$ref": "#/components/schemas/PostableExtendedRuleNode"
+            },
+            "type": "array"
+          },
+          "source_tenants": {
+            "items": {
+              "type": "string"
             },
             "type": "array"
           }
@@ -9385,6 +9455,9 @@
           "orientation": {
             "type": "string"
           },
+          "pdfShowTemplateVariables": {
+            "type": "boolean"
+          },
           "timeRange": {
             "$ref": "#/components/schemas/ReportTimeRange"
           }
@@ -9821,10 +9894,23 @@
       },
       "RuleGroupConfigResponse": {
         "properties": {
+          "align_evaluation_time_on_interval": {
+            "type": "boolean"
+          },
+          "evaluation_delay": {
+            "type": "string"
+          },
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "name": {
+            "type": "string"
+          },
+          "query_offset": {
             "type": "string"
           },
           "rules": {
@@ -12072,6 +12158,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "ExternalSessionId": {
+            "format": "int64",
+            "type": "integer"
+          },
           "Id": {
             "format": "int64",
             "type": "integer"
@@ -13235,7 +13325,7 @@
     },
     "/access-control/roles/{roleUID}/assignments": {
       "get": {
-        "description": "Get role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
+        "description": "Get role assignments for the role with the given UID.\nDoes not include role assignments mapped through group attribute sync.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
         "operationId": "getRoleAssignments",
         "parameters": [
           {
@@ -13658,7 +13748,7 @@
         ]
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nRoles mapped through group attribute sync are not impacted.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "operationId": "setUserRoles",
         "parameters": [
           {
@@ -15499,43 +15589,6 @@
         ]
       }
     },
-    "/cloudmigration/migration/run/{runUID}": {
-      "get": {
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "description": "RunUID of a migration run",
-            "in": "path",
-            "name": "runUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/cloudMigrationRunResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get the result of a single migration run.",
-        "tags": [
-          "migrations"
-        ]
-      }
-    },
     "/cloudmigration/migration/{uid}": {
       "delete": {
         "operationId": "deleteSession",
@@ -15600,79 +15653,6 @@
           }
         },
         "summary": "Get a cloud migration session by its uid.",
-        "tags": [
-          "migrations"
-        ]
-      }
-    },
-    "/cloudmigration/migration/{uid}/run": {
-      "get": {
-        "operationId": "getCloudMigrationRunList",
-        "parameters": [
-          {
-            "description": "UID of a migration",
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/cloudMigrationRunListResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get a list of migration runs for a migration.",
-        "tags": [
-          "migrations"
-        ]
-      },
-      "post": {
-        "description": "It returns migrations that has been created.",
-        "operationId": "runCloudMigration",
-        "parameters": [
-          {
-            "description": "UID of a migration",
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/cloudMigrationRunResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Trigger the run of a migration to the Grafana Cloud.",
         "tags": [
           "migrations"
         ]
@@ -15904,6 +15884,14 @@
             "in": "path",
             "name": "uid",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "in": "query",
+            "name": "sort",
             "schema": {
               "type": "string"
             }

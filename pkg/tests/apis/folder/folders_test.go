@@ -3,6 +3,7 @@ package playlist
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -13,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -40,8 +42,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesFolders,
+			featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 		},
+		// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+		// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 	})
 
 	t.Run("Check discovery client", func(t *testing.T) {
@@ -108,8 +112,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			AppModeProduction: true,
 			DisableAnonymous:  true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -124,8 +130,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -140,8 +148,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -156,8 +166,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -172,8 +184,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -188,8 +202,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -204,8 +220,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -223,8 +241,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		})
 
 		// Clear the collection before starting (etcd)
@@ -252,8 +272,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		})
 
 		// Clear the collection before starting (etcd)
@@ -265,6 +287,24 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		require.NoError(t, err)
 
 		doFolderTests(t, helper)
+	})
+
+	t.Run("with dual write (unified storage, mode 1, nested folders)", func(t *testing.T) {
+		checkNestedCreate(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagNestedFolders,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
 	})
 }
 
@@ -296,10 +336,6 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			"apiVersion": "folder.grafana.app/v0alpha1",
 			"kind": "Folder",
 			"metadata": {
-			  "annotations": {
-				"grafana.app/originPath": "${originPath}",
-				"grafana.app/originName": "SQL"
-			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",
 			  "namespace": "default",
@@ -350,6 +386,49 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		}
 	})
 	return helper
+}
+
+func checkNestedCreate(t *testing.T, helper *apis.K8sTestHelper) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	parentPayload := `{
+		"title": "Test/parent",
+		"uid": ""
+		}`
+	parentCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(parentPayload),
+	}, &folder.Folder{})
+	require.NotNil(t, parentCreate.Result)
+	parentUID := parentCreate.Result.UID
+	require.NotEmpty(t, parentUID)
+
+	childPayload := fmt.Sprintf(`{
+			"title": "Test/child",
+			"uid": "",
+			"parentUid": "%s"
+			}`, parentUID)
+	childCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(childPayload),
+	}, &dtos.Folder{})
+	require.NotNil(t, childCreate.Result)
+	childUID := childCreate.Result.UID
+	require.NotEmpty(t, childUID)
+	require.Equal(t, "Test/child", childCreate.Result.Title)
+	require.Equal(t, 1, len(childCreate.Result.Parents))
+
+	parent := childCreate.Result.Parents[0]
+	require.Equal(t, parentUID, parent.UID)
+	require.Equal(t, "Test\\/parent", parent.Title)
+	require.Equal(t, parentCreate.Result.URL, parent.URL)
 }
 
 // This does a get with both k8s and legacy API, and verifies the results are the same

@@ -1,12 +1,19 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
+import { useParams } from 'react-router-dom-v5-compat';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
+import {
+  LocationServiceProvider,
+  config,
+  getPluginLinkExtensions,
+  locationService,
+  setPluginImportUtils,
+} from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
@@ -42,6 +49,11 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({ uid: 'my-dash-uid' }),
+}));
+
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
@@ -49,25 +61,23 @@ function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps
   const defaultRouteProps = getRouteComponentProps();
   const props: Props = {
     ...defaultRouteProps,
-    match: {
-      ...defaultRouteProps.match,
-      params: {
-        uid: 'my-dash-uid',
-      },
-    },
     ...routeProps,
   };
 
   const renderResult = render(
     <TestProvider grafanaContext={context}>
-      <DashboardScenePage {...props} />
+      <LocationServiceProvider service={locationService}>
+        <DashboardScenePage {...props} />
+      </LocationServiceProvider>
     </TestProvider>
   );
 
   const rerender = (newProps: Props) => {
     renderResult.rerender(
       <TestProvider grafanaContext={context}>
-        <DashboardScenePage {...newProps} />
+        <LocationServiceProvider service={locationService}>
+          <DashboardScenePage {...newProps} />
+        </LocationServiceProvider>
       </TestProvider>
     );
   };
@@ -153,7 +163,7 @@ describe('DashboardScenePage', () => {
   it('Can render dashboard', async () => {
     setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
     expect(await screen.findByText('Content A')).toBeInTheDocument();
@@ -165,7 +175,7 @@ describe('DashboardScenePage', () => {
   it('routeReloadCounter should trigger reload', async () => {
     const { rerender, props } = setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 
@@ -186,7 +196,7 @@ describe('DashboardScenePage', () => {
   it('Can inspect panel', async () => {
     setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     expect(screen.queryByText('Inspect: Panel B')).not.toBeInTheDocument();
 
@@ -196,7 +206,7 @@ describe('DashboardScenePage', () => {
 
     const inspectMenuItem = await screen.findAllByText('Inspect');
 
-    act(() => fireEvent.click(inspectMenuItem[0]));
+    await userEvent.click(inspectMenuItem[0]);
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
 
@@ -208,7 +218,7 @@ describe('DashboardScenePage', () => {
   it('Can view panel in fullscreen', async () => {
     setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 
@@ -229,7 +239,7 @@ describe('DashboardScenePage', () => {
     it('shows and hides empty state when panels are added and removed', async () => {
       setup();
 
-      await waitForDashbordToRender();
+      await waitForDashboardToRender();
 
       expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
@@ -262,7 +272,7 @@ describe('DashboardScenePage', () => {
 
     setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     const panelAMenu = await screen.findByLabelText('Menu for panel with title Panel A');
     expect(panelAMenu).toBeInTheDocument();
@@ -273,21 +283,17 @@ describe('DashboardScenePage', () => {
 
   describe('home page', () => {
     it('should render the dashboard when the route is home', async () => {
+      (useParams as jest.Mock).mockReturnValue({});
       setup({
         routeProps: {
           route: {
             ...getRouteComponentProps().route,
             routeName: DashboardRoutes.Home,
           },
-          match: {
-            ...getRouteComponentProps().match,
-            path: '/',
-            params: {},
-          },
         },
       });
 
-      await waitForDashbordToRender();
+      await waitForDashboardToRender();
 
       expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
       expect(await screen.findByText('Content A')).toBeInTheDocument();
@@ -318,7 +324,7 @@ function CustomVizPanel(props: VizProps) {
   return <div>{props.options.content}</div>;
 }
 
-async function waitForDashbordToRender() {
+async function waitForDashboardToRender() {
   expect(await screen.findByText('Last 6 hours')).toBeInTheDocument();
   expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 }

@@ -113,6 +113,11 @@ func TestProcessTicks(t *testing.T) {
 
 	folderWithRuleGroup1 := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(alertRule1.NamespaceUID), alertRule1.RuleGroup)
 
+	t.Run("before 1st tick status should not be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.False(t, ok, "status for a rule should not be present before the scheduler has created it")
+	})
+
 	t.Run("on 1st tick alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
@@ -137,11 +142,24 @@ func TestProcessTicks(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("after 1st tick status for rule should be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
+		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
+		// We are only testing that things were scheduled, not that the rule routine worked internally.
+	})
+
 	// add alert rule under main org with three base intervals
 	alertRule2 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(3*cfg.BaseInterval), gen.WithTitle("rule-2")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule2)
 
 	folderWithRuleGroup2 := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(alertRule2.NamespaceUID), alertRule2.RuleGroup)
+
+	t.Run("before 2nd tick status for rule should not be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule2.GetKey())
+		require.False(t, ok, "status for a rule should not be present before the scheduler has created it")
+	})
 
 	t.Run("on 2nd tick first alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
@@ -184,6 +202,16 @@ func TestProcessTicks(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, keys...)
 	})
 
+	t.Run("after 3rd tick status for both rules should be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
+		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
+		// We are only testing that things were scheduled, not that the rule routine worked internally.
+	})
+
 	t.Run("on 4th tick only one alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
@@ -221,6 +249,16 @@ func TestProcessTicks(t *testing.T) {
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
 		require.NoError(t, err)
+	})
+
+	t.Run("after 5th tick status for both rules should be available regardless of pause state", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
+		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
+		// We are only testing that things were scheduled, not that the rule routine worked internally.
 	})
 
 	t.Run("on 6th tick all alert rule are paused (it still enters evaluation but it is early skipped)", func(t *testing.T) {
@@ -309,6 +347,13 @@ func TestProcessTicks(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("after 8th tick status for deleted rule should not be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.False(t, ok, "status for a rule that was deleted should not be available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+	})
+
 	t.Run("on 9th tick one alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
@@ -337,6 +382,14 @@ func TestProcessTicks(t *testing.T) {
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
 		require.Emptyf(t, updated, "None rules are expected to be updated")
 		assertEvalRun(t, evalAppliedCh, tick, alertRule3.GetKey())
+	})
+	t.Run("after 10th tick status for remaining rules should be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.False(t, ok, "status for a rule that was deleted should not be available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		_, ok = sched.Status(alertRule3.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
 	})
 	t.Run("on 11th tick rule2 should be updated", func(t *testing.T) {
 		newRule2 := models.CopyRule(alertRule2)
@@ -464,6 +517,14 @@ func TestProcessTicks(t *testing.T) {
 		require.Len(t, stopped, len(expectedToBeStopped))
 
 		require.Emptyf(t, updated, "No rules should be updated")
+	})
+	t.Run("after 12th tick no status should be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.False(t, ok, "status for a rule that was deleted should not be available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.False(t, ok, "status for a rule that just evaluated was not available")
+		_, ok = sched.Status(alertRule3.GetKey())
+		require.False(t, ok, "status for a rule that just evaluated was not available")
 	})
 
 	t.Run("scheduled rules should be sorted", func(t *testing.T) {
@@ -713,6 +774,83 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simple_routing_rules")
 			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simple_routing_rules]")
+		})
+	})
+
+	t.Run("simplified_editor_rules metric should reflect the current state", func(t *testing.T) {
+		const firstOrgID int64 = 1
+		const secondOrgID int64 = 2
+
+		alertRuleWithAdvancedSettings := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(false),
+		).GenerateRef()
+
+		// The rule does not have simplified editor enabled, should not be in the metrics
+		t.Run("it should not show metrics", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings})
+
+			expectedMetric := ""
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simplified_editor_rules]")
+		})
+
+		alertRule1 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+		).GenerateRef()
+
+		t.Run("it should show one rule in a single org", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings, alertRule1})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
+								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_query_and_expressions_section"} 1
+				`, alertRule1.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.NoError(t, err)
+		})
+
+		alertRule2 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(secondOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+		).GenerateRef()
+
+		t.Run("it should show two rules in two orgs", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings, alertRule1, alertRule2})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
+								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_query_and_expressions_section"} 1
+								grafana_alerting_simplified_editor_rules{org="%[2]d",setting="simplified_query_and_expressions_section"} 1
+				`, alertRule1.OrgID, alertRule2.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.NoError(t, err)
+		})
+
+		t.Run("after removing one of the rules it should show one present rule and one org", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings, alertRule2})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
+								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%d",setting="simplified_query_and_expressions_section"} 1
+				`, alertRule2.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.NoError(t, err)
+		})
+
+		t.Run("after removing all rules it should not show any metrics", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{})
+
+			expectedMetric := ""
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simplified_editor_rules]")
 		})
 	})
 

@@ -598,6 +598,14 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
 	rule.IntervalSeconds = storedRule.IntervalSeconds
+
+	// Currently metadata contains only editor settings, so we can just copy it.
+	// If we add more fields to metadata, we might need to handle them separately,
+	// and/or merge or update their values.
+	if rule.Metadata == (models.AlertRuleMetadata{}) {
+		rule.Metadata = storedRule.Metadata
+	}
+
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
 		return models.AlertRule{}, err
