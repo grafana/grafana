@@ -644,11 +644,13 @@ export function guessTextBoundingBox(
   headerGroup: HeaderGroup,
   osContext: OffscreenCanvasRenderingContext2D | null,
   lineHeight: number,
-  defaultRowHeight: number
+  defaultRowHeight: number,
+  padding = 0
 ) {
   const width = Number(headerGroup?.width ?? 300);
   const LINE_SCALE_FACTOR = 1.17;
   const LOW_LINE_PAD = 42;
+  const PADDING = padding * 2;
 
   if (osContext !== null && typeof text === 'string') {
     const words = text.split(/\s/);
@@ -662,7 +664,7 @@ export function guessTextBoundingBox(
       const currentWord = words[i];
       let lineWidth = osContext.measureText(currentLine + ' ' + currentWord).width;
 
-      if (lineWidth < width) {
+      if (lineWidth < width - PADDING) {
         currentLine += ' ' + currentWord;
         wordCount++;
       } else {
@@ -695,6 +697,7 @@ export function guessTextBoundingBox(
     } else {
       height = lineNumber * lineHeight + LOW_LINE_PAD;
     }
+    height += PADDING;
 
     return { width, height };
   }
