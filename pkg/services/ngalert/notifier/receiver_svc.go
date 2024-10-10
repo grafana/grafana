@@ -122,6 +122,13 @@ func NewReceiverService(
 // GetReceiver returns a receiver by name.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (*models.Receiver, error) {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.get", trace.WithAttributes(
+		attribute.Int64("query_org_id", q.OrgID),
+		attribute.String("query_name", q.Name),
+		attribute.Bool("query_decrypt", q.Decrypt),
+	))
+	defer span.End()
+
 	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
@@ -130,6 +137,10 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	if err != nil {
 		return nil, err
 	}
+
+	span.AddEvent("Loaded receiver", trace.WithAttributes(
+		attribute.String("concurrency_token", revision.ConcurrencyToken),
+	))
 
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
@@ -166,6 +177,15 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 // GetReceivers returns a list of receivers a user has access to.
 // Receivers can be filtered by name, and secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error) {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.getMany", trace.WithAttributes(
+		attribute.Int64("query_org_id", q.OrgID),
+		attribute.StringSlice("query_names", q.Names),
+		attribute.Int("query_limit", q.Limit),
+		attribute.Int("query_offset", q.Offset),
+		attribute.Bool("query_decrypt", q.Decrypt),
+	))
+	defer span.End()
+
 	uids := make([]string, 0, len(q.Names))
 	for _, name := range q.Names {
 		uids = append(uids, legacy_storage.NameToUid(name))
@@ -176,6 +196,11 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 	postables := revision.GetReceivers(uids)
+
+	span.AddEvent("Loaded receivers", trace.WithAttributes(
+		attribute.String("concurrency_token", revision.ConcurrencyToken),
+		attribute.Int("count", len(postables)),
+	))
 
 	storedProvenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, (&definitions.EmbeddedContactPoint{}).ResourceType())
 	if err != nil {
@@ -194,6 +219,10 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	if err != nil {
 		return nil, err
 	}
+
+	span.AddEvent("Applied access control filter", trace.WithAttributes(
+		attribute.Int("count", len(receivers)),
+	))
 
 	for _, rcv := range filtered {
 		if q.Decrypt {
