@@ -84,9 +84,12 @@ export function doTempoChannelStream(
               throw new Error(error);
           }
 
+          // The order of the frames is important. The metrics frame should always be the last frame.
+          // This is because the metrics frame is used to display the progress of the streaming query
+          // and we would like to display the results first.
           frames = [
-            metricsDataFrame(metrics, frameState, elapsedTime),
             ...formatTraceQLResponse(traces, instanceSettings, query.tableType),
+            metricsDataFrame(metrics, frameState, elapsedTime),
           ];
         }
         return {
