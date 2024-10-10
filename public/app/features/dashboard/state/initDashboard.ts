@@ -310,6 +310,10 @@ function addPanelsFromLocalStorage(model: DashboardDTO) {
       model.dashboard.panels = fromLS.dashboard.panels.concat(model.dashboard.panels);
     }
 
+    if (fromLS.dashboard.time) {
+      model.dashboard.time = fromLS.dashboard.time;
+    }
+
     removeDashboardToFetchFromLocalStorage();
   }
 }

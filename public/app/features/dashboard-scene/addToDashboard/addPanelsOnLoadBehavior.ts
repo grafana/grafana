@@ -1,5 +1,5 @@
 import { SceneTimeRange } from '@grafana/scenes';
-import { default as localStorageStore } from 'app/core/store';
+import store from 'app/core/store';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
   DASHBOARD_FROM_LS_KEY,
@@ -11,9 +11,10 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 
 export function addPanelsOnLoadBehavior(scene: DashboardScene) {
-  const dto = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+  const dto = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
 
   if (dto) {
+    console.log('asd', dto);
     const model = new DashboardModel(dto.dashboard);
 
     for (const panel of model.panels) {
