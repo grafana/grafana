@@ -21,49 +21,33 @@ const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
 import { config } from '@grafana/runtime';
+import * as alertListPanel from 'app/plugins/panel/alertlist/module';
+import * as annoListPanel from 'app/plugins/panel/annolist/module';
+import * as barChartPanel from 'app/plugins/panel/barchart/module';
+import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
+import * as candlestickPanel from 'app/plugins/panel/candlestick/module';
+import * as dashListPanel from 'app/plugins/panel/dashlist/module';
+import * as dataGridPanel from 'app/plugins/panel/datagrid/module';
+import * as debugPanel from 'app/plugins/panel/debug/module';
+import * as flamegraphPanel from 'app/plugins/panel/flamegraph/module';
+import * as gaugePanel from 'app/plugins/panel/gauge/module';
+import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
+import * as histogramPanel from 'app/plugins/panel/histogram/module';
+import * as livePanel from 'app/plugins/panel/live/module';
+import * as logsPanel from 'app/plugins/panel/logs/module';
+import * as newsPanel from 'app/plugins/panel/news/module';
+import * as pieChartPanel from 'app/plugins/panel/piechart/module';
+import * as statPanel from 'app/plugins/panel/stat/module';
+import * as stateTimelinePanel from 'app/plugins/panel/state-timeline/module';
+import * as statusHistoryPanel from 'app/plugins/panel/status-history/module';
+import * as tablePanel from 'app/plugins/panel/table/module';
+import * as textPanel from 'app/plugins/panel/text/module';
+import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
+import * as tracesPanel from 'app/plugins/panel/traces/module';
+import * as trendPanel from 'app/plugins/panel/trend/module';
+import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 
 // Async loaded panels
-const alertListPanel = async () =>
-  await import(/* webpackChunkName: "alertListPanel" */ 'app/plugins/panel/alertlist/module');
-const annoListPanel = async () =>
-  await import(/* webpackChunkName: "annoListPanel" */ 'app/plugins/panel/annolist/module');
-const barChartPanel = async () =>
-  await import(/* webpackChunkName: "barChartPanel" */ 'app/plugins/panel/barchart/module');
-const barGaugePanel = async () =>
-  await import(/* webpackChunkName: "barGaugePanel" */ 'app/plugins/panel/bargauge/module');
-const candlestickPanel = async () =>
-  await import(/* webpackChunkName: "candlestickPanel" */ 'app/plugins/panel/candlestick/module');
-const dashListPanel = async () =>
-  await import(/* webpackChunkName: "dashListPanel" */ 'app/plugins/panel/dashlist/module');
-const dataGridPanel = async () =>
-  await import(/* webpackChunkName: "dataGridPanel" */ 'app/plugins/panel/datagrid/module');
-const debugPanel = async () => await import(/* webpackChunkName: "debugPanel" */ 'app/plugins/panel/debug/module');
-const flamegraphPanel = async () =>
-  await import(/* webpackChunkName: "flamegraphPanel" */ 'app/plugins/panel/flamegraph/module');
-const gaugePanel = async () => await import(/* webpackChunkName: "gaugePanel" */ 'app/plugins/panel/gauge/module');
-const gettingStartedPanel = async () =>
-  await import(/* webpackChunkName: "gettingStartedPanel" */ 'app/plugins/panel/gettingstarted/module');
-const histogramPanel = async () =>
-  await import(/* webpackChunkName: "histogramPanel" */ 'app/plugins/panel/histogram/module');
-const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
-const logsPanel = async () => await import(/* webpackChunkName: "logsPanel" */ 'app/plugins/panel/logs/module');
-const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
-const pieChartPanel = async () =>
-  await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
-const statPanel = async () => await import(/* webpackChunkName: "statPanel" */ 'app/plugins/panel/stat/module');
-const stateTimelinePanel = async () =>
-  await import(/* webpackChunkName: "stateTimelinePanel" */ 'app/plugins/panel/state-timeline/module');
-const statusHistoryPanel = async () =>
-  await import(/* webpackChunkName: "statusHistoryPanel" */ 'app/plugins/panel/status-history/module');
-const tablePanel = async () => await import(/* webpackChunkName: "tablePanel" */ 'app/plugins/panel/table/module');
-const textPanel = async () => await import(/* webpackChunkName: "textPanel" */ 'app/plugins/panel/text/module');
-const timeseriesPanel = async () =>
-  await import(/* webpackChunkName: "timeseriesPanel" */ 'app/plugins/panel/timeseries/module');
-const tracesPanel = async () => await import(/* webpackChunkName: "tracesPanel" */ 'app/plugins/panel/traces/module');
-const trendPanel = async () => await import(/* webpackChunkName: "trendPanel" */ 'app/plugins/panel/trend/module');
-const welcomeBanner = async () =>
-  await import(/* webpackChunkName: "welcomeBanner" */ 'app/plugins/panel/welcome/module');
-
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
 const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');

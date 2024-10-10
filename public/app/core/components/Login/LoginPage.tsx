@@ -16,7 +16,7 @@ import { LoginLayout, InnerBox } from './LoginLayout';
 import { LoginServiceButtons } from './LoginServiceButtons';
 import { UserSignup } from './UserSignup';
 
-const LoginPage = () => {
+export const LoginPage = () => {
   const styles = useStyles2(getStyles);
   document.title = Branding.AppTitle;
 
@@ -78,8 +78,6 @@ const LoginPage = () => {
     </LoginCtrl>
   );
 };
-
-export default LoginPage;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
