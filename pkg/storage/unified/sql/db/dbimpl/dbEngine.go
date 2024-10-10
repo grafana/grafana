@@ -9,11 +9,10 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
-func getEngineMySQL(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, error) {
+func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 	config := mysql.NewConfig()
 	config.User = getter.String("user")
 	// accept the core Grafana jargon of `password` as well, originally Unified
@@ -54,8 +53,6 @@ func getEngineMySQL(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, err
 	}
 
 	// FIXME: get rid of xorm
-	// TODO figure out why wrapping the db driver with hooks causes mysql errors when writing
-	//driverName := sqlstore.WrapDatabaseDriverWithHooks(db.DriverMySQL, tracer)
 	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
@@ -68,7 +65,7 @@ func getEngineMySQL(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, err
 	return engine, nil
 }
 
-func getEnginePostgres(getter confGetter, tracer tracing.Tracer) (*xorm.Engine, error) {
+func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 	dsnKV := map[string]string{
 		"user": getter.String("user"),
 		// accept the core Grafana jargon of `password` as well, originally
