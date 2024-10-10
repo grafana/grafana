@@ -107,10 +107,10 @@ export function addAddHocFilter(query: string, filter: AdHocVariableFilter): str
   let addHocFilter = '';
   switch (filter.operator) {
     case '=~':
-      addHocFilter = `${key}:/${value}/`;
+      addHocFilter = `${key}:"${value}"`;
       break;
     case '!~':
-      addHocFilter = `-${key}:/${value}/`;
+      addHocFilter = `-${key}:"${value}"`;
       break;
     case '>':
       addHocFilter = `${key}:>${value}`;
