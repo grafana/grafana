@@ -2,7 +2,17 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
-type TimeRangeContextValue = {
+type TimeRangeContextValue = TimeRangeContextHookValue & {
+  // These are to be used internally and aren't passed to the users of the hook.
+
+  // Called when picker is mounted to update the picker count.
+  addPicker(): void;
+
+  // Called when picker is unmounted to update the picker count.
+  removePicker(): void;
+};
+
+export type TimeRangeContextHookValue = {
   // If the time range is synced, this is the value that all pickers should show.
   syncedValue?: TimeRange;
 
@@ -14,13 +24,6 @@ type TimeRangeContextValue = {
   syncPossible: boolean;
 
   // Action passed to the picker to interact with the sync state.
-
-  // Called when picker is mounted to update the picker count.
-  addPicker(): void;
-
-  // Called when picker is unmounted to update the picker count.
-  removePicker(): void;
-
   // Sync the time range across all pickers with the provided value. Can be also used just to update a value when
   // already synced.
   sync(value: TimeRange): void;
@@ -49,8 +52,8 @@ export function TimeRangeProvider({ children }: { children: React.ReactNode }) {
     return {
       sync,
       unSync,
-      addPicker: () => setPickersCount(pickersCount + 1),
-      removePicker: () => setPickersCount(pickersCount - 1),
+      addPicker: () => setPickersCount((val) => val + 1),
+      removePicker: () => setPickersCount((val) => val - 1),
       syncPossible: pickersCount > 1,
       synced,
       syncedValue,
@@ -60,14 +63,14 @@ export function TimeRangeProvider({ children }: { children: React.ReactNode }) {
   return <TimeRangeContext.Provider value={contextVal}>{children}</TimeRangeContext.Provider>;
 }
 
-export function useTimeRangeContext(initialSyncValue?: TimeRange) {
+export function useTimeRangeContext(initialSyncValue?: TimeRange): TimeRangeContextHookValue | undefined {
   const context = React.useContext(TimeRangeContext);
 
   // Automatically add and remove the picker when the component mounts and unmounts or if context changes (but that
   // should not happen). We ignore the initialSyncValue to make this value really just an initial value and isn't a
   // prop by which you could control the picker.
   useEffect(() => {
-    // We want the pickers to still function even if they are not used in a context. Not sure this will be a common
+    // We want the pickers to still function even if they are not used in a context. Not sure, this will be a common
     // usecase, but it does not seem like it will cost us anything.
     if (context) {
       context.addPicker();
@@ -79,7 +82,9 @@ export function useTimeRangeContext(initialSyncValue?: TimeRange) {
       };
     }
     return () => {};
-  }, [context]);
+    // We want to do this only on mount and unmount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return useMemo(() => {
     if (!context) {
