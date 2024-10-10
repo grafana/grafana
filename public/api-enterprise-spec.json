@@ -3553,6 +3553,9 @@
             "$ref": "#/definitions/Type"
           }
         },
+        "imageOptions": {
+          "$ref": "#/definitions/ImageOptions"
+        },
         "message": {
           "type": "string"
         },
@@ -3561,6 +3564,9 @@
         },
         "options": {
           "$ref": "#/definitions/ReportOptions"
+        },
+        "pdfOptions": {
+          "$ref": "#/definitions/PDFOptions"
         },
         "recipients": {
           "type": "string"
@@ -4919,6 +4925,19 @@
         }
       }
     },
+    "ImageOptions": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "zoomFactor": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
     "ImportDashboardInput": {
       "type": "object",
       "title": "ImportDashboardInput definition of input parameters when importing a dashboard.",
@@ -5662,6 +5681,21 @@
           "type": "string"
         },
         "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "PDFOptions": {
+      "type": "object",
+      "properties": {
+        "layout": {
+          "type": "string"
+        },
+        "orientation": {
+          "type": "string"
+        },
+        "scaleFactor": {
           "type": "integer",
           "format": "int64"
         }
@@ -6435,6 +6469,7 @@
           }
         },
         "enableCsv": {
+          "description": "Deprecated: use \"csv\" value in formats instead",
           "type": "boolean"
         },
         "enableDashboardUrl": {
@@ -6450,6 +6485,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "imageOptions": {
+          "$ref": "#/definitions/ImageOptions"
+        },
         "message": {
           "type": "string"
         },
@@ -6463,6 +6501,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "pdfOptions": {
+          "$ref": "#/definitions/PDFOptions"
+        },
         "recipients": {
           "type": "string"
         },
@@ -6470,6 +6511,7 @@
           "type": "string"
         },
         "scaleFactor": {
+          "description": "Deprecated: use pdfOptions.scaleFactor instead",
           "type": "integer",
           "format": "int64"
         },
@@ -7270,6 +7312,10 @@
             "type": "integer",
             "format": "int64"
           }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
         },
         "total": {
           "type": "integer",
