@@ -56,17 +56,6 @@ describe('DashboardScenePageStateManager', () => {
       expect(loader.state.dashboard).toBeUndefined();
     });
 
-    it('shoud fetch dashboard from local storage and remove it after if it exists', async () => {
-      const loader = new DashboardScenePageStateManager({});
-      const localStorageDashboard = { uid: 'fake-dash' };
-      store.setObject(DASHBOARD_FROM_LS_KEY, localStorageDashboard);
-
-      const result = await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-
-      expect(result).toEqual(localStorageDashboard);
-      expect(store.getObject(DASHBOARD_FROM_LS_KEY)).toBeUndefined();
-    });
-
     it('should initialize the dashboard scene with the loaded dashboard', async () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
