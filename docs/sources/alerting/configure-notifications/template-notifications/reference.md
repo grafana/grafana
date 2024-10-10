@@ -23,20 +23,20 @@ weight: 400
 
 ### Alert
 
-| Name         | Kind     | Description                                                                          | Example               |
-| ------------ | -------- | ------------------------------------------------------------------------------------ | --------------------- |
-| Status       | `string` | Firing or resolved                                                                   | `{{ .Status }}`       |
-| Labels       | `KV`     | The labels for this alert                                                            | `{{ .Labels }}`       |
-| Annotations  | `KV`     | The annotations for this alert                                                       | `{{ .Annotations }}`  |
-| Values       | `KV`     | The values of all expressions, including Classic Conditions                          | `{{ .Values }}`       |
-| StartsAt     | `Time`   | The time the alert fired                                                             | `{{ .StartsAt }}`     |
-| EndsAt       | `Time`   |                                                                                      | `{{ .EndsAt }}`       |
-| GeneratorURL | `string` | A link to Grafana, or the Alertmanager if using an external Alertmanager             | `{{ .GeneratorURL }}` |
-| SilenceURL   | `string` | A link to silence the alert                                                          | `{{ .SilenceURL }}`   |
-| DashboardURL | `string` | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation          | `{{ .DashboardURL }}` |
-| PanelURL     | `string` | A link to the panel if the alert has a Panel ID annotation                           | `{{ .PanelURL }}`     |
-| Fingerprint  | `string` | A unique string that identifies the alert                                            | `{{ .Fingerprint }}`  |
-| ValueString  | `string` | A string that contains the labels and value of each reduced expression in the alert. | `{{ .ValueString }}`  |
+| Name         | Kind     | Description                                                                         | Example               |
+| ------------ | -------- | ----------------------------------------------------------------------------------- | --------------------- |
+| Status       | `string` | Firing or resolved                                                                  | `{{ .Status }}`       |
+| Labels       | `KV`     | The labels for this alert                                                           | `{{ .Labels }}`       |
+| Annotations  | `KV`     | The annotations for this alert                                                      | `{{ .Annotations }}`  |
+| Values       | `KV`     | The values of all expressions, including Classic Conditions                         | `{{ .Values }}`       |
+| StartsAt     | `Time`   | The time the alert fired                                                            | `{{ .StartsAt }}`     |
+| EndsAt       | `Time`   |                                                                                     | `{{ .EndsAt }}`       |
+| GeneratorURL | `string` | A link to Grafana, or the source of the alert if using an external alert generator  | `{{ .GeneratorURL }}` |
+| SilenceURL   | `string` | A link to silence the alert                                                         | `{{ .SilenceURL }}`   |
+| DashboardURL | `string` | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation         | `{{ .DashboardURL }}` |
+| PanelURL     | `string` | A link to the panel if the alert has a Panel ID annotation                          | `{{ .PanelURL }}`     |
+| Fingerprint  | `string` | A unique string that identifies the alert                                           | `{{ .Fingerprint }}`  |
+| ValueString  | `string` | A string that contains the labels and value of each reduced expression in the alert | `{{ .ValueString }}`  |
 
 ### ExtendedData
 
