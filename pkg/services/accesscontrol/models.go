@@ -589,11 +589,12 @@ type QueryWithOrg struct {
 }
 
 type CheckRequest struct {
-	Namespace string
-	User      string
-	Relation  string
-	Object    string
-	Parent    string
+	Namespace  string
+	User       string
+	Relation   string
+	Object     string
+	ObjectType string
+	Parent     string
 }
 
 type ListObjectsRequest struct {

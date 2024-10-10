@@ -235,31 +235,39 @@ func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckReques
 		TupleKey: key,
 	}
 
-	// Add contextual tuple with parent folder
-	if req.Parent != "" {
-		ns, err := claims.ParseNamespace(req.Namespace)
-		if err != nil {
-			return false, err
-		}
-
-		contextualTuple := &openfgav1.TupleKey{
-			User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
-			Relation: zanzana.RelationParent,
-			Object:   req.Object,
-		}
-
-		in.ContextualTuples = &openfgav1.ContextualTupleKeys{
-			TupleKeys: []*openfgav1.TupleKey{
-				contextualTuple,
-			},
-		}
-	}
-
+	// Check direct access to resource first
 	res, err := a.zclient.Check(ctx, in)
 	if err != nil {
 		return false, err
 	}
-	return res.Allowed, err
+
+	// no need to check folder access
+	if res.Allowed || req.Parent == "" {
+		return res.Allowed, nil
+	}
+
+	// Check access through the parent folder
+	ns, err := claims.ParseNamespace(req.Namespace)
+	if err != nil {
+		return false, err
+	}
+
+	folderKey := &openfgav1.CheckRequestTupleKey{
+		User:     req.User,
+		Relation: zanzana.TranslateToFolderRelation(req.Relation, req.ObjectType),
+		Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
+	}
+
+	folderReq := &openfgav1.CheckRequest{
+		TupleKey: folderKey,
+	}
+
+	folderRes, err := a.zclient.Check(ctx, folderReq)
+	if err != nil {
+		return false, err
+	}
+
+	return folderRes.Allowed, nil
 }
 
 func (a *AccessControl) ListObjects(ctx context.Context, req accesscontrol.ListObjectsRequest) ([]string, error) {
