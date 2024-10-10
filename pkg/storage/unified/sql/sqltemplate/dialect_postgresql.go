@@ -35,3 +35,11 @@ func (p postgresql) Ident(s string) (string, error) {
 
 	return p.standardIdent.Ident(s)
 }
+
+func (postgresql) CurrentEpoch() string {
+	return "(EXTRACT(EPOCH FROM clock_timestamp()) * 1000000)::BIGINT"
+}
+
+func (postgresql) Greatest(m, n string) string {
+	return "GREATEST(" + m + ", " + n + ")"
+}

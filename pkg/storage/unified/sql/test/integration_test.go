@@ -57,7 +57,9 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 }
 
 func TestIntegrationBackendHappyPath(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	if infraDB.IsTestDbSQLite() {
+		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -75,47 +77,48 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 
 	stream, err := backend.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
 	require.NoError(t, err)
+	var rv1, rv2, rv3, rv4, rv5 int64
 
 	t.Run("Add 3 resources", func(t *testing.T) {
-		rv, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+		rv1, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), rv)
+		require.Greater(t, rv1, int64(0))
 
-		rv, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
+		rv2, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), rv)
+		require.Greater(t, rv2, rv1)
 
-		rv, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
+		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
-		require.Equal(t, int64(3), rv)
+		require.Greater(t, rv3, rv2)
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
-		rv, err := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
+		rv4, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
 		require.NoError(t, err)
-		require.Equal(t, int64(4), rv)
+		require.Greater(t, rv4, rv3)
 	})
 
 	t.Run("Delete item1", func(t *testing.T) {
-		rv, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_DELETED)
+		rv5, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_DELETED)
 		require.NoError(t, err)
-		require.Equal(t, int64(5), rv)
+		require.Greater(t, rv5, rv4)
 	})
 
 	t.Run("Read latest item 2", func(t *testing.T) {
 		resp := backend.ReadResource(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
 		require.Nil(t, resp.Error)
-		require.Equal(t, int64(4), resp.ResourceVersion)
+		require.Equal(t, rv4, resp.ResourceVersion)
 		require.Equal(t, "item2 MODIFIED", string(resp.Value))
 	})
 
 	t.Run("Read early version of item2", func(t *testing.T) {
 		resp := backend.ReadResource(ctx, &resource.ReadRequest{
 			Key:             resourceKey("item2"),
-			ResourceVersion: 3, // item2 was created at rv=2 and updated at rv=4
+			ResourceVersion: rv3, // item2 was created at rv2 and updated at rv4
 		})
 		require.Nil(t, resp.Error)
-		require.Equal(t, int64(2), resp.ResourceVersion)
+		require.Equal(t, rv2, resp.ResourceVersion)
 		require.Equal(t, "item2 ADDED", string(resp.Value))
 	})
 
@@ -134,38 +137,40 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		require.Len(t, resp.Items, 2)
 		require.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
 		require.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
-		require.Equal(t, int64(5), resp.ResourceVersion)
+		require.Equal(t, rv5, resp.ResourceVersion)
 	})
 
 	t.Run("Watch events", func(t *testing.T) {
 		event := <-stream
 		require.Equal(t, "item1", event.Key.Name)
-		require.Equal(t, int64(1), event.ResourceVersion)
+		require.Equal(t, rv1, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
 		event = <-stream
 		require.Equal(t, "item2", event.Key.Name)
-		require.Equal(t, int64(2), event.ResourceVersion)
+		require.Equal(t, rv2, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
 
 		event = <-stream
 		require.Equal(t, "item3", event.Key.Name)
-		require.Equal(t, int64(3), event.ResourceVersion)
+		require.Equal(t, rv3, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
 
 		event = <-stream
 		require.Equal(t, "item2", event.Key.Name)
-		require.Equal(t, int64(4), event.ResourceVersion)
+		require.Equal(t, rv4, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_MODIFIED, event.Type)
 
 		event = <-stream
 		require.Equal(t, "item1", event.Key.Name)
-		require.Equal(t, int64(5), event.ResourceVersion)
+		require.Equal(t, rv5, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_DELETED, event.Type)
 	})
 }
 
 func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	if infraDB.IsTestDbSQLite() {
+		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -188,7 +193,9 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 }
 
 func TestIntegrationBackendList(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	if infraDB.IsTestDbSQLite() {
+		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -197,14 +204,23 @@ func TestIntegrationBackendList(t *testing.T) {
 	backend, server := newServer(t)
 
 	// Create a few resources before starting the watch
-	_, _ = writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)    // rv=1
-	_, _ = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)    // rv=2 - will be modified at rv=6
-	_, _ = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)    // rv=3 - will be deleted  at rv=7
-	_, _ = writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)    // rv=4
-	_, _ = writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)    // rv=5
-	_, _ = writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED) // rv=6
-	_, _ = writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)  // rv=7
-	_, _ = writeEvent(ctx, backend, "item6", resource.WatchEvent_ADDED)    // rv=8
+	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	require.Greater(t, rv1, int64(0))
+	rv2, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED) // rv=2 - will be modified at rv=6
+	require.Greater(t, rv2, rv1)
+	rv3, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED) // rv=3 - will be deleted  at rv=7
+	require.Greater(t, rv3, rv2)
+	rv4, _ := writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)
+	require.Greater(t, rv4, rv3)
+	rv5, _ := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)
+	require.Greater(t, rv5, rv4)
+	rv6, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
+	require.Greater(t, rv6, rv5)
+	rv7, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)
+	require.Greater(t, rv7, rv6)
+	rv8, _ := writeEvent(ctx, backend, "item6", resource.WatchEvent_ADDED)
+	require.Greater(t, rv8, rv7)
+
 	t.Run("fetch all latest", func(t *testing.T) {
 		res, err := server.List(ctx, &resource.ListRequest{
 			Options: &resource.ListOptions{
@@ -245,12 +261,12 @@ func TestIntegrationBackendList(t *testing.T) {
 		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
 		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
 		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
-		require.Equal(t, int64(8), continueToken.ResourceVersion)
+		require.Equal(t, rv8, continueToken.ResourceVersion)
 	})
 
 	t.Run("list at revision", func(t *testing.T) {
 		res, err := server.List(ctx, &resource.ListRequest{
-			ResourceVersion: 4,
+			ResourceVersion: rv4,
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Group:    "group",
@@ -271,7 +287,7 @@ func TestIntegrationBackendList(t *testing.T) {
 	t.Run("fetch first page at revision with limit", func(t *testing.T) {
 		res, err := server.List(ctx, &resource.ListRequest{
 			Limit:           3,
-			ResourceVersion: 7,
+			ResourceVersion: rv7,
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Group:    "group",
@@ -290,12 +306,12 @@ func TestIntegrationBackendList(t *testing.T) {
 
 		continueToken, err := sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
-		require.Equal(t, int64(7), continueToken.ResourceVersion)
+		require.Equal(t, rv7, continueToken.ResourceVersion)
 	})
 
 	t.Run("fetch second page at revision", func(t *testing.T) {
 		continueToken := &sql.ContinueToken{
-			ResourceVersion: 8,
+			ResourceVersion: rv8,
 			StartOffset:     2,
 		}
 		res, err := server.List(ctx, &resource.ListRequest{
@@ -317,12 +333,14 @@ func TestIntegrationBackendList(t *testing.T) {
 
 		continueToken, err = sql.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
-		require.Equal(t, int64(8), continueToken.ResourceVersion)
+		require.Equal(t, rv8, continueToken.ResourceVersion)
 		require.Equal(t, int64(4), continueToken.StartOffset)
 	})
 }
 func TestClientServer(t *testing.T) {
-	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	if infraDB.IsTestDbSQLite() {
+		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := infraDB.InitTestDB(t)
 
