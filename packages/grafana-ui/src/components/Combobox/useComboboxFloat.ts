@@ -68,7 +68,7 @@ export const useComboboxFloat = (
       const calculationEnd = Math.min(items.length, endVisibleIndex + INDEX_WIDTH_CALCULATION);
 
       for (let i = startVisibleIndex; i < calculationEnd; i++) {
-        maxLength = Math.max(maxLength, items[i].label.length);
+        maxLength = Math.max(maxLength, items[i].label?.length ?? 0);
       }
 
       setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
@@ -78,7 +78,7 @@ export const useComboboxFloat = (
       const calculationStart = Math.max(0, startVisibleIndex - INDEX_WIDTH_CALCULATION);
 
       for (let i = calculationStart; i < endVisibleIndex; i++) {
-        maxLength = Math.max(maxLength, items[i].label.length);
+        maxLength = Math.max(maxLength, items[i].label?.length ?? 0);
       }
 
       setPopoverWidth(maxLength * WIDTH_MULTIPLIER);

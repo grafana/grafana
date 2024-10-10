@@ -130,6 +130,39 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
   },
 };
 
+const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  const [value, setValue] = useState(args.value);
+  return (
+    <Field label="Test input" description="Input with a few options">
+      <Combobox
+        id="test-combobox"
+        options={async (inputValue) => {
+          return await Promise.resolve([
+            { value: 'async option' },
+            { value: 'inputValue' },
+            { value: 'option2' },
+            { value: 'option3' },
+          ]).then((options) => {
+            return new Promise((resolve) => {
+              setTimeout(() => resolve(options), inputValue.length % 2 === 0 ? 200 : 1000); // Simulate promises that take longer time
+            });
+          });
+        }}
+        value={value}
+        onChange={(val) => {
+          action('onChange')(val);
+          setValue(val?.value || null);
+        }}
+        createCustomValue={args.createCustomValue}
+      />
+    </Field>
+  );
+};
+
+export const Async: StoryObj<PropsAndCustomArgs> = {
+  render: AsyncStory,
+};
+
 export default meta;
 
 function InDevDecorator(Story: React.ElementType) {

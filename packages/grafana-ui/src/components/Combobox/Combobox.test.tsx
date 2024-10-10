@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Combobox, ComboboxOption } from './Combobox';
@@ -102,9 +102,7 @@ describe('Combobox', () => {
       await userEvent.keyboard('{Enter}');
 
       expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
-      expect(onChangeHandler).toHaveBeenCalledWith(
-        expect.objectContaining({ label: 'custom value', value: 'custom value' })
-      );
+      expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'custom value' }));
     });
 
     it('should proivde custom string when all options are numbers', async () => {
@@ -130,6 +128,96 @@ describe('Combobox', () => {
       await userEvent.keyboard('{Enter}'); // Select 1 as the first option
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'string').toBeFalsy();
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'number').toBeTruthy();
+    });
+  });
+
+  describe('async', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    // Assume that most apis only return with the value
+    const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
+
+    it('should allow async options', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input, { delay: null });
+
+      expect(asyncOptions).toHaveBeenCalled();
+      //expect(screen.getByText('Loading')).toBeInTheDocument();
+    });
+
+    it('should allow async options and select value', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input, { delay: null });
+
+      const item = await screen.findByRole('option', { name: 'Option 3' });
+      await userEvent.click(item, { delay: null });
+
+      expect(onChangeHandler).toHaveBeenCalledWith(simpleAsyncOptions[2]);
+      expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
+    });
+
+    it('should ignore late responses', async () => {
+      const asyncOptions = jest.fn(async (searchTerm: string) => {
+        //console.log('called with ', searchTerm);
+        if (searchTerm === 'a') {
+          return new Promise((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 1000));
+        } else if (searchTerm === 'ab') {
+          return new Promise((resolve) => setTimeout(() => resolve([{ value: 'second' }]), 200));
+        }
+        return Promise.resolve([]);
+      });
+      //@ts-ignore
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input, { delay: null }); // First request
+
+      await userEvent.keyboard('ab', { delay: null }); // Second request
+      jest.advanceTimersByTime(210); // Resolve the second request
+
+      let item: HTMLElement | null = await screen.findByRole('option', { name: 'second' });
+      let firstItem = screen.queryByRole('option', { name: 'first' });
+
+      expect(item).toBeInTheDocument();
+      expect(firstItem).not.toBeInTheDocument();
+
+      await act(() => {
+        jest.advanceTimersByTime(1100); // Resolve the first request
+      });
+
+      item = screen.queryByRole('option', { name: 'first' });
+      firstItem = screen.queryByRole('option', { name: 'second' });
+
+      expect(item).not.toBeInTheDocument();
+      expect(firstItem).toBeInTheDocument();
+    });
+
+    it('should allow custom value while async is being run', async () => {
+      const asyncOptions = jest.fn(async () => {
+        return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
+      });
+
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input, { delay: null });
+
+      await act(async () => {
+        await userEvent.type(input, 'fir', { delay: null });
+        jest.advanceTimersByTime(500); // Custom value while typing
+      });
+
+      const customItem = screen.queryByRole('option', { name: 'fir Create custom value' });
+
+      expect(customItem).toBeInTheDocument();
     });
   });
 });
