@@ -1,19 +1,18 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 
-import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '..';
+import { ButtonSelect, Checkbox, FilterInput, IconButton, Label, Stack } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 
 interface Props {
   values: SelectableValue[];
   options: SelectableValue[];
   onChange: (options: SelectableValue[]) => void;
-  caseSensitive?: boolean;
-  showOperators?: boolean;
   searchFilter: string;
   setSearchFilter: (value: string) => void;
   operator: SelectableValue<string>;
@@ -69,19 +68,18 @@ const comparableValue = (value: string): string | number | Date | boolean => {
 export const FilterList = ({
   options,
   values,
-  caseSensitive,
-  showOperators,
   onChange,
   searchFilter,
   setSearchFilter,
   operator,
   setOperator,
 }: Props) => {
+  const [caseSensitive, setCaseSensitive] = useState(false);
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>
       options.filter((option) => {
-        if (!showOperators || !searchFilter || operator.value === REGEX_OPERATOR.value) {
+        if (!searchFilter || operator.value === REGEX_OPERATOR.value) {
           if (option.label === undefined) {
             return false;
           }
@@ -122,7 +120,7 @@ export const FilterList = ({
           return false;
         }
       }),
-    [options, regex, showOperators, operator, searchFilter]
+    [options, regex, operator, searchFilter]
   );
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 
@@ -134,13 +132,6 @@ export const FilterList = ({
   const selectCheckLabel = useMemo(
     () => (selectedItems.length ? `${selectedItems.length} selected` : `Select all`),
     [selectedItems]
-  );
-  const selectCheckDescription = useMemo(
-    () =>
-      items.length !== selectedItems.length
-        ? 'Add all displayed values to the filter'
-        : 'Remove all displayed values from the filter',
-    [items, selectedItems]
   );
 
   const styles = useStyles2(getStyles);
@@ -170,20 +161,19 @@ export const FilterList = ({
   }, [onChange, values, items, selectedItems]);
 
   return (
-    <Stack direction="column" gap={0.25}>
-      {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
-      {showOperators && (
-        <Stack direction="row" gap={0}>
-          <ButtonSelect
-            variant="canvas"
-            options={OPERATORS}
-            onChange={setOperator}
-            value={operator}
-            tooltip={operator.description}
-          />
-          <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
-        </Stack>
-      )}
+    <Stack direction="column" gap={0}>
+      <Stack justifyContent="space-between" alignItems="center">
+        <Label className={styles.label}>
+          <Trans i18nKey="table-filter.select-filter-values">Select values to filter by:</Trans>
+        </Label>
+        <Checkbox
+          value={selectCheckValue}
+          indeterminate={selectCheckIndeterminate}
+          label={selectCheckLabel}
+          onChange={onSelectChanged}
+        />
+      </Stack>
+      <div className={cx(styles.listDivider)} />
       {items.length > 0 ? (
         <>
           <List
@@ -198,19 +188,33 @@ export const FilterList = ({
           </List>
           <Stack direction="column" gap={0.25}>
             <div className={cx(styles.selectDivider)} />
-            <div className={cx(styles.filterListRow)}>
-              <Checkbox
-                value={selectCheckValue}
-                indeterminate={selectCheckIndeterminate}
-                label={selectCheckLabel}
-                description={selectCheckDescription}
-                onChange={onSelectChanged}
+            <Stack direction="row" gap={0}>
+              <FilterInput placeholder="Search values" onChange={setSearchFilter} value={searchFilter} />
+              <ButtonSelect
+                variant="canvas"
+                options={OPERATORS}
+                onChange={setOperator}
+                value={operator}
+                tooltip={operator.description}
               />
-            </div>
+              <IconButton
+                name="text-fields"
+                tooltip="Match case"
+                style={{
+                  color: caseSensitive ? theme.colors.text.link : theme.colors.text.disabled,
+                  marginLeft: theme.spacing(1),
+                }}
+                onClick={() => {
+                  setCaseSensitive((s) => !s);
+                }}
+              />
+            </Stack>
           </Stack>
         </>
       ) : (
-        <Label className={styles.noValuesLabel}>No values</Label>
+        <Label className={styles.noValuesLabel}>
+          <Trans i18nKey="table-filter.no-values">No values</Trans>
+        </Label>
       )}
     </Stack>
   );
@@ -257,9 +261,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'selectDivider',
     width: '100%',
     borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(0.5, 2),
+    padding: theme.spacing(0.5, 0),
   }),
   noValuesLabel: css({
     paddingTop: theme.spacing(1),
+  }),
+  listDivider: css({
+    label: 'listDivider',
+    width: '100%',
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+    marginTop: theme.spacing(0.5),
+  }),
+  label: css({
+    marginBottom: 0,
   }),
 });
