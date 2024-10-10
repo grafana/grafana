@@ -1,5 +1,5 @@
 import { Action, KBarProvider } from 'kbar';
-import { Component, ComponentType } from 'react';
+import { Component, ComponentType, Fragment } from 'react';
 import { Provider } from 'react-redux';
 import { Switch, RouteComponentProps } from 'react-router-dom';
 import { CompatRoute, Navigate } from 'react-router-dom-v5-compat';
@@ -100,6 +100,8 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       bodyRenderHooks,
     };
 
+    const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
+
     return (
       <Provider store={store}>
         <ErrorBoundaryAlert style="page">
@@ -110,7 +112,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
                 <GlobalStyles />
-                <TimeRangeProvider>
+                <MaybeTimeRangeProvider>
                   <SidecarContext.Provider value={sidecarService}>
                     <ExtensionRegistriesProvider registries={app.pluginExtensionsRegistries}>
                       <div className="grafana-app">
@@ -124,7 +126,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                       </div>
                     </ExtensionRegistriesProvider>
                   </SidecarContext.Provider>
-                </TimeRangeProvider>
+                </MaybeTimeRangeProvider>
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
