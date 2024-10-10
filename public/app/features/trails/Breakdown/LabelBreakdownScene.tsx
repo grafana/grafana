@@ -21,7 +21,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -39,7 +39,6 @@ import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { BreakdownSearchReset, BreakdownSearchScene } from './BreakdownSearchScene';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
-import { breakdownPanelOptions } from './panelConfigs';
 import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
@@ -300,6 +299,8 @@ export function buildAllLayout(
     const unit = queryDef.unit;
 
     const vizPanel = PanelBuilders.timeseries()
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
+      .setOption('legend', { showLegend: false })
       .setTitle(option.label!)
       .setData(
         new SceneQueryRunner({
@@ -318,10 +319,6 @@ export function buildAllLayout(
       .setUnit(unit)
       .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
-
-    vizPanel.addActivationHandler(() => {
-      vizPanel.onOptionsChange(breakdownPanelOptions);
-    });
 
     children.push(
       new SceneCSSGridItem({
@@ -382,10 +379,6 @@ function buildNormalLayout(
       isHidden,
     });
 
-    vizPanel.addActivationHandler(() => {
-      vizPanel.onOptionsChange(breakdownPanelOptions);
-    });
-
     return item;
   }
 
@@ -409,7 +402,11 @@ function buildNormalLayout(
         children: [
           new SceneFlexItem({
             minHeight: 300,
-            body: PanelBuilders.timeseries().setTitle('$metric').build(),
+            body: PanelBuilders.timeseries()
+              .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
+              .setOption('legend', { showLegend: false })
+              .setTitle('$metric')
+              .build(),
           }),
         ],
       }),
