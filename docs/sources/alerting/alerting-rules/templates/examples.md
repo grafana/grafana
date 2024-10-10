@@ -30,11 +30,23 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language
     - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language
+  template-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-an-annotation
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-an-annotation
+  template-labels:
+    - pattern: /docs/grafana/
+      destination: /docs/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-a-label
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-a-label
 ---
 
 # Labels and annotations template examples
 
 This document is a compilation of common use cases for templating labels and annotations within Grafana alert rules. Templating allows you to dynamically generate values for both labels and annotations, making your alerts more flexible and context-aware. By leveraging variables from your metrics, you can create more informative and actionable alerts that improve both routing and response times.
+
+> Find step-by-step instructions on [how to template annotations](ref:template-annotations) or [labels](ref:template-labels) for more detailed guidance.
 
 [Annotations](ref:annotations) add extra details to alert instances and are often used to provide helpful information for identifying the issue and guiding the response. A common use case for annotations is to show the specific query value or threshold that triggered the alert, or to highlight important labels like the environment, region, or priority.
 
@@ -82,21 +94,7 @@ If you are using classic conditions, refer to [legacy alerting templates](#legac
 
 ## How to template annotations and labels
 
-Templates are added to annotations and labels in the configuration menu of alert rules.
-
-To template an annotation:
-
-1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
-1. Scroll down to the **Configure notification message** section.
-1. Copy in your template in the corresponding annotation field (`summary`, `description`, `runbook_url`, `custom`)
-
-To template a label:
-
-1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
-1. Scroll down to the **Configure labels and notifications** section.
-1. Click **+ Add labels**
-1. Enter a **key** that indentifies the label.
-1. Copy in your template in the **value** field.
+Templates are added to annotations and labels in the configuration menu of alert rules. See the detailed step by step guide.
 
 ## Common use cases
 

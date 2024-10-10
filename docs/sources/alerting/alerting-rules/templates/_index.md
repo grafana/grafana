@@ -119,6 +119,14 @@ The result of this annotation would now be:
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```
 
+#### How to template an annotation
+
+To template an annotation:
+
+1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
+1. Scroll down to the **Configure notification message** section.
+1. Copy in your template in the corresponding annotation field (`summary`, `description`, `runbook_url`, `custom`)
+
 #### Preview annotation templates
 
 You can template annotations when creating or editing an alert rule.
@@ -164,6 +172,16 @@ In this example, the value of the `severity` label is determined by the query va
 {{% admonition type="note" %}}
 You should avoid displaying query values in labels, as this may create numerous unique alert instances when only one instance is necessary. Instead, use annotations to inform about query values.
 {{% /admonition %}}
+
+#### How to template a label
+
+To template a label:
+
+1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Click **+ Add labels**
+1. Enter a **key** that indentifies the label.
+1. Copy in your template in the **value** field.
 
 #### Preview label templates
 
