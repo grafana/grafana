@@ -242,7 +242,7 @@ func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
 		}
 
 		if tok == "responses" {
-			_, err := dec.Token() // reads the `[` opening bracket
+			_, err := dec.Token() // reads the `[` opening bracket for responses array
 			if err != nil {
 				return err
 			}
@@ -250,23 +250,148 @@ func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
 			for dec.More() {
 				var sr SearchResponse
 
-				err := dec.Decode(&sr)
+				_, err := dec.Token() // reads `{` for each SearchResponse
 				if err != nil {
 					return err
 				}
 
+				for dec.More() {
+					field, err := dec.Token()
+					if err != nil {
+						return err
+					}
+
+					switch field {
+					case "hits":
+						sr.Hits = &SearchResponseHits{}
+						err := processHits(dec, &sr)
+						if err != nil {
+							return err
+						}
+					case "aggregations":
+						err := dec.Decode(&sr.Aggregations)
+						if err != nil {
+							return err
+						}
+					case "error":
+						err := dec.Decode(&sr.Error)
+						if err != nil {
+							return err
+						}
+					case "status":
+						_, err := dec.Token() // read and ignore the status value
+						if err != nil {
+							return err
+						}
+					default:
+						return fmt.Errorf("unknown field: %v", field)
+					}
+				}
+
 				msr.Responses = append(msr.Responses, &sr)
+
+				_, err = dec.Token() // reads `}` closing for each SearchResponse
+				if err != nil {
+					return err
+				}
 			}
 
-			_, err = dec.Token() // reads the `]` closing bracket
+			_, err = dec.Token() // reads the `]` closing bracket for responses array
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	_, err = dec.Token() // reads the `}` closing brace
+	_, err = dec.Token() // reads the `}` closing brace for the entire JSON
 	return err
+}
+
+// processHits processes the hits in the JSON response incrementally.
+func processHits(dec *json.Decoder, sr *SearchResponse) error {
+	tok, err := dec.Token() // reads the `{` opening brace for the hits object
+	if err != nil {
+		return err
+	}
+
+	if tok != json.Delim('{') {
+		return fmt.Errorf("expected '{' for hits object, got %v", tok)
+	}
+
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+
+		switch tok {
+		case "hits":
+			if err := streamHitsArray(dec, sr); err != nil {
+				return err
+			}
+		case "max_score", "total":
+			// we will ignore these fields as they don't seem to be used
+			// in the current implementation
+			var skip interface{}
+			if err := dec.Decode(&skip); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unknown field in hits object: %v", tok)
+		}
+	}
+
+	// read the closing `}` for the hits object
+	_, err = dec.Token()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// streamHitsArray processes the hits array field incrementally.
+func streamHitsArray(dec *json.Decoder, sr *SearchResponse) error {
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+
+	// read the opening `[` for the hits array
+	if tok != json.Delim('[') {
+		return fmt.Errorf("expected '[' for hits array, got %v", tok)
+	}
+
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+
+		if tok != json.Delim('{') {
+			return fmt.Errorf("expected each hit to be an object, got %v", tok)
+		}
+
+		var hit map[string]interface{}
+		err = dec.Decode(&hit)
+		if err != nil {
+			return err
+		}
+
+		sr.Hits.Hits = append(sr.Hits.Hits, hit)
+	}
+
+	tok, err = dec.Token()
+	if err != nil {
+		return err
+	}
+
+	// read the closing `]` for the hits array
+	if tok != json.Delim(']') {
+		return fmt.Errorf("expected ']' for closing hits array, got %v", tok)
+	}
+
+	return nil
 }
 
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {

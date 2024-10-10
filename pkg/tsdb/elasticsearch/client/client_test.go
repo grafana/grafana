@@ -291,8 +291,8 @@ func TestStreamMultiSearchResponse_Success(t *testing.T) {
 	jsonBody := `
     {
         "responses": [
-            { "field1": "value1" },
-            { "field2": "value2" }
+            { "hits": { "hits": [] } },
+            { "hits": { "hits": [] } }
         ]
     }`
 
@@ -312,8 +312,7 @@ func TestStreamMultiSearchResponse_MalformedJSON(t *testing.T) {
 	jsonBody := `
     {
         "responses": [
-            { "field1": "value1" },
-            { "field2": "value2" }
+            { "hits": { "hits": [] } }
     ` // Missing closing braces
 
 	msr := &MultiSearchResponse{}
@@ -328,7 +327,7 @@ func TestStreamMultiSearchResponse_MissingResponses(t *testing.T) {
 	jsonBody := `
     {
         "something_else": [
-            { "field1": "value1" }
+            { "hits": { "hits": [] } }
         ]
     }`
 
@@ -370,11 +369,11 @@ func TestStreamMultiSearchResponse_InvalidJSONStart(t *testing.T) {
 	}
 }
 
-func TestStreamMultiSearchResponse_InvalidSearchResponse(t *testing.T) {
+func TestStreamMultiSearchResponse_InvalidHitsField(t *testing.T) {
 	jsonBody := `
     {
         "responses": [
-            { "field1": 123 } // assuming field1 should be a string
+            { "hits": "invalid_string_value" }
         ]
     }`
 
@@ -382,7 +381,31 @@ func TestStreamMultiSearchResponse_InvalidSearchResponse(t *testing.T) {
 	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
 
 	if err == nil {
-		t.Fatalf("expected an error due to invalid SearchResponse structure, got none")
+		t.Fatalf("expected an error due to invalid 'hits' field, got none")
+	}
+
+	if err.Error() != "expected '{' for hits object, got invalid_string_value" {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestStreamMultiSearchResponse_InvalidHitElement(t *testing.T) {
+	jsonBody := `
+    {
+        "responses": [
+            { "hits": { "hits": ["invalid_element"] } }
+        ]
+    }`
+
+	msr := &MultiSearchResponse{}
+	err := StreamMultiSearchResponse(strings.NewReader(jsonBody), msr)
+
+	if err == nil {
+		t.Fatalf("expected an error due to invalid element in 'hits' array, got none")
+	}
+
+	if err.Error() != "expected each hit to be an object, got invalid_element" {
+		t.Errorf("unexpected error message: %v", err)
 	}
 }
 
