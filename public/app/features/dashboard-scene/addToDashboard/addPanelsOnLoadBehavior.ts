@@ -25,7 +25,11 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
       const newTimeRange = new SceneTimeRange({ from: dto.dashboard.time.from, to: dto.dashboard.time.to });
       const timeRange = scene.state.$timeRange;
       if (timeRange) {
-        timeRange.onTimeRangeChange(newTimeRange.state.value);
+        timeRange.setState({
+          value: newTimeRange.state.value,
+          from: newTimeRange.state.from,
+          to: newTimeRange.state.to,
+        });
       }
     }
   }
