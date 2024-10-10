@@ -7,7 +7,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -440,17 +439,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         >
           {showToolbar && (
             <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
-              <AppChromeUpdate
-                actions={
-                  <DashNav
-                    dashboard={dashboard}
-                    title={dashboard.title}
-                    folderTitle={dashboard.meta.folderTitle}
-                    isFullscreen={!!viewPanel}
-                    kioskMode={kioskMode}
-                    hideTimePicker={dashboard.timepicker.hidden}
-                  />
-                }
+              <DashNav
+                dashboard={dashboard}
+                title={dashboard.title}
+                folderTitle={dashboard.meta.folderTitle}
+                isFullscreen={!!viewPanel}
+                kioskMode={kioskMode}
+                hideTimePicker={dashboard.timepicker.hidden}
               />
             </header>
           )}
