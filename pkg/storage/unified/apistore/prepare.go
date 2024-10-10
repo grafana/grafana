@@ -25,11 +25,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, err
 	}
 	if obj.GetName() == "" {
-		return nil, fmt.Errorf("new object must have a name")
+		return nil, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
 	}
+
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
@@ -43,6 +44,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	obj.SetCreatedBy(user.GetUID())
+	obj.SetResourceVersion("")
 
 	var buf bytes.Buffer
 	err = s.codec.Encode(newObject, &buf)
@@ -71,9 +73,19 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if err != nil {
 		return nil, err
 	}
+
+	if previous.GetUID() == "" {
+		return nil, fmt.Errorf("object is missing UID")
+	}
+
+	if obj.GetName() != previous.GetName() {
+		return nil, fmt.Errorf("name mismatch between existing and updated object")
+	}
+
 	obj.SetUID(previous.GetUID())
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
+	obj.SetResourceVersion("")
 
 	// Read+write will verify that origin format is accurate
 	origin, err := obj.GetOriginInfo()
