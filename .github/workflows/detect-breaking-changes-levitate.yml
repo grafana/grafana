@@ -237,7 +237,7 @@ jobs:
             if [ -f "levitate-mrkdwn.md" ]; then
             {
               echo 'levitate_mrkdwn<<EOF'
-              cat levitate-mrkdwn.md
+              cat levitate-mrkdwn.md | tr '\n' '\n' | sed 's/$/\\n/'
               echo EOF
             } >> "$GITHUB_OUTPUT"
             else
