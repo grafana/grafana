@@ -28,7 +28,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	// Create some instances to write down and then delete.
 	count := 10_003
 	instances := make([]models.AlertInstance, 0, count)
-	keys := make([]models.AlertInstanceKey, 0, count)
+	keys := make([]models.AlertInstanceKeyWithGroup, 0, count)
 	for i := 0; i < count; i++ {
 		labels := models.InstanceLabels{"test": fmt.Sprint(i)}
 		_, labelsHash, _ := labels.StringAndHash()
@@ -38,12 +38,13 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 				RuleUID:    alertRule.UID,
 				LabelsHash: labelsHash,
 			},
+			RuleGroup:     alertRule.RuleGroup,
 			CurrentState:  models.InstanceStateFiring,
 			CurrentReason: string(models.InstanceStateError),
 			Labels:        labels,
 		}
 		instances = append(instances, instance)
-		keys = append(keys, instance.AlertInstanceKey)
+		keys = append(keys, instance.GetKeyWithGroup())
 	}
 
 	b.StartTimer()
@@ -95,6 +96,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    alertRule1.UID,
 				LabelsHash: hash,
 			},
+			RuleGroup:     alertRule1.RuleGroup,
 			CurrentState:  models.InstanceStateFiring,
 			CurrentReason: string(models.InstanceStateError),
 			Labels:        labels,
@@ -125,6 +127,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    alertRule2.UID,
 				LabelsHash: hash,
 			},
+			RuleGroup:    alertRule2.RuleGroup,
 			CurrentState: models.InstanceStateNormal,
 			Labels:       labels,
 		}
@@ -154,6 +157,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    alertRule3.UID,
 				LabelsHash: hash,
 			},
+			RuleGroup:    alertRule3.RuleGroup,
 			CurrentState: models.InstanceStateFiring,
 			Labels:       labels,
 		}
@@ -169,6 +173,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    instance1.RuleUID,
 				LabelsHash: hash,
 			},
+			RuleGroup:    instance1.RuleGroup,
 			CurrentState: models.InstanceStateFiring,
 			Labels:       labels,
 		}
@@ -205,6 +210,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    util.GenerateShortUID(),
 				LabelsHash: util.GenerateShortUID(),
 			},
+			RuleGroup:     util.GenerateShortUID(),
 			CurrentState:  models.InstanceStateNormal,
 			CurrentReason: "",
 			Labels:        labels,
@@ -215,6 +221,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    util.GenerateShortUID(),
 				LabelsHash: util.GenerateShortUID(),
 			},
+			RuleGroup:     util.GenerateShortUID(),
 			CurrentState:  models.InstanceStateNormal,
 			CurrentReason: models.StateReasonError,
 			Labels:        labels,
@@ -260,6 +267,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    alertRule4.UID,
 				LabelsHash: hash,
 			},
+			RuleGroup:    alertRule4.RuleGroup,
 			CurrentState: models.InstanceStateFiring,
 			Labels:       labels,
 		}
@@ -273,6 +281,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    instance1.RuleUID,
 				LabelsHash: instance1.LabelsHash,
 			},
+			RuleGroup:    alertRule4.RuleGroup,
 			CurrentState: models.InstanceStateNormal,
 			Labels:       instance1.Labels,
 		}
@@ -378,6 +387,7 @@ func generateTestAlertInstance(orgID int64, ruleID string) models.AlertInstance 
 			RuleUID:    ruleID,
 			LabelsHash: "abc",
 		},
+		RuleGroup:    util.GenerateShortUID(),
 		CurrentState: models.InstanceStateFiring,
 		Labels: map[string]string{
 			"hello": "world",

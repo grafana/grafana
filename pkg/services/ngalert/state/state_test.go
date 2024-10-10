@@ -11,6 +11,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -792,6 +793,49 @@ func TestGetRuleExtraLabels(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			result := GetRuleExtraLabels(logger, tc.rule, folderTitle, tc.includeFolder)
 			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestStateGetAlertInstanceKeyWithGroup(t *testing.T) {
+	const orgID = 1
+	const ruleUID = "rule-uid"
+	const ruleGroup = "rule-group"
+
+	labels := data.Labels(map[string]string{"label-1": "value-1", "label-2": "value-2"})
+	instanceLabels := ngmodels.InstanceLabels(labels)
+	_, labelsHash, err := instanceLabels.StringAndHash()
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name        string
+		state       State
+		expectedKey ngmodels.AlertInstanceKeyWithGroup
+	}{
+		{
+			name: "should return key with group",
+			state: State{
+				AlertRuleUID:   ruleUID,
+				OrgID:          orgID,
+				Labels:         labels,
+				AlertRuleGroup: ruleGroup,
+			},
+			expectedKey: ngmodels.AlertInstanceKeyWithGroup{
+				AlertInstanceKey: ngmodels.AlertInstanceKey{
+					RuleOrgID:  orgID,
+					RuleUID:    ruleUID,
+					LabelsHash: labelsHash,
+				},
+				RuleGroup: ruleGroup,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			key, err := tc.state.GetAlertInstanceKeyWithGroup()
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedKey, key)
 		})
 	}
 }

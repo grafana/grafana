@@ -108,7 +108,7 @@ func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 }
 
 // DeleteAlertInstances deletes instances with the provided keys in a single transaction.
-func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {
+func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKeyWithGroup) error {
 	if len(keys) == 0 {
 		return nil
 	}
@@ -206,7 +206,7 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 	return err
 }
 
-func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
 		return err

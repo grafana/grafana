@@ -199,6 +199,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 	// expected value for a Normal state during state transition.
 	newState := State{
 		AlertRuleUID:       alertRule.UID,
+		AlertRuleGroup:     alertRule.RuleGroup,
 		OrgID:              alertRule.OrgID,
 		CacheID:            cacheID,
 		Labels:             lbs,
@@ -363,6 +364,7 @@ func (c *cache) asInstances(skipNormalState bool) []ngModels.AlertInstance {
 				}
 				states = append(states, ngModels.AlertInstance{
 					AlertInstanceKey:  key,
+					RuleGroup:         v2.AlertRuleGroup,
 					Labels:            ngModels.InstanceLabels(v2.Labels),
 					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
 					CurrentReason:     v2.StateReason,

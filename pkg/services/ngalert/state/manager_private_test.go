@@ -128,9 +128,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 	t3 := tN(3)
 
 	baseRule := &ngmodels.AlertRule{
-		OrgID: 1,
-		Title: "test_title",
-		UID:   "test_alert_rule_uid",
+		OrgID:     1,
+		Title:     "test_title",
+		UID:       "test_alert_rule_uid",
+		RuleGroup: "test_rule_group",
 		Data: []ngmodels.AlertQuery{{
 			RefID:         "A",
 			DatasourceUID: "datasource_uid_1",
@@ -242,6 +243,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		}
 		if s.OrgID == 0 {
 			s.OrgID = r.OrgID
+		}
+		if s.AlertRuleGroup == "" {
+			s.AlertRuleGroup = r.RuleGroup
 		}
 		if s.Annotations == nil {
 			s.Annotations = r.Annotations

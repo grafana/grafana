@@ -469,6 +469,11 @@ type AlertRuleKeyWithId struct {
 	ID int64
 }
 
+type AlertRuleKeyWithGroup struct {
+	AlertRuleKey
+	RuleGroup string
+}
+
 // AlertRuleGroupKey is the identifier of a group of alerts
 type AlertRuleGroupKey struct {
 	OrgID        int64
@@ -515,6 +520,11 @@ func (s AlertRuleGroupKeySorter) Less(i, j int) bool { return s.by(&s.keys[i], &
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
+}
+
+// GetKeyWithGroup returns the alert definitions identifier with the group
+func (alertRule *AlertRule) GetKeyWithGroup() AlertRuleKeyWithGroup {
+	return AlertRuleKeyWithGroup{AlertRuleKey: alertRule.GetKey(), RuleGroup: alertRule.RuleGroup}
 }
 
 // GetGroupKey returns the identifier of a group the rule belongs to
