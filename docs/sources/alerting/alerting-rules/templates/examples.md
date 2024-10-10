@@ -32,12 +32,12 @@ refs:
     - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language
   template-annotations:
     - pattern: /docs/grafana/
-      destination: /docs/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-an-annotation
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-an-annotation
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-an-annotation
   template-labels:
     - pattern: /docs/grafana/
-      destination: /docs/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-a-label
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-a-label
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-a-label
 ---
