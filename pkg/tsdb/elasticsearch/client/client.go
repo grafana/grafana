@@ -278,13 +278,12 @@ func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
 						if err != nil {
 							return err
 						}
-					case "status":
-						_, err := dec.Token() // read and ignore the status value
+					default:
+						// skip over unknown fields
+						err := skipUnknownField(dec)
 						if err != nil {
 							return err
 						}
-					default:
-						return fmt.Errorf("unknown field: %v", field)
 					}
 				}
 
@@ -297,6 +296,11 @@ func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
 			}
 
 			_, err = dec.Token() // reads the `]` closing bracket for responses array
+			if err != nil {
+				return err
+			}
+		} else {
+			err := skipUnknownField(dec)
 			if err != nil {
 				return err
 			}
@@ -324,20 +328,16 @@ func processHits(dec *json.Decoder, sr *SearchResponse) error {
 			return err
 		}
 
-		switch tok {
-		case "hits":
+		if tok == "hits" {
 			if err := streamHitsArray(dec, sr); err != nil {
 				return err
 			}
-		case "max_score", "total":
-			// we will ignore these fields as they don't seem to be used
-			// in the current implementation
-			var skip interface{}
-			if err := dec.Decode(&skip); err != nil {
+		} else {
+			// ignore these fields as they are not used in the current implementation
+			err := skipUnknownField(dec)
+			if err != nil {
 				return err
 			}
-		default:
-			return fmt.Errorf("unknown field in hits object: %v", tok)
 		}
 	}
 
@@ -363,15 +363,6 @@ func streamHitsArray(dec *json.Decoder, sr *SearchResponse) error {
 	}
 
 	for dec.More() {
-		tok, err := dec.Token()
-		if err != nil {
-			return err
-		}
-
-		if tok != json.Delim('{') {
-			return fmt.Errorf("expected each hit to be an object, got %v", tok)
-		}
-
 		var hit map[string]interface{}
 		err = dec.Decode(&hit)
 		if err != nil {
@@ -381,17 +372,49 @@ func streamHitsArray(dec *json.Decoder, sr *SearchResponse) error {
 		sr.Hits.Hits = append(sr.Hits.Hits, hit)
 	}
 
+	// read the closing bracket `]` for the hits array
 	tok, err = dec.Token()
 	if err != nil {
 		return err
 	}
 
-	// read the closing `]` for the hits array
 	if tok != json.Delim(']') {
 		return fmt.Errorf("expected ']' for closing hits array, got %v", tok)
 	}
 
 	return nil
+}
+
+// skipUnknownField skips over an unknown JSON field's value in the stream.
+func skipUnknownField(dec *json.Decoder) error {
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+
+	switch tok {
+	case json.Delim('{'):
+		// skip everything inside the object until we reach the closing `}`
+		for dec.More() {
+			if err := skipUnknownField(dec); err != nil {
+				return err
+			}
+		}
+		_, err = dec.Token() // read the closing `}`
+		return err
+	case json.Delim('['):
+		// skip everything inside the array until we reach the closing `]`
+		for dec.More() {
+			if err := skipUnknownField(dec); err != nil {
+				return err
+			}
+		}
+		_, err = dec.Token() // read the closing `]`
+		return err
+	default:
+		// no further action needed for primitives
+		return nil
+	}
 }
 
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {

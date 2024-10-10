@@ -404,8 +404,9 @@ func TestStreamMultiSearchResponse_InvalidHitElement(t *testing.T) {
 		t.Fatalf("expected an error due to invalid element in 'hits' array, got none")
 	}
 
-	if err.Error() != "expected each hit to be an object, got invalid_element" {
-		t.Errorf("unexpected error message: %v", err)
+	expected := "json: cannot unmarshal string into Go value of type map[string]interface {}"
+	if err.Error() != expected {
+		t.Errorf("unexpected error message: expected %v, got %v", expected, err)
 	}
 }
 
