@@ -14,6 +14,7 @@ import {
   QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
+  dateTimeFormat,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -183,7 +184,7 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
 
     return {
       line: log.entry,
-      timestamp: log.timeEpochNs,
+      timestamp: dateTimeFormat(log.timeEpochMs, { defaultWithMS: true }),
       fields: {
         ...fields,
         ...log.labels,
