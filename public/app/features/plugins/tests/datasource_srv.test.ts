@@ -1,11 +1,16 @@
+import { Observable, of } from 'rxjs';
+
 import {
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePlugin,
   DataSourcePluginMeta,
   ScopedVars,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { RuntimeDataSource, TemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
@@ -48,6 +53,12 @@ const templateSrv = {
 
 class TestDataSource {
   constructor(public instanceSettings: DataSourceInstanceSettings) {}
+}
+
+class TestRuntimeDataSource extends RuntimeDataSource {
+  query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
+    return of({ data: [] });
+  }
 }
 
 jest.mock('../plugin_loader', () => ({
@@ -138,6 +149,14 @@ describe('datasource_srv', () => {
   };
 
   describe('Given a list of data sources', () => {
+    const runtimeDataSource = new TestRuntimeDataSource('grafana-runtime-datasource', 'uuid-runtime-ds');
+
+    beforeAll(() => {
+      dataSourceSrv.registerRuntimeDataSource({
+        dataSource: runtimeDataSource,
+      });
+    });
+
     beforeEach(() => {
       dataSourceSrv.init(dataSourceInit as any, 'BBB');
     });
@@ -250,6 +269,16 @@ describe('datasource_srv', () => {
         expect(exprWithName?.name).toBe(ExpressionDatasourceRef.name);
         expect(exprWithName?.uid).toBe(ExpressionDatasourceRef.uid);
         expect(exprWithName?.type).toBe(ExpressionDatasourceRef.type);
+      });
+
+      it('should return settings for runtime datasource when called with uid', () => {
+        const settings = dataSourceSrv.getInstanceSettings(runtimeDataSource.uid);
+        expect(settings).toBe(runtimeDataSource.instanceSettings);
+      });
+
+      it('should return settings for runtime datasource when called with name', () => {
+        const settings = dataSourceSrv.getInstanceSettings(runtimeDataSource.name);
+        expect(settings).toBe(runtimeDataSource.instanceSettings);
       });
     });
 
@@ -415,20 +444,50 @@ describe('datasource_srv', () => {
       `);
     });
 
-    it('Should reload the datasource', async () => {
-      // arrange
-      getBackendSrvGetMock.mockReturnValueOnce({
-        datasources: {
-          ...dataSourceInit,
-        },
-        defaultDatasource: 'aaa',
+    describe('when calling reload', () => {
+      it('should reload the datasource list', async () => {
+        // arrange
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: {
+            ...dataSourceInit,
+          },
+          defaultDatasource: 'aaa',
+        });
+        const initMock = jest.spyOn(dataSourceSrv, 'init').mockImplementation(() => {});
+        // act
+        await dataSourceSrv.reload();
+        // assert
+        expect(getBackendSrvGetMock).toHaveBeenCalledWith('/api/frontend/settings');
+        expect(initMock).toHaveBeenCalledWith(dataSourceInit, 'aaa');
       });
-      const initMock = jest.spyOn(dataSourceSrv, 'init').mockImplementation(() => {});
-      // act
-      await dataSourceSrv.reload();
-      // assert
-      expect(getBackendSrvGetMock).toHaveBeenCalledWith('/api/frontend/settings');
-      expect(initMock).toHaveBeenCalledWith(dataSourceInit, 'aaa');
+
+      it('should still be possible to get registered runtime data source', async () => {
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: {
+            ...dataSourceInit,
+          },
+          defaultDatasource: 'aaa',
+        });
+
+        await dataSourceSrv.reload();
+        const ds = await dataSourceSrv.get(runtimeDataSource.getRef());
+        expect(ds).toBe(runtimeDataSource);
+      });
+    });
+
+    describe('when registering runtime datasources', () => {
+      it('should have registered a runtime datasource', async () => {
+        const ds = await dataSourceSrv.get(runtimeDataSource.getRef());
+        expect(ds).toBe(runtimeDataSource);
+      });
+
+      it('should throw when trying to re-register a runtime datasource', () => {
+        expect(() =>
+          dataSourceSrv.registerRuntimeDataSource({
+            dataSource: runtimeDataSource,
+          })
+        ).toThrow();
+      });
     });
   });
 
