@@ -93,6 +93,7 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
             <Input
               value={query.limit || ''}
               type="number"
+              placeholder="20"
               onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
                 let newValue = parseInt(event.currentTarget.value, 10);
                 newValue = isNaN(newValue) ? 0 : newValue;
