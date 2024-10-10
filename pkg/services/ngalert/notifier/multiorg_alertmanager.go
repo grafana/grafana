@@ -153,7 +153,11 @@ func NewMultiOrgAlertmanager(
 
 	// Set up the default per tenant Alertmanager factory.
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
-		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
+		reg, exist := moa.metrics.GetOrCreateOrgRegistry(orgID)
+		if exist {
+			return nil, fmt.Errorf("registry is already registered for org - %d, don't register again", orgID)
+		}
+		m := metrics.NewAlertmanagerMetrics(reg)
 		stateStore := NewFileStore(orgID, kvStore)
 		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting))
 	}
