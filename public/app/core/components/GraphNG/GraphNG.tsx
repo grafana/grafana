@@ -175,6 +175,9 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
 
       if (withConfig) {
         config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange);
+        config.addHook('draw', () => {
+          performance.mark('uPlot.draw done');
+        });
         pluginLog('GraphNG', false, 'config prepared', config);
       }
 
