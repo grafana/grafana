@@ -3,7 +3,7 @@ import { ReactElement, useEffect, useState } from 'react';
 import { Controller, DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -32,7 +32,7 @@ interface SaveToExistingDashboard extends SaveTargetDTO {
 
 type FormDTO = SaveToNewDashboardDTO | SaveToExistingDashboard;
 
-interface Props<TOptions = undefined> {
+export interface Props<TOptions = undefined> {
   onClose: () => void;
   buildPanel: (options: TOptions) => Panel;
   timeRange?: TimeRange;
@@ -78,7 +78,7 @@ export function AddToDashboardForm<TOptions = undefined>({
 
   const saveTarget = saveTargets.length > 1 ? watch('saveTarget') : saveTargets[0].value;
 
-  const onSubmit = async (openInNewTab: boolean, data: FormDTO) => {
+  const onSubmit = (openInNewTab: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
 
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
@@ -90,7 +90,7 @@ export function AddToDashboardForm<TOptions = undefined>({
       queries: panel.targets,
     });
 
-    const error = await addToDashboard({ dashboardUid, panel, openInNewTab, timeRange });
+    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange });
     if (error) {
       setSubmissionError(error);
       return;

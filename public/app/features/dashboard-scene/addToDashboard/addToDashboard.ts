@@ -30,12 +30,12 @@ interface AddPanelToDashboardOptions {
   timeRange?: TimeRange;
 }
 
-export async function addToDashboard({
+export function addToDashboard({
   panel,
   dashboardUid,
   openInNewTab,
   timeRange,
-}: AddPanelToDashboardOptions): Promise<SubmissionError | undefined> {
+}: AddPanelToDashboardOptions): SubmissionError | undefined {
   let dto: DashboardDTO = {
     meta: {},
     dashboard: {
@@ -65,21 +65,22 @@ export async function addToDashboard({
 
   const dashboardURL = getDashboardURL(dashboardUid);
 
-  if (!openInNewTab) {
-    locationService.push(locationUtil.stripBaseFromUrl(dashboardURL));
+  if (openInNewTab) {
+    const didTabOpen = !!global.open(config.appUrl + dashboardURL, '_blank');
+
+    if (!didTabOpen) {
+      removeDashboardToFetchFromLocalStorage();
+      return {
+        error: GenericError.NAVIGATION,
+        message: 'Could not navigate to the selected dashboard. Please try again.',
+      };
+    }
+
     return;
   }
 
-  const didTabOpen = !!global.open(config.appUrl + dashboardURL, '_blank');
-  if (!didTabOpen) {
-    removeDashboardToFetchFromLocalStorage();
-    return {
-      error: GenericError.NAVIGATION,
-      message: 'Could not navigate to the selected dashboard. Please try again.',
-    };
-  }
-
-  return undefined;
+  locationService.push(locationUtil.stripBaseFromUrl(dashboardURL));
+  return;
 }
 
 function getDashboardURL(dashboardUid?: string) {

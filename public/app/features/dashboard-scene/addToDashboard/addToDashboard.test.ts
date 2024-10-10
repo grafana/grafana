@@ -1,5 +1,4 @@
-import { MutableDataFrame } from '@grafana/data';
-import { DataQuery, defaultDashboard } from '@grafana/schema';
+import { dateTime } from '@grafana/data';
 import * as api from 'app/features/dashboard/state/initDashboard';
 
 import { addToDashboard } from './addToDashboard';
@@ -24,29 +23,19 @@ describe('addToDashboard', () => {
       },
     });
 
-    expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dashboard: expect.objectContaining({
-          time: expect.objectContaining({ from: 'now-10h', to: 'now' }),
-        }),
-      })
-    );
+    const panel = spy.mock.calls[0][0].dashboard.panels[0];
+    expect(panel.type).toEqual('table');
+    expect(panel.options).toEqual({ showHeader: true });
   });
 
-  // it('Correct time range is used', async () => {
-  //   await setDashboardInLocalStorage({
-  //     queries: [],
-  //     queryResponse: createEmptyQueryResponse(),
-  //     datasource: { type: 'loki', uid: 'someUid' },
-  //     time: { from: 'now-10h', to: 'now' },
-  //   });
+  it('Correct time range is used', async () => {
+    await addToDashboard({
+      panel: { type: 'table' },
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-5m', to: 'now' } },
+    });
 
-  //   expect(spy).toHaveBeenCalledWith(
-  //     expect.objectContaining({
-  //       dashboard: expect.objectContaining({
-  //         time: expect.objectContaining({ from: 'now-10h', to: 'now' }),
-  //       }),
-  //     })
-  //   );
-  // });
+    const dashboard = spy.mock.calls[0][0].dashboard;
+    expect(dashboard.time.from).toEqual('now-5m');
+    expect(dashboard.time.to).toEqual('now');
+  });
 });

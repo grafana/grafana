@@ -31,10 +31,9 @@ describe('buildDashboardPanelFromExploreState', () => {
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
 
     const result = buildDashboardPanelFromExploreState({ queries, queryResponse: createEmptyQueryResponse() });
-
-    expect(result.targets).toEqual(queries),
+    expect(result.targets).toEqual(queries);
   });
-  
+
   describe('Setting visualization type', () => {
     describe('Defaults to table', () => {
       const cases: Array<[string, DataQuery[], ExplorePanelData]> = [
@@ -93,7 +92,7 @@ describe('buildDashboardPanelFromExploreState', () => {
         };
 
         const result = buildDashboardPanelFromExploreState({ queries, queryResponse });
-        expect(result.type).toBe('someCustomPluginId'); 
+        expect(result.type).toBe('someCustomPluginId');
       });
     });
   });
