@@ -23,7 +23,7 @@ import (
  */
 var (
 	unavailableGaugeDesc = metrics.NewDesc(
-		"rand_aggregator_unavailable_apiservice",
+		"st_aggregator_unavailable_apiservice",
 		"Gauge of Grafana APIServices which are marked as unavailable broken down by APIService name.",
 		[]string{"name"},
 		nil,
@@ -42,9 +42,11 @@ func newAvailabilityMetrics() *Metrics {
 	return &Metrics{
 		unavailableCounter: metrics.NewCounterVec(
 			&metrics.CounterOpts{
-				// These metrics are registered in the main kube-aggregator package as well, prefixing with grafana to avoid
+				// These metrics are registered in the main kube-aggregator package as well, prefixing with single-tenant (ST) to avoid
 				// "duplicate metrics collector registration attempted" in https://github.com/prometheus/client_golang
-				Name:           "rand_aggregator_unavailable_apiservice_total",
+				// a more descriptive prefix is already added for apiserver metrics during scraping in cloud and didn't want
+				// to double a word by using a word such as "grafana" here
+				Name:           "st_aggregator_unavailable_apiservice_total",
 				Help:           "Counter of Grafana APIServices which are marked as unavailable broken down by APIService name and reason.",
 				StabilityLevel: metrics.ALPHA,
 			},
