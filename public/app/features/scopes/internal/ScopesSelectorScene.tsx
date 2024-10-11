@@ -22,7 +22,12 @@ import { ScopesInput } from './ScopesInput';
 import { ScopesTree } from './ScopesTree';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
-import { getBasicScope, getScopeNamesFromSelectedScopes, getTreeScopesFromSelectedScopes } from './utils';
+import {
+  getBasicScope,
+  getScopeNamesFromSelectedScopes,
+  getScopesAndTreeScopesWithPaths,
+  getTreeScopesFromSelectedScopes,
+} from './utils';
 
 export interface ScopesSelectorSceneState extends SceneObjectState {
   dashboards: SceneObjectRef<ScopesDashboardsScene> | null;
@@ -126,7 +131,14 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
           })
         )
         .subscribe((childNodes) => {
-          const persistedNodes = this.state.treeScopes
+          const [scopes, treeScopes] = getScopesAndTreeScopesWithPaths(
+            this.state.scopes,
+            this.state.treeScopes,
+            path,
+            childNodes
+          );
+
+          const persistedNodes = treeScopes
             .map(({ path }) => path[path.length - 1])
             .filter((nodeName) => nodeName in currentNode.nodes && !(nodeName in childNodes))
             .reduce<NodesMap>((acc, nodeName) => {
@@ -140,7 +152,7 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
 
           currentNode.nodes = { ...persistedNodes, ...childNodes };
 
-          this.setState({ nodes });
+          this.setState({ nodes, scopes, treeScopes });
 
           this.nodesFetchingSub?.unsubscribe();
         });

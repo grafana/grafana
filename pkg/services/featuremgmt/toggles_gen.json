@@ -808,17 +808,18 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1719321877748",
+        "resourceVersion": "1728397491294",
         "creationTimestamp": "2024-05-16T17:36:26Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-06-25 13:24:37.748284 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-08 14:24:51.294668 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Enables deleted dashboard restore feature (backend only)",
+        "description": "Enables deleted dashboard restore feature",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true
+        "hideFromAdminPage": true,
+        "expression": "false"
       }
     },
     {
@@ -826,6 +827,7 @@
         "name": "dashboardRestoreUI",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-06-25T14:43:13Z",
+        "deletionTimestamp": "2024-10-08T14:24:51Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2165,6 +2167,18 @@
     },
     {
       "metadata": {
+        "name": "onPremToCloudMigrationsAlerts",
+        "resourceVersion": "1728048163201",
+        "creationTimestamp": "2024-10-04T13:22:43Z"
+      },
+      "spec": {
+        "description": "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "openSearchBackendFlowEnabled",
         "resourceVersion": "1724141158995",
         "creationTimestamp": "2024-06-17T09:41:50Z",
@@ -2341,14 +2355,16 @@
     {
       "metadata": {
         "name": "pluginsFrontendSandbox",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-06-05T08:51:36Z"
+        "resourceVersion": "1728388793917",
+        "creationTimestamp": "2023-06-05T08:51:36Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-08 11:59:53.917243 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the plugins frontend sandbox",
         "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true
+        "codeowner": "@grafana/plugins-platform-backend"
       }
     },
     {
@@ -3071,6 +3087,20 @@
         "description": "Use session storage for handling the redirection after login",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageSearch",
+        "resourceVersion": "1726771421439",
+        "creationTimestamp": "2024-09-19T18:43:41Z"
+      },
+      "spec": {
+        "description": "Enable unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {

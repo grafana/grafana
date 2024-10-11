@@ -122,15 +122,22 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
+			reason := metav1.StatusReasonInvalid
+			message := err.Error()
+
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				reason = metav1.StatusReasonNotFound
 				// TODO, can we wrap the error somehow?
-				err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
-					Status:  metav1.StatusFailure,
-					Code:    http.StatusBadRequest, // the URL is found, but includes bad requests
-					Reason:  metav1.StatusReasonNotFound,
-					Message: "datasource not found",
-				}}
+				message = "datasource not found"
 			}
+
+			err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusBadRequest,
+				Reason:  reason,
+				Message: message,
+			}}
+
 			responder.Error(err)
 			return
 		}
