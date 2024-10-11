@@ -27,14 +27,14 @@ import (
 	zlogger "github.com/grafana/grafana/pkg/services/authz/zanzana/logger"
 )
 
-func New(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
+func New(cfg *setting.ZanzanaSettings, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
-		server.WithCheckQueryCacheEnabled(cfg.Zanzana.CheckQueryCache),
-		server.WithCheckQueryCacheTTL(cfg.Zanzana.CheckQueryCacheTTL),
-		server.WithListObjectsMaxResults(cfg.Zanzana.ListObjectsMaxResults),
-		server.WithListObjectsDeadline(cfg.Zanzana.ListObjectsDeadline),
+		server.WithCheckQueryCacheEnabled(cfg.CheckQueryCache),
+		server.WithCheckQueryCacheTTL(cfg.CheckQueryCacheTTL),
+		server.WithListObjectsMaxResults(cfg.ListObjectsMaxResults),
+		server.WithListObjectsDeadline(cfg.ListObjectsDeadline),
 	}
 
 	// FIXME(kalleep): Interceptors

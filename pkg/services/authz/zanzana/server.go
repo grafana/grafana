@@ -12,7 +12,7 @@ import (
 )
 
 func NewServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
-	return zserver.New(cfg, store, logger)
+	return zserver.New(&cfg.Zanzana, store, logger)
 }
 
 func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
