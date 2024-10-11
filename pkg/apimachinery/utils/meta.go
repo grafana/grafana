@@ -34,6 +34,11 @@ const AnnoKeyOriginPath = "grafana.app/originPath"
 const AnnoKeyOriginHash = "grafana.app/originHash"
 const AnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
 
+// #TODO revisit keeping these folder-specific annotations once we have complete support for mode 1
+
+const AnnoKeyFullPath = "grafana.app/fullPath"
+const AnnoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
+
 // ResourceOriginInfo is saved in annotations.  This is used to identify where the resource came from
 // This object can model the same data as our existing provisioning table or a more general git sync
 type ResourceOriginInfo struct {
@@ -100,6 +105,11 @@ type GrafanaMetaAccessor interface {
 	// Used by the generic strategy to keep the status value unchanged on an update
 	// NOTE the type must match the existing value, or an error will be thrown
 	SetStatus(any) error
+
+	GetFullPath() string
+	SetFullPath(path string)
+	GetFullPathUIDs() string
+	SetFullPathUIDs(path string)
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -596,6 +606,22 @@ func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
 		err = fmt.Errorf("unable to read status")
 	}
 	return
+}
+
+func (m *grafanaMetaAccessor) GetFullPath() string {
+	return m.get(AnnoKeyFullPath)
+}
+
+func (m *grafanaMetaAccessor) SetFullPath(path string) {
+	m.SetAnnotation(AnnoKeyFullPath, path)
+}
+
+func (m *grafanaMetaAccessor) GetFullPathUIDs() string {
+	return m.get(AnnoKeyFullPathUIDs)
+}
+
+func (m *grafanaMetaAccessor) SetFullPathUIDs(path string) {
+	m.SetAnnotation(AnnoKeyFullPathUIDs, path)
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {

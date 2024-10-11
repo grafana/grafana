@@ -4,6 +4,8 @@ import { renderHook } from '@testing-library/react-hooks';
 import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
+import { log } from './logs/log';
+import { resetLogMock } from './logs/testUtils';
 import { setupPluginExtensionRegistries } from './registry/setup';
 import { PluginExtensionRegistries } from './registry/types';
 import { usePluginLinks } from './usePluginLinks';
@@ -28,18 +30,27 @@ jest.mock('./utils', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 
+jest.mock('./logs/log', () => {
+  const { createLogMock } = jest.requireActual('./logs/testUtils');
+  const original = jest.requireActual('./logs/log');
+
+  return {
+    ...original,
+    log: createLogMock(),
+  };
+});
+
 describe('usePluginLinks()', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
-  let consoleWarnSpy: jest.SpyInstance;
   const pluginId = 'myorg-extensions-app';
   const extensionPointId = `${pluginId}/extension-point/v1`;
 
   beforeEach(() => {
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     registries = setupPluginExtensionRegistries();
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    resetLogMock(log);
 
     pluginMeta = {
       id: pluginId,
@@ -194,7 +205,7 @@ describe('usePluginLinks()', () => {
     // (No restrictions due to isGrafanaDevMode() = false)
     let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
     expect(result.current.links.length).toBe(1);
-    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(log.warning).not.toHaveBeenCalled();
   });
 
   it('should not validate the extension point id in production mode', () => {
@@ -217,7 +228,7 @@ describe('usePluginLinks()', () => {
     // (No restrictions due to isGrafanaDevMode() = false)
     let { result } = renderHook(() => usePluginLinks({ extensionPointId: 'invalid-extension-point-id' }), { wrapper });
     expect(result.current.links.length).toBe(0);
-    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(log.warning).not.toHaveBeenCalled();
   });
 
   it('should not validate the extension point meta-info if used in Grafana core (no plugin context)', () => {
@@ -244,7 +255,7 @@ describe('usePluginLinks()', () => {
 
     let { result } = renderHook(() => usePluginLinks({ extensionPointId: 'grafana/extension-point/v1' }), { wrapper });
     expect(result.current.links.length).toBe(1);
-    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(log.warning).not.toHaveBeenCalled();
   });
 
   it('should not validate the extension point id if used in Grafana core (no plugin context)', () => {
@@ -258,7 +269,7 @@ describe('usePluginLinks()', () => {
 
     let { result } = renderHook(() => usePluginLinks({ extensionPointId: 'invalid-extension-point-id' }), { wrapper });
     expect(result.current.links.length).toBe(0);
-    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(log.warning).not.toHaveBeenCalled();
   });
 
   it('should validate if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
@@ -296,7 +307,7 @@ describe('usePluginLinks()', () => {
     // Trying to render an extension point that is not defined in the plugin meta
     let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
     expect(result.current.links.length).toBe(0);
-    expect(consoleWarnSpy).toHaveBeenCalled();
+    expect(log.warning).toHaveBeenCalled();
   });
 
   it('should not log a warning if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
@@ -334,6 +345,6 @@ describe('usePluginLinks()', () => {
     // Trying to render an extension point that is not defined in the plugin meta
     let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
     expect(result.current.links.length).toBe(0);
-    expect(consoleWarnSpy).toHaveBeenCalled();
+    expect(log.warning).toHaveBeenCalled();
   });
 });
