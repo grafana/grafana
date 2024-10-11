@@ -64,7 +64,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
 	err := tree.Validate()
 	if err != nil {
-		return definitions.Route{}, "", fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}
 
 	revision, err := nps.configStore.Get(ctx, orgID)
@@ -86,15 +86,15 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return definitions.Route{}, "", err
 	}
 
-	receivers, err := nps.receiversToMap(revision.Config.AlertmanagerConfig.Receivers)
-	if err != nil {
-		return definitions.Route{}, "", err
+	receivers := map[string]struct{}{}
+	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
+	for _, receiver := range revision.GetReceivers(nil) {
+		receivers[receiver.Name] = struct{}{}
 	}
 
-	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
-		return definitions.Route{}, "", fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}
 
 	timeIntervals := map[string]struct{}{}
@@ -106,7 +106,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 	err = tree.ValidateMuteTimes(timeIntervals)
 	if err != nil {
-		return definitions.Route{}, "", fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", MakeErrRouteInvalidFormat(err)
 	}
 
 	revision.Config.AlertmanagerConfig.Config.Route = &tree
@@ -161,14 +161,6 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	} // TODO should be error?
 
 	return *route, nil
-}
-
-func (nps *NotificationPolicyService) receiversToMap(records []*definitions.PostableApiReceiver) (map[string]struct{}, error) {
-	receivers := map[string]struct{}{}
-	for _, receiver := range records {
-		receivers[receiver.Name] = struct{}{}
-	}
-	return receivers, nil
 }
 
 func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitions.PostableUserConfig, defaultCfg *definitions.PostableUserConfig) error {
