@@ -53,7 +53,7 @@ type TemplateService interface {
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) error
-	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
+	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
 }
 
 type MuteTimingService interface {
@@ -84,7 +84,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 		return ErrResp(http.StatusNotFound, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusOK, policies)
@@ -117,16 +117,17 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
 }
 
 func (srv *ProvisioningSrv) RouteResetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	provenance := determineProvenance(c)
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), alerting_models.Provenance(provenance))
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to reset notification policy tree", err)
 	}
 	return response.JSON(http.StatusAccepted, tree)
 }

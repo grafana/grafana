@@ -3,11 +3,7 @@ import { ComponentProps, ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  flushMicrotasks,
-  testWithFeatureToggles,
-  testWithLicenseFeatures,
-} from 'app/features/alerting/unified/test/test-utils';
+import { flushMicrotasks, testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -533,32 +529,20 @@ describe('contact points', () => {
       ).toBeInTheDocument();
     });
 
-    it('does not show manage permissions', async () => {
-      renderGrafanaContactPoints();
+    it('shows manage permissions and allows closing', async () => {
+      const { user } = renderGrafanaContactPoints();
 
       await clickMoreActionsButton('lotsa-emails');
 
-      expect(screen.queryByRole('menuitem', { name: /manage permissions/i })).not.toBeInTheDocument();
-    });
+      await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
 
-    describe('accesscontrol license feature enabled', () => {
-      testWithLicenseFeatures(['accesscontrol']);
+      const permissionsDialog = await screen.findByRole('dialog', { name: /drawer title manage permissions/i });
 
-      it('shows manage permissions and allows closing', async () => {
-        const { user } = renderGrafanaContactPoints();
+      expect(permissionsDialog).toBeInTheDocument();
+      expect(await screen.findByRole('table')).toBeInTheDocument();
 
-        await clickMoreActionsButton('lotsa-emails');
-
-        await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
-
-        const permissionsDialog = await screen.findByRole('dialog', { name: /drawer title manage permissions/i });
-
-        expect(permissionsDialog).toBeInTheDocument();
-        expect(await screen.findByRole('table')).toBeInTheDocument();
-
-        await user.click(within(permissionsDialog).getAllByRole('button', { name: /close/i })[0]);
-        expect(permissionsDialog).not.toBeInTheDocument();
-      });
+      await user.click(within(permissionsDialog).getAllByRole('button', { name: /close/i })[0]);
+      expect(permissionsDialog).not.toBeInTheDocument();
     });
   });
 });
