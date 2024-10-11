@@ -41,16 +41,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  notification-messages:
+  template-notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  create-notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
 ---
 
 # Templates
@@ -143,16 +138,15 @@ For more details on how to template labels, refer to [Template annotations and l
 
 ## Template notifications
 
-[Notification templates](ref:notification-messages) allow you to customize the content of your notifications, such as the subject of an email or the body of a Slack message.
+[Notification templates](ref:template-notifications) allow you to customize the content of your notifications, such as the subject of an email or the body of a Slack message.
 
 Notification templates differ from templating annotations and labels in the following ways:
 
 - Notification templates are assigned to the **Contact point**, rather than the alert rule.
 - If not specified, the contact point uses a default template that includes relevant alert information.
-- You can create reusable notification templates and reference them in other templates.
 - The same template can be shared across multiple contact points, making it easier to maintain and ensuring consistency.
-- While both annotation/label templates and notification templates use the same templating language, the available variables and functions differ. For more details, refer to the [notification template reference](ref:notification-message-reference) and [annotation/label template reference](ref:templating-labels-annotations).
 - Notification templates should not be used to add additional information to individual alerts—use annotations for that purpose.
+- While both annotation/label templates and notification templates use the same templating language, the available variables and functions differ. For more details, refer to the [notification template reference](ref:notification-message-reference) and [annotation/label template reference](ref:templating-labels-annotations).
 
 Here is an example of a notification template that summarizes all firing and resolved alerts in a notification group:
 
@@ -185,4 +179,4 @@ The notification message to the contact point would look like this:
 - The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
 ```
 
-For instructions on creating and using notification templates, refer to [Create notification templates.](ref:create-notification-templates)
+For more details, refer to [Template notifications](ref:template-notifications).
