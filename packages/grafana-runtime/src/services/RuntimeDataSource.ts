@@ -1,4 +1,10 @@
-import { DataQuery, DataSourceApi, DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  PluginType,
+  TestDataSourceResponse,
+} from '@grafana/data';
 
 export abstract class RuntimeDataSource<TQuery extends DataQuery = DataQuery> extends DataSourceApi<TQuery> {
   public instanceSettings: DataSourceInstanceSettings;
@@ -39,7 +45,10 @@ export abstract class RuntimeDataSource<TQuery extends DataQuery = DataQuery> ex
     this.instanceSettings = instanceSettings;
   }
 
-  public testDatasource(): Promise<any> {
-    return Promise.resolve({});
+  public testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({
+      status: 'success',
+      message: '',
+    });
   }
 }
