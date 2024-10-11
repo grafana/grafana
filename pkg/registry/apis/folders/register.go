@@ -15,6 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -157,7 +158,7 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			verb := attr.GetVerb()
 			name := attr.GetName()
-			if (!attr.IsResourceRequest()) || (name == "" && verb != "create") {
+			if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
@@ -172,9 +173,9 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			// "get" is used for sub-resources with GET http (parents, access, count)
 			switch verb {
-			case "patch":
+			case utils.VerbPatch:
 				fallthrough
-			case "create":
+			case utils.VerbCreate:
 				action = dashboards.ActionFoldersCreate
 				evaluator := accesscontrol.EvalPermission(action)
 				ok, err := b.accessControl.Evaluate(ctx, user, evaluator)
@@ -182,11 +183,11 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return authorizer.DecisionAllow, "", nil
 				}
 				return authorizer.DecisionDeny, "folder", err
-			case "update":
+			case utils.VerbUpdate:
 				action = dashboards.ActionFoldersWrite
-			case "deletecollection":
+			case utils.VerbDeleteCollection:
 				fallthrough
-			case "delete":
+			case utils.VerbDelete:
 				action = dashboards.ActionFoldersDelete
 			}
 
