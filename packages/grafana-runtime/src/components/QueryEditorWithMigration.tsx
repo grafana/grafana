@@ -6,8 +6,10 @@ import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { isMigrationHandler, migrateQuery } from '../utils/migrationHandler';
 
-// QueryEditorWithMigration is a higher order component that wraps the QueryEditor component
-// and ensures that the query is migrated before being passed to the QueryEditor.
+/**
+ * @alpha Experimental: QueryEditorWithMigration is a higher order component that wraps the QueryEditor component
+ * and ensures that the query is migrated before being passed to the QueryEditor.
+ */
 export function QueryEditorWithMigration<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
@@ -34,7 +36,7 @@ export function QueryEditorWithMigration<
     }, [props.query]);
 
     if (!migrated) {
-      return <Skeleton containerTestId="react-loading-skeleton-testid" />;
+      return <Skeleton containerTestId="react-loading-skeleton-testid" height={75} />;
     }
     return <QueryEditor {...props} query={query} />;
   };

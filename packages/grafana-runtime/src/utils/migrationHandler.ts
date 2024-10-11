@@ -6,6 +6,9 @@ import { getBackendSrv } from '../services';
 
 import { DataSourceWithBackend } from './DataSourceWithBackend';
 
+/**
+ * @alpha Experimental: Plugins implementing MigrationHandler interface will automatically have their queries migrated.
+ */
 export interface MigrationHandler {
   hasBackendMigration: boolean;
   shouldMigrate(query: DataQuery): boolean;
