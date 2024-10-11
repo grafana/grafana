@@ -37,6 +37,9 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 				"groupBys":         groupBys,
 			},
 		}
+		// Ensure the time field is named correctly
+		timeField := frame.Fields[0]
+		timeField.Name = data.TimeSeriesTimeFieldName
 
 		var err error
 		frames, err = appendFrames(frames, series, 0, defaultMetricName, seriesLabels, frame, query)
