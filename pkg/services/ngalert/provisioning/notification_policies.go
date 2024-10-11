@@ -61,40 +61,40 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	return result, version, nil
 }
 
-func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) error {
+func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
 	err := tree.Validate()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
-		return err
+		return definitions.Route{}, "", err
 	}
 
 	err = nps.checkOptimisticConcurrency(*revision.Config.AlertmanagerConfig.Route, p, version, "update")
 	if err != nil {
-		return err
+		return definitions.Route{}, "", err
 	}
 
 	// check that provenance is not changed in an invalid way
 	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &tree, orgID)
 	if err != nil {
-		return err
+		return definitions.Route{}, "", err
 	}
 	if err := nps.validator(storedProvenance, p); err != nil {
-		return err
+		return definitions.Route{}, "", err
 	}
 
 	receivers, err := nps.receiversToMap(revision.Config.AlertmanagerConfig.Receivers)
 	if err != nil {
-		return err
+		return definitions.Route{}, "", err
 	}
 
 	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	timeIntervals := map[string]struct{}{}
@@ -106,17 +106,21 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 	err = tree.ValidateMuteTimes(timeIntervals)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.Route{}, "", fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	revision.Config.AlertmanagerConfig.Config.Route = &tree
 
-	return nps.xact.InTransaction(ctx, func(ctx context.Context) error {
+	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
 		return nps.provenanceStore.SetProvenance(ctx, &tree, orgID, p)
 	})
+	if err != nil {
+		return definitions.Route{}, "", err
+	}
+	return tree, calculateRouteFingerprint(tree), nil
 }
 
 func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
