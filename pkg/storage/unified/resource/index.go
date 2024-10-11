@@ -79,12 +79,15 @@ func (i *Index) Init(ctx context.Context) error {
 	for _, rt := range resourceTypes {
 		i.log.Info("indexing resource", "kind", rt.Key.Resource)
 		r := &ListRequest{Options: rt, Limit: 100}
+
+		// Paginate through the list of resources and index each page
 		for {
 			list, err := i.s.List(ctx, r)
 			if err != nil {
 				return err
 			}
 
+			// Index current page
 			err = i.IndexBatch(list, rt.Key.Resource)
 			if err != nil {
 				return err
