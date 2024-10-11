@@ -20,8 +20,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
-import { DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 

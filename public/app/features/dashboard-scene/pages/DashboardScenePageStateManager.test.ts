@@ -2,8 +2,7 @@ import { advanceBy } from 'jest-date-mock';
 
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import store from 'app/core/store';
-import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
-import { DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock } from '../utils/test-utils';
