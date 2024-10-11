@@ -166,15 +166,14 @@ describe('Combobox', () => {
 
     it('should ignore late responses', async () => {
       const asyncOptions = jest.fn(async (searchTerm: string) => {
-        //console.log('called with ', searchTerm);
         if (searchTerm === 'a') {
-          return new Promise((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 1000));
+          return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 1000));
         } else if (searchTerm === 'ab') {
-          return new Promise((resolve) => setTimeout(() => resolve([{ value: 'second' }]), 200));
+          return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'second' }]), 200));
         }
         return Promise.resolve([]);
       });
-      //@ts-ignore
+
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
