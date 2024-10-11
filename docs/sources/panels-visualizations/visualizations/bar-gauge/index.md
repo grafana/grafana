@@ -39,7 +39,7 @@ You can use a bar gauge visualization when you need to show:
 - Attendance
 - Process completion rates
 
-## Configure a bar gauge
+## Configure a bar gauge visualization
 
 The following video shows you how to create and configure a bar gauge visualization:
 
