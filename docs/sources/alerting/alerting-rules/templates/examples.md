@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Examples of templating labels and annotations in alert rules
+title: Labels and annotations template examples
 menuTitle: Examples
 weight: 102
 refs:
@@ -104,7 +104,7 @@ CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 
 This annotation provides useful information about which instance is affected and by how much.
 
-[Labels](ref:labels) determine how alerts are routed and managed for notifications, and they contribute that alert notifications reach the right teams at the right time.  If the labels returned by your queries don’t fully capture the necessary context, you can use templating to modify or enhance them.
+[Labels](ref:labels) determine how alerts are routed and managed for notifications, and they contribute that alert notifications reach the right teams at the right time. If the labels returned by your queries don’t fully capture the necessary context, you can use templating to modify or enhance them.
 
 Here’s an example of templating a `severity` label based on the query value:
 
@@ -121,6 +121,7 @@ low
 ```
 
 In this example, the severity of the alert is determined by the query value:
+
 - `critical` for values above 90,
 - `high` for values above 80,
 - `medium` for values above 60,
@@ -142,7 +143,7 @@ Below are some examples that address common use cases and some of the different 
 
 Annotations can provide additional context for alert responders by showing the details of what triggered the alert. For example, to display the CPU usage of a specific instance that exceeded a threshold, use the following template:
 
-``` go
+```go
 CPU usage for {{ $labels.instance }} has exceeded {{ $values.A }} for the last 5 minutes.
 ```
 
@@ -153,7 +154,9 @@ CPU usage for Instance-1 has exceeded 81.23% for the last 5 minutes.
 ```
 
 Used functions and syntax:
+
 <!-- add links to these elements -->
+
 - [`$labels`](ref:reference-labels): Used to access alert labels.
 - [`$values`](ref:reference-values): Used to access the query values that triggered the alert.
 - [`{{ }}`](ref:language-print): Go templating syntax for embedding values within the template.
@@ -162,7 +165,7 @@ Used functions and syntax:
 
 Annotations can also be used to provide a summary of key alert labels, such as the environment and alert severity. For instance, you can display a summary of the alert with important labels like so:
 
-``` go
+```go
 Alert triggered in {{ $labels.environment }} with severity {{ $labels.severity }}
 ```
 
@@ -176,7 +179,7 @@ Alert triggered in production with severity critical.
 
 When multiple alerts are fired, an annotation can summarize them by listing all affected instances. For example, to list all instances with high CPU usage when multiple alerts fire simultaneously:
 
-``` go
+```go
 The following instances have high CPU usage: {{ range .Alerts.Firing }} {{ .Labels.instance }} ({{ .Values.A }}%) {{ end }}
 ```
 
@@ -196,7 +199,7 @@ Used functions and syntax:
 
 To print an individual label use the `index` function with the `$labels` variable:
 
-``` go
+```go
 The host {{ index $labels "instance" }} has exceeded 80% CPU usage for the last 5 minutes
 ```
 
@@ -216,7 +219,7 @@ Used functions and syntax:
 
 To print all labels, one per line, use a `range` to iterate over each key/value pair and print them individually. Here `$k` refers to the name and `$v` refers to the value of the current label:
 
-``` go
+```go
 {{ range $k, $v := $labels -}}
 {{ $k }}={{ $v }}
 {{ end }}
@@ -234,7 +237,7 @@ instance=server1
 
 To print the value of an instant query you can print its Ref ID using the `index` function and the `$values` variable:
 
-``` go
+```go
 {{ index $values "A" }}
 ```
 
@@ -246,7 +249,7 @@ For example, given an instant query that returns the value 81.2345, this will pr
 
 To print the value of a range query you must first reduce it from a time series to an instant vector with a reduce expression. You can then print the result of the reduce expression by using its Ref ID instead. For example, if the reduce expression takes the average of A and has the Ref ID B you would write:
 
-``` go
+```go
 {{ index $values "B" }}
 ```
 
@@ -254,7 +257,7 @@ To print the value of a range query you must first reduce it from a time series 
 
 To print the humanized value of an instant query use the `humanize` function:
 
-``` go
+```go
 {{ humanize (index $values "A").Value }}
 ```
 
@@ -274,7 +277,7 @@ To print the humanized value of a range query you must first reduce it from a ti
 
 To print the value of an instant query as a percentage use the `humanizePercentage` function:
 
-``` go
+```go
 {{ humanizePercentage (index $values "A").Value }}
 ```
 
@@ -284,7 +287,7 @@ This function expects the value to be a decimal number between 0 and 1. If the v
 
 To set a severity label from the value of a query use an if statement and the greater than comparison function. Make sure to use decimals (`80.0`, `50.0`, `0.0`, etc) when doing comparisons against `$values` as text/template does not support type coercion. You can find a list of all the supported comparison functions [here](https://pkg.go.dev/text/template#hdr-Functions).
 
-``` go
+```go
 {{ if (gt $values.A.Value 80.0) -}}
 high
 {{ else if (gt $values.A.Value 50.0) -}}
@@ -304,7 +307,7 @@ Used functions and syntax:
 
 You can use labels to differentiate alerts coming from various environments (e.g., production, staging, dev). For example, you may want to add a label that sets the environment based on the instance’s label. Here’s how you can template it:
 
-``` go
+```go
 {{ if eq $labels.instance "prod-server-1" }}production
 {{ else if eq $labels.instance "staging-server-1" }}staging
 {{ else }}development
@@ -325,7 +328,7 @@ Used functions and syntax:
 
 You can automatically set a priority label based on both the alert condition and the importance of the instance. This approach allows you to combine the instance's importance with the query value to determine the appropriate priority level:
 
-``` go
+```go
 {{ if and (eq $labels.instance "critical-server") (gt $values.A 90) }}P1
 {{ else if (gt $values.A 80) }}P2
 {{ else }}P3
