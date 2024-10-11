@@ -135,12 +135,12 @@ func TestDeleteWithSuggestion(t *testing.T) {
 	storagetesting.RunTestDeleteWithSuggestion(ctx, t, store)
 }
 
-//func TestDeleteWithSuggestionAndConflict(t *testing.T) {
-//	ctx, store, destroyFunc, err := testSetup(t)
-//	defer destroyFunc()
-//	assert.NoError(t, err)
-//	storagetesting.RunTestDeleteWithSuggestionAndConflict(ctx, t, store)
-//}
+func TestDeleteWithSuggestionAndConflict(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestDeleteWithSuggestionAndConflict(ctx, t, store)
+}
 
 // TODO: this test relies on update
 //func TestDeleteWithSuggestionOfDeletedObject(t *testing.T) {
