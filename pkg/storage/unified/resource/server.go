@@ -223,7 +223,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	}
 
 	if obj.GetUID() == "" {
-		s.log.Error("object is missing UID", "key", key)
+		return nil, NewBadRequestError("object is missing UID")
 	}
 
 	if obj.GetResourceVersion() != "" {
