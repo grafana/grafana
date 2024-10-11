@@ -190,26 +190,30 @@ function findSourceField(referenceField: Field, sourceFields: Field[], index: nu
 }
 
 const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
+const EXEC_TIME_STAT = 'Summary: exec time';
 // This is specific for Loki
 function getCombinedMetadataStats(
   destStats: QueryResultMetaStat[],
   sourceStats: QueryResultMetaStat[]
 ): QueryResultMetaStat[] {
   // in the current approach, we only handle a single stat
-  const destStat = destStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
-  const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+  const stats: QueryResultMetaStat[] = [];
+  for (const stat of [TOTAL_BYTES_STAT, EXEC_TIME_STAT]) {
+    const destStat = destStats.find((s) => s.displayName === stat);
+    const sourceStat = sourceStats.find((s) => s.displayName === stat);
 
-  if (sourceStat != null && destStat != null) {
-    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT, unit: destStat.unit }];
+    if (sourceStat != null && destStat != null) {
+      stats.push({ value: sourceStat.value + destStat.value, displayName: stat, unit: destStat.unit });
+      continue;
+    }
+
+    // maybe one of them exist
+    const eitherStat = sourceStat ?? destStat;
+    if (eitherStat != null) {
+      stats.push(eitherStat);
+    }
   }
-
-  // maybe one of them exist
-  const eitherStat = sourceStat ?? destStat;
-  if (eitherStat != null) {
-    return [eitherStat];
-  }
-
-  return [];
+  return stats;
 }
 
 /**
