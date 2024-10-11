@@ -78,14 +78,14 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   }),
   wrapperBookmark: css({
     '.pin-icon': {
-      display: 'none',
+      visibility: 'hidden',
     },
     '&:hover, &:focus-within': {
       a: {
         width: 'calc(100% - 20px)',
       },
       '.pin-icon': {
-        display: 'inline-flex',
+        visibility: 'visible',
       },
     },
   }),
