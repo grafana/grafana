@@ -586,7 +586,7 @@ def test_backend_integration_step():
         ],
         "commands": [
             "apk add --update build-base",
-            "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
+            "go test -count=1 -covermode=atomic -timeout=5m -ldflags \"-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn\" -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
         ],
     }
 
