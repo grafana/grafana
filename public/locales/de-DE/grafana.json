@@ -1225,6 +1225,7 @@
     "documentation": "",
     "host": {
       "description": "",
+      "error": "",
       "label": "",
       "placeholder": ""
     },
@@ -1234,11 +1235,13 @@
     },
     "search_filter": {
       "description": "",
+      "error": "",
       "label": "",
       "placeholder": ""
     },
     "search-base-dns": {
       "description": "",
+      "error": "",
       "label": "",
       "placeholder": ""
     },
