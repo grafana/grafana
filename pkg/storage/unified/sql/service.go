@@ -65,7 +65,7 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
-	authn, err := grpcutils.NewGrpcAuthenticator(cfg)
+	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer)
 	if err != nil {
 		return nil, err
 	}

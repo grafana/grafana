@@ -48,6 +48,7 @@ type GrpcServerConfig struct {
 	SigningKeysURL   string
 	AllowedAudiences []string
 	Mode             Mode
+	LegacyFallback   bool
 }
 
 func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
@@ -62,5 +63,6 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
 		SigningKeysURL:   section.Key("signing_keys_url").MustString(""),
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		Mode:             mode,
+		LegacyFallback:   section.Key("legacy_fallback").MustBool(true),
 	}, nil
 }
