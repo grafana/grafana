@@ -398,6 +398,7 @@ steps:
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+    -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
@@ -1793,6 +1794,7 @@ steps:
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+    -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
@@ -3007,6 +3009,7 @@ steps:
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+    -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
@@ -4718,6 +4721,7 @@ steps:
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+    -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
@@ -6013,6 +6017,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e618274ea7a8bfbf3d5e151d459348aa9382fe63fe7fef76c997db3cba74779f
+hmac: 80c36d72907b5c606790c65f166396a63511e28737bb4aaefc68c22a0daef40c
 
 ...

@@ -29,6 +29,7 @@ func GrafanaLDFlags(version string, r config.Revision) []string {
 		fmt.Sprintf("-X main.commit=%s", r.SHA256),
 		fmt.Sprintf("-X main.buildstamp=%d", r.Timestamp),
 		fmt.Sprintf("-X main.buildBranch=%s", r.Branch),
+		` -X "google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"`
 	}
 
 	if r.EnterpriseCommit != "" {
