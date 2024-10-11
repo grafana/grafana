@@ -39,7 +39,7 @@ export interface NameAlreadyExistsErrorProps {
 }
 
 export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
-  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI;
+  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
   return isRestoreDashboardsEnabled ? (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>

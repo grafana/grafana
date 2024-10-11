@@ -121,7 +121,7 @@ const BrowseDashboardsPage = memo(() => {
       onEditTitle={showEditTitle ? onEditTitle : undefined}
       actions={
         <>
-          {config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI && hasAdminRights && (
+          {config.featureToggles.dashboardRestore && hasAdminRights && (
             <LinkButton
               variant="secondary"
               href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
