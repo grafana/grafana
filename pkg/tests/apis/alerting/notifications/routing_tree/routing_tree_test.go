@@ -67,7 +67,6 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 	err = client.DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{})
 	assert.Error(t, err)
 	require.Truef(t, errors.IsMethodNotSupported(err), "Expected MethodNotSupported but got %s", err)
-
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
@@ -118,7 +117,6 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	})
 
-
 	testCases := []testCase{
 		{
 			user: none,
@@ -129,8 +127,8 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canUpdate: true,
 		},
 		{
-			user:    org1.Editor,
-			canRead: true,
+			user:      org1.Editor,
+			canRead:   true,
 			canUpdate: true,
 		},
 		{
@@ -210,7 +208,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			expected := current.DeepCopy()
 			expected.Spec.Routes = []v0alpha1.Route{
 				{
-					Matchers:          []v0alpha1.Matcher{
+					Matchers: []v0alpha1.Matcher{
 						{
 							Label: "test",
 							Type:  v0alpha1.MatcherTypeEqual,
@@ -321,7 +319,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		updated := current.DeepCopy()
 		updated.Spec.Routes = []v0alpha1.Route{
 			{
-				Matchers:          []v0alpha1.Matcher{
+				Matchers: []v0alpha1.Matcher{
 					{
 						Label: "test",
 						Type:  v0alpha1.MatcherTypeNotEqual,
