@@ -16,7 +16,7 @@ export const Prompt = ({ when, message }: PromptProps) => {
     if (!when) {
       return undefined;
     }
-    //@ts-expect-error
+    //@ts-expect-error TODO Update the history package to fix types
     const unblock = history.block((nextLocation) => {
       if (nextLocation.pathname !== currentLocation.pathname) {
         return typeof message === 'function' ? message(nextLocation) : message;
