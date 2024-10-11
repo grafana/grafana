@@ -39,46 +39,62 @@ func NewIndex(s *server, opts Opts) *Index {
 	return idx
 }
 
-func (i *Index) Init(ctx context.Context) error {
-	resourceTypes := fetchResourceTypes()
-	for _, rt := range resourceTypes {
-		r := &ListRequest{Options: rt}
-		list, err := i.s.List(ctx, r)
+func (i *Index) IndexBatch(list *ListResponse, kind string) error {
+	for _, obj := range list.Items {
+		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind)
+		res, err := getResource(obj.Value)
 		if err != nil {
 			return err
 		}
-		i.log.Info("initial indexing resources", "count", len(list.Items))
 
-		for _, obj := range list.Items {
-			res, err := getResource(obj.Value)
-			if err != nil {
-				return err
-			}
-
-			shard, err := i.getShard(tenant(res))
-			if err != nil {
-				return err
-			}
-
-			i.log.Info("indexing resource for tenant", "res", res, "tenant", tenant(res))
-
-			var jsonDoc interface{}
-			err = json.Unmarshal(obj.Value, &jsonDoc)
-			if err != nil {
-				return err
-			}
-			err = shard.batch.Index(res.Metadata.Uid, jsonDoc)
-			if err != nil {
-				return err
-			}
+		shard, err := i.getShard(tenant(res))
+		if err != nil {
+			return err
 		}
 
-		for _, shard := range i.shards {
-			err := shard.index.Batch(shard.batch)
+		var jsonDoc interface{}
+		err = json.Unmarshal(obj.Value, &jsonDoc)
+		if err != nil {
+			return err
+		}
+		err = shard.batch.Index(res.Metadata.Uid, jsonDoc)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, shard := range i.shards {
+		err := shard.index.Batch(shard.batch)
+		if err != nil {
+			return err
+		}
+		shard.batch.Reset()
+	}
+
+	return nil
+}
+
+func (i *Index) Init(ctx context.Context) error {
+	resourceTypes := fetchResourceTypes()
+	for _, rt := range resourceTypes {
+		i.log.Info("indexing resource", "kind", rt.Key.Resource)
+		r := &ListRequest{Options: rt, Limit: 1}
+		for {
+			list, err := i.s.List(ctx, r)
 			if err != nil {
 				return err
 			}
-			shard.batch.Reset()
+
+			err = i.IndexBatch(list, rt.Key.Resource)
+			if err != nil {
+				return err
+			}
+
+			if list.NextPageToken == "" {
+				break
+			}
+
+			r.NextPageToken = list.NextPageToken
 		}
 	}
 
