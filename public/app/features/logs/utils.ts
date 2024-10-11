@@ -184,7 +184,7 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
 
     return {
       line: log.entry,
-      timestamp: dateTimeFormat(log.timeEpochMs, { defaultWithMS: true }),
+      timestamp: log.timeEpochMs,
       fields: {
         ...fields,
         ...log.labels,

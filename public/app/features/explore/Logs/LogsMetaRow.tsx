@@ -90,11 +90,6 @@ export const LogsMetaRow = memo(
           const dataFrameMap = new Map<string, DataFrame>();
           logRows.forEach((row) => {
             if (row.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
-              row.dataFrame.fields.forEach((field: Field) => {
-                if (field.name === "Time" && field.type === "time") {
-                  field.values = field.values.map(value => dateTimeFormat(value, { defaultWithMS: true }))
-                }
-              })
               dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
             }
           });
