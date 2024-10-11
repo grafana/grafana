@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -35,6 +36,7 @@ type legacyStorage struct {
 	service        folder.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	accessControl  accesscontrol.AccessControl
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -174,16 +176,34 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	parent := accessor.GetFolder()
 
-	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
+	createCmd := folder.CreateFolderCommand{
 		SignedInUser: user,
 		UID:          p.Name,
 		Title:        p.Spec.Title,
 		Description:  p.Spec.Description,
 		OrgID:        info.OrgID,
-		ParentUID:    parent,
-	})
+	}
+
+	parentUID := accessor.GetFolder()
+
+	if parentUID != "" {
+		// Check that the user is allowed to create a subfolder in this folder
+		parentUIDScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(parentUID)
+		legacyEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, parentUIDScope)
+		newEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, parentUIDScope)
+		evaluator := accesscontrol.EvalAny(legacyEvaluator, newEvaluator)
+		hasAccess, evalErr := s.accessControl.Evaluate(ctx, user, evaluator)
+		if evalErr != nil {
+			return nil, evalErr
+		}
+		if !hasAccess {
+			return nil, dashboards.ErrFolderCreationAccessDenied.Errorf("user is missing the permission with action either folders:create or folders:write and scope %s or any of the parent folder scopes", parentUIDScope)
+		}
+		createCmd.ParentUID = parentUID
+	}
+
+	out, err := s.service.Create(ctx, &createCmd)
 	if err != nil {
 		return nil, err
 	}
