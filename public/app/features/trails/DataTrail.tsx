@@ -251,11 +251,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   private async _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
     const metric = evt.payload ?? '';
 
-    this.setState(this.getSceneUpdatesForNewMetricValue(metric));
-
     if (this.state.useOtelExperience) {
       await updateOtelJoinWithGroupLeft(this, metric);
     }
+
+    this.setState(this.getSceneUpdatesForNewMetricValue(metric));
 
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
