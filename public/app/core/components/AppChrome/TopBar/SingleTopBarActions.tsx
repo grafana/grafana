@@ -7,9 +7,7 @@ import { Stack, useStyles2 } from '@grafana/ui';
 
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
-export interface Props {}
-
-export function SingleTopBarActions({ children }: PropsWithChildren<Props>) {
+export function SingleTopBarActions({ children }: PropsWithChildren) {
   const styles = useStyles2(getStyles);
 
   return (
