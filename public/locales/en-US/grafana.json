@@ -831,8 +831,8 @@
       "private": "Private",
       "public": "Public",
       "query-deleted": "Query deleted",
-      "query-template-add-error": "Error attempting to add this query to the library",
-      "query-template-added": "Query template successfully added to the library",
+      "query-template-add-error": "Error attempting to save this query to the library",
+      "query-template-added": "Query successfully saved to the library",
       "query-template-edit-error": "Error attempting to edit this query",
       "query-template-edited": "Query template successfully edited",
       "save": "Save"
@@ -1478,6 +1478,7 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "dashboard-load-error": "Unable to load dashboard",
       "error-library-element-sub": "Library Element {uid}",
       "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
@@ -2217,7 +2218,9 @@
     "datasource-names": "Datasource name(s):",
     "delete-query-button": "Delete query",
     "query-template-get-error": "Error attempting to get query template from the library: {{error}}",
-    "search": "Search by data source, query content or description"
+    "search": "Search by data source, query content or description",
+    "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
+    "user-names": "User name(s):"
   },
   "query-operation": {
     "header": {
@@ -2386,7 +2389,6 @@
     "menu": {
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
-      "share-internally-description": "Link settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
     },
@@ -2676,6 +2678,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+    },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",

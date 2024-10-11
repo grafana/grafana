@@ -430,11 +430,10 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "pluginsFrontendSandbox",
-			Description:  "Enables the plugins frontend sandbox",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
+			Name:        "pluginsFrontendSandbox",
+			Description: "Enables the plugins frontend sandbox",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "frontendSandboxMonitorOnly",
@@ -675,9 +674,8 @@ var (
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
-			Stage:             FeatureStageGeneralAvailability,
+			Stage:             FeatureStagePublicPreview,
 			Owner:             identityAccessTeam,
-			Expression:        "true", // enabled by default
 		},
 		{
 			Name:         "panelMonitoring",
@@ -1062,6 +1060,12 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "onPremToCloudMigrationsAlerts",
+			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
 			Name:         "alertingSaveStatePeriodic",

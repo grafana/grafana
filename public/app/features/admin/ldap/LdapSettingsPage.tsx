@@ -20,6 +20,7 @@ import {
   TextLink,
   Dropdown,
   MultiSelect,
+  SecretInput,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
@@ -98,14 +99,9 @@ export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  const [isBindPasswordConfigured, setBindPasswordConfigured] = useState(false);
   const [mapKeyCertConfigured, setMapKeyCertConfigured] = useState<MapKeyCertConfigured>({
-    // values
-    rootCaCertValue: false,
-    clientCertValue: false,
     clientKeyCertValue: false,
-    // paths
-    rootCaCertPath: false,
-    clientCertPath: false,
     clientKeyCertPath: false,
   });
 
@@ -114,6 +110,7 @@ export const LdapSettingsPage = () => {
     control,
     formState: { isDirty },
     getValues,
+    setValue,
     handleSubmit,
     register,
     reset,
@@ -130,13 +127,10 @@ export const LdapSettingsPage = () => {
         serverConfig = payload.settings.config.servers[0];
       }
       setMapKeyCertConfigured({
-        rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
-        clientCertValue: isOptionDefined(serverConfig.client_cert_value),
         clientKeyCertValue: isOptionDefined(serverConfig.client_key_value),
-        rootCaCertPath: isOptionDefined(serverConfig.root_ca_cert),
-        clientCertPath: isOptionDefined(serverConfig.client_cert),
         clientKeyCertPath: isOptionDefined(serverConfig.client_key),
       });
+      setBindPasswordConfigured(isOptionDefined(serverConfig.bind_password));
 
       reset(payload);
       setIsLoading(false);
@@ -325,10 +319,15 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
-                  <Input
+                  <SecretInput
                     id="bind-password"
-                    type="text"
-                    {...register(`${serverConfig}.bind_password`, { required: false })}
+                    isConfigured={isBindPasswordConfigured}
+                    onReset={() => {
+                      setValue(`${serverConfig}.bind_password`, '');
+                      setBindPasswordConfigured(false);
+                    }}
+                    value={watch(`${serverConfig}.bind_password`)}
+                    onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.bind_password`, value)}
                   />
                 </Field>
                 <Field
