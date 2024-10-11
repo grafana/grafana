@@ -14,7 +14,6 @@ import {
   QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
-  dateTimeFormat,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
