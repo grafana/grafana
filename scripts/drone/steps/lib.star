@@ -1050,7 +1050,7 @@ def postgres_integration_tests_steps():
         "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f " +
         "devenv/docker/blocks/postgres_tests/setup.sql",
         "go clean -testcache",
-        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
+        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags \"-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn\" -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
 
     environment = {
@@ -1066,7 +1066,7 @@ def mysql_integration_tests_steps(hostname, version):
         "apk add --update mysql-client",
         "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h {} -P 3306 -u root -prootpass".format(hostname),
         "go clean -testcache",
-        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
+        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags \"-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn\" -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
 
     environment = {
@@ -1079,7 +1079,7 @@ def mysql_integration_tests_steps(hostname, version):
 def redis_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
+        "go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags \"-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn\" -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1104,7 +1104,7 @@ def remote_alertmanager_integration_tests_steps():
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
+        "go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags \"-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn\" -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
 
     environment = {
