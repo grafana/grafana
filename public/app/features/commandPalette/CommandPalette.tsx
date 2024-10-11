@@ -29,6 +29,7 @@ import { useMatches } from './useMatches';
 export function CommandPalette() {
   const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
   const [rightPosition, setRightPosition] = useState<number | null>(null);
+
   const styles = useStyles2((theme) => getSearchStyles(theme, rightPosition));
 
   const { query, showing, searchQuery } = useKBar((state) => ({
@@ -54,6 +55,7 @@ export function CommandPalette() {
     setRightPosition(input?.getBoundingClientRect().right ?? null);
   }, [input, showing]);
 
+  // Get the right position of the input element to align the command palette
   useLayoutEffect(() => {
     const handleResize = () => {
       setRightPosition(input?.getBoundingClientRect().right ?? null);
