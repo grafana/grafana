@@ -79,7 +79,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	// Search without dashboard UID filter is expensive, so check without access control first
 	if query.DashboardID == 0 && query.DashboardUID == "" {
 		// Return early if no annotations found, it's not necessary to perform expensive access control filtering
-		res, err := r.reader.Get(ctx, query, &accesscontrol.AccessResources{
+		res, err := r.reader.Get(ctx, *query, &accesscontrol.AccessResources{
 			SkipAccessControlFilter: true,
 		})
 		if err != nil || len(res) == 0 {
@@ -97,12 +97,12 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	// Iterate over available annotations until query limit is reached
 	// or all available dashboards are checked
 	for len(results) < int(query.Limit) {
-		resources, err := r.authZ.Authorize(ctx, query)
+		resources, err := r.authZ.Authorize(ctx, *query)
 		if err != nil {
 			return nil, err
 		}
 
-		res, err := r.reader.Get(ctx, query, resources)
+		res, err := r.reader.Get(ctx, *query, resources)
 		if err != nil {
 			return nil, err
 		}
@@ -123,5 +123,5 @@ func (r *RepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteP
 }
 
 func (r *RepositoryImpl) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return r.reader.GetTags(ctx, query)
+	return r.reader.GetTags(ctx, *query)
 }

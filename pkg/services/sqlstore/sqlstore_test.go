@@ -94,6 +94,13 @@ func TestInitEngine_ParseTimeInConnectionString(t *testing.T) {
 			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&charset=utf8&parseTime=true",
 		},
 		{
+			name:               "MySQL with feature enabled",
+			connectionString:   "mysql://user:password@localhost:3306/existingparams?charset=utf8",
+			dbType:             "mysqlWithHooks",
+			featureEnabled:     true,
+			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&charset=utf8&parseTime=true",
+		},
+		{
 			name:               "MySQL with feature disabled",
 			connectionString:   "mysql://user:password@localhost:3306/disabled",
 			dbType:             "mysql",

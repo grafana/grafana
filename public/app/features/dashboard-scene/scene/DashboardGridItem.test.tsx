@@ -8,6 +8,7 @@ import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-ut
 
 import { DashboardGridItem, DashboardGridItemState } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -122,8 +123,8 @@ describe('PanelRepeaterGridItem', () => {
       $variables: new SceneVariableSet({
         variables: [variable],
       }),
-      body: new SceneGridLayout({
-        children: [panel],
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [panel] }),
       }),
     });
 
@@ -193,8 +194,10 @@ describe('PanelRepeaterGridItem', () => {
       $variables: new SceneVariableSet({
         variables: [variable],
       }),
-      body: new SceneGridLayout({
-        children: [panel, panel2],
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [panel, panel2],
+        }),
       }),
     });
 
@@ -269,7 +272,8 @@ describe('PanelRepeaterGridItem', () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, maxPerRow: 2, itemHeight: 10 });
 
     const layoutForceRender = jest.fn();
-    (scene.state.body as SceneGridLayout).forceRender = layoutForceRender;
+    const layout = scene.state.body as DefaultGridLayoutManager;
+    layout.state.grid.forceRender = layoutForceRender;
 
     activateFullSceneTree(scene);
 
