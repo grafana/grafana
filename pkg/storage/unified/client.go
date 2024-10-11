@@ -25,7 +25,6 @@ func ProvideUnifiedStorageClient(
 	db infraDB.DB,
 	tracer tracing.Tracer,
 ) (resource.ResourceClient, error) {
-	fmt.Println("HELLOOOOO")
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := options.StorageOptions{
