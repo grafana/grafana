@@ -28,9 +28,8 @@ import { useMatches } from './useMatches';
 
 export function CommandPalette() {
   const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [rightPosition, setRightPosition] = useState<number | null>(null);
-  const styles = useStyles2((theme) => getSearchStyles(theme, screenWidth, rightPosition));
+  const styles = useStyles2((theme) => getSearchStyles(theme, rightPosition));
 
   const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -58,7 +57,6 @@ export function CommandPalette() {
   useLayoutEffect(() => {
     const handleResize = () => {
       setRightPosition(input?.getBoundingClientRect().right ?? null);
-      setScreenWidth(window.innerWidth);
     };
     window.addEventListener('resize', handleResize);
     return () => {
@@ -160,14 +158,19 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
     />
   );
 };
-// eslint-disable-next-line
-const getSearchStyles = (theme: GrafanaTheme2, screenWidth?: any, rightPosition?: any) => {
-  const paddingSet = theme.spacing(2);
-  const commandPaletteWidth = theme.breakpoints.values.md;
+
+const getCommandPalettePosition = (inputRightPosition: number, spaceApplied: number) => {
+  const screenWidth = window.innerWidth;
+  const commandPaletteWidth = screenWidth * 0.8;
   const lateralSpace = (screenWidth - commandPaletteWidth) / 2;
-  const rightSpace = screenWidth - rightPosition;
-  const originPoint =
-    lateralSpace > rightSpace ? screenWidth - (rightPosition + parseInt(paddingSet, 10)) : lateralSpace;
+  const rightSpace = screenWidth - inputRightPosition;
+  const originPoint = lateralSpace > rightSpace ? screenWidth - (inputRightPosition + spaceApplied) : lateralSpace;
+  return originPoint;
+};
+// eslint-disable-next-line
+const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
+  const paddingSet = theme.spacing(2);
+  const right = getCommandPalettePosition(rightPosition, parseInt(paddingSet, 10));
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -185,7 +188,7 @@ const getSearchStyles = (theme: GrafanaTheme2, screenWidth?: any, rightPosition?
       },
     }),
     animator: css({
-      maxWidth: commandPaletteWidth,
+      maxWidth: theme.breakpoints.values.md,
       width: '100%',
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
@@ -195,7 +198,8 @@ const getSearchStyles = (theme: GrafanaTheme2, screenWidth?: any, rightPosition?
       boxShadow: theme.shadows.z3,
       [`@media (min-width: ${theme.breakpoints.values.md}px)`]: {
         position: 'fixed',
-        right: originPoint,
+        right: right,
+        maxWidth: '80%',
       },
     }),
     loadingBarContainer: css({
