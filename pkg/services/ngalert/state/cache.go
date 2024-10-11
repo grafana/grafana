@@ -346,8 +346,8 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	return states
 }
 
-// asInstances returns the whole content of the cache as a slice of AlertInstance.
-func (c *cache) asInstances(skipNormalState bool) []ngModels.AlertInstance {
+// GetAlertInstances returns the whole content of the cache as a slice of AlertInstance.
+func (c *cache) GetAlertInstances(skipNormalState bool) []ngModels.AlertInstance {
 	var states []ngModels.AlertInstance
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
