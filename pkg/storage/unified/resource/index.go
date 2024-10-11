@@ -78,7 +78,7 @@ func (i *Index) Init(ctx context.Context) error {
 	resourceTypes := fetchResourceTypes()
 	for _, rt := range resourceTypes {
 		i.log.Info("indexing resource", "kind", rt.Key.Resource)
-		r := &ListRequest{Options: rt, Limit: 1}
+		r := &ListRequest{Options: rt, Limit: 100}
 		for {
 			list, err := i.s.List(ctx, r)
 			if err != nil {
