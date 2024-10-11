@@ -1,12 +1,12 @@
 import * as H from 'history';
 import { find } from 'lodash';
 import { memo, useContext, useEffect, useState } from 'react';
-import { Prompt } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { ModalsContext } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
@@ -51,22 +51,6 @@ export const DashboardPrompt = memo(({ dashboard }: Props) => {
       savedEventUnsub.unsubscribe();
     };
   }, [dashboard, originalPath]);
-
-  useEffect(() => {
-    const handleUnload = (event: BeforeUnloadEvent) => {
-      if (ignoreChanges(dashboard, original)) {
-        return;
-      }
-      if (hasChanges(dashboard, original)) {
-        event.preventDefault();
-        // No browser actually displays this message anymore.
-        // But Chrome requires it to be defined else the popup won't show.
-        event.returnValue = '';
-      }
-    };
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
-  }, [dashboard, original]);
 
   const onHistoryBlock = (location: H.Location) => {
     const panelInEdit = dashboard.panelInEdit;
