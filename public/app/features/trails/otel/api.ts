@@ -203,7 +203,7 @@ export async function getFilteredResourceAttributes(
   const url = `/api/datasources/uid/${datasourceUid}/resources/api/v1/labels`;
 
   // The match param for the metric to get all possible labels for this metric
-  const metricMatchParam = `metric{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
+  const metricMatchParam = `${metric}{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
 
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
