@@ -1,5 +1,5 @@
 import { useObservable } from 'react-use';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, map } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -31,6 +31,7 @@ export interface AppChromeState {
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
+const SINGLE_HEADER_BAR_HEIGHT = 40;
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -55,6 +56,20 @@ export class AppChromeService {
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
+
+  public headerHeightObservable = this.state.pipe(
+    map((appChromeState) => {
+      const { chromeless, kioskMode, searchBarHidden } = appChromeState;
+
+      if (kioskMode || chromeless) {
+        return 0;
+      } else if (searchBarHidden || config.featureToggles.singleTopNav) {
+        return SINGLE_HEADER_BAR_HEIGHT;
+      } else {
+        return SINGLE_HEADER_BAR_HEIGHT * 2;
+      }
+    })
+  );
 
   public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {
