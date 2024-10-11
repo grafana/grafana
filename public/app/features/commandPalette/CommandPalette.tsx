@@ -176,6 +176,8 @@ const getSearchStyles = (theme: GrafanaTheme2, screenWidth?: any, rightPosition?
       '&::before': {
         content: '""',
         position: 'fixed',
+        top: 0,
+        right: 0,
         bottom: 0,
         left: 0,
         background: theme.components.overlay.background,
