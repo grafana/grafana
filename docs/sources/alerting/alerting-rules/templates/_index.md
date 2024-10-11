@@ -23,6 +23,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#labels
+  values:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#values
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#values
   annotations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
@@ -51,6 +56,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
+  notification-data-reference:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#notification-data
   view-alert-state:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-state-health/
@@ -72,18 +82,18 @@ Grafana Alerting offers two ways for templating alert messages:
 1. **Template annotations and labels**: In the alert rule definition, you can template annotations and labels to add extra information from query data, enriching individual alerts with meaningful details from query results.
 1. **Template notifications**: You can template notifications to control the content and appearance of their notifications.
 
-Both types of templates are written in the Go templating system. However, it's important to understand that [variables and functions used in notification templates](ref:notification-template-reference) are different from those used in [annotation and label templates](ref:alert-rule-template-reference).
-
 ## How templating works
 
 See the differences between both types of templates in this diagram:
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" alt="How templating works" >}}
 
-1.  **Template annotations and labels**: These templates add extra information to individual alert instances. Template variables like `$labels` and `$values` represent alert query data of the individual alert instance.
-1.  **Template notifications**: Notification templates format the notification content for a group of alerts, including variables for all firing (`.Alerts.Firing`) and resolved alerts (`.Alerts.Resolved`) in the notification.
+Refer to the [Templates Introduction](ref:intro-to-templates) for a more detailed explanation of this diagram.
 
-For a more detailed explanation of this diagram, refer to the [Templates Introduction](ref:intro-to-templates).
+Both types of templates are written in the Go templating system. However, it's important to understand that variables and functions used in notification templates are different from those used in annotation and label templates:
+
+1.  **Template annotations and labels**: These templates add extra information to individual alert instances. Template variables like [`$labels`](ref:labels) and [`$values`](ref:values) represent alert query data of the individual alert instance.
+1.  **Template notifications**: Notification templates format the notification content for a group of alerts. Variables like [`.Alerts`](ref:notification-data-reference) includes all firing and resolved alerts in the notification.
 
 ## Template annotations
 
@@ -119,7 +129,7 @@ The result of this annotation would now be:
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```
 
-#### How to template an annotation
+### How to template an annotation
 
 To template an annotation:
 
@@ -127,7 +137,7 @@ To template an annotation:
 1. Scroll down to the **Configure notification message** section.
 1. Copy in your template in the corresponding annotation field (`summary`, `description`, `runbook_url`, `custom`)
 
-#### Preview annotation templates
+### Preview annotation templates
 
 You can template annotations when creating or editing an alert rule.
 
@@ -173,7 +183,7 @@ In this example, the value of the `severity` label is determined by the query va
 You should avoid displaying query values in labels, as this may create numerous unique alert instances when only one instance is necessary. Instead, use annotations to inform about query values.
 {{% /admonition %}}
 
-#### How to template a label
+### How to template a label
 
 To template a label:
 
@@ -183,7 +193,7 @@ To template a label:
 1. Enter a **key** that indentifies the label.
 1. Copy in your template in the **value** field.
 
-#### Preview label templates
+### Preview label templates
 
 You can template label values when creating or editing an alert rule.
 

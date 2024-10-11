@@ -16,21 +16,21 @@ labels:
 title: Template notifications
 weight: 430
 refs:
-  use-notification-templates:
+  manage-notification-templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/use-notification-templates/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/use-notification-templates/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
   reference:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  using-go-templating-language:
+  examples:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/examples/
 ---
 
 # Template notifications
@@ -50,18 +50,10 @@ However, there are limitations. You cannot:
 - Modify Visual Appearance: Add HTML and CSS to email notifications for visual changes. Alter the design of notifications in messaging services like Slack and Microsoft Teams, such as adding custom blocks or adaptive cards.
 - Manage Media and Data: Adjust the number and size of images or their placement in notifications. Customize webhook data structure or format, including JSON fields or sending data in XML. Modify HTTP headers in webhooks beyond those in the contact point configuration.
 
-## Learn more
+## More information
 
-[Using Go's templating language](ref:using-go-templating-language)
+For further details on how to write notification templates, refer to:
 
-Learn how to write the content of your notification templates in Go’s templating language.
-
-Create reusable notification templates for your contact points.
-
-[Use notification templates](ref:use-notification-templates)
-
-Use notification templates to send notifications to your contact points.
-
-[Reference](ref:reference)
-
-Data that is available when writing templates.
+- [Manage notification templates](ref:manage-notification-templates)
+- [Notification template reference](ref:reference)
+- [Notification template examples](ref:examples)
