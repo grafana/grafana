@@ -41,7 +41,6 @@ func NewIndex(s *server, opts Opts) *Index {
 
 func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 	for _, obj := range list.Items {
-		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind)
 		res, err := getResource(obj.Value)
 		if err != nil {
 			return err
@@ -51,6 +50,7 @@ func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 		if err != nil {
 			return err
 		}
+		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind, "tenant", tenant(res))
 
 		var jsonDoc interface{}
 		err = json.Unmarshal(obj.Value, &jsonDoc)
@@ -107,7 +107,7 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 		return err
 	}
 	tenant := tenant(res)
-	i.log.Info("indexing resource for tenant", "res", res, "tenant", tenant)
+	i.log.Debug("indexing resource for tenant", "res", res, "tenant", tenant)
 	shard, err := i.getShard(tenant)
 	if err != nil {
 		return err
