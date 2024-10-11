@@ -87,13 +87,10 @@ The text element lets you easily add text to the canvas. The element also suppor
 
 The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
 
-To set a custom icon, upload or add the image URL for both the **Icon** and **Background (icon)** options:
+You can add custom icons by setting both the **Icon** and **Background (icon)** image options.
+For steps on how to add your own images, refer to [Add custom images to elements](#add-custom-images-to-elements).
 
-![Canvas visualization icon image options](/media/docs/grafana/panels-visualizations/screenshot-canvas-icon-images-11.2.png)
-
-#### Upload a custom image
-
-To upload a custom image
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-icon-images-11.2.png" max-width="350px" alt="Canvas visualization icon image options" >}}
 
 ### Server
 
@@ -112,6 +109,25 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
 {{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
+
+## Add custom images to elements
+
+You can add custom background images to all elements except **Button** by referencing an image URL.
+The image must be hosted on a publicly available URL.
+
+To upload a custom image, follow these steps:
+
+1. Under **Background (\<ELEMENT TYPE\>)**, if it's not already selected, select **Fixed** as your image source.
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-src-v11.3.png" max-width="300px" alt="Custom image source selection" >}}
+
+1. Click **Select a value** in the field below.
+1. In the dialog box that opens, click the **URL** tab.
+1. Enter the URL in the field below the **URL** tab.
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="300px" alt="Add a custom image URL" >}}
+
+1. Click **Select**.
 
 ## Connections
 
