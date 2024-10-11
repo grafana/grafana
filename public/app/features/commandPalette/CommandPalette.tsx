@@ -161,18 +161,14 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   );
 };
 
-const getCommandPalettePosition = (inputRightPosition: number, spaceApplied: number) => {
+const getCommandPalettePosition = (inputRightPosition: number) => {
   const screenWidth = window.innerWidth;
-  const commandPaletteWidth = screenWidth * 0.8;
-  const lateralSpace = (screenWidth - commandPaletteWidth) / 2;
-  const rightSpace = screenWidth - inputRightPosition;
-  const originPoint = lateralSpace > rightSpace ? screenWidth - (inputRightPosition + spaceApplied) : lateralSpace;
-  return originPoint;
+  const lateralSpace = screenWidth - inputRightPosition;
+  return lateralSpace;
 };
 // eslint-disable-next-line
 const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
-  const paddingSet = theme.spacing(2);
-  const right = getCommandPalettePosition(rightPosition, parseInt(paddingSet, 10));
+  const lateralSpace = getCommandPalettePosition(rightPosition);
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -190,7 +186,6 @@ const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
       },
     }),
     animator: css({
-      maxWidth: theme.breakpoints.values.md,
       width: '100%',
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
@@ -198,10 +193,14 @@ const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
-      [`@media (min-width: ${theme.breakpoints.values.md}px)`]: {
+      [`@media (max-width: ${theme.breakpoints.values.lg}px)`]: {
+        maxWidth: theme.breakpoints.values.md,
+      },
+      [`@media (min-width: ${theme.breakpoints.values.lg}px)`]: {
         position: 'fixed',
-        right: right,
-        maxWidth: '80%',
+        right: lateralSpace,
+        left: lateralSpace,
+        width: `calc(100% - (${lateralSpace}px * 2))`,
       },
     }),
     loadingBarContainer: css({
