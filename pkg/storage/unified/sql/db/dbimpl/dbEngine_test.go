@@ -25,14 +25,14 @@ func TestGetEngineMySQLFromConfig(t *testing.T) {
 
 	t.Run("happy path - with key prefix", func(t *testing.T) {
 		t.Parallel()
-		engine, err := getEngineMySQL(newValidMySQLGetter(true), nil)
+		engine, err := getEngineMySQL(newValidMySQLGetter(true))
 		assert.NotNil(t, engine)
 		assert.NoError(t, err)
 	})
 
 	t.Run("happy path - without key prefix", func(t *testing.T) {
 		t.Parallel()
-		engine, err := getEngineMySQL(newValidMySQLGetter(false), nil)
+		engine, err := getEngineMySQL(newValidMySQLGetter(false))
 		assert.NotNil(t, engine)
 		assert.NoError(t, err)
 	})
@@ -47,7 +47,7 @@ func TestGetEngineMySQLFromConfig(t *testing.T) {
 			"db_user":     "user",
 			"db_password": "password",
 		}, "db_")
-		engine, err := getEngineMySQL(getter, nil)
+		engine, err := getEngineMySQL(getter)
 		assert.Nil(t, engine)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, errInvalidUTF8Sequence)
@@ -73,14 +73,14 @@ func TestGetEnginePostgresFromConfig(t *testing.T) {
 
 	t.Run("happy path - with key prefix", func(t *testing.T) {
 		t.Parallel()
-		engine, err := getEnginePostgres(newValidPostgresGetter(true), nil)
+		engine, err := getEnginePostgres(newValidPostgresGetter(true))
 		assert.NotNil(t, engine)
 		assert.NoError(t, err)
 	})
 
 	t.Run("happy path - without key prefix", func(t *testing.T) {
 		t.Parallel()
-		engine, err := getEnginePostgres(newValidPostgresGetter(false), nil)
+		engine, err := getEnginePostgres(newValidPostgresGetter(false))
 		assert.NotNil(t, engine)
 		assert.NoError(t, err)
 	})
@@ -94,7 +94,7 @@ func TestGetEnginePostgresFromConfig(t *testing.T) {
 			"db_user":     "user",
 			"db_password": "password",
 		}, "db_")
-		engine, err := getEnginePostgres(getter, nil)
+		engine, err := getEnginePostgres(getter)
 
 		assert.Nil(t, engine)
 		assert.Error(t, err)
@@ -110,7 +110,7 @@ func TestGetEnginePostgresFromConfig(t *testing.T) {
 			"db_user":     "user",
 			"db_password": "password",
 		}, "db_")
-		engine, err := getEnginePostgres(getter, nil)
+		engine, err := getEnginePostgres(getter)
 
 		assert.Nil(t, engine)
 		assert.Error(t, err)

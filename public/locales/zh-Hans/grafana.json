@@ -2208,7 +2208,9 @@
     "datasource-names": "",
     "delete-query-button": "",
     "query-template-get-error": "",
-    "search": ""
+    "search": "",
+    "user-info-get-error": "",
+    "user-names": ""
   },
   "query-operation": {
     "header": {
