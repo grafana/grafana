@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
-import React, { ComponentProps, useEffect, useState } from 'react';
+import React, { ComponentProps, useCallback, useEffect, useState } from 'react';
 
 import { Alert } from '../Alert/Alert';
 import { Field } from '../Forms/Field';
@@ -73,7 +73,6 @@ async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: chance.sentence({ words: index % 5 }),
     value: chance.guid(),
-    //description: chance.sentence(),
   }));
 }
 
@@ -131,23 +130,22 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
 };
 
 const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
-  const [value, setValue] = useState(args.value);
+  const [value, setValue] = useState<string | number | null>(null);
+
+  // This simulates a kind of search API call
+  const loadOptions = useCallback(
+    (inputValue: string) => {
+      return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+    },
+    [args.options]
+  );
+
   return (
     <Field label="Test input" description="Input with a few options">
       <Combobox
         id="test-combobox"
-        options={async (inputValue) => {
-          return await Promise.resolve([
-            { value: 'async option' },
-            { value: 'inputValue' },
-            { value: 'option2' },
-            { value: 'option3' },
-          ]).then((options) => {
-            return new Promise((resolve) => {
-              setTimeout(() => resolve(options), inputValue.length % 2 === 0 ? 200 : 1000); // Simulate promises that take longer time
-            });
-          });
-        }}
+        placeholder="Select an option"
+        options={loadOptions}
         value={value}
         onChange={(val) => {
           action('onChange')(val);
@@ -177,4 +175,28 @@ function InDevDecorator(Story: React.ElementType) {
       <Story />
     </div>
   );
+}
+
+let fakeApiOptions: Array<ComboboxOption<string | number>>;
+async function fakeSearchAPI(urlString: string) {
+  const searchParams = new URL(urlString).searchParams;
+
+  if (!fakeApiOptions) {
+    fakeApiOptions = await generateOptions(1000);
+  }
+
+  const searchQuery = searchParams.get('query')?.toLowerCase();
+
+  if (!searchQuery || searchQuery.length === 0) {
+    return Promise.resolve(fakeApiOptions.slice(0, 100));
+  }
+
+  const filteredOptions = Promise.resolve(
+    fakeApiOptions.filter((opt) => opt.label?.toLowerCase().includes(searchQuery))
+  );
+
+  const delay = searchQuery.length % 2 === 0 ? 200 : 1000;
+  return new Promise<Array<ComboboxOption<string | number>>>((resolve) => {
+    setTimeout(() => resolve(filteredOptions), delay);
+  });
 }
