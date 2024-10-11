@@ -26,7 +26,7 @@ func TestGetImageFiles(t *testing.T) {
 			"grafana-oss-1.2.3-ubuntu-armv7.img",
 		}
 
-		res := GetImageFiles("grafana", "1.2.3", architectures)
+		res := GetImageFiles("grafana-oss", "1.2.3", architectures)
 
 		require.Equal(t, expect, res)
 	})
@@ -41,7 +41,7 @@ func TestGetImageFiles(t *testing.T) {
 			"grafana-oss-1.2.3+example-01-ubuntu-armv7.img",
 		}
 
-		res := GetImageFiles("grafana", "1.2.3+example-01", architectures)
+		res := GetImageFiles("grafana-oss", "1.2.3+example-01", architectures)
 
 		require.Equal(t, expect, res)
 	})
