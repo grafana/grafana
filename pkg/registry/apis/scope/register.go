@@ -111,7 +111,7 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(scope.SchemeGroupVersion)
 }
 
-func (b *ScopeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
+func (b *ScopeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder, _ prometheus.Registerer) error {
 	scopeResourceInfo := scope.ScopeResourceInfo
 	scopeDashboardResourceInfo := scope.ScopeDashboardBindingResourceInfo
 	scopeNodeResourceInfo := scope.ScopeNodeResourceInfo

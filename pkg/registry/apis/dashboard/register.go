@@ -124,9 +124,10 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(resourceInfo.GroupVersion())
 }
 
-func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
+func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme,
+	optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder, reg prometheus.Registerer) error {
 	dash := b.legacy.resource
-	legacyStore, err := b.legacy.newStore(scheme, optsGetter)
+	legacyStore, err := b.legacy.newStore(scheme, optsGetter, reg)
 	if err != nil {
 		return err
 	}
