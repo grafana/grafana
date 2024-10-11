@@ -812,47 +812,6 @@ describe('DashboardScene', () => {
     });
   });
 
-  describe('When coming from explore', () => {
-    // When coming from Explore the first panel in a dashboard is a temporary panel
-    it('should remove first panel from the grid when discarding changes', () => {
-      const layout = DefaultGridLayoutManager.fromVizPanels([
-        new VizPanel({
-          title: 'Panel A',
-          key: 'panel-1',
-          pluginId: 'table',
-          $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-        }),
-        new VizPanel({
-          title: 'Panel B',
-          key: 'panel-2',
-          pluginId: 'table',
-        }),
-      ]);
-      const scene = new DashboardScene({
-        title: 'hello',
-        uid: 'dash-1',
-        description: 'hello description',
-        editable: true,
-        $timeRange: new SceneTimeRange({
-          timeZone: 'browser',
-        }),
-        controls: new DashboardControls({}),
-        $behaviors: [new behaviors.CursorSync({})],
-        body: layout,
-      });
-
-      scene.onEnterEditMode(true);
-      expect(scene.state.isEditing).toBe(true);
-      expect(layout.state.grid.state.children.length).toBe(2);
-
-      scene.exitEditMode({ skipConfirm: true });
-
-      const restoredGrid = scene.state.body as DefaultGridLayoutManager;
-      expect(scene.state.isEditing).toBe(false);
-      expect(restoredGrid.state.grid.state.children.length).toBe(1);
-    });
-  });
-
   describe('When a dashboard contain angular panels', () => {
     it('should return true if the dashboard contains angular panels', () => {
       // create a scene with angular panels inside

@@ -23,7 +23,7 @@ import {
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
-import { SortOrder } from 'app/core/utils/richHistory';
+import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData, StoreState } from 'app/types';
 import { ExploreItemState, RichHistoryQuery } from 'app/types/explore';

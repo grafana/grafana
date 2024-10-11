@@ -139,3 +139,5 @@ export interface DashboardState {
   initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
 }
+
+export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';

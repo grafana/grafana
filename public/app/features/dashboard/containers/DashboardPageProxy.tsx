@@ -40,11 +40,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       return null;
     }
 
-    return stateManager.fetchDashboard({
-      route: props.route.routeName as DashboardRoutes,
-      uid: params.uid ?? '',
-      keepDashboardFromExploreInLocalStorage: true,
-    });
+    return stateManager.fetchDashboard({ route: props.route.routeName as DashboardRoutes, uid: params.uid ?? '' });
   }, [params.uid, props.route.routeName]);
 
   if (!config.featureToggles.dashboardSceneForViewers) {
