@@ -4064,7 +4064,7 @@
           "type": "string"
         },
         "ErrorSource": {
-          "$ref": "#/definitions/ErrorSource"
+          "$ref": "#/definitions/Source"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -4360,10 +4360,6 @@
           "type": "string"
         }
       }
-    },
-    "ErrorSource": {
-      "description": "ErrorSource type defines the source of the error",
-      "type": "string"
     },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
@@ -7283,6 +7279,10 @@
           }
         }
       }
+    },
+    "Source": {
+      "type": "string",
+      "title": "Source type defines the status source."
     },
     "State": {
       "description": "+enum",

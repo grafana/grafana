@@ -14503,7 +14503,7 @@
           "type": "string"
         },
         "ErrorSource": {
-          "$ref": "#/definitions/ErrorSource"
+          "$ref": "#/definitions/Source"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -20477,6 +20477,10 @@
           }
         }
       }
+    },
+    "Source": {
+      "type": "string",
+      "title": "Source type defines the status source."
     },
     "Span": {
       "type": "object",
