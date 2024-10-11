@@ -37,7 +37,3 @@ func (backtickIdent) Ident(s string) (string, error) {
 func (mysql) CurrentEpoch() string {
 	return "FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000)"
 }
-
-func (mysql) Greatest(m, n string) string {
-	return "GREATEST(" + m + ", " + n + ")"
-}
