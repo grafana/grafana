@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
+import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -25,8 +25,8 @@ import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-  LogMessages,
   logInfo,
+  LogMessages,
   trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
@@ -36,17 +36,18 @@ import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFr
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { DataSourceType } from '../../../utils/datasource';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
-  MANUAL_ROUTING_KEY,
-  SIMPLIFIED_QUERY_EDITOR_KEY,
   formValuesFromExistingRule,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
+  MANUAL_ROUTING_KEY,
   normalizeDefaultAnnotations,
+  SIMPLIFIED_QUERY_EDITOR_KEY,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
@@ -408,22 +409,23 @@ function setInstantOrRange(values: RuleFormValues): RuleFormValues {
   return {
     ...values,
     queries: values.queries?.map((query) => {
-      if (!isExpressionQuery(query.model)) {
-        // data query
-        const defaultToInstant =
-          query.model.datasource?.type === 'loki' || query.model.datasource?.type === 'prometheus';
-        const isInstant =
-          'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
-        return {
-          ...query,
-          model: {
-            ...query.model,
-            instant: isInstant,
-            range: !isInstant, // we cannot have both instant and range queries in alerting
-          },
-        };
+      if (isExpressionQuery(query.model)) {
+        return query;
       }
-      return query;
+      // data query
+      const defaultToInstant =
+        query.model.datasource?.type === DataSourceType.Loki ||
+        query.model.datasource?.type === DataSourceType.Prometheus;
+      const isInstant =
+        'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
+      return {
+        ...query,
+        model: {
+          ...query.model,
+          instant: isInstant,
+          range: !isInstant, // we cannot have both instant and range queries in alerting
+        },
+      };
     }),
   };
 }
