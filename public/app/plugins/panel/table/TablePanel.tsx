@@ -9,8 +9,8 @@ import {
   InterpolateFunction,
   PanelProps,
   SelectableValue,
+  Field,
 } from '@grafana/data';
-import { Field } from '@grafana/data/';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
