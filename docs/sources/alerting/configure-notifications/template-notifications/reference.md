@@ -63,9 +63,9 @@ In notification templates, dot (`.`) is initialized with the following data:
 | `CommonAnnotations` | [KV](#kv)         | The annotations common to all alerts in this notification                                            |
 | `ExternalURL`       | string            | A link to Grafana, or the Alertmanager that sent this notification if using an external Alertmanager |
 
-It's important to remember that [a single notification can group multiple alerts](ref:alert-grouping) to reduce the number of alerts you receive.
+It's important to remember that [a single notification can group multiple alerts](ref:alert-grouping) to reduce the number of alerts you receive. `Alerts` is an array that includes all the alerts in the notification.
 
-`Alerts` is an array that includes all the alerts in the notification. Here's an example that prints all available notification data from dot (`.`):
+Here's an example that prints all available notification data from dot (`.`):
 
 ```
 {{ define "custom_template" }}

@@ -131,7 +131,7 @@ If Grafana has been set up to send images in notifications, however notification
 5. If images cannot be taken because of mis-configuration or an issue with image rendering there are logs for `Failed to take an image` including the Dashboard UID, Panel ID, and the error message.
 6. Check that the contact point supports images in notifications and whether it supports uploading images to the receiving service or referencing images that have been uploaded to a cloud storage service.
 
-## Metrics
+## Meta monitoring
 
 Grafana provides the following metrics to observe the performance and failure rate of images in notifications.
 For example, if a screenshot could not be taken within the expected time (10 seconds) then the counter `grafana_screenshot_failures_total` is updated.
