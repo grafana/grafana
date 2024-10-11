@@ -195,7 +195,7 @@ func (cma *CloudMigrationAPI) GetSessionList(c *contextmodel.ReqContext) respons
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
-// 500: internalServerError
+// 500: createSessionErrorResponse
 func (cma *CloudMigrationAPI) GetSession(c *contextmodel.ReqContext) response.Response {
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSession")
 	defer span.End()
@@ -213,12 +213,7 @@ func (cma *CloudMigrationAPI) GetSession(c *contextmodel.ReqContext) response.Re
 		span.SetStatus(codes.Error, "session not found")
 		span.RecordError(err)
 
-		errorResult := CloudMigrationSessionErrorResponseDTO{
-			ErrorCode: "TOKEN_INVALID",
-			Message:   err.Error(),
-		}
-		return response.JSON(http.StatusInternalServerError, errorResult)
-		// return response.ErrOrFallback(http.StatusNotFound, "session not found", err)
+		return response.ErrOrFallback(http.StatusNotFound, "session not found", err)
 	}
 
 	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{
@@ -238,7 +233,7 @@ func (cma *CloudMigrationAPI) GetSession(c *contextmodel.ReqContext) response.Re
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
-// 500: internalServerError
+// 500: createSessionErrorResponse
 func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response.Response {
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateSession")
 	defer span.End()
@@ -254,10 +249,10 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 		AuthToken: cmd.AuthToken,
 	})
 	if err != nil {
-		span.SetStatus(codes.Error, "session creation error")
-		span.RecordError(err)
+		span.SetStatus(codes.Error, "Session creation error")
+		// span.RecordError(err)
 
-		return response.ErrOrFallback(http.StatusInternalServerError, "session creation error", err)
+		return response.JSON(http.StatusInternalServerError, fromCreateSessionErrorToDTO(err))
 	}
 
 	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{

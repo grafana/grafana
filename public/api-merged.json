@@ -2321,7 +2321,7 @@
             "$ref": "#/responses/forbiddenError"
           },
           "500": {
-            "$ref": "#/responses/internalServerError"
+            "$ref": "#/responses/createSessionErrorResponse"
           }
         }
       }
@@ -2356,7 +2356,7 @@
             "$ref": "#/responses/forbiddenError"
           },
           "500": {
-            "$ref": "#/responses/internalServerError"
+            "$ref": "#/responses/createSessionErrorResponse"
           }
         }
       },
@@ -14120,6 +14120,17 @@
         }
       }
     },
+    "CreateSessionErrorDTO": {
+      "type": "object",
+      "properties": {
+        "errorCode": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "CreateSnapshotResponseDTO": {
       "type": "object",
       "properties": {
@@ -23145,6 +23156,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/ServiceAccountDTO"
+      }
+    },
+    "createSessionErrorResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CreateSessionErrorDTO"
       }
     },
     "createSnapshotResponse": {

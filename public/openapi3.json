@@ -424,6 +424,16 @@
         },
         "description": "(empty)"
       },
+      "createSessionErrorResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateSessionErrorDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "createSnapshotResponse": {
         "content": {
           "application/json": {
@@ -4345,6 +4355,17 @@
               "Admin"
             ],
             "example": "Admin",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreateSessionErrorDTO": {
+        "properties": {
+          "errorCode": {
+            "type": "string"
+          },
+          "message": {
             "type": "string"
           }
         },
@@ -15580,7 +15601,7 @@
             "$ref": "#/components/responses/forbiddenError"
           },
           "500": {
-            "$ref": "#/components/responses/internalServerError"
+            "$ref": "#/components/responses/createSessionErrorResponse"
           }
         },
         "summary": "Create a migration session.",
@@ -15649,7 +15670,7 @@
             "$ref": "#/components/responses/forbiddenError"
           },
           "500": {
-            "$ref": "#/components/responses/internalServerError"
+            "$ref": "#/components/responses/createSessionErrorResponse"
           }
         },
         "summary": "Get a cloud migration session by its uid.",

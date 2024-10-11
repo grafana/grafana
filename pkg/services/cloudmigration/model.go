@@ -135,6 +135,30 @@ type CloudMigrationSessionResponse struct {
 	Updated time.Time
 }
 
+type CreateSessionError struct {
+	ErrorCode string
+	Message   string
+}
+
+var (
+	ErrTokenInvalid = CreateSessionError{
+		ErrorCode: "TOKEN_INVALID",
+		Message:   "Token is not valid. Generate a new token on your cloud instance and try again.",
+	}
+	ErrTokenRequestError = CreateSessionError{
+		ErrorCode: "TOKEN_REQUEST_ERROR",
+		Message:   "An error occurred while validating the token. Please ensure the token matches the migration token on your cloud instance.",
+	}
+	ErrSessionCreationFailure = CreateSessionError{
+		ErrorCode: "SESSION_CREATION_FAILURE",
+		Message:   "An error occurred while validating the token. Please ensure the token matches the migration token on your cloud instance.",
+	}
+	ErrMigrationDisabled = CreateSessionError{
+		ErrorCode: "MIGRATION_DISABLED",
+		Message:   "Cloud migrations are disabled on this instance.",
+	}
+)
+
 type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
 }

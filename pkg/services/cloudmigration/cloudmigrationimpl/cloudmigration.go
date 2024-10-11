@@ -392,30 +392,31 @@ func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigr
 	return &cloudmigration.CloudMigrationSessionListResponse{Sessions: migrations}, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
+func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, *cloudmigration.CreateSessionError) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CreateSession")
 	defer span.End()
 
 	base64Token := cmd.AuthToken
 	b, err := base64.StdEncoding.DecodeString(base64Token)
 	if err != nil {
-		return nil, fmt.Errorf(api.ErrorMessageInvalidToken)
+		return nil, &cloudmigration.ErrTokenInvalid
 	}
 	var token cloudmigration.Base64EncodedTokenPayload
 	if err := json.Unmarshal(b, &token); err != nil {
-		return nil, fmt.Errorf(api.ErrorMessageInvalidToken) // don't want to leak info here
+		return nil, &cloudmigration.ErrTokenInvalid // don't want to leak info here
 	}
 
 	migration := token.ToMigration()
 	// validate token against GMS before saving
 	if err := s.ValidateToken(ctx, migration); err != nil {
-		gmsErrorMessage := s.handleGMSErrors(err)
-		return nil, fmt.Errorf(gmsErrorMessage)
+		// gmsErrorMessage := s.handleGMSErrors(err)
+		// TODO: return specific GMS error
+		return nil, &cloudmigration.ErrTokenInvalid
 	}
 
 	cm, err := s.store.CreateMigrationSession(ctx, migration)
 	if err != nil {
-		return nil, fmt.Errorf(api.ErrorMessageCreateSessionFailed)
+		return nil, &cloudmigration.ErrSessionCreationFailure
 	}
 
 	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)

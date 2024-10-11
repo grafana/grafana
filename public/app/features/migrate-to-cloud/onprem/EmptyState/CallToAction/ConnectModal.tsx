@@ -143,7 +143,7 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
               >
                 <Text element="p">
                   {/* TODO: how to get error data here correctly */}
-                  {getTMessage(error?.data?.message)}
+                  {getTMessage(error?.data?.errorCode)}
                 </Text>
               </AlertWithTraceID>
             ) : undefined}

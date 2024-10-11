@@ -16,7 +16,7 @@ type Service interface {
 	ValidateToken(ctx context.Context, mig CloudMigrationSession) error
 	DeleteToken(ctx context.Context, uid string) error
 
-	CreateSession(ctx context.Context, req CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, error)
+	CreateSession(ctx context.Context, req CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, *CreateSessionError)
 	GetSession(ctx context.Context, migUID string) (*CloudMigrationSession, error)
 	DeleteSession(ctx context.Context, migUID string) (*CloudMigrationSession, error)
 	GetSessionList(context.Context) (*CloudMigrationSessionListResponse, error)

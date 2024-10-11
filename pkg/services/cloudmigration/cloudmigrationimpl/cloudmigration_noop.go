@@ -37,8 +37,8 @@ func (s *NoopServiceImpl) GetSessionList(ctx context.Context) (*cloudmigration.C
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
+func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, *cloudmigration.CreateSessionError) {
+	return nil, &cloudmigration.ErrMigrationDisabled
 }
 
 func (s *NoopServiceImpl) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {

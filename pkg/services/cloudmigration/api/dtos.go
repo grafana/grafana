@@ -76,15 +76,15 @@ type CloudMigrationSessionResponse struct {
 	Body CloudMigrationSessionResponseDTO
 }
 
-type CloudMigrationSessionErrorResponseDTO struct {
+type CreateSessionErrorDTO struct {
 	ErrorCode string `json:"errorCode"`
 	Message   string `json:"message"`
 }
 
-// swagger:response cloudMigrationSessionResponse
-type CloudMigrationSessionErrorResponse struct {
+// swagger:response createSessionErrorResponse
+type CreateSessionErrorResponse struct {
 	// in: body
-	Body CloudMigrationSessionErrorResponseDTO
+	Body CreateSessionErrorDTO
 }
 
 // swagger:parameters createSession
@@ -190,6 +190,13 @@ type DeleteMigrationSessionRequest struct {
 }
 
 // utility funcs for converting to/from DTO
+
+func fromCreateSessionErrorToDTO(createSessionError *cloudmigration.CreateSessionError) CreateSessionErrorDTO {
+	return CreateSessionErrorDTO{
+		ErrorCode: createSessionError.ErrorCode,
+		Message:   createSessionError.Message,
+	}
+}
 
 func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse) CloudMigrationSessionListResponseDTO {
 	slDTOs := make([]CloudMigrationSessionResponseDTO, len(sl.Sessions))
