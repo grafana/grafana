@@ -226,12 +226,10 @@ func publishPackages(cfg packaging.PublishConfig) error {
 		r.ReleaseNotesURL = cfg.ReleaseNotesURL
 	}
 
-	// 1. Create the release
 	if err := postRequest(cfg, "versions", r, fmt.Sprintf("create release %s", r.Version)); err != nil {
 		return err
 	}
 
-	// 2.
 	if err := postRequest(cfg, fmt.Sprintf("versions/%s", cfg.Version), r,
 		fmt.Sprintf("update release %s", cfg.Version)); err != nil {
 		return err
