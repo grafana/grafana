@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,9 +32,10 @@ const (
 )
 
 const (
-	MetaKeyUsername   = "username"
-	MetaKeyAuthModule = "authModule"
-	MetaKeyIsLogin    = "isLogin"
+	MetaKeyUsername            = "username"
+	MetaKeyAuthModule          = "authModule"
+	MetaKeyIsLogin             = "isLogin"
+	defaultRedirectToCookieKey = "redirect_to"
 )
 
 // ClientParams are hints to the auth service about how to handle the identity management
@@ -64,15 +66,20 @@ type ClientParams struct {
 }
 
 type FetchPermissionsParams struct {
-	// ActionsLookup will restrict the permissions to only these actions
-	ActionsLookup []string
+	// RestrictedActions will restrict the permissions to only these actions
+	RestrictedActions []string
+	// AllowedActions will be added to the identity permissions
+	AllowedActions []string
+	// Note: Kept for backwards compatibility, use AllowedActions instead
 	// Roles permissions will be directly added to the identity permissions
 	Roles []string
 }
 
-type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
-type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
-type PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
+type (
+	PostAuthHookFn  func(ctx context.Context, identity *Identity, r *Request) error
+	PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
+	PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
+)
 
 type Authenticator interface {
 	// Authenticate authenticates a request
@@ -227,38 +234,54 @@ func ClientWithPrefix(name string) string {
 type RedirectValidator func(url string) error
 
 // HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
-func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
+func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) *response.NormalResponse {
 	result := map[string]any{"message": "Logged in"}
-	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator)
+	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator, features, "")
 	return response.JSON(http.StatusOK, result)
 }
 
 // HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
-func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) {
-	redirectURL := handleLogin(r, w, cfg, identity, validator)
+func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) {
+	redirectURL := handleLogin(r, w, cfg, identity, validator, features, "redirectTo")
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 // HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse
-func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.RedirectResponse {
-	return response.Redirect(handleLogin(r, w, cfg, identity, validator))
+func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles, redirectToCookieName string) *response.RedirectResponse {
+	return response.Redirect(handleLogin(r, w, cfg, identity, validator, features, redirectToCookieName))
 }
 
-func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
+func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles, redirectToCookieName string) string {
+	WriteSessionCookie(w, cfg, identity.SessionToken)
+
 	redirectURL := cfg.AppSubURL + "/"
+	if features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
+		if redirectToCookieName != "" {
+			scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)
+			if err == nil {
+				redirectTo, _ := url.QueryUnescape(scopedRedirectToCookie.Value)
+				if redirectTo != "" && validator(redirectTo) == nil {
+					redirectURL = cfg.AppSubURL + redirectTo
+				}
+				cookies.DeleteCookie(w, redirectToCookieName, cookieOptions(cfg))
+			}
+		}
+		return redirectURL
+	}
+
+	redirectURL = cfg.AppSubURL + "/"
 	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 {
 		if validator(redirectTo) == nil {
 			redirectURL = redirectTo
 		}
-		cookies.DeleteCookie(w, "redirect_to", cookieOptions(cfg))
+		cookies.DeleteCookie(w, defaultRedirectToCookieKey, cookieOptions(cfg))
 	}
 
-	WriteSessionCookie(w, cfg, identity.SessionToken)
 	return redirectURL
 }
 
 func getRedirectURL(r *http.Request) string {
-	cookie, err := r.Cookie("redirect_to")
+	cookie, err := r.Cookie(defaultRedirectToCookieKey)
 	if err != nil {
 		return ""
 	}

@@ -2,6 +2,7 @@ package writer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -27,6 +28,11 @@ const (
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
+)
+
+var (
+	ErrWriteFailure = errors.New("failed to write time series")
+	ErrBadFrame     = errors.New("failed to read dataframe")
 )
 
 var DuplicateTimestampErrors = [...]string{
@@ -60,9 +66,15 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 
 	points := make([]Point, 0, len(col.Refs))
 	for _, ref := range col.Refs {
-		fp, empty, _ := ref.NullableFloat64Value()
-		if empty || fp == nil {
-			return nil, fmt.Errorf("unable to read float64 value")
+		fp, empty, err := ref.NullableFloat64Value()
+		if err != nil {
+			return nil, fmt.Errorf("unable to read float64 value: %w", err)
+		}
+		if empty {
+			return nil, fmt.Errorf("empty frame")
+		}
+		if fp == nil {
+			return nil, fmt.Errorf("nil frame")
 		}
 
 		metric := Metric{
@@ -179,7 +191,7 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {
-		return err
+		return errors.Join(ErrBadFrame, err)
 	}
 
 	series := make([]promremote.TimeSeries, 0, len(points))
@@ -202,7 +214,7 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	w.metrics.WritesTotal.WithLabelValues(lvs...).Inc()
 
 	if err, ignored := checkWriteError(writeErr); err != nil {
-		return fmt.Errorf("failed to write time series: %w", err)
+		return errors.Join(ErrWriteFailure, err)
 	} else if ignored {
 		l.Debug("Ignored write error", "error", err, "status_code", res.StatusCode)
 	}

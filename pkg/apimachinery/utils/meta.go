@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,6 +33,11 @@ const AnnoKeyOriginName = "grafana.app/originName"
 const AnnoKeyOriginPath = "grafana.app/originPath"
 const AnnoKeyOriginHash = "grafana.app/originHash"
 const AnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
+
+// #TODO revisit keeping these folder-specific annotations once we have complete support for mode 1
+
+const AnnoKeyFullPath = "grafana.app/fullPath"
+const AnnoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
 
 // ResourceOriginInfo is saved in annotations.  This is used to identify where the resource came from
 // This object can model the same data as our existing provisioning table or a more general git sync
@@ -95,7 +101,15 @@ type GrafanaMetaAccessor interface {
 	SetSpec(any) error
 
 	GetStatus() (any, error)
+
+	// Used by the generic strategy to keep the status value unchanged on an update
+	// NOTE the type must match the existing value, or an error will be thrown
 	SetStatus(any) error
+
+	GetFullPath() string
+	SetFullPath(path string)
+	GetFullPathUIDs() string
+	SetFullPathUIDs(path string)
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -504,7 +518,22 @@ func (m *grafanaMetaAccessor) GetSpec() (spec any, err error) {
 			err = fmt.Errorf("error reading spec")
 		}
 	}()
-	spec = m.r.FieldByName("Spec").Interface()
+
+	f := m.r.FieldByName("Spec")
+	if f.IsValid() {
+		spec = f.Interface()
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		spec, ok = u.Object["spec"]
+		if ok {
+			return // no error
+		}
+	}
+	err = fmt.Errorf("unable to read spec")
 	return
 }
 
@@ -514,7 +543,20 @@ func (m *grafanaMetaAccessor) SetSpec(s any) (err error) {
 			err = fmt.Errorf("error setting spec")
 		}
 	}()
-	m.r.FieldByName("Spec").Set(reflect.ValueOf(s))
+
+	f := m.r.FieldByName("Spec")
+	if f.IsValid() {
+		f.Set(reflect.ValueOf(s))
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["spec"] = s
+	} else {
+		err = fmt.Errorf("unable to set spec")
+	}
 	return
 }
 
@@ -524,7 +566,22 @@ func (m *grafanaMetaAccessor) GetStatus() (status any, err error) {
 			err = fmt.Errorf("error reading status")
 		}
 	}()
-	status = m.r.FieldByName("Status").Interface()
+
+	f := m.r.FieldByName("Status")
+	if f.IsValid() {
+		status = f.Interface()
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		status, ok = u.Object["status"]
+		if ok {
+			return // no error
+		}
+	}
+	err = fmt.Errorf("unable to read status")
 	return
 }
 
@@ -534,8 +591,37 @@ func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
 			err = fmt.Errorf("error setting status")
 		}
 	}()
-	m.r.FieldByName("Status").Set(reflect.ValueOf(s))
+
+	f := m.r.FieldByName("Status")
+	if f.IsValid() {
+		f.Set(reflect.ValueOf(s))
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["status"] = s
+	} else {
+		err = fmt.Errorf("unable to read status")
+	}
 	return
+}
+
+func (m *grafanaMetaAccessor) GetFullPath() string {
+	return m.get(AnnoKeyFullPath)
+}
+
+func (m *grafanaMetaAccessor) SetFullPath(path string) {
+	m.SetAnnotation(AnnoKeyFullPath, path)
+}
+
+func (m *grafanaMetaAccessor) GetFullPathUIDs() string {
+	return m.get(AnnoKeyFullPathUIDs)
+}
+
+func (m *grafanaMetaAccessor) SetFullPathUIDs(path string) {
+	m.SetAnnotation(AnnoKeyFullPathUIDs, path)
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {

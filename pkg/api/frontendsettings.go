@@ -41,7 +41,6 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	hash.Reset()
 	_, _ = hash.Write([]byte(setting.BuildVersion))
 	_, _ = hash.Write([]byte(setting.BuildCommit))
-	_, _ = hash.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
 	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	// Plugin configs
@@ -146,6 +145,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			AliasIDs:        panel.AliasIDs,
 			Info:            panel.Info,
 			Module:          panel.Module,
+			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
 			HideFromList:    panel.HideFromList,
@@ -412,7 +412,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
 			orgDataSources = dataSources
 		} else {
-			filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByQueryPermissions(dataSources)
+			filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
 			if err != nil {
 				return nil, err
 			}
@@ -454,6 +454,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			JSONData:                  plugin.JSONData,
 			Signature:                 plugin.Signature,
 			Module:                    plugin.Module,
+			ModuleHash:                hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
 			BaseURL:                   plugin.BaseURL,
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
@@ -539,8 +540,9 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
 					Module:    ds.Module,
-					BaseURL:   ds.BaseURL,
-					Angular:   ds.Angular,
+					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
+					BaseURL: ds.BaseURL,
+					Angular: ds.Angular,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -562,6 +564,9 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Preload:         false,
 		Angular:         plugin.Angular,
 		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
+		Extensions:      plugin.Extensions,
+		Dependencies:    plugin.Dependencies,
+		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
 	}
 
 	if settings.Enabled {

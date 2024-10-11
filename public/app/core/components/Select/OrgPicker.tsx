@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
@@ -14,9 +14,20 @@ export interface Props {
   inputId?: string;
   autoFocus?: boolean;
   excludeOrgs?: UserOrg[];
+  defaultOrganization?: Organization;
 }
 
-export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOrgs }: Props) {
+function orgToSelectItem(org: Organization): OrgSelectItem {
+  return {
+    value: org,
+    label: org.name,
+  };
+}
+
+export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOrgs, defaultOrganization }: Props) {
+  const [selected, setSelected] = useState<OrgSelectItem | undefined>(
+    defaultOrganization ? orgToSelectItem(defaultOrganization) : undefined
+  );
   // For whatever reason the autoFocus prop doesn't seem to work
   // with AsyncSelect, hence this workaround. Maybe fixed in a later version?
   useEffect(() => {
@@ -27,13 +38,12 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOr
 
   const [orgOptionsState, getOrgOptions] = useAsyncFn(async () => {
     const orgs: Organization[] = await getBackendSrv().get('/api/orgs');
-    const allOrgs = orgs.map((org) => ({ value: { id: org.id, name: org.name }, label: org.name }));
+    const allOrgs = orgs.map(orgToSelectItem);
     if (excludeOrgs) {
       let idArray = excludeOrgs.map((anOrg) => anOrg.orgId);
-      const filteredOrgs = allOrgs.filter((item) => {
-        return !idArray.includes(item.value.id);
+      return allOrgs.filter((item) => {
+        return item.value !== undefined && !idArray.includes(item.value.id);
       });
-      return filteredOrgs;
     } else {
       return allOrgs;
     }
@@ -50,7 +60,11 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOr
         const input = rawInput.toLowerCase();
         return !!option.value?.name.toLowerCase().includes(input);
       }}
-      onChange={onSelected}
+      onChange={(item) => {
+        onSelected(item);
+        setSelected(item);
+      }}
+      value={selected}
       placeholder="Select organization"
       noOptionsMessage="No organizations found"
     />

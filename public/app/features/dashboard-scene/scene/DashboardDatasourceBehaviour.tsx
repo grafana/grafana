@@ -1,9 +1,18 @@
+import { Unsubscribable } from 'rxjs';
+
 import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
-import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  getQueryRunnerFor,
+  getVizPanelKeyForPanelId,
+} from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehaviorState } from './LibraryPanelBehavior';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
@@ -16,48 +25,77 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
   }
 
   private _activationHandler() {
-    const queryRunner = this.parent;
+    const dashboardDsQueryRunner = this.parent;
+    let libraryPanelSub: Unsubscribable;
     let dashboard: DashboardScene;
-    if (!(queryRunner instanceof SceneQueryRunner)) {
+    if (!(dashboardDsQueryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
 
-    if (queryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
+    if (dashboardDsQueryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
       return;
     }
 
     try {
-      dashboard = getDashboardSceneFor(queryRunner);
+      dashboard = getDashboardSceneFor(dashboardDsQueryRunner);
     } catch {
       return;
     }
 
-    const dashboardQuery = queryRunner.state.queries.find((query) => query.panelId !== undefined);
+    const dashboardQuery = dashboardDsQueryRunner.state.queries.find((query) => query.panelId !== undefined);
 
     if (!dashboardQuery) {
       return;
     }
 
+    // find the source panel referenced in the the dashboard ds query
     const panelId = dashboardQuery.panelId;
     const vizKey = getVizPanelKeyForPanelId(panelId);
-    const panel = findVizPanelByKey(dashboard, vizKey);
+    const sourcePanel = findVizPanelByKey(dashboard, vizKey);
 
-    if (!(panel instanceof VizPanel)) {
+    if (!(sourcePanel instanceof VizPanel)) {
       return;
     }
 
-    const sourcePanelQueryRunner = getQueryRunnerFor(panel);
+    //check if the source panel is a library panel and wait for it to load
+    const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
+    if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
+      libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
+        this.handleLibPanelStateUpdates(newLibPanel, dashboardDsQueryRunner, sourcePanel);
+      });
+      return;
+    }
+
+    const sourcePanelQueryRunner = getQueryRunnerFor(sourcePanel);
 
     if (!sourcePanelQueryRunner) {
       throw new Error('Could not find SceneQueryRunner for panel');
     }
 
     if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
-      queryRunner.runQueries();
+      dashboardDsQueryRunner.runQueries();
     }
 
     return () => {
       this.prevRequestId = sourcePanelQueryRunner?.state.data?.request?.requestId;
+      if (libraryPanelSub) {
+        libraryPanelSub.unsubscribe();
+      }
     };
+  }
+
+  private handleLibPanelStateUpdates(
+    newLibPanel: LibraryPanelBehaviorState,
+    dashboardDsQueryRunner: SceneQueryRunner,
+    sourcePanel: VizPanel
+  ) {
+    if (newLibPanel && newLibPanel?.isLoaded) {
+      const libPanelQueryRunner = getQueryRunnerFor(sourcePanel);
+
+      if (!(libPanelQueryRunner instanceof SceneQueryRunner)) {
+        throw new Error('Could not find SceneQueryRunner for library panel');
+      }
+      dashboardDsQueryRunner.runQueries();
+    }
   }
 }

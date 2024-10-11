@@ -39,7 +39,6 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
 		folderTreeCollector(store),
-		dashboardFolderCollector(store),
 		basicRolesCollector(store),
 		customRolesCollector(store),
 		basicRoleAssignemtCollector(store),
@@ -58,6 +57,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 // Sync runs all collectors and tries to write all collected tuples.
 // It will skip over any "sync group" that has already been written.
 func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
+	z.log.Info("Starting zanzana permissions sync")
 	ctx, span := tracer.Start(ctx, "accesscontrol.migrator.Sync")
 	defer span.End()
 
@@ -94,12 +94,12 @@ func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
 func managedPermissionsCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "managed"
-		const query = `
+		query := `
 			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN user_role ur ON r.id = ur.role_id
-			LEFT JOIN user u ON u.id = ur.user_id
+			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ur.user_id
 			LEFT JOIN team_role tr ON r.id = tr.role_id
 			LEFT JOIN team t ON tr.team_id = t.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
@@ -156,11 +156,11 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 		defer span.End()
 
 		const collectorID = "team_membership"
-		const query = `
+		query := `
 			SELECT t.uid as team_uid, u.uid as user_uid, tm.permission
 			FROM team_member tm
 			INNER JOIN team t ON tm.team_id = t.id
-			INNER JOIN user u ON tm.user_id = u.id
+			INNER JOIN ` + store.GetDialect().Quote("user") + ` u ON tm.user_id = u.id
 		`
 
 		type membership struct {
@@ -239,45 +239,6 @@ func folderTreeCollector(store db.DB) TupleCollector {
 					User:     zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(f.OrgID, 10), ""),
 				}
 			}
-			tuples[collectorID] = append(tuples[collectorID], tuple)
-		}
-
-		return nil
-	}
-}
-
-// dashboardFolderCollector collects information about dashboards parent folders
-func dashboardFolderCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.dashboardFolderCollector")
-		defer span.End()
-
-		const collectorID = "folder"
-		const query = `
-			SELECT org_id, uid, folder_uid, is_folder FROM dashboard WHERE is_folder = 0 AND folder_uid IS NOT NULL
-		`
-		type dashboard struct {
-			OrgID     int64  `xorm:"org_id"`
-			UID       string `xorm:"uid"`
-			ParentUID string `xorm:"folder_uid"`
-		}
-
-		var dashboards []dashboard
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&dashboards)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		for _, d := range dashboards {
-			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, d.ParentUID, "", strconv.FormatInt(d.OrgID, 10)),
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeDashboard, d.UID, "", strconv.FormatInt(d.OrgID, 10)),
-				Relation: zanzana.RelationParent,
-			}
-
 			tuples[collectorID] = append(tuples[collectorID], tuple)
 		}
 
@@ -426,10 +387,10 @@ func customRolesCollector(store db.DB) TupleCollector {
 func basicRoleAssignemtCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "basic_role_assignment"
-		const query = `
+		query := `
 			SELECT ou.org_id, u.uid as user_uid, ou.role as org_role, u.is_admin
 			FROM org_user ou
-			LEFT JOIN user u ON u.id = ou.user_id
+			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ou.user_id
 		`
 		type Assignment struct {
 			OrgID   int64  `xorm:"org_id"`
@@ -474,11 +435,11 @@ func basicRoleAssignemtCollector(store db.DB) TupleCollector {
 func userRoleAssignemtCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "user_role_assignment"
-		const query = `
+		query := `
 			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid, r.name AS role_name
 			FROM user_role ur
 			LEFT JOIN role r ON r.id = ur.role_id
-			LEFT JOIN user u ON u.id = ur.user_id
+			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ur.user_id
 			WHERE r.name NOT LIKE 'managed:%'
 		`
 

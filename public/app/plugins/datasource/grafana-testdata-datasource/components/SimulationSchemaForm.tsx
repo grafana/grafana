@@ -4,10 +4,12 @@ import { FormEvent, useState, ChangeEvent } from 'react';
 import { DataFrameSchema, FieldSchema, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TextArea, InlineField, Input, FieldSet, InlineSwitch } from '@grafana/ui';
 
+type Config = Record<string, any>;
+
 interface SchemaFormProps {
-  config: Record<string, any>;
+  config: Config;
   schema: DataFrameSchema;
-  onChange: (config: Record<string, any>) => void;
+  onChange: (config: Config) => void;
 }
 
 const renderInput = (field: FieldSchema, onChange: SchemaFormProps['onChange'], config: SchemaFormProps['config']) => {
