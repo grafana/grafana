@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -13,7 +13,7 @@ import { DashboardSearchItemType } from 'app/features/search/types';
 
 import { AddToDashboardForm, Props } from './AddToDashboardForm';
 
-function setup(overrides: Partial<Props> = {}) {
+async function setup(overrides: Partial<Props> = {}) {
   const props: Props = {
     buildPanel: () => ({ id: 1, type: 'table', options: { showHeader: false } }),
     onClose: jest.fn(),
@@ -21,7 +21,9 @@ function setup(overrides: Partial<Props> = {}) {
     ...overrides,
   };
 
-  return render(<AddToDashboardForm {...props} />);
+  const res = render(<AddToDashboardForm {...props} />);
+  await act(() => Promise.resolve());
+  return res;
 }
 
 jest.mock('app/core/services/context_srv');
@@ -47,7 +49,7 @@ describe('AddToDashboardButton', () => {
       // @ts-expect-error global.open should return a Window, but is not implemented in js-dom.
       const openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
 
-      setup();
+      await setup();
 
       await userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
@@ -61,7 +63,7 @@ describe('AddToDashboardButton', () => {
       // @ts-expect-error global.open should return a Window, but is not implemented in js-dom.
       const openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
 
-      setup();
+      await setup();
 
       await userEvent.click(screen.getByRole('button', { name: /open in new tab/i }));
 
@@ -73,7 +75,7 @@ describe('AddToDashboardButton', () => {
   describe('Add to new dashboard', () => {
     describe('Navigate to correct dashboard when saving', () => {
       it('Navigates to the new dashboard', async () => {
-        setup();
+        await setup();
 
         await userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
@@ -85,7 +87,7 @@ describe('AddToDashboardButton', () => {
 
   describe('Add to existing dashboard', () => {
     it('Renders the dashboard picker when switching to "Existing Dashboard"', async () => {
-      setup();
+      await setup();
 
       expect(screen.queryByRole('combobox', { name: /dashboard/ })).not.toBeInTheDocument();
 
@@ -96,7 +98,7 @@ describe('AddToDashboardButton', () => {
     it('Does not submit if no dashboard is selected', async () => {
       locationService.push = jest.fn();
 
-      setup();
+      await setup();
 
       await userEvent.click(screen.getByRole<HTMLInputElement>('radio', { name: /existing dashboard/i }));
       await userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
@@ -127,7 +129,7 @@ describe('AddToDashboardButton', () => {
           },
         ]);
 
-        setup();
+        await setup();
 
         await userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
         await userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
@@ -159,7 +161,7 @@ describe('AddToDashboardButton', () => {
           },
         ]);
 
-        setup();
+        await setup();
 
         await userEvent.click(screen.getByRole('radio', { name: /existing dashboard/i }));
         await userEvent.click(screen.getByRole('combobox', { name: /dashboard/i }));
@@ -195,7 +197,7 @@ describe('Permissions', () => {
       }
     });
 
-    setup();
+    await setup();
 
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
@@ -209,7 +211,7 @@ describe('Permissions', () => {
       }
     });
 
-    setup();
+    await setup();
 
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
@@ -228,7 +230,7 @@ describe('Error handling', () => {
     jest.spyOn(global, 'open').mockReturnValue(null);
     const removeDashboardSpy = jest.spyOn(initDashboard, 'removeDashboardToFetchFromLocalStorage');
 
-    setup();
+    await setup();
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
@@ -246,7 +248,7 @@ describe('Error handling', () => {
       throw 'SOME ERROR';
     });
 
-    setup();
+    await setup();
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 

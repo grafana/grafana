@@ -1096,7 +1096,6 @@
   "help-wizard": {
     "download-snapshot": "Download snapshot",
     "github-comment": "Copy Github comment",
-    "preview-snapshot": "Preview snapshot",
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
     "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
   },
