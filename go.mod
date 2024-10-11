@@ -478,7 +478,7 @@ require (
 
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 
-require connectrpc.com/connect v1.16.2
+require connectrpc.com/connect v1.16.2 // @grafana/observability-traces-and-profiling
 
 require (
 	cloud.google.com/go/longrunning v0.5.12 // indirect
