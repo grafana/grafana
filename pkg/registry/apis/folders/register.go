@@ -101,7 +101,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		service:        b.folderSvc,
 		namespacer:     b.namespacer,
 		tableConverter: resourceInfo.TableConverter(),
-		accessControl:  b.accessControl,
 	}
 
 	storage := map[string]rest.Storage{}

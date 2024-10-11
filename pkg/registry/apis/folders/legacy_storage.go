@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -36,7 +35,6 @@ type legacyStorage struct {
 	service        folder.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-	accessControl  accesscontrol.AccessControl
 }
 
 func (s *legacyStorage) New() runtime.Object {
