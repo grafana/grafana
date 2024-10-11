@@ -21,7 +21,6 @@ const (
 // GetImageFiles returns the list of image (.img, but should be .tar because they are tar archives) files that are
 // created in the 'tag' process and stored in the prerelease bucket, waiting to be released.
 func GetImageFiles(grafana string, version string, architectures []config.Architecture) []string {
-
 	bases := []string{alpine, ubuntu}
 	images := []string{}
 	for _, base := range bases {
@@ -117,6 +116,7 @@ func DownloadImages(baseURL string, images []string, destination string) error {
 	for _, image := range images {
 		p := baseURL + image
 		log.Println("Downloading image", p)
+		//nolint:gosec
 		cmd := exec.Command("gsutil", "-m", "cp", "-r", p, destination)
 		out, err := cmd.CombinedOutput()
 		if err != nil {

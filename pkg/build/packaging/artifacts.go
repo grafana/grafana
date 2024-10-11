@@ -124,5 +124,3 @@ func join(a []BuildArtifact, b ...[]BuildArtifact) []BuildArtifact {
 }
 
 var ArtifactConfigs = join(LinuxArtifacts, DarwinArtifacts, WindowsArtifacts, ARMArtifacts)
-
-var a = []BuildArtifact{}
