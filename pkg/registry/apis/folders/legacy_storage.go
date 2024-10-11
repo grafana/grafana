@@ -177,33 +177,16 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	createCmd := folder.CreateFolderCommand{
+	parent := accessor.GetFolder()
+
+	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
 		SignedInUser: user,
 		UID:          p.Name,
 		Title:        p.Spec.Title,
 		Description:  p.Spec.Description,
 		OrgID:        info.OrgID,
-	}
-
-	parentUID := accessor.GetFolder()
-
-	if parentUID != "" {
-		// Check that the user is allowed to create a subfolder in this folder
-		parentUIDScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(parentUID)
-		legacyEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, parentUIDScope)
-		newEvaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersCreate, parentUIDScope)
-		evaluator := accesscontrol.EvalAny(legacyEvaluator, newEvaluator)
-		hasAccess, evalErr := s.accessControl.Evaluate(ctx, user, evaluator)
-		if evalErr != nil {
-			return nil, evalErr
-		}
-		if !hasAccess {
-			return nil, dashboards.ErrFolderCreationAccessDenied.Errorf("user is missing the permission with action either folders:create or folders:write and scope %s or any of the parent folder scopes", parentUIDScope)
-		}
-		createCmd.ParentUID = parentUID
-	}
-
-	out, err := s.service.Create(ctx, &createCmd)
+		ParentUID:    parent,
+	})
 	if err != nil {
 		return nil, err
 	}
