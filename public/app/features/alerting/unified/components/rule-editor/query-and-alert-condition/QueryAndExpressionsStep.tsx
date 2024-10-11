@@ -171,7 +171,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
 
   const isAdvancedMode =
-    editorSettings?.simplifiedQueryEditor !== true ||
+    Boolean(editorSettings?.simplifiedQueryEditor) === false ||
     !isGrafanaAlertingType ||
     (isNewFromQueryParams && !queryParamsAreTransformable);
 
