@@ -35,5 +35,5 @@ func (backtickIdent) Ident(s string) (string, error) {
 }
 
 func (mysql) CurrentEpoch() string {
-	return "FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000)"
+	return "CAST(FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000) AS SIGNED)"
 }

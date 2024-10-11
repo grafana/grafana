@@ -1,6 +1,6 @@
 SELECT
         `resource_version`,
-        FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000)
+        CAST(FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000) AS SIGNED)
     FROM `resource_version`
     WHERE 1 = 1
         AND `group`    = 'group'
