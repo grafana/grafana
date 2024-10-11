@@ -130,11 +130,10 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 - `e`: Toggle panel edit view
 - `v`: Toggle panel fullscreen view
-- `pu`: Open share panel link configuration
-- `pe`: Open share panel embed configuration
-- `ps`: Open share panel snapshot configuration
-- `pd`: Duplicate panel
-- `pr`: Remove panel
+- `ps`: Open Panel Share Modal
+- `pd`: Duplicate Panel
+- `pr`: Remove Panel
+- `pl`: Toggle panel legend
 
 ## Set dashboard time range
 
