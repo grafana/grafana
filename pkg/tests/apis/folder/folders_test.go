@@ -485,27 +485,41 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	type testCase struct {
 		description  string
 		input        string
+		permissions  []resourcepermissions.SetResourcePermissionCommand
 		expectedCode int
-		unauthorized bool
-		withParent   bool
 	}
 	tcs := []testCase{
 		{
 			description:  "creation of folder without parent succeeds given the correct request for creating a folder",
 			input:        folderWithoutParentInput,
 			expectedCode: http.StatusOK,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			},
 		},
 		{
 			description:  "creation of folder without parent fails without permissions to create a folder",
 			input:        folderWithoutParentInput,
 			expectedCode: http.StatusForbidden,
-			unauthorized: true,
+			permissions:  []resourcepermissions.SetResourcePermissionCommand{},
 		},
 		{
 			description:  "creation of folder with parent succeeds given the correct request for creating a folder",
 			input:        folderWithParentInput,
 			expectedCode: http.StatusOK,
-			withParent:   true,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "parentuid",
+				},
+			},
 		},
 	}
 
@@ -527,27 +541,7 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 				},
 			})
 
-			user := helper.CreateUser("creator", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
-				{
-					Actions:           []string{"folders:create"},
-					Resource:          "folders",
-					ResourceAttribute: "uid",
-					ResourceID:        "*",
-				},
-			})
-			if tc.unauthorized {
-				user = helper.CreateUser("unauthorized", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
-			}
-			if tc.withParent {
-				user = helper.CreateUser("creatorInParent", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
-					{
-						Actions:           []string{"folders:create"},
-						Resource:          "folders",
-						ResourceAttribute: "uid",
-						ResourceID:        "parentuid",
-					},
-				})
-			}
+			user := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
 
 			parentPayload := `{
 				"title": "Test/parent",
