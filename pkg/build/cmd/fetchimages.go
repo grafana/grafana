@@ -21,9 +21,6 @@ const (
 // GetImageFiles returns the list of image (.img, but should be .tar because they are tar archives) files that are
 // created in the 'tag' process and stored in the prerelease bucket, waiting to be released.
 func GetImageFiles(grafana string, version string, architectures []config.Architecture) []string {
-	if grafana == "grafana" {
-		grafana = "grafana-oss"
-	}
 
 	bases := []string{alpine, ubuntu}
 	images := []string{}
@@ -74,13 +71,18 @@ func FetchImages(c *cli.Context) error {
 	if cfg.Edition == "enterprise2" {
 		grafana = "grafana-enterprise2"
 	}
-
-	err = gcloud.ActivateServiceAccount()
-	if err != nil {
-		return err
+	if cfg.Edition == "grafana" || cfg.Edition == "oss" {
+		grafana = "grafana-oss"
 	}
+
 	baseURL := fmt.Sprintf("gs://%s/%s/", cfg.Bucket, cfg.Tag)
 	images := GetImageFiles(grafana, cfg.Tag, cfg.Archs)
+
+	log.Printf("Fetching images [%v]", images)
+
+	if err := gcloud.ActivateServiceAccount(); err != nil {
+		return err
+	}
 	if err := DownloadImages(baseURL, images, "."); err != nil {
 		return err
 	}
@@ -114,6 +116,7 @@ func LoadImages(images []string, source string) error {
 func DownloadImages(baseURL string, images []string, destination string) error {
 	for _, image := range images {
 		p := baseURL + image
+		log.Println("Downloading image", p)
 		cmd := exec.Command("gsutil", "-m", "cp", "-r", p, destination)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
