@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -54,6 +55,7 @@ func ProvideService(
 	secrectService secrets.Service,
 	orgService org.Service,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
+	tracer tracing.Tracer,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -157,6 +159,7 @@ type ProvisioningServiceImpl struct {
 	secretService                secrets.Service
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
+	tracer                       tracing.Tracer
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -291,6 +294,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.SQLStore,
 		ps.log,
 		ps.resourcePermissions,
+		ps.tracer,
 	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		st, ps.SQLStore, receiverSvc, ps.log, &st, ps.resourcePermissions)
