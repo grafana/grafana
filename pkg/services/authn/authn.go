@@ -130,6 +130,7 @@ type Service interface {
 	// - "github" = "auth.client.github"
 	IsClientEnabled(client string) bool
 
+	// GetClientConfig returns the client configuration for the given client.
 	GetClientConfig(client string) AuthenticationClientConfig
 }
 
