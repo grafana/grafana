@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
-import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
@@ -132,7 +132,6 @@ export const MegaMenu = memo(
           </div>
         )}
         <nav className={styles.content}>
-          {/* <CustomScrollbar showScrollIndicators hideHorizontalTrack> */}
           <ScrollContainer height="100%" overflowX="hidden">
             <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
@@ -162,7 +161,6 @@ export const MegaMenu = memo(
               ))}
             </ul>
           </ScrollContainer>
-          {/* </CustomScrollbar> */}
         </nav>
       </div>
     );

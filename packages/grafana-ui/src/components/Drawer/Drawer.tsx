@@ -11,7 +11,6 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -168,7 +167,6 @@ export function Drawer({
             </div>
           )}
           {typeof title !== 'string' && title}
-          {/* {!scrollableContent ? content : <CustomScrollbar>{content}</CustomScrollbar>} */}
           {!scrollableContent ? (
             content
           ) : (

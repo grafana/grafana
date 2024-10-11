@@ -20,14 +20,8 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import {
-  AdHocFilterItem,
-  CustomScrollbar,
-  ErrorBoundaryAlert,
-  PanelContainer,
-  Themeable2,
-  withTheme2,
-} from '@grafana/ui';
+import { AdHocFilterItem, ErrorBoundaryAlert, PanelContainer, Themeable2, withTheme2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -578,10 +572,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
             {contentOutlineVisible && (
               <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
             )}
-            <CustomScrollbar
-              testId={selectors.pages.Explore.General.scrollView}
-              scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
-              hideHorizontalTrack
+            <ScrollContainer
+              data-test-id={selectors.pages.Explore.General.scrollView}
+              ref={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
+              width="100%"
             >
               <div className={styles.exploreContainer}>
                 {datasourceInstance ? (
@@ -649,7 +643,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                   this.renderEmptyState(styles.exploreContainer)
                 )}
               </div>
-            </CustomScrollbar>
+            </ScrollContainer>
           </div>
         </div>
       </ContentOutlineContextProvider>

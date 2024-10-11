@@ -6,9 +6,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { ScrollIndicators } from '../CustomScrollbar/ScrollIndicators';
+import { FlexProps } from '../Layout/types';
 import { getSizeStyles, SizeProps } from '../Layout/utils/styles';
 
-interface Props extends SizeProps {
+interface Props extends SizeProps, FlexProps {
   hideScrollIndicators?: boolean;
   overflowX?: Property.OverflowX;
   overflowY?: Property.OverflowY;
