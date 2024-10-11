@@ -50,21 +50,36 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
-  reference-:
+  language-range:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#range
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#
-  reference-:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#range
   language-print:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#print
     - pattern:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#print
+  language-index:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
+  language-if:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#if
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#if
+  language-comparison:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#comparison-operators
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#comparison-operators
+  language-functions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
 ---
 
 # Labels and annotations template examples
@@ -173,7 +188,7 @@ The following instances have high CPU usage: Instance-1 (81.23%) Instance-2 (83.
 
 Used functions and syntax:
 
-`{{ range }}`: Introduces looping through alerts to display multiple instances.
+[`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
 
 ### Label examples
 
@@ -195,7 +210,7 @@ Used functions and syntax:
 
 <!-- link this to language ref -->
 
-- `{{ index }}`: Used to access specific elements from a map or slice, helping to extract label values.
+- [`{{ index }}`](ref:language-index): Used to access specific elements from a map or slice, helping to extract label values.
 
 #### Print all labels, one per line
 
@@ -281,9 +296,9 @@ low
 
 Used functions and syntax:
 
-- `$values`: Used to access the query value that triggered the alert.
-- `{{ if }}`, `{{ else if }}`, `{{ end }}`: Introduces conditional logic in Go templating to set the severity label dynamically.
-- `{{ gt }}`: A function that checks if one value is greater than another, useful for implementing threshold logic.
+- [`$values`](ref:reference-values): Used to access the query value that triggered the alert.
+- [`{{ if }}`](ref:language-if): Introduces conditional logic in Go templating to set the severity label dynamically.
+- [`{{ gt }}`](ref:language-comparison): A function that checks if one value is greater than another, useful for implementing threshold logic.
 
 #### Labeling based on environment
 
@@ -304,7 +319,7 @@ This would print:
 
 Used functions and syntax:
 
-- `{{ eq }}`: A function that checks if two values are equal, allowing you to customize messages based on the environment.
+- [`{{ eq }}`](ref:language-comparison): A function that checks if two values are equal, allowing you to customize messages based on the environment.
 
 #### Automatically assigning priority
 
@@ -325,8 +340,8 @@ This would print:
 
 Used functions and syntax:
 
-- `{{ and }}`: Logical operator for combining conditions (e.g., checking both the instance and the query value).
-- `$labels`: Reference alert labels within the conditional logic.
+- [`{{ and }}`](ref:language-functions): Logical operator for combining conditions (e.g., checking both the instance and the query value).
+- [`$labels`](ref:reference-labels): Reference alert labels within the conditional logic.
 
 ## Legacy Alerting templates
 
