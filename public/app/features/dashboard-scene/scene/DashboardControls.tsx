@@ -122,10 +122,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { variableControls, refreshPicker, timePicker, hideTimeControls, hideVariableControls, hideLinksControls } =
     model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel, $timeRange } = dashboard.useState();
+  const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = location.search.includes('scene-debugger');
-  $timeRange?.useState();
+  sceneGraph.getTimeRange(dashboard).useState();
 
   if (!model.hasControls()) {
     return null;
