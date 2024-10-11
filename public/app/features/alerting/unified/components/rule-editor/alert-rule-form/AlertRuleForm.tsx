@@ -29,6 +29,9 @@ import {
   trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
+  trackNewGrafanaAlertRuleFormCancelled,
+  trackNewGrafanaAlertRuleFormError,
+  trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
@@ -138,6 +141,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const submit = async (values: RuleFormValues, exitOnSave: boolean) => {
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
+      if (!existing && grafanaTypeRule) {
+        // new Grafana-managed rule
+        trackNewGrafanaAlertRuleFormError();
+      }
       return;
     }
 
@@ -154,6 +161,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
       await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+      grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
@@ -207,6 +215,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
     trackAlertRuleFormCancelled({ formAction: existing ? 'update' : 'create' });
+    if (!existing && grafanaTypeRule) {
+      // new Grafana-managed rule
+      trackNewGrafanaAlertRuleFormCancelled();
+    }
     locationService.getHistory().goBack();
   };
 
