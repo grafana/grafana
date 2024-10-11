@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -267,6 +269,14 @@ func (r *FakePluginRepo) PluginVersion(ctx context.Context, pluginID, version st
 	return repo.VersionData{}, nil
 }
 
+type fakeTracerProvider struct {
+	noop.TracerProvider
+}
+
+func InitializeNoopTracerForTest() trace.Tracer {
+	return fakeTracerProvider{}.Tracer("test")
+}
+
 type FakePluginStorage struct {
 	ExtractFunc func(_ context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
 }
@@ -340,7 +350,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 	}
 	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 		f.Requested[p.ID]++
-		return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
+		return func(pluginID string, _ log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 			f.Invoked[pluginID]++
 			return &FakePluginClient{}, nil
 		}

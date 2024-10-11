@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestInitializer_Initialize(t *testing.T) {
@@ -28,7 +29,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassCore,
 		}
 
-		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, fakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -52,7 +53,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, fakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -76,7 +77,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p}, fakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -96,7 +97,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{
 			plugin: p,
-		})
+		}, fakes.InitializeNoopTracerForTest())
 
 		var err error
 		p, err = i(context.Background(), p)
@@ -115,7 +116,7 @@ type fakeBackendProvider struct {
 }
 
 func (f *fakeBackendProvider) BackendFactory(_ context.Context, _ *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	return func(_ string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
+	return func(_ string, _ log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 		return f.plugin, nil
 	}
 }
