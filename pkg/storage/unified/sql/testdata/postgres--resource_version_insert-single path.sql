@@ -7,6 +7,6 @@ INSERT INTO "resource_version"
     VALUES (
         '',
         '',
-        (EXTRACT(EPOCH FROM clock_timestamp()) * 1000000)::BIGINT
+        (EXTRACT(EPOCH FROM statement_timestamp()) * 1000000)::BIGINT
     )
 ;
