@@ -42,7 +42,7 @@ We provide release documentation in multiple places to address different needs:
 
 ## When to expect releases
 
-Currently, Grafana is on a monthly release cycle, with release types rotating every other month between minor or patching. For example, here’s a look at scheduled releases for 2024:
+Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled releases for 2024:
 
 | **Anticipated release date** | **Grafana versions** | **Release type**   |
 | ---------------------------- | -------------------- | ------------------ |
