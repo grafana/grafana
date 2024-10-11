@@ -143,7 +143,7 @@ func TestMode1_CreateOnUnifiedStorage(t *testing.T) {
 			}
 
 			dw := NewDualWriter(Mode1, ls, us, p, kind)
-			err := dw.(*DualWriterMode1).createOnUnifiedStorage(ctx, tt.input, func(context.Context, runtime.Object) error { return nil }, tt.input, &metav1.CreateOptions{})
+			err := dw.(*DualWriterMode1).createOnUnifiedStorage(ctx, func(context.Context, runtime.Object) error { return nil }, tt.input, &metav1.CreateOptions{})
 			assert.NoError(t, err)
 		})
 	}
