@@ -4,7 +4,6 @@ This module returns a Drone pipeline that verifies all Starlark files are linted
 
 load(
     "scripts/drone/steps/lib.star",
-    "compile_build_cmd",
     "identify_runner_step",
     "lint_starlark_step",
 )
