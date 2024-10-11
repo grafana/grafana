@@ -9,7 +9,6 @@ interface PromptProps {
 }
 
 export const Prompt = ({ message, when = true }: PromptProps) => {
-  const currentLocation = locationService.getLocation();
   const history = locationService.getHistory();
 
   useEffect(() => {
@@ -22,7 +21,7 @@ export const Prompt = ({ message, when = true }: PromptProps) => {
     return () => {
       unblock();
     };
-  }, [when, message, history, currentLocation]);
+  }, [when, message, history]);
 
   return null;
 };
