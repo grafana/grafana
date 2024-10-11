@@ -255,8 +255,8 @@ export const LdapSettingsPage = () => {
   };
 
   const isInvalidField = (field: string) => {
-    const err = errors?.settings?.config?.servers;
-    return err && err[0] && typeof err[0] === 'object' && field in err[0];
+    const err = errors?.settings?.config?.servers?.[0];
+    return typeof err === 'object' && field in err;
   };
 
   const subTitle = (
