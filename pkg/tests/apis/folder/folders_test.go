@@ -17,8 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -476,7 +478,6 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	// #TODO could we take the helper client and set that when creating server?
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    true,
@@ -496,6 +497,16 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 
+	creator := helper.CreateUser("creator", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"folders:create"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	})
+	unauthorized := helper.CreateUser("unauthorized", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
+
 	type testCase struct {
 		description  string
 		expectedCode int
@@ -507,13 +518,13 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 			description:  "folder creation succeeds given the correct request for creating a folder",
 			input:        folderWithoutParentInput,
 			expectedCode: http.StatusOK,
-			user:         helper.Org1.Creator,
+			user:         creator,
 		},
 		{
 			description:  "folder creation fails without permissions to create a folder",
 			input:        folderWithoutParentInput,
 			expectedCode: http.StatusForbidden,
-			user:         helper.Org1.Unauthorized,
+			user:         unauthorized,
 		},
 	}
 
