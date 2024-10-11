@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -494,6 +495,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		xact,
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
+		tracing.InitializeTracerForTest(),
 	)
 
 	return NewContactPointService(
