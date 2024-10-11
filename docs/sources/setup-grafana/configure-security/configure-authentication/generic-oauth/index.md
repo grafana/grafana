@@ -256,7 +256,7 @@ Payload:
 Config:
 
 ```bash
-role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
 ##### Map server administrator role
@@ -282,7 +282,7 @@ Payload:
 Config:
 
 ```ini
-role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(roles[*], 'admin') && 'GrafanaAdmin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
 ```
 
@@ -324,7 +324,7 @@ Payload:
 Config:
 
 ```ini
-role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || 'None'
+role_attribute_path = contains(roles[*], 'admin') && 'GrafanaAdmin' || 'None'
 allow_assign_grafana_admin = true
 org_attribute_path = info.roles
 org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
