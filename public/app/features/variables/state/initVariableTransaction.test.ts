@@ -49,6 +49,7 @@ function getTestContext(variables?: VariableModel[]) {
   const templating = { list: variables ?? [constant] };
   const getInstanceSettingsMock = jest.fn().mockReturnValue(undefined);
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     get: jest.fn().mockResolvedValue({}),
     getList: jest.fn().mockReturnValue([]),
     getInstanceSettings: getInstanceSettingsMock,

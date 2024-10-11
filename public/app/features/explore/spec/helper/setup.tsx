@@ -113,6 +113,7 @@ export function setupExplore(options?: SetupOptions): {
   const previousDataSourceSrv = getDataSourceSrv();
 
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     getList(): DataSourceInstanceSettings[] {
       return dsSettings.map((d) => d.settings);
     },

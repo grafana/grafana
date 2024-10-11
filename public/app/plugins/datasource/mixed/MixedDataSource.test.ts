@@ -34,6 +34,7 @@ describe('MixedDatasource', () => {
       getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
       getList: jest.fn(),
       reload: jest.fn(),
+      registerRuntimeDataSource: jest.fn(),
     });
     setTemplateSrv(new TemplateSrv());
   });
