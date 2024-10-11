@@ -66,7 +66,8 @@ to be enabled. By default, it saves the states every 5 minutes to the database a
 can also be configured using the `state_periodic_save_interval` configuration flag.
 
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
-that is exposed by Grafana.
+that is exposed by Grafana. Additionally, the `state_full_sync_last_time` metric allows you to track the timestamp of the last full state save.
+Periodic state writes are performed under a database-level lock. If Grafana is [configured for high availability]({{< relref "../configure-high-availability" >}}), this locking mechanism ensures that only one Grafana instance writes to the database at any given time.
 
 If Grafana crashes or is force killed, then the database can be up to `state_periodic_save_interval` seconds out of date.
 When Grafana restarts, the UI might show incorrect state for some alerts until the alerts are re-evaluated.
