@@ -12,7 +12,7 @@ import {
   useKBar,
   ActionImpl,
 } from 'kbar';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -27,7 +27,10 @@ import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
-  const styles = useStyles2(getSearchStyles);
+  const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+  const [rightPosition, setRightPosition] = useState<number | null>(null);
+  const styles = useStyles2((theme) => getSearchStyles(theme, screenWidth, rightPosition));
 
   const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -49,7 +52,19 @@ export function CommandPalette() {
   // Report interaction when opened
   useEffect(() => {
     showing && reportInteraction('command_palette_opened');
-  }, [showing]);
+    setRightPosition(input?.getBoundingClientRect().right ?? null);
+  }, [input, showing]);
+
+  useLayoutEffect(() => {
+    const handleResize = () => {
+      setRightPosition(input?.getBoundingClientRect().right ?? null);
+      setScreenWidth(window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  });
 
   return actions.length > 0 ? (
     <KBarPortal>
@@ -145,8 +160,14 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
     />
   );
 };
-
-const getSearchStyles = (theme: GrafanaTheme2) => {
+// eslint-disable-next-line
+const getSearchStyles = (theme: GrafanaTheme2, screenWidth?: any, rightPosition?: any) => {
+  const paddingSet = theme.spacing(2);
+  const commandPaletteWidth = theme.breakpoints.values.md;
+  const lateralSpace = (screenWidth - commandPaletteWidth) / 2;
+  const rightSpace = screenWidth - rightPosition;
+  const originPoint =
+    lateralSpace > rightSpace ? screenWidth - (rightPosition + parseInt(paddingSet, 10)) : lateralSpace;
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -155,8 +176,6 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       '&::before': {
         content: '""',
         position: 'fixed',
-        top: 0,
-        right: 0,
         bottom: 0,
         left: 0,
         background: theme.components.overlay.background,
@@ -164,7 +183,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       },
     }),
     animator: css({
-      maxWidth: theme.breakpoints.values.md,
+      maxWidth: commandPaletteWidth,
       width: '100%',
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
@@ -172,6 +191,10 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
+      [`@media (min-width: ${theme.breakpoints.values.md}px)`]: {
+        position: 'fixed',
+        right: originPoint,
+      },
     }),
     loadingBarContainer: css({
       position: 'absolute',
