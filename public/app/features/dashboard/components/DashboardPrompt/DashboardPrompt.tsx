@@ -52,6 +52,22 @@ export const DashboardPrompt = memo(({ dashboard }: Props) => {
     };
   }, [dashboard, originalPath]);
 
+  useEffect(() => {
+    const handleUnload = (event: BeforeUnloadEvent) => {
+      if (ignoreChanges(dashboard, original)) {
+        return;
+      }
+      if (hasChanges(dashboard, original)) {
+        event.preventDefault();
+        // No browser actually displays this message anymore.
+        // But Chrome requires it to be defined else the popup won't show.
+        event.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [dashboard, original]);
+
   const onHistoryBlock = (location: H.Location) => {
     const panelInEdit = dashboard.panelInEdit;
     const search = new URLSearchParams(location.search);
