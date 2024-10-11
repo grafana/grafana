@@ -16,8 +16,9 @@ var (
 	[auth.saml]
 	enabled = true
 	single_logout = true
+	name = "SAML Test"
 	allow_sign_up = true
-	auto_login = false
+	auto_login = true
 	certificate = devenv/docker/blocks/auth/saml-enterprise/cert.crt
 	certificate_path = /path/to/cert
 	private_key = dGhpcyBpcyBteSBwcml2YXRlIGtleSB0aGF0IEkgd2FudCB0byBnZXQgZW5jb2RlZCBpbiBiYXNlIDY0
@@ -55,7 +56,8 @@ var (
 		"enabled":                    true,
 		"single_logout":              true,
 		"allow_sign_up":              true,
-		"auto_login":                 false,
+		"auto_login":                 true,
+		"name":                       "SAML Test",
 		"certificate":                "devenv/docker/blocks/auth/saml-enterprise/cert.crt",
 		"certificate_path":           "/path/to/cert",
 		"private_key":                "dGhpcyBpcyBteSBwcml2YXRlIGtleSB0aGF0IEkgd2FudCB0byBnZXQgZW5jb2RlZCBpbiBiYXNlIDY0",
