@@ -5,7 +5,6 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors/src';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { PageContext } from 'app/core/components/Page/Page';
 import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
@@ -73,9 +72,7 @@ function Wrapper({ children }: React.PropsWithChildren<{}>) {
   const formApi = useForm<RuleFormValues>({ defaultValues: getDefaultFormValues() });
   return (
     <Providers>
-      <PageContext.Provider value={{ setToolbar: jest.fn() }}>
-        <FormProvider {...formApi}>{children}</FormProvider>
-      </PageContext.Provider>
+      <FormProvider {...formApi}>{children}</FormProvider>
     </Providers>
   );
 }

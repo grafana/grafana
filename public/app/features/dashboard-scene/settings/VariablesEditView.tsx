@@ -1,10 +1,9 @@
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions, ToolbarActions } from '../scene/NavToolbarActions';
+import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
@@ -207,7 +206,6 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
-  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];
@@ -228,13 +226,8 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   }
 
   return (
-    <Page
-      navModel={navModel}
-      pageNav={pageNav}
-      layout={PageLayoutType.Standard}
-      toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
-    >
-      {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
+    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+      <NavToolbarActions dashboard={dashboard} />
       <VariableEditorList
         variables={variables}
         onDelete={onDelete}
@@ -269,20 +262,14 @@ function VariableEditorSettingsView({
   onValidateVariableName,
 }: VariableEditorSettingsEditViewProps) {
   const { name } = variable.useState();
-  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const editVariablePageNav = {
     text: name,
     parentItem: pageNav,
   };
   return (
-    <Page
-      navModel={navModel}
-      pageNav={editVariablePageNav}
-      layout={PageLayoutType.Standard}
-      toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
-    >
-      {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
+    <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
+      <NavToolbarActions dashboard={dashboard} />
       <VariableEditorForm
         variable={variable}
         onTypeChange={onTypeChange}
