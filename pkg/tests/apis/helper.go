@@ -219,9 +219,11 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 }
 
 type OrgUsers struct {
-	Admin  User
-	Editor User
-	Viewer User
+	Admin        User
+	Editor       User
+	Viewer       User
+	Creator      User
+	Unauthorized User
 
 	// The team with admin+editor in it (but not viewer)
 	Staff team.Team
@@ -424,6 +426,15 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
+		Creator: c.CreateUser("creator", orgName, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{"folders:create"},
+				Resource:          "folders",
+				ResourceAttribute: "uid",
+				ResourceID:        "*",
+			},
+		}),
+		Unauthorized: c.CreateUser("unauthorized", orgName, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{}),
 	}
 	users.Staff = c.CreateTeam("staff", "staff@"+orgName, users.Admin.Identity.GetOrgID())
 
