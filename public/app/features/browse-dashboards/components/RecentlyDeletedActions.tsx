@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/';
-import { Button, useStyles2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Button, Stack } from '@grafana/ui';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import appEvents from '../../../core/app_events';
@@ -17,11 +16,9 @@ import { PermanentlyDeleteModal } from './PermanentlyDeleteModal';
 import { RestoreModal } from './RestoreModal';
 
 export function RecentlyDeletedActions() {
-  const styles = useStyles2(getStyles);
-
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
-  const [, stateManager] = useRecentlyDeletedStateManager();
+  const [searchState, stateManager] = useRecentlyDeletedStateManager();
 
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
   const [deleteDashboard, { isLoading: isDeleteLoading }] = useHardDeleteDashboardMutation();
@@ -32,20 +29,34 @@ export function RecentlyDeletedActions() {
       .map(([uid]) => uid);
   }, [selectedItemsState.dashboard]);
 
+  const selectedDashboardOrigin: string[] = [];
+  if (searchState.result) {
+    for (const selectedDashboard of selectedDashboards) {
+      const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
+
+      // SQLSearcher changes the location from empty string to 'general' for items with no parent
+      // but the restore API doesn't work with 'general' folder UID, so we need to convert it back
+      // to an empty string
+      const location = searchState.result.view.fields.location.values[index];
+      const fixedLocation = location === GENERAL_FOLDER_UID ? '' : location;
+      selectedDashboardOrigin.push(fixedLocation);
+    }
+  }
+
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
     stateManager.doSearchWithDebounce();
   };
 
-  const onRestore = async () => {
+  const onRestore = async (restoreTarget: string) => {
     const resultsView = stateManager.state.result?.view.toArray();
     if (!resultsView) {
       return;
     }
 
     const promises = selectedDashboards.map((uid) => {
-      return restoreDashboard({ dashboardUID: uid });
+      return restoreDashboard({ dashboardUID: uid, targetFolderUID: restoreTarget });
     });
 
     await Promise.all(promises);
@@ -75,11 +86,17 @@ export function RecentlyDeletedActions() {
   };
 
   const showRestoreModal = () => {
+    reportInteraction('grafana_restore_clicked', {
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
+    });
     appEvents.publish(
       new ShowModalReactEvent({
         component: RestoreModal,
         props: {
           selectedDashboards,
+          dashboardOrigin: selectedDashboardOrigin,
           onConfirm: onRestore,
           isLoading: isRestoreLoading,
         },
@@ -88,6 +105,11 @@ export function RecentlyDeletedActions() {
   };
 
   const showDeleteModal = () => {
+    reportInteraction('grafana_delete_permanently_clicked', {
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
+    });
     appEvents.publish(
       new ShowModalReactEvent({
         component: PermanentlyDeleteModal,
@@ -101,22 +123,13 @@ export function RecentlyDeletedActions() {
   };
 
   return (
-    <div className={styles.row}>
+    <Stack gap={1}>
       <Button onClick={showRestoreModal} variant="secondary">
         <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
       </Button>
       <Button onClick={showDeleteModal} variant="destructive">
         <Trans i18nKey="recently-deleted.buttons.delete">Delete permanently</Trans>
       </Button>
-    </div>
+    </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  row: css({
-    display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(2),
-  }),
-});

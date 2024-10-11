@@ -1,6 +1,7 @@
 import { set } from 'lodash';
 
 import { RelativeTimeRange } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
@@ -21,12 +22,12 @@ import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } 
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { alertingApi } from './alertingApi';
+import { alertingApi, WithNotificationOptions } from './alertingApi';
 import {
   FetchPromRulesFilter,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  prepareRulesFilterQueryParams,
+  getRulesFilterSearchParams,
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
@@ -152,7 +153,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           searchParams.set(PrometheusAPIFilters.RuleGroup, identifier.groupName);
         }
 
-        const params = prepareRulesFilterQueryParams(searchParams, filter);
+        const filterParams = getRulesFilterSearchParams(filter);
+        const params = { ...filterParams, ...Object.fromEntries(searchParams) };
 
         return { url: PROM_RULES_URL, params: paramsWithMatcherAndState(params, state, matcher) };
       },
@@ -225,24 +227,83 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     // TODO This should be probably a separate ruler API file
     getRuleGroupForNamespace: build.query<
       RulerRuleGroupDTO,
-      { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
+      WithNotificationOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
     >({
-      query: ({ rulerConfig, namespace, group }) => {
+      query: ({ rulerConfig, namespace, group, notificationOptions }) => {
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
-        return { url: path, params };
+        return {
+          url: path,
+          params,
+          notificationOptions,
+        };
       },
-      providesTags: ['CombinedAlertRule'],
+      providesTags: (_result, _error, { namespace, group }) => [
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${group}`,
+        },
+        { type: 'RuleNamespace', id: namespace },
+      ],
     }),
 
     deleteRuleGroupFromNamespace: build.mutation<
       RulerRuleGroupDTO,
-      { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
+      WithNotificationOptions<{ rulerConfig: RulerDataSourceConfig; namespace: string; group: string }>
     >({
-      query: ({ rulerConfig, namespace, group }) => {
+      query: ({ rulerConfig, namespace, group, notificationOptions }) => {
+        const successMessage = t('alerting.rule-groups.delete.success', 'Successfully deleted rule group');
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
-        return { url: path, params, method: 'DELETE' };
+
+        return {
+          url: path,
+          params,
+          method: 'DELETE',
+          notificationOptions: {
+            successMessage,
+            ...notificationOptions,
+          },
+        };
       },
-      invalidatesTags: ['CombinedAlertRule'],
+      invalidatesTags: (_result, _error, { namespace, group }) => [
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${group}`,
+        },
+        { type: 'RuleNamespace', id: namespace },
+      ],
+    }),
+
+    upsertRuleGroupForNamespace: build.mutation<
+      AlertGroupUpdated,
+      WithNotificationOptions<{
+        rulerConfig: RulerDataSourceConfig;
+        namespace: string;
+        payload: PostableRulerRuleGroupDTO;
+      }>
+    >({
+      query: ({ payload, namespace, rulerConfig, notificationOptions }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+
+        const successMessage = t('alerting.rule-groups.update.success', 'Successfully updated rule group');
+
+        return {
+          url: path,
+          params,
+          data: payload,
+          method: 'POST',
+          notificationOptions: {
+            successMessage,
+            ...notificationOptions,
+          },
+        };
+      },
+      invalidatesTags: (result, _error, { namespace, payload }) => [
+        { type: 'RuleNamespace', id: namespace },
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${payload.name}`,
+        },
+      ],
     }),
 
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
@@ -311,22 +372,6 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
       keepUnusedDataFor: 0,
-    }),
-    updateRuleGroupForNamespace: build.mutation<
-      AlertGroupUpdated,
-      { rulerConfig: RulerDataSourceConfig; namespace: string; payload: PostableRulerRuleGroupDTO }
-    >({
-      query: ({ payload, namespace, rulerConfig }) => {
-        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
-
-        return {
-          url: path,
-          params,
-          data: payload,
-          method: 'POST',
-        };
-      },
-      invalidatesTags: ['CombinedAlertRule'],
     }),
   }),
 });

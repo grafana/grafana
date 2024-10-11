@@ -52,8 +52,8 @@ func (a *SyncStatePersister) deleteAlertStates(ctx context.Context, states []Sta
 	if a.store == nil || len(states) == 0 {
 		return
 	}
-
-	a.log.Debug("Deleting alert states", "count", len(states))
+	logger := a.log.FromContext(ctx)
+	logger.Debug("Deleting alert states", "count", len(states))
 	toDelete := make([]ngModels.AlertInstanceKey, 0, len(states))
 
 	for _, s := range states {
@@ -67,7 +67,7 @@ func (a *SyncStatePersister) deleteAlertStates(ctx context.Context, states []Sta
 
 	err := a.store.DeleteAlertInstances(ctx, toDelete...)
 	if err != nil {
-		a.log.Error("Failed to delete stale states", "error", err)
+		logger.Error("Failed to delete stale states", "error", err)
 	}
 }
 
@@ -75,7 +75,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 	if a.store == nil || len(states) == 0 {
 		return
 	}
-
+	logger := a.log.FromContext(ctx)
 	saveState := func(ctx context.Context, idx int) error {
 		s := states[idx]
 
@@ -91,7 +91,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			a.log.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			return nil
 		}
 		instance := ngModels.AlertInstance{
@@ -102,18 +102,21 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
+			ResolvedAt:        s.ResolvedAt,
+			LastSentAt:        s.LastSentAt,
+			ResultFingerprint: s.ResultFingerprint.String(),
 		}
 
 		err = a.store.SaveAlertInstance(ctx, instance)
 		if err != nil {
-			a.log.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
+			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
 			return nil
 		}
 		return nil
 	}
 
 	start := time.Now()
-	a.log.Debug("Saving alert states", "count", len(states), "max_state_save_concurrency", a.maxStateSaveConcurrency)
+	logger.Debug("Saving alert states", "count", len(states), "max_state_save_concurrency", a.maxStateSaveConcurrency)
 	_ = concurrency.ForEachJob(ctx, len(states), a.maxStateSaveConcurrency, saveState)
-	a.log.Debug("Saving alert states done", "count", len(states), "max_state_save_concurrency", a.maxStateSaveConcurrency, "duration", time.Since(start))
+	logger.Debug("Saving alert states done", "count", len(states), "max_state_save_concurrency", a.maxStateSaveConcurrency, "duration", time.Since(start))
 }

@@ -27,7 +27,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
     (): AlertGroupAlertsTableColumnProps[] => [
       {
         id: 'state',
-        label: 'State',
+        label: 'Notification state',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: alert }) => (
           <>
@@ -45,7 +45,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
       },
       {
         id: 'labels',
-        label: 'Labels',
+        label: 'Instance labels',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} size="sm" />,
         size: 1,

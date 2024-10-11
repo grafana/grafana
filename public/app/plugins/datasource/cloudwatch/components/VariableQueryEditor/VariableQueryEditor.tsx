@@ -1,7 +1,9 @@
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { InlineField } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import {
@@ -50,7 +52,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const accountState = useAccountOptions(datasource.resources, query.region);
   const dimensionKeyError = useEnsureVariableHasSingleSelection(datasource, dimensionKey);
 
-  const newFormStylingEnabled = config.featureToggles.awsDatasourcesNewFormStyling;
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
       ...parsedQuery,
@@ -119,8 +120,11 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.DimensionKeys,
     VariableQueryType.DimensionValues,
   ].includes(parsedQuery.queryType);
+
+  const styles = useStyles2(getStyles);
+
   return (
-    <div className={newFormStylingEnabled ? 'width-15' : ''}>
+    <div className={styles.formStyles}>
       <VariableQueryField
         value={parsedQuery.queryType}
         options={queryTypes}
@@ -129,7 +133,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         }
         label="Query type"
         inputId={`variable-query-type-${query.refId}`}
-        newFormStylingEnabled={newFormStylingEnabled}
       />
       {hasRegionField && (
         <VariableQueryField
@@ -139,7 +142,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           label="Region"
           isLoading={regionIsLoading}
           inputId={`variable-query-region-${query.refId}`}
-          newFormStylingEnabled={newFormStylingEnabled}
         />
       )}
       {hasAccountIDField &&
@@ -152,7 +154,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
             options={[ALL_ACCOUNTS_OPTION, ...accountState?.value]}
             allowCustomValue={false}
-            newFormStylingEnabled={newFormStylingEnabled}
           />
         )}
       {hasNamespaceField && (
@@ -163,7 +164,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           label="Namespace"
           inputId={`variable-query-namespace-${query.refId}`}
           allowCustomValue
-          newFormStylingEnabled={newFormStylingEnabled}
         />
       )}
       {parsedQuery.queryType === VariableQueryType.DimensionValues && (
@@ -175,7 +175,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             label="Metric"
             inputId={`variable-query-metric-${query.refId}`}
             allowCustomValue
-            newFormStylingEnabled={newFormStylingEnabled}
           />
           <VariableQueryField
             value={dimensionKey || null}
@@ -184,37 +183,22 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             label="Dimension key"
             inputId={`variable-query-dimension-key-${query.refId}`}
             allowCustomValue
-            newFormStylingEnabled={newFormStylingEnabled}
             error={dimensionKeyError}
           />
-          {newFormStylingEnabled ? (
-            <EditorField label="Dimensions" className="width-30" tooltip="Dimensions to filter the returned values on">
-              <Dimensions
-                metricStat={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
-                onChange={(dimensions) => {
-                  onChange({ ...parsedQuery, dimensionFilters: dimensions });
-                }}
-                disableExpressions={true}
-                datasource={datasource}
-              />
-            </EditorField>
-          ) : (
-            <InlineField
-              label="Dimensions"
-              labelWidth={20}
-              shrink
-              tooltip="Dimensions to filter the returned values on"
-            >
-              <Dimensions
-                metricStat={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
-                onChange={(dimensions) => {
-                  onChange({ ...parsedQuery, dimensionFilters: dimensions });
-                }}
-                disableExpressions={true}
-                datasource={datasource}
-              />
-            </InlineField>
-          )}
+          <EditorField
+            label="Dimensions"
+            className={styles.dimensionsWidth}
+            tooltip="Dimensions to filter the returned values on"
+          >
+            <Dimensions
+              metricStat={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
+              onChange={(dimensions) => {
+                onChange({ ...parsedQuery, dimensionFilters: dimensions });
+              }}
+              disableExpressions={true}
+              datasource={datasource}
+            />
+          </EditorField>
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.EBSVolumeIDs && (
@@ -223,7 +207,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           placeholder="i-XXXXXXXXXXXXXXXXX"
           onBlur={(value: string) => onQueryChange({ ...parsedQuery, instanceID: value })}
           label="Instance ID"
-          newFormStylingEnabled={newFormStylingEnabled}
         />
       )}
       {parsedQuery.queryType === VariableQueryType.EC2InstanceAttributes && (
@@ -233,7 +216,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
             label="Attribute name"
             interactive={true}
-            newFormStylingEnabled={newFormStylingEnabled}
             tooltip={
               <>
                 {'Attribute or tag to query on. Tags should be formatted "Tags.<name>". '}
@@ -247,60 +229,31 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
               </>
             }
           />
-          {newFormStylingEnabled ? (
-            <EditorField
-              label="Filters"
-              tooltipInteractive
-              tooltip={
-                <>
-                  <a
-                    href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Pre-defined ec2:DescribeInstances filters/tags
-                  </a>
-                  {' and the values to filter on. Tags should be formatted tag:<name>.'}
-                </>
-              }
-            >
-              <MultiFilter
-                filters={parsedQuery.ec2Filters ?? {}}
-                onChange={(filters) => {
-                  onChange({ ...parsedQuery, ec2Filters: filters });
-                }}
-                keyPlaceholder="filter/tag"
-                datasource={datasource}
-              />
-            </EditorField>
-          ) : (
-            <InlineField
-              label="Filters"
-              labelWidth={20}
-              shrink
-              tooltip={
-                <>
-                  <a
-                    href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Pre-defined ec2:DescribeInstances filters/tags
-                  </a>
-                  {' and the values to filter on. Tags should be formatted tag:<name>.'}
-                </>
-              }
-            >
-              <MultiFilter
-                filters={parsedQuery.ec2Filters ?? {}}
-                onChange={(filters) => {
-                  onChange({ ...parsedQuery, ec2Filters: filters });
-                }}
-                keyPlaceholder="filter/tag"
-                datasource={datasource}
-              />
-            </InlineField>
-          )}
+          <EditorField
+            label="Filters"
+            tooltipInteractive
+            tooltip={
+              <>
+                <a
+                  href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pre-defined ec2:DescribeInstances filters/tags
+                </a>
+                {' and the values to filter on. Tags should be formatted tag:<name>.'}
+              </>
+            }
+          >
+            <MultiFilter
+              filters={parsedQuery.ec2Filters ?? {}}
+              onChange={(filters) => {
+                onChange({ ...parsedQuery, ec2Filters: filters });
+              }}
+              keyPlaceholder="filter/tag"
+              datasource={datasource}
+            />
+          </EditorField>
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.ResourceArns && (
@@ -309,31 +262,17 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             value={parsedQuery.resourceType}
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
             label="Resource type"
-            newFormStylingEnabled={newFormStylingEnabled}
           />
-          {newFormStylingEnabled ? (
-            <EditorField label="Tags" tooltip="Tags to filter the returned values on.">
-              <MultiFilter
-                filters={parsedQuery.tags}
-                onChange={(filters) => {
-                  onChange({ ...parsedQuery, tags: filters });
-                }}
-                keyPlaceholder="tag"
-                datasource={datasource}
-              />
-            </EditorField>
-          ) : (
-            <InlineField label="Tags" shrink labelWidth={20} tooltip="Tags to filter the returned values on.">
-              <MultiFilter
-                filters={parsedQuery.tags}
-                onChange={(filters) => {
-                  onChange({ ...parsedQuery, tags: filters });
-                }}
-                keyPlaceholder="tag"
-                datasource={datasource}
-              />
-            </InlineField>
-          )}
+          <EditorField label="Tags" tooltip="Tags to filter the returned values on.">
+            <MultiFilter
+              filters={parsedQuery.tags}
+              onChange={(filters) => {
+                onChange({ ...parsedQuery, tags: filters });
+              }}
+              keyPlaceholder="tag"
+              datasource={datasource}
+            />
+          </EditorField>
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.LogGroups && (
@@ -341,9 +280,17 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           value={query.logGroupPrefix ?? ''}
           onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}
           label="Log group prefix"
-          newFormStylingEnabled={newFormStylingEnabled}
         />
       )}
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  formStyles: css({
+    maxWidth: theme.spacing(30),
+  }),
+  dimensionsWidth: css({
+    width: theme.spacing(50),
+  }),
+});

@@ -163,6 +163,27 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		return nil, err
 	}
 
+	// remove user access if empty. Happens if grafana-auth-app is not injected
+	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
+	}
+	// double-check and remove admin menu if empty
+	if sec := treeRoot.FindById(navtree.NavIDCfg); sec != nil && len(sec.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
+	}
+
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:           "Bookmarks",
+			Id:             navtree.NavIDBookmarks,
+			Icon:           "bookmark",
+			SortWeight:     navtree.WeightBookmarks,
+			Children:       []*navtree.NavLink{},
+			EmptyMessageId: "bookmarks-empty",
+			Url:            s.cfg.AppSubURL + "/bookmarks",
+		})
+	}
+
 	return treeRoot, nil
 }
 
@@ -184,6 +205,18 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Url:        homeUrl,
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
+	}
+	ctx := c.Req.Context()
+	if s.features.IsEnabled(ctx, featuremgmt.FlagHomeSetupGuide) {
+		var children []*navtree.NavLink
+		// setup guide (a submenu item under Home)
+		children = append(children, &navtree.NavLink{
+			Id:         "home-setup-guide",
+			Text:       "Setup guide",
+			Url:        homeUrl + "/setup-guide",
+			SortWeight: navtree.WeightHome,
+		})
+		homeNode.Children = children
 	}
 	return homeNode
 }
@@ -278,7 +311,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}
@@ -322,15 +355,17 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 	dashboardChildNavs := []*navtree.NavLink{}
 
-	dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-		Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
-	})
-
 	if c.IsSignedIn {
+		if c.SignedInUser.HasRole(org.RoleViewer) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
+			})
+		}
+
 		if s.cfg.SnapshotEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
-				SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
+				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
 				Id:       "dashboards/snapshots",
 				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
 				Icon:     "camera",
@@ -354,9 +389,9 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestoreUI) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) && (c.SignedInUser.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Recently Deleted",
+				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
 				Id:       "dashboards/recently-deleted",
 				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
@@ -388,11 +423,32 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead))) {
+	contactPointsPerms := []ac.Evaluator{
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	}
+
+	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
+	// alerting API to maintain backwards compatibility.
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
+		contactPointsPerms = append(contactPointsPerms,
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		)
+	}
+
+	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Contact points", SubTitle: "Choose how to notify your  contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
+	}
+
+	if hasAccess(ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
@@ -405,17 +461,19 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts from an Alertmanager instance", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts with active notifications", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text:     "History",
-			SubTitle: "History of events that were generated by your Grafana-managed alert rules. Silences and Mute timings are ignored.",
-			Id:       "alerts-history",
-			Url:      s.cfg.AppSubURL + "/alerting/history",
-			Icon:     "history",
-		})
+		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
+			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+				Text:     "History",
+				SubTitle: "View a history of all alert events generated by your Grafana-managed alert rules. All alert events are displayed regardless of whether silences or mute timings are set.",
+				Id:       "alerts-history",
+				Url:      s.cfg.AppSubURL + "/alerting/history",
+				Icon:     "history",
+			})
+		}
 	}
 
 	if c.SignedInUser.GetOrgRole() == org.RoleAdmin {

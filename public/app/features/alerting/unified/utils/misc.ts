@@ -19,7 +19,7 @@ import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName, isCloudRulesSource } from './datasource';
 import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
-import { createAbsoluteUrl, createUrl } from './url';
+import { createAbsoluteUrl, createRelativeUrl } from './url';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);
@@ -27,13 +27,13 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
 
-  return createUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {
   const { uid, type } = datasource;
 
-  return createUrl(`/explore`, {
+  return createRelativeUrl(`/explore`, {
     left: JSON.stringify({
       datasource: datasource.uid,
       queries: [{ refId: 'A', datasource: { uid, type }, expr: query }],
@@ -43,13 +43,13 @@ export function createExploreLink(datasource: DataSourceRef, query: string) {
 }
 
 export function createContactPointLink(contactPoint: string, alertManagerSourceName = ''): string {
-  return createUrl(`/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit`, {
+  return createRelativeUrl(`/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit`, {
     alertmanager: alertManagerSourceName,
   });
 }
 
 export function createMuteTimingLink(muteTimingName: string, alertManagerSourceName = ''): string {
-  return createUrl('/alerting/routes/mute-timing/edit', {
+  return createRelativeUrl('/alerting/routes/mute-timing/edit', {
     muteName: muteTimingName,
     alertmanager: alertManagerSourceName,
   });
@@ -75,11 +75,11 @@ export function arrayToRecord(items: Array<{ key: string; value: string }>): Rec
 }
 
 export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): FilterState => {
-  const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
-  const alertState = queryParams['alertState'] === undefined ? undefined : String(queryParams['alertState']);
-  const dataSource = queryParams['dataSource'] === undefined ? undefined : String(queryParams['dataSource']);
-  const ruleType = queryParams['ruleType'] === undefined ? undefined : String(queryParams['ruleType']);
-  const groupBy = queryParams['groupBy'] === undefined ? undefined : String(queryParams['groupBy']).split(',');
+  const queryString = queryParams.queryString === undefined ? undefined : String(queryParams.queryString);
+  const alertState = queryParams.alertState === undefined ? undefined : String(queryParams.alertState);
+  const dataSource = queryParams.dataSource === undefined ? undefined : String(queryParams.dataSource);
+  const ruleType = queryParams.ruleType === undefined ? undefined : String(queryParams.ruleType);
+  const groupBy = queryParams.groupBy === undefined ? undefined : String(queryParams.groupBy).split(',');
   return { queryString, alertState, dataSource, groupBy, ruleType };
 };
 
@@ -91,8 +91,8 @@ export const getNotificationPoliciesFilters = (searchParams: URLSearchParams) =>
 };
 
 export const getSilenceFiltersFromUrlParams = (queryParams: UrlQueryMap): SilenceFilterState => {
-  const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
-  const silenceState = queryParams['silenceState'] === undefined ? undefined : String(queryParams['silenceState']);
+  const queryString = queryParams.queryString === undefined ? undefined : String(queryParams.queryString);
+  const silenceState = queryParams.silenceState === undefined ? undefined : String(queryParams.silenceState);
 
   return { queryString, silenceState };
 };
@@ -125,32 +125,32 @@ export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels
   const matcherParams = getMatcherQueryParams(labels);
   matcherParams.forEach((value, key) => silenceUrlParams.append(key, value));
 
-  return createUrl('/alerting/silence/new', silenceUrlParams);
+  return createRelativeUrl('/alerting/silence/new', silenceUrlParams);
 }
 
 export function makeDataSourceLink(uid: string) {
-  return createUrl(`/datasources/edit/${uid}`);
+  return createRelativeUrl(`/datasources/edit/${uid}`);
 }
 
 export function makeFolderLink(folderUID: string): string {
-  return createUrl(`/dashboards/f/${folderUID}`);
+  return createRelativeUrl(`/dashboards/f/${folderUID}`);
 }
 
 export function makeFolderAlertsLink(folderUID: string, title: string): string {
-  return createUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
+  return createRelativeUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
 }
 
 export function makeFolderSettingsLink(uid: string): string {
-  return createUrl(`/dashboards/f/${uid}/settings`);
+  return createRelativeUrl(`/dashboards/f/${uid}/settings`);
 }
 
 export function makeDashboardLink(dashboardUID: string): string {
-  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`);
+  return createRelativeUrl(`/d/${encodeURIComponent(dashboardUID)}`);
 }
 
 export function makePanelLink(dashboardUID: string, panelId: string): string {
   const panelParams = new URLSearchParams({ viewPanel: panelId });
-  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
+  return createRelativeUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
@@ -242,5 +242,13 @@ export function stringifyErrorLike(error: unknown): string {
     return String(error.status) || 'Unknown error';
   }
 
-  return isErrorLike(error) ? error.message : String(error);
+  if (!isErrorLike(error)) {
+    return String(error);
+  }
+
+  if (error.cause) {
+    return `${error.message}, cause: ${stringifyErrorLike(error.cause)}`;
+  }
+
+  return error.message;
 }

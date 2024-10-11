@@ -18,8 +18,8 @@ const (
 	StatusOK    = "ok"
 	StatusError = "error"
 
-	EndpointCallResource = "callResource"
-	EndpointQueryData    = "queryData"
+	EndpointCallResource = string(backend.EndpointCallResource)
+	EndpointQueryData    = string(backend.EndpointQueryData)
 
 	PluginSource   = "plugin"
 	ExternalSource = "external"

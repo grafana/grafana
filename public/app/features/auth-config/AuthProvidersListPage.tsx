@@ -55,6 +55,19 @@ export const AuthConfigPageUnconnected = ({
   // filter out saml from sso providers because it is already included in availableProviders
   providers = providers.filter((p) => p.provider !== 'saml');
 
+  providers = providers.map((p) => {
+    if (p.provider === 'ldap') {
+      return {
+        ...p,
+        settings: {
+          ...p.settings,
+          type: 'LDAP',
+        },
+      };
+    }
+    return p;
+  });
+
   const providerList = availableProviders.length
     ? [
         ...availableProviders.map((p) => ({

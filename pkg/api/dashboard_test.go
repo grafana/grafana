@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -41,7 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	libraryelementsfake "github.com/grafana/grafana/pkg/services/libraryelements/fake"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -81,6 +82,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
 		log:                     log.New("test-logger"),
+		tracer:                  tracing.InitializeTracerForTest(),
 	}
 
 	tests := []struct {
@@ -129,7 +131,7 @@ func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		features, acimpl.ProvideAccessControl(features), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
+		features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
 	require.NoError(t, err)
 	return gLive
 }
@@ -146,7 +148,7 @@ func TestHTTPServer_GetDashboard_AccessControl(t *testing.T) {
 			hs.DashboardService = dashSvc
 
 			hs.Cfg = setting.NewCfg()
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 			hs.starService = startest.NewStarServiceFake()
 			hs.dashboardProvisioningService = mockDashboardProvisioningService{}
 
@@ -265,11 +267,11 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 			hs.DashboardService = dashSvc
 
 			hs.Cfg = setting.NewCfg()
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 			hs.starService = startest.NewStarServiceFake()
 
 			hs.LibraryPanelService = &mockLibraryPanelService{}
-			hs.LibraryElementService = &mockLibraryElementService{}
+			hs.LibraryElementService = &libraryelementsfake.LibraryElementService{}
 
 			pubDashService := publicdashboards.NewFakePublicDashboardService(t)
 			pubDashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil).Maybe()
@@ -321,7 +323,7 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 			hs.DashboardService = dashSvc
 
 			hs.Cfg = setting.NewCfg()
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 			hs.starService = startest.NewStarServiceFake()
 
 			hs.dashboardVersionService = &dashvertest.FakeDashboardVersionService{
@@ -585,7 +587,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				DashboardID: 2,
 				Version:     1,
 				Data:        fakeDash.Data,
-			}}
+			},
+		}
 		mockSQLStore := dbtest.NewFakeDB()
 		origNewGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
@@ -622,7 +625,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				DashboardID: 2,
 				Version:     1,
 				Data:        fakeDash.Data,
-			}}
+			},
+		}
 
 		cmd := dtos.RestoreDashboardVersionCommand{
 			Version: 1,
@@ -673,13 +677,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				Cfg:                          setting.NewCfg(),
 				ProvisioningService:          fakeProvisioningService,
 				LibraryPanelService:          &mockLibraryPanelService{},
-				LibraryElementService:        &mockLibraryElementService{},
+				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
 				starService:                  startest.NewStarServiceFake(),
+				tracer:                       tracing.InitializeTracerForTest(),
 			}
 			hs.callGetDashboard(sc)
 
@@ -718,6 +723,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 			userService:             userSvc,
 			CacheService:            localcache.New(5*time.Minute, 10*time.Minute),
 			log:                     log.New(),
+			tracer:                  tracing.InitializeTracerForTest(),
 		}
 	}
 
@@ -821,26 +827,28 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
-	libraryElementsService := mockLibraryElementService{}
+	libraryElementsService := libraryelementsfake.LibraryElementService{}
 	cfg := setting.NewCfg()
 	ac := accesscontrolmock.New()
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
-	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashboardStore, folderStore, db.InitTestDB(t), features, supportbundlestest.NewFakeBundleService(), nil)
-
+	db := db.InitTestDB(t)
+	fStore := folderimpl.ProvideStore(db)
+	folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
+		dashboardStore, folderStore, db, features, cfg, folderPermissions,
+		supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
-			ac, folderSvc, nil,
+			ac, folderSvc, fStore, nil,
 		)
 		require.NoError(t, err)
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
-		ac, folderSvc, nil,
+		ac, folderSvc, fStore, nil,
 	)
 	require.NoError(t, err)
 
@@ -855,6 +863,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		DashboardService:             dashboardService,
 		Features:                     featuremgmt.WithFeatures(),
 		starService:                  startest.NewStarServiceFake(),
+		tracer:                       tracing.InitializeTracerForTest(),
 	}
 
 	hs.callGetDashboard(sc)
@@ -902,12 +911,13 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			QuotaService:          quotatest.New(false, nil),
 			pluginStore:           &pluginstore.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
-			LibraryElementService: &mockLibraryElementService{},
+			LibraryElementService: &libraryelementsfake.LibraryElementService{},
 			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
 			accesscontrolService:  actest.FakeService{},
 			log:                   log.New("test-logger"),
+			tracer:                tracing.InitializeTracerForTest(),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -927,7 +937,8 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 }
 
 func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions,
-	role org.RoleType, fn scenarioFunc, sqlmock db.DB, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
+	role org.RoleType, fn scenarioFunc, sqlmock db.DB, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService,
+) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 
@@ -938,11 +949,12 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Live:                    newTestLive(t, db.InitTestDB(t)),
 			QuotaService:            quotatest.New(false, nil),
 			LibraryPanelService:     &mockLibraryPanelService{},
-			LibraryElementService:   &mockLibraryElementService{},
+			LibraryElementService:   &libraryelementsfake.LibraryElementService{},
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
 			DashboardService:        dashSvc,
+			tracer:                  tracing.InitializeTracerForTest(),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -967,7 +979,8 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 
 func restoreDashboardVersionScenario(t *testing.T, desc string, url string, routePattern string,
 	mock *dashboards.FakeDashboardService, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService,
-	cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore db.DB) {
+	cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore db.DB,
+) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		folderSvc := foldertest.NewFakeService()
@@ -979,13 +992,14 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Live:                    newTestLive(t, db.InitTestDB(t)),
 			QuotaService:            quotatest.New(false, nil),
 			LibraryPanelService:     &mockLibraryPanelService{},
-			LibraryElementService:   &mockLibraryElementService{},
+			LibraryElementService:   &libraryelementsfake.LibraryElementService{},
 			DashboardService:        mock,
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
 			dashboardVersionService: fakeDashboardVersionService,
 			accesscontrolService:    actest.FakeService{},
 			folderService:           folderSvc,
+			tracer:                  tracing.InitializeTracerForTest(),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1022,12 +1036,12 @@ type mockDashboardProvisioningService struct {
 }
 
 func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (
-	*dashboards.DashboardProvisioning, error) {
+	*dashboards.DashboardProvisioning, error,
+) {
 	return nil, nil
 }
 
-type mockLibraryPanelService struct {
-}
+type mockLibraryPanelService struct{}
 
 var _ librarypanels.Service = (*mockLibraryPanelService)(nil)
 
@@ -1036,37 +1050,5 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Con
 }
 
 func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
-	return nil
-}
-
-type mockLibraryElementService struct {
-}
-
-func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
-	return model.LibraryElementDTO{}, nil
-}
-
-// GetElement gets an element from a UID.
-func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
-	return model.LibraryElementDTO{}, nil
-}
-
-// GetElementsForDashboard gets all connected elements for a specific dashboard.
-func (l *mockLibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
-	return map[string]model.LibraryElementDTO{}, nil
-}
-
-// ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
-	return nil
-}
-
-// DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
-func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error {
-	return nil
-}
-
-// DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return nil
 }

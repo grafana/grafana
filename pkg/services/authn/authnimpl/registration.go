@@ -3,8 +3,10 @@ package authnimpl
 import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/gcomsso"
@@ -28,7 +30,7 @@ type Registration struct{}
 func ProvideRegistration(
 	cfg *setting.Cfg, authnSvc authn.Service,
 	orgService org.Service, sessionService auth.UserTokenService,
-	accessControlService accesscontrol.Service,
+	accessControlService accesscontrol.Service, permRegistry permreg.PermissionRegistry,
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService, userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
@@ -36,6 +38,7 @@ func ProvideRegistration(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
+	tracer tracing.Tracer,
 ) Registration {
 	logger := log.New("authn.registration")
 
@@ -48,7 +51,10 @@ func ProvideRegistration(
 
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
-	if cfg.LDAPAuthEnabled {
+
+	// always register LDAP if LDAP is enabled in SSO settings
+	ssoSettingsLDAP := features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) && features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP)
+	if cfg.LDAPAuthEnabled || ssoSettingsLDAP {
 		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
@@ -95,16 +101,16 @@ func ProvideRegistration(
 	}
 
 	// FIXME (jguer): move to User package
-	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
-	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg)
+	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer)
+	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg, tracer)
 	authnSvc.RegisterPostAuthHook(userSync.SyncUserHook, 10)
 	authnSvc.RegisterPostAuthHook(userSync.EnableUserHook, 20)
 	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 30)
 	authnSvc.RegisterPostAuthHook(userSync.SyncLastSeenHook, 130)
-	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
+	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
-	rbacSync := sync.ProvideRBACSync(accessControlService)
+	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
 		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)

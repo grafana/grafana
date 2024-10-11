@@ -12,6 +12,7 @@ import {
   Label,
   RadioButtonGroup,
   Stack,
+  Switch,
   TagsInput,
   TextArea,
 } from '@grafana/ui';
@@ -24,7 +25,7 @@ import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/Ge
 
 import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -161,6 +162,10 @@ export class GeneralSettingsEditView
     this.getCursorSync()?.setState({ sync: value });
   };
 
+  public onPreloadChange = (preload: boolean) => {
+    this._dashboard.setState({ preload });
+  };
+
   public onDeleteDashboard = () => {};
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
@@ -172,10 +177,16 @@ export class GeneralSettingsEditView
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
     const { enabled: liveNow } = model.getLiveNowTimer().useState();
+    const isSingleTopNav = config.featureToggles.singleTopNav;
 
     return (
-      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-        <NavToolbarActions dashboard={dashboard} />
+      <Page
+        navModel={navModel}
+        pageNav={pageNav}
+        layout={PageLayoutType.Standard}
+        toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
+      >
+        {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
         <div style={{ maxWidth: '600px' }}>
           <Box marginBottom={5}>
             <Field
@@ -270,6 +281,20 @@ export class GeneralSettingsEditView
               )}
             >
               <RadioButtonGroup onChange={model.onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={graphTooltip} />
+            </Field>
+
+            <Field
+              label={t('dashboard-settings.general.panels-preload-label', 'Preload panels')}
+              description={t(
+                'dashboard-settings.general.panels-preload-description',
+                'When enabled all panels will start loading as soon as the dashboard has been loaded.'
+              )}
+            >
+              <Switch
+                id="preload-panels-dashboards-toggle"
+                value={dashboard.state.preload}
+                onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
+              />
             </Field>
           </CollapsableSection>
 

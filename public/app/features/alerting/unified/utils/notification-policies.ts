@@ -89,7 +89,7 @@ function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): Array<R
   // If the current node matches, recurse through child nodes
   if (route.routes) {
     for (const child of route.routes) {
-      let matchingChildren = findMatchingRoutes(child, labels);
+      const matchingChildren = findMatchingRoutes(child, labels);
       // TODO how do I solve this typescript thingy? It looks correct to me /shrug
       // @ts-ignore
       childMatches = childMatches.concat(matchingChildren);
@@ -266,7 +266,7 @@ function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {
 // for route selection algorithm, always compare a single matcher to the entire label set
 // see "matchLabelsSet"
 function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
-  let [labelKey, labelValue] = label;
+  const [labelKey, labelValue] = label;
   const [matcherKey, operator, matcherValue] = matcher;
 
   if (labelKey !== matcherKey) {
@@ -281,4 +281,27 @@ function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
   return matchFunction(labelValue, matcherValue);
 }
 
-export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, isLabelMatchInSet };
+// recursive function to rename receivers in all routes (notification policies)
+function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
+  const updated: Route = {
+    ...route,
+  };
+
+  if (updated.receiver === oldName) {
+    updated.receiver = newName;
+  }
+
+  if (updated.routes) {
+    updated.routes = updated.routes.map((route) => renameReceiverInRoute(route, oldName, newName));
+  }
+
+  return updated;
+}
+
+export {
+  findMatchingAlertGroups,
+  findMatchingRoutes,
+  getInheritedProperties,
+  isLabelMatchInSet,
+  renameReceiverInRoute,
+};

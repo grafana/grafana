@@ -22,7 +22,7 @@ func interpolateInterval(flux string, interval time.Duration) string {
 	return flux
 }
 
-var fluxVariableFilterExp = regexp.MustCompile(`(?m)([a-zA-Z]+)\.([a-zA-Z]+)`)
+var fluxVariableFilterExp = regexp.MustCompile(`(?m)(v)\.([a-zA-Z]+)`)
 
 func interpolateFluxSpecificVariables(query queryModel) string {
 	rawQuery := query.RawQuery

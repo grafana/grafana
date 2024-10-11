@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -156,7 +157,7 @@ func TestAPIEndpoint_PutOrgQuotas(t *testing.T) {
 				Permissions: map[int64]map[string][]string{},
 			}
 			for orgID, permissions := range tt.permissions {
-				expectedIdentity.Permissions[orgID] = accesscontrol.GroupScopesByAction(permissions)
+				expectedIdentity.Permissions[orgID] = accesscontrol.GroupScopesByActionContext(context.Background(), permissions)
 			}
 
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {

@@ -102,10 +102,10 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						AssignmentOrgID:   1,
+						AssignmentOrgID:   2,
 						ServiceAccountID:  2,
 					},
-					wantErr: true,
+					wantErr: false,
 				},
 			},
 		},

@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"fmt"
+	"slices"
 
 	"golang.org/x/net/context"
 
@@ -23,11 +24,17 @@ const (
 
 type RuleService struct {
 	genericService
+	notificationSettingsAuth notificationSettingsAuth
+}
+
+type notificationSettingsAuth interface {
+	AuthorizeRead(context.Context, identity.Requester, *models.NotificationSettings) error
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
-		genericService{ac: ac},
+		genericService:           genericService{ac: ac},
+		notificationSettingsAuth: NewReceiverAccess[*models.NotificationSettings](ac, true),
 	}
 }
 
@@ -74,6 +81,14 @@ func (r *RuleService) getRulesQueryEvaluator(rules ...*models.AlertRule) accessc
 		return evals[0]
 	}
 	return accesscontrol.EvalAll(evals...)
+}
+
+// CanReadAllRules returns true when user has access to all folders and can read rules in them.
+func (r *RuleService) CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error) {
+	return r.HasAccess(ctx, user, accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ruleRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()),
+		accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()),
+	))
 }
 
 // AuthorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
@@ -188,6 +203,10 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 			}); err != nil {
 				return err
 			}
+
+			if err := r.authorizeNotificationSettings(ctx, user, rule); err != nil {
+				return err
+			}
 		}
 		if !existingGroup {
 			// create a new group, check that user has "read" access to that new group. Otherwise, it will not be able to read it back.
@@ -228,6 +247,24 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 				return err
 			}
 			updateAuthorized = true
+		}
+
+		if !slices.EqualFunc(rule.Existing.NotificationSettings, rule.New.NotificationSettings, func(settings models.NotificationSettings, settings2 models.NotificationSettings) bool {
+			return settings.Equals(&settings2)
+		}) {
+			if err := r.authorizeNotificationSettings(ctx, user, rule.New); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// authorizeNotificationSettings checks if the user has access to all receivers that are used by the rule's notification settings.
+func (r *RuleService) authorizeNotificationSettings(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	for _, ns := range rule.NotificationSettings {
+		if err := r.notificationSettingsAuth.AuthorizeRead(ctx, user, &ns); err != nil {
+			return err
 		}
 	}
 	return nil

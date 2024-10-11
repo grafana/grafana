@@ -8,13 +8,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -31,9 +32,10 @@ const (
 )
 
 const (
-	MetaKeyUsername   = "username"
-	MetaKeyAuthModule = "authModule"
-	MetaKeyIsLogin    = "isLogin"
+	MetaKeyUsername            = "username"
+	MetaKeyAuthModule          = "authModule"
+	MetaKeyIsLogin             = "isLogin"
+	defaultRedirectToCookieKey = "redirect_to"
 )
 
 // ClientParams are hints to the auth service about how to handle the identity management
@@ -64,19 +66,28 @@ type ClientParams struct {
 }
 
 type FetchPermissionsParams struct {
-	// ActionsLookup will restrict the permissions to only these actions
-	ActionsLookup []string
+	// RestrictedActions will restrict the permissions to only these actions
+	RestrictedActions []string
+	// AllowedActions will be added to the identity permissions
+	AllowedActions []string
+	// Note: Kept for backwards compatibility, use AllowedActions instead
 	// Roles permissions will be directly added to the identity permissions
 	Roles []string
 }
 
-type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
-type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
-type PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
+type (
+	PostAuthHookFn  func(ctx context.Context, identity *Identity, r *Request) error
+	PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
+	PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
+)
 
-type Service interface {
+type Authenticator interface {
 	// Authenticate authenticates a request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+}
+
+type Service interface {
+	Authenticator
 	// RegisterPostAuthHook registers a hook with a priority that is called after a successful authentication.
 	// A lower number means higher priority.
 	RegisterPostAuthHook(hook PostAuthHookFn, priority uint)
@@ -91,8 +102,8 @@ type Service interface {
 	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
 	// RegisterPreLogoutHook registers a hook that is called before a logout request.
 	RegisterPreLogoutHook(hook PreLogoutHookFn, priority uint)
-	// ResolveIdentity resolves an identity from org and namespace id.
-	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
+	// ResolveIdentity resolves an identity from orgID and typedID.
+	ResolveIdentity(ctx context.Context, orgID int64, typedID string) (*Identity, error)
 
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
@@ -116,10 +127,9 @@ type IdentitySynchronizer interface {
 }
 
 type Client interface {
+	Authenticator
 	// Name returns the name of a client
 	Name() string
-	// Authenticate performs the authentication for the request
-	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 	// IsEnabled returns the enabled status of the client
 	IsEnabled() bool
 }
@@ -155,7 +165,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user Requester) (*Redirect, bool)
+	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
 }
 
 type PasswordClient interface {
@@ -174,11 +184,11 @@ type UsageStatClient interface {
 }
 
 // IdentityResolverClient is an optional interface that auth clients can implement.
-// Clients that implements this interface can resolve an full identity from an orgID and namespaceID.
+// Clients that implements this interface can resolve an full identity from an orgID and typedID.
 type IdentityResolverClient interface {
 	Client
-	Namespace() string
-	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
+	IdentityType() claims.IdentityType
+	ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*Identity, error)
 }
 
 type Request struct {
@@ -186,11 +196,6 @@ type Request struct {
 	OrgID int64
 	// HTTPRequest is the original HTTP request to authenticate
 	HTTPRequest *http.Request
-
-	// Resp is the response writer to use for the request
-	// Used to set cookies and headers
-	Resp web.ResponseWriter
-
 	// metadata is additional information about the auth request
 	metadata map[string]string
 }
@@ -229,38 +234,54 @@ func ClientWithPrefix(name string) string {
 type RedirectValidator func(url string) error
 
 // HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
-func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
+func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) *response.NormalResponse {
 	result := map[string]any{"message": "Logged in"}
-	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator)
+	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator, features, "")
 	return response.JSON(http.StatusOK, result)
 }
 
 // HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
-func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) {
-	redirectURL := handleLogin(r, w, cfg, identity, validator)
+func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) {
+	redirectURL := handleLogin(r, w, cfg, identity, validator, features, "redirectTo")
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 // HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse
-func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.RedirectResponse {
-	return response.Redirect(handleLogin(r, w, cfg, identity, validator))
+func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles, redirectToCookieName string) *response.RedirectResponse {
+	return response.Redirect(handleLogin(r, w, cfg, identity, validator, features, redirectToCookieName))
 }
 
-func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
+func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles, redirectToCookieName string) string {
+	WriteSessionCookie(w, cfg, identity.SessionToken)
+
 	redirectURL := cfg.AppSubURL + "/"
+	if features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
+		if redirectToCookieName != "" {
+			scopedRedirectToCookie, err := r.Cookie(redirectToCookieName)
+			if err == nil {
+				redirectTo, _ := url.QueryUnescape(scopedRedirectToCookie.Value)
+				if redirectTo != "" && validator(redirectTo) == nil {
+					redirectURL = cfg.AppSubURL + redirectTo
+				}
+				cookies.DeleteCookie(w, redirectToCookieName, cookieOptions(cfg))
+			}
+		}
+		return redirectURL
+	}
+
+	redirectURL = cfg.AppSubURL + "/"
 	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 {
 		if validator(redirectTo) == nil {
 			redirectURL = redirectTo
 		}
-		cookies.DeleteCookie(w, "redirect_to", cookieOptions(cfg))
+		cookies.DeleteCookie(w, defaultRedirectToCookieKey, cookieOptions(cfg))
 	}
 
-	WriteSessionCookie(w, cfg, identity.SessionToken)
 	return redirectURL
 }
 
 func getRedirectURL(r *http.Request) string {
-	cookie, err := r.Cookie("redirect_to")
+	cookie, err := r.Cookie(defaultRedirectToCookieKey)
 	if err != nil {
 		return ""
 	}

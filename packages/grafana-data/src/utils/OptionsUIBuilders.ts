@@ -1,25 +1,27 @@
 import { set, cloneDeep } from 'lodash';
 
 import {
+  FieldNamePickerConfigSettings,
+  NumberFieldConfigSettings,
+  SelectFieldConfigSettings,
+  SliderFieldConfigSettings,
+  StringFieldConfigSettings,
+  UnitFieldConfigSettings,
+  booleanOverrideProcessor,
+  identityOverrideProcessor,
   numberOverrideProcessor,
   selectOverrideProcessor,
   stringOverrideProcessor,
-  booleanOverrideProcessor,
-  standardEditorsRegistry,
-  SelectFieldConfigSettings,
-  StandardEditorProps,
-  StringFieldConfigSettings,
-  NumberFieldConfigSettings,
-  SliderFieldConfigSettings,
-  identityOverrideProcessor,
-  UnitFieldConfigSettings,
   unitOverrideProcessor,
-  FieldNamePickerConfigSettings,
+} from '../field/overrides/processors';
+import {
   StandardEditorContext,
-} from '../field';
+  StandardEditorProps,
+  standardEditorsRegistry,
+} from '../field/standardFieldConfigEditorRegistry';
 import { PanelOptionsSupplier } from '../panel/PanelPlugin';
-import { isObject } from '../types';
 import { OptionsEditorItem, OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
+import { isObject } from '../types/data';
 import { FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 

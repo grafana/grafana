@@ -11,7 +11,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
     return migrateOptions(panel);
   }
 
-  return panel.options as Options;
+  return panel.options;
 };
 
 function migrateOptions(panel: PanelModel): Options {
@@ -189,7 +189,7 @@ function migrateOptions(panel: PanelModel): Options {
       frame: {
         matcher: {
           id: FrameMatcherID.byIndex,
-          options: frame ?? (seriesMapping === SeriesMapping.Manual ? i++ : frameShared ?? 0),
+          options: frame ?? (seriesMapping === SeriesMapping.Manual ? i++ : (frameShared ?? 0)),
         },
       },
       x: {

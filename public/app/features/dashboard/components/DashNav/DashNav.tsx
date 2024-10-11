@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -16,7 +16,6 @@ import {
   Badge,
 } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -83,6 +82,7 @@ export const DashNav = memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   useLocation();
   const forceUpdate = useForceUpdate();
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
@@ -185,6 +185,8 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const renderLeftActions = () => {
+    const isDevEnv = config.buildInfo.env === 'development';
+
     const { dashboard, kioskMode } = props;
     const { canStar, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
@@ -222,7 +224,7 @@ export const DashNav = memo<Props>((props) => {
       );
     }
 
-    if (config.featureToggles.scenes) {
+    if (isDevEnv && config.featureToggles.dashboardScene) {
       buttons.push(
         <DashNavButton
           key="button-scenes"
@@ -268,14 +270,7 @@ export const DashNav = memo<Props>((props) => {
       return null;
     }
     return (
-      <DashNavTimeControls
-        dashboard={dashboard}
-        onChangeTimeZone={updateTimeZoneForSession}
-        onToolbarRefreshClick={DashboardInteractions.toolbarRefreshClick}
-        onToolbarZoomClick={DashboardInteractions.toolbarZoomClick}
-        onToolbarTimePickerClick={DashboardInteractions.toolbarTimePickerClick}
-        key="time-controls"
-      />
+      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
     );
   };
 
@@ -313,7 +308,6 @@ export const DashNav = memo<Props>((props) => {
               tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
               icon="save"
               onClick={() => {
-                DashboardInteractions.toolbarSaveClick();
                 showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,
@@ -341,8 +335,8 @@ export const DashNav = memo<Props>((props) => {
     if (canEdit && !isFullscreen) {
       buttons.push(
         <AddPanelButton
-          dashboard={dashboard}
           onToolbarAddMenuOpen={DashboardInteractions.toolbarAddClick}
+          dashboard={dashboard}
           key="panel-add-dropdown"
         />
       );
@@ -363,15 +357,11 @@ export const DashNav = memo<Props>((props) => {
   };
 
   return (
-    <AppChromeUpdate
-      actions={
-        <>
-          {renderLeftActions()}
-          <NavToolbarSeparator leftActionsSeparator />
-          <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
-        </>
-      }
-    />
+    <>
+      {renderLeftActions()}
+      {!isSingleTopNav && <NavToolbarSeparator leftActionsSeparator />}
+      <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
+    </>
   );
 });
 

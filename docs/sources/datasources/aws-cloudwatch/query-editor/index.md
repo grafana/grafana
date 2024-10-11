@@ -253,7 +253,9 @@ To enable cross-account observability, complete the following steps:
 
 1. Add [two API actions]({{< relref "../../aws-cloudwatch#cross-account-observability-permissions" >}}) to the IAM policy attached to the role/user running the plugin.
 
-Cross-account querying is available in the plugin through the `Logs` mode and the `Metric search` mode. Once you have it configured correctly, you'll see a "Monitoring account" badge displayed in the query editor header.
+Cross-account querying is available in the plugin through the **Logs**, **Metric search**, and **Metric Insights** modes.
+After you have it configured, you'll see a **Monitoring account** badge in the query editor header.
+To support cross-account query building in the **Metric Insight** builder mode, the `cloudwatchMetricInsightsCrossAccount` feature toggle should be enabled.
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-monitoring-badge-9.3.0.png" max-width="1200px" caption="Monitoring account badge" >}}
 

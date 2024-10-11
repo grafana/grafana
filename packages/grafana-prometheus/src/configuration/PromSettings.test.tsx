@@ -6,8 +6,9 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
+import { createDefaultConfigOptions } from '../test/__mocks__/datasource';
+
 import { countError, getValueFromEventItem, PromSettings } from './PromSettings';
-import { createDefaultConfigOptions } from './mocks';
 
 beforeEach(() => {
   jest.replaceProperty(config, 'featureToggles', {
@@ -110,6 +111,13 @@ describe('PromSettings', () => {
       fireEvent.change(input, { target: { value: '-5e5' } });
       fireEvent.blur(input);
       expect(queryByText(countError)).toBeInTheDocument();
+    });
+
+    it('should have a series endpoint configuration element', () => {
+      const options = defaultProps;
+
+      render(<PromSettings onOptionsChange={() => {}} options={options} />);
+      expect(screen.getByText('Use series endpoint')).toBeInTheDocument();
     });
   });
 });

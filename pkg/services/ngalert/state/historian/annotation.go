@@ -13,15 +13,23 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
+
+type AccessControl interface {
+	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
+	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, rule ngmodels.Namespaced) error
+	HasAccessInFolder(ctx context.Context, user identity.Requester, rule ngmodels.Namespaced) (bool, error)
+}
 
 // AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
 type AnnotationBackend struct {
@@ -30,10 +38,12 @@ type AnnotationBackend struct {
 	clock   clock.Clock
 	metrics *metrics.Historian
 	log     log.Logger
+	ac      AccessControl
 }
 
 type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
+	GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error)
 }
 
 type AnnotationStore interface {
@@ -41,13 +51,20 @@ type AnnotationStore interface {
 	Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error
 }
 
-func NewAnnotationBackend(logger log.Logger, annotations AnnotationStore, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
+func NewAnnotationBackend(
+	logger log.Logger,
+	annotations AnnotationStore,
+	rules RuleStore,
+	metrics *metrics.Historian,
+	ac AccessControl,
+) *AnnotationBackend {
 	return &AnnotationBackend{
 		store:   annotations,
 		rules:   rules,
 		clock:   clock.New(),
 		metrics: metrics,
 		log:     logger,
+		ac:      ac,
 	}
 }
 
@@ -78,8 +95,15 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 		defer cancel()
 		defer close(errCh)
 		logger := h.log.FromContext(ctx)
+		logger.Debug("Saving state history batch", "samples", len(annotations))
 
-		errCh <- h.store.Save(ctx, panel, annotations, rule.OrgID, logger)
+		err := h.store.Save(ctx, panel, annotations, rule.OrgID, logger)
+		if err != nil {
+			logger.Error("Failed to save history batch", "samples", len(annotations), "err", err)
+			errCh <- err
+			return
+		}
+		logger.Debug("Done saving history batch", "samples", len(annotations))
 	}(writeCtx)
 	return errCh
 }
@@ -105,6 +129,10 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 	}
 	if rule == nil {
 		return nil, fmt.Errorf("no such rule exists")
+	}
+
+	if err := h.ac.AuthorizeAccessInFolder(ctx, query.SignedInUser, rule); err != nil {
+		return nil, err
 	}
 
 	q := annotations.ItemQuery{

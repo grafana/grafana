@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/gcom"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // NoopServiceImpl Define the Service Implementation.
@@ -40,27 +41,11 @@ func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.C
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
-func (s *NoopServiceImpl) GetMigrationRunList(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRunList, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
 func (s *NoopServiceImpl) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.CloudMigrationSnapshot) (string, error) {
-	return "", cloudmigration.ErrInternalNotImplementedError
-}
-
-func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateDataResponse, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
-func (s *NoopServiceImpl) CreateSnapshot(ctx context.Context, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (s *NoopServiceImpl) CreateSnapshot(ctx context.Context, user *user.SignedInUser, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 

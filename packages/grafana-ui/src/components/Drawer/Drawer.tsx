@@ -256,17 +256,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     drawer: css({
-      '.main-view &': {
-        top: 80,
-      },
-
-      '.main-view--search-bar-hidden &': {
-        top: 40,
-      },
-
-      '.main-view--chrome-hidden &': {
-        top: 0,
-      },
+      top: 0,
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
@@ -294,8 +284,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     // but we don't want the backdrop styling to apply over the top bar as it looks weird
     // instead have a child pseudo element to apply the backdrop styling below the top bar
     mask: css({
-      backgroundColor: 'transparent',
-      position: 'fixed',
+      // The !important here is to override the default .rc-drawer-mask styles
+      backgroundColor: 'transparent !important',
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      position: 'fixed !important' as 'fixed',
 
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
@@ -305,18 +297,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         left: 0,
         position: 'fixed',
         right: 0,
-
-        '.main-view &': {
-          top: 80,
-        },
-
-        '.main-view--search-bar-hidden &': {
-          top: 40,
-        },
-
-        '.main-view--chrome-hidden &': {
-          top: 0,
-        },
+        top: 0,
       },
     }),
     maskMotion: css({
@@ -379,7 +360,7 @@ function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
 
     [theme.breakpoints.down('md')]: {
       width: `calc(100% - ${theme.spacing(2)}) !important`,
-      minWidth: 0,
+      minWidth: '0 !important',
     },
   });
 }

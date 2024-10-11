@@ -22,9 +22,9 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to set home dashboard", errID)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to set home dashboard", err)
 	}
 
 	cmd.UserID = userID
@@ -64,9 +64,9 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get user preferences", errID)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
 	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, c.SignedInUser.GetOrgID(), userID, 0)
@@ -89,9 +89,9 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", errID)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
 	return prefapi.UpdatePreferencesFor(c.Req.Context(), hs.DashboardService,
@@ -113,9 +113,9 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", errID)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
 	}
 
 	return hs.patchPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), userID, 0, &dtoCmd)
@@ -155,6 +155,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		Language:          dtoCmd.Language,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
+		Navbar:            dtoCmd.Navbar,
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {

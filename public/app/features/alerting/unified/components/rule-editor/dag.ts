@@ -63,7 +63,7 @@ export const getOriginOfRefId = memoize(_getOriginsOfRefId, (refId, graph) => re
 export function _getOriginsOfRefId(refId: string, graph: Graph): string[] {
   const node = graph.getNode(refId);
 
-  let origins: Node[] = [];
+  const origins: Node[] = [];
 
   // recurse through "node > inputEdges > inputNode"
   function findChildNode(node: Node) {
@@ -90,8 +90,8 @@ export function fingerprintGraph(graph: Graph) {
   return Object.keys(graph.nodes)
     .map((name) => {
       const n = graph.nodes[name];
-      let outputEdges = n.outputEdges.map((e: Edge) => e.outputNode?.name).join(', ');
-      let inputEdges = n.inputEdges.map((e: Edge) => e.inputNode?.name).join(', ');
+      const outputEdges = n.outputEdges.map((e: Edge) => e.outputNode?.name).join(', ');
+      const inputEdges = n.inputEdges.map((e: Edge) => e.inputNode?.name).join(', ');
       return `${n.name}:${outputEdges}:${inputEdges}`;
     })
     .join(' ');

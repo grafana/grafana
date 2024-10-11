@@ -7,7 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -16,7 +15,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -38,7 +37,6 @@ type QueryAPIBuilder struct {
 	log                    log.Logger
 	concurrentQueryLimit   int
 	userFacingDefaultError string
-	returnMultiStatus      bool // from feature toggle
 	features               featuremgmt.FeatureToggles
 
 	tracer     tracing.Tracer
@@ -77,7 +75,6 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
-		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
 		client:               client,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer),
@@ -124,11 +121,6 @@ func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return query.SchemeGroupVersion
 }
 
-func (b *QueryAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
-}
-
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
@@ -146,15 +138,8 @@ func (b *QueryAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(query.SchemeGroupVersion)
 }
 
-func (b *QueryAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriterMode,
-	_ prometheus.Registerer,
-) (*genericapiserver.APIGroupInfo, error) {
+func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ *runtime.Scheme, _ generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	gv := query.SchemeGroupVersion
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
 
 	storage := map[string]rest.Storage{}
 
@@ -174,7 +159,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
-	return &apiGroupInfo, err
+	return err
 }
 
 func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

@@ -6,29 +6,15 @@ labels:
 title: 'Alerting Provisioning HTTP API '
 ---
 
-The Alerting provisioning API can be used to create, modify, and delete resources relevant to [Grafana-managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}). It is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+The Alerting Provisioning HTTP API can be used to create, modify, and delete resources relevant to Grafana-managed alerts. This API is the one used by our [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
-To manage resources related to [data source-managed alerts]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule" >}}), including recording rules, use the [Mimir tool](https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/) and [Cortex tool](https://github.com/grafana/cortex-tools#cortextool).
+For more information on the differences between Grafana-managed and data source-managed alerts, refer to [Introduction to alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/).
 
-## Information
+> If you are running Grafana Enterprise, you need to add specific permissions for some endpoints. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
-### Version
+## Grafana-managed endpoints
 
-1.1.0
-
-## Content negotiation
-
-### Consumes
-
-- application/json
-
-### Produces
-
-- application/json
-- text/yaml
-- application/yaml
-
-## All endpoints
+Note that the JSON format from most of the following endpoints is not fully compatible with [provisioning via configuration JSON files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/).
 
 ### Alert rules
 
@@ -45,13 +31,18 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
 | GET    | /api/v1/provisioning/alert-rules                                 | [route get alert rules](#route-get-alert-rules)                         | Get all the alert rules.                                              |
 | GET    | /api/v1/provisioning/alert-rules/export                          | [route get alert rules export](#route-get-alert-rules-export)           | Export all alert rules in provisioning file format.                   |
 
-#### Example alert rules template
+**Example request for new alert rule:**
 
-```json
+```http
+POST /api/v1/provisioning/alert-rules
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
 {
   "title": "TEST-API_1",
   "ruleGroup": "API",
-  "folderUID": "FOLDER",
+  "folderUID": "SET_FOLDER_UID",
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
@@ -72,7 +63,7 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
         "from": 600,
         "to": 0
       },
-      "datasourceUid": " XXXXXXXXX-XXXXXXXXX-XXXXXXXXXX",
+      "datasourceUid": "XXXXXXXXX-XXXXXXXXX-XXXXXXXXXX",
       "model": {
         "expr": "up",
         "hide": false,
@@ -122,6 +113,99 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
     }
   ]
 }
+
+```
+
+#### Example Response:
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 1,
+  "uid": "XXXXXXXXX",
+  "orgID": 1,
+  "folderUID": "SET_FOLDER_UID",
+  "ruleGroup": "API3",
+  "title": "TEST-API_1",
+  "condition": "B",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "XXXXXXXXX-XXXXXXXXX-XXXXXXXXXX",
+      "model": {
+        "expr": "up",
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "A"
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "-100",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                6
+              ],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "A"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "-100"
+        },
+        "hide": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "B",
+        "type": "classic_conditions"
+      }
+    }
+  ],
+  "updated": "2024-08-02T13:19:32.609640048Z",
+  "noDataState": "OK",
+  "execErrState": "OK",
+  "for": "5m",
+  "annotations": {
+    "summary": "test_api_1"
+  },
+  "labels": {
+    "API": "test1"
+  },
+  "provenance": "api",
+  "isPaused": false,
+  "notification_settings": null,
+  "record": null
+}
 ```
 
 ### Contact points
@@ -134,6 +218,34 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
 | PUT    | /api/v1/provisioning/contact-points/:uid   | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
 | GET    | /api/v1/provisioning/contact-points/export | [route get contactpoints export](#route-get-contactpoints-export) | Export all contact points in provisioning file format. |
 
+**Example Request for all the contact points:**
+
+```http
+GET /api/v1/provisioning/contact-points
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "uid": "",
+    "name": "email receiver",
+    "type": "email",
+    "settings": {
+      "addresses": "<example@email.com>"
+    },
+    "disableResolveMessage": false
+  }
+]
+```
+
 ### Notification policies
 
 | Method | URI                                  | Name                                                          | Summary                                                          |
@@ -142,6 +254,38 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
 | GET    | /api/v1/provisioning/policies        | [route get policy tree](#route-get-policy-tree)               | Get the notification policy tree.                                |
 | PUT    | /api/v1/provisioning/policies        | [route put policy tree](#route-put-policy-tree)               | Sets the notification policy tree.                               |
 | GET    | /api/v1/provisioning/policies/export | [route get policy tree export](#route-get-policy-tree-export) | Export the notification policy tree in provisioning file format. |
+
+**Example Request for exporting the notification policy tree in YAML format:**
+
+```http
+GET /api/v1/provisioning/policies/export?format=yaml
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/yaml
+
+apiVersion: 1
+policies:
+    - orgId: 1
+      receiver: My Contact Email Point
+      group_by:
+        - grafana_folder
+        - alertname
+      routes:
+        - receiver: My Contact Email Point
+          object_matchers:
+            - - monitor
+              - =
+              - testdata
+          mute_time_intervals:
+            - weekends
+```
 
 ### Mute timings
 
@@ -155,6 +299,38 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
 | GET    | /api/v1/provisioning/mute-timings/export       | [route get mute timings export](#route-get-mute-timings-export) | Export all mute timings in provisioning file format. |
 | GET    | /api/v1/provisioning/mute-timings/:name/export | [route get mute timing export](#route-get-mute-timing-export)   | Export a mute timing in provisioning file format.    |
 
+**Example Request for all mute timings:**
+
+```http
+GET /api/v1/provisioning/mute-timings
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "name": "weekends",
+    "time_intervals": [
+      {
+        "weekdays": [
+          "saturday",
+          "sunday"
+        ]
+      }
+    ],
+    "version": "",
+    "provenance": "file"
+  }
+]
+```
+
 ### Templates
 
 | Method | URI                                  | Name                                            | Summary                                   |
@@ -164,7 +340,36 @@ To manage resources related to [data source-managed alerts]({{< relref "/docs/gr
 | GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.           |
 | PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Create or update a notification template. |
 
-## Edit resources in the Grafana UI
+**Example Request for all notification templates:**
+
+```http
+GET /api/v1/provisioning/templates
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+  {
+    "name": "custom_email.message",
+    "template": "{{ define \"custom_email.message\" }}\n  Custom alert!\n{{ end }}",
+    "provenance": "file"
+  },
+  {
+    "name": "custom_email.subject",
+    "template": "{{ define \"custom_email.subject\" }}\n{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)\n{{ end }}",
+    "provenance": "file"
+  }
+]
+```
+
+### Edit resources in the Grafana UI
 
 By default, you cannot edit API-provisioned alerting resources in Grafana. To enable editing these resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
 
@@ -176,6 +381,18 @@ By default, you cannot edit API-provisioned alerting resources in Grafana. To en
 - `PUT /api/v1/provisioning/templates/{name}`
 
 To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use the `DELETE /api/v1/provisioning/policies` endpoint.
+
+## Data source-managed resources
+
+The Alerting Provisioning HTTP API can only be used to manage Grafana-managed alert resources. To manage resources related to [data source-managed alerts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule/), consider the following tools:
+
+- [mimirtool](https://grafana.com/docs/mimir/<GRAFANA_VERSION>/manage/tools/mimirtool/): to interact with the Mimir alertmanager and ruler configuration.
+- [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
+- [lokitool](https://grafana.com/docs/loki/<GRAFANA_VERSION>/alert/#lokitool): to configure the Loki Ruler.
+
+Alternatively, the [Grafana Alerting API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json) can be used to access data from data source-managed alerts. This API is primarily intended for internal usage, with the exception of the `/api/v1/provisioning/` endpoints. It's important to note that internal APIs may undergo changes without prior notice and are not officially supported for user consumption.
+
+For Prometheus, `amtool` can also be used to interact with the [AlertManager API](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/prometheus/alertmanager/main/api/v2/openapi.yaml#/).
 
 ## Paths
 
@@ -216,10 +433,6 @@ Status: No Content
 DELETE /api/v1/provisioning/contact-points/:uid
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 | Name | Source | Type   | Go type  | Separator | Required | Default | Description                                |
@@ -248,15 +461,17 @@ DELETE /api/v1/provisioning/mute-timings/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description      |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ---------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Mute timing name |
+| Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
+| ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
+| name    | `path`  | string | `string` |           |    ✓     |         | Mute timing name                                                                                              |
+| version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
 
 | Code                                 | Status     | Description                               | Has headers | Schema                                         |
 | ------------------------------------ | ---------- | ----------------------------------------- | :---------: | ---------------------------------------------- |
 | [204](#route-delete-mute-timing-204) | No Content | The mute timing was deleted successfully. |             | [schema](#route-delete-mute-timing-204-schema) |
+| [409](#route-delete-mute-timing-409) | Conflict   | GenericPublicError                        |             | [schema](#route-delete-mute-timing-409-schema) |
 
 #### Responses
 
@@ -266,6 +481,14 @@ Status: No Content
 
 ###### <span id="route-delete-mute-timing-204-schema"></span> Schema
 
+##### <span id="route-delete-mute-timing-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-delete-mute-timing-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
+
 ### <span id="route-delete-template"></span> Delete a template. (_RouteDeleteTemplate_)
 
 ```
@@ -274,15 +497,17 @@ DELETE /api/v1/provisioning/templates/:name
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description   |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ------------- |
-| name | `path` | string | `string` |           |    ✓     |         | Template Name |
+| Name    | Source  | Type   | Go type  | Separator | Required | Default | Description                                                                                                   |
+| ------- | ------- | ------ | -------- | --------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------- |
+| name    | `path`  | string | `string` |           |    ✓     |         | Template Name                                                                                                 |
+| version | `query` | string | `string` |           |          |         | Current version of the resource. Used for optimistic concurrency validation. Keep empty to bypass validation. |
 
 #### All responses
 
 | Code                              | Status     | Description                            | Has headers | Schema                                      |
 | --------------------------------- | ---------- | -------------------------------------- | :---------: | ------------------------------------------- |
 | [204](#route-delete-template-204) | No Content | The template was deleted successfully. |             | [schema](#route-delete-template-204-schema) |
+| [409](#route-delete-template-409) | Conflict   | GenericPublicError                     |             | [schema](#route-delete-template-409-schema) |
 
 #### Responses
 
@@ -291,6 +516,14 @@ DELETE /api/v1/provisioning/templates/:name
 Status: No Content
 
 ###### <span id="route-delete-template-204-schema"></span> Schema
+
+##### <span id="route-delete-template-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-delete-template-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-get-alert-rule"></span> Get a specific alert rule by UID. (_RouteGetAlertRule_)
 
@@ -831,7 +1064,7 @@ GET /api/v1/provisioning/templates/:name
 | Code                           | Status    | Description          | Has headers | Schema                                   |
 | ------------------------------ | --------- | -------------------- | :---------: | ---------------------------------------- |
 | [200](#route-get-template-200) | OK        | NotificationTemplate |             | [schema](#route-get-template-200-schema) |
-| [404](#route-get-template-404) | Not Found | Not found.           |             | [schema](#route-get-template-404-schema) |
+| [404](#route-get-template-404) | Not Found | GenericPublicError   |             | [schema](#route-get-template-404-schema) |
 
 #### Responses
 
@@ -845,7 +1078,7 @@ Status: OK
 
 ##### <span id="route-get-template-404"></span> 404 - Not found.
 
-Status: Not Found
+[GenericPublicError](#generic-public-error)
 
 ###### <span id="route-get-template-404-schema"></span> Schema
 
@@ -857,10 +1090,9 @@ GET /api/v1/provisioning/templates
 
 #### All responses
 
-| Code                            | Status    | Description           | Has headers | Schema                                    |
-| ------------------------------- | --------- | --------------------- | :---------: | ----------------------------------------- |
-| [200](#route-get-templates-200) | OK        | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
-| [404](#route-get-templates-404) | Not Found | Not found.            |             | [schema](#route-get-templates-404-schema) |
+| Code                            | Status | Description           | Has headers | Schema                                    |
+| ------------------------------- | ------ | --------------------- | :---------: | ----------------------------------------- |
+| [200](#route-get-templates-200) | OK     | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
 
 #### Responses
 
@@ -872,21 +1104,11 @@ Status: OK
 
 [NotificationTemplates](#notification-templates)
 
-##### <span id="route-get-templates-404"></span> 404 - Not found.
-
-Status: Not Found
-
-###### <span id="route-get-templates-404-schema"></span> Schema
-
 ### <span id="route-post-alert-rule"></span> Create a new alert rule. (_RoutePostAlertRule_)
 
 ```
 POST /api/v1/provisioning/alert-rules
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -930,10 +1152,6 @@ Status: Bad Request
 POST /api/v1/provisioning/contact-points
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 {{% responsive-table %}}
@@ -975,10 +1193,6 @@ Status: Bad Request
 ```
 POST /api/v1/provisioning/mute-timings
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -1022,10 +1236,6 @@ Status: Bad Request
 PUT /api/v1/provisioning/alert-rules/:uid
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 {{% responsive-table %}}
@@ -1068,10 +1278,6 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -1117,10 +1323,6 @@ Status: Bad Request
 PUT /api/v1/provisioning/contact-points/:uid
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 {{% responsive-table %}}
@@ -1164,10 +1366,6 @@ Status: Bad Request
 PUT /api/v1/provisioning/mute-timings/:name
 ```
 
-#### Consumes
-
-- application/json
-
 #### Parameters
 
 {{% responsive-table %}}
@@ -1182,10 +1380,11 @@ PUT /api/v1/provisioning/mute-timings/:name
 
 #### All responses
 
-| Code                              | Status      | Description      | Has headers | Schema                                      |
-| --------------------------------- | ----------- | ---------------- | :---------: | ------------------------------------------- |
-| [200](#route-put-mute-timing-200) | OK          | MuteTimeInterval |             | [schema](#route-put-mute-timing-200-schema) |
-| [400](#route-put-mute-timing-400) | Bad Request | ValidationError  |             | [schema](#route-put-mute-timing-400-schema) |
+| Code                              | Status      | Description        | Has headers | Schema                                      |
+| --------------------------------- | ----------- | ------------------ | :---------: | ------------------------------------------- |
+| [200](#route-put-mute-timing-200) | OK          | MuteTimeInterval   |             | [schema](#route-put-mute-timing-200-schema) |
+| [400](#route-put-mute-timing-400) | Bad Request | ValidationError    |             | [schema](#route-put-mute-timing-400-schema) |
+| [409](#route-put-mute-timing-409) | Conflict    | GenericPublicError |             | [schema](#route-put-mute-timing-409-schema) |
 
 #### Responses
 
@@ -1205,15 +1404,19 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
+##### <span id="route-put-mute-timing-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-put-mute-timing-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
+
 ### <span id="route-put-policy-tree"></span> Sets the notification policy tree. (_RoutePutPolicyTree_)
 
 ```
 PUT /api/v1/provisioning/policies
 ```
-
-#### Consumes
-
-- application/json
 
 #### Parameters
 
@@ -1257,10 +1460,6 @@ Status: Bad Request
 PUT /api/v1/provisioning/templates/:name
 ```
 
-#### Consumes
-
-- application/json
-
 {{% responsive-table %}}
 
 #### Parameters
@@ -1278,7 +1477,8 @@ PUT /api/v1/provisioning/templates/:name
 | Code                           | Status      | Description          | Has headers | Schema                                   |
 | ------------------------------ | ----------- | -------------------- | :---------: | ---------------------------------------- |
 | [202](#route-put-template-202) | Accepted    | NotificationTemplate |             | [schema](#route-put-template-202-schema) |
-| [400](#route-put-template-400) | Bad Request | ValidationError      |             | [schema](#route-put-template-400-schema) |
+| [400](#route-put-template-400) | Bad Request | GenericPublicError   |             | [schema](#route-put-template-400-schema) |
+| [409](#route-put-template-409) | Conflict    | GenericPublicError   |             | [schema](#route-put-template-409-schema) |
 
 #### Responses
 
@@ -1296,17 +1496,21 @@ Status: Bad Request
 
 ###### <span id="route-put-template-400-schema"></span> Schema
 
-[ValidationError](#validation-error)
+[GenericPublicError](#generic-public-error)
+
+##### <span id="route-put-template-409"></span> 409 - Conflict
+
+Status: Conflict
+
+###### <span id="route-put-template-409-schema"></span> Schema
+
+[GenericPublicError](#generic-public-error)
 
 ### <span id="route-reset-policy-tree"></span> Clears the notification policy tree. (_RouteResetPolicyTree_)
 
 ```
 DELETE /api/v1/provisioning/policies
 ```
-
-#### Consumes
-
-- application/json
 
 #### All responses
 
@@ -1448,9 +1652,9 @@ Status: Accepted
 
 ### <span id="duration"></span> Duration
 
-| Name     | Type                      | Go type | Default | Description | Example |
-| -------- | ------------------------- | ------- | ------- | ----------- | ------- |
-| Duration | int64 (formatted integer) | int64   |         |             |         |
+| Name     | Type   | Go type | Default | Description | Example |
+| -------- | ------ | ------- | ------- | ----------- | ------- |
+| Duration | string | int64   |         |             |         |
 
 ### <span id="embedded-contact-point"></span> EmbeddedContactPoint
 
@@ -1516,10 +1720,11 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name           | Type                             | Go type           | Required | Default | Description | Example |
-| -------------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| name           | string                           | `string`          |          |         |             |         |
-| time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
+| Name           | Type                             | Go type           | Required | Default | Description         | Example |
+| -------------- | -------------------------------- | ----------------- | :------: | ------- | ------------------- | ------- |
+| name           | string                           | `string`          |          |         |                     |         |
+| time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |                     |         |
+| version        | string                           | `string`          |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
 
@@ -1554,11 +1759,12 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name       | Type                      | Go type      | Required | Default | Description | Example |
-| ---------- | ------------------------- | ------------ | :------: | ------- | ----------- | ------- |
-| name       | string                    | `string`     |          |         |             |         |
-| provenance | [Provenance](#provenance) | `Provenance` |          |         |             |         |
-| template   | string                    | `string`     |          |         |             |         |
+| Name       | Type                      | Go type      | Required | Default | Description         | Example |
+| ---------- | ------------------------- | ------------ | :------: | ------- | ------------------- | ------- |
+| name       | string                    | `string`     |          |         |                     |         |
+| provenance | [Provenance](#provenance) | `Provenance` |          |         |                     |         |
+| template   | string                    | `string`     |          |         |                     |         |
+| version    | string                    | `string`     |          |         | Version of resource |         |
 
 {{% /responsive-table %}}
 
@@ -1568,9 +1774,10 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name     | Type   | Go type  | Required | Default | Description | Example |
-| -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| template | string | `string` |          |         |             |         |
+| Name     | Type   | Go type  | Required | Default | Description                                             | Example |
+| -------- | ------ | -------- | :------: | ------- | ------------------------------------------------------- | ------- |
+| template | string | `string` |          |         |                                                         |         |
+| version  | string | `string` |          |         | Version of resource. Should be empty for new templates. |         |
 
 {{% /responsive-table %}}
 
@@ -1740,10 +1947,10 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name        | Type                      | Go type | Required | Default | Description | Example |
-| ----------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| EndMinute   | int64 (formatted integer) | `int64` |          |         |             |         |
-| StartMinute | int64 (formatted integer) | `int64` |          |         |             |         |
+| Name       | Type   | Go type  | Required | Default | Description | Example                 |
+| ---------- | ------ | -------- | :------: | ------- | ----------- | ----------------------- |
+| end_time   | string | `string` |          |         |             | `"end_time": "24:00"`   |
+| start_time | string | `string` |          |         |             | `"start_time": "18:00"` |
 
 {{% /responsive-table %}}
 
@@ -1756,5 +1963,20 @@ Status: Accepted
 | Name | Type   | Go type  | Required | Default | Description | Example         |
 | ---- | ------ | -------- | :------: | ------- | ----------- | --------------- |
 | msg  | string | `string` |          |         |             | `error message` |
+
+{{% /responsive-table %}}
+
+### <span id="generic-public-error"></span> GenericPublicError
+
+**Properties**
+
+{{% responsive-table %}}
+
+| Name       | Type       | Go type          | Required | Default | Description                                                              | Example |
+| ---------- | ---------- | ---------------- | :------: | ------- | ------------------------------------------------------------------------ | ------- |
+| statusCode | string     | `string`         |    ✓     |         | HTTP Status Code                                                         |         |
+| messageId  | string     | `string`         |    ✓     |         | Unique code of the error                                                 |         |
+| message    | string     | `string`         |          |         | Error message                                                            |         |
+| extra      | map of any | `map[string]any` |          |         | Extra information about the error. Format is specific to the error code. |         |
 
 {{% /responsive-table %}}

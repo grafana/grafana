@@ -76,7 +76,7 @@ Once you've added the Loki data source, you can [configure it](#configure-the-da
 To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
 {{% /admonition %}}
 
-## Provision the Loki data source
+## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).

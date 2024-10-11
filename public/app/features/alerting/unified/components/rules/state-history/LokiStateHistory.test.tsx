@@ -1,18 +1,14 @@
-import { render, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
 import { Props } from 'react-virtualized-auto-sizer';
+import { render, waitFor } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataFrameJSON } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
-
-import { TestProvider } from '../../../../../../../test/helpers/TestProvider';
-import { backendSrv } from '../../../../../../core/services/backend_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import LokiStateHistory from './LokiStateHistory';
 
-const server = setupServer();
+const server = setupMswServer();
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
@@ -25,9 +21,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
 });
 
 beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-
   server.use(
     http.get('/api/v1/rules/history', () =>
       HttpResponse.json<DataFrameJSON>({
@@ -78,10 +71,6 @@ beforeAll(() => {
   );
 });
 
-afterAll(() => {
-  server.close();
-});
-
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 const ui = {
@@ -94,7 +83,7 @@ const ui = {
 
 describe('LokiStateHistory', () => {
   it('should render history records', async () => {
-    render(<LokiStateHistory ruleUID="ABC123" />, { wrapper: TestProvider });
+    render(<LokiStateHistory ruleUID="ABC123" />);
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -107,7 +96,7 @@ describe('LokiStateHistory', () => {
   });
 
   it('should render timeline chart', async () => {
-    render(<LokiStateHistory ruleUID="ABC123" />, { wrapper: TestProvider });
+    render(<LokiStateHistory ruleUID="ABC123" />);
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -121,7 +110,7 @@ describe('LokiStateHistory', () => {
       )
     );
 
-    render(<LokiStateHistory ruleUID="abcd" />, { wrapper: TestProvider });
+    render(<LokiStateHistory ruleUID="abcd" />);
 
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 

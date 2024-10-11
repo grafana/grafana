@@ -6,6 +6,24 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.1.0 (2024-08-22)
+#
+# ### Added
+#
+# - Additional website mounts for projects that use the website repository.
+#
+#   Mounts are required for `make docs` to work in the website repository or with the website project.
+#   The Makefile is also mounted for convenient development of the procedure that repository.
+#
+# ## 8.0.1 (2024-07-01)
+#
+# ### Fixed
+#
+# - Update log suppression to catch new format of website /docs/ homepage REF_NOT_FOUND warnings.
+#
+#   These warnings are related to missing some pages during the build that are required for the /docs/ homepage.
+#   They were previously suppressed but the log format changed and without this change they reappear in the latest builds.
+#
 # ## 8.0.0 (2024-05-28)
 #
 # ### Changed
@@ -718,6 +736,9 @@ POSIX_HERESTRING
 
     _repo="$(repo_path website)"
     volumes="--volume=${_repo}/config:/hugo/config:z"
+    volumes="${volumes} --volume=${_repo}/content/guides:/hugo/content/guides:z"
+    volumes="${volumes} --volume=${_repo}/content/whats-new:/hugo/content/whats-new:z"
+    volumes="${volumes} --volume=${_repo}/Makefile:/hugo/Makefile:z"
     volumes="${volumes} --volume=${_repo}/layouts:/hugo/layouts:z"
     volumes="${volumes} --volume=${_repo}/scripts:/hugo/scripts:z"
   fi
@@ -905,7 +926,7 @@ EOF
               -e '/Press Ctrl+C to stop/ d' \
               -e '/make/ d' \
               -e '/WARNING: The manual_mount source directory/ d' \
-              -e '/docs\/_index.md .* not found/ d'
+              -e '/"docs\/_index.md" not found/d'
     fi
     ;;
 esac

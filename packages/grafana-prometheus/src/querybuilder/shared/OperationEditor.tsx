@@ -1,8 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/OperationEditor.tsx
 import { css, cx } from '@emotion/css';
+import { Draggable } from '@hello-pangea/dnd';
 import { useEffect, useId, useState } from 'react';
 import * as React from 'react';
-import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';

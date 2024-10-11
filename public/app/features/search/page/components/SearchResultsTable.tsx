@@ -136,9 +136,10 @@ export const SearchResultsTable = React.memo(
         if (rowIndex === highlightIndex.y) {
           className += ' ' + styles.selectedRow;
         }
+        const { key, ...rowProps } = row.getRowProps({ style });
 
         return (
-          <div {...row.getRowProps({ style })} className={className}>
+          <div key={key} {...rowProps} className={className}>
             {row.cells.map((cell: Cell, index: number) => {
               return (
                 <TableCell

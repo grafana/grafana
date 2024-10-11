@@ -2,13 +2,13 @@ package acimpl
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -42,6 +43,7 @@ func setupTestEnv(t testing.TB) *Service {
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
 		store:         database.ProvideService(db.InitTestDB(t)),
+		permRegistry:  permreg.ProvidePermissionRegistry(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -69,6 +71,9 @@ func TestUsageMetrics(t *testing.T) {
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest(),
+				nil,
+				nil,
+				permreg.ProvidePermissionRegistry(),
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
@@ -541,7 +546,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			// only the user's basic roles and the user's stored permissions
 			name:           "check namespacedId filter works correctly",
 			siuPermissions: listAllPerms,
-			searchOption:   accesscontrol.SearchOptions{NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceServiceAccount)},
+			searchOption:   accesscontrol.SearchOptions{TypedID: identity.NewTypedID(claims.TypeServiceAccount, 1)},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -613,7 +618,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				NamespacedID: fmt.Sprintf("%s:2", identity.NamespaceUser),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 2),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -638,7 +643,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "stored only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				NamespacedID: fmt.Sprintf("%s:2", identity.NamespaceUser),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 2),
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
@@ -658,7 +663,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram and stored",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				NamespacedID: fmt.Sprintf("%s:2", identity.NamespaceUser),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 2),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
@@ -688,7 +693,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action prefix filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 1),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -709,8 +714,8 @@ func TestService_SearchUserPermissions(t *testing.T) {
 		{
 			name: "check action filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
-				Action:       accesscontrol.ActionTeamsRead,
-				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
+				Action:  accesscontrol.ActionTeamsRead,
+				TypedID: identity.NewTypedID(claims.TypeUser, 1),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -731,8 +736,8 @@ func TestService_SearchUserPermissions(t *testing.T) {
 		{
 			name: "check action sets are correctly included if an action is specified",
 			searchOption: accesscontrol.SearchOptions{
-				Action:       "dashboards:read",
-				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
+				Action:  "dashboards:read",
+				TypedID: identity.NewTypedID(claims.TypeUser, 1),
 			},
 			withActionSets: true,
 			actionSets: map[string][]string{
@@ -765,7 +770,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action sets are correctly included if an action prefix is specified",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "dashboards",
-				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 1),
 			},
 			withActionSets: true,
 			actionSets: map[string][]string{
@@ -802,9 +807,10 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			ac := setupTestEnv(t)
 			if tt.withActionSets {
 				ac.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
-				actionSetSvc := resourcepermissions.NewActionSetService()
+				actionSetSvc := resourcepermissions.NewActionSetService(ac.features)
 				for set, actions := range tt.actionSets {
-					actionSetSvc.StoreActionSet(strings.Split(set, ":")[0], strings.Split(set, ":")[1], actions)
+					actionSetName := resourcepermissions.GetActionSetName(strings.Split(set, ":")[0], strings.Split(set, ":")[1])
+					actionSetSvc.StoreActionSet(actionSetName, actions)
 				}
 				ac.actionResolver = actionSetSvc
 			}
@@ -894,6 +900,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
+			ac.cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 			for _, r := range tt.runs {
 				err := ac.SaveExternalServiceRole(ctx, r.cmd)
@@ -940,6 +947,7 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
+			ac.cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 			if tt.initCmd != nil {

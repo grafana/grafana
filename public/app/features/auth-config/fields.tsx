@@ -4,6 +4,7 @@ import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
+import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
 import { isUrlValid } from './utils/url';
@@ -38,7 +39,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+      fields: ['roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',
@@ -67,6 +68,7 @@ export const sectionFields: Section = {
         'clientSecret',
         'authStyle',
         'scopes',
+        'serverDiscoveryUrl',
         'authUrl',
         'tokenUrl',
         'apiUrl',
@@ -86,6 +88,8 @@ export const sectionFields: Section = {
         'idTokenAttributeName',
         'roleAttributePath',
         'roleAttributeStrict',
+        'orgMapping',
+        'orgAttributePath',
         'allowAssignGrafanaAdmin',
         'skipOrgRoleSync',
       ],
@@ -121,7 +125,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+      fields: ['roleAttributePath', 'roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',
@@ -149,7 +153,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+      fields: ['roleAttributePath', 'roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',
@@ -176,7 +180,7 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+      fields: ['roleAttributePath', 'roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
     },
     {
       name: 'Extra security measures',
@@ -213,7 +217,14 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+      fields: [
+        'roleAttributePath',
+        'roleAttributeStrict',
+        'orgMapping',
+        'orgAttributePath',
+        'allowAssignGrafanaAdmin',
+        'skipOrgRoleSync',
+      ],
     },
     {
       name: 'Extra security measures',
@@ -448,6 +459,22 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description: 'Prevent synchronizing users’ organization roles from your IdP.',
       type: 'switch',
     },
+    orgMapping: {
+      label: 'Organization mapping',
+      description: orgMappingDescription(provider),
+      type: 'select',
+      hidden: !contextSrv.isGrafanaAdmin,
+      multi: true,
+      allowCustomValue: true,
+      options: [],
+      placeholder: 'Enter mappings (my-team:1:Viewer...) and press Enter to add',
+    },
+    orgAttributePath: {
+      label: 'Organization attribute path',
+      description: 'JMESPath expression to use for organization lookup.',
+      type: 'text',
+      hidden: !['generic_oauth', 'okta'].includes(provider),
+    },
     defineAllowedGroups: {
       label: 'Define allowed groups',
       type: 'switch',
@@ -595,10 +622,33 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.',
       type: 'checkbox',
     },
+    serverDiscoveryUrl: {
+      label: 'OpenID Connect Discovery URL',
+      description:
+        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.',
+      type: 'custom',
+      content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
+    },
   };
 }
 
 // Check if a string contains only numeric values
 function isNumeric(value: string) {
   return /^-?\d+$/.test(value);
+}
+
+function orgMappingDescription(provider: string): string {
+  switch (provider) {
+    case 'azuread':
+      return 'List of "<GroupID>:<OrgIdOrName>:<Role>" mappings.';
+    case 'github':
+      return 'List of "<GitHubTeamName>:<OrgIdOrName>:<Role>" mappings.';
+    case 'gitlab':
+      return 'List of "<GitlabGroupName>:<OrgIdOrName>:<Role>';
+    case 'google':
+      return 'List of "<GoogleGroupName>:<OrgIdOrName>:<Role>';
+    default:
+      // Generic OAuth, Okta
+      return 'List of "<ExternalName>:<OrgIdOrName>:<Role>" mappings.';
+  }
 }

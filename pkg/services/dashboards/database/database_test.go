@@ -16,6 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol/testutil"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -827,9 +830,12 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features)
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+	folderPermissions := mock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
+		folderStore, sqlStore, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -838,6 +844,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 				dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
 				dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
 				dashboards.ActionFoldersWrite:   []string{dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersCreate:  []string{dashboards.ScopeFoldersAll},
 			},
 		},
 	}
@@ -934,8 +941,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
@@ -944,9 +950,15 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features)
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	fStore := folderimpl.ProvideStore(sqlStore)
+
+	folderPermissions, err := testutil.ProvideFolderPermissions(features, cfg, sqlStore)
+	require.NoError(t, err)
+
+	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
+		folderStore, sqlStore, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -955,6 +967,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 				dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
 				dashboards.ActionFoldersRead:    []string{dashboards.ScopeFoldersAll},
 				dashboards.ActionFoldersWrite:   []string{dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersCreate:  []string{dashboards.ScopeFoldersAll},
 			},
 		},
 	}

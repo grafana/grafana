@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -76,6 +77,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
+	resourcePermissions accesscontrol.ReceiverPermissionsService,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -97,12 +99,13 @@ func ProvideService(
 		dashboardService:     dashboardService,
 		renderService:        renderService,
 		bus:                  bus,
-		accesscontrolService: accesscontrolService,
+		AccesscontrolService: accesscontrolService,
 		annotationsRepo:      annotationsRepo,
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
 		store:                ruleStore,
 		httpClientProvider:   httpClientProvider,
+		ResourcePermissions:  resourcePermissions,
 	}
 
 	if ng.IsDisabled() {
@@ -134,6 +137,7 @@ type AlertNG struct {
 	Log                 log.Logger
 	renderService       rendering.Service
 	ImageService        image.ImageService
+	RecordingWriter     schedule.RecordingWriter
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       folder.Service
@@ -145,7 +149,8 @@ type AlertNG struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
-	accesscontrolService accesscontrol.Service
+	AccesscontrolService accesscontrol.Service
+	ResourcePermissions  accesscontrol.ReceiverPermissionsService
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
 
@@ -203,6 +208,8 @@ func (ng *AlertNG) init() error {
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 						PromoteConfig:     true,
 						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+						ExternalURL:       ng.Cfg.AppURL,
+						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
@@ -237,6 +244,8 @@ func (ng *AlertNG) init() error {
 						PromoteConfig:     true,
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+						ExternalURL:       ng.Cfg.AppURL,
+						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
@@ -273,6 +282,8 @@ func (ng *AlertNG) init() error {
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+						ExternalURL:       ng.Cfg.AppURL,
+						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
@@ -300,7 +311,21 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	moa, err := notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, ng.FeatureToggles, overrides...)
+	moa, err := notifier.NewMultiOrgAlertmanager(
+		ng.Cfg,
+		ng.store,
+		ng.store,
+		ng.KVStore,
+		ng.store,
+		decryptFn,
+		multiOrgMetrics,
+		ng.NotificationService,
+		ng.ResourcePermissions,
+		moaLogger,
+		ng.SecretsService,
+		ng.FeatureToggles,
+		overrides...,
+	)
 	if err != nil {
 		return err
 	}
@@ -335,12 +360,18 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
-	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
+	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, ng.tracer, ng.Metrics.GetRemoteWriterMetrics())
+	if !ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagGrafanaManagedRecordingRules) {
+		// Force-disable the feature if the feature toggle is not on - sets us up for feature toggle removal.
+		ng.Cfg.UnifiedAlerting.RecordingRules.Enabled = false
+	}
+	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
 	}
+	ng.RecordingWriter = recordingWriter
 
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
@@ -352,18 +383,18 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
-		FeatureToggles:       ng.FeatureToggles,
+		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
-		RecordingWriter:      recordingWriter,
+		RecordingWriter:      ng.RecordingWriter,
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
 	// If any are set, override the config accordingly.
 	ApplyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
-	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log, ng.tracer)
+	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log, ng.tracer, ac.NewRuleService(ng.accesscontrol))
 	if err != nil {
 		return err
 	}
@@ -400,13 +431,33 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
-	receiverService := notifier.NewReceiverService(ng.accesscontrol, ng.store, ng.store, ng.SecretsService, ng.store, ng.Log)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store)
+	receiverService := notifier.NewReceiverService(
+		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false),
+		configStore,
+		ng.store,
+		ng.store,
+		ng.SecretsService,
+		ng.store,
+		ng.Log,
+		ng.ResourcePermissions,
+	)
+	provisioningReceiverService := notifier.NewReceiverService(
+		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
+		configStore,
+		ng.store,
+		ng.store,
+		ng.SecretsService,
+		ng.store,
+		ng.Log,
+		ng.ResourcePermissions,
+	)
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log, ng.store)
-	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
-	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
+	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
+	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
+	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
@@ -427,6 +478,7 @@ func (ng *AlertNG) init() error {
 		ProvenanceStore:      ng.store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
+		Scheduler:            scheduler,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ReceiverService:      receiverService,
@@ -436,6 +488,7 @@ func (ng *AlertNG) init() error {
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
 		EvaluatorFactory:     evalFactory,
+		ConditionValidator:   conditionValidator,
 		FeatureManager:       ng.FeatureToggles,
 		AppUrl:               appUrl,
 		Historian:            history,
@@ -456,19 +509,20 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return DeclareFixedRoles(ng.accesscontrolService)
+	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
-	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
+	// if full path to the folder is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
-	bus.AddEventListener(func(ctx context.Context, evt *events.FolderTitleUpdated) error {
-		logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
-		_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
+	bus.AddEventListener(func(ctx context.Context, evt *events.FolderFullPathUpdated) error {
+		logger.Info("Got folder full path updated event. updating rules in the folders", "folderUIDs", evt.UIDs)
+		updatedKeys, err := dbStore.IncreaseVersionForAllRulesInNamespaces(ctx, evt.OrgID, evt.UIDs)
 		if err != nil {
-			logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
+			logger.Error("Failed to update alert rules in the folders after their full paths were changed", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
 			return err
 		}
+		logger.Info("Updated version for alert rules", "keys", updatedKeys)
 		return nil
 	})
 }
@@ -528,7 +582,7 @@ type Historian interface {
 	state.Historian
 }
 
-func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger, tracer tracing.Tracer) (Historian, error) {
+func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger, tracer tracing.Tracer, ac historian.AccessControl) (Historian, error) {
 	if !cfg.Enabled {
 		met.Info.WithLabelValues("noop").Set(0)
 		return historian.NewNopHistorian(), nil
@@ -543,7 +597,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.MultiPrimary
-		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer)
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac)
 		if err != nil {
 			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
@@ -552,7 +606,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
-			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer)
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac)
 			if err != nil {
 				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
@@ -565,7 +619,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	if backend == historian.BackendTypeAnnotations {
 		store := historian.NewAnnotationStore(ar, ds, met)
 		annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met), nil
+		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
 	}
 	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)
@@ -574,7 +628,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		}
 		req := historian.NewRequester()
 		lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
-		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met, tracer)
+		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met, tracer, rs, ac)
 
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
@@ -636,11 +690,11 @@ func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVS
 	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
-func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, tracer tracing.Tracer, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
+func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
-		return writer.NewPrometheusWriter(settings, httpClientProvider, tracer, logger, m)
+	if settings.Enabled {
+		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, logger, m)
 	}
 
 	return writer.NoopWriter{}, nil

@@ -4,16 +4,16 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
-import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
+import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
+import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DashboardMeta } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { ToolbarActions } from './NavToolbarActions';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
@@ -28,7 +28,7 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual<Record<string, any>>('@grafana/runtime'),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: jest.fn(),
     getInstanceSettings: jest.fn().mockReturnValue({
@@ -120,9 +120,8 @@ describe('NavToolbarActions', () => {
 
       await act(() => {
         dashboard.onEnterEditMode();
-        const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
-          .body as VizPanel;
-        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel, true) });
+        const panel = dashboard.state.body.getVizPanels()[0];
+        dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
@@ -135,9 +134,8 @@ describe('NavToolbarActions', () => {
 
       await act(() => {
         dashboard.onEnterEditMode();
-        const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
-          .body as VizPanel;
-        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel) });
+        const panel = dashboard.state.body.getVizPanels()[0];
+        dashboard.setState({ editPanel: buildPanelEditScene(panel) });
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
@@ -153,6 +151,8 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Share')).toBeInTheDocument();
       const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).not.toBeInTheDocument();
+      const newExportButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).not.toBeInTheDocument();
     });
     it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
       config.featureToggles.newDashboardSharingComponent = true;
@@ -161,6 +161,12 @@ describe('NavToolbarActions', () => {
       expect(await screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
       const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).toBeInTheDocument();
+    });
+    it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = true;
+      setup();
+      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).toBeInTheDocument();
     });
   });
 
@@ -199,27 +205,19 @@ function setup(meta?: DashboardMeta) {
     },
     title: 'hello',
     uid: 'dash-1',
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-          }),
-        }),
-        new DashboardGridItem({
-          body: new VizPanel({
-            title: 'Panel B',
-            key: 'panel-2',
-            pluginId: 'table',
-          }),
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([
+      new VizPanel({
+        title: 'Panel A',
+        key: 'panel-1',
+        pluginId: 'table',
+        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+      }),
+      new VizPanel({
+        title: 'Panel B',
+        key: 'panel-2',
+        pluginId: 'table',
+      }),
+    ]),
   });
 
   const context = getGrafanaContextMock();
@@ -228,9 +226,11 @@ function setup(meta?: DashboardMeta) {
 
   render(
     <TestProvider grafanaContext={context}>
-      <UrlSyncContextProvider scene={dashboard}>
-        <ToolbarActions dashboard={dashboard} />
-      </UrlSyncContextProvider>
+      <LocationServiceProvider service={locationService}>
+        <UrlSyncContextProvider scene={dashboard}>
+          <ToolbarActions dashboard={dashboard} />
+        </UrlSyncContextProvider>
+      </LocationServiceProvider>
     </TestProvider>
   );
 

@@ -531,8 +531,9 @@ export function getAlignmentFactor(
 
   if (alignmentFactor) {
     // check if current alignmentFactor is still the longest
-    if (alignmentFactor.text.length < displayValue.text.length) {
-      alignmentFactor.text = displayValue.text;
+    if (formattedValueToString(alignmentFactor).length < formattedValueToString(displayValue).length) {
+      alignmentFactor = { ...displayValue };
+      field.state!.alignmentFactors = alignmentFactor;
     }
     return alignmentFactor;
   } else {
@@ -542,7 +543,7 @@ export function getAlignmentFactor(
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
       const nextDisplayValue = field.display!(field.values[i]);
-      if (nextDisplayValue.text.length > alignmentFactor.text.length) {
+      if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
         alignmentFactor.text = displayValue.text;
       }
     }
@@ -645,7 +646,7 @@ export function guessTextBoundingBox(
   lineHeight: number,
   defaultRowHeight: number
 ) {
-  const width = Number(headerGroup.width ?? 300);
+  const width = Number(headerGroup?.width ?? 300);
   const LINE_SCALE_FACTOR = 1.17;
   const LOW_LINE_PAD = 42;
 

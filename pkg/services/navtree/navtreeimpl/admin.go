@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
+// nolint: gocyclo
 func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink, error) {
 	var configNodes []*navtree.NavLink
 	ctx := c.Req.Context()
@@ -103,6 +105,16 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	if s.cfg.Env == setting.Dev {
+		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
+			Text:     "Extensions",
+			Icon:     "plug",
+			SubTitle: "Extend the UI of plugins and Grafana",
+			Id:       "extensions",
+			Url:      s.cfg.AppSubURL + "/admin/extensions",
+		})
+	}
+
 	pluginsNode := &navtree.NavLink{
 		Text:     "Plugins and data",
 		SubTitle: "Install plugins and define the relationships between data",
@@ -154,6 +166,21 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	if s.license.FeatureEnabled("groupsync") &&
+		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
+		hasAccess(ac.EvalAny(
+			ac.EvalPermission("groupsync.mappings:read"),
+			ac.EvalPermission("groupsync.mappings:write"),
+		)) {
+		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
+			Text:     "External group sync",
+			Id:       "groupsync",
+			SubTitle: "Manage mappings of Identity Provider groups to Grafana Roles",
+			Icon:     "",
+			Url:      s.cfg.AppSubURL + "/admin/access/groupsync",
+		})
+	}
+
 	usersNode := &navtree.NavLink{
 		Text:     "Users and access",
 		SubTitle: "Configure access for individual users, teams, and service accounts",
@@ -163,9 +190,8 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Children: accessNodeLinks,
 	}
 
-	if len(usersNode.Children) > 0 {
-		configNodes = append(configNodes, usersNode)
-	}
+	// Always append admin access as it's injected by grafana-auth-app.
+	configNodes = append(configNodes, usersNode)
 
 	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
 		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {

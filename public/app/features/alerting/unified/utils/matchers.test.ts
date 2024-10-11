@@ -1,14 +1,18 @@
-import { MatcherOperator, Route } from '../../../../plugins/datasource/alertmanager/types';
+import { Matcher, MatcherOperator, Route } from '../../../../plugins/datasource/alertmanager/types';
 
 import {
+  encodeMatcher,
   getMatcherQueryParams,
   isPromQLStyleMatcher,
   matcherToObjectMatcher,
   normalizeMatchers,
   parseMatcher,
   parsePromQLStyleMatcher,
+  parsePromQLStyleMatcherLoose,
+  parsePromQLStyleMatcherLooseSafe,
   parseQueryParamMatchers,
   quoteWithEscape,
+  quoteWithEscapeIfRequired,
   unquoteWithUnescape,
 } from './matchers';
 
@@ -174,5 +178,103 @@ describe('parsePromQLStyleMatcher', () => {
 
   it('should throw when not using correct syntax', () => {
     expect(() => parsePromQLStyleMatcher('foo="bar"')).toThrow();
+  });
+
+  it('should only encode matchers if the label key contains reserved characters', () => {
+    expect(quoteWithEscapeIfRequired('foo')).toBe('foo');
+    expect(quoteWithEscapeIfRequired('foo bar')).toBe('"foo bar"');
+    expect(quoteWithEscapeIfRequired('foo{}bar')).toBe('"foo{}bar"');
+    expect(quoteWithEscapeIfRequired('foo\\bar')).toBe('"foo\\\\bar"');
+  });
+
+  it('should properly encode a matcher field', () => {
+    expect(encodeMatcher({ name: 'foo', operator: MatcherOperator.equal, value: 'baz' })).toBe('foo="baz"');
+    expect(encodeMatcher({ name: 'foo bar', operator: MatcherOperator.equal, value: 'baz' })).toBe('"foo bar"="baz"');
+    expect(encodeMatcher({ name: 'foo{}bar', operator: MatcherOperator.equal, value: 'baz qux' })).toBe(
+      '"foo{}bar"="baz qux"'
+    );
+  });
+});
+
+describe('parsePromQLStyleMatcherLooseSafe', () => {
+  it('should parse all operators', () => {
+    expect(parsePromQLStyleMatcherLooseSafe('foo=bar, bar=~ba.+, severity!=warning, email!~@grafana.com')).toEqual<
+      Matcher[]
+    >([
+      { name: 'foo', value: 'bar', isRegex: false, isEqual: true },
+      { name: 'bar', value: 'ba.+', isEqual: true, isRegex: true },
+      { name: 'severity', value: 'warning', isRegex: false, isEqual: false },
+      { name: 'email', value: '@grafana.com', isRegex: true, isEqual: false },
+    ]);
+  });
+
+  it('should parse with spaces and brackets', () => {
+    expect(parsePromQLStyleMatcherLooseSafe('{ foo=bar }')).toEqual<Matcher[]>([
+      {
+        name: 'foo',
+        value: 'bar',
+        isRegex: false,
+        isEqual: true,
+      },
+    ]);
+  });
+
+  it('should parse with spaces in the value', () => {
+    expect(parsePromQLStyleMatcherLooseSafe('foo=bar bazz')).toEqual<Matcher[]>([
+      {
+        name: 'foo',
+        value: 'bar bazz',
+        isRegex: false,
+        isEqual: true,
+      },
+    ]);
+  });
+
+  it('should return nothing for invalid operator', () => {
+    expect(parsePromQLStyleMatcherLooseSafe('foo=!bar')).toEqual([
+      {
+        name: 'foo',
+        value: '!bar',
+        isRegex: false,
+        isEqual: true,
+      },
+    ]);
+  });
+
+  it('should parse matchers with or without quotes', () => {
+    expect(parsePromQLStyleMatcherLooseSafe('foo="bar",bar=bazz')).toEqual<Matcher[]>([
+      { name: 'foo', value: 'bar', isRegex: false, isEqual: true },
+      { name: 'bar', value: 'bazz', isEqual: true, isRegex: false },
+    ]);
+  });
+
+  it('should parse matchers for key with special characters', () => {
+    expect(parsePromQLStyleMatcherLooseSafe('foo.bar-baz="bar",baz-bar.foo=bazz')).toEqual<Matcher[]>([
+      { name: 'foo.bar-baz', value: 'bar', isRegex: false, isEqual: true },
+      { name: 'baz-bar.foo', value: 'bazz', isEqual: true, isRegex: false },
+    ]);
+  });
+});
+
+describe('parsePromQLStyleMatcherLoose', () => {
+  it('should throw on invalid matcher', () => {
+    expect(() => {
+      parsePromQLStyleMatcherLoose('foo');
+    }).toThrow();
+
+    expect(() => {
+      parsePromQLStyleMatcherLoose('foo;bar');
+    }).toThrow();
+  });
+
+  it('should return empty array for empty input', () => {
+    expect(parsePromQLStyleMatcherLoose('')).toStrictEqual([]);
+  });
+
+  it('should also accept { } syntax', () => {
+    expect(parsePromQLStyleMatcherLoose('{ foo=bar, bar=baz }')).toStrictEqual([
+      { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
+      { isEqual: true, isRegex: false, name: 'bar', value: 'baz' },
+    ]);
   });
 });

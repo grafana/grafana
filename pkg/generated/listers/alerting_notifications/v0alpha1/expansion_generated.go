@@ -4,6 +4,22 @@
 
 package v0alpha1
 
+// ReceiverListerExpansion allows custom methods to be added to
+// ReceiverLister.
+type ReceiverListerExpansion interface{}
+
+// ReceiverNamespaceListerExpansion allows custom methods to be added to
+// ReceiverNamespaceLister.
+type ReceiverNamespaceListerExpansion interface{}
+
+// TemplateGroupListerExpansion allows custom methods to be added to
+// TemplateGroupLister.
+type TemplateGroupListerExpansion interface{}
+
+// TemplateGroupNamespaceListerExpansion allows custom methods to be added to
+// TemplateGroupNamespaceLister.
+type TemplateGroupNamespaceListerExpansion interface{}
+
 // TimeIntervalListerExpansion allows custom methods to be added to
 // TimeIntervalLister.
 type TimeIntervalListerExpansion interface{}

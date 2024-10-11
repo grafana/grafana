@@ -4,39 +4,31 @@ import usePrevious from 'react-use/lib/usePrevious';
 
 import { VariableFormatID } from '@grafana/schema';
 
-import { compareArrayValues, compareDataFrameStructures, guessFieldTypeForField } from '../dataframe';
+import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
+import { guessFieldTypeForField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
-import { GrafanaTheme2 } from '../themes';
 import { asHexString } from '../themes/colorManipulator';
-import { fieldMatchers, reduceField, ReducerID } from '../transformations';
+import { GrafanaTheme2 } from '../themes/types';
+import { ReducerID, reduceField } from '../transformations/fieldReducer';
+import { fieldMatchers } from '../transformations/matchers';
+import { ScopedVars, DataContextScopedVar } from '../types/ScopedVars';
+import { DataFrame, NumericRange, FieldType, Field, ValueLinkConfig, FieldConfig } from '../types/dataFrame';
+import { LinkModel, DataLink } from '../types/dataLink';
+import { DisplayProcessor, DisplayValue, DecimalCount } from '../types/displayValue';
+import { FieldColorModeId } from '../types/fieldColor';
 import {
-  ApplyFieldOverrideOptions,
-  DataContextScopedVar,
-  DataFrame,
-  DataLink,
-  DecimalCount,
-  DisplayProcessor,
-  DisplayValue,
   DynamicConfigValue,
-  Field,
-  FieldColorModeId,
-  FieldConfig,
-  FieldConfigPropertyItem,
-  FieldConfigSource,
+  ApplyFieldOverrideOptions,
   FieldOverrideContext,
-  FieldType,
+  FieldConfigPropertyItem,
   DataLinkPostProcessor,
-  InterpolateFunction,
-  LinkModel,
-  NumericRange,
-  PanelData,
-  ScopedVars,
-  TimeZone,
-  ValueLinkConfig,
-} from '../types';
+  FieldConfigSource,
+} from '../types/fieldOverrides';
+import { InterpolateFunction, PanelData } from '../types/panel';
+import { TimeZone } from '../types/time';
 import { FieldMatcher } from '../types/transformations';
-import { locationUtil } from '../utils';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
+import { locationUtil } from '../utils/location';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
@@ -170,6 +162,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const { range, newGlobalRange } = calculateRange(config, field, globalRange, options.data!);
       globalRange = newGlobalRange;
 
+      // Clear any cached displayName as it can change during field overrides process
+      field.state!.displayName = null;
       field.state!.seriesIndex = seriesIndex;
       field.state!.range = range;
       field.type = type;
@@ -615,7 +609,7 @@ export function useFieldOverrides(
 /**
  * Clones the existing dataContext or creates a new one
  */
-function getFieldDataContextClone(frame: DataFrame, field: Field, fieldScopedVars: ScopedVars) {
+export function getFieldDataContextClone(frame: DataFrame, field: Field, fieldScopedVars: ScopedVars) {
   if (fieldScopedVars?.__dataContext) {
     return {
       value: {

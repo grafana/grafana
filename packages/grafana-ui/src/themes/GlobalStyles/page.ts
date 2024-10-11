@@ -9,21 +9,15 @@ export function getPageStyles(theme: GrafanaTheme2) {
   return css({
     '.grafana-app': {
       display: 'flex',
-      alignItems: 'stretch',
-      position: 'absolute',
-      width: '100%',
-      height: '100%',
-      top: 0,
-      left: 0,
+      flexDirection: 'column',
+      height: '100vh',
     },
 
     '.main-view': {
-      position: 'relative',
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
-      height: '100%',
-      flex: '1 1 0',
+      position: 'relative',
       minWidth: 0,
     },
 

@@ -2,7 +2,7 @@ import { BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
-export type ActionViewType = 'overview' | 'breakdown' | 'logs' | 'related';
+export type ActionViewType = 'overview' | 'breakdown' | 'label-breakdown' | 'logs' | 'related';
 export interface ActionViewDefinition {
   displayName: string;
   value: ActionViewType;
@@ -23,6 +23,12 @@ export const VAR_DATASOURCE = 'ds';
 export const VAR_DATASOURCE_EXPR = '${ds}';
 export const VAR_LOGS_DATASOURCE = 'logsDs';
 export const VAR_LOGS_DATASOURCE_EXPR = '${logsDs}';
+export const VAR_OTEL_RESOURCES = 'otel_resources';
+export const VAR_OTEL_RESOURCES_EXPR = '${otel_resources}';
+export const VAR_OTEL_DEPLOYMENT_ENV = 'deployment_environment';
+export const VAR_OTEL_DEPLOYMENT_ENV_EXPR = '${deployment_environment}';
+export const VAR_OTEL_JOIN_QUERY = 'otel_join_query';
+export const VAR_OTEL_JOIN_QUERY_EXPR = '${otel_join_query}';
 
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
@@ -31,8 +37,11 @@ export const trailDS = { uid: VAR_DATASOURCE_EXPR };
 
 // Local storage keys
 export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
-
 export const TRAIL_BOOKMARKS_KEY = 'grafana.trails.bookmarks';
+export const TRAIL_BREAKDOWN_VIEW_KEY = 'grafana.trails.breakdown.view';
+
+export const MDP_METRIC_PREVIEW = 250;
+export const MDP_METRIC_OVERVIEW = 500;
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -41,6 +50,16 @@ export function getVariablesWithMetricConstant(metric: string) {
     new ConstantVariable({
       name: VAR_METRIC,
       value: metric,
+      hide: VariableHide.hideVariable,
+    }),
+  ];
+}
+
+export function getVariablesWithOtelJoinQueryConstant(otelJoinQuery: string) {
+  return [
+    new ConstantVariable({
+      name: VAR_OTEL_JOIN_QUERY,
+      value: otelJoinQuery,
       hide: VariableHide.hideVariable,
     }),
   ];

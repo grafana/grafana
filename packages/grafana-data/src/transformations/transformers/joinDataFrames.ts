@@ -1,5 +1,6 @@
-import { getTimeField, sortDataFrame } from '../../dataframe';
-import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
+import { getTimeField, sortDataFrame } from '../../dataframe/processDataFrame';
+import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { FieldMatcher } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -423,7 +424,8 @@ function joinInner(tables: AlignedData[]): Array<Array<string | number | null | 
 
   // Check if joinedTables is empty before transposing. No need to transpose if there are no joined tables.
   if (joinedTables.length === 0) {
-    return [];
+    const fieldCount = tables.reduce((count, table) => count + (table.length - 1), 1);
+    return Array.from({ length: fieldCount }, () => []);
   }
 
   // Transpose the joined tables to get the desired output format.
@@ -544,7 +546,7 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
 
 // Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: any[], samples = 50) {
+export function isLikelyAscendingVector(data: unknown[], samples = 50) {
   const len = data.length;
 
   // empty or single value
@@ -574,7 +576,7 @@ export function isLikelyAscendingVector(data: any[], samples = 50) {
   for (let prevVal = data[firstIdx], i = firstIdx + stride; i <= lastIdx; i += stride) {
     const v = data[i];
 
-    if (v != null) {
+    if (v != null && prevVal != null) {
       if (v <= prevVal) {
         return false;
       }

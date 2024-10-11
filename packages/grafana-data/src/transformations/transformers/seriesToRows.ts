@@ -1,7 +1,8 @@
 import { omit } from 'lodash';
 import { map } from 'rxjs/operators';
 
-import { MutableDataFrame, sortDataFrame } from '../../dataframe';
+import { MutableDataFrame } from '../../dataframe/MutableDataFrame';
+import { sortDataFrame } from '../../dataframe/processDataFrame';
 import { isTimeSeriesFrames } from '../../dataframe/utils';
 import { getFrameDisplayName } from '../../field/fieldState';
 import {

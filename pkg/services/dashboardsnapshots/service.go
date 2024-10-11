@@ -43,8 +43,13 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 	}
 
 	uid := cmd.DashboardCreateCommand.Dashboard.GetNestedString("uid")
+	user, err := identity.GetRequester(c.Req.Context())
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "missing user in context", nil)
+		return
+	}
 
-	err := svc.ValidateDashboardExists(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+	err = svc.ValidateDashboardExists(c.Req.Context(), user.GetOrgID(), uid)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
 			c.JsonApiErr(http.StatusBadRequest, "Dashboard not found", err)
@@ -58,17 +63,10 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		cmd.DashboardCreateCommand.Name = "Unnamed snapshot"
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError,
-			"Failed to create external snapshot", err)
-		return
-	}
-
 	var snapshotUrl string
 	cmd.ExternalURL = ""
-	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.UserID = userID
+	cmd.OrgID = user.GetOrgID()
+	cmd.UserID, _ = identity.UserIdentifier(user.GetID())
 	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Invalid app URL", err)

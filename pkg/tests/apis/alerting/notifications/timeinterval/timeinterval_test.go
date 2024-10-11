@@ -2,11 +2,16 @@ package timeinterval
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"path"
+	"slices"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,17 +22,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+//go:embed test-data/*.*
+var testData embed.FS
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -87,14 +98,21 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		existingInterval = actual
 	})
 
-	t.Run("update should fail if name in the specification changes", func(t *testing.T) {
+	t.Run("update should rename interval if name in the specification changes", func(t *testing.T) {
 		if existingInterval == nil {
 			t.Skip()
 		}
 		updated := existingInterval.DeepCopy()
 		updated.Spec.Name = "another-newInterval"
-		_, err := client.Update(ctx, updated, v1.UpdateOptions{})
-		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+		actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, updated.Spec, actual.Spec)
+		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
+
+		resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, actual, resource)
 	})
 }
 
@@ -191,15 +209,13 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 			var expected = &v0alpha1.TimeInterval{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
-					Annotations: map[string]string{
-						"grafana.com/provenance": "",
-					},
 				},
 				Spec: v0alpha1.TimeIntervalSpec{
 					Name:          fmt.Sprintf("time-interval-1-%s", tc.user.Identity.GetLogin()),
 					TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
 				},
 			}
+			expected.SetProvenanceStatus("")
 			d, err := json.Marshal(expected)
 			require.NoError(t, err)
 
@@ -348,7 +364,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
 	require.NoError(t, err)
 
@@ -362,7 +378,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 		},
 	}, v1.CreateOptions{})
 	require.NoError(t, err)
-	require.Equal(t, "", created.Annotations["grafana.com/provenance"])
+	require.Equal(t, "none", created.GetProvenanceStatus())
 
 	t.Run("should provide provenance status", func(t *testing.T) {
 		require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
@@ -373,7 +389,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 
 		got, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, "API", got.Annotations["grafana.com/provenance"])
+		require.Equal(t, "API", got.GetProvenanceStatus())
 	})
 	t.Run("should not let update if provisioned", func(t *testing.T) {
 		updated := created.DeepCopy()
@@ -537,5 +553,226 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 		}
 		require.EqualValues(t, expectedSpec, result.Spec)
 		current = result
+	})
+}
+
+func TestIntegrationTimeIntervalListSelector(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	interval1 := &v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          "test1",
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		},
+	}
+	interval1, err = adminClient.Create(ctx, interval1, v1.CreateOptions{})
+	require.NoError(t, err)
+
+	interval2 := &v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          "test2",
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		},
+	}
+	interval2, err = adminClient.Create(ctx, interval2, v1.CreateOptions{})
+	require.NoError(t, err)
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+	require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
+		MuteTimeInterval: config.MuteTimeInterval{
+			Name: interval2.Spec.Name,
+		},
+	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
+	interval2, err = adminClient.Get(ctx, interval2.Name, v1.GetOptions{})
+
+	require.NoError(t, err)
+
+	intervals, err := adminClient.List(ctx, v1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, intervals.Items, 2)
+
+	t.Run("should filter by interval name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "spec.name=" + interval1.Spec.Name,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, interval1.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by interval metadata name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "metadata.name=" + interval2.Name,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, interval2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by multiple filters", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", interval2.Name, "API"),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, interval2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should be empty when filter does not match", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", interval2.Name, "unknown"),
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
+	})
+}
+
+func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+	orgID := helper.Org1.Admin.Identity.GetOrgID()
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	// Prepare environment and create notification policy and rule that use time interval
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
+	require.NoError(t, err)
+	var ruleGroup definitions.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &ruleGroup))
+
+	folderUID := "test-folder"
+	legacyCli.CreateFolder(t, folderUID, "TEST")
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	currentRoute := legacyCli.GetRoute(t)
+	currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	intervals, err := adminClient.List(ctx, v1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, intervals.Items, 2)
+	intervalIdx := slices.IndexFunc(intervals.Items, func(interval v0alpha1.TimeInterval) bool {
+		return interval.Spec.Name == "test-interval"
+	})
+	interval := intervals.Items[intervalIdx]
+
+	replace := func(input []string, oldName, newName string) []string {
+		result := make([]string, 0, len(input))
+		for _, s := range input {
+			if s == oldName {
+				result = append(result, newName)
+				continue
+			}
+			result = append(result, s)
+		}
+		return result
+	}
+
+	t.Run("Update", func(t *testing.T) {
+		t.Run("should rename all references if name changes", func(t *testing.T) {
+			renamed := interval.DeepCopy()
+			renamed.Spec.Name += "-new"
+
+			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+			require.NoError(t, err)
+
+			updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			for idx, rule := range updatedRuleGroup.Rules {
+				expectedTimeIntervals := currentRuleGroup.Rules[idx].GrafanaManagedAlert.NotificationSettings.MuteTimeIntervals
+				expectedTimeIntervals = replace(expectedTimeIntervals, interval.Spec.Name, actual.Spec.Name)
+				assert.Equalf(t, expectedTimeIntervals, rule.GrafanaManagedAlert.NotificationSettings.MuteTimeIntervals, "time interval in rules should have been renamed but it did not")
+			}
+
+			updatedRoute := legacyCli.GetRoute(t)
+			for idx, route := range updatedRoute.Routes {
+				expectedTimeIntervals := replace(currentRoute.Routes[idx].MuteTimeIntervals, interval.Spec.Name, actual.Spec.Name)
+				assert.Equalf(t, expectedTimeIntervals, route.MuteTimeIntervals, "time interval in routes should have been renamed but it did not")
+			}
+
+			interval = *actual
+		})
+
+		t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
+			require.NoError(t, err)
+			renamed := interval.DeepCopy()
+			renamed.Spec.Name += util.GenerateShortUID()
+
+			t.Run("provisioned route", func(t *testing.T) {
+				require.NoError(t, db.SetProvenance(ctx, &currentRoute, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, &currentRoute, orgID))
+				})
+				actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+
+			t.Run("provisioned rules", func(t *testing.T) {
+				ruleUid := currentRuleGroup.Rules[0].GrafanaManagedAlert.UID
+				resource := &ngmodels.AlertRule{UID: ruleUid}
+				require.NoError(t, db.SetProvenance(ctx, resource, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, resource, orgID))
+				})
+
+				actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+		})
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		t.Run("should fail to delete if time interval is used in rule and routes", func(t *testing.T) {
+			err := adminClient.Delete(ctx, interval.Name, v1.DeleteOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+		})
+
+		t.Run("should fail to delete if time interval is used in only rule", func(t *testing.T) {
+			route := legacyCli.GetRoute(t)
+			route.Routes[0].MuteTimeIntervals = nil
+			legacyCli.UpdateRoute(t, route, true)
+
+			err = adminClient.Delete(ctx, interval.Name, v1.DeleteOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+		})
 	})
 }

@@ -1,13 +1,17 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
+	"mime"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,6 +24,8 @@ const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeySlug = "grafana.app/slug"
+const AnnoKeyBlob = "grafana.app/blob"
+const AnnoKeyMessage = "grafana.app/message"
 
 // Identify where values came from
 
@@ -27,6 +33,11 @@ const AnnoKeyOriginName = "grafana.app/originName"
 const AnnoKeyOriginPath = "grafana.app/originPath"
 const AnnoKeyOriginHash = "grafana.app/originHash"
 const AnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
+
+// #TODO revisit keeping these folder-specific annotations once we have complete support for mode 1
+
+const AnnoKeyFullPath = "grafana.app/fullPath"
+const AnnoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
 
 // ResourceOriginInfo is saved in annotations.  This is used to identify where the resource came from
 // This object can model the same data as our existing provisioning table or a more general git sync
@@ -53,6 +64,7 @@ type GrafanaMetaAccessor interface {
 	metav1.Object
 
 	GetGroupVersionKind() schema.GroupVersionKind
+	GetRuntimeObject() (runtime.Object, bool)
 
 	// Helper to get resource versions as int64, however this is not required
 	// See: https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions
@@ -68,10 +80,15 @@ type GrafanaMetaAccessor interface {
 	SetUpdatedBy(user string)
 	GetFolder() string
 	SetFolder(uid string)
+	GetMessage() string
+	SetMessage(msg string)
 	SetAnnotation(key string, val string)
 
 	GetSlug() string
 	SetSlug(v string)
+
+	SetBlob(v *BlobInfo)
+	GetBlob() *BlobInfo
 
 	GetOriginInfo() (*ResourceOriginInfo, error)
 	SetOriginInfo(info *ResourceOriginInfo)
@@ -79,6 +96,20 @@ type GrafanaMetaAccessor interface {
 	GetOriginPath() string
 	GetOriginHash() string
 	GetOriginTimestamp() (*time.Time, error)
+
+	GetSpec() (any, error)
+	SetSpec(any) error
+
+	GetStatus() (any, error)
+
+	// Used by the generic strategy to keep the status value unchanged on an update
+	// NOTE the type must match the existing value, or an error will be thrown
+	SetStatus(any) error
+
+	GetFullPath() string
+	SetFullPath(path string)
+	GetFullPathUIDs() string
+	SetFullPathUIDs(path string)
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -121,6 +152,11 @@ func (m *grafanaMetaAccessor) GetResourceVersionInt64() (int64, error) {
 		return 0, nil
 	}
 	return strconv.ParseInt(v, 10, 64)
+}
+
+func (m *grafanaMetaAccessor) GetRuntimeObject() (runtime.Object, bool) {
+	obj, ok := m.raw.(runtime.Object)
+	return obj, ok
 }
 
 func (m *grafanaMetaAccessor) SetResourceVersionInt64(rv int64) {
@@ -192,12 +228,31 @@ func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
 	m.SetAnnotation(AnnoKeyUpdatedBy, user)
 }
 
+func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
+	return ParseBlobInfo(m.get(AnnoKeyBlob))
+}
+
+func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
+	if info == nil {
+		m.SetAnnotation(AnnoKeyBlob, "") // delete
+	}
+	m.SetAnnotation(AnnoKeyBlob, info.String())
+}
+
 func (m *grafanaMetaAccessor) GetFolder() string {
 	return m.get(AnnoKeyFolder)
 }
 
 func (m *grafanaMetaAccessor) SetFolder(uid string) {
 	m.SetAnnotation(AnnoKeyFolder, uid)
+}
+
+func (m *grafanaMetaAccessor) GetMessage() string {
+	return m.get(AnnoKeyMessage)
+}
+
+func (m *grafanaMetaAccessor) SetMessage(uid string) {
+	m.SetAnnotation(AnnoKeyMessage, uid)
 }
 
 func (m *grafanaMetaAccessor) GetSlug() string {
@@ -457,6 +512,118 @@ func (m *grafanaMetaAccessor) GetGroupVersionKind() schema.GroupVersionKind {
 	return gvk
 }
 
+func (m *grafanaMetaAccessor) GetSpec() (spec any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error reading spec")
+		}
+	}()
+
+	f := m.r.FieldByName("Spec")
+	if f.IsValid() {
+		spec = f.Interface()
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		spec, ok = u.Object["spec"]
+		if ok {
+			return // no error
+		}
+	}
+	err = fmt.Errorf("unable to read spec")
+	return
+}
+
+func (m *grafanaMetaAccessor) SetSpec(s any) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting spec")
+		}
+	}()
+
+	f := m.r.FieldByName("Spec")
+	if f.IsValid() {
+		f.Set(reflect.ValueOf(s))
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["spec"] = s
+	} else {
+		err = fmt.Errorf("unable to set spec")
+	}
+	return
+}
+
+func (m *grafanaMetaAccessor) GetStatus() (status any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error reading status")
+		}
+	}()
+
+	f := m.r.FieldByName("Status")
+	if f.IsValid() {
+		status = f.Interface()
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		status, ok = u.Object["status"]
+		if ok {
+			return // no error
+		}
+	}
+	err = fmt.Errorf("unable to read status")
+	return
+}
+
+func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting status")
+		}
+	}()
+
+	f := m.r.FieldByName("Status")
+	if f.IsValid() {
+		f.Set(reflect.ValueOf(s))
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["status"] = s
+	} else {
+		err = fmt.Errorf("unable to read status")
+	}
+	return
+}
+
+func (m *grafanaMetaAccessor) GetFullPath() string {
+	return m.get(AnnoKeyFullPath)
+}
+
+func (m *grafanaMetaAccessor) SetFullPath(path string) {
+	m.SetAnnotation(AnnoKeyFullPath, path)
+}
+
+func (m *grafanaMetaAccessor) GetFullPathUIDs() string {
+	return m.get(AnnoKeyFullPathUIDs)
+}
+
+func (m *grafanaMetaAccessor) SetFullPathUIDs(path string) {
+	m.SetAnnotation(AnnoKeyFullPathUIDs, path)
+}
+
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	// look for Spec.Title or Spec.Name
 	spec := m.r.FieldByName("Spec")
@@ -476,4 +643,83 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		return title.String()
 	}
 	return defaultTitle
+}
+
+type BlobInfo struct {
+	UID      string `json:"uid"`
+	Size     int64  `json:"size,omitempty"`
+	Hash     string `json:"hash,omitempty"`
+	MimeType string `json:"mime,omitempty"`
+	Charset  string `json:"charset,omitempty"` // content type = mime+charset
+}
+
+// Content type is mime + charset
+func (b *BlobInfo) SetContentType(v string) {
+	var params map[string]string
+	var err error
+
+	b.Charset = ""
+	b.MimeType, params, err = mime.ParseMediaType(v)
+	if err != nil {
+		return
+	}
+	b.Charset = params["charset"]
+}
+
+// Content type is mime + charset
+func (b *BlobInfo) ContentType() string {
+	sb := bytes.NewBufferString(b.MimeType)
+	if b.Charset != "" {
+		sb.WriteString("; charset=")
+		sb.WriteString(b.Charset)
+	}
+	return sb.String()
+}
+
+func (b *BlobInfo) String() string {
+	sb := bytes.NewBufferString(b.UID)
+	if b.Size > 0 {
+		sb.WriteString(fmt.Sprintf("; size=%d", b.Size))
+	}
+	if b.Hash != "" {
+		sb.WriteString("; hash=")
+		sb.WriteString(b.Hash)
+	}
+	if b.MimeType != "" {
+		sb.WriteString("; mime=")
+		sb.WriteString(b.MimeType)
+	}
+	if b.Charset != "" {
+		sb.WriteString("; charset=")
+		sb.WriteString(b.Charset)
+	}
+	return sb.String()
+}
+
+func ParseBlobInfo(v string) *BlobInfo {
+	if v == "" {
+		return nil
+	}
+	info := &BlobInfo{}
+	for i, part := range strings.Split(v, ";") {
+		if i == 0 {
+			info.UID = part
+			continue
+		}
+		kv := strings.Split(strings.TrimSpace(part), "=")
+		if len(kv) == 2 {
+			val := kv[1]
+			switch kv[0] {
+			case "size":
+				info.Size, _ = strconv.ParseInt(val, 10, 64)
+			case "hash":
+				info.Hash = val
+			case "mime":
+				info.MimeType = val
+			case "charset":
+				info.Charset = val
+			}
+		}
+	}
+	return info
 }
