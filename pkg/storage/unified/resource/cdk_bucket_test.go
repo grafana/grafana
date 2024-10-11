@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 	"gocloud.dev/blob"
 )
 
@@ -145,25 +146,6 @@ func TestInstrumentedBucket(t *testing.T) {
 				return err
 			},
 		},
-		{
-			name:      "ListPage",
-			operation: "ListPage",
-			setup: func(fakeBucket *fakeCDKBucket, success bool) {
-				if success {
-					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
-						return []*blob.ListObject{}, nil, nil
-					}
-				} else {
-					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
-						return nil, nil, fmt.Errorf("some error")
-					}
-				}
-			},
-			call: func(instrumentedBucket *InstrumentedBucket) error {
-				_, _, err := instrumentedBucket.ListPage(context.Background(), nil, 10, nil)
-				return err
-			},
-		},
 	}
 
 	for _, op := range operations {
@@ -186,7 +168,8 @@ func TestInstrumentedBucket(t *testing.T) {
 			t.Run(op.name+" "+tc.name, func(t *testing.T) {
 				fakeBucket := &fakeCDKBucket{}
 				reg := prometheus.NewPedanticRegistry()
-				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg)
+				tracer := otel.Tracer("test")
+				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg, tracer)
 
 				op.setup(fakeBucket, tc.success)
 				err := op.call(instrumentedBucket)

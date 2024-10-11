@@ -6,6 +6,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"gocloud.dev/blob"
 )
 
@@ -32,12 +34,14 @@ const (
 type InstrumentedBucket struct {
 	requests *prometheus.CounterVec
 	latency  *prometheus.HistogramVec
+	tracer   trace.Tracer
 	bucket   CDKBucket
 }
 
-func NewInstrumentedBucket(bucket CDKBucket, reg prometheus.Registerer) *InstrumentedBucket {
+func NewInstrumentedBucket(bucket CDKBucket, reg prometheus.Registerer, tracer trace.Tracer) *InstrumentedBucket {
 	b := &InstrumentedBucket{
 		bucket: bucket,
+		tracer: tracer,
 	}
 	b.initMetrics(reg)
 	return b
@@ -59,6 +63,8 @@ func (b *InstrumentedBucket) initMetrics(reg prometheus.Registerer) {
 }
 
 func (b *InstrumentedBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
+	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/Attributes")
+	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.Attributes(ctx, key)
 	end := time.Since(start).Seconds()
@@ -69,6 +75,8 @@ func (b *InstrumentedBucket) Attributes(ctx context.Context, key string) (*blob.
 		labels[cdkBucketStatusLabel] = cdkBucketStatusError
 		b.requests.With(labels).Inc()
 		b.latency.With(labels).Observe(end)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return retVal, err
 	}
 	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
@@ -78,19 +86,13 @@ func (b *InstrumentedBucket) Attributes(ctx context.Context, key string) (*blob.
 }
 
 func (b *InstrumentedBucket) List(opts *blob.ListOptions) *blob.ListIterator {
-	start := time.Now()
-	iterator := b.bucket.List(opts)
-	end := time.Since(start).Seconds()
-	labels := prometheus.Labels{
-		cdkBucketOperationLabel: "List",
-		cdkBucketStatusLabel:    cdkBucketStatusSuccess,
-	}
-	b.requests.With(labels).Inc()
-	b.latency.With(labels).Observe(end)
-	return iterator
+	// List just returns an iterator struct based on the provided options. No need for extended telemetry.
+	return b.bucket.List(opts)
 }
 
 func (b *InstrumentedBucket) ListPage(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
+	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/ListPage")
+	defer span.End()
 	start := time.Now()
 	retVal, nextPageToken, err := b.bucket.ListPage(ctx, pageToken, pageSize, opts)
 	end := time.Since(start).Seconds()
@@ -101,6 +103,8 @@ func (b *InstrumentedBucket) ListPage(ctx context.Context, pageToken []byte, pag
 		labels[cdkBucketStatusLabel] = cdkBucketStatusError
 		b.latency.With(labels).Observe(end)
 		b.requests.With(labels).Inc()
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return retVal, nextPageToken, err
 	}
 	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
@@ -109,6 +113,8 @@ func (b *InstrumentedBucket) ListPage(ctx context.Context, pageToken []byte, pag
 }
 
 func (b *InstrumentedBucket) ReadAll(ctx context.Context, key string) ([]byte, error) {
+	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/ReadAll")
+	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.ReadAll(ctx, key)
 	end := time.Since(start).Seconds()
@@ -119,6 +125,8 @@ func (b *InstrumentedBucket) ReadAll(ctx context.Context, key string) ([]byte, e
 		labels[cdkBucketStatusLabel] = cdkBucketStatusError
 		b.requests.With(labels).Inc()
 		b.latency.With(labels).Observe(end)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return retVal, err
 	}
 	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
@@ -128,6 +136,8 @@ func (b *InstrumentedBucket) ReadAll(ctx context.Context, key string) ([]byte, e
 }
 
 func (b *InstrumentedBucket) WriteAll(ctx context.Context, key string, p []byte, opts *blob.WriterOptions) error {
+	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/WriteAll")
+	defer span.End()
 	start := time.Now()
 	err := b.bucket.WriteAll(ctx, key, p, opts)
 	end := time.Since(start).Seconds()
@@ -138,6 +148,8 @@ func (b *InstrumentedBucket) WriteAll(ctx context.Context, key string, p []byte,
 		labels[cdkBucketStatusLabel] = cdkBucketStatusError
 		b.requests.With(labels).Inc()
 		b.latency.With(labels).Observe(end)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess
@@ -147,6 +159,8 @@ func (b *InstrumentedBucket) WriteAll(ctx context.Context, key string, p []byte,
 }
 
 func (b *InstrumentedBucket) SignedURL(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error) {
+	ctx, span := b.tracer.Start(ctx, "InstrumentedBucket/SignedURL")
+	defer span.End()
 	start := time.Now()
 	retVal, err := b.bucket.SignedURL(ctx, key, opts)
 	end := time.Since(start).Seconds()
@@ -157,6 +171,8 @@ func (b *InstrumentedBucket) SignedURL(ctx context.Context, key string, opts *bl
 		labels[cdkBucketStatusLabel] = cdkBucketStatusError
 		b.requests.With(labels).Inc()
 		b.latency.With(labels).Observe(end)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return retVal, err
 	}
 	labels[cdkBucketStatusLabel] = cdkBucketStatusSuccess

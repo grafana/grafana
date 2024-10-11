@@ -161,7 +161,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 		blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
 			Tracer: opts.Tracer,
-			Bucket: NewInstrumentedBucket(bucket, opts.Reg),
+			Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
 		})
 		if err != nil {
 			return nil, err
