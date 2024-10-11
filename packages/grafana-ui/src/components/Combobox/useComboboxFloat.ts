@@ -1,12 +1,13 @@
 import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+
+import { measureText } from '../../utils';
 
 import { ComboboxOption } from './Combobox';
+import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from './getComboboxStyles';
 
-// On every 100th index we will recalculate the width of the popover.
-const INDEX_WIDTH_CALCULATION = 100;
-// A multiplier guesstimate times the amount of characters. If any padding or image support etc. is added this will need to be updated.
-const WIDTH_MULTIPLIER = 7.3;
+// Only consider the first n items when calculating the width of the popover.
+const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 
 /**
  * Used with Downshift to get the height of each item
@@ -22,8 +23,9 @@ export const useComboboxFloat = (
 ) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
-  const [popoverWidth, setPopoverWidth] = useState<number | undefined>(undefined);
   const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
+
+  const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
   // the order of middleware is important!
   const middleware = [
@@ -48,49 +50,43 @@ export const useComboboxFloat = (
     whileElementsMounted: autoUpdate,
   });
 
-  useEffect(() => {
-    if (range === null) {
-      return;
-    }
-    const startVisibleIndex = range?.startIndex;
-    const endVisibleIndex = range?.endIndex;
+  const longestItemWidth = useMemo(() => {
+    let longestItem = '';
+    const itemsToLookAt = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
 
-    if (typeof startVisibleIndex === 'undefined' || typeof endVisibleIndex === 'undefined') {
-      return;
+    for (let i = 0; i < itemsToLookAt; i++) {
+      const itemLabel = items[i].label;
+      longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
     }
 
-    // Scroll down and default case
-    if (
-      startVisibleIndex === 0 ||
-      (startVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && startVisibleIndex >= INDEX_WIDTH_CALCULATION)
-    ) {
-      let maxLength = 0;
-      const calculationEnd = Math.min(items.length, endVisibleIndex + INDEX_WIDTH_CALCULATION);
+    const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-      for (let i = startVisibleIndex; i < calculationEnd; i++) {
-        maxLength = Math.max(maxLength, items[i].label.length);
-      }
-
-      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
-    } else if (endVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && endVisibleIndex >= INDEX_WIDTH_CALCULATION) {
-      // Scroll up case
-      let maxLength = 0;
-      const calculationStart = Math.max(0, startVisibleIndex - INDEX_WIDTH_CALCULATION);
-
-      for (let i = calculationStart; i < endVisibleIndex; i++) {
-        maxLength = Math.max(maxLength, items[i].label.length);
-      }
-
-      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
-    }
-  }, [items, range, setPopoverWidth]);
+    return size + MENU_ITEM_PADDING_X * 2 + scrollbarWidth;
+  }, [items, scrollbarWidth]);
 
   const floatStyles = {
     ...floatingStyles,
-    width: popoverWidth,
+    width: longestItemWidth,
     maxWidth: popoverMaxWidth,
     minWidth: inputRef.current?.offsetWidth,
   };
 
   return { inputRef, floatingRef, floatStyles };
 };
+
+// Creates a temporary div with a scrolling inner div to calculate the width of the scrollbar
+function getScrollbarWidth(): number {
+  const outer = document.createElement('div');
+  outer.style.visibility = 'hidden';
+  outer.style.overflow = 'scroll';
+  document.body.appendChild(outer);
+
+  const inner = document.createElement('div');
+  outer.appendChild(inner);
+
+  const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+
+  outer.parentNode?.removeChild(outer);
+
+  return scrollbarWidth;
+}
