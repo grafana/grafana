@@ -15,6 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -154,7 +155,9 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			if !attr.IsResourceRequest() || attr.GetName() == "" {
+			verb := attr.GetVerb()
+			name := attr.GetName()
+			if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
@@ -164,24 +167,24 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
-			action := dashboards.ActionFoldersRead
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(attr.GetName())
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
+			eval := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 
 			// "get" is used for sub-resources with GET http (parents, access, count)
-			switch attr.GetVerb() {
-			case "patch":
+			switch verb {
+			case utils.VerbCreate:
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+			case utils.VerbPatch:
 				fallthrough
-			case "create":
+			case utils.VerbUpdate:
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
+			case utils.VerbDeleteCollection:
 				fallthrough
-			case "update":
-				action = dashboards.ActionFoldersWrite
-			case "deletecollection":
-				fallthrough
-			case "delete":
-				action = dashboards.ActionFoldersDelete
+			case utils.VerbDelete:
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
 			}
 
-			ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
+			ok, err := b.accessControl.Evaluate(ctx, user, eval)
 			if ok {
 				return authorizer.DecisionAllow, "", nil
 			}
