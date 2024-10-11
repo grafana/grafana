@@ -127,6 +127,7 @@ export async function importPluginModule({
       pluginId,
       pluginVersion: version ?? '',
       expectedHash: moduleHash ?? '',
+      loadingStrategy: loadingStrategy.toString(),
       sriChecksEnabled: (config.featureToggles.pluginsSriChecks ?? false).toString(),
     });
     throw error;
