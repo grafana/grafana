@@ -276,9 +276,9 @@ describe('datasource_srv', () => {
         expect(settings).toBe(runtimeDataSource.instanceSettings);
       });
 
-      it('should return settings for runtime datasource when called with name', () => {
+      it('should not return settings for runtime datasource when called with name', () => {
         const settings = dataSourceSrv.getInstanceSettings(runtimeDataSource.name);
-        expect(settings).toBe(runtimeDataSource.instanceSettings);
+        expect(settings).toBe(undefined);
       });
     });
 
