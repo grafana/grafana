@@ -260,6 +260,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		dashFolder.Fullpath = dashFolder.Title
+		dashFolder.FullpathUIDs = dashFolder.UID
 		return dashFolder, nil
 	}
 
@@ -282,7 +283,8 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	f.Version = dashFolder.Version
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		f.Fullpath = f.Title // set full path to the folder title (unescaped)
+		f.Fullpath = f.Title   // set full path to the folder title (unescaped)
+		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
 	return f, err
@@ -669,6 +671,30 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 	if err = s.setDefaultFolderPermissions(ctx, cmd.OrgID, user, f); err != nil {
 		return nil, err
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+		if f.ParentUID == "" {
+			return f, nil
+		}
+
+		// Fetch the parent since the permissions for fetching the newly created folder
+		// are not yet present for the user--this requires a call to ClearUserPermissionCache
+		parent, err := s.Get(ctx, &folder.GetFolderQuery{
+			UID:              &f.ParentUID,
+			OrgID:            f.OrgID,
+			WithFullpath:     true,
+			WithFullpathUIDs: true,
+			SignedInUser:     user,
+		})
+		if err != nil {
+			return nil, err
+		}
+		// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
+		// Escape forward slashes in the title
+		title := strings.Replace(f.Title, "/", "\\/", -1)
+		f.Fullpath = title + "/" + parent.Fullpath
+		f.FullpathUIDs = f.UID + "/" + parent.FullpathUIDs
 	}
 
 	return f, nil
