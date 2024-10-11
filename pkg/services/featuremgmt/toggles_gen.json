@@ -3066,6 +3066,21 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearch",
+        "resourceVersion": "1726771421439",
+        "creationTimestamp": "2024-09-19T18:43:41Z",
+        "deletionTimestamp": "2024-10-11T14:56:04Z"
+      },
+      "spec": {
+        "description": "Enable unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "useSeessionStorageForRedirection",
         "resourceVersion": "1727082170583",
         "creationTimestamp": "2024-09-23T09:02:50Z",
@@ -3087,20 +3102,6 @@
         "description": "Use session storage for handling the redirection after login",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
-      }
-    },
-    {
-      "metadata": {
-        "name": "unifiedStorageSearch",
-        "resourceVersion": "1726771421439",
-        "creationTimestamp": "2024-09-19T18:43:41Z"
-      },
-      "spec": {
-        "description": "Enable unified storage search",
-        "stage": "experimental",
-        "codeowner": "@grafana/search-and-storage",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
       }
     },
     {
