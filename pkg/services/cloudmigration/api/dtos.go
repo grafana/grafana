@@ -76,6 +76,17 @@ type CloudMigrationSessionResponse struct {
 	Body CloudMigrationSessionResponseDTO
 }
 
+type CloudMigrationSessionErrorResponseDTO struct {
+	ErrorCode string `json:"errorCode"`
+	Message   string `json:"message"`
+}
+
+// swagger:response cloudMigrationSessionResponse
+type CloudMigrationSessionErrorResponse struct {
+	// in: body
+	Body CloudMigrationSessionErrorResponseDTO
+}
+
 // swagger:parameters createSession
 type CreateSession struct {
 	// in:body

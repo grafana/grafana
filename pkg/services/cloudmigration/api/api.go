@@ -213,7 +213,12 @@ func (cma *CloudMigrationAPI) GetSession(c *contextmodel.ReqContext) response.Re
 		span.SetStatus(codes.Error, "session not found")
 		span.RecordError(err)
 
-		return response.ErrOrFallback(http.StatusNotFound, "session not found", err)
+		errorResult := CloudMigrationSessionErrorResponseDTO{
+			ErrorCode: "TOKEN_INVALID",
+			Message:   err.Error(),
+		}
+		return response.JSON(http.StatusInternalServerError, errorResult)
+		// return response.ErrOrFallback(http.StatusNotFound, "session not found", err)
 	}
 
 	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{
@@ -249,10 +254,10 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 		AuthToken: cmd.AuthToken,
 	})
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
+		span.SetStatus(codes.Error, "session creation error")
 		span.RecordError(err)
 
-		return response.ErrOrFallback(http.StatusInternalServerError, err.Error(), err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "session creation error", err)
 	}
 
 	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{

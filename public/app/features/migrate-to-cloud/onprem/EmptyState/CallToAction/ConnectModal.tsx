@@ -21,6 +21,46 @@ interface FormData {
   token: string;
 }
 
+function getTMessage(errorCode: string | undefined): string {
+  switch (errorCode) {
+    case 'TOKEN_INVALID':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.token-invalid',
+        'Token is not valid. Generate a new token on your cloud instance and try again.'
+      );
+    case 'TOKEN_REQUEST_ERROR':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.token-request-error',
+        'An error occurred while validating the token. Please ensure the token matches the migration token on your cloud instance.'
+      );
+    case 'INSTANCE_NOT_FOUND':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.instance-not-found',
+        'The cloud instance cannot be found. Please ensure the cloud instance exists and is active.'
+      );
+    case 'INSTANCE_UNREACHABLE':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.instance-unreachable',
+        'The cloud instance cannot be reached. Make sure the instance is running and try again.'
+      );
+    case 'INSTANCE_REQUEST_ERROR':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.instance-request-error',
+        "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status."
+      );
+    case 'SESSION_CREATION_FAILURE':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.session-creation-failure',
+        'There was an error creating the migration. Please try again."'
+      );
+    default:
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.token-not-saved',
+        'There was an error saving the token. See the Grafana server logs for more details.'
+      );
+  }
+}
+
 export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }: Props) => {
   const tokenId = useId();
   const styles = useStyles2(getStyles);
@@ -102,8 +142,8 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
                 title={t('migrate-to-cloud.connect-modal.token-error-title', 'Error saving token')}
               >
                 <Text element="p">
-                  {error?.data?.message ||
-                    'There was an error saving the token. See the Grafana server logs for more details.'}
+                  {/* TODO: how to get error data here correctly */}
+                  {getTMessage(error?.data?.message)}
                 </Text>
               </AlertWithTraceID>
             ) : undefined}
