@@ -168,30 +168,24 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
-			action := dashboards.ActionFoldersRead
+			var eval accesscontrol.Evaluator
 			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
 
 			// "get" is used for sub-resources with GET http (parents, access, count)
 			switch verb {
+			case utils.VerbCreate:
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
 			case utils.VerbPatch:
 				fallthrough
-			case utils.VerbCreate:
-				action = dashboards.ActionFoldersCreate
-				evaluator := accesscontrol.EvalPermission(action)
-				ok, err := b.accessControl.Evaluate(ctx, user, evaluator)
-				if ok {
-					return authorizer.DecisionAllow, "", nil
-				}
-				return authorizer.DecisionDeny, "folder", err
 			case utils.VerbUpdate:
-				action = dashboards.ActionFoldersWrite
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
 			case utils.VerbDeleteCollection:
 				fallthrough
 			case utils.VerbDelete:
-				action = dashboards.ActionFoldersDelete
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
 			}
 
-			ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
+			ok, err := b.accessControl.Evaluate(ctx, user, eval)
 			if ok {
 				return authorizer.DecisionAllow, "", nil
 			}
