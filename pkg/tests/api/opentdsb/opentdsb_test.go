@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -36,6 +38,12 @@ func TestIntegrationOpenTSDB(t *testing.T) {
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
 
+	// Increase timeout and add retry mechanism
+	err := retry(5, 2*time.Second, func() error {
+		return waitForGrafanaToBeReady(grafanaListeningAddr)
+	})
+	require.NoError(t, err, "Grafana failed to start")
+
 	u := testinfra.CreateUser(t, testEnv.SQLStore, testEnv.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
@@ -59,7 +67,7 @@ func TestIntegrationOpenTSDB(t *testing.T) {
 	}
 
 	uid := "influxdb"
-	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+	_, err = testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
 		OrgID:          u.OrgID,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "opentsdb",
@@ -107,4 +115,44 @@ func TestIntegrationOpenTSDB(t *testing.T) {
 		require.Equal(t, "basicAuthUser", username)
 		require.Equal(t, "basicAuthPassword", pwd)
 	})
+}
+
+func waitForGrafanaToBeReady(addr string) error {
+	client := retryablehttp.NewClient()
+	client.RetryMax = 5
+	client.RetryWaitMin = 5 * time.Second
+	client.RetryWaitMax = 30 * time.Second
+
+	url := fmt.Sprintf("http://%s/api/health", addr)
+	req, err := retryablehttp.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// Add this helper function at the end of the file
+func retry(attempts int, sleep time.Duration, f func() error) (err error) {
+	for i := 0; i < attempts; i++ {
+		if i > 0 {
+			time.Sleep(sleep)
+			sleep *= 2 // exponential backoff
+		}
+		err = f()
+		if err == nil {
+			return nil
+		}
+	}
+	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
