@@ -3,11 +3,6 @@ import { DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { ExplorePanelData } from 'app/types';
 
-export enum AddToDashboardError {
-  FETCH_DASHBOARD = 'fetch-dashboard',
-  SET_DASHBOARD_LS = 'set-dashboard-ls-error',
-}
-
 interface ExploreToDashboardPanelOptions {
   queries: DataQuery[];
   queryResponse: ExplorePanelData;
