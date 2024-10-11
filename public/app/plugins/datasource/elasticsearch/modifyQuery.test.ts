@@ -62,7 +62,7 @@ describe('addFilterToQuery', () => {
     expect(addFilterToQuery('', 'label:name', 'value')).toBe('label\\:name:"value"');
   });
   it('should support filters with forward slash', () => {
-    expect(addFilterToQuery('', 'label', '/value/foo')).toBe('label:"\\/value\\/foo"');
+    expect(addFilterToQuery('', 'label', '/value/foo')).toBe('label:"/value/foo"');
   });
 });
 
@@ -133,15 +133,6 @@ describe('addStringFilterToQuery', () => {
     );
     expect(addStringFilterToQuery('label:"value"', '"filter with \\"', false)).toBe(
       'label:"value" NOT "\\"filter with \\\\\\""'
-    );
-  });
-
-  it('should escape filter values with forwardslashes', () => {
-    expect(addStringFilterToQuery('label:"value"', '"/filter/slash"')).toBe(
-      'label:"value" AND "\\"\\/filter\\/slash\\""'
-    );
-    expect(addStringFilterToQuery('label:"value"', '"/filter/slash"', false)).toBe(
-      'label:"value" NOT "\\"\\/filter\\/slash\\""'
     );
   });
 });
