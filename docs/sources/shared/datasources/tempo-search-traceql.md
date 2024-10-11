@@ -167,12 +167,9 @@ Selecting a Trace ID (2 in the screenshot) displays more detailed information (3
 
 The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
 
-{{% admonition type="note" %}}
-To use this public preview feature, enable the `traceQLStreaming` feature toggle.
-When active, all configured Tempo data sources will attempt to use streaming.
-You can control which Tempo data sources do and don't attempt to stream results at the per-data source level using the **Streaming** section of the Tempo data source configuration.
-
-{{% /admonition %}}
+When active, all configured Tempo data sources attempt to use streaming.
+You can activate and control which Tempo data sources do and don't attempt to stream results at the per-data source level using the **Streaming** section of the Tempo data source configuration.
+For more information, refer to the [Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#streaming) documentation.
 
 Streaming is available for both the **Search** and **TraceQL** query types.
 You'll get immediate visibility of incoming traces on the results table.
