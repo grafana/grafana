@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/stretchr/testify/require"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
@@ -41,7 +42,8 @@ func TestAggregatorPostStartHooks(t *testing.T) {
 	cfg.GenericConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(*storagebackend.NewDefaultConfig("memory", nil))
+	features := featuremgmt.WithFeatures()
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(*storagebackend.NewDefaultConfig("memory", nil), features)
 	require.NoError(t, err)
 	cfg.GenericConfig.RESTOptionsGetter = restOptionsGetter
 
