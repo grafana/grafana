@@ -67,12 +67,12 @@ func (d *DualWriterMode1) Create(ctx context.Context, in runtime.Object, createV
 	createdCopy := created.DeepCopyObject()
 
 	//nolint:errcheck
-	go d.createOnUnifiedStorage(ctx, in, createValidation, createdCopy, options)
+	go d.createOnUnifiedStorage(ctx, createValidation, createdCopy, options)
 
 	return created, err
 }
 
-func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, createdCopy runtime.Object, options *metav1.CreateOptions) error {
+func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, createValidation rest.ValidateObjectFunc, createdCopy runtime.Object, options *metav1.CreateOptions) error {
 	var method = "create"
 	log := d.Log.WithValues("method", method)
 
