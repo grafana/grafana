@@ -45,7 +45,6 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	obj.SetCreatedBy(user.GetUID())
-	obj.SetResourceVersion("")
 
 	var buf bytes.Buffer
 	err = s.codec.Encode(newObject, &buf)
