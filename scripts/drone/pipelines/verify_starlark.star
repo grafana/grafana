@@ -17,7 +17,6 @@ def verify_starlark(trigger, ver_mode):
     environment = {"EDITION": "oss"}
     steps = [
         identify_runner_step(),
-        compile_build_cmd(),
         lint_starlark_step(),
     ]
     return pipeline(

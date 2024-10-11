@@ -72,17 +72,9 @@ steps:
   image: alpine:3.20.3
   name: identify-runner
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
-- commands:
   - go install github.com/bazelbuild/buildtools/buildifier@latest
   - buildifier --lint=warn -mode=check -r .
-  depends_on:
-  - compile-build-cmd
+  depends_on: []
   image: golang:1.23.1-alpine
   name: lint-starlark
 trigger:
@@ -1278,13 +1270,6 @@ platform:
   os: linux
 services: []
 steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
 - commands:
   - apt-get update -yq && apt-get install shellcheck
   - shellcheck -e SC1071 -e SC2162 scripts/**/*.sh
@@ -6002,6 +5987,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1b4690701a449f8beaef07d97d063ae93d6779df6190f63aecd4d5495641f77a
+hmac: dc30a3a00ee542fb289da36ef6db4274684db4533c472f7f903468919d1046ac
 
 ...
