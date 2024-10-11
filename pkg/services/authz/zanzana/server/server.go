@@ -28,7 +28,6 @@ import (
 )
 
 func New(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
-	// FIXME(kalleep): add support for more options, tracing etc
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
