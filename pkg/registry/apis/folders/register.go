@@ -168,8 +168,8 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
-			var eval accesscontrol.Evaluator
 			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
+			eval := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 
 			// "get" is used for sub-resources with GET http (parents, access, count)
 			switch verb {
