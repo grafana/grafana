@@ -573,7 +573,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m",
+            "go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m -ldflags \"-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn\"",
         ],
     }
 
@@ -586,7 +586,7 @@ def test_backend_integration_step():
         ],
         "commands": [
             "apk add --update build-base",
-            "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
+            "go test -count=1 -covermode=atomic -timeout=5m -ldflags \"-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn\" -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
         ],
     }
 
