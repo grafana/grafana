@@ -479,64 +479,92 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:    true,
-		DisableAnonymous:     true,
-		APIServerStorageType: "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			folderv0alpha1.RESOURCEGROUP: {
-				DualWriterMode: grafanarest.Mode1,
-			},
-		},
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-			featuremgmt.FlagNestedFolders,
-			featuremgmt.FlagKubernetesFolders,
-		},
-	})
-
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
-
-	creator := helper.CreateUser("creator", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
-		{
-			Actions:           []string{"folders:create"},
-			Resource:          "folders",
-			ResourceAttribute: "uid",
-			ResourceID:        "*",
-		},
-	})
-	unauthorized := helper.CreateUser("unauthorized", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
+	folderWithParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
 
 	type testCase struct {
 		description  string
-		expectedCode int
-		user         apis.User
 		input        string
+		expectedCode int
+		unauthorized bool
+		withParent   bool
 	}
 	tcs := []testCase{
 		{
-			description:  "folder creation succeeds given the correct request for creating a folder",
+			description:  "creation of folder without parent succeeds given the correct request for creating a folder",
 			input:        folderWithoutParentInput,
 			expectedCode: http.StatusOK,
-			user:         creator,
 		},
 		{
-			description:  "folder creation fails without permissions to create a folder",
+			description:  "creation of folder without parent fails without permissions to create a folder",
 			input:        folderWithoutParentInput,
 			expectedCode: http.StatusForbidden,
-			user:         unauthorized,
+			unauthorized: true,
+		},
+		{
+			description:  "creation of folder with parent succeeds given the correct request for creating a folder",
+			input:        folderWithParentInput,
+			expectedCode: http.StatusOK,
+			withParent:   true,
 		},
 	}
 
 	for _, tc := range tcs {
 		t.Run(tc.description, func(t *testing.T) {
-			client := helper.GetResourceClient(apis.ResourceClientArgs{
-				User: tc.user,
-				GVR:  gvr,
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: grafanarest.Mode1,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+					featuremgmt.FlagNestedFolders,
+					featuremgmt.FlagKubernetesFolders,
+				},
 			})
 
+			user := helper.CreateUser("creator", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			})
+			if tc.unauthorized {
+				user = helper.CreateUser("unauthorized", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
+			}
+			if tc.withParent {
+				user = helper.CreateUser("creatorInParent", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
+					{
+						Actions:           []string{"folders:create"},
+						Resource:          "folders",
+						ResourceAttribute: "uid",
+						ResourceID:        "parentuid",
+					},
+				})
+			}
+
+			parentPayload := `{
+				"title": "Test/parent",
+				"uid": "parentuid"
+				}`
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			parentUID := parentCreate.Result.UID
+			require.NotEmpty(t, parentUID)
+
 			resp := apis.DoRequest(helper, apis.RequestParams{
-				User:   client.Args.User,
+				User:   user,
 				Method: http.MethodPost,
 				Path:   "/api/folders",
 				Body:   []byte(tc.input),
