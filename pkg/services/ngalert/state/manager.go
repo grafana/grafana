@@ -31,8 +31,8 @@ type AlertInstanceManager interface {
 }
 
 type StatePersister interface {
-	Async(ctx context.Context, cache *cache)
-	Sync(ctx context.Context, span trace.Span, states StateTransitions)
+	Async(ctx context.Context, instancesProvider AlertInstancesProvider)
+	Sync(ctx context.Context, span trace.Span, ruleKey ngModels.AlertRuleKeyWithGroup, states StateTransitions)
 }
 
 // Sender is an optional callback intended for sending the states to an alertmanager.
@@ -347,7 +347,7 @@ func (st *Manager) ProcessEvalResults(
 		statesToSend = st.updateLastSentAt(allChanges, evaluatedAt)
 	}
 
-	st.persister.Sync(ctx, span, allChanges)
+	st.persister.Sync(ctx, span, alertRule.GetKeyWithGroup(), allChanges)
 	if st.historian != nil {
 		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}

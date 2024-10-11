@@ -17,8 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -289,8 +291,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		doFolderTests(t, helper)
 	})
 
-	t.Run("with dual write (unified storage, mode 1, nested folders)", func(t *testing.T) {
-		checkNestedCreate(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	t.Run("with dual write (unified storage, mode 1, create nested folders)", func(t *testing.T) {
+		doNestedCreateTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
@@ -388,7 +390,48 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 	return helper
 }
 
-func checkNestedCreate(t *testing.T, helper *apis.K8sTestHelper) {
+// This does a get with both k8s and legacy API, and verifies the results are the same
+func getFromBothAPIs(t *testing.T,
+	helper *apis.K8sTestHelper,
+	client *apis.K8sResourceClient,
+	uid string,
+	// Optionally match some expect some values
+	expect *folder.Folder,
+) *unstructured.Unstructured {
+	t.Helper()
+
+	found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, uid, found.GetName())
+
+	dto := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   "/api/folders/" + uid,
+	}, &folder.Folder{}).Result
+	require.NotNil(t, dto)
+	require.Equal(t, uid, dto.UID)
+
+	spec, ok := found.Object["spec"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, dto.UID, found.GetName())
+	require.Equal(t, dto.Title, spec["title"])
+	// #TODO add checks for other fields
+
+	if expect != nil {
+		if expect.Title != "" {
+			require.Equal(t, expect.Title, dto.Title)
+			require.Equal(t, expect.Title, spec["title"])
+		}
+		if expect.UID != "" {
+			require.Equal(t, expect.UID, dto.UID)
+			require.Equal(t, expect.UID, found.GetName())
+		}
+	}
+	return found
+}
+
+func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
 		GVR:  gvr,
@@ -431,43 +474,101 @@ func checkNestedCreate(t *testing.T, helper *apis.K8sTestHelper) {
 	require.Equal(t, parentCreate.Result.URL, parent.URL)
 }
 
-// This does a get with both k8s and legacy API, and verifies the results are the same
-func getFromBothAPIs(t *testing.T,
-	helper *apis.K8sTestHelper,
-	client *apis.K8sResourceClient,
-	uid string,
-	// Optionally match some expect some values
-	expect *folder.Folder,
-) *unstructured.Unstructured {
-	t.Helper()
-
-	found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-	require.NoError(t, err)
-	require.Equal(t, uid, found.GetName())
-
-	dto := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
-		Method: http.MethodGet,
-		Path:   "/api/folders/" + uid,
-	}, &folder.Folder{}).Result
-	require.NotNil(t, dto)
-	require.Equal(t, uid, dto.UID)
-
-	spec, ok := found.Object["spec"].(map[string]any)
-	require.True(t, ok)
-	require.Equal(t, dto.UID, found.GetName())
-	require.Equal(t, dto.Title, spec["title"])
-	// #TODO add checks for other fields
-
-	if expect != nil {
-		if expect.Title != "" {
-			require.Equal(t, expect.Title, dto.Title)
-			require.Equal(t, expect.Title, spec["title"])
-		}
-		if expect.UID != "" {
-			require.Equal(t, expect.UID, dto.UID)
-			require.Equal(t, expect.UID, found.GetName())
-		}
+func TestIntegrationFolderCreatePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
 	}
-	return found
+
+	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
+	folderWithParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
+
+	type testCase struct {
+		description  string
+		input        string
+		permissions  []resourcepermissions.SetResourcePermissionCommand
+		expectedCode int
+	}
+	tcs := []testCase{
+		{
+			description:  "creation of folder without parent succeeds given the correct request for creating a folder",
+			input:        folderWithoutParentInput,
+			expectedCode: http.StatusOK,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			},
+		},
+		{
+			description:  "creation of folder without parent fails without permissions to create a folder",
+			input:        folderWithoutParentInput,
+			expectedCode: http.StatusForbidden,
+			permissions:  []resourcepermissions.SetResourcePermissionCommand{},
+		},
+		{
+			description:  "creation of folder with parent succeeds given the correct request for creating a folder",
+			input:        folderWithParentInput,
+			expectedCode: http.StatusOK,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "parentuid",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: grafanarest.Mode1,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+					featuremgmt.FlagNestedFolders,
+					featuremgmt.FlagKubernetesFolders,
+				},
+			})
+
+			user := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
+
+			parentPayload := `{
+				"title": "Test/parent",
+				"uid": "parentuid"
+				}`
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			parentUID := parentCreate.Result.UID
+			require.NotEmpty(t, parentUID)
+
+			resp := apis.DoRequest(helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(tc.input),
+			}, &dtos.Folder{})
+			require.Equal(t, tc.expectedCode, resp.Response.StatusCode)
+
+			if tc.expectedCode == http.StatusOK {
+				require.Equal(t, "uid", resp.Result.UID)
+				require.Equal(t, "Folder", resp.Result.Title)
+			}
+		})
+	}
 }
