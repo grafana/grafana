@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -25,12 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:           cfg,
 		tracer:        tracer,
 		authenticator: authenticator,
+		features:      features,
 	}
 }
 
@@ -39,6 +41,7 @@ type ContextHandler struct {
 	Cfg           *setting.Cfg
 	tracer        tracing.Tracer
 	authenticator authn.Authenticator
+	features      featuremgmt.FeatureToggles
 }
 
 type reqContextKey = ctxkey.Key
@@ -92,10 +95,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
 			},
-			IsSignedIn:     false,
-			AllowAnonymous: false,
-			SkipDSCache:    false,
-			Logger:         log.New("context"),
+			IsSignedIn:                false,
+			AllowAnonymous:            false,
+			SkipDSCache:               false,
+			Logger:                    log.New("context"),
+			UseSessionStorageRedirect: h.features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection),
 		}
 
 		// inject ReqContext in the context
@@ -122,6 +126,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
+			ctx = identity.WithRequester(ctx, id)
 		}
 
 		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
@@ -139,8 +144,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
-
-		next.ServeHTTP(w, r.WithContext(identity.WithRequester(ctx, id)))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -155,22 +159,21 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		id := ident.GetID()
-		if !identity.IsIdentityType(
-			id,
+		id, _ := ident.GetInternalID()
+		if !ident.IsIdentityType(
 			claims.TypeUser,
 			claims.TypeServiceAccount,
 			claims.TypeAPIKey,
-		) || id.ID() == "0" {
+		) || id == 0 {
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[id.Type().String()]; !ok {
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
 			return
 		}
 
 		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, id.String())
+		w.Header().Add(headerName, ident.GetID())
 	}
 }
 

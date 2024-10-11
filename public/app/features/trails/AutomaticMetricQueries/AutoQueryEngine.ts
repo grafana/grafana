@@ -1,4 +1,4 @@
-import { getQueryGeneratorFor } from './query-generators';
+import { getQueryGeneratorFor } from './query-generators/getQueryGeneratorFor';
 import { AutoQueryInfo } from './types';
 
 export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {

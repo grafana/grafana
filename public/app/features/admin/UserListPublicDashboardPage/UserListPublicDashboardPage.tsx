@@ -32,7 +32,7 @@ export const UserListPublicDashboardPage = () => {
                   'Earliest time user has been an active user to a dashboard'
                 )}
               >
-                <Icon name="question-circle" />
+                <Icon name="info-circle" />
               </Tooltip>
             </th>
             <th>

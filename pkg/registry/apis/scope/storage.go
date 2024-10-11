@@ -22,9 +22,8 @@ type storage struct {
 }
 
 func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
-
 	resourceInfo := scope.ScopeResourceInfo
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
@@ -45,10 +44,10 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 	return &storage{Store: store}, nil
 }
 
-func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
-
+func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, *grafanaregistry.StatusREST, error) {
 	resourceInfo := scope.ScopeDashboardBindingResourceInfo
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
+
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
@@ -64,15 +63,18 @@ func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.
 	}
 	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &storage{Store: store}, nil
+
+	statusStrategy := grafanaregistry.NewStatusStrategy(scheme, resourceInfo.GroupVersion())
+	statusREST := grafanaregistry.NewStatusREST(store, statusStrategy)
+	return &storage{Store: store}, statusREST, nil
 }
 
 func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
-
 	resourceInfo := scope.ScopeNodeResourceInfo
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
+
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,

@@ -121,9 +121,15 @@ type UnifiedAlertingSettings struct {
 
 	// Duration for which a resolved alert state transition will continue to be sent to the Alertmanager.
 	ResolvedAlertRetention time.Duration
+
+	// RuleVersionRecordLimit defines the limit of how many alert rule versions
+	// should be stored in the database for each alert_rule in an organization including the current one.
+	// 0 value means no limit
+	RuleVersionRecordLimit int
 }
 
 type RecordingRuleSettings struct {
+	Enabled           bool
 	URL               string
 	BasicAuthUsername string
 	BasicAuthPassword string
@@ -421,6 +427,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
+		Enabled:           rr.Key("enabled").MustBool(false),
 		URL:               rr.Key("url").MustString(""),
 		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
 		BasicAuthPassword: rr.Key("basic_auth_password").MustString(""),
@@ -451,6 +458,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.ResolvedAlertRetention, err = gtime.ParseDuration(valueAsString(ua, "resolved_alert_retention", (15 * time.Minute).String()))
 	if err != nil {
 		return err
+	}
+
+	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
+	if uaCfg.RuleVersionRecordLimit < 0 {
+		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
 	}
 
 	cfg.UnifiedAlerting = uaCfg

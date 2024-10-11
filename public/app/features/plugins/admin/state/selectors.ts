@@ -3,7 +3,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { filterByKeyword } from '../helpers';
+import { filterByKeyword, isPluginUpdateable } from '../helpers';
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
 import { pluginsAdapter } from './reducer';
@@ -11,8 +11,6 @@ import { pluginsAdapter } from './reducer';
 export const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
 
 export const selectItems = createSelector(selectRoot, ({ items }) => items);
-
-export const selectDisplayMode = createSelector(selectRoot, ({ settings }) => settings.displayMode);
 
 export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
@@ -63,7 +61,7 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
-      if (filters.hasUpdate !== undefined && plugin.hasUpdate !== filters.hasUpdate) {
+      if (filters.hasUpdate !== undefined && (plugin.hasUpdate !== filters.hasUpdate || !isPluginUpdateable(plugin))) {
         return false;
       }
 

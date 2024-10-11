@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -38,6 +38,10 @@ type Rule interface {
 	Eval(eval *Evaluation) (bool, *Evaluation)
 	// Update sends a singal to change the definition of the rule.
 	Update(lastVersion RuleVersionAndPauseStatus) bool
+	// Type gives the type of the rule.
+	Type() ngmodels.RuleType
+	// Status indicates the status of the evaluating rule.
+	Status() ngmodels.RuleStatus
 }
 
 type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
@@ -55,7 +59,7 @@ func newRuleFactory(
 	evalFactory eval.EvaluatorFactory,
 	ruleProvider ruleProvider,
 	clock clock.Clock,
-	featureToggles featuremgmt.FeatureToggles,
+	rrCfg setting.RecordingRuleSettings,
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
@@ -71,16 +75,18 @@ func newRuleFactory(
 				maxAttempts,
 				clock,
 				evalFactory,
-				featureToggles,
+				rrCfg,
 				logger,
 				met,
 				tracer,
 				recordingWriter,
+				evalAppliedHook,
+				stopAppliedHook,
 			)
 		}
 		return newAlertRule(
 			ctx,
-			rule.GetKey(),
+			rule.GetKeyWithGroup(),
 			appURL,
 			disableGrafanaFolder,
 			maxAttempts,
@@ -106,7 +112,7 @@ type ruleProvider interface {
 }
 
 type alertRule struct {
-	key ngmodels.AlertRuleKey
+	key ngmodels.AlertRuleKeyWithGroup
 
 	evalCh   chan *Evaluation
 	updateCh chan RuleVersionAndPauseStatus
@@ -134,7 +140,7 @@ type alertRule struct {
 
 func newAlertRule(
 	parent context.Context,
-	key ngmodels.AlertRuleKey,
+	key ngmodels.AlertRuleKeyWithGroup,
 	appURL *url.URL,
 	disableGrafanaFolder bool,
 	maxAttempts int64,
@@ -149,7 +155,7 @@ func newAlertRule(
 	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
 	stopAppliedHook func(ngmodels.AlertRuleKey),
 ) *alertRule {
-	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
+	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 	return &alertRule{
 		key:                  key,
 		evalCh:               make(chan *Evaluation),
@@ -172,6 +178,14 @@ func newAlertRule(
 	}
 }
 
+func (a *alertRule) Type() ngmodels.RuleType {
+	return ngmodels.RuleTypeAlerting
+}
+
+func (a *alertRule) Status() ngmodels.RuleStatus {
+	return a.stateManager.GetStatusForRuleUID(a.key.OrgID, a.key.UID)
+}
+
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
 // Before sending a message into the channel, it does non-blocking read to make sure that there is no concurrent send operation.
 // Returns a tuple where first element is
@@ -180,7 +194,7 @@ func newAlertRule(
 //
 // the second element contains a dropped message that was sent by a concurrent sender.
 func (a *alertRule) Eval(eval *Evaluation) (bool, *Evaluation) {
-	if a.key != eval.rule.GetKey() {
+	if a.key != eval.rule.GetKeyWithGroup() {
 		// Make sure that rule has the same key. This should not happen
 		a.logger.Error("Invalid rule sent for evaluating. Skipping", "ruleKeyToEvaluate", eval.rule.GetKey().String())
 		return false, eval
@@ -338,7 +352,7 @@ func (a *alertRule) Run() error {
 				// cases.
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
-				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key), a.key, ngmodels.StateReasonRuleDeleted)
+				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
 				a.expireAndSend(grafanaCtx, states)
 			}
 			a.logger.Debug("Stopping alert rule routine")
@@ -418,7 +432,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 		span.SetStatus(codes.Error, "rule evaluation failed")
 		span.RecordError(err)
 	} else {
-		logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
+		logger.Debug("Alert rule evaluated", "results", len(results), "duration", dur)
 		span.AddEvent("rule evaluated", trace.WithAttributes(
 			attribute.Int64("results", int64(len(results))),
 		))
@@ -453,7 +467,7 @@ func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.St
 
 	if len(alerts.PostableAlerts) > 0 {
 		logger.Debug("Sending transitions to notifier", "transitions", len(alerts.PostableAlerts))
-		a.sender.Send(ctx, a.key, alerts)
+		a.sender.Send(ctx, a.key.AlertRuleKey, alerts)
 	}
 	return alerts
 }
@@ -462,12 +476,12 @@ func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.St
 func (a *alertRule) expireAndSend(ctx context.Context, states []state.StateTransition) {
 	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 	if len(expiredAlerts.PostableAlerts) > 0 {
-		a.sender.Send(ctx, a.key, expiredAlerts)
+		a.sender.Send(ctx, a.key.AlertRuleKey, expiredAlerts)
 	}
 }
 
 func (a *alertRule) resetState(ctx context.Context, isPaused bool) {
-	rule := a.ruleProvider.get(a.key)
+	rule := a.ruleProvider.get(a.key.AlertRuleKey)
 	reason := ngmodels.StateReasonUpdated
 	if isPaused {
 		reason = ngmodels.StateReasonPaused
@@ -482,7 +496,7 @@ func (a *alertRule) evalApplied(now time.Time) {
 		return
 	}
 
-	a.evalAppliedHook(a.key, now)
+	a.evalAppliedHook(a.key.AlertRuleKey, now)
 }
 
 // stopApplied is only used on tests.
@@ -491,7 +505,7 @@ func (a *alertRule) stopApplied() {
 		return
 	}
 
-	a.stopAppliedHook(a.key)
+	a.stopAppliedHook(a.key.AlertRuleKey)
 }
 
 func SchedulerUserFor(orgID int64) *user.SignedInUser {
@@ -504,6 +518,9 @@ func SchedulerUserFor(orgID int64) *user.SignedInUser {
 		Permissions: map[int64]map[string][]string{
 			orgID: {
 				datasources.ActionQuery: []string{
+					datasources.ScopeAll,
+				},
+				datasources.ActionRead: []string{
 					datasources.ScopeAll,
 				},
 			},

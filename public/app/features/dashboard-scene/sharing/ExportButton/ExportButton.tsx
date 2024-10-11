@@ -30,7 +30,7 @@ export default function ExportButton({ dashboard }: { dashboard: DashboardScene 
           tooltip={t('export.menu.export-as-json-tooltip', 'Export')}
         >
           <Trans i18nKey="export.menu.export-as-json-label">Export</Trans>&nbsp;
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="sm" />
         </Button>
       </Dropdown>
     </ButtonGroup>

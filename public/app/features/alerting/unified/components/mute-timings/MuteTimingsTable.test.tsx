@@ -8,10 +8,11 @@ import {
   setMuteTimingsListError,
 } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { TIME_INTERVAL_UID_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import { grantUserPermissions } from '../../mocks';
+import { TIME_INTERVAL_UID_HAPPY_PATH } from '../../mocks/server/handlers/k8s/timeIntervals.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -80,7 +81,7 @@ describe('MuteTimingsTable', () => {
         (r) => r.url.includes('/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
       );
 
-      const body = await amConfigUpdateRequest?.clone().json();
+      const body: AlertManagerCortexConfig = await amConfigUpdateRequest?.clone().json();
       expect(body.alertmanager_config.mute_time_intervals).toHaveLength(0);
     });
 

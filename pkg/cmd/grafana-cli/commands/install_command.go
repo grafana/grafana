@@ -51,7 +51,10 @@ func validateInput(c utils.CommandLine) error {
 
 	fileInfo, err := os.Stat(pluginsDir)
 	if err != nil {
-		if err = os.MkdirAll(pluginsDir, 0o750); err != nil {
+		// If the directory does not exist, try to create it with permissions enough
+		// so the server running Grafana can write to it to install new plugins.
+		// nolint: gosec
+		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
 			return fmt.Errorf("pluginsDir (%s) is not a writable directory", pluginsDir)
 		}
 		return nil
@@ -134,7 +137,9 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		Logger:        services.Logger,
 	})
 
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+	// FIXME: Re-enable grafanaVersion. This check was broken in 10.2 so disabling it for the moment.
+	// Expected to be re-enabled in 12.x.
+	compatOpts := repo.NewCompatOpts("", runtime.GOOS, runtime.GOARCH)
 
 	var archive *repo.PluginArchive
 	var err error
@@ -144,6 +149,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 			return err
 		}
 	} else {
+		ctx = repo.WithRequestOrigin(ctx, "cli")
 		archiveInfo, err := repository.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err

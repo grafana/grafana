@@ -37,6 +37,9 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 				"groupBys":         groupBys,
 			},
 		}
+		// Ensure the time field is named correctly
+		timeField := frame.Fields[0]
+		timeField.Name = data.TimeSeriesTimeFieldName
 
 		var err error
 		frames, err = appendFrames(frames, series, 0, defaultMetricName, seriesLabels, frame, query)
@@ -47,7 +50,7 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 	if len(response.TimeSeries) > 0 {
 		dl := query.buildDeepLink()
 		aggregationAlignmentString := params.Get("aggregation.alignmentPeriod")
-		frames = addConfigData(frames, dl, response.Unit, &aggregationAlignmentString)
+		frames = addConfigData(frames, dl, response.Unit, &aggregationAlignmentString, logger)
 	}
 
 	queryRes.Frames = frames
@@ -93,6 +96,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
 			"Failed to generate deep link: unable to parse metrics explorer URL",
 			"ProjectName", timeSeriesFilter.parameters.ProjectName,
 			"error", err,
+			"statusSource", backend.ErrorSourcePlugin,
 		)
 	}
 

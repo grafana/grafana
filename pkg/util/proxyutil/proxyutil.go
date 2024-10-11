@@ -115,7 +115,7 @@ func ApplyUserHeader(sendUserHeader bool, req *http.Request, user identity.Reque
 		return
 	}
 
-	if identity.IsIdentityType(user.GetID(), claims.TypeUser) {
+	if user.IsIdentityType(claims.TypeUser) {
 		req.Header.Set(UserHeaderName, user.GetLogin())
 	}
 }

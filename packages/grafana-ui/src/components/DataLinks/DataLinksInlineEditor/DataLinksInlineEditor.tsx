@@ -112,7 +112,7 @@ export const DataLinksInlineEditor = ({
                 const key = `${link.title}/${idx}`;
 
                 const linkJSX = (
-                  <div className={styles.itemWrapper}>
+                  <div className={styles.itemWrapper} key={key}>
                     <DataLinksListItem
                       key={key}
                       index={idx}

@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/ptrace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,7 +58,30 @@ func TestTraceToFrame(t *testing.T) {
 		require.Equal(t, json.RawMessage("[{\"value\":\"loki-all\",\"key\":\"service.name\"},{\"value\":\"Jaeger-Go-2.25.0\",\"key\":\"opencensus.exporterversion\"},{\"value\":\"4d019a031941\",\"key\":\"host.hostname\"},{\"value\":\"172.18.0.6\",\"key\":\"ip\"},{\"value\":\"4b19ace06df8e4de\",\"key\":\"client-uuid\"}]"), span["serviceTags"])
 		require.Equal(t, 1616072924072.852, span["startTime"])
 		require.Equal(t, 0.094, span["duration"])
-		require.Equal(t, "[{\"timestamp\":1616072924072.856,\"fields\":[{\"value\":\"test event\",\"key\":\"message\"},{\"value\":1,\"key\":\"chunks requested\"}]},{\"timestamp\":1616072924072.9448,\"fields\":[{\"value\":1,\"key\":\"chunks fetched\"}]}]", string(span["logs"].(json.RawMessage)))
+		expectedLogs := `
+			[
+				{
+					"timestamp": 1616072924072.856,
+					"name": "test event",
+					"fields": [
+						{
+							"value": 1,
+							"key": "chunks requested"
+						}
+					]
+				},
+				{
+					"timestamp": 1616072924072.9448,
+					"fields": [
+						{
+							"value": 1,
+							"key": "chunks fetched"
+						}
+					]
+				}
+			]
+		`
+		assert.JSONEq(t, expectedLogs, string(span["logs"].(json.RawMessage)))
 	})
 
 	t.Run("should transform correct traceID", func(t *testing.T) {

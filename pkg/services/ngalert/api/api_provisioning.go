@@ -38,21 +38,22 @@ type ProvisioningSrv struct {
 
 type ContactPointService interface {
 	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user identity.Requester) ([]definitions.EmbeddedContactPoint, error)
-	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
+	CreateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
 }
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance, version string) error
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error)
+	UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error
 }
 
 type NotificationPolicyService interface {
-	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
-	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
-	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
+	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
+	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) error
+	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
 }
 
 type MuteTimingService interface {
@@ -78,19 +79,19 @@ type AlertRuleService interface {
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	policies, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusOK, policies)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
-	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	policies, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -108,7 +109,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
 	provenance := determineProvenance(c)
-	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance))
+	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance), "")
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -116,16 +117,17 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
 }
 
 func (srv *ProvisioningSrv) RouteResetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	provenance := determineProvenance(c)
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), alerting_models.Provenance(provenance))
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to reset notification policy tree", err)
 	}
 	return response.JSON(http.StatusAccepted, tree)
 }
@@ -164,7 +166,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
 	provenance := determineProvenance(c)
-	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), cp, alerting_models.Provenance(provenance))
+	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser, cp, alerting_models.Provenance(provenance))
 	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -201,22 +203,17 @@ func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, 
 func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) response.Response {
 	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, templates)
 }
 
-func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
+func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
+	template, err := srv.templates.GetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), nameOrUid)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	for _, tmpl := range templates {
-		if tmpl.Name == name {
-			return response.JSON(http.StatusOK, tmpl)
-		}
-	}
-	return response.Empty(http.StatusNotFound)
+	return response.JSON(http.StatusOK, template)
 }
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
@@ -226,19 +223,16 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 		Provenance:      determineProvenance(c),
 		ResourceVersion: body.ResourceVersion,
 	}
-	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
+	modified, err := srv.templates.UpsertTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrValidation) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, modified)
 }
 
-func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
+func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
 	version := c.Query("version")
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c), version)
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), nameOrUid, determineProvenance(c), version)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}

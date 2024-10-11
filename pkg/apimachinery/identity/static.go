@@ -69,8 +69,16 @@ func (u *StaticRequester) GetIdentityType() claims.IdentityType {
 	return u.Type
 }
 
+// IsIdentityType implements Requester.
+func (u *StaticRequester) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(u.GetIdentityType(), expected...)
+}
+
 // GetExtra implements Requester.
 func (u *StaticRequester) GetExtra() map[string][]string {
+	if u.IDToken != "" {
+		return map[string][]string{"id-token": {u.IDToken}}
+	}
 	return map[string][]string{}
 }
 
@@ -158,8 +166,8 @@ func (u *StaticRequester) HasUniqueId() bool {
 	return u.UserID > 0
 }
 
-// GetID returns namespaced id for the entity
-func (u *StaticRequester) GetID() TypedID {
+// GetID returns typed id for the entity
+func (u *StaticRequester) GetID() string {
 	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
 }
 

@@ -64,6 +64,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Field name** - Select the names of fields you want to use in the calculation for the new field.
 - **Calculation** - If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
 - **Operation** - If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
+  - **All number fields** - Set the left side of a **Binary operation** to apply the calculation to all number fields.
 - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
@@ -1522,10 +1523,30 @@ ${buildImageContent(
   },
   transpose: {
     name: 'Transpose',
-    getHelperDocs: function () {
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
 If you have multiple types it will default to string type.
+
+**Before Transformation:**
+
+| env  | January   | February |
+| ---- | --------- | -------- |
+| prod | 1 | 2 |
+| dev | 3 | 4 |
+
+**After applying transpose transformation:**
+
+| Field  | prod   | dev |
+| ---- | --------- | -------- |
+| January | 1 | 3 |
+| February  | 2 | 4 |
+
+${buildImageContent(
+  '/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png',
+  imageRenderType,
+  'Before and after transpose transformation'
+)}
   `;
     },
   },

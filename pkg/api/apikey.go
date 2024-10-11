@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
@@ -23,7 +22,7 @@ import (
 // Deprecated: true.
 //
 // Deprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead
-// see https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+// see https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.
 //
 // Responses:
 // 200: getAPIkeyResponse
@@ -57,7 +56,7 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	metadata := hs.getMultiAccessControlMetadata(c, "apikeys:id", ids)
+	metadata := getMultiAccessControlMetadata(c, "apikeys:id", ids)
 	if len(metadata) > 0 {
 		for _, key := range result {
 			key.AccessControl = metadata[strconv.FormatInt(key.ID, 10)]
@@ -72,7 +71,7 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 // Delete API key.
 //
 // Deletes an API key.
-// Deprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+// Deprecated. See: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.
 //
 // Deprecated: true
 // Responses:
@@ -111,62 +110,19 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 // Deprecated: true
 // Deprecated. Please use POST /api/serviceaccounts and POST /api/serviceaccounts/{id}/tokens
 //
-// see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+// see: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.
 //
 // Responses:
-// 200: postAPIkeyResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 409: conflictError
-// 500: internalServerError
+// 410: goneError
 func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
-	cmd := apikey.AddCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	if !cmd.Role.IsValid() {
-		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
-	}
-	if !c.SignedInUser.GetOrgRole().Includes(cmd.Role) {
-		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
-	}
+	hs.log.Warn("Obsolete and Permanently moved API endpoint called", "path", c.Req.URL.Path)
 
-	if hs.Cfg.ApiKeyMaxSecondsToLive != -1 {
-		if cmd.SecondsToLive == 0 {
-			return response.Error(http.StatusBadRequest, "Number of seconds before expiration should be set", nil)
-		}
-		if cmd.SecondsToLive > hs.Cfg.ApiKeyMaxSecondsToLive {
-			return response.Error(http.StatusBadRequest, "Number of seconds before expiration is greater than the global limit", nil)
-		}
-	}
-
-	cmd.OrgID = c.SignedInUser.GetOrgID()
-
-	newKeyInfo, err := apikeygen.New(cmd.OrgID, cmd.Name)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Generating API key failed", err)
-	}
-
-	cmd.Key = newKeyInfo.HashedKey
-	key, err := hs.apiKeyService.AddAPIKey(c.Req.Context(), &cmd)
-	if err != nil {
-		if errors.Is(err, apikey.ErrInvalidExpiration) {
-			return response.Error(http.StatusBadRequest, err.Error(), nil)
-		}
-		if errors.Is(err, apikey.ErrDuplicate) {
-			return response.Error(http.StatusConflict, err.Error(), nil)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to add API Key", err)
-	}
-
-	result := &dtos.NewApiKeyResult{
-		ID:   key.ID,
-		Name: key.Name,
-		Key:  newKeyInfo.ClientSecret,
-	}
-
-	return response.JSON(http.StatusOK, result)
+	// Respond with a 410 Gone status code
+	return response.Error(
+		http.StatusGone,
+		"this endpoint has been removed, please use POST /api/serviceaccounts and POST /api/serviceaccounts/{id}/tokens instead",
+		nil,
+	)
 }
 
 // swagger:parameters getAPIkeys
@@ -176,13 +132,6 @@ type GetAPIkeysParams struct {
 	// required:false
 	// default:false
 	IncludeExpired bool `json:"includeExpired"`
-}
-
-// swagger:parameters addAPIkey
-type AddAPIkeyParams struct {
-	// in:body
-	// required:true
-	Body apikey.AddCommand
 }
 
 // swagger:parameters deleteAPIkey
@@ -197,11 +146,4 @@ type GetAPIkeyResponse struct {
 	// The response message
 	// in: body
 	Body []*dtos.ApiKeyDTO `json:"body"`
-}
-
-// swagger:response postAPIkeyResponse
-type PostAPIkeyResponse struct {
-	// The response message
-	// in: body
-	Body dtos.NewApiKeyResult `json:"body"`
 }

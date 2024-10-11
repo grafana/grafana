@@ -33,6 +33,7 @@ const plugin: CatalogPlugin = {
   isDeprecated: false,
   isPublished: true,
   isManaged: false,
+  isPreinstalled: { found: false, withVersion: false },
 };
 
 function setup(opts: { angularSupportEnabled: boolean; angularDetected: boolean }) {
@@ -249,6 +250,18 @@ describe('InstallControlsButton', () => {
       render(
         <TestProvider>
           <InstallControlsButton plugin={{ ...plugin, isManaged: true }} pluginStatus={PluginStatus.UPDATE} />
+        </TestProvider>
+      );
+      expect(screen.queryByText('Update')).not.toBeInTheDocument();
+    });
+
+    it('should be hidden when plugin is preinstalled with a specific version', () => {
+      render(
+        <TestProvider>
+          <InstallControlsButton
+            plugin={{ ...plugin, isPreinstalled: { found: true, withVersion: true } }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
         </TestProvider>
       );
       expect(screen.queryByText('Update')).not.toBeInTheDocument();

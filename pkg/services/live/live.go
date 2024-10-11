@@ -97,6 +97,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		},
 		usageStatsService: usageStatsService,
 		orgService:        orgService,
+		keyPrefix:         "gf_live",
+	}
+
+	if cfg.LiveHAPrefix != "" {
+		g.keyPrefix = cfg.LiveHAPrefix + ".gf_live"
 	}
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
@@ -105,9 +110,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	// things. For example Node allows to publish messages to channels from server
 	// side with its Publish method.
 	node, err := centrifuge.New(centrifuge.Config{
-		LogHandler:       handleLog,
-		LogLevel:         centrifuge.LogLevelError,
-		MetricsNamespace: "grafana_live",
+		LogHandler:         handleLog,
+		LogLevel:           centrifuge.LogLevelError,
+		MetricsNamespace:   "grafana_live",
+		ClientQueueMaxSize: 4194304, // 4MB
 		// Use reasonably large expiration interval for stream meta key,
 		// much bigger than maximum HistoryLifetime value in Node config.
 		// This way stream meta data will expire, in some cases you may want
@@ -152,7 +158,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
 			channelLocalPublisher,
-			managedstream.NewRedisFrameCache(redisClient),
+			managedstream.NewRedisFrameCache(redisClient, g.keyPrefix),
 		)
 	} else {
 		managedStreamRunner = managedstream.NewRunner(
@@ -284,9 +290,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
+		id, _ := user.GetInternalID()
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
-			UserID: user.GetID().ID(),
+			UserID: strconv.FormatInt(id, 10),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
@@ -342,7 +349,7 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	}
 
 	broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
-		Prefix: "gf_live",
+		Prefix: g.keyPrefix,
 		Shards: redisShards,
 	})
 	if err != nil {
@@ -352,7 +359,7 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	node.SetBroker(broker)
 
 	presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
-		Prefix: "gf_live",
+		Prefix: g.keyPrefix,
 		Shards: redisShards,
 	})
 	if err != nil {
@@ -382,6 +389,8 @@ type GrafanaLive struct {
 	pluginClient          plugins.Client
 	queryDataService      query.Service
 	orgService            org.Service
+
+	keyPrefix string
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller

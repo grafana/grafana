@@ -1,61 +1,59 @@
-import * as React from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
+import { setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
+import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
+import { DashboardSearchItemType } from 'app/features/search/types';
 
-import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
-import { backendSrv } from '../../../core/services/backend_srv';
 import { AccessControlAction } from '../../../types';
 
 import RuleEditor from './RuleEditor';
-import * as ruler from './api/ruler';
-import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from './mocks';
-import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import { Annotation } from './utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-
-jest.mock('./components/rule-editor/ExpressionEditor', () => ({
-  ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
-    <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
-  ),
-}));
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-jest.mock('../../../../app/features/manage-dashboards/state/actions');
-
-// there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
-// lets just skip it
-jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  QueryEditorRow: () => <p>hi</p>,
-}));
-
 jest.setTimeout(60 * 1000);
-
-const mocks = {
-  searchFolders: jest.mocked(searchFolders),
-  api: {
-    setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
-  },
-};
 
 setupMswServer();
 
-function renderRuleEditor(identifier?: string) {
-  return render(<Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />, {
-    historyOptions: { initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new`] },
-  });
+function renderRuleEditor(identifier: string) {
+  return render(
+    <Routes>
+      <Route path="/alerting/:id/edit" element={<RuleEditor />} />
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/alerting/${identifier}/edit`] },
+    }
+  );
 }
 
 describe('RuleEditor grafana managed rules', () => {
+  const folder = {
+    title: 'Folder A',
+    uid: grafanaRulerRule.grafana_alert.namespace_uid,
+    id: 1,
+    type: DashboardSearchItemType.DashDB,
+    accessControl: {
+      [AccessControlAction.AlertingRuleUpdate]: true,
+    },
+  };
+
+  const slashedFolder = {
+    title: 'Folder with /',
+    uid: 'abcde',
+    id: 2,
+    accessControl: {
+      [AccessControlAction.AlertingRuleUpdate]: true,
+    },
+  };
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
@@ -74,21 +72,6 @@ describe('RuleEditor grafana managed rules', () => {
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
-  });
-
-  it('can edit grafana managed rule', async () => {
-    const folder = {
-      title: 'Folder A',
-      uid: grafanaRulerRule.grafana_alert.namespace_uid,
-      id: 1,
-      type: DashboardSearchItemType.DashDB,
-    };
-
-    const slashedFolder = {
-      title: 'Folder with /',
-      uid: 'abcde',
-      id: 2,
-    };
 
     const dataSources = {
       default: mockDataSource(
@@ -100,20 +83,12 @@ describe('RuleEditor grafana managed rules', () => {
         { alerting: false }
       ),
     };
-
-    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
-      ...mockFolder(),
-      accessControl: {
-        [AccessControlAction.AlertingRuleUpdate]: true,
-      },
-    });
-
     setupDataSources(dataSources.default);
+    setFolderResponse(mockFolder(folder));
+    setFolderResponse(mockFolder(slashedFolder));
+  });
 
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
-    // mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
-
+  it('can edit grafana managed rule', async () => {
     const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
     // check that it's filled in
@@ -143,25 +118,37 @@ describe('RuleEditor grafana managed rules', () => {
 
     // save and check what was sent to backend
     await user.click(ui.buttons.save.get());
-    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
-    mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
     expect(screen.getByText('New folder')).toBeInTheDocument();
+  });
 
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      grafanaRulerRule.grafana_alert.namespace_uid,
-      {
-        interval: grafanaRulerGroup.interval,
-        name: grafanaRulerGroup.name,
-        rules: [
-          {
-            ...grafanaRulerRule,
-            annotations: { ...grafanaRulerRule.annotations, custom: 'value' },
-            grafana_alert: { ...grafanaRulerRule.grafana_alert, namespace_uid: undefined, rule_group: undefined },
-          },
-        ],
-      }
+  it('saves evaluation interval correctly', async () => {
+    const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+    await user.click(await screen.findByRole('button', { name: /new evaluation group/i }));
+    await screen.findByRole('dialog');
+
+    await user.type(screen.getByLabelText(/evaluation group name/i), 'new group');
+    const evalInterval = screen.getByLabelText(/^evaluation interval/i);
+
+    await user.clear(evalInterval);
+    await user.type(evalInterval, '12m');
+    await user.click(screen.getByRole('button', { name: /create/i }));
+
+    // Update the pending period as well, otherwise we'll get a form validation error
+    // and the rule won't try and save
+    await user.type(screen.getByLabelText(/pending period/i), '12m');
+
+    const capture = captureRequests(
+      (req) => req.method === 'POST' && req.url.includes('/api/ruler/grafana/api/v1/rules/uuid020c61ef')
     );
+
+    await user.click(ui.buttons.save.get());
+
+    const [request] = await capture;
+    const postBody = await request.json();
+
+    expect(postBody.name).toBe('new group');
+    expect(postBody.interval).toBe('12m');
   });
 });

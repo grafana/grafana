@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,9 +13,12 @@ import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
+import { TOP_BAR_LEVEL_HEIGHT } from '../types';
+
+import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
-import { enrichWithInteractionTracking, getActiveItem } from './utils';
+import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '300px';
 
@@ -39,7 +42,32 @@ export const MegaMenu = memo(
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
+    if (config.featureToggles.pinNavItems) {
+      const bookmarksItem = findByUrl(navItems, '/bookmarks');
+      if (bookmarksItem) {
+        // Add children to the bookmarks section
+        bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
+          const item = findByUrl(navItems, url);
+          if (!item) {
+            return acc;
+          }
+          const newItem = {
+            id: item.id,
+            text: item.text,
+            url: item.url,
+            parentItem: { id: 'bookmarks', text: 'Bookmarks' },
+          };
+          acc.push(enrichWithInteractionTracking(newItem, state.megaMenuDocked));
+          return acc;
+        }, []);
+      }
+    }
+
     const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
+
+    const handleMegaMenu = () => {
+      chrome.setMegaMenuOpen(!state.megaMenuOpen);
+    };
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -88,22 +116,26 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        <div className={styles.mobileHeader}>
-          <Icon name="bars" size="xl" />
-          <IconButton
-            tooltip={t('navigation.megamenu.close', 'Close menu')}
-            name="times"
-            onClick={onClose}
-            size="xl"
-            variant="secondary"
-          />
-        </div>
+        {config.featureToggles.singleTopNav ? (
+          <MegaMenuHeader handleDockedMenu={handleDockedMenu} handleMegaMenu={handleMegaMenu} onClose={onClose} />
+        ) : (
+          <div className={styles.mobileHeader}>
+            <Icon name="bars" size="xl" />
+            <IconButton
+              tooltip={t('navigation.megamenu.close', 'Close menu')}
+              name="times"
+              onClick={onClose}
+              size="xl"
+              variant="secondary"
+            />
+          </div>
+        )}
         <nav className={styles.content}>
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
-                <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="center">
-                  {index === 0 && (
+                <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="start">
+                  {index === 0 && !config.featureToggles.singleTopNav && (
                     <IconButton
                       id="dock-menu-button"
                       className={styles.dockMenuButton}
@@ -136,39 +168,44 @@ export const MegaMenu = memo(
 
 MegaMenu.displayName = 'MegaMenu';
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  content: css({
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    minHeight: 0,
-    position: 'relative',
-  }),
-  mobileHeader: css({
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: theme.spacing(1, 1, 1, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+const getStyles = (theme: GrafanaTheme2) => {
+  const isSingleTopNav = config.featureToggles.singleTopNav;
+  return {
+    content: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: isSingleTopNav ? `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)` : '100%',
+      minHeight: 0,
+      position: 'relative',
+    }),
+    mobileHeader: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: theme.spacing(1, 1, 1, 2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
 
-    [theme.breakpoints.up('md')]: {
+      [theme.breakpoints.up('md')]: {
+        display: 'none',
+      },
+    }),
+    itemList: css({
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      listStyleType: 'none',
+      padding: theme.spacing(1, 1, 2, 1),
+      [theme.breakpoints.up('md')]: {
+        width: MENU_WIDTH,
+      },
+    }),
+    dockMenuButton: css({
       display: 'none',
-    },
-  }),
-  itemList: css({
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    listStyleType: 'none',
-    padding: theme.spacing(1, 1, 2, 1),
-    [theme.breakpoints.up('md')]: {
-      width: MENU_WIDTH,
-    },
-  }),
-  dockMenuButton: css({
-    display: 'none',
+      position: 'relative',
+      top: theme.spacing(1),
 
-    [theme.breakpoints.up('xl')]: {
-      display: 'inline-flex',
-    },
-  }),
-});
+      [theme.breakpoints.up('xl')]: {
+        display: 'inline-flex',
+      },
+    }),
+  };
+};

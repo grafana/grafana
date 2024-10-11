@@ -37,6 +37,7 @@ import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@gr
 import {
   generateQueryFromAdHocFilters,
   generateQueryFromFilters,
+  getTagWithoutScope,
   interpolateFilters,
 } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
@@ -180,7 +181,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
-  async labelValuesQuery(labelName?: string, query?: string): Promise<Array<{ text: string }>> {
+  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
@@ -202,7 +203,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2(scopeAndTag, query);
+      options = await this.languageProvider.getOptionsV2(scopeAndTag);
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
@@ -228,7 +229,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
     const query = generateQueryFromAdHocFilters(options.filters);
-    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''), query);
+    return this.tagValuesQuery(options.key, query);
+  }
+
+  async tagValuesQuery(tag: string, query: string): Promise<Array<{ text: string }>> {
+    let options;
+    try {
+      // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
+      // unless the tag has intrinsic scope
+      options = await this.languageProvider.getOptionsV2(tag, query);
+    } catch {
+      // For V1, the tag name (e.g. `http.status_code`) is enough
+      options = await this.languageProvider.getOptionsV1(getTagWithoutScope(tag));
+    }
+
+    return options.flatMap((option: SelectableValue<string>) =>
+      option.value !== undefined ? [{ text: option.value }] : []
+    );
   }
 
   init = async () => {
@@ -269,18 +286,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * Check if streaming for search queries is enabled (and available).
    *
    * We need to check:
-   * - the `traceQLStreaming` feature toggle, to disable streaming if customer support turned off the toggle in the past, which usually means that streaming does not work properly for the customer
-   * - the recently created Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
-   * - whether streaming is actually available based on the Tempo version, just as a sanity check
+   * - the Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
+   * - if Grafana Live is enabled
    *
    * @return true if streaming for search queries is enabled, false otherwise
    */
   isStreamingSearchEnabled() {
-    return (
-      (config.featureToggles.traceQLStreaming || this.streamingEnabled?.search) &&
-      this.isFeatureAvailable(FeatureName.streaming) &&
-      config.liveEnabled
-    );
+    return this.streamingEnabled?.search && config.liveEnabled;
   }
 
   isTraceQlMetricsQuery(query: string): boolean {
@@ -354,7 +366,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: this.streamingEnabled,
+              streaming: this.isStreamingSearchEnabled(),
             });
             subQueries.push(this.handleTraceQlQuery(options, targets, queryValue));
           }
@@ -388,7 +400,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValueFromFilters ?? '',
-            streaming: this.streamingEnabled,
+            streaming: this.isStreamingSearchEnabled(),
           });
 
           if (this.isStreamingSearchEnabled()) {

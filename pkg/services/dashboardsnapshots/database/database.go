@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -124,9 +123,9 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 		}
 
 		var userID int64
-		if identity.IsIdentityType(query.SignedInUser.GetID(), claims.TypeUser, claims.TypeServiceAccount) {
+		if query.SignedInUser.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 			var err error
-			userID, err = identity.UserIdentifier(query.SignedInUser.GetID())
+			userID, err = query.SignedInUser.GetInternalID()
 			if err != nil {
 				return err
 			}

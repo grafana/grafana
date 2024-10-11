@@ -45,7 +45,6 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken       string                                   `json:"-" xorm:"-"`
 	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
 
@@ -76,16 +75,9 @@ func (u *SignedInUser) GetRawIdentifier() string {
 	return u.UserUID
 }
 
-// Deprecated: use GetUID
+// GetInternalID implements Requester.
 func (u *SignedInUser) GetInternalID() (int64, error) {
-	switch {
-	case u.ApiKeyID != 0:
-		return u.ApiKeyID, nil
-	case u.IsAnonymous:
-		return 0, nil
-	default:
-	}
-	return u.UserID, nil
+	return identity.IntIdentifier(u.GetID())
 }
 
 // GetIdentityType implements Requester.
@@ -103,6 +95,11 @@ func (u *SignedInUser) GetIdentityType() claims.IdentityType {
 		return claims.TypeRenderService
 	}
 	return u.FallbackType
+}
+
+// IsIdentityType implements Requester.
+func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(u.GetIdentityType(), expected...)
 }
 
 // GetName implements identity.Requester.
@@ -183,7 +180,7 @@ func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
-	typ, id := u.GetID().Type(), u.GetID().ID()
+	typ, id := u.getTypeAndID()
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
@@ -258,7 +255,7 @@ func (u *SignedInUser) GetOrgRole() identity.RoleType {
 }
 
 // GetID returns namespaced id for the entity
-func (u *SignedInUser) GetID() identity.TypedID {
+func (u *SignedInUser) GetID() string {
 	ns, id := u.getTypeAndID()
 	return identity.NewTypedIDString(ns, id)
 }
@@ -324,8 +321,4 @@ func (u *SignedInUser) GetDisplayName() string {
 
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
-}
-
-func (u *SignedInUser) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
-	return u.IDTokenClaims
 }

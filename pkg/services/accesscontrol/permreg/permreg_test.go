@@ -51,7 +51,7 @@ func Test_permissionRegistry_RegisterPermission(t *testing.T) {
 		scope         string
 		wantKind      string
 		wantPrefixSet PrefixSet
-		wantSkip      bool
+		wantErr       bool
 	}{
 		{
 			name:          "register folders read",
@@ -67,16 +67,31 @@ func Test_permissionRegistry_RegisterPermission(t *testing.T) {
 			wantPrefixSet: PrefixSet{},
 		},
 		{
-			name:          "register an action on an unknown kind",
-			action:        "unknown:action",
-			scope:         "unknown:uid:*",
-			wantPrefixSet: PrefixSet{},
+			name:    "register an action on an unknown kind",
+			action:  "unknown:action",
+			scope:   "unknown:uid:*",
+			wantErr: true,
+		},
+		{
+			name:          "register an action that is already registered",
+			action:        "already:registered",
+			scope:         "already:uid:*",
+			wantPrefixSet: PrefixSet{"already:uid:": true},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pr := newPermissionRegistry()
-			pr.RegisterPermission(tt.action, tt.scope)
+
+			// Pretend that an action is registered
+			pr.actionScopePrefixes["already:registered"] = PrefixSet{"already:uid:": true}
+
+			err := pr.RegisterPermission(tt.action, tt.scope)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
 			got, ok := pr.actionScopePrefixes[tt.action]
 			require.True(t, ok)
 			for k, v := range got {
@@ -88,8 +103,14 @@ func Test_permissionRegistry_RegisterPermission(t *testing.T) {
 
 func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 	pr := newPermissionRegistry()
-	pr.RegisterPermission("folders:read", "folders:uid:")
-	pr.RegisterPermission("test-app.settings:read", "")
+	err := pr.RegisterPermission("folders:read", "folders:*")
+	require.NoError(t, err)
+	err = pr.RegisterPermission("dashboards:read", "dashboards:*")
+	require.NoError(t, err)
+	err = pr.RegisterPermission("dashboards:read", "folders:*")
+	require.NoError(t, err)
+	err = pr.RegisterPermission("test-app.settings:read", "")
+	require.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -113,6 +134,18 @@ func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 			name:    "valid folders read with kind level wildcard",
 			action:  "folders:read",
 			scope:   "folders:*",
+			wantErr: false,
+		},
+		{
+			name:    "valid dashboards read with dashboard scope",
+			action:  "dashboards:read",
+			scope:   "dashboards:uid:my_team_dash",
+			wantErr: false,
+		},
+		{
+			name:    "valid dashboards read with folder scope",
+			action:  "dashboards:read",
+			scope:   "folders:uid:my_team_folder",
 			wantErr: false,
 		},
 		{
@@ -166,8 +199,10 @@ func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 
 func Test_permissionRegistry_GetScopePrefixes(t *testing.T) {
 	pr := newPermissionRegistry()
-	pr.RegisterPermission("folders:read", "folders:uid:")
-	pr.RegisterPermission("test-app.settings:read", "")
+	err := pr.RegisterPermission("folders:read", "folders:uid:")
+	require.NoError(t, err)
+	err = pr.RegisterPermission("test-app.settings:read", "")
+	require.NoError(t, err)
 
 	tests := []struct {
 		name        string
