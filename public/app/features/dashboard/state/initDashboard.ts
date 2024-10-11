@@ -19,7 +19,15 @@ import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  DASHBOARD_FROM_LS_KEY,
+  DashboardDTO,
+  DashboardInitPhase,
+  DashboardRoutes,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -292,16 +300,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
-
-export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
-  store.setObject(DASHBOARD_FROM_LS_KEY, model);
-}
-
-export function removeDashboardToFetchFromLocalStorage() {
-  store.delete(DASHBOARD_FROM_LS_KEY);
-}
-
 function addPanelsFromLocalStorage(model: DashboardDTO) {
   // When creating new or adding panels to a dashboard from explore we load it from local storage
   const fromLS = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
@@ -314,6 +312,6 @@ function addPanelsFromLocalStorage(model: DashboardDTO) {
       model.dashboard.time = fromLS.dashboard.time;
     }
 
-    removeDashboardToFetchFromLocalStorage();
+    store.delete(DASHBOARD_FROM_LS_KEY);
   }
 }

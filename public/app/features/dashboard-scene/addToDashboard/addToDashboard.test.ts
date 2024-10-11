@@ -1,5 +1,5 @@
 import { dateTime } from '@grafana/data';
-import * as api from 'app/features/dashboard/state/initDashboard';
+import store from 'app/core/store';
 
 import { addToDashboard } from './addToDashboard';
 
@@ -7,7 +7,7 @@ describe('addToDashboard', () => {
   let spy: jest.SpyInstance;
 
   beforeAll(() => {
-    spy = jest.spyOn(api, 'setDashboardToFetchFromLocalStorage');
+    spy = jest.spyOn(store, 'setObject');
   });
 
   afterEach(() => {
@@ -23,7 +23,7 @@ describe('addToDashboard', () => {
       },
     });
 
-    const panel = spy.mock.calls[0][0].dashboard.panels[0];
+    const panel = spy.mock.calls[0][1].dashboard.panels[0];
     expect(panel.type).toEqual('table');
     expect(panel.options).toEqual({ showHeader: true });
   });
@@ -34,7 +34,7 @@ describe('addToDashboard', () => {
       timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-5m', to: 'now' } },
     });
 
-    const dashboard = spy.mock.calls[0][0].dashboard;
+    const dashboard = spy.mock.calls[0][1].dashboard;
     expect(dashboard.time.from).toEqual('now-5m');
     expect(dashboard.time.to).toEqual('now');
   });

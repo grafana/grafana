@@ -1,12 +1,9 @@
 import { locationUtil, TimeRange } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
+import store from 'app/core/store';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
-import {
-  removeDashboardToFetchFromLocalStorage,
-  setDashboardToFetchFromLocalStorage,
-} from 'app/features/dashboard/state/initDashboard';
-import { DashboardDTO } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardDTO } from 'app/types';
 
 export enum GenericError {
   UNKNOWN = 'unknown-error',
@@ -55,7 +52,7 @@ export function addToDashboard({
   }
 
   try {
-    setDashboardToFetchFromLocalStorage(dto);
+    store.setObject(DASHBOARD_FROM_LS_KEY, dto);
   } catch {
     return {
       error: AddToDashboardError.SET_DASHBOARD_LS,
@@ -69,7 +66,7 @@ export function addToDashboard({
     const didTabOpen = !!global.open(config.appUrl + dashboardURL, '_blank');
 
     if (!didTabOpen) {
-      removeDashboardToFetchFromLocalStorage();
+      store.delete(DASHBOARD_FROM_LS_KEY);
       return {
         error: GenericError.NAVIGATION,
         message: 'Could not navigate to the selected dashboard. Please try again.',

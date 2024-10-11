@@ -8,7 +8,7 @@ import { defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
-import * as initDashboard from 'app/features/dashboard/state/initDashboard';
+import store from 'app/core/store';
 import { DashboardSearchItemType } from 'app/features/search/types';
 
 import { AddToDashboardForm, Props } from './AddToDashboardForm';
@@ -228,7 +228,7 @@ describe('Error handling', () => {
 
   it('Shows an error if opening a new tab fails', async () => {
     jest.spyOn(global, 'open').mockReturnValue(null);
-    const removeDashboardSpy = jest.spyOn(initDashboard, 'removeDashboardToFetchFromLocalStorage');
+    const removeDashboardSpy = jest.spyOn(store, 'delete');
 
     await setup();
 
@@ -244,7 +244,7 @@ describe('Error handling', () => {
   });
 
   it('Shows an error if saving to localStorage fails', async () => {
-    jest.spyOn(initDashboard, 'setDashboardToFetchFromLocalStorage').mockImplementation(() => {
+    jest.spyOn(store, 'setObject').mockImplementation(() => {
       throw 'SOME ERROR';
     });
 
