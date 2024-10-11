@@ -45,7 +45,7 @@ You can also create custom templates to customize the content and format of noti
 
 This documentation provides step-by-step instructions for selecting templates in contact points, previewing templates, and creating custom templates using the Grafana UI.
 
-## Choose a notification template for a contact point
+## Select a notification template for a contact point
 
 To add an existing notification template to your contact point, follow these steps:
 
