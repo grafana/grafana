@@ -217,6 +217,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     <Stack justifyContent="flex-end" alignItems="center">
       {existing && (
         <Button
+          data-testid="save-rule"
           variant="primary"
           type="button"
           size="sm"
@@ -228,10 +229,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         </Button>
       )}
       <Button
+        data-testid="save-rule-and-exit"
         variant="primary"
         type="button"
         size="sm"
-        onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+        onClick={handleSubmit((values) => submit(values, false), onInvalid)}
         disabled={isSubmitting}
       >
         {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
