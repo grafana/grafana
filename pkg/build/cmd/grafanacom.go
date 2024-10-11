@@ -177,7 +177,6 @@ func publishPackages(cfg packaging.PublishConfig) error {
 	log.Printf("Creating release %s at grafana.com...\n", versionStr)
 
 	var (
-		sfx     string
 		pth     string
 		grafana = "grafana"
 	)
@@ -188,7 +187,6 @@ func publishPackages(cfg packaging.PublishConfig) error {
 	case config.EditionEnterprise:
 		grafana = "grafana-enterprise"
 		pth = "enterprise"
-		sfx = packaging.EnterpriseSfx
 	default:
 		return fmt.Errorf("unrecognized edition %q", cfg.Edition)
 	}
@@ -200,8 +198,7 @@ func publishPackages(cfg packaging.PublishConfig) error {
 		pth = path.Join(pth, packaging.ReleaseFolder)
 	}
 
-	product := fmt.Sprintf("grafana%s", sfx)
-	pth = path.Join(pth, product)
+	pth = path.Join(pth)
 	baseArchiveURL := &url.URL{
 		Scheme: "https",
 		Host:   "dl.grafana.com",
