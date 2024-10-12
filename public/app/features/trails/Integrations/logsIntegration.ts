@@ -22,11 +22,9 @@ export async function fetchLokiDataSources(): Promise<DataSourceSettings[]> {
   const dataSourcesReq: BackendSrvRequest = { url: 'api/datasources' };
   const { data } = await lastValueFrom<FetchResponse<DataSourceSettings[]>>(getBackendSrv().fetch(dataSourcesReq));
   return data.filter((d) => d.type === 'loki');
-  // return ['000000193'];
 }
 
 export function buildRecordingRuleURL(datasourceSettings: DataSourceSettings): string {
-  // return `https://ops.grafana-ops.net/api/prometheus/000000193/api/v1/rules`;
   return `api/prometheus/${datasourceSettings.uid}/api/v1/rules`;
 }
 
