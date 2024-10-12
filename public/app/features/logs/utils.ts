@@ -17,7 +17,6 @@ import {
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
-import {number} from "yargs";
 
 /**
  * Returns the log level of a log line.
