@@ -1,7 +1,14 @@
 import { queryByTestId, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  DataSourcePluginMeta,
+  GrafanaConfig,
+  PluginMetaInfo,
+  PluginType,
+  locationUtil,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { DataSourceModal, DataSourceModalProps } from './DataSourceModal';
@@ -73,6 +80,12 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   };
 });
 
+locationUtil.initialize({
+  config: { appSubUrl: '/my-sub-path' } as GrafanaConfig,
+  getTimeRangeForUrl: jest.fn(),
+  getVariablesUrlParams: jest.fn(),
+});
+
 const getListMock = jest.fn();
 const getInstanceSettingsMock = jest.fn();
 beforeEach(() => {
@@ -95,6 +108,10 @@ describe('DataSourceDropdown', () => {
       await user.keyboard('foobarbaz'); //Search for a DS that should not exist
 
       expect(screen.queryAllByText('Configure a new data source')).toHaveLength(2);
+      screen.queryAllByRole('link').forEach((link) => {
+        // It should point to the new data source page including any sub url configured
+        expect(link).toHaveAttribute('href', '/my-sub-path/connections/datasources/new');
+      });
     });
 
     it('only displays the file drop area when the ff is enabled', async () => {

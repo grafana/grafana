@@ -80,5 +80,7 @@ func (cfg *Cfg) readAzureSettings() {
 
 	azureSettings.ForwardSettingsPlugins = util.SplitString(azureSection.Key("forward_settings_to_plugins").String())
 
+	azureSettings.AzureEntraPasswordCredentialsEnabled = azureSection.Key("azure_entra_password_credentials_enabled").MustBool(false)
+
 	cfg.Azure = azureSettings
 }

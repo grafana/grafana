@@ -7,7 +7,7 @@ Triage helps ensure that GitHub issues resolve quickly by:
 - Lowering the issue count by preventing duplicate issues.
 - Streamlining the development process by preventing duplicate discussions.
 
-This document gives you some ideas on what you can do to help. For more information, read more about [how the core Grafana team triage issues](/ISSUE_TRIAGE.md).
+This document gives you some ideas on what you can do to help. For more information, read more about [how the core Grafana team triage issues](/contribute/ISSUE_TRIAGE.md).
 
 ## Improve issues
 
@@ -23,9 +23,9 @@ Investigate issues that we haven't been able to reproduce yet. In some cases, th
 
 ## Vote on issues
 
-Use [GitHub reactions](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) to let us know what's important to you. Vote on bugs if you've experienced the same problem. **Don't vote, or react, by commenting on the issue.**
+Use [GitHub reactions](https://github.blog/news-insights/product-news/add-reactions-to-pull-requests-issues-and-comments/) to let us know what's important to you. Vote on bugs if you've experienced the same problem. **Don't vote, or react, by commenting on the issue.**
 
-Read more about [how we prioritize issues](/ISSUE_TRIAGE.md#4-prioritization-of-issues).
+Read more about [how we prioritize issues](/contribute/ISSUE_TRIAGE.md#4-prioritization-of-issues).
 
 ## Report duplicates
 

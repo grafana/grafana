@@ -34,6 +34,13 @@
                 },
                 "value": {
                   "type": "string"
+                },
+                "values": {
+                  "description": "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false
@@ -213,6 +220,13 @@
                       },
                       "value": {
                         "type": "string"
+                      },
+                      "values": {
+                        "description": "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     },
                     "additionalProperties": false

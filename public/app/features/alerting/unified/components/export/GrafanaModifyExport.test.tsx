@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DashboardSearchItemType } from '../../../../search/types';
-import { mockExportApi, mockSearchApi, setupMswServer } from '../../mockApi';
-import { mockDashboardSearchItem, mockDataSource } from '../../mocks';
+import { mockExportApi, setupMswServer } from '../../mockApi';
+import { mockDataSource } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 
@@ -56,9 +55,14 @@ const dataSources = {
 };
 
 function renderModifyExport(ruleId: string) {
-  render(<Route path="/alerting/:id/modify-export" component={GrafanaModifyExport} />, {
-    historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
-  });
+  render(
+    <Routes>
+      <Route path="/alerting/:id/modify-export" element={<GrafanaModifyExport />} />
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
+    }
+  );
 }
 
 const server = setupMswServer();
@@ -67,15 +71,6 @@ describe('GrafanaModifyExport', () => {
   setupDataSources(dataSources.default);
 
   it('Should render edit form for the specified rule', async () => {
-    mockSearchApi(server).search([
-      mockDashboardSearchItem({
-        title: grafanaRulerRule.grafana_alert.title,
-        uid: grafanaRulerRule.grafana_alert.namespace_uid,
-        url: '',
-        tags: [],
-        type: DashboardSearchItemType.DashFolder,
-      }),
-    ]);
     mockExportApi(server).modifiedExport(grafanaRulerRule.grafana_alert.namespace_uid, {
       yaml: 'Yaml Export Content',
       json: 'Json Export Content',

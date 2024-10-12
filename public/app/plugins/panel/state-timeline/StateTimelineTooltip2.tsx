@@ -2,16 +2,17 @@ import { ReactNode } from 'react';
 
 import { FieldType, TimeRange } from '@grafana/data';
 import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
-import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
+import { TooltipDisplayMode } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
 import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
-import { getDataLinks } from '../status-history/utils';
-import { TimeSeriesTooltipProps, getStyles } from '../timeseries/TimeSeriesTooltip';
+import { getDataLinks, getFieldActions } from '../status-history/utils';
+import { TimeSeriesTooltipProps } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
@@ -30,9 +31,8 @@ export const StateTimelineTooltip2 = ({
   timeRange,
   withDuration,
   maxHeight,
+  replaceVariables,
 }: StateTimelineTooltip2Props) => {
-  const styles = useStyles2(getStyles);
-
   const xField = series.fields[0];
 
   const dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
@@ -71,17 +71,18 @@ export const StateTimelineTooltip2 = ({
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
+    const actions = getFieldActions(series, field, replaceVariables!);
 
-    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
+    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
   }
 
   const headerItem: VizTooltipItem = {
-    label: xField.type === FieldType.time ? '' : xField.state?.displayName ?? xField.name,
+    label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
     value: xVal,
   };
 
   return (
-    <div className={styles.wrapper}>
+    <VizTooltipWrapper>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
       <VizTooltipContent
         items={contentItems}
@@ -90,6 +91,6 @@ export const StateTimelineTooltip2 = ({
         maxHeight={maxHeight}
       />
       {footer}
-    </div>
+    </VizTooltipWrapper>
   );
 };

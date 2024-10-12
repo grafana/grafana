@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Icon, useStyles2, Stack } from '@grafana/ui';
+import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
@@ -12,11 +12,11 @@ import {
   getFirstActiveAt,
   isAlertingRule,
 } from 'app/features/alerting/unified/utils/rules';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
-import { AlertingRule, AlertInstanceTotalState, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
+import { AlertInstanceTotalState, AlertingRule, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { UnifiedAlertListOptions } from '../types';
@@ -63,7 +63,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
               ? getGrafanaInstancesTotal(ruleWithLocation.filteredInstanceTotals)
               : undefined;
 
-          const href = createUrl(
+          const href = createRelativeUrl(
             `/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
             { returnTo: returnTo ?? '' }
           );

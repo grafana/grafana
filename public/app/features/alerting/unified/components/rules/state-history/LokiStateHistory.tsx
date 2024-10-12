@@ -10,7 +10,7 @@ import { Alert, Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { AlertLabels } from '../../AlertLabels';
-import { HoverCard } from '../../HoverCard';
+import { PopupCard } from '../../HoverCard';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';
 import { LogTimelineViewer } from './LogTimelineViewer';
@@ -186,7 +186,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
           <Label htmlFor="instancesSearchInput">
             <Stack gap={0.5}>
               <span>Filter instances</span>
-              <HoverCard
+              <PopupCard
                 content={
                   <>
                     Use label matcher expression (like <code>{'{foo=bar}'}</code>) or click on an instance label to
@@ -195,7 +195,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
                 }
               >
                 <Icon name="info-circle" size="sm" />
-              </HoverCard>
+              </PopupCard>
             </Stack>
           </Label>
         }

@@ -17,7 +17,7 @@ title: Dashboard URL variables
 description: Use variables in dashboard URLs to add more context to your links
 weight: 250
 refs:
-  add-ad-hoc-filters:
+  ad-hoc-filters:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
     - pattern: /docs/grafana-cloud/
@@ -27,12 +27,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/
-  linking-overview:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/
-  template-and-variables:
+  variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
@@ -41,22 +36,37 @@ refs:
 
 # Dashboard URL variables
 
-Grafana can apply variable values passed as query parameters in dashboard URLs.
-For more information, refer to [Manage dashboard links](ref:manage-dashboard-links) and [Templates and variables](ref:template-and-variables).
+Dashboard URL [variables](ref:variables) allow you to provide more context when you share a dashboard URL.
 
-## Passing variables as query parameters
+For example, you could share a basic URL to your dashboard that looks like this:
 
-Grafana interprets query string parameters prefixed with `var-` as variables in the given dashboard.
+```
+https://${your-domain}/path/to/your/dashboard
+```
 
-For example, in this URL:
+This allows someone to navigate to the dashboard, but doesn't provide any helpful context that might be available.
+
+Instead, you can add dashboard variables, passed as query parameters in the dashboard URL, to provide a URL like this:
 
 ```
 https://${your-domain}/path/to/your/dashboard?var-example=value
 ```
 
-The query parameter `var-example=value` represents the dashboard variable `example` with a value of `value`.
+This allows you to provide added context to the dashboard when someone navigates to it.
 
-### Passing multiple values for a variable
+## Variables as query parameters
+
+Grafana interprets query string parameters prefixed with `var-` as variables in the given dashboard.
+
+For example:
+
+```
+https://${your-domain}/path/to/your/dashboard?var-example=value
+```
+
+In this URL, the query parameter `var-example=value` represents the dashboard variable `example` with a value of `value`.
+
+### Multiple values for a variable
 
 To pass multiple values, repeat the variable parameter once for each value:
 
@@ -68,34 +78,38 @@ Grafana interprets `var-example=value1&var-example=value2` as the dashboard vari
 
 ### Example
 
-This example in [Grafana Play](https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1h) passes the variable `server` with multiple values, and the variables `app` and `interval` with a single value each.
+[This dashboard in Grafana Play](https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1h) passes the variable `server` with multiple values, and the variables `app` and `interval` with a single value each.
 
-## Adding variables to dashboard links
+## Ad hoc filters
 
-Grafana can add variables to dashboard links when you generate them from a dashboard's settings. For more information and steps to add variables, refer to [Manage dashboard links](ref:manage-dashboard-links).
+Ad hoc filters apply key/value filters to all metric queries that use the specified data source. For more information, refer to [Add ad hoc filters](ref:ad-hoc-filters).
 
-## Passing ad hoc filters
+To pass an ad hoc filter as a query parameter, use the variable syntax to pass the ad hoc filter variable. Then provide the key, operator, and value as a pipe-separated list.
 
-Ad hoc filters apply key/value filters to all metric queries that use a specified data source. For more information, refer to [Add ad hoc filters](ref:add-ad-hoc-filters).
-
-To pass an ad hoc filter as a query parameter, use the variable syntax to pass the ad hoc filter variable, and also provide the key, the operator as the value, and the value as a pipe-separated list.
-
-For example, in this URL:
+For example:
 
 ```
 https://${your-domain}/path/to/your/dashboard?var-adhoc=example_key|=|example_value
 ```
 
-The query parameter `var-adhoc=key|=|value` applies the ad hoc filter configured as the `adhoc` dashboard variable using the `example_key` key, the `=` operator, and the `example_value` value.
+In this URL, the query parameter `var-adhoc=key|=|value` applies the ad hoc filter configured as the `adhoc` dashboard variable using the `example_key` key, the `=` operator, and the `example_value` value.
 
-{{% admonition type="note" %}}
-When sharing URLs with ad hoc filters, remember to encode the URL. In the above example, replace the pipes (`|`) with `%7C` and the equality operator (`=`) with `%3D`.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+When sharing URLs with ad hoc filters, remember to encode the URL. In the preceding example, replace the pipes (`|`) with `%7C` and the equality operator (`=`) with `%3D`.
+{{< /admonition >}}
 
 ### Example
 
-[This example in Grafana Play](https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica) passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
+[This dashboard in Grafana Play](https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica) passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
 
-## Controlling time range using the URL
+## Time range control using the URL
 
-To set a dashboard's time range, use the `from`, `to`, `time`, and `time.window` query parameters. Because these are not variables, they do not require the `var-` prefix. For more information, see the [Linking overview](ref:linking-overview).
+{{< docs/shared lookup="dashboards/time-range-URLs.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Variables in dashboard links
+
+When you create dashboard links the dashboard settings, you can have current dashboard variables included in the link by selecting that option:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-link-variables-11.1.png" max-width="500px" alt="Dashboard link page with variables option selected" >}}
+
+For steps to add variables to dashboard links, refer to [Manage dashboard links](ref:manage-dashboard-links).

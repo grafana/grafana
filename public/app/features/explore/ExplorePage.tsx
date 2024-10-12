@@ -1,22 +1,30 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { Badge, ErrorBoundaryAlert, Modal, useStyles2, useTheme2 } from '@grafana/ui';
+import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
+
+import { RowActionComponents } from '../query/components/QueryActionComponent';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { QueriesDrawerContextProvider, useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
+import { QUERY_LIBRARY_LOCAL_STORAGE_KEYS } from './QueryLibrary/QueryLibrary';
+import { queryLibraryTrackAddFromQueryRow } from './QueryLibrary/QueryLibraryAnalyticsEvents';
+import { QueryTemplateForm } from './QueryLibrary/QueryTemplateForm';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -26,6 +34,7 @@ import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
+const QUERY_LIBRARY_ACTION_KEY = 'queryLibraryAction';
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   return (
@@ -55,6 +64,11 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const correlationDetails = useSelector(selectCorrelationDetails);
   const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
+  const [queryToAdd, setQueryToAdd] = useState<DataQuery | undefined>();
+  const [showQueryLibraryBadgeButton, setShowQueryLibraryBadgeButton] = useLocalStorage(
+    QUERY_LIBRARY_LOCAL_STORAGE_KEYS.explore.newButton,
+    true
+  );
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -63,6 +77,38 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
       sectionNav: navModel,
     });
   }, [chrome, navModel]);
+
+  useEffect(() => {
+    const hasQueryLibrary = config.featureToggles.queryLibrary || false;
+    if (hasQueryLibrary) {
+      RowActionComponents.addKeyedExtraRenderAction(QUERY_LIBRARY_ACTION_KEY, {
+        scope: CoreApp.Explore,
+        queryActionComponent: (props) =>
+          showQueryLibraryBadgeButton ? (
+            <Badge
+              key={props.key}
+              text={`New: ${t('query-operation.header.save-to-query-library', 'Save to query library')}`}
+              icon="save"
+              color="blue"
+              onClick={() => {
+                setQueryToAdd(props.query);
+                setShowQueryLibraryBadgeButton(false);
+              }}
+              style={{ cursor: 'pointer' }}
+            />
+          ) : (
+            <QueryOperationAction
+              key={props.key}
+              title={t('query-operation.header.save-to-query-library', 'Save to query library')}
+              icon="save"
+              onClick={() => {
+                setQueryToAdd(props.query);
+              }}
+            />
+          ),
+      });
+    }
+  }, [showQueryLibraryBadgeButton, setShowQueryLibraryBadgeButton]);
 
   useKeyboardShortcuts();
 
@@ -105,6 +151,24 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
           />
         </ExploreDrawer>
       )}
+      <Modal
+        title={t('explore.query-template-modal.add-title', 'Add query to Query Library')}
+        isOpen={queryToAdd !== undefined}
+        onDismiss={() => setQueryToAdd(undefined)}
+      >
+        <QueryTemplateForm
+          onCancel={() => {
+            setQueryToAdd(undefined);
+          }}
+          onSave={(isSuccess) => {
+            if (isSuccess) {
+              setQueryToAdd(undefined);
+              queryLibraryTrackAddFromQueryRow(queryToAdd?.datasource?.type || '');
+            }
+          }}
+          queryToAdd={queryToAdd!}
+        />
+      </Modal>
     </div>
   );
 }

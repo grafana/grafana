@@ -151,6 +151,17 @@ describe('LokiQueryBuilderOptions', () => {
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
+
+  it('does not show instant type when using a log query', async () => {
+    setup({ expr: '{foo="bar"}', queryType: LokiQueryType.Instant });
+    expect(screen.queryByText(/Instant/)).not.toBeInTheDocument();
+  });
+
+  it('does not show instant type in the options when using a log query', async () => {
+    setup({ expr: '{foo="bar"}', step: '1m' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.queryByText(/Instant/)).not.toBeInTheDocument();
+  });
 });
 
 function setup(queryOverrides: Partial<LokiQuery> = {}) {

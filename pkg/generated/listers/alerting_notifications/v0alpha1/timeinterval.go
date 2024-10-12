@@ -6,8 +6,8 @@ package v0alpha1
 
 import (
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -24,25 +24,17 @@ type TimeIntervalLister interface {
 
 // timeIntervalLister implements the TimeIntervalLister interface.
 type timeIntervalLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v0alpha1.TimeInterval]
 }
 
 // NewTimeIntervalLister returns a new TimeIntervalLister.
 func NewTimeIntervalLister(indexer cache.Indexer) TimeIntervalLister {
-	return &timeIntervalLister{indexer: indexer}
-}
-
-// List lists all TimeIntervals in the indexer.
-func (s *timeIntervalLister) List(selector labels.Selector) (ret []*v0alpha1.TimeInterval, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v0alpha1.TimeInterval))
-	})
-	return ret, err
+	return &timeIntervalLister{listers.New[*v0alpha1.TimeInterval](indexer, v0alpha1.Resource("timeinterval"))}
 }
 
 // TimeIntervals returns an object that can list and get TimeIntervals.
 func (s *timeIntervalLister) TimeIntervals(namespace string) TimeIntervalNamespaceLister {
-	return timeIntervalNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return timeIntervalNamespaceLister{listers.NewNamespaced[*v0alpha1.TimeInterval](s.ResourceIndexer, namespace)}
 }
 
 // TimeIntervalNamespaceLister helps list and get TimeIntervals.
@@ -60,26 +52,5 @@ type TimeIntervalNamespaceLister interface {
 // timeIntervalNamespaceLister implements the TimeIntervalNamespaceLister
 // interface.
 type timeIntervalNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all TimeIntervals in the indexer for a given namespace.
-func (s timeIntervalNamespaceLister) List(selector labels.Selector) (ret []*v0alpha1.TimeInterval, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v0alpha1.TimeInterval))
-	})
-	return ret, err
-}
-
-// Get retrieves the TimeInterval from the indexer for a given namespace and name.
-func (s timeIntervalNamespaceLister) Get(name string) (*v0alpha1.TimeInterval, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v0alpha1.Resource("timeinterval"), name)
-	}
-	return obj.(*v0alpha1.TimeInterval), nil
+	listers.ResourceIndexer[*v0alpha1.TimeInterval]
 }

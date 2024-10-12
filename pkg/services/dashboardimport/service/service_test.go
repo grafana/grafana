@@ -83,7 +83,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
-		userID, err := identity.IntIdentifier(importDashboardArg.User.GetNamespacedID())
+		userID, err := identity.IntIdentifier(importDashboardArg.User.GetID())
 		require.NoError(t, err)
 
 		require.NotNil(t, importDashboardArg)
@@ -149,7 +149,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
-		userID, err := identity.IntIdentifier(importDashboardArg.User.GetNamespacedID())
+		userID, err := identity.IntIdentifier(importDashboardArg.User.GetID())
 		require.NoError(t, err)
 
 		require.NotNil(t, importDashboardArg)

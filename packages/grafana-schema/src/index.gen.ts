@@ -145,6 +145,3 @@ export type {
   BuiltinRoleRef,
   RoleBindingSubject
 } from './raw/rolebinding/x/rolebinding_types.gen';
-
-// Raw generated types from Team kind.
-export type { Team } from './raw/team/x/team_types.gen';

@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useMemo } from 'react';
-import { Unsubscribable } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneObjectBase,
-  VariableDependencyConfig,
   SceneGridLayout,
   SceneVariableSet,
   SceneComponentProps,
@@ -20,18 +18,18 @@ import {
   VizPanelMenu,
   VizPanelState,
   VariableValueSingle,
+  SceneVariable,
+  SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
-import { getMultiVariableValues } from '../utils/utils';
+import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
-import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
-import { LibraryVizPanel } from './LibraryVizPanel';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
-  body: VizPanel | LibraryVizPanel | AddLibraryPanelDrawer;
+  body: VizPanel;
   repeatedPanels?: VizPanel[];
   variableName?: string;
   itemHeight?: number;
@@ -42,13 +40,9 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
-  private _libPanelSubscription: Unsubscribable | undefined;
   private _prevRepeatValues?: VariableValueSingle[];
 
-  protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: this.state.variableName ? [this.state.variableName] : [],
-    onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
-  });
+  protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
   public constructor(state: DashboardGridItemState) {
     super(state);
@@ -59,53 +53,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   private _activationHandler() {
     if (this.state.variableName) {
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
-      this._performRepeat();
-    }
-
-    // Subscriptions that handles body updates, i.e. VizPanel -> LibraryVizPanel, AddLibPanelWidget -> LibraryVizPanel
-    this._subs.add(
-      this.subscribeToState((newState, prevState) => {
-        if (newState.body !== prevState.body) {
-          if (newState.body instanceof LibraryVizPanel) {
-            this.setupLibraryPanelChangeSubscription(newState.body);
-          }
-        }
-      })
-    );
-
-    // Initial setup of the lbrary panel subscription. Lib panels are lazy laded, so only then we can subscribe to the repeat config changes
-    if (this.state.body instanceof LibraryVizPanel) {
-      this.setupLibraryPanelChangeSubscription(this.state.body);
-    }
-
-    return () => {
-      this._libPanelSubscription?.unsubscribe();
-      this._libPanelSubscription = undefined;
-    };
-  }
-
-  private setupLibraryPanelChangeSubscription(panel: LibraryVizPanel) {
-    if (this._libPanelSubscription) {
-      this._libPanelSubscription.unsubscribe();
-      this._libPanelSubscription = undefined;
-    }
-
-    this._libPanelSubscription = panel.subscribeToState((newState) => {
-      if (newState._loadedPanel?.model.repeat) {
-        this._variableDependency.setVariableNames([newState._loadedPanel.model.repeat]);
-        this.setState({
-          variableName: newState._loadedPanel.model.repeat,
-          repeatDirection: newState._loadedPanel.model.repeatDirection,
-          maxPerRow: newState._loadedPanel.model.maxPerRow,
-        });
-        this._performRepeat();
-      }
-    });
-  }
-
-  private _onVariableUpdateCompleted(): void {
-    if (this.state.variableName) {
-      this._performRepeat();
+      this.performRepeat();
     }
   }
 
@@ -134,11 +82,8 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     }
   }
 
-  private _performRepeat() {
-    if (this.state.body instanceof AddLibraryPanelDrawer) {
-      return;
-    }
-    if (!this.state.variableName || this._variableDependency.hasDependencyInLoadingState()) {
+  public performRepeat() {
+    if (!this.state.variableName || sceneGraph.hasVariableDependencyInLoadingState(this)) {
       return;
     }
 
@@ -160,21 +105,35 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     const { values, texts } = getMultiVariableValues(variable);
 
     if (isEqual(this._prevRepeatValues, values)) {
+      // In some cases, like for variables that depend on time range, the panel query runners are waiting for the top level variable to complete
+      // So even when there was no change in the variable value (like in this case) we need to notify the query runners that the variable has completed it's update
+      this.notifyRepeatedPanelsWaitingForVariables(variable);
       return;
     }
 
-    // Needed to calculate item height
-    const prevRepeatCount = this._prevRepeatValues?.length ?? values.length;
-    this._prevRepeatValues = values;
-    const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
+    const panelToRepeat = this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    //  adding a placeholder in this case so that there is at least empty panel that can display error
+    const emptyVariablePlaceholderOption = {
+      values: [''],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
+
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+
     // Loop through variable values and create repeats
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < variableValues.length; index++) {
       const cloneState: Partial<VizPanelState> = {
         $variables: new SceneVariableSet({
           variables: [
-            new LocalValueVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
+            new LocalValueVariable({
+              name: variable.state.name,
+              value: variableValues[index],
+              text: String(variableTexts[index]),
+            }),
           ],
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,
@@ -190,15 +149,16 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
 
     const direction = this.getRepeatDirection();
     const stateChange: Partial<DashboardGridItemState> = { repeatedPanels: repeatedPanels };
-    const prevHeight = this.state.height ?? 0;
-    const maxPerRow = direction === 'h' ? this.getMaxPerRow() : 1;
-    const prevRowCount = Math.ceil(prevRepeatCount / maxPerRow);
-    const newRowCount = Math.ceil(repeatedPanels.length / maxPerRow);
+    const itemHeight = this.state.itemHeight ?? 10;
+    const prevHeight = this.state.height;
+    const maxPerRow = this.getMaxPerRow();
 
-    // If item height is not defined, calculate based on total height and row count
-    const itemHeight = this.state.itemHeight ?? prevHeight / prevRowCount;
-    stateChange.itemHeight = itemHeight;
-    stateChange.height = Math.ceil(newRowCount * itemHeight);
+    if (direction === 'h') {
+      const rowCount = Math.ceil(repeatedPanels.length / maxPerRow);
+      stateChange.height = rowCount * itemHeight;
+    } else {
+      stateChange.height = repeatedPanels.length * itemHeight;
+    }
 
     this.setState(stateChange);
 
@@ -210,8 +170,63 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       }
     }
 
+    this._prevRepeatValues = values;
+
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
+  }
+
+  public setRepeatByVariable(variableName: string | undefined) {
+    const stateUpdate: Partial<DashboardGridItemState> = { variableName };
+
+    if (variableName && !this.state.repeatDirection) {
+      stateUpdate.repeatDirection = 'h';
+    }
+
+    if (this.state.body.state.$variables) {
+      this.state.body.setState({ $variables: undefined });
+    }
+
+    this.setState(stateUpdate);
+  }
+
+  /**
+   * Logic to prep panel for panel edit
+   */
+  public editingStarted() {
+    if (!this.state.variableName) {
+      return;
+    }
+
+    if (this.state.repeatedPanels?.length ?? 0 > 1) {
+      this.state.body.setState({
+        $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
+        $data: this.state.repeatedPanels![0].state.$data?.clone(),
+      });
+    }
+  }
+
+  /**
+   * Going back to dashboards logic
+   * withChanges true if there where changes made while in panel edit
+   */
+  public editingCompleted(withChanges: boolean) {
+    if (withChanges) {
+      this._prevRepeatValues = undefined;
+    }
+
+    if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
+      this.setState({ width: GRID_COLUMN_COUNT });
+    }
+  }
+
+  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
+    for (const panel of this.state.repeatedPanels ?? []) {
+      const queryRunner = getQueryRunnerFor(panel);
+      if (queryRunner) {
+        queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
+      }
+    }
   }
 
   public getMaxPerRow(): number {
@@ -239,14 +254,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       if (body instanceof VizPanel) {
         return <body.Component model={body} key={body.state.key} />;
       }
-
-      if (body instanceof LibraryVizPanel) {
-        return <body.Component model={body} key={body.state.key} />;
-      }
-
-      if (body instanceof AddLibraryPanelDrawer) {
-        return <body.Component model={body} key={body.state.key} />;
-      }
     }
 
     if (!repeatedPanels) {
@@ -263,6 +270,34 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       </div>
     );
   };
+}
+
+export class DashboardGridItemVariableDependencyHandler implements SceneVariableDependencyConfigLike {
+  constructor(private _gridItem: DashboardGridItem) {}
+
+  getNames(): Set<string> {
+    if (this._gridItem.state.variableName) {
+      return new Set([this._gridItem.state.variableName]);
+    }
+
+    return new Set();
+  }
+
+  hasDependencyOn(name: string): boolean {
+    return this._gridItem.state.variableName === name;
+  }
+
+  variableUpdateCompleted(variable: SceneVariable, hasChanged: boolean): void {
+    if (this._gridItem.state.variableName === variable.state.name) {
+      /**
+       * We do not really care if the variable has changed or not as we do an equality check in performRepeat
+       * And this function needs to be called even when variable valued id not change as performRepeat calls
+       * notifyRepeatedPanelsWaitingForVariables which is needed to notify panels waiting for variable to complete (even when the value did not change)
+       * This is for scenarios where the variable used for repeating is depending on time range.
+       */
+      this._gridItem.performRepeat();
+    }
+  }
 }
 
 function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow: number, itemHeight: number) {

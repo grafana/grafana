@@ -96,7 +96,7 @@ These are just a few examples of how Grafana can be used in M2M scenarios. The p
 You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and service accounts tokens to authenticate applications, such as Terraform, with the Grafana API.
 
 {{% admonition type="note" %}}
-Service accounts will eventually replace [API keys]({{< relref ".#api-keys" >}}) as the primary way to authenticate applications that interact with Grafana.
+Service accounts will eventually replace [API keys](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/) as the primary way to authenticate applications that interact with Grafana.
 {{% /admonition %}}
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:

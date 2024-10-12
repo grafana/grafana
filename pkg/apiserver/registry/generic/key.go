@@ -32,6 +32,11 @@ func ParseKey(raw string) (*Key, error) {
 	for i := 0; i < len(parts); i += 2 {
 		k := parts[i]
 		if i+1 >= len(parts) {
+			// Kube aggregator just appends the name to a key
+			if key.Group != "" && key.Resource != "" && key.Namespace == "" && key.Name == "" {
+				key.Name = k
+				return key, nil
+			}
 			return nil, fmt.Errorf("invalid key: %s", raw)
 		}
 		v := parts[i+1]
@@ -45,7 +50,7 @@ func ParseKey(raw string) (*Key, error) {
 		case "name":
 			key.Name = v
 		default:
-			return nil, fmt.Errorf("invalid key name: %s", key)
+			return nil, fmt.Errorf("invalid key part: %s", raw)
 		}
 	}
 

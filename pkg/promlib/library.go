@@ -32,7 +32,7 @@ type instance struct {
 	versionCache *cache.Cache
 }
 
-type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error
+type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error
 
 func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, extendOptions ExtendOptions) *Service {
 	if httpClientProvider == nil {
@@ -53,7 +53,7 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 		}
 
 		if extendOptions != nil {
-			err = extendOptions(ctx, settings, opts)
+			err = extendOptions(ctx, settings, opts, log)
 			if err != nil {
 				return nil, fmt.Errorf("error extending transport options: %v", err)
 			}
@@ -109,7 +109,8 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	if strings.EqualFold(req.Path, "version-detect") {
+	switch {
+	case strings.EqualFold(req.Path, "version-detect"):
 		versionObj, found := i.versionCache.Get("version")
 		if found {
 			return sender.Send(versionObj.(*backend.CallResourceResponse))
@@ -121,6 +122,13 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		}
 		i.versionCache.Set("version", vResp, cache.DefaultExpiration)
 		return sender.Send(vResp)
+
+	case strings.EqualFold(req.Path, "suggestions"):
+		resp, err := i.resource.GetSuggestions(ctx, req)
+		if err != nil {
+			return err
+		}
+		return sender.Send(resp)
 	}
 
 	resp, err := i.resource.Execute(ctx, req)

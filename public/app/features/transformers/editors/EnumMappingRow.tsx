@@ -104,6 +104,8 @@ const EnumMappingRow = ({
               {validationError && <FieldValidationMessage>{validationError}</FieldValidationMessage>}
             </td>
           ) : (
+            // TODO fix accessibility issue here
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
             <td onClick={onEnumValueClick} className={styles.clickableTableCell}>
               {value && value !== '' ? value : 'Click to edit'}
             </td>

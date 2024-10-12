@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -30,8 +31,8 @@ type AlertInstanceManager interface {
 }
 
 type StatePersister interface {
-	Async(ctx context.Context, cache *cache)
-	Sync(ctx context.Context, span trace.Span, states StateTransitions)
+	Async(ctx context.Context, instancesProvider AlertInstancesProvider)
+	Sync(ctx context.Context, span trace.Span, ruleKey ngModels.AlertRuleKeyWithGroup, states StateTransitions)
 }
 
 // Sender is an optional callback intended for sending the states to an alertmanager.
@@ -186,6 +187,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				continue
 			}
 
+			// nil safety.
+			annotations := ruleForEntry.Annotations
+			if annotations == nil {
+				annotations = make(map[string]string)
+			}
+
 			rulesStates, ok := orgStates[entry.RuleUID]
 			if !ok {
 				rulesStates = &ruleStates{states: make(map[data.Fingerprint]*State)}
@@ -213,7 +220,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				StartsAt:             entry.CurrentStateSince,
 				EndsAt:               entry.CurrentStateEnd,
 				LastEvaluationTime:   entry.LastEvalTime,
-				Annotations:          ruleForEntry.Annotations,
+				Annotations:          annotations,
 				ResultFingerprint:    resultFp,
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
@@ -233,7 +240,7 @@ func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprin
 // DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
 // to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
 // history.
-func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, reason string) []StateTransition {
+func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKeyWithGroup, reason string) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
 
@@ -283,7 +290,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
 func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []StateTransition {
-	ruleKey := rule.GetKey()
+	ruleKey := rule.GetKeyWithGroup()
 	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
 
 	if rule == nil || st.historian == nil || len(transitions) == 0 {
@@ -340,7 +347,7 @@ func (st *Manager) ProcessEvalResults(
 		statesToSend = st.updateLastSentAt(allChanges, evaluatedAt)
 	}
 
-	st.persister.Sync(ctx, span, allChanges)
+	st.persister.Sync(ctx, span, alertRule.GetKeyWithGroup(), allChanges)
 	if st.historian != nil {
 		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
@@ -369,9 +376,37 @@ func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Ti
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {
 	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
-		// TODO aggregate UID of datasources that returned NoData into one and provide as auxiliary info, probably annotation
+		// aggregate UID of datasources that returned NoData into one and provide as auxiliary info via annotationa. See: https://github.com/grafana/grafana/issues/88184
+		var refIds strings.Builder
+		var datasourceUIDs strings.Builder
+		// for deduplication of datasourceUIDs
+		dsUIDSet := make(map[string]bool)
+		for i, result := range results {
+			if refid, ok := result.Instance["ref_id"]; ok {
+				if i > 0 {
+					refIds.WriteString(",")
+				}
+				refIds.WriteString(refid)
+			}
+			if dsUID, ok := result.Instance["datasource_uid"]; ok {
+				if !dsUIDSet[dsUID] {
+					if i > 0 {
+						refIds.WriteString(",")
+					}
+					datasourceUIDs.WriteString(dsUID)
+					dsUIDSet[dsUID] = true
+				}
+			}
+		}
 		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
 		if len(transitions) > 0 {
+			for _, t := range transitions {
+				if t.State.Annotations == nil {
+					t.State.Annotations = make(map[string]string)
+				}
+				t.State.Annotations["datasource_uid"] = datasourceUIDs.String()
+				t.State.Annotations["ref_id"] = refIds.String()
+			}
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
 	}
@@ -521,6 +556,11 @@ func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*Stat
 	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotSaveNormalState)
 }
 
+func (st *Manager) GetStatusForRuleUID(orgID int64, alertRuleUID string) ngModels.RuleStatus {
+	states := st.GetStatesForRuleUID(orgID, alertRuleUID)
+	return StatesToRuleStatus(states)
+}
+
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.cache.set(s)
@@ -587,4 +627,35 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 
 func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
+}
+
+func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
+	status := ngModels.RuleStatus{
+		Health:              "ok",
+		LastError:           nil,
+		EvaluationTimestamp: time.Time{},
+	}
+	for _, state := range states {
+		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
+			status.EvaluationTimestamp = state.LastEvaluationTime
+		}
+
+		status.EvaluationDuration = state.EvaluationDuration
+
+		switch state.State {
+		case eval.Normal:
+		case eval.Pending:
+		case eval.Alerting:
+		case eval.Error:
+			status.Health = "error"
+		case eval.NoData:
+			status.Health = "nodata"
+		}
+
+		if state.Error != nil {
+			status.LastError = state.Error
+			status.Health = "error"
+		}
+	}
+	return status
 }

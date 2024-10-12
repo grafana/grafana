@@ -337,6 +337,10 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error configuring Secure Socks proxy for Transport: %w", err)
 		}
+	} else if sess.Config.HTTPClient != nil {
+		// Workaround for https://github.com/grafana/grafana/issues/91356 - PDC transport set above
+		// stays on the cached session after PDC is disabled
+		sess.Config.HTTPClient.Transport = nil
 	}
 	return sess, nil
 }

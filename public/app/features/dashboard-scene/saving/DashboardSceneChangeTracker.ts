@@ -14,12 +14,11 @@ import {
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
-import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -43,7 +42,6 @@ export class DashboardSceneChangeTracker {
     }
 
     // Any change in the panel should trigger a change detection
-    // The VizPanelManager includes configuration for the panel like repeat
     // The PanelTimeRange includes the overrides configuration
     if (
       payload.changedObject instanceof VizPanel ||
@@ -51,16 +49,6 @@ export class DashboardSceneChangeTracker {
       payload.changedObject instanceof PanelTimeRange
     ) {
       return true;
-    }
-    // VizPanelManager includes the repeat configuration
-    if (payload.changedObject instanceof VizPanelManager) {
-      if (
-        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeat') ||
-        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeatDirection') ||
-        Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'maxPerRow')
-      ) {
-        return true;
-      }
     }
     // SceneQueryRunner includes the DS configuration
     if (payload.changedObject instanceof SceneQueryRunner) {
@@ -77,16 +65,16 @@ export class DashboardSceneChangeTracker {
     if (payload.changedObject instanceof VizPanelLinks) {
       return true;
     }
-    if (payload.changedObject instanceof LibraryVizPanel) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
-        return true;
-      }
-    }
     if (payload.changedObject instanceof SceneRefreshPicker) {
       if (
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
       ) {
+        return true;
+      }
+    }
+    if (payload.changedObject instanceof LibraryPanelBehavior) {
+      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
         return true;
       }
     }
@@ -139,10 +127,16 @@ export class DashboardSceneChangeTracker {
   }
 
   private detectSaveModelChanges() {
-    this._changesWorker?.postMessage({
-      changed: transformSceneToSaveModel(this._dashboard),
-      initial: this._dashboard.getInitialSaveModel(),
-    });
+    const changedDashboard = transformSceneToSaveModel(this._dashboard);
+    const initialDashboard = this._dashboard.getInitialSaveModel();
+
+    // Objects must be stringify to ensure they are clonable, so they don't contain functions
+    const changed =
+      typeof changedDashboard === 'object' ? JSON.parse(JSON.stringify(changedDashboard)) : changedDashboard;
+    const initial =
+      typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard;
+
+    this._changesWorker?.postMessage({ initial, changed });
   }
 
   private hasMetadataChanges() {

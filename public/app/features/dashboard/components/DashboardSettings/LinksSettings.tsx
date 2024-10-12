@@ -39,12 +39,7 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
     pageNav = {
       text: title,
       subTitle: description,
-    };
-
-    const parentUrl = sectionNav.node.url;
-    pageNav.parentItem = sectionNav.node.parentItem && {
-      ...sectionNav.node.parentItem,
-      url: parentUrl,
+      parentItem: sectionNav.node.parentItem,
     };
   }
 

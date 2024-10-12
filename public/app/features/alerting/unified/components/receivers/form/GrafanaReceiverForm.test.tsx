@@ -1,23 +1,27 @@
-import { render, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
+import { config } from '@grafana/runtime';
+import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
+import {
+  setOnCallFeatures,
+  setOnCallIntegrations,
+} from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 
-import { ONCALL_INTEGRATION_V2_FEATURE } from '../../../api/onCallApi';
-import { AlertmanagerConfigBuilder, mockApi, setupMswServer } from '../../../mockApi';
-import { grafanaAlertNotifiersMock } from '../../../mockGrafanaNotifiers';
-import { onCallPluginMetaMock } from '../../../mocks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
+import { grantUserPermissions } from '../../../mocks';
+import { captureRequests } from '../../../mocks/server/events';
+import { renderWithProvider } from '../../contact-points/ContactPoints.test';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 
 import 'core-js/stable/structured-clone';
 
-const server = setupMswServer();
+setupMswServer();
 
 const ui = {
   loadingIndicator: byText('Loading notifiers...'),
@@ -35,51 +39,88 @@ const ui = {
 
 describe('GrafanaReceiverForm', () => {
   beforeEach(() => {
-    clearPluginSettingsCache();
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+    ]);
+  });
+
+  describe('alertingApiServer', () => {
+    beforeEach(() => {
+      config.featureToggles.alertingApiServer = true;
+    });
+    afterEach(() => {
+      config.featureToggles.alertingApiServer = false;
+    });
+
+    it('handles nested secure fields correctly', async () => {
+      const capturedRequests = captureRequests(
+        (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
+      );
+      const { user } = renderWithProvider(<GrafanaReceiverForm />);
+      const { type, click } = user;
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Select MQTT receiver and fill out basic required fields for contact point
+      await clickSelectOption(await byTestId('items.0.type').find(), 'MQTT');
+      await type(screen.getByLabelText(/^name/i), 'mqtt contact point');
+      await type(screen.getByLabelText(/broker url/i), 'broker url');
+      await type(screen.getByLabelText(/topic/i), 'topic');
+
+      // Fill out fields that we know will be nested secure fields
+      await click(screen.getByText(/optional mqtt settings/i));
+      await click(screen.getByRole('button', { name: /^Add$/i }));
+      await type(screen.getByLabelText(/ca certificate/i), 'some cert');
+
+      await click(screen.getByRole('button', { name: /save contact point/i }));
+
+      const [request] = await capturedRequests;
+      const postRequestbody = await request.clone().json();
+
+      const integrationPayload = postRequestbody.spec.integrations[0];
+      expect(integrationPayload.settings.tlsConfig).toEqual({
+        // Expect the payload to have included the value of a secret field
+        caCertificate: 'some cert',
+        // And to not have removed other values (which would happen if we incorrectly merged settings together)
+        insecureSkipVerify: false,
+      });
+
+      expect(postRequestbody).toMatchSnapshot();
+    });
   });
 
   describe('OnCall contact point', () => {
     it('OnCall contact point should be disabled if OnCall integration is not enabled', async () => {
-      mockApi(server).grafanaNotifiers(grafanaAlertNotifiersMock);
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: false });
+      disablePlugin(SupportedPlugin.OnCall);
 
-      const amConfig = getAmCortexConfig((_) => {});
-
-      render(<GrafanaReceiverForm alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME} config={amConfig} />, {
-        wrapper: TestProvider,
-      });
+      renderWithProvider(<GrafanaReceiverForm />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Grafana OnCall');
       // Clicking on a disable element shouldn't change the form value. email is the default value
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'email' });
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Alertmanager');
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'prometheus-alertmanager' });
     });
 
     it('OnCall contact point should support new and existing integration options if OnCall integration V2 is enabled', async () => {
-      mockApi(server).grafanaNotifiers(grafanaAlertNotifiersMock);
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
-      mockApi(server).oncall.getOnCallIntegrations([
+      setOnCallIntegrations([
         { display_name: 'nasa-oncall', value: 'nasa-oncall', integration_url: 'https://nasa.oncall.example.com' },
         { display_name: 'apac-oncall', value: 'apac-oncall', integration_url: 'https://apac.oncall.example.com' },
       ]);
 
-      const amConfig = getAmCortexConfig((_) => {});
-
-      const user = userEvent.setup();
-
-      render(<GrafanaReceiverForm alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME} config={amConfig} />, {
-        wrapper: TestProvider,
-      });
+      const { user } = renderWithProvider(<GrafanaReceiverForm />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Grafana OnCall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'oncall' });
       expect(ui.onCallIntegrationType.get()).toBeInTheDocument();
 
@@ -94,6 +135,7 @@ describe('GrafanaReceiverForm', () => {
 
       await user.type(ui.newOnCallIntegrationName.get(), 'emea-oncall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({
         'items.0.settings.integration_type': 'new_oncall_integration',
         'items.0.settings.integration_name': 'emea-oncall',
@@ -105,6 +147,7 @@ describe('GrafanaReceiverForm', () => {
 
       await clickSelectOption(ui.existingOnCallIntegrationSelect(0).get(), 'apac-oncall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({
         'items.0.settings.url': 'https://apac.oncall.example.com',
         'items.0.settings.integration_name': undefined,
@@ -112,10 +155,8 @@ describe('GrafanaReceiverForm', () => {
     });
 
     it('Should render URL text input field for OnCall concact point if OnCall plugin uses legacy integration', async () => {
-      mockApi(server).grafanaNotifiers(grafanaAlertNotifiersMock);
-      mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.features([]);
-      mockApi(server).oncall.getOnCallIntegrations([]);
+      setOnCallFeatures([]);
+      setOnCallIntegrations([]);
 
       const amConfig = getAmCortexConfig((config) =>
         config.addReceivers((receiver) =>
@@ -125,16 +166,7 @@ describe('GrafanaReceiverForm', () => {
         )
       );
 
-      render(
-        <GrafanaReceiverForm
-          alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
-          config={amConfig}
-          existing={amConfig.alertmanager_config.receivers![0]}
-        />,
-        {
-          wrapper: TestProvider,
-        }
-      );
+      renderWithProvider(<GrafanaReceiverForm contactPoint={amConfig.alertmanager_config.receivers![0]} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 

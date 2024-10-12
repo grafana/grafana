@@ -91,10 +91,10 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 		states = &ruleStates{states: make(map[data.Fingerprint]*State)}
 		c.states[stateCandidate.OrgID][stateCandidate.AlertRuleUID] = states
 	}
-	return states.getOrAdd(stateCandidate)
+	return states.getOrAdd(stateCandidate, log)
 }
 
-func (rs *ruleStates) getOrAdd(stateCandidate State) *State {
+func (rs *ruleStates) getOrAdd(stateCandidate State, log log.Logger) *State {
 	state, ok := rs.states[stateCandidate.CacheID]
 	// Check if the state with this ID already exists.
 	if !ok {
@@ -115,6 +115,10 @@ func (rs *ruleStates) getOrAdd(stateCandidate State) *State {
 	}
 	state.Annotations = stateCandidate.Annotations
 	state.Values = stateCandidate.Values
+	if state.ResultFingerprint != stateCandidate.ResultFingerprint {
+		log.Info("Result fingerprint has changed", "oldFingerprint", state.ResultFingerprint, "newFingerprint", stateCandidate.ResultFingerprint, "cacheID", state.CacheID, "stateLabels", state.Labels.String())
+		state.ResultFingerprint = stateCandidate.ResultFingerprint
+	}
 	rs.states[stateCandidate.CacheID] = state
 	return state
 }
@@ -342,8 +346,8 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	return states
 }
 
-// asInstances returns the whole content of the cache as a slice of AlertInstance.
-func (c *cache) asInstances(skipNormalState bool) []ngModels.AlertInstance {
+// GetAlertInstances returns the whole content of the cache as a slice of AlertInstance.
+func (c *cache) GetAlertInstances(skipNormalState bool) []ngModels.AlertInstance {
 	var states []ngModels.AlertInstance
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
