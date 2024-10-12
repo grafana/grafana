@@ -70,14 +70,6 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		RefIDTypes: make(map[string]string, len(input.Queries)),
 	}
 
-	// Ensure a valid time range
-	if input.From == "" {
-		input.From = "now-6h"
-	}
-	if input.To == "" {
-		input.To = "now"
-	}
-
 	for _, q := range input.Queries {
 		_, found := queryRefIDs[q.RefID]
 		if found {
@@ -123,7 +115,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 					PluginId: ds.Type,
 					UID:      ds.UID,
 					Request: &data.QueryDataRequest{
-						TimeRange: input.TimeRange,
+						TimeRange: getTimeRangeForQuery(&input.TimeRange, q.TimeRange),
 						Debug:     input.Debug,
 						// no queries
 					},
@@ -187,6 +179,19 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 		}
 	}
 	return rsp, nil
+}
+
+func getTimeRangeForQuery(parentTimerange, queryTimerange *data.TimeRange) data.TimeRange {
+	if queryTimerange != nil && queryTimerange.From != "" && queryTimerange.To != "" {
+		return *queryTimerange
+	}
+	if parentTimerange != nil && parentTimerange.To != "" && parentTimerange.From != "" {
+		return *parentTimerange
+	}
+	return data.TimeRange{
+		From: "0",
+		To:   "0",
+	}
 }
 
 func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSourceRef, id int64) (*data.DataSourceRef, error) {

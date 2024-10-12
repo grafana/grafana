@@ -274,7 +274,7 @@ export const RowsList = (props: RowsListProps) => {
       const rowExpanded = nestedDataField && tableState.expanded[row.id];
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
-        style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
+        style = { ...style, backgroundColor: theme.components.table.rowSelected };
         additionalProps = {
           'aria-selected': 'true',
         };
@@ -301,10 +301,12 @@ export const RowsList = (props: RowsListProps) => {
         );
         style.height = bbox.height;
       }
+      const { key, ...rowProps } = row.getRowProps({ style, ...additionalProps });
 
       return (
         <div
-          {...row.getRowProps({ style, ...additionalProps })}
+          key={key}
+          {...rowProps}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
@@ -353,7 +355,7 @@ export const RowsList = (props: RowsListProps) => {
       tableState.expanded,
       tableStyles,
       textWrapField,
-      theme.components.table.rowHoverBackground,
+      theme.components.table.rowSelected,
       theme.typography.fontSize,
       theme.typography.body.lineHeight,
       timeRange,
@@ -396,12 +398,15 @@ export const RowsList = (props: RowsListProps) => {
     }
   };
 
+  // Key the virtualizer for expanded rows
+  const expandedKey = Object.keys(tableState.expanded).join('|');
+
   return (
     <>
       <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
         <VariableSizeList
-          // This component needs an unmount/remount when row height or page changes
-          key={rowHeight + pageIndex}
+          // This component needs an unmount/remount when row height, page changes, or expanded rows change
+          key={`${rowHeight}${pageIndex}${expandedKey}`}
           height={listHeight}
           itemCount={itemCount}
           itemSize={getItemSize}

@@ -164,7 +164,7 @@ export const CorrelationTransformationAddModal = ({
           <pre>
             <Highlighter
               textToHighlight={exampleValue}
-              searchWords={[isExpValid ? getValues('expression') ?? '' : '']}
+              searchWords={[isExpValid ? (getValues('expression') ?? '') : '']}
               autoEscape={false}
             />
           </pre>

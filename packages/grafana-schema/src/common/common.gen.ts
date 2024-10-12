@@ -658,6 +658,7 @@ export enum BarGaugeValueMode {
  */
 export enum BarGaugeNamePlacement {
   Auto = 'auto',
+  Hidden = 'hidden',
   Left = 'left',
   Top = 'top',
 }

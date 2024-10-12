@@ -268,8 +268,8 @@ export class StreamingDataFrame implements DataFrame {
             type: f.type ?? FieldType.other,
             // transfer old values by type & name, unless we relied on labels to match fields
             values: isWide
-              ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
-                Array(this.length).fill(undefined)
+              ? (this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
+                Array(this.length).fill(undefined))
               : [],
           };
         });

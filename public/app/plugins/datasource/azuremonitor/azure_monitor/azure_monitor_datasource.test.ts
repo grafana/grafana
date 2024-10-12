@@ -748,7 +748,7 @@ describe('AzureMonitorDatasource', () => {
             if (target?.includes('$reg')) {
               return 'eastus';
             }
-            return target === `$${multiVariable.id}` ? 'foo,bar' : target ?? '';
+            return target === `$${multiVariable.id}` ? 'foo,bar' : (target ?? '');
           };
           const ds = new AzureMonitorDatasource(ctx.instanceSettings);
           //ds.azureMonitorDatasource.templateSrv = tsrv;

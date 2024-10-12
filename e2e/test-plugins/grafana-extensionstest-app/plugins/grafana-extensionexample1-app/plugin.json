@@ -1,0 +1,59 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "C App",
+  "id": "grafana-extensionexample1-app",
+  "preload": true,
+  "info": {
+    "keywords": ["app"],
+    "description": "Will extend root app with ui extensions",
+    "author": {
+      "name": "Myorg"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "name": "Default",
+      "path": "/a/grafana-extensionexample1-app",
+      "role": "Admin",
+      "addToNav": false,
+      "defaultNav": false
+    }
+  ],
+  "extensions": {
+    "exposedComponents": [
+      {
+        "id": "grafana-extensionexample1-app/reusable-component/v1",
+        "title": "Exposed component",
+        "description": "A component that can be reused by other app plugins."
+      }
+    ],
+    "addedLinks": [
+      {
+        "targets": [
+          "plugins/grafana-extensionstest-app/actions",
+          "plugins/grafana-extensionstest-app/use-plugin-links/v1"
+        ],
+        "title": "Go to A",
+        "description": "Navigating to pluging A"
+      },
+      {
+        "targets": ["plugins/grafana-extensionstest-app/use-plugin-links/v1"],
+        "title": "Basic link",
+        "description": "..."
+      }
+    ]
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.3.3",
+    "plugins": []
+  }
+}

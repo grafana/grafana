@@ -37,8 +37,7 @@ type CloudMigrationSnapshot struct {
 	UID            string `xorm:"uid"`
 	SessionUID     string `xorm:"session_uid"`
 	Status         SnapshotStatus
-	EncryptionKey  string `xorm:"encryption_key"` // stored in the unified secrets table
-	UploadURL      string `xorm:"upload_url"`
+	EncryptionKey  []byte `xorm:"-"` // stored in the unified secrets table
 	LocalDir       string `xorm:"local_directory"`
 	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
 	ErrorString    string `xorm:"error_string"`
@@ -69,34 +68,43 @@ type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
+	Name   string          `xorm:"name" json:"name"`
 	Type   MigrateDataType `xorm:"resource_type" json:"type"`
 	RefID  string          `xorm:"resource_uid" json:"refId"`
 	Status ItemStatus      `xorm:"status" json:"status"`
 	Error  string          `xorm:"error_string" json:"error"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
+	ParentName  string `xorm:"parent_name" json:"parentName"`
 }
 
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType        MigrateDataType = "DASHBOARD"
+	DatasourceDataType       MigrateDataType = "DATASOURCE"
+	FolderDataType           MigrateDataType = "FOLDER"
+	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
+	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	ContactPointType         MigrateDataType = "CONTACT_POINT"
+	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
+	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
+	MuteTimingType           MigrateDataType = "MUTE_TIMING"
 )
 
 type ItemStatus string
 
 const (
 	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
-	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
 type SnapshotResourceStats struct {
 	CountsByType   map[MigrateDataType]int
 	CountsByStatus map[ItemStatus]int
+	Total          int
 }
 
 // Deprecated, use GetSnapshotResult for the async workflow
@@ -142,10 +150,12 @@ type ListSnapshotsQuery struct {
 	SessionUID string
 	Page       int
 	Limit      int
+	Sort       string
 }
 
 type UpdateSnapshotCmd struct {
 	UID       string
+	SessionID string
 	Status    SnapshotStatus
 	Resources []CloudMigrationResource
 }
@@ -181,7 +191,8 @@ type Base64HGInstance struct {
 // GMS domain structs
 
 type MigrateDataRequest struct {
-	Items []MigrateDataRequestItem
+	Items           []MigrateDataRequestItem
+	ItemParentNames map[MigrateDataType]map[string](string)
 }
 
 type MigrateDataRequestItem struct {
@@ -208,8 +219,8 @@ type StartSnapshotResponse struct {
 	SnapshotID           string `json:"snapshotID"`
 	MaxItemsPerPartition uint32 `json:"maxItemsPerPartition"`
 	Algo                 string `json:"algo"`
-	UploadURL            string `json:"uploadURL"`
-	EncryptionKey        string `json:"encryptionKey"`
+	EncryptionKey        []byte `json:"encryptionKey"`
+	Metadata             []byte `json:"metadata"`
 }
 
 // Based on Grafana Migration Service DTOs

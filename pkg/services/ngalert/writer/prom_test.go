@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -140,6 +141,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	client := &testClient{}
 	writer := &PrometheusWriter{
 		client:  client,
+		clock:   clock.New(),
 		logger:  log.New("test"),
 		metrics: metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
 	}
@@ -151,7 +153,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
 
 	t.Run("error when frames are empty", func(t *testing.T) {
-		err := writer.Write(ctx, "test", now, emptyFrames, map[string]string{})
+		err := writer.Write(ctx, "test", now, emptyFrames, 1, map[string]string{})
 		require.Error(t, err)
 	})
 
@@ -161,7 +163,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 			return promremote.WriteResult{}, clientErr
 		}
 
-		err := writer.Write(ctx, "test", now, frames, map[string]string{})
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
 		require.Error(t, err)
 		require.ErrorIs(t, err, clientErr)
 	})
@@ -182,7 +184,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 			return promremote.WriteResult{}, nil
 		}
 
-		err := writer.Write(ctx, "test", now, frames, map[string]string{"extra": "label"})
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
 		require.NoError(t, err)
 	})
 
@@ -197,7 +199,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 					return promremote.WriteResult{}, clientErr
 				}
 
-				err := writer.Write(ctx, "test", now, frames, map[string]string{"extra": "label"})
+				err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
 				require.NoError(t, err)
 			})
 		}

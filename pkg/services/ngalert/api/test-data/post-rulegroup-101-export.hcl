@@ -1,4 +1,4 @@
-resource "grafana_rule_group" "rule_group_0000" {
+resource "grafana_rule_group" "rule_group_d3e8424bfbf66bc3" {
   org_id           = 1
   name             = "group101"
   folder_uid       = "e4584834-1a87-4dff-8913-8a4748dfca79"
@@ -85,6 +85,50 @@ resource "grafana_rule_group" "rule_group_0000" {
       group_interval  = "5s"
       repeat_interval = "5m"
       mute_timings    = ["test-mute"]
+    }
+  }
+  rule {
+    name = "recording rule"
+
+    data {
+      ref_id = "query"
+
+      relative_time_range {
+        from = 18000
+        to   = 10800
+      }
+
+      datasource_uid = "000000002"
+      model          = "{\"expr\":\"http_request_duration_microseconds_count\",\"hide\":false,\"interval\":\"\",\"intervalMs\":1000,\"legendFormat\":\"\",\"maxDataPoints\":100,\"refId\":\"query\"}"
+    }
+    data {
+      ref_id = "reduced"
+
+      relative_time_range {
+        from = 18000
+        to   = 10800
+      }
+
+      datasource_uid = "__expr__"
+      model          = "{\"expression\":\"query\",\"hide\":false,\"intervalMs\":1000,\"maxDataPoints\":100,\"reducer\":\"mean\",\"refId\":\"reduced\",\"type\":\"reduce\"}"
+    }
+    data {
+      ref_id = "condition"
+
+      relative_time_range {
+        from = 18000
+        to   = 10800
+      }
+
+      datasource_uid = "__expr__"
+      model          = "{\"expression\":\"$reduced > 10\",\"hide\":false,\"intervalMs\":1000,\"maxDataPoints\":100,\"refId\":\"condition\",\"type\":\"math\"}"
+    }
+
+    is_paused = false
+
+    record {
+      metric = "test_metric"
+      from   = "condition"
     }
   }
 }

@@ -1,7 +1,8 @@
 import { capitalize } from 'lodash';
 
-import { FieldType, standardEditorsRegistry } from '@grafana/data';
+import { FieldType } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { config } from '@grafana/runtime';
 import { ConnectionDirection } from 'app/features/canvas/element';
 import { SVGElements } from 'app/features/canvas/runtime/element';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
@@ -11,12 +12,14 @@ import { CanvasConnection, CanvasElementOptions } from '../panelcfg.gen';
 import { LineStyle } from '../types';
 
 import { LineStyleEditor } from './LineStyleEditor';
+import { ActionsEditor } from './element/ActionsEditor';
 import { DataLinksEditor } from './element/DataLinksEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addDataLinks: PanelOptionsSupplier<CanvasElementOptions>;
+  addActions: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
   addRadius: PanelOptionsSupplier<CanvasConnection>;
@@ -209,23 +212,25 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addDataLinks: (builder, context) => {
-    const category = ['Data links'];
-    builder
-      .addCustomEditor({
-        category,
-        id: 'enableOneClick',
-        path: 'oneClickLinks',
-        name: 'One-click',
-        description: 'When enabled, the top link in the list below works with a single click',
-        editor: standardEditorsRegistry.get('boolean').editor,
-      })
-      .addCustomEditor({
-        category,
-        id: 'dataLinks',
-        path: 'links',
-        name: '',
-        editor: DataLinksEditor,
-        settings: context.options,
-      });
+    builder.addCustomEditor({
+      category: config.featureToggles.vizActions ? ['Data links and actions'] : ['Data links'],
+      id: 'dataLinks',
+      path: 'links',
+      name: 'Links',
+      editor: DataLinksEditor,
+      settings: context.options,
+    });
+  },
+
+  addActions: (builder, context) => {
+    builder.addCustomEditor({
+      category: ['Data links and actions'],
+      id: 'actions',
+      path: 'actions',
+      name: 'Actions',
+      editor: ActionsEditor,
+      settings: context.options,
+      showIf: () => config.featureToggles.vizActions,
+    });
   },
 };

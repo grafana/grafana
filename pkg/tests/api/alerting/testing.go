@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -233,11 +234,23 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		ExecErrState:         gettable.ExecErrState,
 		IsPaused:             &gettable.IsPaused,
 		NotificationSettings: gettable.NotificationSettings,
+		Metadata:             gettable.Metadata,
 	}
 }
 
 type apiClient struct {
 	url string
+}
+
+type LegacyApiClient struct {
+	apiClient
+}
+
+func NewAlertingLegacyAPIClient(host, user, pass string) LegacyApiClient {
+	cli := newAlertingApiClient(host, user, pass)
+	return LegacyApiClient{
+		apiClient: cli,
+	}
 }
 
 func newAlertingApiClient(host, user, pass string) apiClient {
@@ -259,6 +272,42 @@ func (a apiClient) ReloadCachedPermissions(t *testing.T) {
 	}()
 	require.NoErrorf(t, err, "failed to reload permissions cache")
 	require.Equalf(t, http.StatusOK, resp.StatusCode, "failed to reload permissions cache")
+}
+
+// AssignReceiverPermission sends a request to access control API to assign permissions to a user, role, or team on a receiver.
+func (a apiClient) AssignReceiverPermission(t *testing.T, receiverUID string, cmd accesscontrol.SetResourcePermissionCommand) (int, string) {
+	t.Helper()
+
+	var assignment string
+	var assignTo string
+	if cmd.UserID != 0 {
+		assignment = "users"
+		assignTo = fmt.Sprintf("%d", cmd.UserID)
+	} else if cmd.TeamID != 0 {
+		assignment = "teams"
+		assignTo = fmt.Sprintf("%d", cmd.TeamID)
+	} else {
+		assignment = "builtInRoles"
+		assignTo = cmd.BuiltinRole
+	}
+
+	body := strings.NewReader(fmt.Sprintf(`{"permission": "%s"}`, cmd.Permission))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/access-control/receivers/%s/%s/%s", a.url, receiverUID, assignment, assignTo), body)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
 }
 
 // CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
@@ -772,7 +821,15 @@ func (a apiClient) GetRouteWithStatus(t *testing.T) (apimodels.Route, int, strin
 	return sendRequest[apimodels.Route](t, req, http.StatusOK)
 }
 
-func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (int, string) {
+func (a apiClient) GetRoute(t *testing.T) apimodels.Route {
+	t.Helper()
+
+	route, status, data := a.GetRouteWithStatus(t)
+	requireStatusCode(t, http.StatusOK, status, data)
+	return route
+}
+
+func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route, noProvenance bool) (int, string) {
 	t.Helper()
 
 	buf := bytes.Buffer{}
@@ -782,6 +839,9 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (i
 
 	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/policies", a.url), &buf)
 	req.Header.Add("Content-Type", "application/json")
+	if noProvenance {
+		req.Header.Add("X-Disable-Provenance", "true")
+	}
 	require.NoError(t, err)
 
 	client := &http.Client{}
@@ -794,6 +854,12 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (i
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(body)
+}
+
+func (a apiClient) UpdateRoute(t *testing.T, route apimodels.Route, noProvenance bool) {
+	t.Helper()
+	status, data := a.UpdateRouteWithStatus(t, route, noProvenance)
+	requireStatusCode(t, http.StatusAccepted, status, data)
 }
 
 func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.Frame, int, string) {
@@ -850,6 +916,44 @@ func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedConta
 	require.Equalf(t, http.StatusAccepted, status, body)
 }
 
+func (a apiClient) ExportReceiver(t *testing.T, name string, format string, decrypt bool) string {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/contact-points/export", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("name", name)
+	q.Set("format", format)
+	q.Set("decrypt", fmt.Sprintf("%v", decrypt))
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	requireStatusCode(t, http.StatusOK, resp.StatusCode, string(body))
+	return string(body)
+}
+
+func (a apiClient) ExportReceiverTyped(t *testing.T, name string, decrypt bool) apimodels.ContactPointExport {
+	t.Helper()
+
+	response := a.ExportReceiver(t, name, "json", decrypt)
+
+	var export apimodels.AlertingFileExport
+	require.NoError(t, json.Unmarshal([]byte(response), &export))
+	require.Len(t, export.ContactPoints, 1)
+	return export.ContactPoints[0]
+}
+
 func (a apiClient) GetAlertmanagerConfigWithStatus(t *testing.T) (apimodels.GettableUserConfig, int, string) {
 	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/alerts", a.url), nil)
@@ -866,6 +970,7 @@ func (a apiClient) GetActiveAlertsWithStatus(t *testing.T) (apimodels.AlertGroup
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
+	t.Helper()
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	require.NoError(t, err)
@@ -887,5 +992,6 @@ func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) 
 }
 
 func requireStatusCode(t *testing.T, expected, actual int, response string) {
+	t.Helper()
 	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
 }

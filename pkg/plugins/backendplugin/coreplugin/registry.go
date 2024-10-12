@@ -216,13 +216,13 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Elasticsearch:
-		svc = elasticsearch.ProvideService(httpClientProvider, tracer)
+		svc = elasticsearch.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider, features)
 	case Loki:
-		svc = loki.ProvideService(httpClientProvider, features, tracer)
+		svc = loki.ProvideService(httpClientProvider, tracer)
 	case OpenTSDB:
 		svc = opentsdb.ProvideService(httpClientProvider)
 	case Prometheus:
@@ -254,7 +254,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	if backendFactory == nil {
 		return nil, ErrCorePluginNotFound
 	}
-	bp, err := backendFactory(p.ID, p.Logger(), nil)
+	bp, err := backendFactory(p.ID, p.Logger(), tracer, nil)
 	if err != nil {
 		return nil, err
 	}

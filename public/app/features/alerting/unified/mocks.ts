@@ -12,8 +12,6 @@ import {
   DataSourceRef,
   PluginExtensionLink,
   PluginExtensionTypes,
-  PluginMeta,
-  PluginType,
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
@@ -144,6 +142,42 @@ export const mockRulerGrafanaRule = (
     ...partial,
   };
 };
+export const mockRulerGrafanaRecordingRule = (
+  partial: Partial<RulerGrafanaRuleDTO> = {},
+  partialDef: Partial<GrafanaRuleDefinition> = {}
+): RulerGrafanaRuleDTO => {
+  return {
+    grafana_alert: {
+      uid: '123',
+      title: 'myalert',
+      namespace_uid: '123',
+      rule_group: 'my-group',
+      condition: 'A',
+      record: {
+        metric: 'myalert',
+        from: 'A',
+      },
+      data: [
+        {
+          datasourceUid: '123',
+          refId: 'A',
+          queryType: 'huh',
+          model: {
+            refId: '',
+          },
+        },
+      ],
+      ...partialDef,
+    },
+    annotations: {
+      message: 'alert with severity "{{.warning}}}"',
+    },
+    labels: {
+      severity: 'warning',
+    },
+    ...partial,
+  };
+};
 
 export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {}): RulerAlertingRuleDTO => ({
   alert: 'alert1',
@@ -174,20 +208,6 @@ export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): Ru
   rules: [mockRulerAlertingRule()],
   ...partial,
 });
-
-export const promRuleFromRulerRule = (
-  rulerRule: RulerAlertingRuleDTO,
-  override?: Partial<AlertingRule>
-): AlertingRule => {
-  return mockPromAlertingRule({
-    name: rulerRule.alert,
-    query: rulerRule.expr,
-    labels: rulerRule.labels,
-    annotations: rulerRule.annotations,
-    type: PromRuleType.Alerting,
-    ...override,
-  });
-};
 
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {
@@ -765,6 +785,19 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
   });
 }
 
+export function getVanillaPromRule(override?: Partial<Omit<CombinedRule, 'rulerRule'>>) {
+  return mockCombinedRule({
+    namespace: {
+      groups: [],
+      name: 'Prometheus',
+      rulesSource: mockDataSource(),
+    },
+    promRule: mockPromAlertingRule(),
+    rulerRule: undefined,
+    ...override,
+  });
+}
+
 export function mockPluginLinkExtension(extension: Partial<PluginExtensionLink>): PluginExtensionLink {
   return {
     type: PluginExtensionTypes.link,
@@ -810,28 +843,3 @@ export function mockDashboardDto(
     meta: { ...meta },
   };
 }
-
-export const getMockPluginMeta: (id: string, name: string) => PluginMeta = (id, name) => {
-  return {
-    name,
-    id,
-    type: PluginType.app,
-    module: `plugins/${id}/module`,
-    baseUrl: `public/plugins/${id}`,
-    info: {
-      author: { name: 'Grafana Labs' },
-      description: name,
-      updated: '',
-      version: '',
-      links: [],
-      logos: {
-        small: '',
-        large: '',
-      },
-      screenshots: [],
-    },
-  };
-};
-
-export const labelsPluginMetaMock = getMockPluginMeta('grafana-labels-app', 'Grafana IRM Labels');
-export const onCallPluginMetaMock = getMockPluginMeta('grafana-oncall-app', 'Grafana OnCall');

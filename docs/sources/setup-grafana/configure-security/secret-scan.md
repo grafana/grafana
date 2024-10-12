@@ -46,7 +46,7 @@ Secret scanning is disabled by default. Outgoing connections are made once you e
 ## Before you begin
 
 - Ensure all your API keys have been migrated to service accounts.
-  For more information about service account migration, refer to [Migrate API keys to Grafana service accounts]({{< relref "../../administration/api-keys#migrate-api-keys-to-grafana-service-accounts" >}}).
+  For more information about service account migration, refer to [Migrate API keys to Grafana service accounts](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/).
 
 ## Configure secret scanning
 

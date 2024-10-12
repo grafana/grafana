@@ -9,7 +9,7 @@ describe('Geomap spatial operations', () => {
 
   it('Tests location auto option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.Tab.title('Transform data').should('be.visible').click();
+    e2e.components.Tab.title('Transformations').should('be.visible').click();
     e2e.components.Transforms.addTransformationButton().scrollIntoView().should('be.visible').click();
 
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
@@ -27,7 +27,7 @@ describe('Geomap spatial operations', () => {
 
   it('Tests location coords option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.Tab.title('Transform data').should('be.visible').click();
+    e2e.components.Tab.title('Transformations').should('be.visible').click();
     e2e.components.Transforms.addTransformationButton().scrollIntoView().should('be.visible').click();
 
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
@@ -51,7 +51,7 @@ describe('Geomap spatial operations', () => {
 
   it('Tests geoshash field column appears in table view', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.Tab.title('Transform data').should('be.visible').click();
+    e2e.components.Tab.title('Transformations').should('be.visible').click();
     e2e.components.Transforms.addTransformationButton().scrollIntoView().should('be.visible').click();
 
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
@@ -74,7 +74,7 @@ describe('Geomap spatial operations', () => {
 
   it('Tests location lookup option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
-    e2e.components.Tab.title('Transform data').should('be.visible').click();
+    e2e.components.Tab.title('Transformations').should('be.visible').click();
     e2e.components.Transforms.addTransformationButton().scrollIntoView().should('be.visible').click();
 
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();

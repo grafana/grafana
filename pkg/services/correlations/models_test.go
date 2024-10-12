@@ -14,13 +14,13 @@ func TestCorrelationModels(t *testing.T) {
 			config := &CorrelationConfig{
 				Field:  "field",
 				Target: map[string]any{},
-				Type:   ConfigTypeQuery,
 			}
 			cmd := &CreateCorrelationCommand{
 				SourceUID: "some-uid",
 				OrgId:     1,
 				TargetUID: &targetUid,
 				Config:    *config,
+				Type:      query,
 			}
 
 			require.NoError(t, cmd.Validate())
@@ -30,7 +30,7 @@ func TestCorrelationModels(t *testing.T) {
 			config := &CorrelationConfig{
 				Field:  "field",
 				Target: map[string]any{},
-				Type:   ConfigTypeQuery,
+				Type:   query,
 			}
 			cmd := &CreateCorrelationCommand{
 				SourceUID: "some-uid",
@@ -60,7 +60,7 @@ func TestCorrelationModels(t *testing.T) {
 	t.Run("CorrelationConfigType Validate", func(t *testing.T) {
 		t.Run("Successfully validates a correct type", func(t *testing.T) {
 			type test struct {
-				input     CorrelationConfigType
+				input     CorrelationType
 				assertion require.ErrorAssertionFunc
 			}
 
@@ -79,13 +79,12 @@ func TestCorrelationModels(t *testing.T) {
 		t.Run("Applies a default empty object if target is not defined", func(t *testing.T) {
 			config := CorrelationConfig{
 				Field: "field",
-				Type:  ConfigTypeQuery,
 			}
 
 			data, err := json.Marshal(config)
 			require.NoError(t, err)
 
-			require.Equal(t, `{"type":"query","field":"field","target":{}}`, string(data))
+			require.Equal(t, `{"field":"field","target":{}}`, string(data))
 		})
 	})
 }

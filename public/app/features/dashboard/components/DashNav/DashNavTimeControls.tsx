@@ -2,8 +2,8 @@ import { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
-import { config, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { defaultIntervals, getWeekStart, RefreshPicker } from '@grafana/ui';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { defaultIntervals, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -100,7 +100,7 @@ export class DashNavTimeControls extends Component<Props> {
     const timeZone = dashboard.getTimezone();
     const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
     const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
-    const weekStart = dashboard.weekStart || getWeekStart(config.bootData.user.weekStart);
+    const weekStart = dashboard.weekStart;
 
     let text: string | undefined = undefined;
     if (dashboard.refresh === AutoRefreshInterval) {

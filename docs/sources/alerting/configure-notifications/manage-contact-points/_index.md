@@ -76,11 +76,18 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+  mqtt:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-mqtt/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-mqtt/
 ---
 
 # Configure contact points
 
 Use contact points to select your preferred communication channel for receiving notifications when your alert rules are firing. You can add, edit, delete, export, and test a contact point.
+
+Testing a contact point is only available for Grafana Alertmanager.
 
 On the **Contact Points** tab, you can:
 
@@ -139,6 +146,8 @@ Complete the following steps to add templates to your contact point.
 
 ## Test a contact point
 
+** For Grafana Alertmanager only.**
+
 Complete the following steps to test a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
@@ -157,6 +166,7 @@ The following table lists the contact point integrations supported by Grafana.
 | Name                         | Type                      |
 | ---------------------------- | ------------------------- |
 | Alertmanager                 | `prometheus-alertmanager` |
+| Amazon SNS                   | `sns`                     |
 | Cisco Webex Teams            | `webex`                   |
 | DingDing                     | `dingding`                |
 | [Discord](ref:discord)       | `discord`                 |
@@ -164,6 +174,7 @@ The following table lists the contact point integrations supported by Grafana.
 | Google Chat                  | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Kafka REST Proxy             | `kafka`                   |
+| [MQTT](ref:mqtt)             | `mqtt`                    |
 | Line                         | `line`                    |
 | [Microsoft Teams](ref:teams) | `teams`                   |
 | [Opsgenie](ref:opsgenie)     | `opsgenie`                |

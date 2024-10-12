@@ -1,14 +1,12 @@
-import { isArray, omit, pick, isNil, omitBy } from 'lodash';
+import { get, has, isArray, isNil, omit, omitBy, reduce } from 'lodash';
 
 import {
-  AlertManagerCortexConfig,
   AlertmanagerReceiver,
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   Receiver,
-  Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { CloudNotifierType, NotifierDTO, NotifierType } from 'app/types';
+import { CloudNotifierType, NotificationChannelOption, NotifierDTO, NotifierType } from 'app/types';
 
 import {
   CloudChannelConfig,
@@ -121,62 +119,6 @@ export function formValuesToCloudReceiver(
   return recv;
 }
 
-// will add new receiver, or replace exisitng one
-export function updateConfigWithReceiver(
-  config: AlertManagerCortexConfig,
-  receiver: Receiver,
-  replaceReceiverName?: string
-): AlertManagerCortexConfig {
-  const oldReceivers = config.alertmanager_config.receivers ?? [];
-
-  // sanity check that name is not duplicated
-  if (receiver.name !== replaceReceiverName && !!oldReceivers.find(({ name }) => name === receiver.name)) {
-    throw new Error(`Duplicate receiver name ${receiver.name}`);
-  }
-
-  // sanity check that existing receiver exists
-  if (replaceReceiverName && !oldReceivers.find(({ name }) => name === replaceReceiverName)) {
-    throw new Error(`Expected receiver ${replaceReceiverName} to exist, but did not find it in the config`);
-  }
-
-  const updated: AlertManagerCortexConfig = {
-    ...config,
-    alertmanager_config: {
-      // @todo rename receiver on routes as necessary
-      ...config.alertmanager_config,
-      receivers: replaceReceiverName
-        ? oldReceivers.map((existingReceiver) =>
-            existingReceiver.name === replaceReceiverName ? receiver : existingReceiver
-          )
-        : [...oldReceivers, receiver],
-    },
-  };
-
-  // if receiver was renamed, rename it in routes as well
-  if (updated.alertmanager_config.route && replaceReceiverName && receiver.name !== replaceReceiverName) {
-    updated.alertmanager_config.route = renameReceiverInRoute(
-      updated.alertmanager_config.route,
-      replaceReceiverName,
-      receiver.name
-    );
-  }
-
-  return updated;
-}
-
-function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
-  const updated: Route = {
-    ...route,
-  };
-  if (updated.receiver === oldName) {
-    updated.receiver = newName;
-  }
-  if (updated.routes) {
-    updated.routes = updated.routes.map((route) => renameReceiverInRoute(route, oldName, newName));
-  }
-  return updated;
-}
-
 function cloudChannelConfigToFormChannelValues(
   id: string,
   type: CloudNotifierType,
@@ -209,19 +151,37 @@ function grafanaChannelConfigToFormChannelValues(
     disableResolveMessage: channel.disableResolveMessage,
   };
 
-  // work around https://github.com/grafana/alerting-squad/issues/100
-  notifier?.options.forEach((option) => {
-    if (option.secure && values.secureSettings[option.propertyName]) {
-      delete values.settings[option.propertyName];
-      values.secureFields[option.propertyName] = true;
-    }
-    if (option.secure && values.settings[option.propertyName]) {
-      values.secureSettings[option.propertyName] = values.settings[option.propertyName];
-      delete values.settings[option.propertyName];
-    }
-  });
-
   return values;
+}
+
+/**
+ * Recursively find all keys that should be marked a secure fields, using JSONpath for nested fields.
+ */
+export function getSecureFieldNames(notifier: NotifierDTO): string[] {
+  // eg. ['foo', 'bar.baz']
+  const secureFieldPaths: string[] = [];
+
+  // we'll pass in the prefix for each iteration so we can track the JSON path
+  function findSecureOptions(options: NotificationChannelOption[], prefix?: string) {
+    for (const option of options) {
+      const key = prefix ? `${prefix}.${option.propertyName}` : option.propertyName;
+
+      // if the field is a subform, recurse
+      if (option.subformOptions) {
+        findSecureOptions(option.subformOptions, key);
+        continue;
+      }
+
+      if (option.secure) {
+        secureFieldPaths.push(key);
+        continue;
+      }
+    }
+  }
+
+  findSecureOptions(notifier.options);
+
+  return secureFieldPaths;
 }
 
 export function formChannelValuesToGrafanaChannelConfig(
@@ -233,7 +193,7 @@ export function formChannelValuesToGrafanaChannelConfig(
 ): GrafanaManagedReceiverConfig {
   const channel: GrafanaManagedReceiverConfig = {
     settings: omitEmptyValues({
-      ...(existing && existing.type === values.type ? existing.settings ?? {} : {}),
+      ...(existing && existing.type === values.type ? (existing.settings ?? {}) : {}),
       ...(values.settings ?? {}),
     }),
     secureSettings: omitEmptyUnlessExisting(values.secureSettings, existing?.secureFields),
@@ -244,13 +204,21 @@ export function formChannelValuesToGrafanaChannelConfig(
   };
 
   // find all secure field definitions
-  const secureFieldNames: string[] =
-    notifier?.options.filter((option) => option.secure).map((option) => option.propertyName) ?? [];
+  const secureFieldNames = notifier ? getSecureFieldNames(notifier) : [];
 
   // we make sure all fields that are marked as "secure" will be moved to "SecureSettings" instead of "settings"
-  const shouldBeSecure = pick(channel.settings, secureFieldNames);
+  const secureSettings = reduce(
+    secureFieldNames,
+    (acc: Record<string, unknown> = {}, key) => {
+      // the value for secure settings can come from either the "settings" (accidental) or "secureFields" if editing an existing receiver
+      acc[key] = get(channel.settings, key) ?? get(values.secureFields, key);
+      return acc;
+    },
+    {}
+  );
+
   channel.secureSettings = {
-    ...shouldBeSecure,
+    ...secureSettings,
     ...channel.secureSettings,
   };
 
@@ -290,7 +258,7 @@ export function omitEmptyValues<T>(obj: T): T {
 // Will remove empty ('', null, undefined) object properties unless they were previously defined.
 // existing is a map of property names that were previously defined.
 export function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<string, unknown> {
-  return omitBy(settings, (value, key) => isUnacceptableValue(value) && !(key in existing));
+  return omitBy(settings, (value, key) => isUnacceptableValue(value) && !has(existing, key));
 }
 
 export function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {

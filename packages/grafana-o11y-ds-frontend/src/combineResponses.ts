@@ -66,9 +66,7 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
     }
     // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
     // If the field has no name, we fallback to the old index version.
-    const sourceField = dest.fields[i].name
-      ? source.fields.find((f) => f.name === dest.fields[i].name)
-      : source.fields[i];
+    const sourceField = findSourceField(dest.fields[i], source.fields, i);
     if (!sourceField) {
       continue;
     }
@@ -83,6 +81,20 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
     ...dest.meta,
     stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
   };
+}
+
+function findSourceField(referenceField: Field, sourceFields: Field[], index: number) {
+  const candidates = sourceFields.filter((f) => f.name === referenceField.name);
+
+  if (candidates.length === 1) {
+    return candidates[0];
+  }
+
+  if (referenceField.labels) {
+    return candidates.find((candidate) => shallowCompare(referenceField.labels ?? {}, candidate.labels ?? {}));
+  }
+
+  return sourceFields[index];
 }
 
 const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
@@ -130,7 +142,7 @@ function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
 }
 
 function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
-  if (frame1.refId !== frame2.refId) {
+  if (frame1.refId !== frame2.refId || frame1.name !== frame2.name) {
     return false;
   }
 

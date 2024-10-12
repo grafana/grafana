@@ -49,7 +49,7 @@ export function VariableTextField({
         defaultValue={defaultValue}
         onChange={onChange}
         onBlur={onBlur}
-        width={grow ? undefined : width ?? 30}
+        width={grow ? undefined : (width ?? 30)}
         data-testid={testId}
         maxLength={maxLength}
         required={required}

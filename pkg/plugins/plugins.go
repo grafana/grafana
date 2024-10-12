@@ -76,6 +76,7 @@ var (
 	_ = backend.CallResourceHandler(&Plugin{})
 	_ = backend.StreamHandler(&Plugin{})
 	_ = backend.AdmissionHandler(&Plugin{})
+	_ = backend.ConversionHandler(&Plugin{})
 )
 
 type AngularMeta struct {
@@ -101,27 +102,30 @@ type JSONData struct {
 	Routes       []*Route     `json:"routes"`
 
 	// AccessControl settings
-	Roles []RoleRegistration `json:"roles,omitempty"`
+	Roles      []RoleRegistration `json:"roles,omitempty"`
+	ActionSets []ActionSet        `json:"actionSets,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
 
 	// App settings
-	AutoEnabled bool `json:"autoEnabled"`
+	AutoEnabled bool       `json:"autoEnabled"`
+	Extensions  Extensions `json:"extensions"`
 
 	// Datasource settings
-	Annotations  bool            `json:"annotations"`
-	Metrics      bool            `json:"metrics"`
-	Alerting     bool            `json:"alerting"`
-	Explore      bool            `json:"explore"`
-	Table        bool            `json:"tables"`
-	Logs         bool            `json:"logs"`
-	Tracing      bool            `json:"tracing"`
-	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
-	BuiltIn      bool            `json:"builtIn,omitempty"`
-	Mixed        bool            `json:"mixed,omitempty"`
-	Streaming    bool            `json:"streaming"`
-	SDK          bool            `json:"sdk,omitempty"`
+	Annotations               bool            `json:"annotations"`
+	Metrics                   bool            `json:"metrics"`
+	Alerting                  bool            `json:"alerting"`
+	Explore                   bool            `json:"explore"`
+	Table                     bool            `json:"tables"`
+	Logs                      bool            `json:"logs"`
+	Tracing                   bool            `json:"tracing"`
+	QueryOptions              map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn                   bool            `json:"builtIn,omitempty"`
+	Mixed                     bool            `json:"mixed,omitempty"`
+	Streaming                 bool            `json:"streaming"`
+	SDK                       bool            `json:"sdk,omitempty"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators,omitempty"`
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
@@ -170,9 +174,34 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		plugin.Dependencies.GrafanaVersion = "*"
 	}
 
+	if len(plugin.Dependencies.Extensions.ExposedComponents) == 0 {
+		plugin.Dependencies.Extensions.ExposedComponents = make([]string, 0)
+	}
+
+	if plugin.Extensions.AddedLinks == nil {
+		plugin.Extensions.AddedLinks = []AddedLink{}
+	}
+
+	if plugin.Extensions.AddedComponents == nil {
+		plugin.Extensions.AddedComponents = []AddedComponent{}
+	}
+
+	if plugin.Extensions.ExposedComponents == nil {
+		plugin.Extensions.ExposedComponents = []ExposedComponent{}
+	}
+
+	if plugin.Extensions.ExtensionPoints == nil {
+		plugin.Extensions.ExtensionPoints = []ExtensionPoint{}
+	}
+
 	for _, include := range plugin.Includes {
 		if include.Role == "" {
 			include.Role = org.RoleViewer
+		}
+
+		// Default to app access for app plugins
+		if plugin.Type == TypeApp && include.Role == org.RoleViewer && include.Action == "" {
+			include.Action = ActionAppAccess
 		}
 	}
 
@@ -385,12 +414,12 @@ func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequ
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, ErrPluginUnavailable
 	}
-	return pluginClient.ConvertObject(ctx, req)
+	return pluginClient.ConvertObjects(ctx, req)
 }
 
 func (p *Plugin) File(name string) (fs.File, error) {
@@ -452,6 +481,7 @@ type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.StreamHandler
 }
 
@@ -497,6 +527,7 @@ const (
 	ClassCore     Class = "core"
 	ClassBundled  Class = "bundled"
 	ClassExternal Class = "external"
+	ClassCDN      Class = "cdn"
 )
 
 func (c Class) String() string {

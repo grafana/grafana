@@ -7,6 +7,8 @@ import { getAlertingStyles } from './alerting';
 import { getAgularPanelStyles } from './angularPanelStyles';
 import { getCardStyles } from './card';
 import { getCodeStyles } from './code';
+import { getDashboardGridStyles } from './dashboardGrid';
+import { getDashDiffStyles } from './dashdiff';
 import { getElementStyles } from './elements';
 import { getExtraStyles } from './extra';
 import { getFilterTableStyles } from './filterTable';
@@ -21,6 +23,7 @@ import { getRcTimePickerStyles } from './rcTimePicker';
 import { getSkeletonStyles } from './skeletonStyles';
 import { getSlateStyles } from './slate';
 import { getUplotStyles } from './uPlot';
+import { getUtilityClassStyles } from './utilityClasses';
 
 /** @internal */
 export function GlobalStyles() {
@@ -33,6 +36,8 @@ export function GlobalStyles() {
         getAgularPanelStyles(theme),
         getAlertingStyles(theme),
         getCodeStyles(theme),
+        getDashDiffStyles(theme),
+        getDashboardGridStyles(theme),
         getElementStyles(theme),
         getExtraStyles(theme),
         getFilterTableStyles(theme),
@@ -47,6 +52,7 @@ export function GlobalStyles() {
         getSkeletonStyles(theme),
         getSlateStyles(theme),
         getUplotStyles(theme),
+        getUtilityClassStyles(theme),
         getLegacySelectStyles(theme),
       ]}
     />

@@ -63,6 +63,7 @@ type API struct {
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
+	Scheduler            StatusReader
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ReceiverService      *notifier.ReceiverService
@@ -72,6 +73,7 @@ type API struct {
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
 	EvaluatorFactory     eval.EvaluatorFactory
+	ConditionValidator   *eval.ConditionValidator
 	FeatureManager       featuremgmt.FeatureToggles
 	Historian            Historian
 	Tracer               tracing.Tracer
@@ -95,10 +97,11 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		&AlertmanagerSrv{
-			crypto: api.MultiOrgAlertmanager.Crypto,
-			log:    logger,
-			ac:     api.AccessControl,
-			mam:    api.MultiOrgAlertmanager,
+			crypto:         api.MultiOrgAlertmanager.Crypto,
+			log:            logger,
+			ac:             api.AccessControl,
+			mam:            api.MultiOrgAlertmanager,
+			featureManager: api.FeatureManager,
 			silenceSvc: notifier.NewSilenceService(
 				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
 				api.TransactionManager,
@@ -107,20 +110,21 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 				api.RuleStore,
 				ruleAuthzService,
 			),
+			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
 		},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, authz: ruleAuthzService},
+		&PrometheusSrv{log: logger, manager: api.StateManager, status: api.Scheduler, store: api.RuleStore, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			conditionValidator: api.EvaluatorFactory,
+			conditionValidator: api.ConditionValidator,
 			QuotaService:       api.QuotaService,
 			store:              api.RuleStore,
 			provenanceStore:    api.ProvenanceStore,

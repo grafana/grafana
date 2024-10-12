@@ -781,8 +781,8 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService()
-			asService.StoreActionSet(tt.resource, tt.action, tt.actions)
+			asService := NewInMemoryActionSetStore(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
 
 			actionSetName := GetActionSetName(tt.resource, tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
@@ -792,10 +792,10 @@ func TestStore_StoreActionSet(t *testing.T) {
 }
 
 func TestStore_ResolveActionSet(t *testing.T) {
-	actionSetService := NewActionSetService()
-	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
-	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
-	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
+	actionSetService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
 
 	type actionSetTest struct {
 		desc               string
@@ -835,10 +835,10 @@ func TestStore_ResolveActionSet(t *testing.T) {
 }
 
 func TestStore_ExpandActions(t *testing.T) {
-	actionSetService := NewActionSetService()
-	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
-	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
-	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
+	actionSetService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
 
 	type actionSetTest struct {
 		desc                string

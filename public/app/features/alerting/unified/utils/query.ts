@@ -20,7 +20,7 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
 
   if (isGrafanaRulerRule(rulerRule)) {
     const query = rulerRule.grafana_alert.data;
-    return widenRelativeTimeRanges(query, rulerRule.for, combinedRule.group.interval);
+    return widenRelativeTimeRanges(query, rulerRule.for ?? '', combinedRule.group.interval);
   }
 
   if (isCloudRulesSource(rulesSource)) {

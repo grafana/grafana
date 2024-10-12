@@ -1,7 +1,10 @@
 // Libraries
+import { css } from '@emotion/css';
 import { useEffect } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, Spinner } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -18,14 +21,15 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
 /**
  * Used for iframe embedding and image rendering of single panels
  */
-export function SoloPanelPage({ match, queryParams }: Props) {
+export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard } = stateManager.useState();
+  const { uid = '' } = useParams();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid: match.params.uid!, route: DashboardRoutes.Embedded });
+    stateManager.loadDashboard({ uid, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, match, queryParams]);
+  }, [stateManager, queryParams, uid]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
@@ -42,6 +46,7 @@ export default SoloPanelPage;
 
 export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: DashboardScene; panelId: string }) {
   const [panel, error] = useSoloPanel(dashboard, panelId);
+  const styles = useStyles2(getStyles);
 
   if (error) {
     return <Alert title={error} />;
@@ -56,8 +61,21 @@ export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: Dashboard
   }
 
   return (
-    <div className="panel-solo">
+    <div className={styles.container}>
       <panel.Component model={panel} />
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    position: 'fixed',
+    bottom: 0,
+    right: 0,
+    margin: 0,
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: '100%',
+  }),
+});

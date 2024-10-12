@@ -1,5 +1,5 @@
 import { EmptyState } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { SearchState } from 'app/features/search/types';
 
 interface RecentlyDeletedEmptyStateProps {
@@ -17,6 +17,11 @@ export const RecentlyDeletedEmptyState = ({ searchState }: RecentlyDeletedEmptyS
       }
       variant={userIsSearching ? 'not-found' : 'completed'}
       role="alert"
-    />
+    >
+      <Trans i18nKey={'recently-deleted.page.no-deleted-dashboards-text'}>
+        When you delete a dashboard, it will appear here for 30 days before being permanently deleted. Your organization
+        administrator can restore recently-deleted dashboards.
+      </Trans>
+    </EmptyState>
   );
 };
