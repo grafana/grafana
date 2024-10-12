@@ -77,13 +77,14 @@ This allows different users, teams, or service accounts to have customized acces
 
 Refer to the following table for details on the additional access provided by contact point permissions.
 
-| Folder permission | Additional Access                                                                                                                            |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| View              | View and export contact point as well as select it on the Alert rule edit page                                                        |
-| Edit              | Update or delete the contact point                                                                                                           |
+| Folder permission | Additional Access                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| View              | View and export contact point as well as select it on the Alert rule edit page                                                                |
+| Edit              | Update or delete the contact point                                                                                                            |
 | Admin             | Same additional access as Edit and manage permissions for the contact point. User should have additional permissions to read users and teams. |
 
 ### Steps
+
 To contact point permissions, complete the following steps.
 
 1. In the left-side menu, click **Contact points**.
