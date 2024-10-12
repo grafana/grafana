@@ -17,6 +17,7 @@ import {
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
+import {number} from "yargs";
 
 /**
  * Returns the log level of a log line.
@@ -138,8 +139,36 @@ export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: LogsSort
   return logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 };
 
-export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
-  sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
+export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder): LogRowModel[]  => {
+  // change csv data order
+  const dataFrameMap = new Map<string, DataFrame>();
+  logRows.forEach((row) => {
+    if (row?.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
+      dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
+      let sortedIndices: number[] = [];
+      row.dataFrame?.fields.forEach((field) => {
+        // if field type is time, record value and it's index.
+        if (field?.type === "time" && field?.name === "Time") {
+          sortedIndices = sortOrder === LogsSortOrder.Ascending ?
+            field?.values.map((_, i) => i).sort((a, b) => field.values[a] - field.values[b]) :
+            field?.values.map((_, i) => i).sort((a, b) => field.values[b] - field.values[a]);
+        }
+      })
+
+      row.dataFrame?.fields.forEach((field) => {
+        // sort values based on sortedIndices
+        if (field?.values.length === sortedIndices.length) {
+          field.values = sortedIndices.map(i => field.values[i])
+        }
+      })
+    }
+  });
+
+
+
+  return sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
+}
+
 
 // Currently supports only error condition in Loki logs
 export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorMessage?: string } => {
