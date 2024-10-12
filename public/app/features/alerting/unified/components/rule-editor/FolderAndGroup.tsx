@@ -198,10 +198,6 @@ export function FolderAndGroup({
         )}
       </Stack>
 
-      {isCreatingFolder && (
-        <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
-      )}
-
       <Stack alignItems="center">
         <div style={{ width: 420 }}>
           <Field
