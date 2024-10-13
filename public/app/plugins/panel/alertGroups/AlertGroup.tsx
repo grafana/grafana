@@ -75,8 +75,9 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
                       Silence
                     </LinkButton>
                   )}
+                  { /* LOGZ.IO CHANGE :: DEV-46517 - add link target to _top */ }
                   {alert.generatorURL && (
-                    <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
+                    <LinkButton target="_top" className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
                       See source
                     </LinkButton>
                   )}
