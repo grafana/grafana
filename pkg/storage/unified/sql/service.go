@@ -84,7 +84,7 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) start(ctx context.Context) error {
-	server, err := NewResourceServer(s.db, s.cfg, s.features, s.tracing)
+	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing)
 	if err != nil {
 		return err
 	}

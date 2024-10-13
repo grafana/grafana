@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { Switch, RouteComponentProps } from 'react-router-dom';
 import { CompatRoute, Navigate } from 'react-router-dom-v5-compat';
 
-import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -56,7 +56,6 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
 
   renderRoute = (route: RouteDescriptor) => {
     const roles = route.roles ? route.roles() : [];
-
     return (
       <CompatRoute
         exact={route.exact === undefined ? true : route.exact}
@@ -64,6 +63,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         path={route.path}
         key={route.path}
         render={(props: RouteComponentProps) => {
+          const location = locationService.getLocation();
           // TODO[Router]: test this logic
           if (roles?.length) {
             if (!roles.some((r: string) => contextSrv.hasRole(r))) {
@@ -71,7 +71,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
             }
           }
 
-          return <GrafanaRoute {...props} route={route} />;
+          return <GrafanaRoute {...props} route={route} location={location} />;
         }}
       />
     );

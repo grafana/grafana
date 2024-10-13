@@ -1,6 +1,6 @@
 {
   "name": "@grafana/saga-icons",
-  "version": "11.3.0-pre",
+  "version": "11.4.0-pre",
   "private": true,
   "description": "Icons for Grafana",
   "author": "Grafana Labs",
@@ -34,7 +34,7 @@
     "build": "yarn generate && rollup -c rollup.config.ts --configPlugin esbuild"
   },
   "devDependencies": {
-    "@babel/core": "7.25.7",
+    "@babel/core": "7.25.8",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
     "@rollup/plugin-typescript": "^12.1.0",
@@ -45,7 +45,7 @@
     "@svgr/plugin-prettier": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/babel__core": "^7",
-    "@types/node": "20.16.9",
+    "@types/node": "20.16.11",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
     "esbuild": "0.24.0",
