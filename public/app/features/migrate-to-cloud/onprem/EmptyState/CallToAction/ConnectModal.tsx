@@ -51,7 +51,7 @@ function getTMessage(errorCode: string | undefined): string {
     case 'SESSION_CREATION_FAILURE':
       return t(
         'migrate-to-cloud.connect-modal.token-errors.session-creation-failure',
-        'There was an error creating the migration. Please try again."'
+        'There was an error creating the migration. Please try again.'
       );
     default:
       return t(

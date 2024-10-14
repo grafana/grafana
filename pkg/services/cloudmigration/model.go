@@ -147,11 +147,23 @@ var (
 	}
 	ErrTokenRequestError = CreateSessionError{
 		ErrorCode: "TOKEN_REQUEST_ERROR",
-		Message:   "An error occurred while validating the token. Please ensure the token matches the migration token on your cloud instance.",
+		Message:   "An error occurred while validating the token. Please check the Grafana instance logs.",
+	}
+	ErrInstanceNotFound = CreateSessionError{
+		ErrorCode: "INSTANCE_NOT_FOUND",
+		Message:   "The cloud instance cannot be found. Please ensure the cloud instance exists and is active.",
+	}
+	ErrInstanceUnreachable = CreateSessionError{
+		ErrorCode: "INSTANCE_UNREACHABLE",
+		Message:   "The cloud instance cannot be reached. Make sure the instance is running and try again.",
+	}
+	ErrInstanceRequestError = CreateSessionError{
+		ErrorCode: "INSTANCE_REQUEST_ERROR",
+		Message:   "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status.'",
 	}
 	ErrSessionCreationFailure = CreateSessionError{
 		ErrorCode: "SESSION_CREATION_FAILURE",
-		Message:   "An error occurred while validating the token. Please ensure the token matches the migration token on your cloud instance.",
+		Message:   "There was an error creating the migration. Please try again.",
 	}
 	ErrMigrationDisabled = CreateSessionError{
 		ErrorCode: "MIGRATION_DISABLED",

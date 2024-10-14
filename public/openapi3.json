@@ -15670,7 +15670,7 @@
             "$ref": "#/components/responses/forbiddenError"
           },
           "500": {
-            "$ref": "#/components/responses/createSessionErrorResponse"
+            "$ref": "#/components/responses/internalServerError"
           }
         },
         "summary": "Get a cloud migration session by its uid.",

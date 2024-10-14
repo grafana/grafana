@@ -2356,7 +2356,7 @@
             "$ref": "#/responses/forbiddenError"
           },
           "500": {
-            "$ref": "#/responses/createSessionErrorResponse"
+            "$ref": "#/responses/internalServerError"
           }
         }
       },

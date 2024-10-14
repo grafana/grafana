@@ -7,7 +7,7 @@ import (
 )
 
 type Client interface {
-	ValidateKey(context.Context, cloudmigration.CloudMigrationSession) error
+	ValidateKey(context.Context, cloudmigration.CloudMigrationSession) *cloudmigration.CreateSessionError
 	StartSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error)
 	GetSnapshotStatus(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot, int) (*cloudmigration.GetSnapshotStatusResponse, error)
 	CreatePresignedUploadUrl(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot) (string, error)

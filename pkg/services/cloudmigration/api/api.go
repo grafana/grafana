@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -195,7 +196,7 @@ func (cma *CloudMigrationAPI) GetSessionList(c *contextmodel.ReqContext) respons
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
-// 500: createSessionErrorResponse
+// 500: internalServerError
 func (cma *CloudMigrationAPI) GetSession(c *contextmodel.ReqContext) response.Response {
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSession")
 	defer span.End()
@@ -250,7 +251,7 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 	})
 	if err != nil {
 		span.SetStatus(codes.Error, "Session creation error")
-		// span.RecordError(err)
+		span.RecordError(fmt.Errorf(err.Message)) // TODO: should bring the error here?
 
 		return response.JSON(http.StatusInternalServerError, fromCreateSessionErrorToDTO(err))
 	}

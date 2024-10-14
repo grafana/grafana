@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -843,16 +842,4 @@ func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []
 	}
 
 	return results, nil
-}
-
-// handleGMSErrors parses the error message from GMS and translates it to an appropriate error message
-func (s *Service) handleGMSErrors(err error) string {
-	if strings.Contains(err.Error(), api.GMSErrorMessageInstanceUnreachable) {
-		return api.ErrorMessageInstanceUnreachable
-	} else if strings.Contains(err.Error(), api.GMSErrorMessageInstanceNotFound) {
-		return api.ErrorMessageCreateSessionFailed
-	} else if strings.Contains(err.Error(), api.GMSErrorMessageInstanceUnreachable) {
-		return api.GMSErrorMessageHttpRequestError
-	}
-	return api.ErrorMessageInstanceNotReached
 }
