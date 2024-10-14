@@ -56,8 +56,8 @@
       "metadata": {
         "name": "adhocFilterOneOf",
         "resourceVersion": "1723119716623",
-        "creationTimestamp": "2024-08-08T12:21:56Z",
-        "deletionTimestamp": "2024-09-05T12:30:12Z"
+        "creationTimestamp": "2024-08-12T08:56:42Z",
+        "deletionTimestamp": "2024-09-05T12:49:24Z"
       },
       "spec": {
         "description": "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
@@ -170,7 +170,7 @@
       "metadata": {
         "name": "alertingFilterV2",
         "resourceVersion": "1723028774805",
-        "creationTimestamp": "2024-08-07T11:06:14Z"
+        "creationTimestamp": "2024-09-11T11:29:26Z"
       },
       "spec": {
         "description": "Enable the new alerting search experience",
@@ -260,7 +260,7 @@
       "metadata": {
         "name": "alertingQueryAndExpressionsStepMode",
         "resourceVersion": "1725978395461",
-        "creationTimestamp": "2024-09-10T14:26:35Z"
+        "creationTimestamp": "2024-09-26T06:33:14Z"
       },
       "spec": {
         "description": "Enables step mode for alerting queries and expressions",
@@ -386,8 +386,8 @@
       "metadata": {
         "name": "appPlatformAccessTokens",
         "resourceVersion": "1725549369316",
-        "creationTimestamp": "2024-09-05T15:16:09Z",
-        "deletionTimestamp": "2024-10-11T15:54:21Z"
+        "creationTimestamp": "2024-09-05T16:18:44Z",
+        "deletionTimestamp": "2024-10-14T13:14:46Z"
       },
       "spec": {
         "description": "Enables the use of access tokens for the App Platform",
@@ -415,7 +415,7 @@
       "metadata": {
         "name": "appSidecar",
         "resourceVersion": "1722872007883",
-        "creationTimestamp": "2024-08-05T15:33:27Z"
+        "creationTimestamp": "2024-09-09T12:45:05Z"
       },
       "spec": {
         "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
@@ -580,7 +580,7 @@
         "name": "awsDatasourcesNewFormStyling",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-12T08:59:10Z",
-        "deletionTimestamp": "2024-07-05T10:20:55Z",
+        "deletionTimestamp": "2024-07-22T12:48:17Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -624,8 +624,8 @@
       "metadata": {
         "name": "backgroundPluginInstaller",
         "resourceVersion": "1723202510081",
-        "creationTimestamp": "2024-08-09T11:21:50Z",
-        "deletionTimestamp": "2024-09-20T13:20:41Z"
+        "creationTimestamp": "2024-08-12T14:39:31Z",
+        "deletionTimestamp": "2024-09-23T13:49:18Z"
       },
       "spec": {
         "description": "Enable background plugin installer",
@@ -639,7 +639,7 @@
         "name": "bodyScrolling",
         "resourceVersion": "1721723807004",
         "creationTimestamp": "2024-07-01T10:28:39Z",
-        "deletionTimestamp": "2024-09-24T09:17:00Z",
+        "deletionTimestamp": "2024-09-24T12:23:18Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-23 08:36:47.004393 +0000 UTC"
         }
@@ -927,7 +927,7 @@
         "name": "databaseReadReplica",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-06-18T15:07:15Z",
-        "deletionTimestamp": "2024-09-20T20:03:26Z",
+        "deletionTimestamp": "2024-09-25T23:21:39Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -943,7 +943,7 @@
       "metadata": {
         "name": "dataplaneAggregator",
         "resourceVersion": "1723151074613",
-        "creationTimestamp": "2024-08-08T21:04:34Z"
+        "creationTimestamp": "2024-08-09T08:41:07Z"
       },
       "spec": {
         "description": "Enable grafana dataplane aggregator",
@@ -974,7 +974,7 @@
       "metadata": {
         "name": "datasourceAPIServers",
         "resourceVersion": "1726731672938",
-        "creationTimestamp": "2024-09-12T07:32:40Z",
+        "creationTimestamp": "2024-09-19T08:28:27Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-19 07:41:12.938146 +0000 UTC"
         }
@@ -1008,7 +1008,7 @@
         "name": "datasourceQueryMultiStatus",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-05-03T16:02:20Z",
-        "deletionTimestamp": "2024-07-08T14:46:08Z"
+        "deletionTimestamp": "2024-07-10T09:15:10Z"
       },
       "spec": {
         "description": "Introduce HTTP 207 Multi Status for api/ds/query",
@@ -1171,7 +1171,7 @@
       "metadata": {
         "name": "exploreLogsAggregatedMetrics",
         "resourceVersion": "1724938092041",
-        "creationTimestamp": "2024-08-29T13:28:12Z"
+        "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
         "description": "Used in Explore Logs to query by aggregated metrics",
@@ -1184,7 +1184,7 @@
       "metadata": {
         "name": "exploreLogsLimitedTimeRange",
         "resourceVersion": "1724938092041",
-        "creationTimestamp": "2024-08-29T13:28:12Z"
+        "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
         "description": "Used in Explore Logs to limit the time range",
@@ -1197,7 +1197,7 @@
       "metadata": {
         "name": "exploreLogsShardSplitting",
         "resourceVersion": "1724938092041",
-        "creationTimestamp": "2024-08-29T13:28:12Z"
+        "creationTimestamp": "2024-08-29T13:55:59Z"
       },
       "spec": {
         "description": "Used in Explore Logs to split queries into multiple queries based on the number of shards",
@@ -1348,7 +1348,7 @@
         "name": "flameGraphItemCollapsing",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-11-09T14:31:07Z",
-        "deletionTimestamp": "2024-07-08T14:17:01Z"
+        "deletionTimestamp": "2024-07-15T12:45:41Z"
       },
       "spec": {
         "description": "Allow collapsing of flame graph items",
@@ -1448,7 +1448,7 @@
       "metadata": {
         "name": "groupAttributeSync",
         "resourceVersion": "1725893018130",
-        "creationTimestamp": "2024-09-09T14:43:38Z"
+        "creationTimestamp": "2024-09-09T15:29:43Z"
       },
       "spec": {
         "description": "Enable the groupsync extension for managing Group Attribute Sync feature",
@@ -1508,7 +1508,7 @@
       "metadata": {
         "name": "homeSetupGuide",
         "resourceVersion": "1726258153467",
-        "creationTimestamp": "2024-09-10T15:46:32Z",
+        "creationTimestamp": "2024-09-25T17:20:04Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-13 20:09:13.467989 +0000 UTC"
         }
@@ -1525,7 +1525,7 @@
         "name": "idForwarding",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-09-25T15:21:28Z",
-        "deletionTimestamp": "2024-08-21T11:35:56Z"
+        "deletionTimestamp": "2024-08-21T13:30:17Z"
       },
       "spec": {
         "description": "Generate signed id token for identity that can be forwarded to plugins and external services",
@@ -1537,7 +1537,7 @@
       "metadata": {
         "name": "improvedExternalSessionHandling",
         "resourceVersion": "1726560214520",
-        "creationTimestamp": "2024-09-17T08:03:34Z"
+        "creationTimestamp": "2024-09-17T10:54:39Z"
       },
       "spec": {
         "description": "Enable improved support for external sessions in Grafana",
@@ -1662,7 +1662,7 @@
       "metadata": {
         "name": "kubernetesFolders",
         "resourceVersion": "1725863636605",
-        "creationTimestamp": "2024-09-09T06:29:38Z",
+        "creationTimestamp": "2024-09-10T09:22:08Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-09 06:33:56.605329 +0000 UTC"
         }
@@ -1678,6 +1678,7 @@
         "name": "kubernetesPlaylists",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-05T19:00:36Z",
+        "deletionTimestamp": "2024-08-13T08:03:28Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1945,7 +1946,7 @@
       "metadata": {
         "name": "lokiSendDashboardPanelNames",
         "resourceVersion": "1724089497989",
-        "creationTimestamp": "2024-08-19T17:44:18Z",
+        "creationTimestamp": "2024-08-22T19:30:43Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-19 17:44:57.989565 +0000 UTC"
         }
@@ -2029,7 +2030,7 @@
       "metadata": {
         "name": "mysqlParseTime",
         "resourceVersion": "1724750152191",
-        "creationTimestamp": "2024-08-27T09:15:52Z"
+        "creationTimestamp": "2024-08-27T11:16:04Z"
       },
       "spec": {
         "description": "Ensure the parseTime flag is set for MySQL driver",
@@ -2088,7 +2089,7 @@
       "metadata": {
         "name": "newFiltersUI",
         "resourceVersion": "1724228641625",
-        "creationTimestamp": "2024-08-21T08:24:01Z"
+        "creationTimestamp": "2024-08-30T12:48:13Z"
       },
       "spec": {
         "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
@@ -2355,7 +2356,7 @@
       "metadata": {
         "name": "pluginsDetailsRightPanel",
         "resourceVersion": "1720788722220",
-        "creationTimestamp": "2024-07-12T08:39:21Z",
+        "creationTimestamp": "2024-08-13T09:55:30Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-12 12:52:02.22099 +0000 UTC"
         }
@@ -2487,7 +2488,7 @@
         "name": "prometheusDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-03-29T15:26:32Z",
-        "deletionTimestamp": "2024-08-21T13:35:19Z",
+        "deletionTimestamp": "2024-08-26T12:53:38Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2549,7 +2550,7 @@
       "metadata": {
         "name": "prometheusRunQueriesInParallel",
         "resourceVersion": "1720677541862",
-        "creationTimestamp": "2024-07-11T05:59:01Z"
+        "creationTimestamp": "2024-08-12T12:31:39Z"
       },
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
@@ -2814,7 +2815,7 @@
       "metadata": {
         "name": "singleTopNav",
         "resourceVersion": "1724861961030",
-        "creationTimestamp": "2024-08-28T16:19:21Z"
+        "creationTimestamp": "2024-08-29T08:48:32Z"
       },
       "spec": {
         "description": "Unifies the top search bar and breadcrumb bar into one",
@@ -3053,7 +3054,7 @@
         "name": "unifiedStorage",
         "resourceVersion": "1724096690370",
         "creationTimestamp": "2023-12-06T20:21:21Z",
-        "deletionTimestamp": "2024-08-21T09:30:06Z",
+        "deletionTimestamp": "2024-08-21T16:28:30Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-19 19:44:50.370023815 +0000 UTC"
         }
@@ -3111,7 +3112,7 @@
       "metadata": {
         "name": "useSessionStorageForRedirection",
         "resourceVersion": "1727082618788",
-        "creationTimestamp": "2024-09-23T09:10:18Z"
+        "creationTimestamp": "2024-09-23T09:31:23Z"
       },
       "spec": {
         "description": "Use session storage for handling the redirection after login",
@@ -3123,7 +3124,7 @@
       "metadata": {
         "name": "vizActions",
         "resourceVersion": "1722461779830",
-        "creationTimestamp": "2024-07-31T21:36:19Z"
+        "creationTimestamp": "2024-09-09T14:11:55Z"
       },
       "spec": {
         "description": "Allow actions in visualizations",
