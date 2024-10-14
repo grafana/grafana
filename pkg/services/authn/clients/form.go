@@ -40,7 +40,3 @@ func (c *Form) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ident
 func (c *Form) IsEnabled() bool {
 	return true
 }
-
-func (c *Form) GetConfig() authn.AuthenticationClientConfig {
-	return nil
-}

@@ -96,10 +96,6 @@ func (s *ExtendedJWT) IsEnabled() bool {
 	return s.cfg.ExtJWTAuth.Enabled
 }
 
-func (s *ExtendedJWT) GetConfig() authn.AuthenticationClientConfig {
-	return nil
-}
-
 func (s *ExtendedJWT) authenticateAsUser(
 	idTokenClaims authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],

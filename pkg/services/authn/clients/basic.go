@@ -40,10 +40,6 @@ func (c *Basic) IsEnabled() bool {
 	return true
 }
 
-func (c *Basic) GetConfig() authn.AuthenticationClientConfig {
-	return nil
-}
-
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
 	if r.HTTPRequest == nil {
 		return false

@@ -65,10 +65,6 @@ func (c *Render) IsEnabled() bool {
 	return true
 }
 
-func (c *Render) GetConfig() authn.AuthenticationClientConfig {
-	return nil
-}
-
 func (c *Render) Test(ctx context.Context, r *authn.Request) bool {
 	if r.HTTPRequest == nil {
 		return false

@@ -27,7 +27,7 @@ func (m *MockService) IsClientEnabled(name string) bool {
 	panic("unimplemented")
 }
 
-func (m *MockService) GetClientConfig(name string) authn.AuthenticationClientConfig {
+func (m *MockService) GetClientConfig(name string) authn.SSOAuthenticationClientConfig {
 	panic("unimplemented")
 }
 
@@ -108,7 +108,7 @@ func (m MockClient) IsEnabled() bool {
 	return true
 }
 
-func (m MockClient) GetConfig() authn.AuthenticationClientConfig {
+func (m MockClient) GetConfig() authn.SSOAuthenticationClientConfig {
 	return nil
 }
 

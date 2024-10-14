@@ -91,10 +91,6 @@ func (s *APIKey) IsEnabled() bool {
 	return true
 }
 
-func (s *APIKey) GetConfig() authn.AuthenticationClientConfig {
-	return nil
-}
-
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
 	fn := s.getFromToken
 	if !strings.HasPrefix(token, satokengen.GrafanaPrefix) {

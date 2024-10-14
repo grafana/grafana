@@ -86,7 +86,7 @@ type Authenticator interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 }
 
-type AuthenticationClientConfig interface {
+type SSOAuthenticationClientConfig interface {
 	// GetDisplayName returns the display name of the client
 	GetDisplayName() string
 	// IsAutoLoginEnabled returns true if the client has auto login enabled
@@ -131,7 +131,7 @@ type Service interface {
 	IsClientEnabled(client string) bool
 
 	// GetClientConfig returns the client configuration for the given client.
-	GetClientConfig(client string) AuthenticationClientConfig
+	GetClientConfig(client string) SSOAuthenticationClientConfig
 }
 
 type IdentitySynchronizer interface {
@@ -144,8 +144,6 @@ type Client interface {
 	Name() string
 	// IsEnabled returns the enabled status of the client
 	IsEnabled() bool
-	// GetConfig returns the client configuration
-	GetConfig() AuthenticationClientConfig
 }
 
 // ContextAwareClient is an optional interface that auth client can implement.
@@ -180,6 +178,11 @@ type RedirectClient interface {
 type LogoutClient interface {
 	Client
 	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
+}
+
+type SSOSettingsConfigAwareClient interface {
+	Client
+	GetConfig() SSOAuthenticationClientConfig
 }
 
 type PasswordClient interface {
