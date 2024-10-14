@@ -14,13 +14,12 @@ interface PluginBridgeHookResponse {
 }
 
 export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
+  const { loading, error, value } = useAsync(() => getPluginSettings(plugin, { showErrorAlert: false }));
   // LOGZ.IO CHANGE :: DEV-46522 disable the oncall grafana plugin
   if (plugin === SupportedPlugin.OnCall) {
     return { loading: false, installed: false};
   }
   // LOGZ.IO CHANGE :: DEV-46522 disable the oncall grafana plugin. END
-  const { loading, error, value } = useAsync(() => getPluginSettings(plugin, { showErrorAlert: false }));
-
   const installed = value && !error && !loading;
   const enabled = value?.enabled;
   const isLoading = loading && !value;

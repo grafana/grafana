@@ -93,6 +93,8 @@ export function SmartAlertTypeDetector({
   // if we can't switch to data-source managed, disable it
   // TODO figure out how to show a popover to the user to indicate _why_ it's disabled
   const disabledOptions = canSwitch ? [] : [RuleFormType.cloudAlerting];
+  
+  return null;
 
   return (
     <Stack direction="column" gap={1} alignItems="flex-start">

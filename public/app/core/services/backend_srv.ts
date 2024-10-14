@@ -508,7 +508,7 @@ export class BackendSrv implements BackendService {
   }
 
   /** @deprecated */
-  search(query: any): Promise<DashboardSearchItem[]> {
+  search(query: any): Promise<Array<DashboardSearchItem & {id?: number}>> { // LOGZ.IO GRAFANA CHANGE :: DEV-20609 Home dashboard
     return this.get('/api/search', query);
   }
 
