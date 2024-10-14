@@ -74,8 +74,8 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	assert.ErrorIs(t, err, cloudmigration.ErrTokenNotFound)
 
 	cm := cloudmigration.CloudMigrationSession{}
-	err = s.ValidateToken(context.Background(), cm)
-	assert.NoError(t, err)
+	errCreateSession := s.ValidateToken(context.Background(), cm)
+	assert.Nil(t, errCreateSession)
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
@@ -529,8 +529,8 @@ func TestDeleteSession(t *testing.T) {
 			AuthToken: createTokenResp.Token,
 		}
 
-		createResp, err := s.CreateSession(ctx, cmd)
-		require.NoError(t, err)
+		createResp, errCreateSession := s.CreateSession(ctx, cmd)
+		require.Nil(t, errCreateSession)
 		require.NotEmpty(t, createResp.UID)
 		require.NotEmpty(t, createResp.Slug)
 
@@ -828,7 +828,7 @@ type gmsClientMock struct {
 	getSnapshotResponse *cloudmigration.GetSnapshotStatusResponse
 }
 
-func (m *gmsClientMock) ValidateKey(_ context.Context, _ cloudmigration.CloudMigrationSession) error {
+func (m *gmsClientMock) ValidateKey(_ context.Context, _ cloudmigration.CloudMigrationSession) *cloudmigration.CreateSessionError {
 	m.validateKeyCalled++
 	return nil
 }

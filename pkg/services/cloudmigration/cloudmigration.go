@@ -13,7 +13,7 @@ type Service interface {
 	// CreateToken Creates a cloud migration token.
 	CreateToken(ctx context.Context) (CreateAccessTokenResponse, error)
 	// ValidateToken Sends a request to GMS to test the token.
-	ValidateToken(ctx context.Context, mig CloudMigrationSession) error
+	ValidateToken(ctx context.Context, mig CloudMigrationSession) *CreateSessionError
 	DeleteToken(ctx context.Context, uid string) error
 
 	CreateSession(ctx context.Context, req CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, *CreateSessionError)
