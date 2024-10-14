@@ -21,18 +21,18 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator"
 // They key used should be a unique group key for the collector so we can skip over an already synced group.
 type TupleCollector func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error
 
-// ZanzanaSynchroniser is a component to sync RBAC permissions to zanzana.
+// ZanzanaReconciler is a component to reconcile RBAC permissions to zanzana.
 // We should rewrite the migration after we have "migrated" all possible actions
 // into our schema. This will only do a one time migration for each action so its
 // is not really syncing the full rbac state. If a fresh sync is needed the tuple
 // needs to be cleared first.
-type ZanzanaSynchroniser struct {
+type ZanzanaReconciler struct {
 	log        log.Logger
 	client     zanzana.Client
 	collectors []TupleCollector
 }
 
-func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...TupleCollector) *ZanzanaSynchroniser {
+func NewZanzanaReconciler(client zanzana.Client, store db.DB, collectors ...TupleCollector) *ZanzanaReconciler {
 	// Append shared collectors that is used by both enterprise and oss
 	collectors = append(
 		collectors,
@@ -47,7 +47,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		fixedRoleTuplesCollector(store),
 	)
 
-	return &ZanzanaSynchroniser{
+	return &ZanzanaReconciler{
 		client:     client,
 		log:        log.New("zanzana.sync"),
 		collectors: collectors,
@@ -56,29 +56,29 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 
 // Sync runs all collectors and tries to write all collected tuples.
 // It will skip over any "sync group" that has already been written.
-func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
-	z.log.Info("Starting zanzana permissions sync")
+func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
+	r.log.Info("Starting zanzana permissions sync")
 	ctx, span := tracer.Start(ctx, "accesscontrol.migrator.Sync")
 	defer span.End()
 
 	tuplesMap := make(map[string][]*openfgav1.TupleKey)
 
-	for _, c := range z.collectors {
+	for _, c := range r.collectors {
 		if err := c(ctx, tuplesMap); err != nil {
 			return fmt.Errorf("failed to collect permissions: %w", err)
 		}
 	}
 
 	for key, tuples := range tuplesMap {
-		if err := batch(len(tuples), 100, func(start, end int) error {
-			return z.client.Write(ctx, &openfgav1.WriteRequest{
+		if err := batch(tuples, 100, func(items []*openfgav1.TupleKey) error {
+			return r.client.Write(ctx, &openfgav1.WriteRequest{
 				Writes: &openfgav1.WriteRequestWrites{
-					TupleKeys: tuples[start:end],
+					TupleKeys: items,
 				},
 			})
 		}); err != nil {
 			if strings.Contains(err.Error(), "cannot write a tuple which already exists") {
-				z.log.Debug("Skipping already synced permissions", "sync_key", key)
+				r.log.Debug("Skipping already synced permissions", "sync_key", key)
 				continue
 			}
 			return err
@@ -599,21 +599,4 @@ func fixedRoleTuplesCollector(store db.DB) TupleCollector {
 
 		return nil
 	}
-}
-
-func batch(count, batchSize int, eachFn func(start, end int) error) error {
-	for i := 0; i < count; {
-		end := i + batchSize
-		if end > count {
-			end = count
-		}
-
-		if err := eachFn(i, end); err != nil {
-			return err
-		}
-
-		i = end
-	}
-
-	return nil
 }

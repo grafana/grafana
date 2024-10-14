@@ -86,7 +86,7 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		sync:           dualwrite.NewZanzanaSynchroniser(zclient, db),
+		reconciler:     dualwrite.NewZanzanaReconciler(zclient, db),
 		permRegistry:   permRegistry,
 	}
 
@@ -103,7 +103,7 @@ type Service struct {
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
-	sync           *dualwrite.ZanzanaSynchroniser
+	reconciler     *dualwrite.ZanzanaReconciler
 	permRegistry   permreg.PermissionRegistry
 }
 
@@ -450,7 +450,7 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	})
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		if err := s.sync.Sync(context.Background()); err != nil {
+		if err := s.reconciler.Sync(context.Background()); err != nil {
 			s.log.Error("Failed to synchronise permissions to zanzana ", "err", err)
 		}
 	}
