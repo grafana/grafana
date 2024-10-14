@@ -1,5 +1,7 @@
 import { screen } from '@testing-library/react';
 
+import { scopesSelectorScene } from '../../instance';
+
 const selectors = {
   tree: {
     search: 'scopes-tree-search',
@@ -36,6 +38,7 @@ export const getSelectorApply = () => screen.getByTestId(selectors.selector.appl
 export const getSelectorCancel = () => screen.getByTestId(selectors.selector.cancel);
 
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
+export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
 export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
@@ -82,3 +85,9 @@ export const getResultCloudDevRadio = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-dev', 'result'));
 export const getResultCloudOpsRadio = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops', 'result'));
+
+export const getListOfSelectedScopes = () => scopesSelectorScene?.state.scopes;
+export const getListOfTreeScopes = () => scopesSelectorScene?.state.treeScopes;
+export const getSelectedScope = (name: string) =>
+  getListOfSelectedScopes()?.find((selectedScope) => selectedScope.scope.metadata.name === name);
+export const getTreeScope = (name: string) => getListOfTreeScopes()?.find((treeScope) => treeScope.scopeName === name);
