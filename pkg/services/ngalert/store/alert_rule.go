@@ -46,6 +46,15 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			return err
 		}
 		logger.Debug("Deleted alert rules", "count", rows)
+		if rows > 0 {
+			keys := make([]ngmodels.AlertRuleKey, 0, len(ruleUID))
+			for _, uid := range ruleUID {
+				keys = append(keys, ngmodels.AlertRuleKey{OrgID: orgID, UID: uid})
+			}
+			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+				RuleKeys: keys,
+			})
+		}
 
 		rows, err = sess.Table(alertRuleVersion{}).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
 		if err != nil {
@@ -173,6 +182,7 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 // Returns the UID and ID of rules that were created in the same order as the input rules.
 func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
+	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		newRules := make([]alertRule, 0, len(rules))
 		ruleVersions := make([]alertRuleVersion, 0, len(rules))
@@ -211,13 +221,10 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
 				r := newRules[i]
-				ids = append(ids, ngmodels.AlertRuleKeyWithId{
-					AlertRuleKey: ngmodels.AlertRuleKey{
-						OrgID: r.OrgID,
-						UID:   r.UID,
-					},
-					ID: r.ID,
-				})
+				key := ngmodels.AlertRuleKey{OrgID: r.OrgID, UID: r.UID}
+
+				ids = append(ids, ngmodels.AlertRuleKeyWithId{AlertRuleKey: key, ID: r.ID})
+				keys = append(keys, key)
 			}
 		}
 
@@ -225,6 +232,12 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
+		}
+
+		if len(keys) > 0 {
+			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+				RuleKeys: keys,
+			})
 		}
 		return nil
 	})
@@ -239,6 +252,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 		}
 
 		ruleVersions := make([]alertRuleVersion, 0, len(rules))
+		keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 		for i := range rules {
 			// We do indexed access way to avoid "G601: Implicit memory aliasing in for loop."
 			// Doing this will be unnecessary with go 1.22 https://stackoverflow.com/a/68247837/767660
@@ -269,6 +283,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			v.Version++
 			v.ParentVersion = r.Existing.Version
 			ruleVersions = append(ruleVersions, v)
+			keys = append(keys, ngmodels.AlertRuleKey{OrgID: r.New.OrgID, UID: r.New.UID})
 		}
 		if len(ruleVersions) > 0 {
 			if _, err := sess.Insert(&ruleVersions); err != nil {
@@ -283,7 +298,11 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 				}
 			}
 		}
-
+		if len(keys) > 0 {
+			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+				RuleKeys: keys,
+			})
+		}
 		return nil
 	})
 }

@@ -1,7 +1,7 @@
 // Libraries
 import { isString, map as isArray } from 'lodash';
 import { from, merge, Observable, of, timer } from 'rxjs';
-import { catchError, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
+import { catchError, map, mapTo, mergeMap, share, takeUntil, tap } from 'rxjs/operators';
 
 // Utils & Services
 // Types
@@ -18,7 +18,7 @@ import {
   PanelData,
   TimeRange,
 } from '@grafana/data';
-import { config, toDataQueryError } from '@grafana/runtime';
+import { config, isMigrationHandler, migrateRequest, toDataQueryError } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { queryIsEmpty } from 'app/core/utils/query';
@@ -143,7 +143,7 @@ export function runRequest(
     return of(state.panelData);
   }
 
-  const dataObservable = callQueryMethod(datasource, request, queryFunction).pipe(
+  const dataObservable = callQueryMethodWithMigration(datasource, request, queryFunction).pipe(
     // Transform response packets into PanelData with merged results
     map((packet: DataQueryResponse) => {
       if (!isArray(packet.data)) {
@@ -184,6 +184,20 @@ export function runRequest(
   // mapTo will translate the timer event into state.panelData (which has state set to loading)
   // takeUntil will cancel the timer emit when first response packet is received on the dataObservable
   return merge(timer(200).pipe(mapTo(state.panelData), takeUntil(dataObservable)), dataObservable);
+}
+
+export function callQueryMethodWithMigration(
+  datasource: DataSourceApi,
+  request: DataQueryRequest,
+  queryFunction?: typeof datasource.query
+) {
+  if (isMigrationHandler(datasource)) {
+    const migratedRequestPromise = migrateRequest(datasource, request);
+    return from(migratedRequestPromise).pipe(
+      mergeMap((migratedRequest) => callQueryMethod(datasource, migratedRequest, queryFunction))
+    );
+  }
+  return callQueryMethod(datasource, request, queryFunction);
 }
 
 export function callQueryMethod(
