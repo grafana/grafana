@@ -3,6 +3,7 @@ package grpcutils
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -81,11 +82,16 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 
 	legacyAuthenticator := &grpc.Authenticator{}
 
+	metrics, err := newMetrics(reg)
+	if err != nil {
+		return nil, err
+	}
+
 	return &AuthenticatorWithFallback{
 		authenticator:       authenticator,
 		legacyAuthenticator: legacyAuthenticator,
 		fallbackEnabled:     authCfg.LegacyFallback,
-		metrics:             newMetrics(reg),
+		metrics:             metrics,
 	}, nil
 }
 
@@ -113,7 +119,7 @@ type metrics struct {
 	fallbackCounter *prometheus.CounterVec
 }
 
-func newMetrics(reg prometheus.Registerer) *metrics {
+func newMetrics(reg prometheus.Registerer) (*metrics, error) {
 	m := &metrics{
 		fallbackCounter: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -124,9 +130,16 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			}, []string{"result"}),
 	}
 
-	if reg != nil {
-		reg.MustRegister(m.fallbackCounter)
+	if err := reg.Register(m.fallbackCounter); err != nil {
+		// If the counter is already registered, reuse it.
+		// This has the benefit of allowing multiple calls to `newMetrics()`.
+		var are prometheus.AlreadyRegisteredError
+		if errors.As(err, &are) {
+			m.fallbackCounter = are.ExistingCollector.(*prometheus.CounterVec)
+		} else {
+			return nil, err
+		}
 	}
 
-	return m
+	return m, nil
 }
