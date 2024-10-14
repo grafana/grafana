@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -11,6 +11,7 @@ import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
 import { estimateSize, useComboboxFloat } from './useComboboxFloat';
+import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type ComboboxOption<T extends string | number = string> = {
   label?: string;
@@ -88,10 +89,8 @@ export const Combobox = <T extends string | number>({
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
 
   const isAsync = typeof options === 'function';
-
+  const loadOptions = useLatestAsyncCall(isAsync ? options : null);
   const [asyncLoading, setAsyncLoading] = useState(false);
-  // Discard results from requests that do not match the latest request string
-  const latestRequestString = useRef('');
 
   const [items, setItems] = useState(isAsync ? [] : options);
 
@@ -172,15 +171,18 @@ export const Combobox = <T extends string | number>({
         if (customValueOption) {
           setItems([customValueOption]);
         }
-        latestRequestString.current = inputValue;
         setAsyncLoading(true);
-        options(inputValue).then((opts) => {
-          if (latestRequestString.current !== inputValue) {
-            return;
-          }
-          setItems(customValueOption ? [customValueOption, ...opts] : opts);
-          setAsyncLoading(false);
-        });
+        loadOptions(inputValue)
+          .then((opts) => {
+            setItems(customValueOption ? [customValueOption, ...opts] : opts);
+            setAsyncLoading(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              // TODO: handle error
+              setAsyncLoading(false);
+            }
+          });
 
         return;
       }
@@ -199,7 +201,7 @@ export const Combobox = <T extends string | number>({
 
       if (isOpen && isAsync) {
         setAsyncLoading(true);
-        options('').then((options) => {
+        loadOptions('').then((options) => {
           setItems(options);
           setAsyncLoading(false);
         });
