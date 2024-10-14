@@ -93,7 +93,7 @@ Here's an example that prints all available notification data from dot (`.`):
 | `Values`       | [KV](#kv) | The values of all expressions, including Classic Conditions                          |
 | `StartsAt`     | time      | The time the alert fired                                                             |
 | `EndsAt`       | time      |                                                                                      |
-| `GeneratorURL` | string    | A link to Grafana, or the Alertmanager if using an external Alertmanager             |
+| `GeneratorURL` | string    | A link to Grafana, or the source of the alert if using an external alert generator   |
 | `SilenceURL`   | string    | A link to silence the alert                                                          |
 | `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation          |
 | `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation                           |
