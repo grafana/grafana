@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/dualwrite"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -85,7 +86,7 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		sync:           migrator.NewZanzanaSynchroniser(zclient, db),
+		sync:           dualwrite.NewZanzanaSynchroniser(zclient, db),
 		permRegistry:   permRegistry,
 	}
 
@@ -102,7 +103,7 @@ type Service struct {
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
-	sync           *migrator.ZanzanaSynchroniser
+	sync           *dualwrite.ZanzanaSynchroniser
 	permRegistry   permreg.PermissionRegistry
 }
 
