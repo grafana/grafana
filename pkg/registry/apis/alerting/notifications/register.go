@@ -7,14 +7,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	receiver "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template_group"
 	timeInterval "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/timeinterval"
@@ -71,7 +69,11 @@ func (t *NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(notificationsModels.SchemeGroupVersion)
 }
 
-func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
+func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
+	optsGetter := opts.OptsGetter
+	dualWriteBuilder := opts.DualWriteBuilder
+
 	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, optsGetter, dualWriteBuilder)
 	if err != nil {
 		return fmt.Errorf("failed to initialize time-interval storage: %w", err)
