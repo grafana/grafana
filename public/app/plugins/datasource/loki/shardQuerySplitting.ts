@@ -86,7 +86,6 @@ function splitQueriesByStreamShard(
     let nextGroupSize = groups[group].groupSize;
     const { shards, groupSize, cycle } = groups[group];
     let retrying = false;
-    let useTimeSplitting = false;
 
     if (subquerySubscription != null) {
       subquerySubscription.unsubscribe();
@@ -138,12 +137,8 @@ function splitQueriesByStreamShard(
 
       const key = `${group}_${cycle}`;
       const retries = retriesMap.get(key) ?? 0;
-      if (retries > 2) {
-        debug(`Retrying with time splitting`);
-        retriesMap.set(key, retries + 1);
-        useTimeSplitting = true;
-        return true;
-      } else if (retries > 3) {
+
+      if (retries > 3) {
         shouldStop = true;
         return false;
       }
@@ -175,7 +170,7 @@ function splitQueriesByStreamShard(
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
-    const queryRunner = useTimeSplitting ? runSplitQuery.bind(null, datasource, subRequest, { skipPartialUpdates: true }) : datasource.runQuery.bind(datasource, subRequest);
+    const queryRunner = shardsToQuery.length > 0 ? runSplitQuery.bind(null, datasource, subRequest, { skipPartialUpdates: true }) : datasource.runQuery.bind(datasource, subRequest);
 
     subquerySubscription = queryRunner().subscribe({
       next: (partialResponse: DataQueryResponse) => {
@@ -185,7 +180,7 @@ function splitQueriesByStreamShard(
           }
         }
         if (groupSize) {
-          nextGroupSize = updateGroupSizeFromResponse(partialResponse, groupSize);
+          nextGroupSize = updateGroupSizeFromResponse(partialResponse, groups[group]);
           if (nextGroupSize !== groupSize) {
             debug(`New group size ${nextGroupSize}`);
           }
@@ -234,6 +229,7 @@ interface ShardedQueryGroup {
   shards?: number[];
   groupSize?: number;
   cycle?: number;
+  prevExecutionTime?: number;
 }
 
 async function groupTargetsByQueryType(
@@ -293,7 +289,11 @@ function groupHasPendingRequests(group: ShardedQueryGroup) {
   return cycle < shards.length && nextCycle <= shards.length;
 }
 
-function updateGroupSizeFromResponse(response: DataQueryResponse, currentSize: number) {
+function updateGroupSizeFromResponse(response: DataQueryResponse, group: ShardedQueryGroup) {
+  const { groupSize: currentSize } = group;
+  if (!currentSize) {
+    return 1;
+  }
   if (!response.data.length) {
     // Empty response, increase group size
     return currentSize + 1;
@@ -302,29 +302,45 @@ function updateGroupSizeFromResponse(response: DataQueryResponse, currentSize: n
   const metaExecutionTime: QueryResultMetaStat | undefined = response.data[0].meta?.stats?.find(
     (stat: QueryResultMetaStat) => stat.displayName === 'Summary: exec time'
   );
+  if (!metaExecutionTime) {
+    return currentSize;
+  }
 
-  if (metaExecutionTime) {
-    debug(`${metaExecutionTime.value}`);
-    // Positive scenarios
-    if (metaExecutionTime.value < 1) {
-      return currentSize * 2;
-    } else if (metaExecutionTime.value < 6) {
-      return currentSize + 2;
-    } else if (metaExecutionTime.value < 16) {
-      return currentSize + 1;
-    }
+  debug(`${metaExecutionTime.value}`);
 
-    // Negative scenarios
-    if (currentSize === 1) {
+  const prevExecutionTime = group.prevExecutionTime;
+  group.prevExecutionTime = metaExecutionTime.value;
+
+  // Adjustment based on the previous execution time
+  if (prevExecutionTime) {
+    const rateOfChange = (metaExecutionTime.value - prevExecutionTime) / prevExecutionTime;
+
+    if (rateOfChange <= -0.5) {
+      return Math.ceil(currentSize * 2);
+    } else if (rateOfChange < 0) {
+      return Math.ceil(currentSize * 1.5);
+    } else if (currentSize === 1) {
       return currentSize;
-    } else if (metaExecutionTime.value < 20) {
-      return currentSize - 1;
+    } else if (rateOfChange < 0.5) {
+      return Math.ceil(currentSize * (1 - rateOfChange));
     } else {
-      return Math.floor(currentSize / 2);
+      return Math.ceil(currentSize / 2);
     }
   }
 
-  return currentSize;
+  // Adjustment from the first non-empty response
+  // Positive scenarios
+  if (metaExecutionTime.value < 1) {
+    return Math.ceil(currentSize * 1.5);
+  } else if (metaExecutionTime.value < 6) {
+    return currentSize;
+  }
+
+  // Negative scenarios
+  if (metaExecutionTime.value < 20) {
+    return Math.round(currentSize / 1.5);
+  }
+  return Math.round(currentSize / 2);
 }
 
 function groupShardRequests(shards: number[], start: number, groupSize: number) {
