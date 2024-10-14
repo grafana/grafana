@@ -147,7 +147,6 @@ describe('Combobox', () => {
       await userEvent.click(input, { delay: null });
 
       expect(asyncOptions).toHaveBeenCalled();
-      //expect(screen.getByText('Loading')).toBeInTheDocument();
     });
 
     it('should allow async options and select value', async () => {
