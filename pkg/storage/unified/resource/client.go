@@ -12,7 +12,6 @@ import (
 	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 	authnlib "github.com/grafana/authlib/authn"
-	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
@@ -89,7 +88,6 @@ func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
 		&authnlib.GrpcClientConfig{},
 		authnlib.WithDisableAccessTokenOption(),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithMetadataExtractorOption(namespaceExtractor),
 	)
 	if err != nil {
 		return nil, err
@@ -113,7 +111,6 @@ func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceCl
 
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithMetadataExtractorOption(namespaceCloudExtractor(cfg.StackID)),
 	}
 
 	if cfg.Env == setting.Dev {
@@ -158,26 +155,6 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	return "", fmt.Errorf("id-token not found")
-}
-
-func namespaceExtractor(ctx context.Context) (string, []string, error) {
-	// Using identity.Requester instead of claims.AuthInfo because Namespace() relies on AllowedKubernetesNamespace, which is empty.
-	caller, err := identity.GetRequester(ctx)
-	if err != nil {
-		return "", nil, err
-	}
-
-	namespace := caller.GetAllowedKubernetesNamespace()
-	if namespace == "" {
-		namespace = claims.OrgNamespaceFormatter(caller.GetOrgID())
-	}
-	return authzlib.DefaultNamespaceMetadataKey, []string{namespace}, nil
-}
-
-func namespaceCloudExtractor(stackID string) func(ctx context.Context) (key string, values []string, err error) {
-	return func(ctx context.Context) (key string, values []string, err error) {
-		return authzlib.DefaultNamespaceMetadataKey, []string{"stacks-" + stackID}, nil
-	}
 }
 
 func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts []authnlib.GrpcClientInterceptorOption) []authnlib.GrpcClientInterceptorOption {
