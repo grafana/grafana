@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { forwardRef, PropsWithChildren } from 'react';
+import { forwardRef, PropsWithChildren, UIEventHandler } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -10,6 +10,7 @@ import { getSizeStyles, SizeProps } from '../Layout/utils/styles';
 
 interface Props extends SizeProps {
   hideScrollIndicators?: boolean;
+  onScroll?: UIEventHandler<HTMLDivElement>;
   overflowX?: Property.OverflowX;
   overflowY?: Property.OverflowY;
   scrollbarWidth?: Property.ScrollbarWidth;
@@ -25,6 +26,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
       maxWidth,
       minHeight = 0,
       minWidth,
+      onScroll,
       overflowX = 'auto',
       overflowY = 'auto',
       scrollbarWidth = 'thin',
@@ -36,7 +38,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
     const styles = useStyles2(getStyles, scrollbarWidth, overflowY, overflowX);
     return (
       <div className={cx(sizeStyles, styles.outerWrapper)}>
-        <div className={styles.innerWrapper} ref={ref}>
+        <div onScroll={onScroll} className={styles.innerWrapper} ref={ref}>
           {hideScrollIndicators ? children : <ScrollIndicators>{children}</ScrollIndicators>}
         </div>
       </div>

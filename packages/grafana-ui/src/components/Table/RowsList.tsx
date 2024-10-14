@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 import { Cell, Row, TableState, HeaderGroup } from 'react-table';
 import { VariableSizeList } from 'react-window';
@@ -17,8 +17,8 @@ import {
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../PanelChrome';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
@@ -215,14 +215,21 @@ export const RowsList = (props: RowsListProps) => {
     };
   }, [data, enableSharedCrosshair, footerPaginationEnabled, onDataHoverEvent, panelContext]);
 
-  let scrollTop: number | undefined = undefined;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState<number | undefined>(undefined);
   if (rowHighlightIndex !== undefined) {
     const firstMatchedRowIndex = rows.findIndex((row) => row.index === rowHighlightIndex);
 
     if (firstMatchedRowIndex !== -1) {
-      scrollTop = headerHeight + (firstMatchedRowIndex - 1) * rowHeight;
+      setScrollTop(headerHeight + (firstMatchedRowIndex - 1) * rowHeight);
     }
   }
+
+  useEffect(() => {
+    if (scrollTop) {
+      scrollRef.current?.scrollTo(0, scrollTop);
+    }
+  }, [scrollTop]);
 
   const rowIndexForPagination = useCallback(
     (index: number) => {
@@ -403,7 +410,7 @@ export const RowsList = (props: RowsListProps) => {
 
   return (
     <>
-      <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
+      <ScrollContainer ref={scrollRef} onScroll={handleScroll} hideScrollIndicators>
         <VariableSizeList
           // This component needs an unmount/remount when row height, page changes, or expanded rows change
           key={`${rowHeight}${pageIndex}${expandedKey}`}
@@ -416,7 +423,7 @@ export const RowsList = (props: RowsListProps) => {
         >
           {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
         </VariableSizeList>
-      </CustomScrollbar>
+      </ScrollContainer>
     </>
   );
 };

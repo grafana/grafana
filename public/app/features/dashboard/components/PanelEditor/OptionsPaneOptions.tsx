@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
@@ -130,9 +131,9 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         )}
       </div>
       <div className={styles.scrollWrapper}>
-        <CustomScrollbar autoHeightMin="100%">
+        <ScrollContainer minHeight="100%">
           <div className={styles.mainBox}>{mainBoxElements}</div>
-        </CustomScrollbar>
+        </ScrollContainer>
       </div>
     </div>
   );
