@@ -192,7 +192,7 @@ exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,t
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
 homeSetupGuide,experimental,@grafana/growth-and-onboarding,false,false,true
-appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
+appPlatformGrpcClientAuth,experimental,@grafana/identity-access-team,false,false,false
 appSidecar,experimental,@grafana/explore-squad,false,false,false
 groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false
 alertingQueryAndExpressionsStepMode,experimental,@grafana/alerting-squad,false,false,true
