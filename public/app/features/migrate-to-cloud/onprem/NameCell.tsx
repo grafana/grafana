@@ -37,16 +37,9 @@ function ResourceInfo({ data }: { data: ResourceTableItem }) {
       return <FolderInfo data={data} />;
     case 'LIBRARY_ELEMENT':
       return <LibraryElementInfo data={data} />;
-    case 'ALERT_RULE':
-      return null;
-    case 'CONTACT_POINT':
-      return null;
-    case 'NOTIFICATION_POLICY':
-      return null;
-    case 'NOTIFICATION_TEMPLATE':
-      return null;
-    case 'MUTE_TIMING':
-      return null;
+    // Starting from 11.4.x, new resources have both `name` and optionally a `parentName`, so we can use this catch-all component.
+    default:
+      return <BasicResourceInfo data={data} />;
   }
 }
 
@@ -200,23 +193,35 @@ function InfoSkeleton() {
   );
 }
 
+function BasicResourceInfo({ data }: { data: ResourceTableItem }) {
+  return (
+    <>
+      <span>{data.name}</span>
+      {data.parentName && <Text color="secondary">{data.parentName}</Text>}
+    </>
+  );
+}
+
 function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const styles = useStyles2(getIconStyles);
   const datasource = useDatasource(resource.type === 'DATASOURCE' ? resource.refId : undefined);
 
-  if (resource.type === 'DASHBOARD') {
-    return <Icon size="xl" name="dashboard" />;
-  } else if (resource.type === 'FOLDER') {
-    return <Icon size="xl" name="folder" />;
-  } else if (resource.type === 'DATASOURCE' && datasource?.meta?.info?.logos?.small) {
-    return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
-  } else if (resource.type === 'DATASOURCE') {
-    return <Icon size="xl" name="database" />;
-  } else if (resource.type === 'LIBRARY_ELEMENT') {
-    return <Icon size="xl" name="library-panel" />;
-  }
+  switch (resource.type) {
+    case 'DASHBOARD':
+      return <Icon size="xl" name="dashboard" />;
+    case 'FOLDER':
+      return <Icon size="xl" name="folder" />;
+    case 'DATASOURCE':
+      if (datasource?.meta?.info?.logos?.small) {
+        return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
+      }
 
-  return undefined;
+      return <Icon size="xl" name="database" />;
+    case 'LIBRARY_ELEMENT':
+      return <Icon size="xl" name="library-panel" />;
+    default:
+      return undefined;
+  }
 }
 
 function getIconStyles() {
