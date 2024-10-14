@@ -6,6 +6,7 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -54,6 +55,8 @@ var wireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
 	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
+	validator.ProvideAnonDeviceValidator,
+	wire.Bind(new(validator.Service), new(*validator.AnonDeviceValidator)),
 	anonimpl.ProvideAnonymousDeviceService,
 	wire.Bind(new(anonymous.Service), new(*anonimpl.AnonDeviceService)),
 	licensing.ProvideService,

@@ -3,6 +3,7 @@ package anonimpl
 import (
 	"context"
 	"errors"
+	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"net/http"
 	"time"
 
@@ -33,11 +34,13 @@ type AnonDeviceService struct {
 	anonStore  anonstore.AnonStore
 	serverLock *serverlock.ServerLockService
 	cfg        *setting.Cfg
+	validator  validator.Service
 }
 
 func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
 	sqlStore db.DB, cfg *setting.Cfg, orgService org.Service,
 	serverLockService *serverlock.ServerLockService, accesscontrol accesscontrol.AccessControl, routeRegister routing.RouteRegister,
+	validator validator.Service,
 ) *AnonDeviceService {
 	a := &AnonDeviceService{
 		log:        log.New("anonymous-session-service"),
@@ -45,6 +48,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 		anonStore:  anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
 		serverLock: serverLockService,
 		cfg:        cfg,
+		validator:  validator,
 	}
 
 	usageStats.RegisterMetricsFunc(a.usageStatFn)
@@ -81,6 +85,11 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, er
 }
 
 func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, device *anonstore.Device) error {
+	err := a.validator.Validate(ctx)
+	if err != nil {
+		return err
+	}
+
 	key := device.CacheKey()
 
 	if val, ok := a.localCache.Get(key); ok {
@@ -109,8 +118,7 @@ func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, device *anonstore.D
 	return nil
 }
 
-func (a *AnonDeviceService) untagDevice(ctx context.Context,
-	identity *authn.Identity, r *authn.Request, err error) {
+func (a *AnonDeviceService) untagDevice(ctx context.Context, _ *authn.Identity, r *authn.Request, err error) {
 	if err != nil {
 		return
 	}
