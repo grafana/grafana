@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import {
   Avatar,
   Box,
@@ -20,6 +21,7 @@ import {
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
+import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
@@ -126,6 +128,10 @@ export const OrgUsersTable = ({
               onUserRolesChange();
             }
           };
+
+          if (config.featureToggles.rolePickerDrawer) {
+            return <RolePickerBadges disabled={basicRoleDisabled} user={original} />;
+          }
 
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
