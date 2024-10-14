@@ -22,9 +22,11 @@ import (
 )
 
 type syncItem struct {
-	name       string
-	objStorage runtime.Object
-	objLegacy  runtime.Object
+	name            string
+	objStorage      runtime.Object
+	objLegacy       runtime.Object
+	accessorStorage utils.GrafanaMetaAccessor
+	accessorLegacy  utils.GrafanaMetaAccessor
 }
 
 const dataSyncerInterval = 60 * time.Minute
@@ -146,6 +148,7 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, 
 			item := itemsByName[name]
 			item.name = name
 			item.objLegacy = obj
+			item.accessorLegacy = accessor
 			itemsByName[name] = item
 		}
 
@@ -160,6 +163,7 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, 
 			item := itemsByName[name]
 			item.name = name
 			item.objStorage = obj
+			item.accessorStorage = accessor
 			itemsByName[name] = item
 		}
 		log.Info("got list of items to be synced", "items", len(itemsByName))
@@ -172,25 +176,14 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, 
 				(item.objStorage == nil || !Compare(item.objLegacy, item.objStorage)) {
 				outOfSync++
 
-				accessor, err := utils.MetaAccessor(item.objLegacy)
-				if err != nil {
-					log.Error(err, "error retrieving accessor data for object from storage")
-					continue
-				}
-
 				if item.objStorage != nil {
-					accessorStorage, err := utils.MetaAccessor(item.objStorage)
-					if err != nil {
-						log.Error(err, "error retrieving accessor data for object from storage")
-						continue
-					}
-					accessor.SetResourceVersion(accessorStorage.GetResourceVersion())
-					accessor.SetUID(accessorStorage.GetUID())
+					item.accessorLegacy.SetResourceVersion(item.accessorStorage.GetResourceVersion())
+					item.accessorLegacy.SetUID(item.accessorStorage.GetUID())
 
 					log.Info("updating item on unified storage", "name", name)
 				} else {
-					accessor.SetResourceVersion("")
-					accessor.SetUID("")
+					item.accessorLegacy.SetResourceVersion("")
+					item.accessorLegacy.SetUID("")
 
 					log.Info("inserting item on unified storage", "name", name)
 				}
