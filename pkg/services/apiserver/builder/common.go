@@ -3,7 +3,6 @@ package builder
 import (
 	"net/http"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -36,7 +35,6 @@ type APIGroupBuilder interface {
 		scheme *runtime.Scheme,
 		optsGetter generic.RESTOptionsGetter,
 		dualWriteBuilder grafanarest.DualWriteBuilder,
-		reg prometheus.Registerer,
 	) error
 
 	// Get OpenAPI definitions

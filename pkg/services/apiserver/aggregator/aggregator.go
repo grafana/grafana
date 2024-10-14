@@ -291,7 +291,6 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 			aggregatorscheme.Scheme,
 			aggregatorConfig.GenericConfig.RESTOptionsGetter,
 			nil, // no dual writer
-			reg,
 		)
 		if err != nil {
 			return nil, err

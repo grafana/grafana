@@ -44,6 +44,7 @@ type DashboardsAPIBuilder struct {
 	unified       resource.ResourceClient
 
 	log log.Logger
+	reg prometheus.Registerer
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
@@ -76,6 +77,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
 			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
 		},
+		reg: reg,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -125,9 +127,9 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme,
-	optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder, reg prometheus.Registerer) error {
+	optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
 	dash := b.legacy.resource
-	legacyStore, err := b.legacy.newStore(scheme, optsGetter, reg)
+	legacyStore, err := b.legacy.newStore(scheme, optsGetter, b.reg)
 	if err != nil {
 		return err
 	}

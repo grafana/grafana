@@ -235,7 +235,7 @@ func InstallAPIs(
 	for group, buildersForGroup := range buildersGroupMap {
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
-			if err := b.UpdateAPIGroupInfo(&g, scheme, optsGetter, dualWrite, reg); err != nil {
+			if err := b.UpdateAPIGroupInfo(&g, scheme, optsGetter, dualWrite); err != nil {
 				return err
 			}
 			if len(g.PrioritizedVersions) < 1 {
