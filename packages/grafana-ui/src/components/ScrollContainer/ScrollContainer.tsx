@@ -6,10 +6,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { ScrollIndicators } from '../CustomScrollbar/ScrollIndicators';
-import { FlexProps } from '../Layout/types';
 import { getSizeStyles, SizeProps } from '../Layout/utils/styles';
 
-interface Props extends SizeProps, FlexProps {
+interface Props extends SizeProps {
   hideScrollIndicators?: boolean;
   overflowX?: Property.OverflowX;
   overflowY?: Property.OverflowY;
@@ -22,7 +21,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
       children,
       height,
       hideScrollIndicators = false,
-      maxHeight,
+      maxHeight = '100%',
       maxWidth,
       minHeight = 0,
       minWidth,

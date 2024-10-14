@@ -54,7 +54,7 @@ export function NewsPanel(props: NewsPanelProps) {
   }
 
   return (
-    <ScrollContainer minHeight="100%" maxHeight="100%" hideScrollIndicators>
+    <ScrollContainer minHeight="100%" hideScrollIndicators>
       {state.value.map((_, index) => {
         return <News key={index} index={index} width={width} showImage={showImage} data={state.value} />;
       })}

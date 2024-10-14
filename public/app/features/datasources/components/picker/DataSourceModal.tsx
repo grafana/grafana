@@ -14,6 +14,7 @@ import {
   Input,
   Icon,
 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
 import { t, Trans } from 'app/core/internationalization';
 import * as DFImport from 'app/features/dataframe-import';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
@@ -166,7 +167,7 @@ export function DataSourceModal({
             reportSearchUsageOnce();
           }}
         />
-        <CustomScrollbar>
+        <ScrollContainer hideScrollIndicators>
           <DataSourceList
             onChange={onChangeDataSource}
             current={current}
@@ -189,7 +190,7 @@ export function DataSourceModal({
             mixed={mixed}
           />
           <BuiltInList className={styles.appendBuiltInDataSourcesList} />
-        </CustomScrollbar>
+        </ScrollContainer>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>

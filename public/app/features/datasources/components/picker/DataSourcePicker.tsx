@@ -322,6 +322,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
+      {/* TODO fix behaviour when searching matches few/no results */}
       <ScrollContainer>
         <DataSourceList
           {...props}
