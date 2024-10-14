@@ -34,6 +34,7 @@ import { useDispatch } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
+import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
@@ -136,7 +137,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   } = useFormContext<RuleFormValues>();
 
   const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading, clearPreviewData } = useAlertQueryRunner();
+  const [queryParams] = useURLSearchParams();
   const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
+  const isNewFromQueryParams = queryParams.has('defaults') && !editingExistingRule;
 
   const initialState = {
     queries: getValues('queries'),
@@ -165,8 +168,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
   const isRecordingRuleType = isCloudRecordingRuleByType(type);
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
+  const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
 
-  const isAdvancedMode = editorSettings?.simplifiedQueryEditor !== true || !isGrafanaAlertingType;
+  const isAdvancedMode =
+    Boolean(editorSettings?.simplifiedQueryEditor) === false ||
+    !isGrafanaAlertingType ||
+    (isNewFromQueryParams && !queryParamsAreTransformable);
 
   const [showResetModeModal, setShowResetModal] = useState(false);
 
