@@ -130,30 +130,56 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
 };
 
 const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
-  const [value, setValue] = useState<string | number | null>(null);
+  const [selectedOption, setSelectedOption] = useState<ComboboxOption<string> | null>(null);
 
   // This simulates a kind of search API call
-  const loadOptions = useCallback(
+  const loadOptionsWithLabels = useCallback((inputValue: string) => {
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+  }, []);
+
+  const loadOptionsOnlyValues = useCallback(
     (inputValue: string) => {
-      return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+      return loadOptionsWithLabels(inputValue).then((options) => options.map((opt) => ({ value: opt.label! })));
     },
-    [args.options]
+    [loadOptionsWithLabels]
   );
 
   return (
-    <Field label="Test input" description="Input with a few options">
-      <Combobox
-        id="test-combobox"
-        placeholder="Select an option"
-        options={loadOptions}
-        value={value}
-        onChange={(val) => {
-          action('onChange')(val);
-          setValue(val?.value || null);
-        }}
-        createCustomValue={args.createCustomValue}
-      />
-    </Field>
+    <>
+      <Field
+        label="Options with labels"
+        description="This tests when options have both a label and a value. Consumers are required to pass in a full ComboboxOption as a value with a label"
+      >
+        <Combobox
+          id="test-combobox"
+          placeholder="Select an option"
+          options={loadOptionsWithLabels}
+          value={selectedOption}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+          createCustomValue={args.createCustomValue}
+        />
+      </Field>
+
+      <Field
+        label="Options without labels"
+        description="Or without labels, where consumer can just pass in a raw scalar value Value"
+      >
+        <Combobox
+          id="test-combobox"
+          placeholder="Select an option"
+          options={loadOptionsOnlyValues}
+          value={selectedOption?.value ?? null}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+          createCustomValue={args.createCustomValue}
+        />
+      </Field>
+    </>
   );
 };
 
@@ -177,8 +203,8 @@ function InDevDecorator(Story: React.ElementType) {
   );
 }
 
-let fakeApiOptions: Array<ComboboxOption<string | number>>;
-async function fakeSearchAPI(urlString: string) {
+let fakeApiOptions: Array<ComboboxOption<string>>;
+async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOption<string>>> {
   const searchParams = new URL(urlString).searchParams;
 
   if (!fakeApiOptions) {
@@ -196,7 +222,8 @@ async function fakeSearchAPI(urlString: string) {
   );
 
   const delay = searchQuery.length % 2 === 0 ? 200 : 1000;
-  return new Promise<Array<ComboboxOption<string | number>>>((resolve) => {
+
+  return new Promise<Array<ComboboxOption<string>>>((resolve) => {
     setTimeout(() => resolve(filteredOptions), delay);
   });
 }

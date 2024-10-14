@@ -1,7 +1,6 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-//import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
@@ -19,13 +18,19 @@ export type ComboboxOption<T extends string | number = string> = {
   description?: string;
 };
 
+// TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
+// then the onChange handler emits ComboboxOption with the label as non-undefined.
 interface ComboboxBaseProps<T extends string | number>
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
   isClearable?: boolean;
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
   onChange: (option: ComboboxOption<T> | null) => void;
-  value: T | null;
+  /**
+   * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
+   * have the full options loaded to match the value to, consumers may also pass in an Option with a label to display.
+   */
+  value: T | ComboboxOption<T> | null;
   /**
    * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
    * */
@@ -46,7 +51,7 @@ type AutoSizeConditionals =
 
 type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
-function itemToString(item: ComboboxOption<string | number> | null) {
+function itemToString<T extends string | number>(item: ComboboxOption<T> | null) {
   return item?.label ?? item?.value.toString() ?? '';
 }
 
@@ -70,7 +75,7 @@ function itemFilter<T extends string | number>(inputValue: string) {
 export const Combobox = <T extends string | number>({
   options,
   onChange,
-  value,
+  value: valueProp,
   isClearable = false,
   createCustomValue = false,
   id,
@@ -78,6 +83,10 @@ export const Combobox = <T extends string | number>({
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
+  // Value can be an actual scalar Value (string or number), or an Option (value + label), so
+  // get a consistent Value from it
+  const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
+
   const isAsync = typeof options === 'function';
 
   const [asyncLoading, setAsyncLoading] = useState(false);
@@ -90,6 +99,7 @@ export const Combobox = <T extends string | number>({
     if (isAsync) {
       return null;
     }
+
     if (value === null) {
       return null;
     }
@@ -107,15 +117,8 @@ export const Combobox = <T extends string | number>({
       return options[selectedItemIndex];
     }
 
-    // Custom value
-    if (value !== null) {
-      return {
-        label: value.toString(),
-        value,
-      };
-    }
-    return null;
-  }, [selectedItemIndex, options, value, isAsync]);
+    return typeof valueProp === 'object' ? valueProp : { value: valueProp, label: valueProp.toString() };
+  }, [selectedItemIndex, isAsync, valueProp, options]);
 
   const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
   const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
@@ -149,7 +152,6 @@ export const Combobox = <T extends string | number>({
     itemToString,
     selectedItem,
     onSelectedItemChange: ({ selectedItem }) => {
-      // @ts-ignore
       onChange(selectedItem);
     },
     defaultHighlightedIndex: selectedItemIndex ?? 0,
@@ -160,7 +162,7 @@ export const Combobox = <T extends string | number>({
         inputValue &&
         items.findIndex((opt) => opt.label === inputValue || opt.value === inputValue) === -1
           ? {
-              // @ts-ignore Type casting needed to make this work when T is a number
+              // Type casting needed to make this work when T is a number
               value: inputValue as unknown as T,
               description: t('combobox.custom-value.create', 'Create custom value'),
             }
@@ -194,6 +196,7 @@ export const Combobox = <T extends string | number>({
         setItems(options);
         return;
       }
+
       if (isOpen && isAsync) {
         setAsyncLoading(true);
         options('').then((options) => {
