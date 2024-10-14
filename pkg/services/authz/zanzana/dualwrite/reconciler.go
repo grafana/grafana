@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
@@ -27,16 +28,16 @@ type TupleCollector func(ctx context.Context, tuples map[string][]*openfgav1.Tup
 // is not really syncing the full rbac state. If a fresh sync is needed the tuple
 // needs to be cleared first.
 type ZanzanaReconciler struct {
-	log        log.Logger
-	client     zanzana.Client
-	collectors []TupleCollector
+	log         log.Logger
+	client      zanzana.Client
+	collectors  []TupleCollector
+	reconcilers []resourceReconciler
 }
 
 func NewZanzanaReconciler(client zanzana.Client, store db.DB, collectors ...TupleCollector) *ZanzanaReconciler {
 	// Append shared collectors that is used by both enterprise and oss
 	collectors = append(
 		collectors,
-		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
 		folderTreeCollector(store),
 		basicRolesCollector(store),
@@ -49,8 +50,16 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, collectors ...Tupl
 
 	return &ZanzanaReconciler{
 		client:     client,
-		log:        log.New("zanzana.sync"),
+		log:        log.New("zanzana.reconciler"),
 		collectors: collectors,
+		reconcilers: []resourceReconciler{
+			newResourceReconciler(
+				"team memberships",
+				teamMembershipCollector(store),
+				zanzanaCollector(client, []string{zanzana.RelationTeamMember, zanzana.RelationTeamAdmin}),
+				client,
+			),
+		},
 	}
 }
 
@@ -85,6 +94,24 @@ func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
 		}
 	}
 
+	go r.Reconcile(ctx)
+
+	return nil
+}
+
+// Reoncilie schedules as job that will run and reconcile resources between
+// legacy access control and zanzana.
+func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
+	ticker := time.NewTicker(5 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			for _, r := range r.reconcilers {
+				err := r.reconcile(ctx)
+				fmt.Println(err)
+			}
+		}
+	}
 	return nil
 }
 
@@ -144,54 +171,6 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 			// sync new data when more actions are supported
 			key := fmt.Sprintf("%s-%s", collectorID, p.Action)
 			tuples[key] = append(tuples[key], tuple)
-		}
-
-		return nil
-	}
-}
-
-func teamMembershipCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.teamMembershipCollector")
-		defer span.End()
-
-		const collectorID = "team_membership"
-		query := `
-			SELECT t.uid as team_uid, u.uid as user_uid, tm.permission
-			FROM team_member tm
-			INNER JOIN team t ON tm.team_id = t.id
-			INNER JOIN ` + store.GetDialect().Quote("user") + ` u ON tm.user_id = u.id
-		`
-
-		type membership struct {
-			TeamUID    string `xorm:"team_uid"`
-			UserUID    string `xorm:"user_uid"`
-			Permission int
-		}
-
-		var memberships []membership
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&memberships)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		for _, m := range memberships {
-			tuple := &openfgav1.TupleKey{
-				User:   zanzana.NewTupleEntry(zanzana.TypeUser, m.UserUID, ""),
-				Object: zanzana.NewTupleEntry(zanzana.TypeTeam, m.TeamUID, ""),
-			}
-
-			// Admin permission is 4 and member 0
-			if m.Permission == 4 {
-				tuple.Relation = zanzana.RelationTeamAdmin
-			} else {
-				tuple.Relation = zanzana.RelationTeamMember
-			}
-
-			tuples[collectorID] = append(tuples[collectorID], tuple)
 		}
 
 		return nil
