@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 // TODO(drclau): decide on the audience for the resource store
@@ -37,6 +38,15 @@ type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
 	DiagnosticsClient
+}
+
+func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
+	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	return &resourceClient{
+		ResourceStoreClient: NewResourceStoreClient(cc),
+		ResourceIndexClient: NewResourceIndexClient(cc),
+		DiagnosticsClient:   NewDiagnosticsClient(cc),
+	}
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {

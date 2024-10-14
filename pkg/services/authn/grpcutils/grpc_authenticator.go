@@ -90,6 +90,7 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 }
 
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
+	origCtx := ctx
 	// Try to authenticate with the new authenticator first
 	ctx, err := f.authenticator.Authenticate(ctx)
 	if err == nil {
@@ -97,7 +98,7 @@ func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 		return ctx, nil
 	} else if f.fallbackEnabled {
 		// If the new authenticator failed and the fallback is enabled, try the legacy authenticator
-		ctx, err = f.legacyAuthenticator.Authenticate(ctx)
+		ctx, err = f.legacyAuthenticator.Authenticate(origCtx)
 		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
 	}
 	return ctx, err
