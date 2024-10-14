@@ -157,10 +157,7 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, 
 			}
 			name := accessor.GetName()
 
-			item, ok := itemsByName[name]
-			if !ok {
-				item = syncItem{}
-			}
+			item := itemsByName[name]
 			item.name = name
 			item.objStorage = obj
 			itemsByName[name] = item
