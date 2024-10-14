@@ -26,87 +26,33 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
+  language-dot:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
+    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
+  language-range:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#range
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#range
+  reference-extended-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#extendeddata
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#extendeddata
 ---
 
 # Notification template examples
 
 This document is a compilation of common use cases for templating within Grafana notification templates. Templating in notification templates allows you to dynamically customize the title, message, and format of alert notifications. The template can dynamically insert relevant information—such as alert labels, metrics, and values—into your notifications. Moreover, notification templates can be easily reused across contact points.
 
-Here's an example of a custom notification template that summarizes all firing and resolved alerts in the notification group:
-
-```
-{{ define "alerts.message" -}}
-  {{ if .Alerts.Firing -}}
-    {{ len .Alerts.Firing }} firing alert(s)
-    {{ template "alerts.summarize" .Alerts.Firing }}
-  {{- end }}
-  {{- if .Alerts.Resolved -}}
-    {{ len .Alerts.Resolved }} resolved alert(s)
-    {{ template "alerts.summarize" .Alerts.Resolved }}
-  {{- end }}
-{{- end }}
-
-{{ define "alerts.summarize" -}}
-  {{ range . -}}
-  - {{ index .Annotations "summary" }}
-  {{ end }}
-{{ end }}
-```
-
-The notification message would look like this:
-
-```
-1 firing alert(s)
-- The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours.
-
-1 resolved alert(s)
-- The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
-```
-
 Each example provided here applies specifically to notification templates (note that the syntax and behavior may differ from alert rule templating). For examples related to templating within alert rules, please refer to the [labels and annotations template examples](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/) document.
 
 > Find step-by-step instructions on [how to create notification templates](ref:manage-notification-templates) for more detailed guidance.
 
-## Template logic examples
+## Examples utilizing templating constructs and functions
 
-### Iterate over alerts
-
-To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts in `ExtendedData`:
-
-```
-{{ range .Alerts }}
-{{ .Labels }}
-{{ end }}
-```
-
-Inside the range dot no longer refers to `ExtendedData`, but to an `Alert`. You can use `{{ .Labels }}` to print the labels of each alert. This works because `{{ range .Alerts }}` changes dot to refer to the current alert in the list of alerts. When the range is finished dot is reset to the value it had before the start of the range, which in this example is `ExtendedData`:
-
-```
-{{ range .Alerts }}
-{{ .Labels }}
-{{ end }}
-{{/* does not work, .Labels does not exist here */}}
-{{ .Labels }}
-{{/* works, cursor was reset */}}
-{{ .Status }}
-```
-
-### Iterate over annotations and labels
-
-Let's write a template to print the labels of each alert in the format `The name of the label is $name, and the value is $value`, where `$name` and `$value` contain the name and value of each label.
-
-Like in the previous example, use a range to iterate over the alerts in `.Alerts` such that dot refers to the current alert in the list of alerts, and then use a second range on the sorted labels so dot is updated a second time to refer to the current label. Inside the second range use `.Name` and `.Value` to print the name and value of each label:
-
-```
-{{ range .Alerts }}
-{{ range .Labels.SortedPairs }}
-The name of the label is {{ .Name }}, and the value is {{ .Value }}
-{{ end }}
-{{ range .Annotations.SortedPairs }}
-The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
-{{ end }}
-{{ end }}
-```
+This first collection of examples showcase the main templating elements that you can use to customize alert notifications.
 
 ### The index function
 
@@ -152,30 +98,51 @@ Variables in text/template must be created within the template. For example, to 
 
 You can use `$variable` inside a range or `with` and it will refer to the value of dot at the time the variable was defined, not the current value of dot.
 
-For example, you cannot write a template that use `{{ .Labels }}` in the second range because here dot refers to the current label, not the current alert:
-
-```
-{{ range .Alerts }}
-{{ range .Labels.SortedPairs }}
-{{ .Name }} = {{ .Value }}
-{{/* does not work because in the second range . is a label not an alert */}}
-There are {{ len .Labels }}
-{{ end }}
-{{ end }}
-```
-
-You can fix this by defining a variable called `$alert` in the first range and before the second range:
-
 ```
 {{ range .Alerts }}
 {{ $alert := . }}
 {{ range .Labels.SortedPairs }}
 {{ .Name }} = {{ .Value }}
-{{/* works because $alert refers to the value of dot inside the first range */}}
 There are {{ len $alert.Labels }}
 {{ end }}
 {{ end }}
 ```
+
+### Iterate over alerts
+
+To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which is initialized with the data listed in [ExtendedData](ref:reference-notification-data).
+
+```
+{{ range .Alerts }}
+{{ .Labels }}
+{{ end }}
+```
+
+Used functions and syntax:
+
+- [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
+- [ExtendedData](ref:reference-extended-data): the data that the [dot](ref:language-dot) cursor is initialized with.
+
+### Iterate over annotations and labels
+
+This template iterates over each alert and its associated labels and annotations. It formats the output to display the name and value of each label and annotation.
+
+```
+{{ range .Alerts }}
+{{ range .Labels.SortedPairs }}
+The name of the label is {{ .Name }}, and the value is {{ .Value }}
+{{ end }}
+{{ range .Annotations.SortedPairs }}
+The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
+{{ end }}
+{{ end }}
+```
+
+Used functions and syntax:
+
+- `Outer Range`: `{{ range .Alerts }}` iterates over each alert in the list.
+- `.Labels`: The inner range `{{ range .Labels.SortedPairs }}` accesses each label, printing its name and value.
+- `.Annotations`: A similar inner range for annotations prints their names and values.
 
 ### Range with index
 
@@ -188,43 +155,9 @@ This is alert {{ $index }} out of {{ $num_alerts }}
 {{ end }}
 ```
 
-### Conditional notification template
-
-Template alert notifications based on a label. In this example the label represents a namespace.
-
-1. Use the following code in your notification template to display different messages based on the namespace:
-
-   ```go
-   {{ define "my_conditional_notification" }}
-   {{ if eq .CommonLabels.namespace "namespace-a" }}
-   Alert: CPU limits have reached 80% in namespace-a.
-   {{ else if eq .CommonLabels.namespace "namespace-b" }}
-   Alert: CPU limits have reached 80% in namespace-b.
-   {{ else if eq .CommonLabels.namespace "namespace-c" }}
-   Alert: CPU limits have reached 80% in namespace-c.
-   {{ else }}
-   Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
-   {{ end }}
-   {{ end }}
-   ```
-
-   `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
-
-   Make sure to replace the `.namespace` label with a label that exists in your alert rule.
-
-1. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values.
-1. Navigate to your contact point in Grafana
-1. In the **Message** field, reference the template by name (see **Optional settings** section):
-
-   ```
-   {{ template "my_conditional_notification" . }}
-   ```
-
-   This template alters the content of alert notifications depending on the namespace value.
-
 ## Common use cases
 
-Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-langauge).
+Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-language). 
 
 > Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See more details in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
 
@@ -248,10 +181,6 @@ The following instances have high CPU usage:
 - Instance: est-03, CPU Usage: 79%
 - Instance: wst-02, CPU Usage: 74%
 ```
-
-Used functions and syntax:
-
-[`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
 
 ### Firing and resolved alerts, with summary annotation
 
@@ -368,6 +297,34 @@ alertname=web_server_high_5xx_rate server=web1
 The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
 - View on Grafana: https://example.com/grafana/alerting/grafana/view
 ```
+
+### Conditional template
+
+Template alert notifications based on a label. In this example the label represents a namespace.
+
+Use the following code in your notification template to display different messages based on the namespace:
+
+   ```go
+   {{ define "my_conditional_notification" }}
+   {{ if eq .CommonLabels.namespace "namespace-a" }}
+   Alert: CPU limits have reached 80% in namespace-a.
+   {{ else if eq .CommonLabels.namespace "namespace-b" }}
+   Alert: CPU limits have reached 80% in namespace-b.
+   {{ else if eq .CommonLabels.namespace "namespace-c" }}
+   Alert: CPU limits have reached 80% in namespace-c.
+   {{ else }}
+   Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
+   {{ end }}
+   {{ end }}
+   ```
+
+This template alters the content of alert notifications depending on the namespace value.
+
+** Make sure to replace the `.namespace` label with a label that exists in your alert rule. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values. **
+
+Used functions and syntax:
+
+- `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
 
 ## Templates for contact points
 

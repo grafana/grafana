@@ -211,6 +211,10 @@ grafana_folder=CPU alerts
 instance=server1
 ```
 
+Used functions and syntax:
+
+- [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
+
 #### Print the value of a query
 
 To print the value of an instant query you can print its Ref ID using the `index` function and the `$values` variable:
