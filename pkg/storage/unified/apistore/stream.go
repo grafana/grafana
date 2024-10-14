@@ -1,9 +1,11 @@
 package apistore
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 
 	grpcCodes "google.golang.org/grpc/codes"
 	grpcStatus "google.golang.org/grpc/status"
@@ -17,12 +19,23 @@ import (
 )
 
 type streamDecoder struct {
-	client    resource.ResourceStore_WatchClient
-	newFunc   func() runtime.Object
-	predicate storage.SelectionPredicate
-	codec     runtime.Codec
+	client      resource.ResourceStore_WatchClient
+	newFunc     func() runtime.Object
+	predicate   storage.SelectionPredicate
+	codec       runtime.Codec
+	cancelWatch context.CancelFunc
+	done        sync.WaitGroup
 }
 
+func newStreamDecoder(client resource.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc) *streamDecoder {
+	return &streamDecoder{
+		client:      client,
+		newFunc:     newFunc,
+		predicate:   predicate,
+		codec:       codec,
+		cancelWatch: cancelWatch,
+	}
+}
 func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Object, error) {
 	obj, _, err := d.codec.Decode(w.Value, nil, d.newFunc())
 	if err == nil {
@@ -35,25 +48,30 @@ func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Objec
 	return obj, err
 }
 
+// nolint: gocyclo // we may be able to simplify this in the future, but this is a complex function by nature
 func (d *streamDecoder) Decode() (action watch.EventType, object runtime.Object, err error) {
+	d.done.Add(1)
+	defer d.done.Done()
 decode:
 	for {
-		err := d.client.Context().Err()
-		if err != nil {
-			klog.Errorf("client: context error: %s\n", err)
-			return watch.Error, nil, err
+		var evt *resource.WatchEvent
+		var err error
+		select {
+		case <-d.client.Context().Done():
+		default:
+			evt, err = d.client.Recv()
 		}
 
-		evt, err := d.client.Recv()
-		if errors.Is(err, io.EOF) {
+		switch {
+		case errors.Is(d.client.Context().Err(), context.Canceled):
+			return watch.Error, nil, io.EOF
+		case d.client.Context().Err() != nil:
+			return watch.Error, nil, d.client.Context().Err()
+		case errors.Is(err, io.EOF):
+			return watch.Error, nil, io.EOF
+		case grpcStatus.Code(err) == grpcCodes.Canceled:
 			return watch.Error, nil, err
-		}
-
-		if grpcStatus.Code(err) == grpcCodes.Canceled {
-			return watch.Error, nil, err
-		}
-
-		if err != nil {
+		case err != nil:
 			klog.Errorf("client: error receiving result: %s", err)
 			return watch.Error, nil, err
 		}
@@ -194,10 +212,15 @@ decode:
 }
 
 func (d *streamDecoder) Close() {
+	// Close the send stream
 	err := d.client.CloseSend()
 	if err != nil {
 		klog.Errorf("error closing watch stream: %s", err)
 	}
+	// Cancel the send context
+	d.cancelWatch()
+	// Wait for all decode operations to finish
+	d.done.Wait()
 }
 
 var _ watch.Decoder = (*streamDecoder)(nil)

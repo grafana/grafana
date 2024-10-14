@@ -104,6 +104,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Sqlyze Datasource](/grafana/plugins/grafana-odbc-datasource)
 - [SumoLogic](/grafana/plugins/grafana-sumologic-datasource)
 - [Wavefront](/grafana/plugins/grafana-wavefront-datasource)
+- [Zendesk](/grafana/plugins/grafana-zendesk-datasource)
 
 ## Try Grafana Enterprise
 

@@ -7,7 +7,7 @@ export type QueryTemplate = {
   title: string;
   targets: DataQuery[];
   createdAtTimestamp: number;
-  user?: string;
+  user?: User;
 };
 
 export type AddQueryTemplateCommand = {
@@ -22,4 +22,10 @@ export type EditQueryTemplateCommand = {
 
 export type DeleteQueryTemplateCommand = {
   uid: string;
+};
+
+export type User = {
+  uid: string;
+  displayName?: string;
+  avatarUrl?: string;
 };

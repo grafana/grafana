@@ -7,12 +7,16 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/openfga/language/pkg/go/transformer"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
 type ClientOption func(c *Client)
 
@@ -82,12 +86,19 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 }
 
 func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
+	defer span.End()
+
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
 	return c.client.Check(ctx, in)
 }
 
 func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.ListObjects")
+	span.SetAttributes(attribute.String("resource.type", in.Type))
+	defer span.End()
+
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
 	return c.client.ListObjects(ctx, in)

@@ -91,7 +91,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	ms := mssql.ProvideService(cfg)
 	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
 	sv2 := searchV2.ProvideService(cfg, db, nil, nil, tracer, features, nil, nil, nil)
-	graf := grafanads.ProvideService(sv2, nil)
+	graf := grafanads.ProvideService(sv2, nil, nil, features)
 	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca)
