@@ -34,7 +34,7 @@ func (m FakeServiceImpl) CreateToken(_ context.Context) (cloudmigration.CreateAc
 	return cloudmigration.CreateAccessTokenResponse{Token: "mock_token"}, nil
 }
 
-func (m FakeServiceImpl) ValidateToken(ctx context.Context, migration cloudmigration.CloudMigrationSession) error {
+func (m FakeServiceImpl) ValidateToken(ctx context.Context, migration cloudmigration.CloudMigrationSession) *cloudmigration.CreateSessionError {
 	panic("implement me")
 }
 

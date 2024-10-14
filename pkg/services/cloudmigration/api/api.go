@@ -251,7 +251,7 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 	})
 	if err != nil {
 		span.SetStatus(codes.Error, "Session creation error")
-		span.RecordError(fmt.Errorf(err.Message)) // TODO: should bring the error here?
+		span.RecordError(fmt.Errorf(err.Message))
 
 		return response.JSON(http.StatusInternalServerError, fromCreateSessionErrorToDTO(err))
 	}

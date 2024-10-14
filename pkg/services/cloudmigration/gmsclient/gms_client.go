@@ -62,14 +62,12 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			c.log.Error("error closing the request body", "err", err.Error())
-			err = errors.Join(err, fmt.Errorf("validate key http request error: %w", closeErr))
 			createSessErr = &cloudmigration.ErrTokenRequestError
 		}
 	}()
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
-		c.log.Error("token validation failure", "err", string(body))
 		if gmsErr := c.handleGMSErrors(body); gmsErr != nil {
 			return gmsErr
 		}

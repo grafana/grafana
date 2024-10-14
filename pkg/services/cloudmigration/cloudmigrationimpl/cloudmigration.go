@@ -319,12 +319,12 @@ func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, access
 	return nil, nil
 }
 
-func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
+func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigrationSession) *cloudmigration.CreateSessionError {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.ValidateToken")
 	defer span.End()
 
 	if err := s.gmsClient.ValidateKey(ctx, cm); err != nil {
-		return fmt.Errorf("validating token: %w", err)
+		return err
 	}
 
 	return nil
@@ -408,9 +408,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	migration := token.ToMigration()
 	// validate token against GMS before saving
 	if err := s.ValidateToken(ctx, migration); err != nil {
-		// gmsErrorMessage := s.handleGMSErrors(err)
-		// TODO: return specific GMS error
-		return nil, &cloudmigration.ErrTokenInvalid
+		return nil, err
 	}
 
 	cm, err := s.store.CreateMigrationSession(ctx, migration)
