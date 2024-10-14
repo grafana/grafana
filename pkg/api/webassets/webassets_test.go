@@ -15,7 +15,7 @@ func TestReadWebassets(t *testing.T) {
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
 	require.NoError(t, err)
-	fmt.Printf("%s\n", string(dto))
+	// fmt.Printf("%s\n", string(dto))
 
 	require.JSONEq(t, `{
 	"jsFiles": [
