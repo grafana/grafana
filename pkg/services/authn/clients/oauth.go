@@ -61,9 +61,9 @@ func fromSocialErr(err *connectors.SocialError) error {
 }
 
 var (
-	_ authn.LogoutClient                 = new(OAuth)
-	_ authn.RedirectClient               = new(OAuth)
-	_ authn.SSOSettingsConfigAwareClient = new(OAuth)
+	_ authn.LogoutClient         = new(OAuth)
+	_ authn.RedirectClient       = new(OAuth)
+	_ authn.SSOConfigAwareClient = new(OAuth)
 )
 
 func ProvideOAuth(
@@ -206,7 +206,7 @@ func (c *OAuth) IsEnabled() bool {
 	return provider.Enabled
 }
 
-func (c *OAuth) GetConfig() authn.SSOAuthenticationClientConfig {
+func (c *OAuth) GetConfig() authn.SSOClientConfig {
 	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
 	if provider == nil {
 		return nil

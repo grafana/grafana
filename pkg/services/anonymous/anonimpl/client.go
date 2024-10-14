@@ -66,7 +66,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 func (a *Anonymous) IsEnabled() bool {
 	return a.cfg.AnonymousEnabled
 }
-ß
+
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
 	// If anonymous client is register it can always be used for authentication
 	return true

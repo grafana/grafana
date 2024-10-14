@@ -46,7 +46,7 @@ func (f *FakeService) IsClientEnabled(name string) bool {
 	return true
 }
 
-func (f *FakeService) GetClientConfig(name string) authn.SSOAuthenticationClientConfig {
+func (f *FakeService) GetClientConfig(name string) authn.SSOClientConfig {
 	return nil
 }
 
@@ -133,7 +133,7 @@ func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn
 
 func (f FakeClient) IsEnabled() bool { return true }
 
-func (f *FakeClient) GetConfig() authn.SSOAuthenticationClientConfig {
+func (f *FakeClient) GetConfig() authn.SSOClientConfig {
 	return nil
 }
 
@@ -181,7 +181,7 @@ func (f FakeRedirectClient) Authenticate(ctx context.Context, r *authn.Request) 
 
 func (f FakeRedirectClient) IsEnabled() bool { return true }
 
-func (f FakeRedirectClient) GetConfig() authn.SSOAuthenticationClientConfig {
+func (f FakeRedirectClient) GetConfig() authn.SSOClientConfig {
 	return nil
 }
 

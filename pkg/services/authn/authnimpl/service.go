@@ -380,13 +380,13 @@ func (s *Service) IsClientEnabled(name string) bool {
 	return client.IsEnabled()
 }
 
-func (s *Service) GetClientConfig(name string) authn.SSOAuthenticationClientConfig {
+func (s *Service) GetClientConfig(name string) authn.SSOClientConfig {
 	client, ok := s.clients[name]
 	if !ok {
 		return nil
 	}
 
-	ssoSettingsAwareClient, ok := client.(authn.SSOSettingsConfigAwareClient)
+	ssoSettingsAwareClient, ok := client.(authn.SSOConfigAwareClient)
 	if !ok {
 		return nil
 	}
