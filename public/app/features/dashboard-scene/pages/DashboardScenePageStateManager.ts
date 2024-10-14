@@ -55,17 +55,20 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   constructor(state: DashboardScenePageState) {
     super(state);
 
-    appEvents.subscribe(ReloadDashboardEvent, () => this.reloadDashboard());
+    appEvents.subscribe(ReloadDashboardEvent, ({ payload }) => this.reloadDashboard(payload));
   }
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions): Promise<DashboardDTO | null> {
+  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions, params?: string): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
-    const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
-    if (cachedDashboard) {
-      return cachedDashboard;
+    if (!params) {
+      const cachedDashboard = this.getDashboardFromCache(cacheKey);
+
+      if (cachedDashboard) {
+        return cachedDashboard;
+      }
     }
 
     let rsp: DashboardDTO;
@@ -94,7 +97,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, params);
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
@@ -155,10 +158,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     throw new Error('Snapshot not found');
   }
 
-  public async loadDashboard(options: LoadDashboardOptions) {
+  public async loadDashboard(options: LoadDashboardOptions, params?: string) {
     try {
       startMeasure(LOAD_SCENE_MEASUREMENT);
-      const dashboard = await this.loadScene(options);
+      const dashboard = await this.loadScene(options, params);
       if (!dashboard) {
         return;
       }
@@ -185,14 +188,14 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  public async reloadDashboard() {
-    return this.loadDashboard(this.state.options!);
+  public async reloadDashboard(params?: string | undefined) {
+    return this.loadDashboard(this.state.options!, params);
   }
 
-  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
+  private async loadScene(options: LoadDashboardOptions, params?: string): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
-    const rsp = await this.fetchDashboard(options);
+    const rsp = await this.fetchDashboard(options, params);
 
     const fromCache = this.getSceneFromCache(options.uid);
     if (fromCache && fromCache.state.version === rsp?.dashboard.version) {

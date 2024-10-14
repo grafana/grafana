@@ -35,7 +35,12 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
+  loadDashboard(
+    type: UrlQueryValue,
+    slug: string | undefined,
+    uid: string | undefined,
+    params?: string
+  ): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager();
     let promise;
 
@@ -77,13 +82,15 @@ export class DashboardLoaderSrv {
           };
         });
     } else if (uid) {
-      const cachedDashboard = stateManager.getDashboardFromCache(uid);
-      if (cachedDashboard) {
-        return Promise.resolve(cachedDashboard);
+      if (!params) {
+        const cachedDashboard = stateManager.getDashboardFromCache(uid);
+        if (cachedDashboard) {
+          return Promise.resolve(cachedDashboard);
+        }
       }
 
       promise = getDashboardAPI()
-        .getDashboardDTO(uid)
+        .getDashboardDTO(uid, params)
         .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);

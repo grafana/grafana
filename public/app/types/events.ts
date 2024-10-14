@@ -210,6 +210,6 @@ export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
 }
 
-export class ReloadDashboardEvent extends BusEventBase {
+export class ReloadDashboardEvent extends BusEventWithPayload<string> {
   static type = 'reload-dashboard';
 }

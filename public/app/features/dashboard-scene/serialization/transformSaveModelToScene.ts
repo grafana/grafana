@@ -30,6 +30,7 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -37,8 +38,6 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { ReloadOnFiltersChangeBehavior } from '../scene/ReloadOnFiltersChangeBehavior';
-import { ReloadOnTimeRangeChangeBehavior } from '../scene/ReloadOnTimeRangeChangeBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -253,15 +252,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
       new DashboardScopesFacade({
-        reloadOnScopesChange: oldModel.meta.reloadOnScopesChange,
+        reloadOnParamsChange: oldModel.meta.reloadOnParamsChange,
         uid: oldModel.uid,
       }),
-      new ReloadOnTimeRangeChangeBehavior({
-        reloadOnTimeRangeChange: oldModel.meta.reloadOnTimeRangeChange,
-        uid: oldModel.uid,
-      }),
-      new ReloadOnFiltersChangeBehavior({
-        reloadOnFiltersChange: oldModel.meta.reloadOnFiltersChange,
+      new DashboardReloadBehavior({
+        reloadOnParamsChange: oldModel.meta.reloadOnParamsChange,
         uid: oldModel.uid,
       }),
     ],
