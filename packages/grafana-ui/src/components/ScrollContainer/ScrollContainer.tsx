@@ -55,6 +55,7 @@ const getStyles = (
 ) => ({
   outerWrapper: css({
     display: 'flex',
+    flex: 1,
     position: 'relative',
   }),
   innerWrapper: css({

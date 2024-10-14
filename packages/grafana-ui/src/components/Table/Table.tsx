@@ -15,8 +15,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
@@ -306,7 +306,7 @@ export const Table = memo((props: Props) => {
       ref={tableDivRef}
       style={{ width, height }}
     >
-      <CustomScrollbar hideVerticalTrack={true}>
+      <ScrollContainer hideScrollIndicators>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && (
             <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
@@ -352,7 +352,7 @@ export const Table = memo((props: Props) => {
             />
           )}
         </div>
-      </CustomScrollbar>
+      </ScrollContainer>
       {paginationEl}
     </div>
   );
