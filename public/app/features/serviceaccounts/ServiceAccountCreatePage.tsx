@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
+import { RolePickerSelect } from 'app/core/components/RolePickerDrawer/RolePickerSelect';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgRole, Role, ServiceAccountCreateApiResponse, ServiceAccountDTO } from 'app/types';
 
@@ -98,6 +99,25 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
     setPendingRoles(roles);
   };
 
+  let rolePickerElement = <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />;
+
+  if (config.featureToggles.rolePickerDrawer) {
+    rolePickerElement = <RolePickerSelect user={serviceAccount} />;
+  } else if (contextSrv.licensedAccessControlEnabled()) {
+    rolePickerElement = (
+      <UserRolePicker
+        userId={serviceAccount.id}
+        orgId={serviceAccount.orgId}
+        basicRole={serviceAccount.role}
+        onBasicRoleChange={onRoleChange}
+        roleOptions={roleOptions}
+        onApplyRoles={onPendingRolesUpdate}
+        pendingRoles={pendingRoles}
+        maxWidth="100%"
+      />
+    );
+  }
+
   return (
     <Page navId="serviceaccounts" pageNav={{ text: 'Create service account' }}>
       <Page.Contents>
@@ -114,23 +134,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
                   >
                     <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
                   </Field>
-                  <Field label="Role">
-                    {contextSrv.licensedAccessControlEnabled() ? (
-                      <UserRolePicker
-                        apply
-                        userId={serviceAccount.id || 0}
-                        orgId={serviceAccount.orgId}
-                        basicRole={serviceAccount.role}
-                        onBasicRoleChange={onRoleChange}
-                        roleOptions={roleOptions}
-                        onApplyRoles={onPendingRolesUpdate}
-                        pendingRoles={pendingRoles}
-                        maxWidth="100%"
-                      />
-                    ) : (
-                      <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />
-                    )}
-                  </Field>
+                  <Field label="Role">{rolePickerElement}</Field>
                 </FieldSet>
                 <Button type="submit">Create</Button>
               </>
