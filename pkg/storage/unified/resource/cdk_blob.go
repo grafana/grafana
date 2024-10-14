@@ -25,7 +25,7 @@ import (
 
 type CDKBlobSupportOptions struct {
 	Tracer        trace.Tracer
-	Bucket        *blob.Bucket
+	Bucket        CDKBucket
 	RootFolder    string
 	URLExpiration time.Duration
 }
@@ -69,7 +69,7 @@ func NewCDKBlobSupport(ctx context.Context, opts CDKBlobSupportOptions) (BlobSup
 
 type cdkBlobSupport struct {
 	tracer      trace.Tracer
-	bucket      *blob.Bucket
+	bucket      CDKBucket
 	root        string
 	cansignurls bool
 	expiration  time.Duration

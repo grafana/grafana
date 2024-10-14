@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -126,6 +127,9 @@ type ResourceServerOptions struct {
 
 	// Get the current time in unix millis
 	Now func() int64
+
+	// Registerer to register prometheus Metrics for the Resource server
+	Reg prometheus.Registerer
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -157,7 +161,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 		blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
 			Tracer: opts.Tracer,
-			Bucket: bucket,
+			Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
 		})
 		if err != nil {
 			return nil, err
@@ -193,7 +197,7 @@ type server struct {
 	tracer       trace.Tracer
 	log          *slog.Logger
 	backend      StorageBackend
-	blob        BlobSupport
+	blob         BlobSupport
 	index        ResourceIndexServer
 	diagnostics  DiagnosticsServer
 	access       WriteAccessHooks
