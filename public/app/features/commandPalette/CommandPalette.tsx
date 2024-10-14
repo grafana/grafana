@@ -161,14 +161,15 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   );
 };
 
-const getCommandPalettePosition = (inputRightPosition: number) => {
+const getCommandPalettePosition = (theme: GrafanaTheme2, inputRightPosition: number) => {
+  const paddingSet = parseInt(theme.spacing(2), 10);
   const screenWidth = window.innerWidth;
-  const lateralSpace = screenWidth - inputRightPosition;
+  const lateralSpace = screenWidth - (inputRightPosition + paddingSet);
   return lateralSpace;
 };
 // eslint-disable-next-line
 const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
-  const lateralSpace = getCommandPalettePosition(rightPosition);
+  const lateralSpace = getCommandPalettePosition(theme, rightPosition);
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -187,20 +188,18 @@ const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
     }),
     animator: css({
       width: '100%',
+      maxWidth: theme.breakpoints.values.md,
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
-      [`@media (max-width: ${theme.breakpoints.values.lg}px)`]: {
-        maxWidth: theme.breakpoints.values.md,
-      },
       [`@media (min-width: ${theme.breakpoints.values.lg}px)`]: {
         position: 'fixed',
         right: lateralSpace,
         left: lateralSpace,
-        width: `calc(100% - (${lateralSpace}px * 2))`,
+        maxWidth: `calc(100% - (${lateralSpace}px * 2))`,
       },
     }),
     loadingBarContainer: css({
