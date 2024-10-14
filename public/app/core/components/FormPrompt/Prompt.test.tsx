@@ -31,14 +31,14 @@ describe('Prompt component with React Router', () => {
     jest.clearAllMocks();
   });
 
-  it('should add and remove event listeners when `when` is true', () => {
+  it('should call the block function when `when` is true', () => {
     const { unmount } = render(<Prompt when={true} message="Are you sure you want to leave?" />);
 
     unmount();
     expect(mockHistory.block).toHaveBeenCalled();
   });
 
-  it('should not add event listeners when `when` is false', () => {
+  it('should not call the block function when `when` is false', () => {
     const { unmount } = render(<Prompt when={false} message="Are you sure you want to leave?" />);
 
     unmount();
