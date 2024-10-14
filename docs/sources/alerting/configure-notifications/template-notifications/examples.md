@@ -67,7 +67,6 @@ Each example provided here applies specifically to notification templates (note 
 
 > Find step-by-step instructions on [how to create notification templates](ref:manage-notification-templates) for more detailed guidance.
 
-
 ## Template logic examples
 
 ### Iterate over alerts
@@ -225,10 +224,9 @@ Template alert notifications based on a label. In this example the label represe
 
 ## Common use cases
 
-Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-langauge). 
+Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-langauge).
 
 > Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See more details in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
-
 
 ### Listing multiple alert instances in a single notification
 
@@ -246,7 +244,7 @@ The following instances have high CPU usage:
 This would print:
 
 ```
-The following instances have high CPU usage:  
+The following instances have high CPU usage:
 - Instance: est-03, CPU Usage: 79%
 - Instance: wst-02, CPU Usage: 74%
 ```
@@ -499,6 +497,7 @@ Follow these steps to create a custom notification template that consolidates al
    This generates a neatly formatted table in the email, grouping information for all affected servers into a single notification.
 
 ### Slack
+
 #### Template the title of a Slack message
 
 Template the title of a Slack message to contain the number of firing and resolved alerts:
