@@ -166,6 +166,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{})
 		require.Error(t, err)
 		require.ErrorIs(t, err, clientErr)
+		require.ErrorIs(t, err, ErrUnexpectedWriteFailure)
 	})
 
 	t.Run("writes expected points", func(t *testing.T) {
@@ -203,6 +204,22 @@ func TestPrometheusWriter_Write(t *testing.T) {
 				require.NoError(t, err)
 			})
 		}
+	})
+
+	t.Run("bad labels fit under the client error category", func(t *testing.T) {
+		msg := MimirInvalidLabelError
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
 }
 
