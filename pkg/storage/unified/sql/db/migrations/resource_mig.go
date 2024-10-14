@@ -22,7 +22,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
 			{Name: "value", Type: migrator.DB_LongText, Nullable: true},
 			{Name: "action", Type: migrator.DB_Int, Nullable: false}, // 1: create, 2: update, 3: delete
 
@@ -44,7 +44,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
 			{Name: "value", Type: migrator.DB_LongText, Nullable: true},
 			{Name: "action", Type: migrator.DB_Int, Nullable: false}, // 1: create, 2: update, 3: delete
 
@@ -98,11 +98,11 @@ func initResourceTables(mg *migrator.Migrator) string {
 	}
 
 	mg.AddMigration("Add column previous_resource_version in resource_history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
-		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: false,
+		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: true,
 	}))
 
 	mg.AddMigration("Add column previous_resource_version in resource", migrator.NewAddColumnMigration(resource_table, &migrator.Column{
-		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: false,
+		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: true,
 	}))
 
 	return marker

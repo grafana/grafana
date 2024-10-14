@@ -32,3 +32,7 @@ export function useFolder(uid?: string): ReturnBag {
     loading: false,
   };
 }
+
+export function stringifyFolder({ title, parents }: FolderDTO) {
+  return parents && parents?.length ? [...parents.map((p) => p.title), title].join('/') : title;
+}

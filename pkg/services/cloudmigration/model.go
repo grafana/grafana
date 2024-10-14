@@ -75,15 +75,21 @@ type CloudMigrationResource struct {
 	Error  string          `xorm:"error_string" json:"error"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
+	ParentName  string `xorm:"parent_name" json:"parentName"`
 }
 
 type MigrateDataType string
 
 const (
-	DashboardDataType      MigrateDataType = "DASHBOARD"
-	DatasourceDataType     MigrateDataType = "DATASOURCE"
-	FolderDataType         MigrateDataType = "FOLDER"
-	LibraryElementDataType MigrateDataType = "LIBRARY_ELEMENT"
+	DashboardDataType        MigrateDataType = "DASHBOARD"
+	DatasourceDataType       MigrateDataType = "DATASOURCE"
+	FolderDataType           MigrateDataType = "FOLDER"
+	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
+	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	ContactPointType         MigrateDataType = "CONTACT_POINT"
+	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
+	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
+	MuteTimingType           MigrateDataType = "MUTE_TIMING"
 )
 
 type ItemStatus string
@@ -185,7 +191,8 @@ type Base64HGInstance struct {
 // GMS domain structs
 
 type MigrateDataRequest struct {
-	Items []MigrateDataRequestItem
+	Items           []MigrateDataRequestItem
+	ItemParentNames map[MigrateDataType]map[string](string)
 }
 
 type MigrateDataRequestItem struct {

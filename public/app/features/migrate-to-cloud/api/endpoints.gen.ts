@@ -56,6 +56,9 @@ const injectedRtkApi = api.injectEndpoints({
     getDashboardByUid: build.query<GetDashboardByUidApiResponse, GetDashboardByUidApiArg>({
       query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}` }),
     }),
+    getLibraryElementByUid: build.query<GetLibraryElementByUidApiResponse, GetLibraryElementByUidApiArg>({
+      query: (queryArg) => ({ url: `/library-elements/${queryArg.libraryElementUid}` }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -112,10 +115,10 @@ export type GetShapshotListApiArg = {
   page?: number;
   /** Max limit for results returned. */
   limit?: number;
-  /** Sort with value latest to return results sorted in descending order */
-  sort?: string;
   /** Session UID of a session */
   uid: string;
+  /** Sort with value latest to return results sorted in descending order. */
+  sort?: string;
 };
 export type GetCloudMigrationTokenApiResponse = /** status 200 (empty) */ GetAccessTokenResponseDto;
 export type GetCloudMigrationTokenApiArg = void;
@@ -129,6 +132,11 @@ export type DeleteCloudMigrationTokenApiArg = {
 export type GetDashboardByUidApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
 export type GetDashboardByUidApiArg = {
   uid: string;
+};
+export type GetLibraryElementByUidApiResponse =
+  /** status 200 (empty) */ LibraryElementResponseIsAResponseStructForLibraryElementDto;
+export type GetLibraryElementByUidApiArg = {
+  libraryElementUid: string;
 };
 export type CloudMigrationSessionResponseDto = {
   created?: string;
@@ -157,9 +165,20 @@ export type CreateSnapshotResponseDto = {
 };
 export type MigrateDataResponseItemDto = {
   message?: string;
+  name?: string;
+  parentName?: string;
   refId: string;
   status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';
-  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER' | 'LIBRARY_ELEMENT';
+  type:
+    | 'DASHBOARD'
+    | 'DATASOURCE'
+    | 'FOLDER'
+    | 'LIBRARY_ELEMENT'
+    | 'ALERT_RULE'
+    | 'CONTACT_POINT'
+    | 'NOTIFICATION_POLICY'
+    | 'NOTIFICATION_TEMPLATE'
+    | 'MUTE_TIMING';
 };
 export type SnapshotResourceStats = {
   statuses?: {
@@ -263,6 +282,39 @@ export type DashboardFullWithMeta = {
   dashboard?: Json;
   meta?: DashboardMeta;
 };
+export type LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser = {
+  avatarUrl?: string;
+  id?: number;
+  name?: string;
+};
+export type LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto = {
+  connectedDashboards?: number;
+  created?: string;
+  createdBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+  folderName?: string;
+  folderUid?: string;
+  updated?: string;
+  updatedBy?: LibraryElementDtoMetaUserDefinesModelForLibraryElementDtoMetaUser;
+};
+export type LibraryElementDtoIsTheFrontendDtoForEntities = {
+  description?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderUid?: string;
+  id?: number;
+  kind?: number;
+  meta?: LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto;
+  model?: object;
+  name?: string;
+  orgId?: number;
+  schemaVersion?: number;
+  type?: string;
+  uid?: string;
+  version?: number;
+};
+export type LibraryElementResponseIsAResponseStructForLibraryElementDto = {
+  result?: LibraryElementDtoIsTheFrontendDtoForEntities;
+};
 export const {
   useGetSessionListQuery,
   useCreateSessionMutation,
@@ -277,4 +329,5 @@ export const {
   useCreateCloudMigrationTokenMutation,
   useDeleteCloudMigrationTokenMutation,
   useGetDashboardByUidQuery,
+  useGetLibraryElementByUidQuery,
 } = injectedRtkApi;

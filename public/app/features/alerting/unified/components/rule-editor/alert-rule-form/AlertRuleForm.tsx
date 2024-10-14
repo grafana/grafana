@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
+import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -19,35 +19,40 @@ import {
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-  LogMessages,
   logInfo,
+  LogMessages,
   trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
+  trackNewGrafanaAlertRuleFormCancelled,
+  trackNewGrafanaAlertRuleFormError,
+  trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { DataSourceType } from '../../../utils/datasource';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
-  MANUAL_ROUTING_KEY,
-  SIMPLIFIED_QUERY_EDITOR_KEY,
   formValuesFromExistingRule,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
+  MANUAL_ROUTING_KEY,
   normalizeDefaultAnnotations,
+  SIMPLIFIED_QUERY_EDITOR_KEY,
 } from '../../../utils/rule-form';
-import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import * as ruleId from '../../../utils/rule-id';
+import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
@@ -81,7 +86,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
-  const uidFromParams = routeParams.id;
+  const uidFromParams = routeParams.id || '';
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
@@ -136,6 +141,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const submit = async (values: RuleFormValues, exitOnSave: boolean) => {
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
+      if (!existing && grafanaTypeRule) {
+        // new Grafana-managed rule
+        trackNewGrafanaAlertRuleFormError();
+      }
       return;
     }
 
@@ -152,6 +161,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
       await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+      grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
@@ -205,6 +215,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
     trackAlertRuleFormCancelled({ formAction: existing ? 'update' : 'create' });
+    if (!existing && grafanaTypeRule) {
+      // new Grafana-managed rule
+      trackNewGrafanaAlertRuleFormCancelled();
+    }
     locationService.getHistory().goBack();
   };
 
@@ -215,6 +229,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     <Stack justifyContent="flex-end" alignItems="center">
       {existing && (
         <Button
+          data-testid="save-rule"
           variant="primary"
           type="button"
           size="sm"
@@ -226,6 +241,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         </Button>
       )}
       <Button
+        data-testid="save-rule-and-exit"
         variant="primary"
         type="button"
         size="sm"
@@ -362,14 +378,16 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
     };
   }
 
-  return ignoreHiddenQueries({
-    ...getDefaultFormValues(),
-    ...ruleFromQueryParams,
-    annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
-    queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-    type: type || RuleFormType.grafana,
-    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
-  });
+  return setInstantOrRange(
+    ignoreHiddenQueries({
+      ...getDefaultFormValues(),
+      ...ruleFromQueryParams,
+      annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
+      queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
+      type: type || RuleFormType.grafana,
+      evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    })
+  );
 }
 
 function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
@@ -377,6 +395,31 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
     ...getDefaultFormValues(),
     ...rule,
   });
+}
+
+function setInstantOrRange(values: RuleFormValues): RuleFormValues {
+  return {
+    ...values,
+    queries: values.queries?.map((query) => {
+      if (isExpressionQuery(query.model)) {
+        return query;
+      }
+      // data query
+      const defaultToInstant =
+        query.model.datasource?.type === DataSourceType.Loki ||
+        query.model.datasource?.type === DataSourceType.Prometheus;
+      const isInstant =
+        'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
+      return {
+        ...query,
+        model: {
+          ...query.model,
+          instant: isInstant,
+          range: !isInstant, // we cannot have both instant and range queries in alerting
+        },
+      };
+    }),
+  };
 }
 
 function storeInLocalStorageValues(values: RuleFormValues) {
