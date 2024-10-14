@@ -516,7 +516,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.exploreMetrics && {
-      path: '/explore/metrics',
+      path: '/explore/metrics/*',
       chromeless: false,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
