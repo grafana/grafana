@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { Spacer } from '../../Spacer';
+import { Spacer } from '../../components/Spacer';
 
 interface GroupProps extends PropsWithChildren {
   name: string;

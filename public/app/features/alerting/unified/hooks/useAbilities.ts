@@ -152,7 +152,7 @@ export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleActi
 }
 
 export function useRulerRuleAbility(
-  rule: RulerRuleDTO,
+  rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifier,
   action: AlertRuleAction
 ): Ability {
@@ -227,7 +227,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
 }
 
 export function useAllRulerRuleAbilities(
-  rule: RulerRuleDTO,
+  rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifier
 ): Abilities<AlertRuleAction> {
   const rulesSourceName = groupIdentifier.dataSourceName;
@@ -366,7 +366,14 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
  * 1. the user has no permissions to create silences
  * 2. the admin has configured to only send instances to external AMs
  */
-function useCanSilence(rule: RulerRuleDTO): [boolean, boolean] {
+function useCanSilence(rule?: RulerRuleDTO): [boolean, boolean] {
+  const folderUID = isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
+  const { loading: folderIsLoading, folder } = useFolder(folderUID);
+
+  if (!rule) {
+    return [false, false];
+  }
+
   const isGrafanaManagedRule = isGrafanaRulerRule(rule);
   const isGrafanaRecording = isGrafanaRecordingRule(rule);
 
@@ -374,9 +381,6 @@ function useCanSilence(rule: RulerRuleDTO): [boolean, boolean] {
     alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {
       skip: !isGrafanaManagedRule,
     });
-
-  const folderUID = isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
-  const { loading: folderIsLoading, folder } = useFolder(folderUID);
 
   // we don't support silencing when the rule is not a Grafana managed alerting rule
   // we simply don't know what Alertmanager the ruler is sending alerts to

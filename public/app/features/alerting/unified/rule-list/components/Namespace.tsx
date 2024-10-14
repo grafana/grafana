@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
-import { WithReturnButton } from '../WithReturnButton';
+import { WithReturnButton } from '../../components/WithReturnButton';
 
 interface NamespaceProps extends PropsWithChildren {
   name: string;

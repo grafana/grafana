@@ -43,7 +43,7 @@ export function getRulesDataSources() {
   }
 
   return getAllDataSources()
-    .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
+    .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts === true)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -242,6 +242,10 @@ export function isGrafanaRulesSource(
 
 export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getAllDataSources().find((source) => source.name === name);
+}
+
+export function getDataSourceByUid(dsUid: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+  return getAllDataSources().find((source) => source.uid === dsUid);
 }
 
 export function getAlertmanagerDataSourceByName(name: string) {

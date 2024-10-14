@@ -5,12 +5,12 @@ import { Alert, LoadingBar, Pagination } from '@grafana/ui';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../../api/alertRuleApi';
-import { usePagination } from '../../../hooks/usePagination';
-import { isAlertingRule } from '../../../utils/rules';
-import { AlertRuleListItem } from '../AlertRuleListItem';
-import EvaluationGroup from '../EvaluationGroup';
+import { alertRuleApi } from '../../api/alertRuleApi';
+import { usePagination } from '../../hooks/usePagination';
+import { isAlertingRule } from '../../utils/rules';
 
+import { AlertRuleListItem } from './AlertRuleListItem';
+import { EvaluationGroup } from './EvaluationGroup';
 import { SkeletonListItem } from './ListItem';
 
 interface EvaluationGroupLoaderProps {

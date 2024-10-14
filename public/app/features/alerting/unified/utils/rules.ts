@@ -172,7 +172,11 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule: Rule | RulerRuleDTO): RulePluginOrigin | undefined {
+export function getRulePluginOrigin(rule?: Rule | RulerRuleDTO): RulePluginOrigin | undefined {
+  if (!rule) {
+    return undefined;
+  }
+
   const origin = rule.labels?.[GRAFANA_ORIGIN_LABEL];
   if (!origin) {
     return undefined;
@@ -197,7 +201,7 @@ function isPluginInstalled(pluginId: string) {
   return Boolean(config.apps[pluginId]);
 }
 
-export function isPluginProvidedRule(rule: RulerRuleDTO): boolean {
+export function isPluginProvidedRule(rule?: Rule | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }
 

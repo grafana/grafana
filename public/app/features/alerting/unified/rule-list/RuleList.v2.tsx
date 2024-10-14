@@ -18,22 +18,22 @@ import {
 import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../api/alertRuleApi';
-import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
-import { getAllRulesSources, isGrafanaRulesSource } from '../../utils/datasource';
-import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../../utils/rules';
-import { createRelativeUrl } from '../../utils/url';
-import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import { Spacer } from '../Spacer';
-import { WithReturnButton } from '../WithReturnButton';
-import RulesFilter from '../rules/Filter/RulesFilter';
-import { ActionsLoader, RuleActionsButtons } from '../rules/RuleActionsButtons';
+import { alertRuleApi } from '../api/alertRuleApi';
+import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
+import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { Spacer } from '../components/Spacer';
+import { WithReturnButton } from '../components/WithReturnButton';
+import RulesFilter from '../components/rules/Filter/RulesFilter';
+import { getAllRulesSources, isGrafanaRulesSource } from '../utils/datasource';
+import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../utils/rule-id';
+import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
+import { createRelativeUrl } from '../utils/url';
 
-import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './AlertRuleListItem';
-import { DataSourceIcon } from './Namespace';
+import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
+import { DataSourceIcon } from './components/Namespace';
+import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { LoadingIndicator } from './components/RuleGroup';
 
 const noop = () => {};
@@ -206,7 +206,7 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
   const {
     isLoading,
     data: rulerRuleGroup,
-    error,
+    // error,
   } = useGetRuleGroupForNamespaceQuery(
     {
       namespace: namespaceName,

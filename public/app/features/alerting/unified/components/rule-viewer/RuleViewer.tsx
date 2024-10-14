@@ -19,7 +19,6 @@ import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import {
-  getRuleGroupLocationFromCombinedRule,
   getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
@@ -79,7 +78,6 @@ const RuleViewer = () => {
   const ruleOrigin = rule.rulerRule ? getRulePluginOrigin(rule.rulerRule ?? rule.promRule) : undefined;
 
   const summary = annotations[Annotation.summary];
-  const groupIdentifier = getRuleGroupLocationFromCombinedRule(rule);
 
   return (
     <AlertingPageWrapper
@@ -96,12 +94,7 @@ const RuleViewer = () => {
           ruleOrigin={ruleOrigin}
         />
       )}
-      actions={
-        rule.rulerRule &&
-        rule.promRule && (
-          <RuleActionsButtons rule={rule.rulerRule} promRule={rule.promRule} groupIdentifier={groupIdentifier} />
-        )
-      }
+      actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">

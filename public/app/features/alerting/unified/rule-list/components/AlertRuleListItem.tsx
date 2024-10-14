@@ -4,21 +4,22 @@ import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { Rule, RuleGroupIdentifier, RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
+import { MetaText } from '../../components/MetaText';
+import { ProvisioningBadge } from '../../components/Provisioning';
+import { RuleListIcon } from '../../components/rule-list/RuleListIcon';
+import { calculateNextEvaluationEstimate } from '../../components/rule-list/util';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
-import { MetaText } from '../MetaText';
-import { ProvisioningBadge } from '../Provisioning';
 
-import { RuleListIcon } from './RuleListIcon';
-import { ListItem } from './components/ListItem';
-import { calculateNextEvaluationEstimate } from './util';
+import { ListItem } from './ListItem';
 
 interface AlertRuleListItemProps {
   name: string;
@@ -237,7 +238,9 @@ export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListIt
   return (
     <Alert title={'Unknown rule type'} className={styles.resetMargin}>
       <details>
-        <summary>Rule definition</summary>
+        <summary>
+          <Trans i18nKey="alerting.rule-list.unknown-rule.summary-header">Rule definition</Trans>
+        </summary>
         <pre>
           <code>{JSON.stringify(rule, null, 2)}</code>
         </pre>

@@ -9,12 +9,13 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { getDataSourceByName, getRulesDataSourceByUID, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
 
 /**
+ * @deprecated Use discoverFeaturesByUid instead
  * Attempt to fetch buildinfo from our component
  */
 export async function discoverFeatures(dataSourceName: string): Promise<PromApiFeatures> {
@@ -29,6 +30,32 @@ export async function discoverFeatures(dataSourceName: string): Promise<PromApiF
   const dsConfig = getDataSourceByName(dataSourceName);
   if (!dsConfig) {
     throw new Error(`Cannot find data source configuration for ${dataSourceName}`);
+  }
+
+  const { url, name, type } = dsConfig;
+  if (!url) {
+    throw new Error(`The data source url cannot be empty.`);
+  }
+
+  if (type !== 'prometheus' && type !== 'loki') {
+    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
+  }
+
+  return discoverDataSourceFeatures({ name, url, type });
+}
+
+export async function discoverFeaturesByUid(dataSourceUid: string): Promise<PromApiFeatures> {
+  if (dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
+    return {
+      features: {
+        rulerApiEnabled: true,
+      },
+    };
+  }
+
+  const dsConfig = getRulesDataSourceByUID(dataSourceUid);
+  if (!dsConfig) {
+    throw new Error(`Cannot find data source configuration for ${dataSourceUid}`);
   }
 
   const { url, name, type } = dsConfig;

@@ -2,10 +2,10 @@ import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 
 import { AlertmanagerApiFeatures, PromApiFeatures, PromApplication } from '../../../../types/unified-alerting-dto';
-import { getRulesDataSource, getRulesDataSourceByUID, isGrafanaRulesSource } from '../utils/datasource';
+import { getRulesDataSource, getRulesDataSourceByUID } from '../utils/datasource';
 
 import { alertingApi } from './alertingApi';
-import { discoverAlertmanagerFeatures, discoverFeatures } from './buildInfo';
+import { discoverAlertmanagerFeatures, discoverFeaturesByUid } from './buildInfo';
 
 export const GRAFANA_RULER_CONFIG: RulerDataSourceConfig = {
   dataSourceName: 'grafana',
@@ -34,25 +34,6 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
       { rulesSourceName: string } | { uid: string }
     >({
       queryFn: async (rulesSourceIdentifier) => {
-        const stringID =
-          'uid' in rulesSourceIdentifier ? rulesSourceIdentifier.uid : rulesSourceIdentifier.rulesSourceName;
-
-        if (isGrafanaRulesSource(stringID)) {
-          return {
-            data: {
-              rulerConfig: GRAFANA_RULER_CONFIG,
-              features: {
-                features: {
-                  rulerApiEnabled: true,
-                },
-              },
-              dataSourceSettings: {
-                name: 'Grafana',
-              },
-            },
-          };
-        }
-
         const dataSourceSettings =
           'uid' in rulesSourceIdentifier
             ? getRulesDataSourceByUID(rulesSourceIdentifier.uid)
@@ -61,7 +42,18 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
           return { error: new Error(`Missing data source configuration for ${rulesSourceIdentifier}`) };
         }
 
-        const features = await discoverFeatures(dataSourceSettings.name);
+        // if (isGrafanaRulesSource(stringID)) {
+        //   return {
+        //     data: {
+        //       rulerConfig: GRAFANA_RULER_CONFIG,
+        //       features: { features: { rulerApiEnabled: true } },
+        //       dataSourceSettings,
+        //     },
+        //   };
+        // }
+
+        const features = await discoverFeaturesByUid(dataSourceSettings.uid);
+
         const rulerConfig = features.features.rulerApiEnabled
           ? ({
               dataSourceName: dataSourceSettings.name,
