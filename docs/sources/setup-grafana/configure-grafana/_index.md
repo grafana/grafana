@@ -1787,6 +1787,10 @@ Configures settings around the short link feature.
 
 Short links that are never accessed are considered expired or stale and will be deleted as cleanup. Set the expiration time in days. The default is `7` days. The maximum is `365` days, and setting above the maximum will have `365` set instead. Setting `0` means the short links will be cleaned up approximately every 10 minutes. A negative value such as `-1` will disable expiry.
 
+{{< admonition type="caution" >}}
+Short links without an expiration increase the size of the database and can’t be deleted.
+{{< /admonition >}}
+
 <hr>
 
 ## [metrics]
