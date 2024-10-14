@@ -71,5 +71,4 @@ type GMSAPIError struct {
 var (
 	GMSErrorMessageInstanceUnreachable = "instance is unreachable"
 	GMSErrorMessageInstanceNotFound    = "instance not found"
-	GMSErrorMessageHttpRequestError    = "validate key http request error"
 )

@@ -7,7 +7,7 @@ import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '
 import { Trans, t } from 'app/core/internationalization';
 import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
-import { CreateSessionApiArg } from '../../../api';
+import { CreateSessionApiArg, CreateSessionErrorDto } from '../../../api';
 
 interface Props {
   isOpen: boolean;
@@ -21,7 +21,7 @@ interface FormData {
   token: string;
 }
 
-function getTMessage(errorCode: string | undefined): string {
+function getTMessage(errorCode: CreateSessionErrorDto['errorCode']): string {
   switch (errorCode) {
     case 'TOKEN_INVALID':
       return t(

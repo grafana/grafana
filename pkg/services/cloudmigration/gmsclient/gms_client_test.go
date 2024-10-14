@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,5 +64,42 @@ func Test_buildBasePath(t *testing.T) {
 			client.cfg.CloudMigration.GMSDomain = tt.domain
 			assert.Equal(t, tt.expected, client.buildBasePath(tt.clusterSlug))
 		})
+	}
+}
+
+func Test_handleGMSErrors(t *testing.T) {
+	t.Parallel()
+
+	c, err := NewGMSClient(&setting.Cfg{
+		CloudMigration: setting.CloudMigrationSettings{
+			GMSDomain: "http://some-domain:8080",
+		},
+	},
+		http.DefaultClient,
+	)
+	require.NoError(t, err)
+	client := c.(*gmsClientImpl)
+
+	testscases := []struct {
+		gmsResBody    []byte
+		expectedError *cloudmigration.CreateSessionError
+	}{
+		{
+			gmsResBody:    []byte(`{"message":"instance is unreachable, make sure the instance is running"}`),
+			expectedError: &cloudmigration.ErrInstanceUnreachable,
+		},
+		{
+			gmsResBody:    []byte(`{"message":"instance not found"}`),
+			expectedError: &cloudmigration.ErrInstanceNotFound,
+		},
+		{
+			gmsResBody:    []byte(`{"status":"error","error":"authentication error: invalid token"}`),
+			expectedError: &cloudmigration.ErrTokenInvalid,
+		},
+	}
+
+	for _, tc := range testscases {
+		resError := client.handleGMSErrors(tc.gmsResBody)
+		require.Equal(t, resError, tc.expectedError)
 	}
 }
