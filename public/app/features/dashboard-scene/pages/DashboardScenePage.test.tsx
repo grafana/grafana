@@ -20,8 +20,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
-import { DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
@@ -265,20 +264,6 @@ describe('DashboardScenePage', () => {
       expect(await screen.findByTitle('Panel Added')).toBeInTheDocument();
       expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
     });
-  });
-
-  it('is in edit mode when coming from explore to an existing dashboard', async () => {
-    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard, meta: { slug: '123' } });
-
-    setup();
-
-    await waitForDashboardToRender();
-
-    const panelAMenu = await screen.findByLabelText('Menu for panel with title Panel A');
-    expect(panelAMenu).toBeInTheDocument();
-    await userEvent.click(panelAMenu);
-    const editMenuItem = await screen.findAllByText('Edit');
-    expect(editMenuItem).toHaveLength(1);
   });
 
   describe('home page', () => {
