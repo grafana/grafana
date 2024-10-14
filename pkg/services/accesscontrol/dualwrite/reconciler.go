@@ -24,12 +24,13 @@ type TupleCollector func(ctx context.Context, tuples map[string][]*openfgav1.Tup
 
 // ZanzanaReconciler is a component to reconcile RBAC permissions to zanzana.
 // We should rewrite the migration after we have "migrated" all possible actions
-// into our schema. This will only do a one time migration for each action so its
-// is not really syncing the full rbac state. If a fresh sync is needed the tuple
-// needs to be cleared first.
+// into our schema.
 type ZanzanaReconciler struct {
-	log         log.Logger
-	client      zanzana.Client
+	log    log.Logger
+	client zanzana.Client
+	// Collectors are one time best effort migrations that gives up on first conflict.
+	// These are depricated and everything should move be resourceReconcilers that are periodically synced
+	// between grafana db and zanzana store.
 	collectors  []TupleCollector
 	reconcilers []resourceReconciler
 }
@@ -94,8 +95,6 @@ func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
 		}
 	}
 
-	go r.Reconcile(ctx)
-
 	return nil
 }
 
@@ -106,10 +105,16 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			for _, r := range r.reconcilers {
-				err := r.reconcile(ctx)
-				fmt.Println(err)
+			now := time.Now()
+			r.log.Debug("Start new reconciliation", "time", now)
+			for _, reconciler := range r.reconcilers {
+				if err := reconciler.reconcile(ctx); err != nil {
+					r.log.Warn("Failed to perform reconciliation for resource", "err", err)
+				}
 			}
+			r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
+		case <-ctx.Done():
+
 		}
 	}
 	return nil
