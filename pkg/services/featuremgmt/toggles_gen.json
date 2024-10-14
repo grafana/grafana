@@ -3084,7 +3084,7 @@
         "name": "unifiedStorageSearch",
         "resourceVersion": "1726771421439",
         "creationTimestamp": "2024-09-19T18:43:41Z",
-        "deletionTimestamp": "2024-10-11T15:54:21Z"
+        "deletionTimestamp": "2024-10-11T14:56:04Z"
       },
       "spec": {
         "description": "Enable unified storage search",
