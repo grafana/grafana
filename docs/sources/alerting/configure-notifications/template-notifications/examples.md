@@ -15,19 +15,53 @@ labels:
 title: Notification template examples
 menuTitle: Examples
 weight: 103
+refs:
+  manage-notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/#create-a-notification-template
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/#create-a-notification-template
 ---
 
 # Notification template examples
 
-This document is a compilation of common use cases for templating within Grafana notification templates. Templating in notification templates allows you to dynamically generate and reuse content for alert messages sent to external systems, such as email, Slack, or PagerDuty. By using variables and functions, you can create more detailed and customized notifications that enhance alert clarity and improve response.
+This document is a compilation of common use cases for templating within Grafana notification templates. Templating in notification templates allows you to dynamically customize the title, message, and format of alert notifications. The template can dynamically insert relevant information—such as alert labels, metrics, and values—into your notifications. Moreover, notification templates can be easily reused across contact points.
 
 Each example provided here applies specifically to notification templates (note that the syntax and behavior may differ from alert rule templating). For examples related to templating within alert rules, please refer to the [labels and annotations template examples](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/) document.
+
+> Find step-by-step instructions on [how to create notification templates](ref:manage-notification-templates) for more detailed guidance.
 
 > Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See more details in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
 
 ## Common use cases
 
 Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](#). 
+
+
+### Listing multiple alert instances in a single notification
+
+When multiple alerts are fired, a notification template can summarize affected instances, making it easier to track issues like high CPU usage across systems. For example, use this template to list all instances with high CPU usage when multiple alerts fire at once:
+
+```go
+{{ define "default.message" }}
+The following instances have high CPU usage:
+{{ range .Alerts.Firing }}
+  - Instance: {{ .Labels.instance }}, CPU Usage: {{ .Values.A }}%
+{{ end }}
+{{ end }}
+```
+
+This would print:
+
+```
+The following instances have high CPU usage:  
+- Instance: est-03, CPU Usage: 79%
+- Instance: wst-02, CPU Usage: 74%
+```
+
+Used functions and syntax:
+
+[`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
 
 ### Firing and resolved alerts, with summary annotation
 
@@ -101,39 +135,6 @@ Runbook: https://example.com/on-call/database_server_high_disk_usage
 Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
 Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service. Please refer to the runbook for more information.
 Runbook: https://example.com/on-call/web_server_high_5xx_rate
-```
-
-### Labels with values of instant queries and expressions
-
-This notification template prints the labels and the values of any instant queries, expression and condition. It does not require a summary annotation in each alert.
-
-```
-{{ define "alerts.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s)
-{{ template "alerts.summarize_labels_and_values" .Alerts.Firing }}
-{{- end }}
-{{- if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s)
-{{ template "alerts.summarize_labels_and_values" .Alerts.Resolved }}
-{{- end }}
-{{- end }}
-
-{{ define "alerts.summarize_labels_and_values" -}}
-{{ range . -}}
-- {{ range $k, $v := .Labels }}{{ $k }}={{ $v }} {{ end }}{{ range $k, $v := .Values }}{{ $k }}={{ $v }} {{ end }}
-{{ end }}
-{{ end }}
-```
-
-The output of this template looks like this:
-
-```
-1 firing alert(s):
-- alertname=database_high_disk_usage server=db1 B=0.76 C=1
-
-1 resolved alert(s):
-- alertname=web_server_high_5xx_rate server=web1 B=0 C=0
 ```
 
 ### Firing and resolved alerts, with labels, summary, and silencing

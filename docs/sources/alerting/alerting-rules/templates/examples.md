@@ -137,7 +137,7 @@ If you are using classic conditions, refer to [legacy alerting templates](#legac
 
 Below are some examples that address common use cases and some of the different approaches you can take with templating. You will see both annotation and label templates share functions and elements that help formatting the alert notifications. If you are unfamiliar with the templating language, check the [Language page](ref:language).
 
-### Annotation examples
+### Annotation template examples
 
 #### Displaying alert trigger details
 
@@ -154,8 +154,6 @@ CPU usage for Instance-1 has exceeded 81.23% for the last 5 minutes.
 ```
 
 Used functions and syntax:
-
-<!-- add links to these elements -->
 
 - [`$labels`](ref:reference-labels): Used to access alert labels.
 - [`$values`](ref:reference-values): Used to access the query values that triggered the alert.
@@ -175,25 +173,7 @@ This would print:
 Alert triggered in production with severity critical.
 ```
 
-#### Summarizing multiple alerts in a single notification
-
-When multiple alerts are fired, an annotation can summarize them by listing all affected instances. For example, to list all instances with high CPU usage when multiple alerts fire simultaneously:
-
-```go
-The following instances have high CPU usage: {{ range .Alerts.Firing }} {{ .Labels.instance }} ({{ .Values.A }}%) {{ end }}
-```
-
-This would print:
-
-```
-The following instances have high CPU usage: Instance-1 (81.23%) Instance-2 (83.45%) Instance-3 (82.01%)
-```
-
-Used functions and syntax:
-
-[`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
-
-### Label examples
+### Label template examples
 
 #### Print an individual label
 
@@ -210,8 +190,6 @@ The host server1 has exceeded 80% CPU usage for the last 5 minutes
 ```
 
 Used functions and syntax:
-
-<!-- link this to language ref -->
 
 - [`{{ index }}`](ref:language-index): Used to access specific elements from a map or slice, helping to extract label values.
 
@@ -323,28 +301,6 @@ This would print:
 Used functions and syntax:
 
 - [`{{ eq }}`](ref:language-comparison): A function that checks if two values are equal, allowing you to customize messages based on the environment.
-
-#### Automatically assigning priority
-
-You can automatically set a priority label based on both the alert condition and the importance of the instance. This approach allows you to combine the instance's importance with the query value to determine the appropriate priority level:
-
-```go
-{{ if and (eq $labels.instance "critical-server") (gt $values.A 90) }}P1
-{{ else if (gt $values.A 80) }}P2
-{{ else }}P3
-{{ end }}
-```
-
-This would print:
-
-- For `critical-server` with a value over 90, the priority is `P1`.
-- For values over 80 but less than 90, the priority is `P2`.
-- Otherwise, the priority is `P3`.
-
-Used functions and syntax:
-
-- [`{{ and }}`](ref:language-functions): Logical operator for combining conditions (e.g., checking both the instance and the query value).
-- [`$labels`](ref:reference-labels): Reference alert labels within the conditional logic.
 
 ## Legacy Alerting templates
 
