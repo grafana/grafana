@@ -191,7 +191,7 @@ export const Combobox = <T extends string | number>({
 
       const filteredItems = options.filter(itemFilter(inputValue));
 
-      setItems(customValueOption ? [...filteredItems, customValueOption] : filteredItems);
+      setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
     },
 
     onIsOpenChange: ({ isOpen }) => {
