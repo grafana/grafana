@@ -86,7 +86,7 @@ func newRuleFactory(
 		}
 		return newAlertRule(
 			ctx,
-			rule.GetKey(),
+			rule.GetKeyWithGroup(),
 			appURL,
 			disableGrafanaFolder,
 			maxAttempts,
@@ -112,7 +112,7 @@ type ruleProvider interface {
 }
 
 type alertRule struct {
-	key ngmodels.AlertRuleKey
+	key ngmodels.AlertRuleKeyWithGroup
 
 	evalCh   chan *Evaluation
 	updateCh chan RuleVersionAndPauseStatus
@@ -140,7 +140,7 @@ type alertRule struct {
 
 func newAlertRule(
 	parent context.Context,
-	key ngmodels.AlertRuleKey,
+	key ngmodels.AlertRuleKeyWithGroup,
 	appURL *url.URL,
 	disableGrafanaFolder bool,
 	maxAttempts int64,
@@ -155,7 +155,7 @@ func newAlertRule(
 	evalAppliedHook func(ngmodels.AlertRuleKey, time.Time),
 	stopAppliedHook func(ngmodels.AlertRuleKey),
 ) *alertRule {
-	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
+	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
 	return &alertRule{
 		key:                  key,
 		evalCh:               make(chan *Evaluation),
@@ -194,7 +194,7 @@ func (a *alertRule) Status() ngmodels.RuleStatus {
 //
 // the second element contains a dropped message that was sent by a concurrent sender.
 func (a *alertRule) Eval(eval *Evaluation) (bool, *Evaluation) {
-	if a.key != eval.rule.GetKey() {
+	if a.key != eval.rule.GetKeyWithGroup() {
 		// Make sure that rule has the same key. This should not happen
 		a.logger.Error("Invalid rule sent for evaluating. Skipping", "ruleKeyToEvaluate", eval.rule.GetKey().String())
 		return false, eval
@@ -352,7 +352,7 @@ func (a *alertRule) Run() error {
 				// cases.
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
-				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key), a.key, ngmodels.StateReasonRuleDeleted)
+				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, a.key.AlertRuleKey), a.key, ngmodels.StateReasonRuleDeleted)
 				a.expireAndSend(grafanaCtx, states)
 			}
 			a.logger.Debug("Stopping alert rule routine")
@@ -467,7 +467,7 @@ func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.St
 
 	if len(alerts.PostableAlerts) > 0 {
 		logger.Debug("Sending transitions to notifier", "transitions", len(alerts.PostableAlerts))
-		a.sender.Send(ctx, a.key, alerts)
+		a.sender.Send(ctx, a.key.AlertRuleKey, alerts)
 	}
 	return alerts
 }
@@ -476,12 +476,12 @@ func (a *alertRule) send(ctx context.Context, logger log.Logger, states state.St
 func (a *alertRule) expireAndSend(ctx context.Context, states []state.StateTransition) {
 	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 	if len(expiredAlerts.PostableAlerts) > 0 {
-		a.sender.Send(ctx, a.key, expiredAlerts)
+		a.sender.Send(ctx, a.key.AlertRuleKey, expiredAlerts)
 	}
 }
 
 func (a *alertRule) resetState(ctx context.Context, isPaused bool) {
-	rule := a.ruleProvider.get(a.key)
+	rule := a.ruleProvider.get(a.key.AlertRuleKey)
 	reason := ngmodels.StateReasonUpdated
 	if isPaused {
 		reason = ngmodels.StateReasonPaused
@@ -496,7 +496,7 @@ func (a *alertRule) evalApplied(now time.Time) {
 		return
 	}
 
-	a.evalAppliedHook(a.key, now)
+	a.evalAppliedHook(a.key.AlertRuleKey, now)
 }
 
 // stopApplied is only used on tests.
@@ -505,7 +505,7 @@ func (a *alertRule) stopApplied() {
 		return
 	}
 
-	a.stopAppliedHook(a.key)
+	a.stopAppliedHook(a.key.AlertRuleKey)
 }
 
 func SchedulerUserFor(orgID int64) *user.SignedInUser {
