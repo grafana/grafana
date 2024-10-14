@@ -586,6 +586,28 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 		assert.Equal(t, savedDash.ID, dash.ID)
 		assert.Equal(t, savedDash.UID, dash.UID)
 		assert.Equal(t, savedDash.Title, dash.Title)
+
+		t.Run("Should clear deleted field when creating a dashboard with the soft deleted UID", func(t *testing.T) {
+			newTitle := "test dash 24"
+			_, err = dashboardStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+				OrgID: savedDash.OrgID,
+				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+					"id":      savedDash.ID,
+					"uid":     savedDash.UID,
+					"title":   newTitle,
+					"version": savedDash.Version,
+				}),
+			})
+
+			dash, err = dashboardStore.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID})
+			require.NoError(t, err)
+			assert.Equal(t, savedDash.ID, dash.ID)
+			assert.Equal(t, savedDash.UID, dash.UID)
+			assert.Equal(t, newTitle, dash.Title)
+
+			_, err = dashboardStore.GetSoftDeletedDashboard(context.Background(), savedDash.OrgID, savedDash.UID)
+			assert.Error(t, err, dashboards.ErrDashboardNotFound)
+		})
 	})
 
 	t.Run("Should not fail when trying to soft delete a soft deleted dashboard", func(t *testing.T) {

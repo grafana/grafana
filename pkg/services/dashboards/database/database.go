@@ -457,7 +457,10 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 		dash.UpdatedBy = userId
 
-		affectedRows, err = sess.MustCols("folder_id", "folder_uid").Nullable("folder_uid").ID(dash.ID).Update(dash)
+		// always clear deleted column on dashboard save
+		dash.Deleted = time.Time{}
+
+		affectedRows, err = sess.MustCols("folder_id", "folder_uid", "deleted").Nullable("folder_uid", "deleted").ID(dash.ID).Update(dash)
 	}
 
 	if err != nil {
