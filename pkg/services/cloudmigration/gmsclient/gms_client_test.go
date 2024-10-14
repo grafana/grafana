@@ -96,6 +96,10 @@ func Test_handleGMSErrors(t *testing.T) {
 			gmsResBody:    []byte(`{"status":"error","error":"authentication error: invalid token"}`),
 			expectedError: &cloudmigration.ErrTokenInvalid,
 		},
+		{
+			gmsResBody:    []byte(""),
+			expectedError: &cloudmigration.ErrTokenInvalid,
+		},
 	}
 
 	for _, tc := range testscases {
