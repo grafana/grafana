@@ -20,7 +20,7 @@ describe('Prompt component with React Router', () => {
     const historyInstance = createMemoryHistory({ initialEntries: ['/current'] });
     mockHistory = {
       ...historyInstance,
-      block: jest.fn(() => jest.fn()) as jest.Mock,
+      block: jest.fn(() => jest.fn()),
     };
 
     (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/current' } as Location);
