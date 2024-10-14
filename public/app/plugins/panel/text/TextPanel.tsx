@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, InterpolateFunction } from '@grafana/data';
-import { CustomScrollbar, CodeEditor, useStyles2 } from '@grafana/ui';
+import { CodeEditor, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
 import config from 'app/core/config';
 
 import { defaultCodeOptions, Options, TextMode } from './panelcfg.gen';
@@ -51,14 +52,16 @@ export function TextPanel(props: Props) {
   }
 
   return (
-    <CustomScrollbar autoHeightMin="100%" className={styles.containStrict}>
-      <DangerouslySetHtmlContent
-        allowRerender
-        html={processed.content}
-        className={styles.markdown}
-        data-testid="TextPanel-converted-content"
-      />
-    </CustomScrollbar>
+    <div className={styles.containStrict}>
+      <ScrollContainer minHeight="100%" hideScrollIndicators>
+        <DangerouslySetHtmlContent
+          allowRerender
+          html={processed.content}
+          className={styles.markdown}
+          data-testid="TextPanel-converted-content"
+        />
+      </ScrollContainer>
+    </div>
   );
 }
 
@@ -99,13 +102,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background-color: ${theme.colors.background.primary};
     }
   `,
-  markdown: cx(
-    'markdown-html',
-    css`
-      height: 100%;
-    `
-  ),
+  markdown: cx('markdown-html'),
   containStrict: css({
     contain: 'strict',
+    height: '100%',
   }),
 });
