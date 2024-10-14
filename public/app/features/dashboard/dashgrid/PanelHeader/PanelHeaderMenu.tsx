@@ -40,5 +40,7 @@ export function PanelHeaderMenu({ items }: Props) {
     });
   };
 
+  debugger;
+
   return <Menu>{renderItems(items)}</Menu>;
 }

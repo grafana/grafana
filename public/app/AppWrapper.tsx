@@ -20,6 +20,7 @@ import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
+import { PluginLoaderContextProvider } from './features/plugins/extensions/PluginLoaderContext';
 import { ExperimentalSplitPaneRouterWrapper, RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
@@ -111,17 +112,19 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
               >
                 <GlobalStyles />
                 <SidecarContext.Provider value={sidecarService}>
-                  <ExtensionRegistriesProvider registries={app.pluginExtensionsRegistries}>
-                    <div className="grafana-app">
-                      {config.featureToggles.appSidecar ? (
-                        <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                      ) : (
-                        <RouterWrapper {...routerWrapperProps} />
-                      )}
-                      <LiveConnectionWarning />
-                      <PortalContainer />
-                    </div>
-                  </ExtensionRegistriesProvider>
+                  <PluginLoaderContextProvider registries={app.pluginExtensionsRegistries}>
+                    <ExtensionRegistriesProvider registries={app.pluginExtensionsRegistries}>
+                      <div className="grafana-app">
+                        {config.featureToggles.appSidecar ? (
+                          <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                        ) : (
+                          <RouterWrapper {...routerWrapperProps} />
+                        )}
+                        <LiveConnectionWarning />
+                        <PortalContainer />
+                      </div>
+                    </ExtensionRegistriesProvider>
+                  </PluginLoaderContextProvider>
                 </SidecarContext.Provider>
               </KBarProvider>
             </ThemeProvider>

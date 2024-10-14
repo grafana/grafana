@@ -580,10 +580,10 @@ export const getExtensionPointPluginDependencies = (extensionPointId: string): s
 // Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.
 // (It is first the plugin that exposes the component, and then the ones that it depends on.)
 export const getExposedComponentPluginDependencies = (exposedComponentId: string) => {
-  const appPluginId = getAppPluginIdFromExposedComponentId(exposedComponentId);
+  const pluginId = getAppPluginIdFromExposedComponentId(exposedComponentId);
 
-  return [appPluginId].reduce((acc: string[], appPluginId: string) => {
-    return [...acc, appPluginId, ...getAppPluginDependencies(appPluginId)];
+  return [pluginId].reduce((acc: string[], pluginId: string) => {
+    return [...acc, pluginId, ...getAppPluginDependencies(pluginId)];
   }, []);
 };
 
@@ -599,7 +599,7 @@ export const getAppPluginDependencies = (pluginId: string): string[] => {
     getAppPluginIdFromExposedComponentId
   );
 
-  return pluginIdDependencies.reduce((acc, dep) => {
-    return [...acc, ...getAppPluginDependencies(dep)];
+  return pluginIdDependencies.reduce((acc, pluginId) => {
+    return [...acc, pluginId, ...getAppPluginDependencies(pluginId)];
   }, pluginIdDependencies);
 };

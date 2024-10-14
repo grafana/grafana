@@ -19,7 +19,7 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
   const registry = useExposedComponentsRegistry();
   const registryState = useObservable(registry.asObservable());
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins([getExposedComponentPluginDependencies(id)]);
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExposedComponentPluginDependencies(id));
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.

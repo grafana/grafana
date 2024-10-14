@@ -1,4 +1,4 @@
-import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { PropsWithChildren, createContext, useCallback, useContext, useState } from 'react';
 
 import { preloadPlugins } from '../pluginPreloader';
 
@@ -36,12 +36,13 @@ export const PluginLoaderContextProvider = ({
         return;
       }
 
-      setIsLoading(true);
+      // setIsLoading(true);
       preloadPlugins(appConfigs, registries).then(() => {
-        setIsLoading(false);
+        // setIsLoading(false);
       });
     },
-    [registries]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   return <PluginLoaderContext.Provider value={{ loadAppPlugins, isLoading }}>{children}</PluginLoaderContext.Provider>;

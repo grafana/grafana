@@ -87,7 +87,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
   private panelOptionsLogger: PanelOptionsLogger | undefined = undefined;
-
   constructor(props: Props) {
     super(props);
 
