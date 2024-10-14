@@ -15,6 +15,8 @@ import {
   SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { HistoryChangedEvent } from 'app/types/events';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
 import { SerializedTrailHistory } from './TrailStore/TrailStore';
@@ -148,13 +150,19 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
             return;
           }
 
-          this.addTrailStep(
-            trail,
-            'time',
-            parseTimeTooltip({
-              from: newState.from,
-              to: newState.to,
-              timeZone: newState.timeZone,
+          const tooltip = parseTimeTooltip({
+            from: newState.from,
+            to: newState.to,
+            timeZone: newState.timeZone,
+          });
+
+          this.addTrailStep(trail, 'time', tooltip);
+
+          appEvents.publish(
+            new HistoryChangedEvent({
+              name: 'Time range changed',
+              description: tooltip,
+              url: window.location.href,
             })
           );
         }
