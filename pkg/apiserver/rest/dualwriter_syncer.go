@@ -222,11 +222,13 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, 
 				if err != nil {
 					if !apierrors.IsNotFound(err) {
 						log.WithValues("objectList", deletedS).Error(err, "could not delete from storage")
+					} else {
+						syncErr++
+						continue
 					}
-					syncErr++
-				} else {
-					syncSuccess++
 				}
+
+				syncSuccess++
 			}
 		}
 
