@@ -2,9 +2,9 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strings"
-	"errors"
 
 	"github.com/grafana/authlib/claims"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
