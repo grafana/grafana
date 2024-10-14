@@ -30,21 +30,38 @@ function onSelect() {
 function RecentExploration({ model }: Props) {
   const styles = useStyles2(getStyles);
   const { metric, datasource, filters, createdAt } = model.useState();
+
+  // Helper function to truncate the value
+  const truncateValue = (key: string, value: string, maxLength: number) => {
+    const combinedLength = key.length + 2 + value.length; // 2 for ": "
+    if (combinedLength > maxLength) {
+      return value.substring(0, maxLength - key.length - 5) + '...'; // 5 for ": " and "..."
+    }
+    return value;
+  };
+
   return (
     <>
       <Card onClick={onSelect} className={styles.card}>
         <Card.Heading>
-          <div className={styles.metricLabel}>Last metric:</div>
+          <div className={styles.metricLabel}>Metric:</div>
           <div className={styles.metricValue}>{metric}</div>
         </Card.Heading>
         <Card.Meta separator={'|'} className={styles.meta}>
+          {/* 
+          - counter (running total of length of filters and their keys)
+          - filters.ForEach, for each filter, increment the counter based on teh length of of both key and value, plus " | " (3 characters)
+          - will the next key:value go over our character limit of 4 lines of labels? if yes, replace that whole filter with "..." and break/stop looping
+          */}
           {filters.map((f) => (
             <span key={f.key}>
-              <div className={styles.secondaryFont}>{f.key}: </div> <div className={styles.primaryFont}>{f.value}</div>
+              <div className={styles.secondaryFont}>{f.key}: </div>
+              <div className={styles.primaryFont}>
+                {truncateValue(f.key, f.value, 35)}
+              </div>
             </span>
           ))}
         </Card.Meta>
-        {/* </div> */}
         <div className={styles.datasource}>
           <div className={styles.secondaryFont}>Datasource: </div>
           <div className={styles.primaryFont}>{datasource && getDataSourceName(datasource)}</div>
@@ -110,15 +127,11 @@ export function getStyles(theme: GrafanaTheme2) {
     meta: css({
       flexWrap: 'wrap',
       width: '100%',
+      margin: 0,
       gridArea: 'Meta',
-      margin: theme.spacing(1, 0, 0),
       color: theme.colors.text.secondary,
       whiteSpace: 'nowrap',
       // lineHeight: theme.typography.body.lineHeight,
-    }),
-    actions: css({
-      marginRight: theme.spacing(1),
-      // gridArea: 'Actions', // seems to do nothing
     }),
     primaryFont: css({
       display: 'inline',
