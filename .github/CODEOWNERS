@@ -241,7 +241,6 @@
 /devenv/docker/rpmtest/ @grafana/grafana-backend-services-squad
 /devenv/jsonnet/ @grafana/dataviz-squad
 /devenv/local-npm/ @grafana/frontend-ops
-/devenv/vscode/ @grafana/frontend-ops
 /devenv/setup.sh @grafana/grafana-backend-services-squad
 /devenv/plugins.yaml @grafana/plugins-platform-frontend
 
