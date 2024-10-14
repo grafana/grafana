@@ -964,6 +964,10 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
 
+### oauth_login_error_message
+
+A custom error message for when users are unauthorized. Default is a key for an internationalized phrase in the frontend, `Login provider denied login request`.
+
 ### oauth_refresh_token_server_lock_min_wait_ms
 
 Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
@@ -1089,6 +1093,16 @@ Set to `true` to enable the AWS Signature Version 4 Authentication option for HT
 Set to `true` to enable verbose request signature logging when AWS Signature Version 4 Authentication is enabled. Default is `false`.
 
 <hr />
+
+### managed_service_accounts_enabled
+
+> Only available in Grafana 11.3+.
+
+Set to `true` to enable the use of managed service accounts for plugin authentication. Default is `false`.
+
+> **Limitations:**
+> This feature currently **only supports single-organization deployments**.
+> The plugin's service account is automatically created in the default organization. This means the plugin can only access data and resources within that specific organization.
 
 ## [auth.anonymous]
 

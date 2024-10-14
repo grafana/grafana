@@ -1542,14 +1542,15 @@ func TestDeleteRuleGroup(t *testing.T) {
 func TestProvisiongWithFullpath(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 	ac := acmock.New()
+	folderPermissions := acmock.NewMockedPermissionsService()
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-	folderService := folderimpl.ProvideService(ac, inProcBus, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderService := folderimpl.ProvideService(fStore, ac, inProcBus, dashboardStore, folderStore, sqlStore,
+		features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
 
@@ -1646,6 +1647,7 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		},
 		Logger:        log.NewNopLogger(),
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}

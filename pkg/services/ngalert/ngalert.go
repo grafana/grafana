@@ -441,6 +441,7 @@ func (ng *AlertNG) init() error {
 		ng.store,
 		ng.Log,
 		ng.ResourcePermissions,
+		ng.tracer,
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -451,6 +452,7 @@ func (ng *AlertNG) init() error {
 		ng.store,
 		ng.Log,
 		ng.ResourcePermissions,
+		ng.tracer,
 	)
 
 	// Provisioning
@@ -478,6 +480,7 @@ func (ng *AlertNG) init() error {
 		ProvenanceStore:      ng.store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
+		Scheduler:            scheduler,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ReceiverService:      receiverService,

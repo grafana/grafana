@@ -403,6 +403,10 @@ const (
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"
 
+	// FlagGrafanaAPIServerTestingWithExperimentalAPIs
+	// Facilitate integration testing of experimental APIs
+	FlagGrafanaAPIServerTestingWithExperimentalAPIs = "grafanaAPIServerTestingWithExperimentalAPIs"
+
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
@@ -563,6 +567,10 @@ const (
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
+	// FlagOnPremToCloudMigrationsAlerts
+	// Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.
+	FlagOnPremToCloudMigrationsAlerts = "onPremToCloudMigrationsAlerts"
+
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
@@ -660,7 +668,7 @@ const (
 	FlagNotificationBanner = "notificationBanner"
 
 	// FlagDashboardRestore
-	// Enables deleted dashboard restore feature (backend only)
+	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
 
 	// FlagDatasourceProxyDisableRBAC
@@ -719,10 +727,6 @@ const (
 	// Register Alerting APIs with the K8s API server
 	FlagAlertingApiServer = "alertingApiServer"
 
-	// FlagDashboardRestoreUI
-	// Enables the frontend to be able to restore a recently deleted dashboard
-	FlagDashboardRestoreUI = "dashboardRestoreUI"
-
 	// FlagCloudWatchRoundUpEndTime
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
@@ -751,6 +755,10 @@ const (
 	// Send dashboard and panel names to Loki when querying
 	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
 
+	// FlagAlertingPrometheusRulesPrimary
+	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
+	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
+
 	// FlagSingleTopNav
 	// Unifies the top search bar and breadcrumb bar into one
 	FlagSingleTopNav = "singleTopNav"
@@ -771,9 +779,9 @@ const (
 	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
 	FlagHomeSetupGuide = "homeSetupGuide"
 
-	// FlagAppPlatformAccessTokens
-	// Enables the use of access tokens for the App Platform
-	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
+	// FlagAppPlatformGrpcClientAuth
+	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
+	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
 	// FlagAppSidecar
 	// Enable the app sidecar feature that allows rendering 2 apps at the same time
@@ -798,4 +806,12 @@ const (
 	// FlagRolePickerDrawer
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
+
+	// FlagUnifiedStorageSearch
+	// Enable unified storage search
+	FlagUnifiedStorageSearch = "unifiedStorageSearch"
+
+	// FlagPluginsSriChecks
+	// Enables SRI checks for plugin assets
+	FlagPluginsSriChecks = "pluginsSriChecks"
 )
