@@ -70,9 +70,10 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
 		c.log.Error("token validation failure", "err", string(body))
-		// TODO: read body here and build error
-		createSessErr = c.handleGMSErrors(body)
-		return createSessErr
+		if gmsErr := c.handleGMSErrors(body); gmsErr != nil {
+			return gmsErr
+		}
+		return &cloudmigration.ErrTokenRequestError
 	}
 
 	return nil
@@ -268,18 +269,14 @@ func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
 func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) *cloudmigration.CreateSessionError {
 	var apiError GMSAPIError
 	if err := json.Unmarshal(responseBody, &apiError); err != nil {
-		// TODO: see what to return generic
-		return &cloudmigration.ErrSessionCreationFailure
+		return &cloudmigration.ErrTokenInvalid
 	}
 
 	if strings.Contains(apiError.Message, GMSErrorMessageInstanceUnreachable) {
 		return &cloudmigration.ErrInstanceUnreachable
 	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceNotFound) {
 		return &cloudmigration.ErrInstanceNotFound
-	} else if strings.Contains(apiError.Message, GMSErrorMessageHttpRequestError) {
-		return &cloudmigration.ErrTokenRequestError
 	}
 
-	// TODO: see what to return generic
-	return &cloudmigration.ErrSessionCreationFailure
+	return &cloudmigration.ErrTokenInvalid
 }
