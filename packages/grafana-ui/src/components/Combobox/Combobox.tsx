@@ -68,6 +68,8 @@ function itemFilter<T extends string | number>(inputValue: string) {
   };
 }
 
+const asyncNoop = () => Promise.resolve([]);
+
 /**
  * A performant Select replacement.
  *
@@ -89,7 +91,7 @@ export const Combobox = <T extends string | number>({
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
 
   const isAsync = typeof options === 'function';
-  const loadOptions = useLatestAsyncCall(isAsync ? options : null);
+  const loadOptions = useLatestAsyncCall(isAsync ? options : asyncNoop); // loadOptions isn't called at all if not async
   const [asyncLoading, setAsyncLoading] = useState(false);
 
   const [items, setItems] = useState(isAsync ? [] : options);

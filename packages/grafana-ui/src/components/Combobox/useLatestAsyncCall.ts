@@ -6,15 +6,11 @@ type AsyncFn<T, V> = (value: T) => Promise<V>;
  * Wraps an async function to ensure that only the latest call is resolved.
  * Used to prevent a faster call being overwritten by an earlier slower call.
  */
-export function useLatestAsyncCall<T, V>(fn: null | AsyncFn<T, V>): AsyncFn<T, V> {
+export function useLatestAsyncCall<T, V>(fn: AsyncFn<T, V>): AsyncFn<T, V> {
   const latestValue = useRef<T>();
 
   const wrappedFn = useCallback(
     (value: T) => {
-      if (!fn) {
-        throw new Error('useLatestAsyncCall was called with a null function');
-      }
-
       latestValue.current = value;
 
       return new Promise<V>((resolve, reject) => {
