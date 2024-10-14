@@ -48,6 +48,10 @@
     "typescript": "5.5.4"
   },
   "dependencies": {
-    "tslib": "2.7.0"
+    "@anatine/zod-openapi": "^2.2.6",
+    "openapi3-ts": "^4.4.0",
+    "tslib": "2.7.0",
+    "zod": "^3.23.8",
+    "zod-defaults": "^0.1.3"
   }
 }
