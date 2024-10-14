@@ -4227,6 +4227,9 @@
           "options": {
             "$ref": "#/components/schemas/ReportOptions"
           },
+          "pdfCombineOneFile": {
+            "type": "boolean"
+          },
           "recipients": {
             "type": "string"
           },
@@ -9346,6 +9349,9 @@
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "pdfCombineOneFile": {
+            "type": "boolean"
           },
           "recipients": {
             "type": "string"

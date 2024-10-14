@@ -3562,6 +3562,9 @@
         "options": {
           "$ref": "#/definitions/ReportOptions"
         },
+        "pdfCombineOneFile": {
+          "type": "boolean"
+        },
         "recipients": {
           "type": "string"
         },
@@ -6462,6 +6465,9 @@
         "orgId": {
           "type": "integer",
           "format": "int64"
+        },
+        "pdfCombineOneFile": {
+          "type": "boolean"
         },
         "recipients": {
           "type": "string"
