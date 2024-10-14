@@ -15,7 +15,7 @@ import {
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -170,6 +170,8 @@ const getCommandPalettePosition = (theme: GrafanaTheme2, inputRightPosition: num
 // eslint-disable-next-line
 const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
   const lateralSpace = getCommandPalettePosition(theme, rightPosition);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
+
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -195,12 +197,14 @@ const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
-      [`@media (min-width: ${theme.breakpoints.values.lg}px)`]: {
-        position: 'fixed',
-        right: lateralSpace,
-        left: lateralSpace,
-        maxWidth: `calc(100% - (${lateralSpace}px * 2))`,
-      },
+      ...(isSingleTopNav && {
+        [`@media (min-width: ${theme.breakpoints.values.lg}px)`]: {
+          position: 'fixed',
+          right: lateralSpace,
+          left: lateralSpace,
+          maxWidth: `calc(100% - (${lateralSpace}px * 2))`,
+        },
+      }),
     }),
     loadingBarContainer: css({
       position: 'absolute',
