@@ -190,7 +190,7 @@ To template a label:
 1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
 1. Scroll down to the **Configure labels and notifications** section.
 1. Click **+ Add labels**
-1. Enter a **key** that indentifies the label.
+1. Enter a **key** that identifies the label.
 1. Copy in your template in the **value** field.
 
 ### Preview label templates

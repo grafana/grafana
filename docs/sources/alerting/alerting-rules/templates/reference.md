@@ -75,7 +75,7 @@ The following variables are available when templating annotations and labels:
 
 The `$labels` variable contains all labels from the query.
 
-{{< figure src="/media/docs/alerting/query-labels-and_value.png" max-width="1200px" caption="An alert rule diplaying labels and value from a query" >}}
+{{< figure src="/media/docs/alerting/query-labels-and_value.png" max-width="1200px" caption="An alert rule displaying labels and value from a query" >}}
 
 For example, suppose you have a query that returns CPU usage for all of your servers, and you have an alert rule that fires when any of your servers have exceeded 80% CPU usage for the last 5 minutes. You want to add a summary annotation to the alert that tells you which server is experiencing high CPU usage. With the `$labels` variable you can write a template that prints a human-readable sentence such as:
 

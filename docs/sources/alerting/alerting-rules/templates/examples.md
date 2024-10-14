@@ -261,7 +261,7 @@ To print the value of an instant query as a percentage use the `humanizePercenta
 
 This function expects the value to be a decimal number between 0 and 1. If the value is instead a decimal number between 0 and 100 you can either divide it by 100 in your query or using a math expression. If the query is a range query you must first reduce it from a time series to an instant vector with a reduce expression.
 
-#### Dinamically setting alert severity
+#### Dynamically setting alert severity
 
 To set a severity label from the value of a query use an if statement and the greater than comparison function. Make sure to use decimals (`80.0`, `50.0`, `0.0`, etc) when doing comparisons against `$values` as text/template does not support type coercion. You can find a list of all the supported comparison functions [here](https://pkg.go.dev/text/template#hdr-Functions).
 
