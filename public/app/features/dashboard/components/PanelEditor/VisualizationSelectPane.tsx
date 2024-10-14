@@ -5,8 +5,9 @@ import { useLocalStorage } from 'react-use';
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
+import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
 import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -112,7 +113,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
         </Field>
       </div>
       <div className={styles.scrollWrapper}>
-        <CustomScrollbar autoHeightMin="100%">
+        <ScrollContainer>
           <div className={styles.scrollContent}>
             {listMode === VisualizationSelectPaneTab.Visualizations && (
               <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} />
@@ -133,7 +134,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
               />
             )}
           </div>
-        </CustomScrollbar>
+        </ScrollContainer>
       </div>
     </div>
   );
