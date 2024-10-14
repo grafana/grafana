@@ -1,4 +1,4 @@
-import { PanelMenuItem } from '@grafana/data';
+import { DataSourceApi, PanelMenuItem } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneTimeRangeState, VizPanel } from '@grafana/scenes';
@@ -34,7 +34,13 @@ export async function addDataTrailPanelAction(dashboard: DashboardScene, panel: 
     return;
   }
 
-  const dataSourceApi = await getDataSourceSrv().get(datasource);
+  let dataSourceApi: DataSourceApi | undefined;
+
+  try {
+    dataSourceApi = await getDataSourceSrv().get(datasource);
+  } catch (e) {
+    return;
+  }
 
   if (dataSourceApi.interpolateVariablesInQueries == null) {
     return;
