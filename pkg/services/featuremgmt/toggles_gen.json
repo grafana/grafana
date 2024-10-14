@@ -2349,12 +2349,12 @@
     },
     {
       "metadata": {
-        "name": "passFiltersToDashboardApi",
-        "resourceVersion": "1727865192179",
-        "creationTimestamp": "2024-10-02T10:33:12Z"
+        "name": "passReloadParamsToDashboardApi",
+        "resourceVersion": "1728903221522",
+        "creationTimestamp": "2024-10-14T10:53:41Z"
       },
       "spec": {
-        "description": "Enables the passing of filters to dashboards fetching in Grafana",
+        "description": "Enables the passing of scopes, time range and filters to dashboards fetching in Grafana",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
@@ -2365,24 +2365,11 @@
       "metadata": {
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
-        "creationTimestamp": "2024-06-20T15:49:19Z"
+        "creationTimestamp": "2024-06-20T15:49:19Z",
+        "deletionTimestamp": "2024-10-14T10:53:41Z"
       },
       "spec": {
         "description": "Enables the passing of scopes to dashboards fetching in Grafana",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "passTimeRangeToDashboardApi",
-        "resourceVersion": "1727865192179",
-        "creationTimestamp": "2024-10-02T10:33:12Z"
-      },
-      "spec": {
-        "description": "Enables the passing of time range to dashboards fetching in Grafana",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,

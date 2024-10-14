@@ -15,9 +15,9 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
-const runTest = async (passScopes: boolean, kubernetesApi: boolean) => {
+const runTest = async (passReloadParamsToDashboardApi: boolean, kubernetesApi: boolean) => {
   config.featureToggles.scopeFilters = true;
-  config.featureToggles.passScopeToDashboardApi = passScopes;
+  config.featureToggles.passReloadParamsToDashboardApi = passReloadParamsToDashboardApi;
   config.featureToggles.kubernetesDashboards = kubernetesApi;
   setDashboardAPI(undefined);
   renderDashboard({}, { reloadOnScopesChange: true });
@@ -28,7 +28,7 @@ const runTest = async (passScopes: boolean, kubernetesApi: boolean) => {
     return expectNewDashboardDTO();
   }
 
-  if (passScopes) {
+  if (passReloadParamsToDashboardApi) {
     return expectOldDashboardDTO(['grafana', 'mimir']);
   }
 

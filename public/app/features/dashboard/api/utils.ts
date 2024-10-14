@@ -6,10 +6,10 @@ import { getSelectedScopesNames } from 'app/features/scopes';
 
 export function getScopes(sorted = false): string[] | undefined {
   const {
-    featureToggles: { passScopeToDashboardApi },
+    featureToggles: { passReloadParamsToDashboardApi },
   } = config;
 
-  if (!passScopeToDashboardApi) {
+  if (!passReloadParamsToDashboardApi) {
     return undefined;
   }
 
@@ -22,17 +22,17 @@ export function getScopes(sorted = false): string[] | undefined {
 
 export function getTimeRangeAndFilters(sorted = false): UrlQueryMap | undefined {
   const {
-    featureToggles: { passTimeRangeToDashboardApi, passFiltersToDashboardApi },
+    featureToggles: { passReloadParamsToDashboardApi },
   } = config;
 
-  if (!passTimeRangeToDashboardApi && !passFiltersToDashboardApi) {
+  if (!passReloadParamsToDashboardApi) {
     return undefined;
   }
 
   const queryParams = Object.entries(locationService.getSearchObject()).reduce<UrlQueryMap>((acc, [key, value]) => {
     if (
-      (passTimeRangeToDashboardApi && (key === 'from' || key === 'to' || key === 'timezone')) ||
-      (passFiltersToDashboardApi && key.startsWith('var-'))
+      passReloadParamsToDashboardApi &&
+      (key === 'from' || key === 'to' || key === 'timezone' || key.startsWith('var-'))
     ) {
       acc[key] = sorted && Array.isArray(value) ? value.sort() : value;
     }

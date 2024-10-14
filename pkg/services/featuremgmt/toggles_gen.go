@@ -727,17 +727,9 @@ const (
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
 
-	// FlagPassScopeToDashboardApi
-	// Enables the passing of scopes to dashboards fetching in Grafana
-	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
-
-	// FlagPassTimeRangeToDashboardApi
-	// Enables the passing of time range to dashboards fetching in Grafana
-	FlagPassTimeRangeToDashboardApi = "passTimeRangeToDashboardApi"
-
-	// FlagPassFiltersToDashboardApi
-	// Enables the passing of filters to dashboards fetching in Grafana
-	FlagPassFiltersToDashboardApi = "passFiltersToDashboardApi"
+	// FlagPassReloadParamsToDashboardApi
+	// Enables the passing of scopes, time range and filters to dashboards fetching in Grafana
+	FlagPassReloadParamsToDashboardApi = "passReloadParamsToDashboardApi"
 
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server

@@ -1,10 +1,9 @@
-import { locationUtil, urlUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
-import { getScopes, getTimeRangeAndFilters } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
@@ -222,7 +221,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public getDashboardFromCache(cacheKey: string) {
     const cachedDashboard = this.dashboardCache;
-    cacheKey = this.getCacheKey(cacheKey);
 
     if (
       cachedDashboard &&
@@ -247,8 +245,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
   }
 
@@ -257,33 +253,15 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public getSceneFromCache(cacheKey: string) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     return this.cache[cacheKey];
   }
 
   public setSceneCache(cacheKey: string, scene: DashboardScene) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     this.cache[cacheKey] = scene;
   }
 
   public clearSceneCache() {
     this.cache = {};
-  }
-
-  public getCacheKey(cacheKey: string): string {
-    // The following are the scopes
-    // We need those as there is a feature where we pass the scopes to fetch dashboard API hence we need to cache based on these
-    const scopes = getScopes(true);
-    const scopesCacheKey = scopes ? `__scp__${scopes.join(',')}` : '';
-
-    // The following are the query params for time range and filters
-    // We need those as there is a feature where we pass these query params to fetch dashboard API hence we need to cache based on these
-    const queryParams = getTimeRangeAndFilters(true);
-    const queryParamsKey = queryParams ? `__qp__${urlUtil.serializeParams(queryParams)}` : '';
-
-    return `${cacheKey}${scopesCacheKey}${queryParamsKey}`;
   }
 }
 

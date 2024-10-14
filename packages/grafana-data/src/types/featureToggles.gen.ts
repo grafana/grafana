@@ -198,9 +198,7 @@ export interface FeatureToggles {
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
-  passScopeToDashboardApi?: boolean;
-  passTimeRangeToDashboardApi?: boolean;
-  passFiltersToDashboardApi?: boolean;
+  passReloadParamsToDashboardApi?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;

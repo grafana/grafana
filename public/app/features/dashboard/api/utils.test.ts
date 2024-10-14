@@ -23,9 +23,9 @@ jest.mock('app/features/scopes', () => ({
 
 describe('Dashboard API utils', () => {
   describe('getScopes', () => {
-    describe('passScopeToDashboardApi off', () => {
+    describe('passReloadParamsToDashboardApi off', () => {
       beforeAll(() => {
-        config.featureToggles.passScopeToDashboardApi = false;
+        config.featureToggles.passReloadParamsToDashboardApi = false;
       });
 
       it('Returns undefined', () => {
@@ -33,9 +33,9 @@ describe('Dashboard API utils', () => {
       });
     });
 
-    describe('passScopeToDashboardApi on', () => {
+    describe('passReloadParamsToDashboardApi on', () => {
       beforeAll(() => {
-        config.featureToggles.passScopeToDashboardApi = true;
+        config.featureToggles.passReloadParamsToDashboardApi = true;
       });
 
       it('Returns sorted scopes', () => {
@@ -49,10 +49,9 @@ describe('Dashboard API utils', () => {
   });
 
   describe('getTimeRangeAndFilters', () => {
-    describe('passTimeRangeToDashboardApi off, passFiltersToDashboardApi off', () => {
+    describe('passReloadParamsToDashboardApi off', () => {
       beforeAll(() => {
-        config.featureToggles.passTimeRangeToDashboardApi = false;
-        config.featureToggles.passFiltersToDashboardApi = false;
+        config.featureToggles.passReloadParamsToDashboardApi = false;
       });
 
       it('Returns undefined', () => {
@@ -60,10 +59,9 @@ describe('Dashboard API utils', () => {
       });
     });
 
-    describe('passTimeRangeToDashboardApi on, passFiltersToDashboardApi on', () => {
+    describe('passReloadParamsToDashboardApi on', () => {
       beforeAll(() => {
-        config.featureToggles.passTimeRangeToDashboardApi = true;
-        config.featureToggles.passFiltersToDashboardApi = true;
+        config.featureToggles.passReloadParamsToDashboardApi = true;
       });
 
       it('Returns sorted time range and filters', () => {
@@ -82,50 +80,6 @@ describe('Dashboard API utils', () => {
           from: 'from',
           'var-1': ['value2', 'value1'],
           timezone: 'timezone',
-          'var-2': 'value',
-        });
-      });
-    });
-
-    describe('passTimeRangeToDashboardApi on, passFiltersToDashboardApi off', () => {
-      beforeAll(() => {
-        config.featureToggles.passTimeRangeToDashboardApi = true;
-        config.featureToggles.passFiltersToDashboardApi = false;
-      });
-
-      it('Returns sorted time range', () => {
-        expect(getTimeRangeAndFilters(true)).toEqual({
-          from: 'from',
-          timezone: 'timezone',
-          to: 'to',
-        });
-      });
-
-      it('Returns unsorted time range', () => {
-        expect(getTimeRangeAndFilters()).toEqual({
-          to: 'to',
-          from: 'from',
-          timezone: 'timezone',
-        });
-      });
-    });
-
-    describe('passTimeRangeToDashboardApi off, passFiltersToDashboardApi on', () => {
-      beforeAll(() => {
-        config.featureToggles.passTimeRangeToDashboardApi = false;
-        config.featureToggles.passFiltersToDashboardApi = true;
-      });
-
-      it('Returns sorted filters', () => {
-        expect(getTimeRangeAndFilters(true)).toEqual({
-          'var-1': ['value1', 'value2'],
-          'var-2': 'value',
-        });
-      });
-
-      it('Returns unsorted filters', () => {
-        expect(getTimeRangeAndFilters()).toEqual({
-          'var-1': ['value2', 'value1'],
           'var-2': 'value',
         });
       });
