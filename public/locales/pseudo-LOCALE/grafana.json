@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": "ŦØ"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Mįşčőŉƒįģūřęđ",
+      "misconfigured-warning": "Ŧĥįş ŧęmpľäŧę įş mįşčőŉƒįģūřęđ.",
+      "misconfigured-warning-details": "Ŧęmpľäŧęş mūşŧ þę đęƒįŉęđ įŉ þőŧĥ ŧĥę <1></1> äŉđ <4></4> şęčŧįőŉş őƒ yőūř äľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉ."
     }
   },
   "annotations": {
