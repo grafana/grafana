@@ -1,6 +1,8 @@
 import { Button, Modal, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
+import { MigrateDataResponseItemDto } from '../api';
+
 import { prettyTypeName } from './TypeCell';
 import { ResourceTableItem } from './types';
 
@@ -9,7 +11,7 @@ interface ResourceDetailsModalProps {
   onClose: () => void;
 }
 
-function getTMessage(errorCode: string | undefined): string {
+function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string {
   switch (errorCode) {
     case 'DATASOURCE_NAME_CONFLICT':
       return t(
