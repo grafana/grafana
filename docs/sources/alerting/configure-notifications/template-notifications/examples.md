@@ -21,163 +21,52 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/#create-a-notification-template
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/#create-a-notification-template
+  template-language:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
 ---
 
 # Notification template examples
 
 This document is a compilation of common use cases for templating within Grafana notification templates. Templating in notification templates allows you to dynamically customize the title, message, and format of alert notifications. The template can dynamically insert relevant information—such as alert labels, metrics, and values—into your notifications. Moreover, notification templates can be easily reused across contact points.
 
+Here's an example of a custom notification template that summarizes all firing and resolved alerts in the notification group:
+
+```
+{{ define "alerts.message" -}}
+  {{ if .Alerts.Firing -}}
+    {{ len .Alerts.Firing }} firing alert(s)
+    {{ template "alerts.summarize" .Alerts.Firing }}
+  {{- end }}
+  {{- if .Alerts.Resolved -}}
+    {{ len .Alerts.Resolved }} resolved alert(s)
+    {{ template "alerts.summarize" .Alerts.Resolved }}
+  {{- end }}
+{{- end }}
+
+{{ define "alerts.summarize" -}}
+  {{ range . -}}
+  - {{ index .Annotations "summary" }}
+  {{ end }}
+{{ end }}
+```
+
+The notification message would look like this:
+
+```
+1 firing alert(s)
+- The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours.
+
+1 resolved alert(s)
+- The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
+```
+
 Each example provided here applies specifically to notification templates (note that the syntax and behavior may differ from alert rule templating). For examples related to templating within alert rules, please refer to the [labels and annotations template examples](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/) document.
 
 > Find step-by-step instructions on [how to create notification templates](ref:manage-notification-templates) for more detailed guidance.
 
-> Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See more details in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
-
-## Common use cases
-
-Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](#). 
-
-
-### Listing multiple alert instances in a single notification
-
-When multiple alerts are fired, a notification template can summarize affected instances, making it easier to track issues like high CPU usage across systems. For example, use this template to list all instances with high CPU usage when multiple alerts fire at once:
-
-```go
-{{ define "default.message" }}
-The following instances have high CPU usage:
-{{ range .Alerts.Firing }}
-  - Instance: {{ .Labels.instance }}, CPU Usage: {{ .Values.A }}%
-{{ end }}
-{{ end }}
-```
-
-This would print:
-
-```
-The following instances have high CPU usage:  
-- Instance: est-03, CPU Usage: 79%
-- Instance: wst-02, CPU Usage: 74%
-```
-
-Used functions and syntax:
-
-[`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
-
-### Firing and resolved alerts, with summary annotation
-
-This template prints the summary of all firing and resolved alerts. It requires a summary annotation in each alert. More details in the [Notification templates examples](#notification-template-examples) section.
-
-```
-{{ define "alerts.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s)
-{{ template "alerts.summarize" .Alerts.Firing }}
-{{- end }}
-{{- if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s)
-{{ template "alerts.summarize" .Alerts.Resolved }}
-{{- end }}
-{{- end }}
-
-{{ define "alerts.summarize" -}}
-{{ range . -}}
-- {{ index .Annotations "summary" }}
-{{ end }}
-{{ end }}
-```
-
-The output of this template looks like this:
-
-```
-1 firing alert(s)
-- The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
-
-1 resolved alert(s)
-- The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
-```
-
-### Firing and resolved alerts, with summary, description, and runbook URL
-
-This template shows the summary, the description, and the runbook URL of all firing and resolved alerts. The Description and Runbook URL are optional and are omitted if absent from the alert. It requires a summary annotation in each alert.
-
-```
-{{ define "alerts.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s)
-{{ template "alerts.summarize_large" .Alerts.Firing }}
-{{- end }}
-{{- if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s)
-{{ template "alerts.summarize_large" .Alerts.Resolved }}
-{{- end }}
-{{- end }}
-
-{{ define "alerts.summarize_large" -}}
-{{ range . }}
-Summary: {{ index .Annotations "summary" }}
-{{- if index .Annotations "description" }}
-Description: {{ index .Annotations "description" }}{{ end }}
-{{- if index .Annotations "runbook_url" }}
-Runbook: {{ index .Annotations "runbook_url" }}{{ end }}
-{{ end }}
-{{ end }}
-```
-
-The output of this template looks like this:
-
-```
-1 firing alert(s)
-Summary: The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
-Description: This alert fires when a database server is at risk of running out of disk space. You should take measures to increase the maximum available disk space as soon as possible to avoid possible corruption.
-Runbook: https://example.com/on-call/database_server_high_disk_usage
-
-1 resolved alert(s)
-Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
-Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service. Please refer to the runbook for more information.
-Runbook: https://example.com/on-call/web_server_high_5xx_rate
-```
-
-### Firing and resolved alerts, with labels, summary, and silencing
-
-This template example prints the summary annotation, and then links to both silence the alert and show in the alert in Grafana. It requires a summary annotation in each alert.
-
-```
-{{ define "alerts.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s)
-{{ template "alerts.summarize_with_links" .Alerts.Firing }}
-{{- end }}
-{{- if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s)
-{{ template "alerts.summarize_with_links" .Alerts.Resolved }}
-{{- end }}
-{{- end }}
-
-{{ define "alerts.summarize_with_links" -}}
-{{ range . -}}
-{{ range $k, $v := .Labels }}{{ $k }}={{ $v }} {{ end }}
-{{ index .Annotations "summary" }}
-{{- if eq .Status "firing" }}
-- Silence this alert: {{ .SilenceURL }}{{ end }}
-- View on Grafana: {{ .GeneratorURL }}
-{{ end }}
-{{ end }}
-```
-
-The output of this template looks like this:
-
-```
-1 firing alert(s):
-alertname=database_high_disk_usage server=db1
-The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
-- Silence this alert: https://example.com/grafana/alerting/silence/new
-- View on Grafana: https://example.com/grafana/alerting/grafana/view
-
-1 resolved alert(s):
-alertname=web_server_high_5xx_rate server=web1
-The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
-- View on Grafana: https://example.com/grafana/alerting/grafana/view
-```
 
 ## Template logic examples
 
@@ -333,6 +222,154 @@ Template alert notifications based on a label. In this example the label represe
    ```
 
    This template alters the content of alert notifications depending on the namespace value.
+
+## Common use cases
+
+Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-langauge). 
+
+> Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See more details in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
+
+
+### Listing multiple alert instances in a single notification
+
+When multiple alerts are fired, a notification template can summarize affected instances, making it easier to track issues like high CPU usage across systems. For example, use this template to list all instances with high CPU usage when multiple alerts fire at once:
+
+```go
+{{ define "default.message" }}
+The following instances have high CPU usage:
+{{ range .Alerts.Firing }}
+  - Instance: {{ .Labels.instance }}, CPU Usage: {{ .Values.A }}%
+{{ end }}
+{{ end }}
+```
+
+This would print:
+
+```
+The following instances have high CPU usage:  
+- Instance: est-03, CPU Usage: 79%
+- Instance: wst-02, CPU Usage: 74%
+```
+
+Used functions and syntax:
+
+[`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
+
+### Firing and resolved alerts, with summary annotation
+
+This template prints the summary of all firing and resolved alerts. It requires a summary annotation in each alert. More details in the [Notification templates examples](#notification-template-examples) section.
+
+```
+{{ define "alerts.message" -}}
+{{ if .Alerts.Firing -}}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ template "alerts.summarize" .Alerts.Firing }}
+{{- end }}
+{{- if .Alerts.Resolved -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ template "alerts.summarize" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+
+{{ define "alerts.summarize" -}}
+{{ range . -}}
+- {{ index .Annotations "summary" }}
+{{ end }}
+{{ end }}
+```
+
+The output of this template looks like this:
+
+```
+1 firing alert(s)
+- The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
+
+1 resolved alert(s)
+- The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
+```
+
+### Firing and resolved alerts, with summary, description, and runbook URL
+
+This template shows the summary, the description, and the runbook URL of all firing and resolved alerts. The Description and Runbook URL are optional and are omitted if absent from the alert. It requires a summary annotation in each alert.
+
+```
+{{ define "alerts.message" -}}
+{{ if .Alerts.Firing -}}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ template "alerts.summarize_large" .Alerts.Firing }}
+{{- end }}
+{{- if .Alerts.Resolved -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ template "alerts.summarize_large" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+
+{{ define "alerts.summarize_large" -}}
+{{ range . }}
+Summary: {{ index .Annotations "summary" }}
+{{- if index .Annotations "description" }}
+Description: {{ index .Annotations "description" }}{{ end }}
+{{- if index .Annotations "runbook_url" }}
+Runbook: {{ index .Annotations "runbook_url" }}{{ end }}
+{{ end }}
+{{ end }}
+```
+
+The output of this template looks like this:
+
+```
+1 firing alert(s)
+Summary: The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
+Description: This alert fires when a database server is at risk of running out of disk space. You should take measures to increase the maximum available disk space as soon as possible to avoid possible corruption.
+Runbook: https://example.com/on-call/database_server_high_disk_usage
+
+1 resolved alert(s)
+Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
+Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service. Please refer to the runbook for more information.
+Runbook: https://example.com/on-call/web_server_high_5xx_rate
+```
+
+### Firing and resolved alerts, with labels, summary, and silencing
+
+This template example prints the summary annotation, and then links to both silence the alert and show in the alert in Grafana. It requires a summary annotation in each alert.
+
+```
+{{ define "alerts.message" -}}
+{{ if .Alerts.Firing -}}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ template "alerts.summarize_with_links" .Alerts.Firing }}
+{{- end }}
+{{- if .Alerts.Resolved -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ template "alerts.summarize_with_links" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+
+{{ define "alerts.summarize_with_links" -}}
+{{ range . -}}
+{{ range $k, $v := .Labels }}{{ $k }}={{ $v }} {{ end }}
+{{ index .Annotations "summary" }}
+{{- if eq .Status "firing" }}
+- Silence this alert: {{ .SilenceURL }}{{ end }}
+- View on Grafana: {{ .GeneratorURL }}
+{{ end }}
+{{ end }}
+```
+
+The output of this template looks like this:
+
+```
+1 firing alert(s):
+alertname=database_high_disk_usage server=db1
+The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
+- Silence this alert: https://example.com/grafana/alerting/silence/new
+- View on Grafana: https://example.com/grafana/alerting/grafana/view
+
+1 resolved alert(s):
+alertname=web_server_high_5xx_rate server=web1
+The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
+- View on Grafana: https://example.com/grafana/alerting/grafana/view
+```
 
 ## Templates for contact points
 
