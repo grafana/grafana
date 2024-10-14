@@ -32,7 +32,6 @@ const dataSyncerInterval = 60 * time.Minute
 // StartPeriodicDataSyncer starts a background job that will execute the DataSyncer every 60 minutes
 func StartPeriodicDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
 	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) {
-
 	log := klog.NewKlogr().WithName("legacyToUnifiedStorageDataSyncer").WithValues("mode", mode, "resource", kind)
 
 	log.Info("Starting periodic data syncer")
