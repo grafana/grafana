@@ -75,6 +75,12 @@ export interface GrafanaTableState extends TableState {
 
 export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
 
+export interface TableStateReducerProps {
+  onColumnResize?: TableColumnResizeActionCallback;
+  onSortByChange?: TableSortByActionCallback;
+  data: DataFrame;
+}
+
 export interface Props {
   ariaLabel?: string;
   data: DataFrame;

@@ -44,6 +44,7 @@ export const Table = memo((props: Props) => {
     data,
     height,
     onCellFilterAdded,
+    onColumnResize,
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
@@ -128,7 +129,7 @@ export const Table = memo((props: Props) => {
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer({
-    ...props,
+    onColumnResize,
     onSortByChange: (state) => {
       // Collapse all rows. This prevents a known bug that causes the size of the rows to be incorrect due to
       // using `VariableSizeList` and `useExpanded` together.
@@ -138,6 +139,7 @@ export const Table = memo((props: Props) => {
         props.onSortByChange(state);
       }
     },
+    data,
   });
 
   const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
