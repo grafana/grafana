@@ -2083,7 +2083,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			assert.Equal(t, tc.startingInstanceDBCount, len(alerts))
 
 			expectedReason := util.GenerateShortUID()
-			transitions := st.DeleteStateByRuleUID(ctx, rule.GetKey(), expectedReason)
+			transitions := st.DeleteStateByRuleUID(ctx, rule.GetKeyWithGroup(), expectedReason)
 
 			// Check that the deleted states are the same as the ones that were in cache
 			assert.Equal(t, tc.startingStateCacheCount, len(transitions))

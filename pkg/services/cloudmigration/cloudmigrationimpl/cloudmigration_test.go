@@ -672,6 +672,7 @@ func TestGetParentNames(t *testing.T) {
 			},
 			libraryElements: []libraryElement{
 				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
+				{UID: "libraryElementUID-1"},
 			},
 			expectedDashParentNames: []string{"", "Folder A", "Folder B"},
 			expectedFoldParentNames: []string{"Folder A"},
@@ -781,7 +782,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	fakeAccessControlService := actest.FakeService{}
 	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
 
-	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl)
+	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl, bus)
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(

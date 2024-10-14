@@ -40,6 +40,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 		create(eval.NoData, ""),
 		create(eval.Error, ""),
 	}
+	ruleKey := ngmodels.AlertRuleKeyWithGroup{}
 
 	transitionToKey := map[ngmodels.AlertInstanceKey]StateTransition{}
 	transitions := make([]StateTransition, 0)
@@ -69,7 +70,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
-		syncStatePersister.Sync(context.Background(), span, transitions)
+		syncStatePersister.Sync(context.Background(), span, ruleKey, transitions)
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps() {
 			saved := op.(ngmodels.AlertInstance)
@@ -90,7 +91,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			InstanceStore:           st,
 			MaxStateSaveConcurrency: 1,
 		})
-		syncStatePersister.Sync(context.Background(), span, transitions)
+		syncStatePersister.Sync(context.Background(), span, ruleKey, transitions)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps() {
@@ -160,7 +161,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			PreviousStateReason: util.GenerateShortUID(),
 		}
 
-		syncStatePersister.Sync(context.Background(), span, []StateTransition{transition})
+		syncStatePersister.Sync(context.Background(), span, ruleKey, []StateTransition{transition})
 
 		require.Len(t, st.RecordedOps(), 1)
 		saved := st.RecordedOps()[0].(ngmodels.AlertInstance)
