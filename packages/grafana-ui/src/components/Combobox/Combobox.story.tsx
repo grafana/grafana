@@ -3,8 +3,11 @@ import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
 import React, { ComponentProps, useCallback, useEffect, useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
+
 import { Alert } from '../Alert/Alert';
 import { Field } from '../Forms/Field';
+import { AsyncSelect } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
 
@@ -130,19 +133,23 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
 };
 
 const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  // Combobox
   const [selectedOption, setSelectedOption] = useState<ComboboxOption<string> | null>(null);
+
+  // AsyncSelect
+  const [asyncSelectValue, setAsyncSelectValue] = useState<SelectableValue<string> | null>(null);
 
   // This simulates a kind of search API call
   const loadOptionsWithLabels = useCallback((inputValue: string) => {
+    console.info(`Load options called with value '${inputValue}' `);
     return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
   }, []);
 
-  const loadOptionsOnlyValues = useCallback(
-    (inputValue: string) => {
-      return loadOptionsWithLabels(inputValue).then((options) => options.map((opt) => ({ value: opt.label! })));
-    },
-    [loadOptionsWithLabels]
-  );
+  const loadOptionsOnlyValues = useCallback((inputValue: string) => {
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`).then((options) =>
+      options.map((opt) => ({ value: opt.label! }))
+    );
+  }, []);
 
   return (
     <>
@@ -151,7 +158,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         description="This tests when options have both a label and a value. Consumers are required to pass in a full ComboboxOption as a value with a label"
       >
         <Combobox
-          id="test-combobox"
+          id="test-combobox-one"
           placeholder="Select an option"
           options={loadOptionsWithLabels}
           value={selectedOption}
@@ -168,7 +175,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         description="Or without labels, where consumer can just pass in a raw scalar value Value"
       >
         <Combobox
-          id="test-combobox"
+          id="test-combobox-two"
           placeholder="Select an option"
           options={loadOptionsOnlyValues}
           value={selectedOption?.value ?? null}
@@ -177,6 +184,20 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
             setSelectedOption(val);
           }}
           createCustomValue={args.createCustomValue}
+        />
+      </Field>
+
+      <Field label="Compared to AsyncSelect">
+        <AsyncSelect
+          id="test-async-select"
+          placeholder="Select an option"
+          loadOptions={loadOptionsWithLabels}
+          value={asyncSelectValue}
+          defaultOptions
+          onChange={(val) => {
+            action('onChange')(val);
+            setAsyncSelectValue(val);
+          }}
         />
       </Field>
     </>
@@ -214,7 +235,7 @@ async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOption<st
   const searchQuery = searchParams.get('query')?.toLowerCase();
 
   if (!searchQuery || searchQuery.length === 0) {
-    return Promise.resolve(fakeApiOptions.slice(0, 100));
+    return Promise.resolve(fakeApiOptions.slice(0, 10));
   }
 
   const filteredOptions = Promise.resolve(
