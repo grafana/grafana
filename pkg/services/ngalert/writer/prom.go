@@ -265,10 +265,6 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 		}
 
 		if strings.Contains(msg, MimirInvalidLabelError) {
-			return nil, true
-		}
-
-		if strings.Contains(msg, MimirInvalidLabelError) {
 			return errors.Join(ErrRejectedWrite, writeErr), false
 		}
 
