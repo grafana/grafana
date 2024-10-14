@@ -5,6 +5,9 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { GetSnapshotResponseDto, SnapshotDto } from '../api';
 
+// After the number of distinct resource types migrated exceeeds this value, we display a generic success message.
+const SUCCESS_MESSAGE_ITEM_TYPES_THRESHOLD = 4;
+
 export function useNotifySuccessful(snapshot: GetSnapshotResponseDto | undefined) {
   const previousStatusRef = useRef<SnapshotDto['status']>(undefined);
   const notifyApp = useAppNotification();
@@ -32,6 +35,8 @@ export function useNotifySuccessful(snapshot: GetSnapshotResponseDto | undefined
 function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
   const types: string[] = [];
 
+  let distinctItems = 0;
+
   for (const [type, count] of Object.entries(snapshot.stats?.types ?? {})) {
     if (count <= 0) {
       continue;
@@ -48,15 +53,23 @@ function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
     } else if (type === 'LIBRARY_ELEMENT') {
       types.push(t('migrate-to-cloud.migrated-counts.library_elements', 'library elements'));
     }
+
+    distinctItems += 1;
   }
 
   const successCount = snapshot?.stats?.statuses?.['OK'] ?? 0;
 
-  const message = t(
+  if (distinctItems > SUCCESS_MESSAGE_ITEM_TYPES_THRESHOLD) {
+    return t(
+      'migrate-to-cloud.onprem.success-message-generic',
+      'Successfully migrated {{successCount}} resources to your Grafana Cloud instance.',
+      { successCount }
+    );
+  }
+
+  return t(
     'migrate-to-cloud.onprem.success-message',
     'Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.',
     { successCount, types }
   );
-
-  return message;
 }
