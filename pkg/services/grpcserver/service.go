@@ -6,7 +6,6 @@ import (
 	"net"
 	"time"
 
-	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
@@ -71,8 +69,6 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		}
 	}
 
-	namespaceAuthz := grpcutils.NewNamespaceAuthorizer(cfg)
-
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
 	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/auth/auth.go#L30.
@@ -80,14 +76,12 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
-			authzlib.UnaryAuthorizeInterceptor(namespaceAuthz),
 			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
 			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 		),
 		grpc.ChainStreamInterceptor(
 			interceptors.TracingStreamInterceptor(tracer),
 			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
-			authzlib.StreamAuthorizeInterceptor(namespaceAuthz),
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),
 	}
