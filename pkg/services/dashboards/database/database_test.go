@@ -598,6 +598,7 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 					"version": savedDash.Version,
 				}),
 			})
+			require.NoError(t, err)
 
 			dash, err = dashboardStore.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID})
 			require.NoError(t, err)
