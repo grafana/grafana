@@ -1,12 +1,11 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/
-description: Lorem Ipsum -- List of examples templating alert rule annotations and labels
+description: Examples of notification templates
 keywords:
   - grafana
   - alerting
   - templating
-  - labels
-  - annotations
+  - notification templates
 labels:
   products:
     - cloud
@@ -55,10 +54,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#functions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#functions
-
-
-
-
 ---
 
 # Notification template examples

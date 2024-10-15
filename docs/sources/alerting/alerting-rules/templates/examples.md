@@ -231,7 +231,7 @@ To print the value of a range query you must first reduce it from a time series 
 
 #### Print the humanized value of a query
 
-To print the humanized value of an instant query use the `humanize` function:
+To print the humanized value of an instant query use the [`humanize`](ref:reference-functions) function:
 
 ```go
 {{ humanize (index $values "A").Value }}
@@ -251,7 +251,7 @@ To print the humanized value of a range query you must first reduce it from a ti
 
 #### Print the value of a query as a percentage
 
-To print the value of an instant query as a percentage use the `humanizePercentage` function:
+To print the value of an instant query as a percentage use the [`humanizePercentage`](ref:reference-functions) function:
 
 ```go
 {{ humanizePercentage (index $values "A").Value }}
