@@ -23773,10 +23773,7 @@
     "getTeamLBACRulesResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/TeamLBACRules"
-        }
+        "$ref": "#/definitions/TeamLBACRules"
       }
     },
     "getTeamMembersResponse": {

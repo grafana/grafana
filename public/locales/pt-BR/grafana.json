@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": ""
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "",
+      "misconfigured-warning": "",
+      "misconfigured-warning-details": ""
     }
   },
   "annotations": {
@@ -1096,7 +1101,6 @@
   "help-wizard": {
     "download-snapshot": "",
     "github-comment": "",
-    "preview-snapshot": "",
     "support-bundle": "",
     "troubleshooting-help": ""
   },
@@ -1409,7 +1413,9 @@
       "dashboards": "",
       "datasources": "",
       "folders": "",
-      "library_elements": ""
+      "library_elements": "",
+      "mute_timings": "",
+      "notification_templates": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1443,6 +1449,7 @@
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
       "success-message": "",
+      "success-message-generic": "",
       "success-title": "",
       "upload-snapshot-error-title": ""
     },
@@ -1492,6 +1499,8 @@
       "datasource": "Fonte de dados",
       "folder": "",
       "library_element": "",
+      "mute_timing": "",
+      "notification_template": "",
       "unknown": "Desconhecido"
     },
     "summary": {
