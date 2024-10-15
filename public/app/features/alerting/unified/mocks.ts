@@ -512,6 +512,7 @@ export const someGrafanaAlertManagerConfig: AlertManagerCortexConfig = {
   },
 };
 
+/** @deprecated Move into alertmanager status mock-entities */
 export const someCloudAlertManagerStatus: AlertmanagerStatus = {
   cluster: {
     peers: [],
@@ -543,6 +544,7 @@ export const someCloudAlertManagerStatus: AlertmanagerStatus = {
   },
 };
 
+/** @deprecated Move into alertmanager config mock-entities */
 export const someCloudAlertManagerConfig: AlertManagerCortexConfig = {
   template_files: {
     'foo template': 'foo content',
