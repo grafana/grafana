@@ -344,7 +344,7 @@ function useTimeSync(options: {
 
   // This is to determine if we should use the context to sync or not. This is for backward compatibility so that
   // Explore with multiple panes still works as it is controlling the sync state itself for now.
-  const usingTimeRangeContext = options.isSyncedProp === undefined && timeRangeContext;
+  const usingTimeRangeContext = Boolean(options.isSyncedProp === undefined && timeRangeContext);
 
   // Create new onChange that handles propagating the value to the context if possible and synced is true.
   const onChangeWithSync = useCallback(
