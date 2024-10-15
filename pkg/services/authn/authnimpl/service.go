@@ -386,7 +386,7 @@ func (s *Service) GetClientConfig(name string) authn.SSOClientConfig {
 		return nil
 	}
 
-	ssoSettingsAwareClient, ok := client.(authn.SSOConfigAwareClient)
+	ssoSettingsAwareClient, ok := client.(authn.SSOSettingsAwareClient)
 	if !ok {
 		return nil
 	}

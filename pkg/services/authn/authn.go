@@ -131,6 +131,7 @@ type Service interface {
 	IsClientEnabled(client string) bool
 
 	// GetClientConfig returns the client configuration for the given client.
+	// If the client is not found and/or does not implement the SSOClientConfig, it will return a nil value.
 	GetClientConfig(client string) SSOClientConfig
 }
 
@@ -180,7 +181,7 @@ type LogoutClient interface {
 	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
 }
 
-type SSOConfigAwareClient interface {
+type SSOSettingsAwareClient interface {
 	Client
 	GetConfig() SSOClientConfig
 }

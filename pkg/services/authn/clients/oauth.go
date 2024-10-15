@@ -61,9 +61,9 @@ func fromSocialErr(err *connectors.SocialError) error {
 }
 
 var (
-	_ authn.LogoutClient         = new(OAuth)
-	_ authn.RedirectClient       = new(OAuth)
-	_ authn.SSOConfigAwareClient = new(OAuth)
+	_ authn.LogoutClient           = new(OAuth)
+	_ authn.RedirectClient         = new(OAuth)
+	_ authn.SSOSettingsAwareClient = new(OAuth)
 )
 
 func ProvideOAuth(
