@@ -429,10 +429,14 @@ export const resourceTypeDisplayNames: { [k: string]: string } = {
 // and go to Select a scope > Resource types > Multi-resource compatible (preview)
 export const multiResourceCompatibleTypes: { [ns: string]: boolean } = {
   'microsoft.cache/redis': true, // 'Azure Cache for Redis'
+  'microsoft.documentdb/mongoclusters': true, // 'Azure Cosmos DB for MongoDB'
   'microsoft.dbforpostgresql/flexibleservers': true, // 'Azure Database for PostgreSQL flexible servers'
   'microsoft.storagecache/amlfilesystems': true, // 'Lustre File Systems'
+  'microsoft.monitor/accounts': true, // Azure Monitor Workspaces
   'microsoft.databoxedge/databoxedgedevices': true, // 'Azure Stack Edge / Data Box Gateway'
+  'microsoft.azurestackhci/clusters': true, // 'Azure Stack HCI'
   'microsoft.dataprotection/backupvaults': true, // 'Backup vaults'
+  'microsoft.networkcloud/baremetalmachines': true, // 'Bare Metal Machines'
   'microsoft.netapp/netappaccounts/capacitypools': true, // 'Capacity pools'
   'microsoft.netapp/netappaccounts/capacitypools/volumes': true, // 'Capacity pool volumes'
   'microsoft.network/networkwatchers/connectionmonitors': true, // 'Connection Monitors'
