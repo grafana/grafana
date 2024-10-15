@@ -101,7 +101,6 @@ func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCol
 			}
 			for _, t := range tuples {
 				out[t.Key.String()] = t.Key
-
 			}
 		}
 

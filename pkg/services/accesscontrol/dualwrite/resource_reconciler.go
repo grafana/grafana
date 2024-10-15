@@ -26,7 +26,7 @@ func newResourceReconciler(name string, legacy legacyTupleCollector, zanzana zan
 }
 
 func (r resourceReconciler) reconcile(ctx context.Context) error {
-	// 1. Fetch grafana resoruces stored in grafana db.
+	// 1. Fetch grafana resources stored in grafana db.
 	res, err := r.legacy(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to collect legacy tuples for %s: %w", r.name, err)
@@ -64,7 +64,6 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 				})
 			}
 		}
-
 	}
 
 	if len(writes) == 0 && len(deletes) == 0 {
