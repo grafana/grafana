@@ -288,9 +288,12 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 	for _, b := range config.Builders {
 		err := b.UpdateAPIGroupInfo(
 			&serviceAPIGroupInfo,
-			aggregatorscheme.Scheme,
-			aggregatorConfig.GenericConfig.RESTOptionsGetter,
-			nil, // no dual writer
+			builder.APIGroupOptions{
+				Scheme:           aggregatorscheme.Scheme,
+				OptsGetter:       aggregatorConfig.GenericConfig.RESTOptionsGetter,
+				DualWriteBuilder: nil, // no dual writer
+				MetricsRegister:  reg,
+			},
 		)
 		if err != nil {
 			return nil, err
