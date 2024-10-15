@@ -194,7 +194,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     dispatchReduxAction(fetchAllPromBuildInfoAction());
   }, [dispatchReduxAction]);
 
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
+  const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(
     (condition?: string) => {
@@ -321,7 +321,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [runQueriesPreview, setValue, updateExpressionAndDatasource]
   );
 
-  const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
+  // Using dataSourcesWithRuler[0] gives incorrect types - no undefined
+  // Using at(0) provides a safe type with undefined
+  const recordingRuleDefaultDatasource = rulesSourcesWithRuler.at(0);
 
   useEffect(() => {
     clearPreviewData();

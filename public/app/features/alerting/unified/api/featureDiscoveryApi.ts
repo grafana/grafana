@@ -42,16 +42,6 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
           return { error: new Error(`Missing data source configuration for ${rulesSourceIdentifier}`) };
         }
 
-        // if (isGrafanaRulesSource(stringID)) {
-        //   return {
-        //     data: {
-        //       rulerConfig: GRAFANA_RULER_CONFIG,
-        //       features: { features: { rulerApiEnabled: true } },
-        //       dataSourceSettings,
-        //     },
-        //   };
-        // }
-
         const features = await discoverFeaturesByUid(dataSourceSettings.uid);
 
         const rulerConfig = features.features.rulerApiEnabled
