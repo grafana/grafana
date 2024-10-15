@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": "TO"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Misconfigured",
+      "misconfigured-warning": "This template is misconfigured.",
+      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
     }
   },
   "annotations": {
