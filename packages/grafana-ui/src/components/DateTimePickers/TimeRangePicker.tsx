@@ -36,8 +36,9 @@ export interface TimeRangePickerProps {
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
 
-  // If you handle sync state between pickers yourself use this prop to pass the sync button component. Otherwise
-  // a default one will show automatically if sync is possible
+    /** If you handle sync state between pickers yourself use this prop to pass the sync button component. 
+   * Otherwise, a default one will show automatically if sync is possible.
+   */
   timeSyncButton?: JSX.Element;
 
   // Use to manually set the synced styles for the time range picker if you need to control the sync state yourself.
