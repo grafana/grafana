@@ -89,6 +89,10 @@ func Test_handleGMSErrors(t *testing.T) {
 			expectedError: &cloudmigration.ErrInstanceUnreachable,
 		},
 		{
+			gmsResBody:    []byte(`{"message":"checking if instance is reachable"}`),
+			expectedError: &cloudmigration.ErrInstanceRequestError,
+		},
+		{
 			gmsResBody:    []byte(`{"message":"instance not found"}`),
 			expectedError: &cloudmigration.ErrInstanceNotFound,
 		},

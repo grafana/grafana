@@ -274,6 +274,8 @@ func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) *cloudmigration.Cre
 		return &cloudmigration.ErrInstanceUnreachable
 	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceNotFound) {
 		return &cloudmigration.ErrInstanceNotFound
+	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceCheckingError) {
+		return &cloudmigration.ErrInstanceRequestError
 	}
 
 	return &cloudmigration.ErrTokenInvalid

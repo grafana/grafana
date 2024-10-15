@@ -143,7 +143,8 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
               >
                 <Text element="p">
                   {/* TODO: how to get error data here correctly */}
-                  {getTMessage(error?.data?.errorCode)}
+                  {getTMessage(error?.data?.errorCode) ||
+                    'There was an error saving the token. See the Grafana server logs for more details.'}
                 </Text>
               </AlertWithTraceID>
             ) : undefined}
