@@ -512,7 +512,7 @@ function MetadataRow({
         {hasActiveTimings && (
           <MetaText icon="calendar-alt" data-testid="active-timings">
             <span>
-              <Trans i18nKey="alerting.policies.metadata.active-time">Active when</Trans>
+              <Trans i18nKey="alerting.policies.metadata.active-time">Active when</Trans>{' '}
             </span>
             <TimeIntervals timings={activeTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>
