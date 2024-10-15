@@ -249,16 +249,35 @@ Not all data sources support ad hoc filters. Examples of those that do include P
 {{% /admonition %}}
 
 1. [Enter general options](#enter-general-options).
-1. In the **Data source** list, select the target data source.
+1. Under **Ad-hoc options**, select a target data source in **Data source** drop-down list.
 
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+   For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
+1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on and enter the values in the provided space.
 1. Click **Save dashboard**.
+1. Enter and optional description of your dashboard changes, and then click **Save**.
 1. Click **Back to dashboard** and **Exit edit**.
 
-### Create ad hoc filters
+### Create dashboard filters
 
 Ad hoc filters are one of the most complex and flexible variable options available. Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query. Filters you apply in this manner are applied to all panels on the dashboard.
+
+Once you've added an ad hoc filter in the dashboard settings, you can add label/value pairs to the filter.
+
+To create dashboard filters, follow these steps:
+
+1. In the dashboard, click in the filter field.
+1. Select a label.
+1. Select an operator.
+1. Select a value.
+1. Repeat this process as needed until you have all the filters you need.
+
+You can edit or delete a filter in the following ways:
+
+- To edit the operator or value of a filter, click anywhere on the filter and update it.
+- To change the filter label, you must delete the filter and create a new one.
+- To delete a filter, click the **X** next to it.
 
 ## Configure variable selection options
 
