@@ -77,9 +77,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/#raw
   add-a-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
 ---
 
 # Add variables
