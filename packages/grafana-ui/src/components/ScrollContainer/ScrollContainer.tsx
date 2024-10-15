@@ -38,7 +38,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
 
     return (
       <Box {...boxProps} display="flex" direction="column" flex={1} position="relative">
-        <div onScroll={onScroll} className={styles.innerWrapper} ref={ref}>
+        <div onScroll={onScroll} className={styles.scroller} ref={ref}>
           {hideScrollIndicators ? children : <ScrollIndicators>{children}</ScrollIndicators>}
         </div>
       </Box>
@@ -53,7 +53,7 @@ const getStyles = (
   overflowY: Props['overflowY'],
   overflowX: Props['overflowX']
 ) => ({
-  innerWrapper: css({
+  scroller: css({
     display: 'flex',
     flex: 1,
     flexDirection: 'column',

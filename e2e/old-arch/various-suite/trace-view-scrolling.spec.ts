@@ -32,7 +32,7 @@ describe('Trace view', () => {
     e2e.components.TraceViewer.spanBar()
       .its('length')
       .then((oldLength) => {
-        e2e.pages.Explore.General.scrollView().children('.scrollbar-view').scrollTo('center');
+        e2e.pages.Explore.General.scrollView().children().first().scrollTo('center');
 
         // After scrolling we should load more spans
         e2e.components.TraceViewer.spanBar().should(($span) => {
