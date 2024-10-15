@@ -3,9 +3,9 @@ package authz
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -54,9 +54,10 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 	action := req.GetAction()
 	subject := req.GetSubject()
 	namespace := req.GetNamespace() // TODO can we consider the stackID as the orgID?
-	orgId, err := strconv.Atoi(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("invalid org id format: %s", err)
+
+	info, err := claims.ParseNamespace(namespace)
+	if err != nil || info.OrgID == 0 {
+		return nil, fmt.Errorf("invalid namespace: %s", namespace)
 	}
 
 	ctxLogger := s.logger.FromContext(ctx)
@@ -64,7 +65,7 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 
 	permissions, err := s.acSvc.SearchUserPermissions(
 		ctx,
-		int64(orgId),
+		info.OrgID,
 		accesscontrol.SearchOptions{Action: action, TypedID: subject},
 	)
 	if err != nil {
