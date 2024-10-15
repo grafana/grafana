@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": "TO"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Misconfigured",
+      "misconfigured-warning": "This template is misconfigured.",
+      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
     }
   },
   "annotations": {
@@ -1408,7 +1413,9 @@
       "dashboards": "dashboards",
       "datasources": "data sources",
       "folders": "folders",
-      "library_elements": "library elements"
+      "library_elements": "library elements",
+      "mute_timings": "mute timings",
+      "notification_templates": "notification templates"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1442,6 +1449,7 @@
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
       "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-message-generic": "Successfully migrated {{successCount}} resources to your Grafana Cloud instance.",
       "success-title": "Migration completed!",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
@@ -1491,6 +1499,8 @@
       "datasource": "Data source",
       "folder": "Folder",
       "library_element": "Library Element",
+      "mute_timing": "Mute Timing",
+      "notification_template": "Notification Template",
       "unknown": "Unknown"
     },
     "summary": {
