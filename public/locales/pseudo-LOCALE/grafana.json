@@ -1408,7 +1408,8 @@
       "dashboards": "đäşĥþőäřđş",
       "datasources": "đäŧä şőūřčęş",
       "folders": "ƒőľđęřş",
-      "library_elements": "ľįþřäřy ęľęmęŉŧş"
+      "library_elements": "ľįþřäřy ęľęmęŉŧş",
+      "mute_timings": "mūŧę ŧįmįŉģş"
     },
     "migration-token": {
       "delete-button": "Đęľęŧę ŧőĸęŉ",
@@ -1492,6 +1493,7 @@
       "datasource": "Đäŧä şőūřčę",
       "folder": "Főľđęř",
       "library_element": "Ŀįþřäřy Ēľęmęŉŧ",
+      "mute_timing": "Mūŧę Ŧįmįŉģ",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {
