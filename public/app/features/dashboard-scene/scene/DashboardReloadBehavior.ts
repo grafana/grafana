@@ -49,7 +49,9 @@ export class DashboardReloadBehavior extends SceneObjectBase {
   }
 
   private isWaitingForVariables() {
-    return sceneGraph.getVariables(this.parent!).state.variables.some((variable) => variable.state.loading) ?? false;
+    const varSet = sceneGraph.getVariables(this.parent!);
+
+    return varSet.state.variables.some((variable) => varSet.isVariableLoadingOrWaitingToUpdate(variable));
   }
 
   private reloadDashboard() {
