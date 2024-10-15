@@ -57,7 +57,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
-		return nil // skip registration unless opting into dashboards in the k8s api
+		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
 	}
 
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
