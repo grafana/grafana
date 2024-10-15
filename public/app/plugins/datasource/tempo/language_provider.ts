@@ -2,8 +2,16 @@ import { LanguageProvider, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
-import { getAllTags, getIntrinsicTags, getTagsByScope, getUnscopedTags } from './SearchTraceQLEditor/utils';
-import { TraceqlSearchScope } from './dataquery.gen';
+import {
+  getAllTags,
+  getIntrinsicTags,
+  getTagsByScope,
+  getUnscopedTags,
+  scopeHelper,
+  tagHelper,
+  valueHelper,
+} from './SearchTraceQLEditor/utils';
+import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { intrinsicsV1 } from './traceql/traceql';
 import { Scope } from './types';
@@ -172,4 +180,15 @@ export default class TempoLanguageProvider extends LanguageProvider {
     // Reference: https://stackoverflow.com/a/37456192
     return encodeURIComponent(encodeURIComponent(tag));
   };
+
+  generateQueryFromFilters(filters: TraceqlFilter[]) {
+    if (!filters) {
+      return '';
+    }
+
+    return `{${filters
+      .filter((f) => f.tag && f.operator && f.value?.length)
+      .map((f) => `${scopeHelper(f, this)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
+      .join(' && ')}}`;
+  }
 }

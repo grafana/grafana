@@ -18,7 +18,7 @@ import { GroupByField } from './GroupByField';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
-import { filterScopedTag, filterTitle, generateQueryFromFilters, interpolateFilters, replaceAt } from './utils';
+import { filterScopedTag, filterTitle, interpolateFilters, replaceAt } from './utils';
 
 interface Props {
   datasource: TempoDatasource;
@@ -64,7 +64,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
 
   const templateVariables = getTemplateSrv().getVariables();
   useEffect(() => {
-    setTraceQlQuery(generateQueryFromFilters(interpolateFilters(query.filters || []), datasource.languageProvider));
+    setTraceQlQuery(datasource.languageProvider.generateQueryFromFilters(interpolateFilters(query.filters || [])));
   }, [datasource.languageProvider, query, templateVariables]);
 
   const findFilter = useCallback((id: string) => query.filters?.find((f) => f.id === id), [query.filters]);
@@ -247,7 +247,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               });
 
               onClearResults();
-              const traceQlQuery = generateQueryFromFilters(query.filters || [], datasource.languageProvider);
+              const traceQlQuery = datasource.languageProvider.generateQueryFromFilters(query.filters || []);
               onChange({
                 ...query,
                 query: traceQlQuery,
