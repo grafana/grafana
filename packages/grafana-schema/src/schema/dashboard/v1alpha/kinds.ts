@@ -1,21 +1,12 @@
 import { AnnotationQuery, DashboardLink } from '../../../index.gen';
 
 import { Kind, Reference } from './common';
-import {
-  QuerySpec,
-  TimeSettingsSpec,
-  QueryVariableSpec,
-  TextVariableSpec,
-  QueryGroupSpec,
-  VizConfigSpec,
-} from './specs';
+import { QuerySpec, QueryVariableSpec, TextVariableSpec, QueryGroupSpec, VizConfigSpec } from './specs';
 
 export type QueryVariableKind = Kind<'QueryVariable', QueryVariableSpec>;
 export type TextVariableKind = Kind<'TextVariable', TextVariableSpec>;
 
 export type QueryKind = Kind<'Query', QuerySpec>;
-
-export type TimeSettingsKind = Kind<'TimeSettings', TimeSettingsSpec>;
 
 interface GridLayoutItemSpec {
   x: number;
@@ -34,7 +25,9 @@ export type GridLayoutKind = Kind<'GridLayout', GridLayoutSpec>;
 
 export type QueryGroupKind = Kind<'QueryGroup', QueryGroupSpec>;
 
-type VizConfigKind = Kind<'VizConfig', VizConfigSpec>;
+// Eventually this will become a plugin-specific kind, TimeSeriesConfigKind, BarChartConfigKind
+// Since we don't have those kinds exposed from plugins anywhere ATM lets keep the interface open enough to allow union in the future
+type VizConfigKind = Kind<string, VizConfigSpec>;
 
 interface PanelSpec {
   uid: string;

@@ -1,14 +1,8 @@
 import { DashboardCursorSync, DashboardLink } from '../../../index.gen';
 
 import { Kind } from './common';
-import {
-  AnnotationKind,
-  GridLayoutKind,
-  PanelKind,
-  QueryVariableKind,
-  TextVariableKind,
-  TimeSettingsKind,
-} from './kinds';
+import { AnnotationKind, GridLayoutKind, PanelKind, QueryVariableKind, TextVariableKind } from './kinds';
+import { TimeSettingsSpec } from './specs';
 
 export type DashboardV2 = Kind<'Dashboard', DashboardSpec>;
 
@@ -29,7 +23,7 @@ interface DashboardSpec {
   tags: string[];
   // EOf dashboard settings
 
-  timeSettings: TimeSettingsKind; // prolly not a "kind"
+  timeSettings: TimeSettingsSpec;
   variables: Array<QueryVariableKind | TextVariableKind /* | ... */>;
   elements: Referenceable<PanelKind /** | ... more element types in the future? */>;
   annotations: AnnotationKind[];
@@ -56,18 +50,15 @@ const handTestingSchema: DashboardV2 = {
     links: [],
     tags: [],
     timeSettings: {
-      kind: 'TimeSettings',
-      spec: {
-        timezone: 'browser',
-        from: 'now-6h',
-        to: 'now',
-        autoRefresh: '10s',
-        autoRefreshIntervals: ['10s', '1m', '5m', '15m', '30m', '1h', '6h', '12h', '1d'],
-        quickRanges: ['now/d', 'now/w', 'now/M', 'now/y'],
-        hideTimepicker: false,
-        weekStart: 'sunday',
-        fiscalYearStartMonth: 1,
-      },
+      timezone: 'browser',
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '10s',
+      autoRefreshIntervals: ['10s', '1m', '5m', '15m', '30m', '1h', '6h', '12h', '1d'],
+      quickRanges: ['now/d', 'now/w', 'now/M', 'now/y'],
+      hideTimepicker: false,
+      weekStart: 'sunday',
+      fiscalYearStartMonth: 1,
     },
 
     elements: {
@@ -81,15 +72,32 @@ const handTestingSchema: DashboardV2 = {
           data: {
             kind: 'QueryGroup',
             spec: {
-              queries: [],
-              transformations: [],
+              queries: [
+                {
+                  kind: 'PrometheusQuery',
+                  spec: {
+                    refId: 'A',
+                    datasource: { uid: 'skdjkasjdkj', type: 'prometheus' },
+                  },
+                },
+              ],
+              transformations: [
+                {
+                  kind: 'LimitTransformation',
+                  spec: {
+                    id: 'limit', // id is competing w/ kind
+                    options: {
+                      limit: 10,
+                    },
+                  },
+                },
+              ],
               queryOptions: {},
             },
           },
           vizConfig: {
-            kind: 'VizConfig',
+            kind: 'timeseries', // TimeseriesConfig | BarChartConfig eventually?
             spec: {
-              pluginId: 'timeseries',
               pluginVersion: '11.0.0',
               options: {},
               fieldConfig: {
@@ -108,7 +116,7 @@ const handTestingSchema: DashboardV2 = {
           {
             kind: 'GridLayoutItem',
             spec: {
-              element: { $ref: '#/spec/elements/0' },
+              element: { $ref: '#/spec/elements/timeSeriesTest' },
               x: 0,
               y: 0,
               width: 12,
