@@ -72,17 +72,9 @@ steps:
   image: alpine:3.20.3
   name: identify-runner
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
-- commands:
   - go install github.com/bazelbuild/buildtools/buildifier@latest
   - buildifier --lint=warn -mode=check -r .
-  depends_on:
-  - compile-build-cmd
+  depends_on: []
   image: golang:1.23.1-alpine
   name: lint-starlark
 trigger:
@@ -1278,13 +1270,6 @@ platform:
   os: linux
 services: []
 steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
 - commands:
   - apt-get update -yq && apt-get install shellcheck
   - shellcheck -e SC1071 -e SC2162 scripts/**/*.sh
@@ -3434,31 +3419,32 @@ steps:
   - |2-
 
         bash -c '
+        IMAGE_TAG=$(echo "$${TAG}" | sed -e "s/+/-/g")
         debug=
         if [[ -n $${DRY_RUN} ]];  then debug=echo; fi
         docker login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}
 
         # Push the grafana-image-tags images
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-amd64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-arm64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-armv7
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-amd64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-arm64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Create the grafana manifests
-        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64       grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7
+        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Push the grafana manifests
-        $$debug docker manifest push grafana/grafana:$${TAG}
-        $$debug docker manifest push grafana/grafana:$${TAG}-ubuntu
+        $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}
+        $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}-ubuntu
 
         # if LATEST is set, then also create & push latest
         if [[ -n $${LATEST} ]]; then
-            $$debug docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${TAG}-amd64           grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7
-            $$debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64           grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+            $$debug docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${IMAGE_TAG}-amd64           grafana/grafana-image-tags:$${IMAGE_TAG}-arm64           grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+            $$debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
             $$debug docker manifest push grafana/grafana:latest
             $$debug docker manifest push grafana/grafana:latest-ubuntu
@@ -3565,31 +3551,32 @@ steps:
   - |2-
 
         bash -c '
+        IMAGE_TAG=$(echo "$${TAG}" | sed -e "s/+/-/g")
         debug=
         if [[ -n $${DRY_RUN} ]];  then debug=echo; fi
         docker login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}
 
         # Push the grafana-image-tags images
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-amd64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-arm64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-armv7
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-amd64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-arm64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Create the grafana manifests
-        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64       grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7
+        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Push the grafana manifests
-        $$debug docker manifest push grafana/grafana:$${TAG}
-        $$debug docker manifest push grafana/grafana:$${TAG}-ubuntu
+        $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}
+        $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}-ubuntu
 
         # if LATEST is set, then also create & push latest
         if [[ -n $${LATEST} ]]; then
-            $$debug docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${TAG}-amd64           grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7
-            $$debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64           grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+            $$debug docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${IMAGE_TAG}-amd64           grafana/grafana-image-tags:$${IMAGE_TAG}-arm64           grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+            $$debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
             $$debug docker manifest push grafana/grafana:latest
             $$debug docker manifest push grafana/grafana:latest-ubuntu
@@ -3681,7 +3668,8 @@ steps:
   image: golang:1.23.1-alpine
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  - ./bin/build artifacts packages --artifacts-editions=oss --tag $${DRONE_TAG} --src-bucket
+    $${PRERELEASE_BUCKET}
   depends_on:
   - compile-build-cmd
   environment:
@@ -3691,19 +3679,6 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-artifacts
-- commands:
-  - ./bin/build artifacts static-assets --tag ${DRONE_TAG} --static-asset-editions=grafana-oss
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
-    STATIC_ASSET_EDITIONS:
-      from_secret: static_asset_editions
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-static-assets
 - commands:
   - ./bin/build artifacts storybook --tag ${DRONE_TAG}
   depends_on:
@@ -3723,7 +3698,6 @@ steps:
     -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on:
   - publish-artifacts
-  - publish-static-assets
   environment:
     GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
     GITHUB_TOKEN:
@@ -6013,6 +5987,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e618274ea7a8bfbf3d5e151d459348aa9382fe63fe7fef76c997db3cba74779f
+hmac: dc30a3a00ee542fb289da36ef6db4274684db4533c472f7f903468919d1046ac
 
 ...
