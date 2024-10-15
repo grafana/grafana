@@ -76,13 +76,6 @@ const GrafanaDataSourceLoader = () => {
 
 const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
   const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid });
-  let application: RulesSourceApplication | undefined;
-
-  if (dataSourceInfo?.dataSourceSettings.type === 'loki') {
-    application = 'loki';
-  } else {
-    application = dataSourceInfo?.features.application;
-  }
 
   if (isLoading) {
     return <DataSourceSection loader={<Skeleton width={250} height={16} />} />;
@@ -94,11 +87,11 @@ const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
 
     return (
       <PaginatedDataSourceLoader
-        ruleSourceName={dataSourceInfo?.dataSourceSettings.name}
+        ruleSourceName={dataSourceInfo.name}
         rulerEnabled={rulerEnabled}
         uid={uid}
         name={name}
-        application={application}
+        application={dataSourceInfo.application}
       />
     );
   }

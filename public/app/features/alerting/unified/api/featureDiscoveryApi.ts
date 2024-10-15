@@ -1,6 +1,10 @@
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 
-import { AlertmanagerApiFeatures, PromApiFeatures, PromApplication } from '../../../../types/unified-alerting-dto';
+import {
+  AlertmanagerApiFeatures,
+  PromApplication,
+  RulesSourceApplication,
+} from '../../../../types/unified-alerting-dto';
 import {
   getRulesDataSource,
   getRulesDataSourceByUID,
@@ -16,6 +20,13 @@ export const GRAFANA_RULER_CONFIG: RulerDataSourceConfig = {
   apiVersion: 'legacy',
 };
 
+interface RulesSourceFeatures {
+  name: string;
+  uid: string;
+  application: RulesSourceApplication;
+  rulerConfig?: RulerDataSourceConfig;
+}
+
 export const featureDiscoveryApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     discoverAmFeatures: build.query<AlertmanagerApiFeatures, { amSourceName: string }>({
@@ -29,14 +40,7 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
       },
     }),
 
-    discoverDsFeatures: build.query<
-      {
-        rulerConfig?: RulerDataSourceConfig;
-        features: PromApiFeatures;
-        // dataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>;
-      },
-      { rulesSourceName: string } | { uid: string }
-    >({
+    discoverDsFeatures: build.query<RulesSourceFeatures, { rulesSourceName: string } | { uid: string }>({
       queryFn: async (rulesSourceIdentifier) => {
         const dataSourceUID = getDataSourceUID(rulesSourceIdentifier);
         if (!dataSourceUID) {
@@ -46,9 +50,11 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
         if (isGrafanaRulesSource(dataSourceUID)) {
           return {
             data: {
+              name: GRAFANA_RULES_SOURCE_NAME,
+              uid: GRAFANA_RULES_SOURCE_NAME,
+              application: 'grafana',
               rulerConfig: GRAFANA_RULER_CONFIG,
-              features: { features: { rulerApiEnabled: true } },
-            },
+            } satisfies RulesSourceFeatures,
           };
         }
 
@@ -68,10 +74,11 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
 
         return {
           data: {
+            name: dataSourceSettings.name,
+            uid: dataSourceSettings.uid,
+            application: features.application ?? 'Loki',
             rulerConfig,
-            features,
-            // dataSourceSettings,
-          },
+          } satisfies RulesSourceFeatures,
         };
       },
     }),

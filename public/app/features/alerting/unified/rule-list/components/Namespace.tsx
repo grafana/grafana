@@ -64,7 +64,7 @@ export const DataSourceIcon = ({ application }: NamespaceIconProps) => {
       return (
         <img width={16} height={16} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
       );
-    case 'loki':
+    case 'Loki':
       return <img width={16} height={16} src="public/app/plugins/datasource/loki/img/loki_icon.svg" alt="Loki" />;
     case 'grafana':
     default:

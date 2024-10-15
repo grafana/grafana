@@ -35,7 +35,6 @@ import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
-import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultFormValues } from './utils/rule-form';
 import { hashRulerRule } from './utils/rule-id';
 
