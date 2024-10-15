@@ -747,8 +747,10 @@ export class PrometheusDatasource
 
   async loadRules() {
     try {
-      const res = await this.metadataRequest('/api/v1/rules', {}, { showErrorAlert: false });
-      const groups = res.data?.data?.groups;
+      // LOGZ.IO GRAFANA CHANGE :: DEV-46445-disable-recording-rules-fetch-in-grafana-10
+      // const res = await this.metadataRequest('/api/v1/rules', {}, { showErrorAlert: false });
+      // const groups = res.data?.data?.groups;
+      const groups = null;
 
       if (groups) {
         this.ruleMappings = extractRuleMappingFromGroups(groups);

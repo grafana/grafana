@@ -191,7 +191,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onChange={handleAlertStateChange}
             />
           </div>
-          <div>
+          <div hidden>{ /* LOGZ.IO GRAFANA CHANGE :: disable recording rules filter */ }
             <Label>Rule type</Label>
             <RadioButtonGroup options={RuleTypeOptions} value={filterState.ruleType} onChange={handleRuleTypeChange} />
           </div>
