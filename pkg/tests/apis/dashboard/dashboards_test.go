@@ -119,7 +119,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPIs,
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -135,7 +135,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPIs,
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -151,7 +151,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPIs,
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -167,7 +167,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPIs,
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -183,7 +183,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesDashboardsAPIs,
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -199,7 +199,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		AppModeProduction: false, // required for experimental APIs
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesDashboardsAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesDashboardsAPI, // Required to start the example service
 		},
 	})
 
