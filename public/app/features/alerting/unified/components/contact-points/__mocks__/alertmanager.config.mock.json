@@ -68,6 +68,9 @@
             "sub2matcher4": "sub2value4"
           },
           "receiver": "another-receiver"
+        },
+        {
+          "receiver": "provisioned-contact-point"
         }
       ]
     },
