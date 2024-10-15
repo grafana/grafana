@@ -32,10 +32,10 @@ export async function fetchLokiRecordingRules(url: string) {
   const recordingRules: BackendSrvRequest = { url };
   const { data } = await lastValueFrom<
     FetchResponse<{
-      groups: RecordingRuleGroup[];
+      data: { groups: RecordingRuleGroup[] };
     }>
   >(getBackendSrv().fetch(recordingRules));
-  return data.groups;
+  return data.data.groups;
 }
 
 export function extractRecordingRules(
@@ -86,7 +86,7 @@ export function fetchLogsForMetric(): string[] {
   return [];
 }
 
-export async function startIntegration() {
+export async function fetchAndExtractLokiRecordingRules() {
   const lokiDataSources = await fetchLokiDataSources();
   const extractedRecordingRules: ExtractedRecordingRules = [];
   for (const lokids of lokiDataSources) {
@@ -99,4 +99,5 @@ export async function startIntegration() {
       console.error(err);
     }
   }
+  return extractedRecordingRules;
 }

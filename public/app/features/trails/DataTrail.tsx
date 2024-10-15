@@ -38,10 +38,10 @@ import { useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
-import { startIntegration } from './Integrations/logsIntegration';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
+import { LogsIntegrationContextProvider } from './RelatedLogs/LogsIntegrationScene';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
@@ -70,7 +70,7 @@ export interface DataTrailState extends SceneObjectState {
   settings: DataTrailSettings;
   createdAt: number;
 
-  // just for for the starting data source
+  // just for the starting data source
   initialDS?: string;
   initialFilters?: AdHocVariableFilter[];
 
@@ -124,9 +124,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (!this.state.topScene) {
       this.setState({ topScene: getTopSceneFor(this.state.metric) });
     }
-
-    // Just a test
-    startIntegration();
 
     // Some scene elements publish this
     this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
@@ -614,19 +611,21 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }, [model]);
 
     return (
-      <div className={styles.container}>
-        {showHeaderForFirstTimeUsers && <MetricsHeader />}
-        <history.Component model={history} />
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            <settings.Component model={settings} />
-          </div>
-        )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-      </div>
+      <LogsIntegrationContextProvider>
+        <div className={styles.container}>
+          {showHeaderForFirstTimeUsers && <MetricsHeader />}
+          <history.Component model={history} />
+          {controls && (
+            <div className={styles.controls}>
+              {controls.map((control) => (
+                <control.Component key={control.state.key} model={control} />
+              ))}
+              <settings.Component model={settings} />
+            </div>
+          )}
+          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        </div>
+      </LogsIntegrationContextProvider>
     );
   };
 }

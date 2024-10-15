@@ -22,6 +22,7 @@ import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngin
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { buildLabelBreakdownActionScene } from './Breakdown/LabelBreakdownScene';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
+import { buildRelatedLogsScene } from './RelatedLogs/RelatedLogsScene';
 import { ShareTrailButton } from './ShareTrailButton';
 import { useBookmarkState } from './TrailStore/useBookmarkState';
 import { reportExploreMetrics } from './interactions';
@@ -116,6 +117,12 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
     value: 'related',
     getScene: buildRelatedMetricsScene,
     description: 'Relevant metrics based on current label filters',
+  },
+  {
+    displayName: 'Related Logs',
+    value: 'related-logs',
+    getScene: buildRelatedLogsScene,
+    description: 'Relevant logs based on current label filters and time range',
   },
 ];
 
