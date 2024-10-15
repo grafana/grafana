@@ -33,6 +33,7 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.LibraryElementDataType,
 	cloudmigration.DashboardDataType,
 	cloudmigration.MuteTimingType,
+	cloudmigration.NotificationTemplateType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
@@ -66,9 +67,17 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Alerts: Notification Templates
+	notificationTemplates, err := s.getNotificationTemplates(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert notification templates", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+len(muteTimings),
+		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
+			len(muteTimings)+len(notificationTemplates),
 	)
 
 	for _, ds := range dataSources {
@@ -121,6 +130,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: muteTiming.Name,
 			Name:  muteTiming.Name,
 			Data:  muteTiming,
+		})
+	}
+
+	for _, notificationTemplate := range notificationTemplates {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.NotificationTemplateType,
+			RefID: notificationTemplate.Name,
+			Name:  notificationTemplate.Name,
+			Data:  notificationTemplate,
 		})
 	}
 

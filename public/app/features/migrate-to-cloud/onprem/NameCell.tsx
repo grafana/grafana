@@ -221,6 +221,8 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
       return <Icon size="xl" name="library-panel" />;
     case 'MUTE_TIMING':
       return <Icon size="xl" name="bell-slash" />;
+    case 'NOTIFICATION_TEMPLATE':
+      return <Icon size="xl" name="gf-layout-simple" />;
     default:
       return undefined;
   }

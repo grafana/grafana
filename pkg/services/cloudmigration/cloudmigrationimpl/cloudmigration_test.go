@@ -799,9 +799,6 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	require.NoError(t, err)
 
 	var validConfig = `{
-		"template_files": {
-			"a": "template"
-		},
 		"alertmanager_config": {
 			"route": {
 				"receiver": "grafana-default-email"

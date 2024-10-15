@@ -42,6 +42,36 @@ func TestGetAlertMuteTimings(t *testing.T) {
 	})
 }
 
+func TestGetNotificationTemplates(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
+
+		notificationTemplates, err := s.getNotificationTemplates(ctx, nil)
+		require.NoError(t, err)
+		require.Nil(t, notificationTemplates)
+	})
+
+	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the notification templates", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
+
+		var orgID int64 = 1
+		user := &user.SignedInUser{OrgID: orgID}
+
+		createdTemplate := createNotificationTemplate(t, ctx, s, orgID)
+
+		notificationTemplates, err := s.getNotificationTemplates(ctx, user)
+		require.NoError(t, err)
+		require.NotNil(t, notificationTemplates)
+		require.Len(t, notificationTemplates, 1)
+		require.Equal(t, createdTemplate.Name, notificationTemplates[0].Name)
+	})
+}
+
 func createMuteTiming(t *testing.T, ctx context.Context, service *Service, orgID int64) definitions.MuteTimeInterval {
 	t.Helper()
 
@@ -66,4 +96,16 @@ func createMuteTiming(t *testing.T, ctx context.Context, service *Service, orgID
 	require.NoError(t, err)
 
 	return createdTiming
+}
+
+func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, orgID int64) definitions.NotificationTemplate {
+	tmpl := definitions.NotificationTemplate{
+		Name:     "MyTestNotificationTemplate",
+		Template: "This is a test template\n{{ .ExternalURL }}",
+	}
+
+	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, orgID, tmpl)
+	require.NoError(t, err)
+
+	return createdTemplate
 }
