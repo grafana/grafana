@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
+import { ReactNode, createContext, useEffect, useMemo, useState, useContext } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
@@ -37,25 +37,17 @@ export function TimeRangeProvider({ children }: { children: ReactNode }) {
   const [pickersCount, setPickersCount] = useState(0);
   const [syncedValue, setSyncedValue] = useState<TimeRange>();
 
-  const sync = useCallback((value: TimeRange) => {
-    setSyncedValue(value);
-  }, []);
-
-  const unSync = useCallback(() => {
-    setSyncedValue(undefined);
-  }, []);
-
   const contextVal = useMemo(() => {
     return {
-      sync,
-      unSync,
+      sync: (value: TimeRange) => setSyncedValue(value),
+      unSync: () => setSyncedValue(undefined),
       addPicker: () => setPickersCount((val) => val + 1),
       removePicker: () => setPickersCount((val) => val - 1),
       syncPossible: pickersCount > 1,
       synced: Boolean(syncedValue),
       syncedValue,
     };
-  }, [pickersCount, sync, unSync, syncedValue]);
+  }, [pickersCount, syncedValue]);
 
   return <TimeRangeContext.Provider value={contextVal}>{children}</TimeRangeContext.Provider>;
 }
