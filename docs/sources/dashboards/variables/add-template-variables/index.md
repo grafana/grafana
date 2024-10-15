@@ -105,17 +105,26 @@ You must enter general options for any type of variable that you create.
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click **Settings**.
 1. Go to the **Variables** tab.
-1. Click **Add variable**.
-1. Enter a **Name** for the variable.
-1. In the **Select variable type** drop-down, choose **Query**.
-1. (Optional) In **Label**, enter the display name of the variable dropdown.
+1. Click **New variable**.
+1. In the **Select variable type** drop-down list, choose one of the following:
 
-   If you don't enter a display name, then the dropdown label is the variable name.
+   - **Query**
+   - **Custom**
+   - **Textbox**
+   - **Constant**
+   - **Data source**
+   - **Interval**
+   - **Ad hoc filters**
+
+1. Enter a **Name** for the variable.
+1. (Optional) In the **Label** field, enter the display name for the variable drop-down list.
+
+   If you don't enter a display name, then the drop-down list label is the variable name.
 
 1. Choose a **Show on dashboard** option:
-   - **Label and value** - The variable drop-down displays the variable **Name** or **Label** value. This is the default.
-   - **Value:** The variable drop-down only displays the selected variable value and a down arrow.
-   - **Nothing:** No variable drop-down is displayed on the dashboard.
+   - **Label and value** - The variable drop-down list displays the variable **Name** or **Label** value. This is the default.
+   - **Value:** The variable drop-down list only displays the selected variable value and a down arrow.
+   - **Nothing:** No variable drop-down list is displayed on the dashboard.
 
 ## Add a query variable
 
