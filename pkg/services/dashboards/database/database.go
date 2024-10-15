@@ -802,8 +802,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
 
-	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
-
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
 
