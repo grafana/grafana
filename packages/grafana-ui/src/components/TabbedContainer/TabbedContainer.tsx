@@ -50,7 +50,7 @@ export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose, t
         ))}
         <IconButton className={styles.close} onClick={onClose} name="times" tooltip={closeIconTooltip ?? 'Close'} />
       </TabsBar>
-      <ScrollContainer minHeight={autoHeight} maxHeight={autoHeight}>
+      <ScrollContainer height={autoHeight}>
         <TabContent className={styles.tabContent}>{tabs.find((t) => t.value === activeTab)?.content}</TabContent>
       </ScrollContainer>
     </div>

@@ -56,7 +56,9 @@ export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     scrollContent: css({
-      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
       position: 'relative',
     }),
     scrollIndicator: css({

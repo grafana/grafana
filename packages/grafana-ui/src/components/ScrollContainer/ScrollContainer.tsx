@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import { forwardRef, PropsWithChildren, UIEventHandler } from 'react';
 
@@ -6,9 +6,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { ScrollIndicators } from '../CustomScrollbar/ScrollIndicators';
-import { getSizeStyles, SizeProps } from '../Layout/utils/styles';
+import { Box, BoxProps } from '../Layout/Box/Box';
 
-interface Props extends SizeProps {
+interface Props extends Omit<BoxProps, 'display' | 'direction' | 'flex'> {
   hideScrollIndicators?: boolean;
   onScroll?: UIEventHandler<HTMLDivElement>;
   overflowX?: Property.OverflowX;
@@ -20,28 +20,27 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
   (
     {
       children,
-      height,
       hideScrollIndicators = false,
-      maxHeight = '100%',
-      maxWidth,
-      minHeight = 0,
-      minWidth,
       onScroll,
       overflowX = 'auto',
       overflowY = 'auto',
       scrollbarWidth = 'thin',
-      width,
+      ...rest
     },
     ref
   ) => {
-    const sizeStyles = useStyles2(getSizeStyles, width, minWidth, maxWidth, height, minHeight, maxHeight);
     const styles = useStyles2(getStyles, scrollbarWidth, overflowY, overflowX);
+    const defaults: Partial<BoxProps> = {
+      maxHeight: '100%',
+      minHeight: 0,
+    };
+    const boxProps = { ...defaults, ...rest };
     return (
-      <div className={cx(sizeStyles, styles.outerWrapper)}>
+      <Box {...boxProps} display="flex" direction="column" flex={1} style={{ position: 'relative' }}>
         <div onScroll={onScroll} className={styles.innerWrapper} ref={ref}>
           {hideScrollIndicators ? children : <ScrollIndicators>{children}</ScrollIndicators>}
         </div>
-      </div>
+      </Box>
     );
   }
 );
@@ -53,13 +52,10 @@ const getStyles = (
   overflowY: Props['overflowY'],
   overflowX: Props['overflowX']
 ) => ({
-  outerWrapper: css({
+  innerWrapper: css({
     display: 'flex',
     flex: 1,
-    position: 'relative',
-  }),
-  innerWrapper: css({
-    flex: 1,
+    flexDirection: 'column',
     overflowX,
     overflowY,
     scrollbarWidth,
