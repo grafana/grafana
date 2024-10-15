@@ -113,7 +113,7 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 ## Add custom images to elements
 
 You can add custom background images to all elements except **Button** by referencing an image URL.
-The image must be hosted on a publicly available URL.
+The image must be hosted at a URL that allows requests from your Grafana instance.
 
 To upload a custom image, follow these steps:
 
