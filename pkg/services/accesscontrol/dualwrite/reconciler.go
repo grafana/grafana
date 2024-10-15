@@ -103,24 +103,32 @@ func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
 // Reconcile schedules as job that will run and reconcile resources between
 // legacy access control and zanzana.
 func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
-	// TODO: make this configurable
-	ticker := time.NewTicker(5 * time.Second)
+	// Trigger full reconciliation initially
+	r.reconcile(ctx)
+
+	// FIXME:
+	// 1. We should be a bit graceful about reconciliations so we are not hammering dbs
+	// 2. We should be able to configure reconciliation interval
+	// 3. We should be able to detect if we already have a reconciliation loop running in case they take a long time
+	ticker := time.NewTicker(1 * time.Hour)
 	for {
 		select {
 		case <-ticker.C:
-			now := time.Now()
-			r.log.Debug("Start new reconciliation", "time", now)
-			for _, reconciler := range r.reconcilers {
-				if err := reconciler.reconcile(ctx); err != nil {
-					r.log.Warn("Failed to perform reconciliation for resource", "err", err)
-				}
-			}
-			r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
+			r.reconcile(ctx)
 		case <-ctx.Done():
 			return ctx.Err()
-
 		}
 	}
+}
+
+func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
+	now := time.Now()
+	for _, reconciler := range r.reconcilers {
+		if err := reconciler.reconcile(ctx); err != nil {
+			r.log.Warn("Failed to perform reconciliation for resource", "err", err)
+		}
+	}
+	r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
 }
 
 // managedPermissionsCollector collects managed permissions into provided tuple map.
