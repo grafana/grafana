@@ -1435,7 +1435,6 @@ modernc.org/opt v0.1.3 h1:3XOZf2yznlhC+ibLltsDGzABUGVx8J6pnFMS3E4dcq4=
 modernc.org/scannertest v1.0.0/go.mod h1:9qnOCV+wSvq1o9hcOPNwRorND4qpZdtmTvmcdKyN3iE=
 modernc.org/scannertest v1.0.2/go.mod h1:RzTm5RwglF/6shsKoEivo8N91nQIoWtcWI7ns+zPyGA=
 modernc.org/sortutil v1.2.0/go.mod h1:TKU2s7kJMf1AE84OoiGppNHJwvB753OYfNl2WRb++Ss=
->>>>>>> 711912458bd (seems to work on my machine)
 modernc.org/tcl v1.15.1 h1:mOQwiEK4p7HruMZcwKTZPw/aqtGM4aY00uzWhlKKYws=
 modernc.org/z v1.7.0 h1:xkDw/KepgEjeizO2sNco+hqYkU12taxQFqPEmgm1GWE=
 nhooyr.io/websocket v1.8.10 h1:mv4p+MnGrLDcPlBoWsvPP7XCzTYMXP9F9eIGoKbgx7Q=
