@@ -133,6 +133,31 @@ When you set up a binary operation using the **Add field from calculation** tran
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
 
+### Actions for visualizations
+
+<!-- Adela Almasan, #grafana-dataviz -->
+
+_Experimental in all editions of Grafana_
+
+We've updated several visualizations so that now you can add actions to them. The panel configuration now includes a **Data links and actions** section where you can add actions that can each be configured to call an API endpoint.
+
+Also, we've also added the ability to control the order in which actions are displayed in the tooltip by dragging and dropping them.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/visualizations-actions-11.3.mp4" >}}
+
+This functionality has been added for the following visualizations:
+
+- Bar chart
+- Candlestick
+- Heatmap
+- State timeline
+- Status history
+- Time series
+- Trend
+- XY chart
+
+To try out this feature, enable the `vizActions` feature toggle.
+
 ## Explore Logs
 
 ### The Explore Logs plugin is installed by default
@@ -163,9 +188,31 @@ Grafana Enterprise and OSS:
 
 To use this feature, enable the `alertingQueryAndExpressionsStepMode` feature toggle.
 
-{{< figure src="/media/docs/alerting/screenshot-simple-query-form-v11.3.png" max-width="800px" alt="Image shows the alert creation form in simple mode" >}}
+{{< figure src="/media/docs/alerting/screenshot-simple-query-form-v11.3.png" max-width="800px"alt="Image shows the alert creation form in simple mode" >}}
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/)
+
+### Role-based access control for notifications in Alerting
+
+<!-- #alerting, #alerting-xl-rbac -->
+
+_Available in public preview in Grafana Enterprise and Grafana Cloud_
+
+Manage contact points, mute timings, and notification templates through Role-Based Access Control (RBAC). Choose who can create, edit, and read contact points, mute timings, and notification templates using permissions or fixed roles.
+
+For mute timings and notification templates, you can grant all users all permissions or no permissions. For contact points, you can extend or limit permissions to individual contact points.
+
+### Recording rules for Grafana-managed alerts
+
+<!-- Alex Weaver -->
+
+_Generally available in all editions of Grafana_
+
+Create recording rules for Grafana-managed alert rules to calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh. Previously, this was only available for data-source managed alert rules.
+
+In Grafana OSS and Enterprise, you can create both Grafana-managed and data source-managed recording rules if you enable the `grafanaManagedRecordingRules` feature flag.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/)
 
 ## Data sources
 
