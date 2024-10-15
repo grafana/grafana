@@ -115,7 +115,7 @@ _Generally available in all editions of Grafana_
 
 We've added legend support to bar gauge visualizations. This is part an effort to standardize legends and make them available across more panels. You can customize legends by navigating to the **Legend** section in panel options. By default, the legend is disabled.
 
-You cna also hide names in each bar gauge, since they are redundant to the legend. To do that, in the **Name placement** option, choose **Hidden**.
+You can also hide names in each bar gauge, since they are redundant to the legend. To do that, in the **Name placement** option, choose **Hidden**.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-bargauge-legend1-11.3.png" alt="Bar gauge legend" >}}
 
