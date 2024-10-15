@@ -1,7 +1,6 @@
 package options
 
 import (
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -81,10 +80,8 @@ func (o *KubeAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Co
 	if err := etcdOptions.ApplyTo(&genericConfig.Config); err != nil {
 		return err
 	}
-	// provide an empty feature registry, for now.
-	features := featuremgmt.WithFeatures()
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, features)
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, make(map[string]any))
 	if err != nil {
 		return err
 	}

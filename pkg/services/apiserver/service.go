@@ -289,9 +289,14 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
+		// This is needed as the apistore doesn't allow any core grafana dependencies.
+		features := make(map[string]any)
+		if s.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+			features[featuremgmt.FlagUnifiedStorageBigObjectsSupport] = struct{}{}
+		}
 		// Use unified storage client
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(
-			s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.features)
+			s.unified, o.RecommendedOptions.Etcd.StorageConfig, features)
 	}
 
 	// Add OpenAPI specs for each group+version

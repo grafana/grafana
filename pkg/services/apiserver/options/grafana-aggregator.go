@@ -3,7 +3,6 @@ package options
 import (
 	"maps"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -74,10 +73,8 @@ func (o *GrafanaAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver
 	if err := etcdOptions.ApplyTo(&genericConfig.Config); err != nil {
 		return err
 	}
-	// provide an empty feature registry, for now.
-	features := featuremgmt.WithFeatures()
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, features)
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, make(map[string]any))
 	if err != nil {
 		return err
 	}

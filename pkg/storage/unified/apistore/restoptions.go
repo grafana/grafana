@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,13 +24,17 @@ import (
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
+// This is a copy of the original flag, as we are not allowed to import grafana core.
+const bigObjectSupportFlag = "unifiedStorageBigObjectsSupport"
+
 type RESTOptionsGetter struct {
 	client   resource.ResourceClient
 	original storagebackend.Config
-	features featuremgmt.FeatureToggles
+	// As we are not allowed to import the feature management directly, we pass a map of enabled features.
+	features map[string]any
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config, features featuremgmt.FeatureToggles) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config, features map[string]any) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:   client,
 		original: original,
@@ -39,7 +42,7 @@ func NewRESTOptionsGetterForClient(client resource.ResourceClient, original stor
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, features featuremgmt.FeatureToggles) (*RESTOptionsGetter, error) {
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, features map[string]any) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
@@ -64,7 +67,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, fea
 // won't be any write operations that initially bootstrap their directories
 func NewRESTOptionsGetterForFile(path string,
 	originalStorageConfig storagebackend.Config,
-	features featuremgmt.FeatureToggles) (*RESTOptionsGetter, error) {
+	features map[string]any) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
@@ -128,7 +131,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			if r.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+			if _, enabled := r.features[bigObjectSupportFlag]; enabled {
 				return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
 					trigger, indexers, LargeObjectSupportEnabled)
 			}
