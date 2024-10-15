@@ -1,4 +1,5 @@
 import { produce } from 'immer';
+import { isEmpty, pick } from 'lodash';
 import { Observable } from 'rxjs';
 
 import {
@@ -80,7 +81,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
     name: `Prometheus-${id}`,
     access: 'proxy',
     url: `/api/datasources/proxy/uid/${uid}`,
-    jsonData: {} as T,
+    jsonData: { manageAlerts: true } as T,
     meta: {
       info: {
         logos: {
@@ -773,14 +774,17 @@ export function getGrafanaRule(override?: Partial<CombinedRule>, rulerOverride?:
 }
 
 export function getCloudRule(override?: Partial<CombinedRule>) {
+  const promOverride = pick(override, ['labels', 'annotations']);
+  const rulerOverride = pick(override, ['labels', 'annotations']);
+
   return mockCombinedRule({
     namespace: {
       groups: [],
       name: 'Cortex',
       rulesSource: mockDataSource(),
     },
-    promRule: mockPromAlertingRule(),
-    rulerRule: mockRulerAlertingRule(),
+    promRule: mockPromAlertingRule(isEmpty(promOverride) ? undefined : promOverride),
+    rulerRule: mockRulerAlertingRule(isEmpty(rulerOverride) ? undefined : rulerOverride),
     ...override,
   });
 }
