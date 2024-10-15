@@ -5,13 +5,14 @@ import { makeTimeRange } from '@grafana/data';
 
 import { TimeRangeContextHookValue, TimeRangeProvider, useTimeRangeContext } from './TimeRangeContext';
 
+// Should be fine to have this globally as single file should not be parallelized
+let context: TimeRangeContextHookValue | undefined = undefined;
+function onContextChange(val?: TimeRangeContextHookValue) {
+  context = val;
+}
+
 describe('TimeRangeProvider', () => {
   it('provides the context with default values', () => {
-    let context: TimeRangeContextHookValue | undefined = undefined;
-    function onContextChange(val?: TimeRangeContextHookValue) {
-      context = val;
-    }
-
     render(
       <TimeRangeProvider>
         <TestComponent onContextChange={onContextChange} />
@@ -28,11 +29,6 @@ describe('TimeRangeProvider', () => {
   });
 
   it('is possible to sync if 2 instances exist', async () => {
-    let context: TimeRangeContextHookValue | undefined = undefined;
-    function onContextChange(val?: TimeRangeContextHookValue) {
-      context = val;
-    }
-
     render(
       <TimeRangeProvider>
         <TestComponent onContextChange={onContextChange} />
@@ -50,11 +46,6 @@ describe('TimeRangeProvider', () => {
   });
 
   it('syncs and unsyncs time across instances', async () => {
-    let context1: TimeRangeContextHookValue | undefined = undefined;
-    function onContextChange1(val?: TimeRangeContextHookValue) {
-      context1 = val;
-    }
-
     let context2: TimeRangeContextHookValue | undefined = undefined;
     function onContextChange2(val?: TimeRangeContextHookValue) {
       context2 = val;
@@ -62,14 +53,14 @@ describe('TimeRangeProvider', () => {
 
     render(
       <TimeRangeProvider>
-        <TestComponent onContextChange={onContextChange1} />
+        <TestComponent onContextChange={onContextChange} />
         <TestComponent onContextChange={onContextChange2} />
       </TimeRangeProvider>
     );
 
     const timeRange = makeTimeRange('2021-01-01', '2021-01-02');
     act(() => {
-      context1?.sync(timeRange);
+      context?.sync(timeRange);
     });
 
     expect(context2).toMatchObject({
@@ -79,7 +70,7 @@ describe('TimeRangeProvider', () => {
     });
 
     act(() => {
-      context1?.unSync();
+      context?.unSync();
     });
 
     expect(context2).toMatchObject({
@@ -92,10 +83,6 @@ describe('TimeRangeProvider', () => {
 
 describe('useTimeRangeContext', () => {
   it('does not error without provider', () => {
-    let context: TimeRangeContextHookValue | undefined = undefined;
-    function onContextChange(val?: TimeRangeContextHookValue) {
-      context = val;
-    }
     render(<TestComponent onContextChange={onContextChange} />);
     expect(context).toBeUndefined();
   });

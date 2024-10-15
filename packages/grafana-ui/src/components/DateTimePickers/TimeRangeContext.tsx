@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactNode, createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
@@ -30,9 +30,9 @@ export type TimeRangeContextHookValue = {
   unSync(): void;
 };
 
-const TimeRangeContext = React.createContext<TimeRangeContextValue | undefined>(undefined);
+const TimeRangeContext = createContext<TimeRangeContextValue | undefined>(undefined);
 
-export function TimeRangeProvider({ children }: { children: React.ReactNode }) {
+export function TimeRangeProvider({ children }: { children: ReactNode }) {
   // We simply keep the count of the pickers visible by letting them call the addPicker and removePicker functions.
   const [pickersCount, setPickersCount] = useState(0);
   const [synced, setSynced] = useState(false);
@@ -64,7 +64,7 @@ export function TimeRangeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTimeRangeContext(initialSyncValue?: TimeRange): TimeRangeContextHookValue | undefined {
-  const context = React.useContext(TimeRangeContext);
+  const context = useContext(TimeRangeContext);
 
   // Automatically add and remove the picker when the component mounts and unmounts or if context changes (but that
   // should not happen). We ignore the initialSyncValue to make this value really just an initial value and isn't a
@@ -87,6 +87,8 @@ export function useTimeRangeContext(initialSyncValue?: TimeRange): TimeRangeCont
   }, []);
 
   return useMemo(() => {
+    // We want the pickers to still function even if they are not used in a context. Not sure, this will be a common
+    // usecase, but it does not seem like it will cost us anything.
     if (!context) {
       return context;
     }
