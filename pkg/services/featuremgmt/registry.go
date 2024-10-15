@@ -1457,8 +1457,8 @@ var (
 			Owner:        growthAndOnboarding,
 		},
 		{
-			Name:              "appPlatformAccessTokens",
-			Description:       "Enables the use of access tokens for the App Platform",
+			Name:              "appPlatformGrpcClientAuth",
+			Description:       "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
