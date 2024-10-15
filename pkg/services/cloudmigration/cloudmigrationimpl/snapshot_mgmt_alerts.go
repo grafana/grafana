@@ -39,3 +39,30 @@ func (s *Service) getAlertMuteTimings(ctx context.Context, signedInUser *user.Si
 
 	return muteTimeIntervals, nil
 }
+
+type notificationTemplate struct {
+	Name     string `json:"name"`
+	Template string `json:"template"`
+}
+
+func (s *Service) getNotificationTemplates(ctx context.Context, signedInUser *user.SignedInUser) ([]notificationTemplate, error) {
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) {
+		return nil, nil
+	}
+
+	templates, err := s.ngAlert.Api.Templates.GetTemplates(ctx, signedInUser.OrgID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching ngalert notification templates: %w", err)
+	}
+
+	notificationTemplates := make([]notificationTemplate, 0, len(templates))
+
+	for _, template := range templates {
+		notificationTemplates = append(notificationTemplates, notificationTemplate{
+			Name:     template.Name,
+			Template: template.Template,
+		})
+	}
+
+	return notificationTemplates, nil
+}

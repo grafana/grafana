@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": "TO"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Misconfigured",
+      "misconfigured-warning": "This template is misconfigured.",
+      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
     }
   },
   "annotations": {
@@ -1409,7 +1414,8 @@
       "datasources": "data sources",
       "folders": "folders",
       "library_elements": "library elements",
-      "mute_timings": "mute timings"
+      "mute_timings": "mute timings",
+      "notification_templates": "notification templates"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1494,6 +1500,7 @@
       "folder": "Folder",
       "library_element": "Library Element",
       "mute_timing": "Mute Timing",
+      "notification_template": "Notification Template",
       "unknown": "Unknown"
     },
     "summary": {
