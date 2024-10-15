@@ -6,6 +6,7 @@ import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 import { Input, InlineFormLabel, stylesFactory, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
+import { t } from 'app/core/internationalization';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -353,6 +354,10 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
         isOpen={isOpen}
         onOpen={this.onOpenOptions}
         onClose={this.onCloseOptions}
+        expanderMessages={{
+          open: t('query-options-expand', 'Expand query options'),
+          close: t('query-options-collapse', 'Collapse query options'),
+        }}
       >
         {this.renderMaxDataPointsOption()}
         {this.renderIntervalOption()}
