@@ -30,20 +30,6 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
     - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
-  language:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language
-    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language
-  template-annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-an-annotation
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-an-annotation
-  template-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-a-label
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-a-label
   reference:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
@@ -59,11 +45,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#values
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
-  reference-functions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#functions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#functions
   reference-humanize:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#humanize
@@ -74,36 +55,30 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#humanizepercentage
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#humanizepercentage
-  language-print:
+  reference-match:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#print
-    - pattern:
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#print
-  language-index:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#match
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
-  language-if:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#if
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#if
-  language-comparison:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#comparison-operators
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#comparison-operators
-  language-functions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#match
   reference-functions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#functions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#functions
+  language-functions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
+  language-index:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
+  language:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language
+    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language
 ---
 
 # Labels and annotations template examples
@@ -213,15 +188,13 @@ For additional functions to display or format data, refer to:
 - [Annotation and label template functions](ref:reference-functions)
 - [Template language functions](ref:language-functions)
 
-## Set dynamically alert label
+## Example setting the label value
 
-TODO
-
-[Labels](ref:labels) determine how alerts are routed and managed for notifications, and they contribute that alert notifications reach the right teams at the right time. If the labels returned by your queries don’t fully capture the necessary context, you can use templating to modify or enhance them.
+[Labels](ref:labels) determine how alerts are routed and managed, ensuring that notifications reach the right teams at the right time. If the labels returned by your queries don’t fully capture the necessary context, you can create a new label and sets its value based on query data.
 
 ### Based on query value
 
-Here’s an example of templating a `severity` label based on the query value:
+Here’s an example of creating a `severity` label based on a query value:
 
 ```
 {{ if (gt $values.A.Value 90.0) -}}
@@ -235,7 +208,7 @@ low
 {{- end }}
 ```
 
-In this example, the severity of the alert is determined by the query value:
+In this example, the `severity` label is determined by the query value:
 
 - `critical` for values above 90,
 - `high` for values above 80,
@@ -244,29 +217,15 @@ In this example, the severity of the alert is determined by the query value:
 
 You can then use the `severity` label to control how alerts are handled. For instance, you could send `critical` alerts immediately, while routing `low` severity alerts to a team for further investigation.
 
-Each example provided here is specifically applicable to alert rules (though syntax and functionality may differ from notification templates). For those seeking examples related to notification templates—which cover the formatting of alert messages sent to external systems—please refer to the [notification templates examples](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/) document.
+{{% admonition type="note" %}}
+You should avoid displaying query values in labels, as this may create many alert instances—one for each distinct label value. Instead, use annotations to convey query values.
+{{% /admonition %}}
 
-To set a severity label from the value of a query use an if statement and the greater than comparison function. Make sure to use decimals (`80.0`, `50.0`, `0.0`, etc) when doing comparisons against `$values` as text/template does not support type coercion. You can find a list of all the supported comparison functions [here](https://pkg.go.dev/text/template#hdr-Functions).
-
-```go
-{{ if (gt $values.A.Value 80.0) -}}
-high
-{{ else if (gt $values.A.Value 50.0) -}}
-medium
-{{ else -}}
-low
-{{- end }}
-```
-
-- [`$values`](ref:reference-values): Used to access the query value that triggered the alert.
-- [`{{ if }}`](ref:language-if): Introduces conditional logic in Go templating to set the severity label dynamically.
-- [`{{ gt }}`](ref:language-comparison): A function that checks if one value is greater than another, useful for implementing threshold logic.
-
-### Based on query value
+### Based on query label
 
 You can use labels to differentiate alerts coming from various environments (e.g., production, staging, dev). For example, you may want to add a label that sets the environment based on the instance’s label. Here’s how you can template it:
 
-```go
+```
 {{ if eq $labels.instance "prod-server-1" }}production
 {{ else if eq $labels.instance "staging-server-1" }}staging
 {{ else }}development
@@ -279,7 +238,14 @@ This would print:
 - For `staging-server-1`, the label would be `staging`.
 - All other instances would be labeled `development`.
 
-- [`{{ eq }}`](ref:language-comparison): A function that checks if two values are equal, allowing you to customize messages based on the environment.
+To make this template more flexible, you can use a regular expression that matches the instance name with the instance name prefix using the [`match()](ref:reference-match) function:
+
+```
+{{ if match "^prod-server-.*" $labels.instance }}production
+{{ else if match "^staging-server-.*" $labels.instance}}staging
+{{ else }}development
+{{ end }}
+```
 
 {{< collapse title="Legacy Alerting templates" >}}
 
