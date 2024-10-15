@@ -26,6 +26,7 @@ export interface NotificationTemplate {
   title: string;
   content: string;
   provenance: string;
+  missing?: boolean;
 }
 
 const { useGetAlertmanagerConfigurationQuery, useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
@@ -84,12 +85,15 @@ function templateGroupToTemplate(
 }
 
 function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemplate[] {
+  const { alertmanager_config } = config;
+  const { templates = [] } = alertmanager_config;
   return Object.entries(config.template_files).map(([title, content]) => ({
     uid: title,
     title,
     content,
     // Undefined, null or empty string should be converted to PROVENANCE_NONE
     provenance: (config.template_file_provenances ?? {})[title] || PROVENANCE_NONE,
+    missing: !templates.includes(title),
   }));
 }
 

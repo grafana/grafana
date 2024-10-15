@@ -97,7 +97,11 @@ describe('alerting API server disabled', () => {
     );
 
     const testBody = await testRequest?.json();
-    const saveBody = await saveRequest?.json();
+    const fullSaveBody = await saveRequest?.json();
+
+    // Only snapshot and check the receivers, as we don't want other tests to break this
+    // just because we added something new to the mock config
+    const saveBody = fullSaveBody.alertmanager_config.receivers;
 
     expect([testBody]).toMatchSnapshot();
     expect([saveBody]).toMatchSnapshot();

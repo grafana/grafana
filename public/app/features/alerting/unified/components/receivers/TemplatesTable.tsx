@@ -1,8 +1,10 @@
 import { Fragment, useState } from 'react';
 
 import { logError } from '@grafana/runtime';
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t, Trans } from 'app/core/internationalization';
+import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
@@ -116,8 +118,8 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
   const [isExpanded, setIsExpanded] = useState(false);
   const { isProvisioned } = useNotificationTemplateMetadata(notificationTemplate);
 
-  const { uid, title: name, content: template } = notificationTemplate;
-
+  const { uid, title: name, content: template, missing } = notificationTemplate;
+  const misconfiguredBadgeText = t('alerting.templates.misconfigured-badge-text', 'Misconfigured');
   return (
     <Fragment key={uid}>
       <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
@@ -125,7 +127,25 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
           <CollapseToggle isCollapsed={!isExpanded} onToggle={() => setIsExpanded(!isExpanded)} />
         </td>
         <td>
-          {name} {isProvisioned && <ProvisioningBadge />}
+          {name} {isProvisioned && <ProvisioningBadge />}{' '}
+          {missing && (
+            <Tooltip
+              content={
+                <>
+                  <Trans i18nKey="alerting.templates.misconfigured-warning">This template is misconfigured.</Trans>
+                  <br />
+                  <Trans i18nKey="alerting.templates.misconfigured-warning-details">
+                    Templates must be defined in both the <CodeText content="template_files" /> and{' '}
+                    <CodeText content="templates" /> sections of your alertmanager configuration.
+                  </Trans>
+                </>
+              }
+            >
+              <span>
+                <Badge text={misconfiguredBadgeText} color="orange" />
+              </span>
+            </Tooltip>
+          )}
         </td>
         <td className={tableStyles.actionsCell}>
           {isProvisioned && (
