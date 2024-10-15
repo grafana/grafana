@@ -255,6 +255,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     this.cache[cacheKey] = scene;
   }
 
+  public clearSceneCache() {
+    this.cache = {};
+  }
+
   public getCacheKey(cacheKey: string): string {
     const scopesCacheKey = getSelectedScopesNames().sort().join('__scp__');
 
