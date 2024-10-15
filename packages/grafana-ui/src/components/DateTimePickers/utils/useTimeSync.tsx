@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import usePrevious from 'react-use/lib/usePrevious';
+import { usePrevious } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
 
