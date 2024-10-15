@@ -57,11 +57,27 @@ Details of the fixed roles and the access they provide for Grafana Alerting are 
 | Access to alert rules provisioning API: `fixed:alerting.provisioning:writer`             | `alert.provisioning:read` and `alert.provisioning:write`                                                                                                                                                                                                                    | Manage all alert rules, notification policies, contact points, templates, in the organization using the provisioning API.                                |
 | Set provisioning status: `fixed:alerting.provisioning.status:writer`                     | `alert.provisioning.provenance:write`                                                                                                                                                                                                                                       | Set provisioning rules for Alerting resources. Should be used together with other regular roles (Notifications Writer and/or Rules Writer.)              |
 
+If you have enabled the `alertingApiServer` feature toggle, an additional set of fixed roles is available.
+
+| Display name in UI / Fixed role                               | Permissions                                                                                                                                                                                 | Description                                                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Contact Point Reader: `fixed:alerting.receivers:reader`       | `alert.notifications.receivers:read` for scope `receivers:*`                                                                                                                                | Read all contact points.                                                                                |
+| Contact Point Creator: `fixed:alerting.receivers:creator`     | `alert.notifications.receivers:create`                                                                                                                                                      | Create a new contact point. The user is automatically granted full access to the created contact point. |
+| Contact Point Writer: `fixed:alerting.receivers:writer`       | `alert.notifications.receivers:read`, `alert.notifications.receivers:write`, `alert.notifications.receivers:delete` for scope `receivers:*` and <br> `alert.notifications.receivers:create` | Create a new contact point and manage all existing contact points.                                      |
+| Templates Reader: `fixed:alerting.templates:reader`           | `alert.notifications.templates:read`                                                                                                                                                        | Read all notification templates.                                                                        |
+| Templates Writer: `fixed:alerting.templates:writer`           | `alert.notifications.templates:read`, `alert.notifications.templates:write`, `alert.notifications.templates:delete`                                                                         | Create new and manage existing notification templates.                                                  |
+| Time Intervals Reader: `fixed:alerting.time-intervals:reader` | `alert.notifications.time-intervals:read`                                                                                                                                                   | Read all time intervals.                                                                                |
+| Time Intervals Writer: `fixed:alerting.time-intervals:writer` | `alert.notifications.time-intervals:read`, `alert.notifications.time-intervals:write`, `alert.notifications.time-intervals:delete`                                                          | Create new and manage existing time intervals.                                                          |
+
 ## Create custom roles
 
 Create custom roles of your own to manage permissions. Custom roles contain unique combinations of permissions, actions and scopes. Create a custom role when basic roles and fixed roles do not meet your permissions requirements.
 
 For more information on creating custom roles, refer to [Create custom roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/manage-rbac-roles/#create-custom-roles).
+
+{{< admonition type="note" >}}
+It is not recommended to create custom roles that include `alerting.notifications.receiver` actions with a scope other than `receivers:*`. The UID used in the scope is not stable and changes whenever a contact point is renamed.  
+{{< /admonition >}}
 
 ### Examples
 

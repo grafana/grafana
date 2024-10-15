@@ -64,3 +64,30 @@ To manage folder permissions, complete the following steps.
 1. Hover your mouse cursor over a folder and click **Go to folder**.
 1. Click **Manage permissions** from the Folder actions menu.
 1. Update or add permissions as required.
+
+## Manage access using contact point permissions
+
+### Before you begin
+
+- Enable the `alertingApiServer` feature toggle.
+
+Extend or limit the access provided by a role to contact points by assigning permissions to individual contact point.
+
+This allows different users, teams, or service accounts to have customized access to read or modify specific contact points.
+
+Refer to the following table for details on the additional access provided by contact point permissions.
+
+| Folder permission | Additional Access                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| View              | View and export contact point as well as select it on the Alert rule edit page                                                                |
+| Edit              | Update or delete the contact point                                                                                                            |
+| Admin             | Same additional access as Edit and manage permissions for the contact point. User should have additional permissions to read users and teams. |
+
+### Steps
+
+To contact point permissions, complete the following steps.
+
+1. In the left-side menu, click **Contact points**.
+1. Hover your mouse cursor over a contact point and click **More**.
+1. Click **Manage permissions** from the actions menu.
+1. Update or add permissions as required.
