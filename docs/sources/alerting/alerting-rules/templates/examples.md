@@ -91,7 +91,7 @@ This page provides common examples for templating labels and annotations. For mo
 - [Annotation and label template reference](ref:reference)
 - [Alerting template language](ref:language)
 
-## Annotation summary example
+## Annotation example
 
 [Annotations](ref:annotations) add extra details to alert instances and are often used to provide helpful information for identifying the issue and guiding the response.
 
@@ -188,7 +188,7 @@ For additional functions to display or format data, refer to:
 - [Annotation and label template functions](ref:reference-functions)
 - [Template language functions](ref:language-functions)
 
-## Example setting the label value
+## Label example
 
 [Labels](ref:labels) determine how alerts are routed and managed, ensuring that notifications reach the right teams at the right time. If the labels returned by your queries don’t fully capture the necessary context, you can create a new label and sets its value based on query data.
 
@@ -238,7 +238,7 @@ This would print:
 - For `staging-server-1`, the label would be `staging`.
 - All other instances would be labeled `development`.
 
-To make this template more flexible, you can use a regular expression that matches the instance name with the instance name prefix using the [`match()](ref:reference-match) function:
+To make this template more flexible, you can use a regular expression that matches the instance name with the instance name prefix using the [`match()`](ref:reference-match) function:
 
 ```
 {{ if match "^prod-server-.*" $labels.instance }}production
