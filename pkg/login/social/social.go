@@ -104,8 +104,8 @@ func (o *OAuthInfo) GetDisplayName() string {
 }
 
 func (o *OAuthInfo) IsSingleLogoutEnabled() bool {
-	// Reuse the isOIDCLogout() function with the signout_redirect_url
-	return o.SignoutRedirectUrl != ""
+	// OIDC SLO is not supported
+	return false
 }
 
 func (o *OAuthInfo) IsAutoLoginEnabled() bool {

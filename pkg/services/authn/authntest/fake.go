@@ -8,18 +8,39 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
+var _ authn.SSOClientConfig = new(FakeSSOClientConfig)
+
+type FakeSSOClientConfig struct {
+	ExpectedName                  string
+	ExpectedIsAutoLoginEnabled    bool
+	ExpectedIsSingleLogoutEnabled bool
+}
+
+func (f *FakeSSOClientConfig) GetDisplayName() string {
+	return f.ExpectedName
+}
+
+func (f *FakeSSOClientConfig) IsAutoLoginEnabled() bool {
+	return f.ExpectedIsAutoLoginEnabled
+}
+
+func (f *FakeSSOClientConfig) IsSingleLogoutEnabled() bool {
+	return f.ExpectedIsSingleLogoutEnabled
+}
+
 var (
 	_ authn.Service              = new(FakeService)
 	_ authn.IdentitySynchronizer = new(FakeService)
 )
 
 type FakeService struct {
-	ExpectedErr        error
-	ExpectedRedirect   *authn.Redirect
-	ExpectedIdentity   *authn.Identity
-	ExpectedErrs       []error
-	ExpectedIdentities []*authn.Identity
-	CurrentIndex       int
+	ExpectedClientConfig authn.SSOClientConfig
+	ExpectedErr          error
+	ExpectedRedirect     *authn.Redirect
+	ExpectedIdentity     *authn.Identity
+	ExpectedErrs         []error
+	ExpectedIdentities   []*authn.Identity
+	CurrentIndex         int
 }
 
 func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -47,7 +68,7 @@ func (f *FakeService) IsClientEnabled(name string) bool {
 }
 
 func (f *FakeService) GetClientConfig(name string) authn.SSOClientConfig {
-	return nil
+	return f.ExpectedClientConfig
 }
 
 func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}
@@ -180,10 +201,6 @@ func (f FakeRedirectClient) Authenticate(ctx context.Context, r *authn.Request) 
 }
 
 func (f FakeRedirectClient) IsEnabled() bool { return true }
-
-func (f FakeRedirectClient) GetConfig() authn.SSOClientConfig {
-	return nil
-}
 
 func (f FakeRedirectClient) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	return f.ExpectedRedirect, f.ExpectedErr

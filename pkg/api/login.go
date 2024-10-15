@@ -359,15 +359,27 @@ func (hs *HTTPServer) samlEnabled() bool {
 }
 
 func (hs *HTTPServer) samlName() string {
-	return hs.authnService.GetClientConfig(authn.ClientSAML).GetDisplayName()
+	config := hs.authnService.GetClientConfig(authn.ClientSAML)
+	if config == nil {
+		return ""
+	}
+	return config.GetDisplayName()
 }
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
-	return hs.samlEnabled() && hs.authnService.GetClientConfig(authn.ClientSAML).IsSingleLogoutEnabled()
+	config := hs.authnService.GetClientConfig(authn.ClientSAML)
+	if config == nil {
+		return false
+	}
+	return hs.samlEnabled() && config.IsSingleLogoutEnabled()
 }
 
 func (hs *HTTPServer) samlAutoLoginEnabled() bool {
-	return hs.samlEnabled() && hs.authnService.GetClientConfig(authn.ClientSAML).IsAutoLoginEnabled()
+	config := hs.authnService.GetClientConfig(authn.ClientSAML)
+	if config == nil {
+		return false
+	}
+	return hs.samlEnabled() && config.IsAutoLoginEnabled()
 }
 
 func getLoginExternalError(err error) string {
