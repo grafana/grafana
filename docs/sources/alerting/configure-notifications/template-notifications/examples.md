@@ -111,7 +111,7 @@ There are no alerts
 {{ end }}
 ```
 
-- ['{{with}}`](ref:language-with): a control structure that updates the [dot](ref:language-dot) cursor to refer to the value passed to with. If the value is empty or false, it falls back to the `else` block.
+- [`{{ with }}`](ref:language-with): a control structure that updates the [dot](ref:language-dot) cursor to refer to the value passed to with. If the value is empty or false, it falls back to the `else` block.
 
 ### Variables
 
@@ -316,7 +316,7 @@ The web server web1 has been responding to 5% of HTTP requests with 5xx errors f
 - View on Grafana: https://example.com/grafana/alerting/grafana/view
 ```
 
-### Conditional template
+### Label-based conditional template
 
 Template alert notifications based on a label. In this example the label represents a namespace.
 
@@ -338,9 +338,7 @@ Use the following code in your notification template to display different messag
 
 This template alters the content of alert notifications depending on the namespace value.
 
-** Make sure to replace the `.namespace` label with a label that exists in your alert rule. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values. **
-
-
+- Make sure to replace the `.namespace` label with a label that exists in your alert rule. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values. **
 
 - `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
 
@@ -502,32 +500,9 @@ Template the content of a Slack message to contain a description of all firing a
 **Note:**
 
 This template is for Grafana-managed alerts only.
-To use the template for Grafana Mimir/Loki-managed alerts, delete the references to DashboardURL and SilenceURL.
+To use the template for data source-managed alerts, delete the references to DashboardURL and SilenceURL.
 For more information, see the [Prometheus documentation on notifications](https://prometheus.io/docs/alerting/latest/notifications/).
 
-```
-1 firing alert(s):
-
-[firing] Test1
-Labels:
-- alertname: Test1
-- grafana_folder: GrafanaCloud
-Annotations:
-- description: This is a test alert
-Silence: https://example.com/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTest1&matcher=grafana_folder%3DGrafanaCloud
-Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
-
-1 resolved alert(s):
-
-[firing] Test2
-Labels:
-- alertname: Test2
-- grafana_folder: GrafanaCloud
-Annotations:
-- description: This is another test alert
-Silence: https://example.com/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTest2&matcher=grafana_folder%3DGrafanaCloud
-Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
-```
 
 1. Create a template called `slack` with two templates in the content: `slack.print_alert` and `slack.message`.
 
@@ -574,6 +549,32 @@ Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
 
    ```
    {{ template "slack.message" . }}
+   ```
+
+   Thiswould print:
+
+   ```
+   1 firing alert(s):
+
+   [firing] Test1
+   Labels:
+   - alertname: Test1
+   - grafana_folder: GrafanaCloud
+   Annotations:
+   - description: This is a test alert
+   Silence: https://example.com/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTest1&matcher=grafana_folder%3DGrafanaCloud
+   Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
+
+   1 resolved alert(s):
+
+   [firing] Test2
+   Labels:
+   - alertname: Test2
+   - grafana_folder: GrafanaCloud
+   Annotations:
+   - description: This is another test alert
+   Silence: https://example.com/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTest2&matcher=grafana_folder%3DGrafanaCloud
+   Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
    ```
 
 ### Template both email and Slack with shared templates
