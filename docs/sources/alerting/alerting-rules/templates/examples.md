@@ -26,6 +26,10 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
+  alert-rule-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
+    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
   language:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language
@@ -40,6 +44,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/#how-to-template-a-label
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/#how-to-template-a-label
+  reference:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/
   reference-labels:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
@@ -50,11 +59,21 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#values
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
-  language-range:
+  reference-functions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#range
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#functions
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#range
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#functions
+  reference-humanize:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#humanize
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#humanize
+  reference-humanizepercentage:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#humanizepercentage
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#humanizepercentage
   language-print:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#print
@@ -89,27 +108,118 @@ refs:
 
 # Labels and annotations template examples
 
-This document is a compilation of common use cases for templating labels and annotations within Grafana alert rules. Templating allows you to dynamically generate values for both labels and annotations, making your alerts more flexible and context-aware. By leveraging variables from your metrics, you can create more informative and actionable alerts that improve both routing and response times.
+Templating allows you to enrich alert labels and annotations with dynamic data from queries. This dynamic data enhances alert context, making it easier for responders to quickly assess and address the issue.
 
-> Find step-by-step instructions on [how to template annotations](ref:template-annotations) or [labels](ref:template-labels) for more detailed guidance.
+This page provides common examples for templating labels and annotations. For more information on templating, refer to:
 
-[Annotations](ref:annotations) add extra details to alert instances and are often used to provide helpful information for identifying the issue and guiding the response. A common use case for annotations is to show the specific query value or threshold that triggered the alert, or to highlight important labels like the environment, region, or priority.
+- [Template annotations and labels](ref:alert-rule-templates)
+- [Annotation and label template reference](ref:reference)
+- [Alerting template language](ref:language)
 
-For example, you can create an annotation to display the specific instance and CPU value that caused the alert:
+## Annotation summary example
+
+[Annotations](ref:annotations) add extra details to alert instances and are often used to provide helpful information for identifying the issue and guiding the response.
+
+A common use case for annotations is to display the specific query value or threshold that triggered the alert.
+
+For example, you can display the query value from the [`$values`](ref:reference-values) variable to inform about the CPU value that triggered the alert:
+
+```
+CPU usage has exceeded 80% ({{ $values.A.value }}) for the last 5 minutes.
+```
+
+Alternatively, you can use the [`index()`](ref:language-index) function to retrieve the query value as follows:
+
+```
+CPU usage has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
+```
+
+```template_output
+CPU usage has exceeded 80% (81.2345) for the last 5 minutes.
+```
+
+### Include labels for extra details
+
+To provide additional context, you can include labels from the query. For instance, access the [`$labels`](ref:reference-labels) variable to display a label that informs about the affected instance:
+
+```
+CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
+```
+
+Alternatively, you can use the `index()` function:
 
 ```
 CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
 ```
 
-This would result in a message like:
-
-```
+```template_output
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```
 
-This annotation provides useful information about which instance is affected and by how much.
+Annotations can also be used to provide a summary of key alert labels, such as the environment and alert severity. For instance, you can display a summary of the alert with important labels like:
+
+```
+Alert triggered in {{ $labels.environment }} with severity {{ $labels.severity }}
+```
+
+```template_output
+Alert triggered in production with severity critical.
+```
+
+### Print a range query
+
+To print the value of an instant query you can print its Ref ID using the `index` function or the `$values` variable:
+
+```
+{{ $values.A.Value }}
+```
+
+For range queries, reduce them from a time series to an instant vector using a reduce expression. You can then print the result by referencing its Ref ID. For example, if the reduce expression averages `A` with the Ref ID `B`, you would then print `$values.B`:
+
+```
+{{ $values.B.Value }}
+```
+
+### Humanize the value of a query
+
+To print the humanized value of an instant query, use the [`humanize`](ref:reference-humanize) function:
+
+```
+{{ humanize $values.A.Value }}
+```
+
+Alternatively:
+
+```
+{{ humanize (index $values "A").Value }}
+```
+
+```template_output
+554.9
+```
+
+To print the value of an instant query as a percentage, use the [`humanizePercentage`](ref:reference-humanizepercentage) function:
+
+```
+{{ humanizePercentage $values.A.Value }}
+```
+
+```template_output
+10%
+```
+
+For additional functions to display or format data, refer to:
+
+- [Annotation and label template functions](ref:reference-functions)
+- [Template language functions](ref:language-functions)
+
+## Set dynamically alert label
+
+TODO
 
 [Labels](ref:labels) determine how alerts are routed and managed for notifications, and they contribute that alert notifications reach the right teams at the right time. If the labels returned by your queries don’t fully capture the necessary context, you can use templating to modify or enhance them.
+
+### Based on query value
 
 Here’s an example of templating a `severity` label based on the query value:
 
@@ -136,136 +246,6 @@ You can then use the `severity` label to control how alerts are handled. For ins
 
 Each example provided here is specifically applicable to alert rules (though syntax and functionality may differ from notification templates). For those seeking examples related to notification templates—which cover the formatting of alert messages sent to external systems—please refer to the [notification templates examples](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/) document.
 
-If you are using classic conditions, refer to [legacy alerting templates](#legacy-alerting-templates) for more information.
-
-## Common use cases
-
-Below are some examples that address common use cases and some of the different approaches you can take with templating. You will see both annotation and label templates share functions and elements that help formatting the alert notifications. If you are unfamiliar with the templating language, check the [Language page](ref:language).
-
-### Annotation template examples
-
-#### Displaying alert trigger details
-
-Annotations can provide additional context for alert responders by showing the details of what triggered the alert. For example, to display the CPU usage of a specific instance that exceeded a threshold, use the following template:
-
-```go
-CPU usage for {{ $labels.instance }} has exceeded {{ $values.A }} for the last 5 minutes.
-```
-
-This would print:
-
-```
-CPU usage for Instance-1 has exceeded 81.23% for the last 5 minutes.
-```
-
-- [`$labels`](ref:reference-labels): Used to access alert labels.
-- [`$values`](ref:reference-values): Used to access the query values that triggered the alert.
-- [`{{ }}`](ref:language-print): Go templating syntax for embedding values within the template.
-
-#### Adding alert summary with labels
-
-Annotations can also be used to provide a summary of key alert labels, such as the environment and alert severity. For instance, you can display a summary of the alert with important labels like so:
-
-```go
-Alert triggered in {{ $labels.environment }} with severity {{ $labels.severity }}
-```
-
-This would print:
-
-```
-Alert triggered in production with severity critical.
-```
-
-### Label template examples
-
-#### Print an individual label
-
-To print an individual label use the `index` function with the `$labels` variable:
-
-```go
-The host {{ index $labels "instance" }} has exceeded 80% CPU usage for the last 5 minutes
-```
-
-For example, given an alert with the labels `instance=server1`, this would print:
-
-```
-The host server1 has exceeded 80% CPU usage for the last 5 minutes
-```
-
-- [`{{ index }}`](ref:language-index): Used to access specific elements from a map or slice, helping to extract label values.
-
-#### Print all labels, one per line
-
-To print all labels, one per line, use a `range` to iterate over each key/value pair and print them individually. Here `$k` refers to the name and `$v` refers to the value of the current label:
-
-```go
-{{ range $k, $v := $labels -}}
-{{ $k }}={{ $v }}
-{{ end }}
-```
-
-For example, given an alert with the labels `alertname=High CPU usage`, `grafana_folder=CPU alerts` and `instance=server1`, this would print:
-
-```
-alertname=High CPU usage
-grafana_folder=CPU alerts
-instance=server1
-```
-
-- [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
-
-#### Print the value of a query
-
-To print the value of an instant query you can print its Ref ID using the `index` function and the `$values` variable:
-
-```go
-{{ index $values "A" }}
-```
-
-For example, given an instant query that returns the value 81.2345, this will print:
-
-```
-81.2345
-```
-
-To print the value of a range query you must first reduce it from a time series to an instant vector with a reduce expression. You can then print the result of the reduce expression by using its Ref ID instead. For example, if the reduce expression takes the average of A and has the Ref ID B you would write:
-
-```go
-{{ index $values "B" }}
-```
-
-#### Print the humanized value of a query
-
-To print the humanized value of an instant query use the [`humanize`](ref:reference-functions) function:
-
-```go
-{{ humanize (index $values "A").Value }}
-```
-
-For example, given an instant query that returns the value 81.2345, this will print:
-
-```
-81.234
-```
-
-To print the humanized value of a range query you must first reduce it from a time series to an instant vector with a reduce expression. You can then print the result of the reduce expression by using its Ref ID instead. For example, if the reduce expression takes the average of A and has the Ref ID B you would write:
-
-```
-{{ humanize (index $values "B").Value }}
-```
-
-#### Print the value of a query as a percentage
-
-To print the value of an instant query as a percentage use the [`humanizePercentage`](ref:reference-functions) function:
-
-```go
-{{ humanizePercentage (index $values "A").Value }}
-```
-
-This function expects the value to be a decimal number between 0 and 1. If the value is instead a decimal number between 0 and 100 you can either divide it by 100 in your query or using a math expression. If the query is a range query you must first reduce it from a time series to an instant vector with a reduce expression.
-
-#### Dynamically setting alert severity
-
 To set a severity label from the value of a query use an if statement and the greater than comparison function. Make sure to use decimals (`80.0`, `50.0`, `0.0`, etc) when doing comparisons against `$values` as text/template does not support type coercion. You can find a list of all the supported comparison functions [here](https://pkg.go.dev/text/template#hdr-Functions).
 
 ```go
@@ -282,7 +262,7 @@ low
 - [`{{ if }}`](ref:language-if): Introduces conditional logic in Go templating to set the severity label dynamically.
 - [`{{ gt }}`](ref:language-comparison): A function that checks if one value is greater than another, useful for implementing threshold logic.
 
-#### Labeling based on environment
+### Based on query value
 
 You can use labels to differentiate alerts coming from various environments (e.g., production, staging, dev). For example, you may want to add a label that sets the environment based on the instance’s label. Here’s how you can template it:
 
@@ -301,13 +281,15 @@ This would print:
 
 - [`{{ eq }}`](ref:language-comparison): A function that checks if two values are equal, allowing you to customize messages based on the environment.
 
+{{< collapse title="Legacy Alerting templates" >}}
+
 ## Legacy Alerting templates
 
 For users working with Grafana's legacy alerting system, templates can still be utilized to extract useful information from alert conditions. However, it's important to note that you cannot use `$labels` to print labels from the query if you are using classic conditions, and must use `$values` instead. The reason for this is classic conditions discard these labels to enforce uni-dimensional behavior (at most one alert per alert rule). If classic conditions didn't discard these labels, then queries that returned many time series would cause alerts to flap between firing and resolved constantly as the labels would change every time the alert rule was evaluated.
 
 Instead, the `$values` variable contains the reduced values of all time series for all conditions that are firing. For example, if you have an alert rule with a query A that returns two time series, and a classic condition B with two conditions, then `$values` would contain `B0`, `B1`, `B2` and `B3`. If the classic condition B had just one condition, then `$values` would contain just `B0` and `B1`.
 
-### Print all labels from a classic condition
+#### Print all labels from a classic condition
 
 To print all labels of all firing time series use the following template (make sure to replace `B` in the regular expression with the Ref ID of the classic condition if it's different):
 
@@ -336,7 +318,7 @@ B3: instance=server2
 
 If you need to print unique labels you should consider changing your alert rules from uni-dimensional to multi-dimensional instead. You can do this by replacing your classic condition with reduce and math expressions.
 
-### Print all values from a classic condition
+#### Print all values from a classic condition
 
 To print all values from a classic condition take the previous example and replace `$v.Labels` with `$v.Value`:
 
@@ -362,3 +344,5 @@ B1: 92.3456
 B2: 84.5678
 B3: 95.6789
 ```
+
+{{< /collapse >}}

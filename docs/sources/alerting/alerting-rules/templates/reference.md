@@ -227,7 +227,7 @@ The `humanizeDuration` function humanizes a duration in seconds:
 
 #### humanizePercentage
 
-The `humanizePercentage` function humanizes a ratio value to a percentage:
+The `humanizePercentage` function humanizes a ratio value between 0 and 1 to a percentage:
 
 ```
 {{ humanizePercentage 0.2 }}
