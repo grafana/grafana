@@ -4728,7 +4728,7 @@
             "type": "string"
           },
           "ErrorSource": {
-            "$ref": "#/components/schemas/ErrorSource"
+            "$ref": "#/components/schemas/Source"
           },
           "Frames": {
             "$ref": "#/components/schemas/Frames"
@@ -10703,6 +10703,10 @@
           }
         },
         "type": "object"
+      },
+      "Source": {
+        "title": "Source type defines the status source.",
+        "type": "string"
       },
       "Span": {
         "properties": {

@@ -171,7 +171,6 @@ func NewMiddlewareHandler(
 
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features featuremgmt.FeatureToggles, promRegisterer prometheus.Registerer, registry registry.Service) []backend.HandlerMiddleware {
 	middlewares := []backend.HandlerMiddleware{
-		clientmiddleware.NewPluginRequestMetaMiddleware(),
 		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry),
 		clientmiddleware.NewContextualLoggerMiddleware(),
@@ -202,9 +201,9 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
-	// StatusSourceMiddleware should be at the very bottom, or any middlewares below it won't see the
-	// correct status source in their context.Context
-	middlewares = append(middlewares, clientmiddleware.NewStatusSourceMiddleware())
+	// ErrorSourceMiddleware should be at the very bottom, or any middlewares below it won't see the
+	// correct error source in their context.Context
+	middlewares = append(middlewares, backend.NewErrorSourceMiddleware())
 
 	return middlewares
 }
