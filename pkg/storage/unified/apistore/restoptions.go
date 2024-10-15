@@ -128,7 +128,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			if r.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectSupport) {
+			if r.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
 				return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
 					trigger, indexers, LargeObjectSupportEnabled)
 			}

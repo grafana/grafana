@@ -1519,7 +1519,7 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "unifiedStorageBigObjectSupport",
+			Name:        "unifiedStorageBigObjectsSupport",
 			Description: "Enables to save big objects in blob storage",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,

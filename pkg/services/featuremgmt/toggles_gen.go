@@ -815,7 +815,7 @@ const (
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
 
-	// FlagUnifiedStorageBigObjectSupport
+	// FlagUnifiedStorageBigObjectsSupport
 	// Enables to save big objects in blob storage
-	FlagUnifiedStorageBigObjectSupport = "unifiedStorageBigObjectSupport"
+	FlagUnifiedStorageBigObjectsSupport = "unifiedStorageBigObjectsSupport"
 )
