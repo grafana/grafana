@@ -56,7 +56,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
 		return nil // skip registration unless opting into dashboards in the k8s api
 	}
 
