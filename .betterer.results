@@ -3513,8 +3513,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "4"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "6"]
+      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "5"]
     ],
     "public/app/features/datasources/state/navModel.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

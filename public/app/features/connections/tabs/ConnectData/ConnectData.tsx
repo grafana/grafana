@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
-import * as React from 'react';
+import { useMemo, useState, FormEvent, MouseEvent } from 'react';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder, EmptyState } from '@grafana/ui';
@@ -38,7 +37,7 @@ export function AddNewConnection() {
   const styles = useStyles2(getStyles);
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 
-  const handleSearchChange = (e: React.FormEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
     setQueryParams({
       search: e.currentTarget.value.toLowerCase(),
     });
@@ -62,7 +61,7 @@ export function AddNewConnection() {
     [plugins]
   );
 
-  const onClickCardGridItem = (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => {
+  const onClickCardGridItem = (e: MouseEvent<HTMLElement>, item: CardGridItem) => {
     if (!canCreateDataSources) {
       e.preventDefault();
       e.stopPropagation();
