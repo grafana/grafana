@@ -37,7 +37,7 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
@@ -309,8 +309,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         // In case we are in the state of having 1 query and 2 expressions,
         // then,we want to remove the reducer expression if query is instant to simplify the process of creating a non complex alert
         const firstQueryIsPromOrLoki =
-          updatedQueries[0].model.datasource?.type === 'prometheus' ||
-          updatedQueries[0].model.datasource?.type === 'loki';
+          updatedQueries[0].model.datasource?.type === DataSourceType.Prometheus ||
+          updatedQueries[0].model.datasource?.type === DataSourceType.Loki;
         const shouldRemoveReducer =
           updatedQueries.length === 1 &&
           'instant' in updatedQueries[0].model &&

@@ -17,6 +17,8 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { DataSourceType } from '../../utils/datasource';
+
 import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromCurrentCondition, errorFromPreviewData, getThresholdsForQueries } from './util';
 
@@ -234,7 +236,7 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
 }
 
 function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
-  const defaultToInstant = settings.type === 'loki' || settings.type === 'prometheus';
+  const defaultToInstant = settings.type === DataSourceType.Loki || settings.type === DataSourceType.Loki;
   const isInstant = 'instant' in item.model && item.model.instant !== undefined ? item.model.instant : defaultToInstant;
   return {
     refId: item.refId,
