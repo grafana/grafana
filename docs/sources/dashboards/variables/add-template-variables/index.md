@@ -268,14 +268,17 @@ Once you've added an ad hoc filter in the dashboard settings, you can add label/
 To create dashboard filters, follow these steps:
 
 1. In the dashboard, click in the filter field.
-1. Select a label.
-1. Select an operator.
-1. Select a value.
+1. Select a label, operator, and value.
 1. Repeat this process as needed until you have all the filters you need.
+
+![Ad hoc filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
 
 You can edit or delete a filter in the following ways:
 
 - To edit the operator or value of a filter, click anywhere on the filter and update it.
+
+  ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
+
 - To change the filter label, you must delete the filter and create a new one.
 - To delete a filter, click the **X** next to it.
 
