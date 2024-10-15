@@ -326,7 +326,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => {
 };
 
 // Handle the behaviour of the time sync button and syncing the time range between pickers. It also takes care of
-// backward compatibility with the manual controlled isSynced prop.
+// backward compatibility with the manually controlled isSynced prop.
 function useTimeSync(options: {
   initialIsSynced?: boolean;
   value: TimeRange;
