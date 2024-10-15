@@ -269,7 +269,7 @@ require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana
 
 require github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces-and-profiling
 
-require github.com/grafana/pyroscope-go/godeltaprof v0.1.6 // @grafana/observability-traces-and-profiling
+require github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 
 require github.com/apache/arrow/go/v15 v15.0.2 // @grafana/observability-metrics
 
@@ -394,7 +394,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
-	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/labstack/echo/v4 v4.11.1 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
