@@ -47,7 +47,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#labels
   reference-values:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#values
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
   language-range:
@@ -80,6 +80,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
+  reference-functions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#functions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#functions
 ---
 
 # Labels and annotations template examples
