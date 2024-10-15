@@ -219,7 +219,6 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'column',
-      // gap: theme.spacing(3),
       height: '100%',
       boxSizing: 'border-box', // Ensure padding doesn't cause overflow
     }),
@@ -228,20 +227,12 @@ function getStyles(theme: GrafanaTheme2) {
       width: '725px',
       height: '294px',
       padding: '40px 32px',
-      // gap: '24px', unsure what this was doing
       boxSizing: 'border-box', // Ensure padding doesn't cause overflow
       flexShrink: 0,
     }),
     startButton: css({
       fontWeight: theme.typography.fontWeightLight,
     }),
-    // column: css({
-    //   display: 'flex',
-    //   flexGrow: 1,
-    //   flexDirection: 'column',
-    //   textAlign: 'center',
-    //   marginBottom: '20px', // Add 20px space below the text, currently not working/being applied
-    // }),
     trailList: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns
