@@ -203,9 +203,8 @@ export interface FeatureToggles {
   prometheusAzureOverrideAudience?: boolean;
   alertingFilterV2?: boolean;
   dataplaneAggregator?: boolean;
-  adhocFilterOneOf?: boolean;
-  tableNG?: boolean;
   newFiltersUI?: boolean;
+  tableNG?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   alertingPrometheusRulesPrimary?: boolean;
   singleTopNav?: boolean;
