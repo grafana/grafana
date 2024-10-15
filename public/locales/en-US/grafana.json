@@ -2249,6 +2249,8 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
+  "query-options-collapse": "Collapse query options",
+  "query-options-expand": "Expand query options",
   "recently-deleted": {
     "buttons": {
       "delete": "Delete permanently",
