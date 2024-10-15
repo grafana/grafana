@@ -44,6 +44,7 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   urlFolderUid?: string;
+  queryParams?: BackendSrvRequest['params'];
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
@@ -60,10 +61,15 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions, params?: BackendSrvRequest['params']): Promise<DashboardDTO | null> {
+  public async fetchDashboard({
+    uid,
+    route,
+    urlFolderUid,
+    queryParams,
+  }: LoadDashboardOptions): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
-    if (!params) {
+    if (!queryParams) {
       const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
       if (cachedDashboard) {
@@ -97,7 +103,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, params);
+          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
@@ -188,11 +194,14 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  public async reloadDashboard(params?: BackendSrvRequest['params'] | undefined) {
+  public async reloadDashboard(queryParams?: LoadDashboardOptions['queryParams'] | undefined) {
     try {
       this.setState({ isLoading: true });
 
-      const rsp = await this.fetchDashboard(this.state.options!, params);
+      const rsp = await this.fetchDashboard({
+        ...this.state.options!,
+        queryParams,
+      });
       const fromCache = this.getSceneFromCache(this.state.options!.uid);
 
       if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
