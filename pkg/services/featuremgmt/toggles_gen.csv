@@ -201,3 +201,4 @@ useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,fals
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
+unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
