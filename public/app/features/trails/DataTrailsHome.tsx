@@ -255,6 +255,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%', // Make the card take up the full width of the grid cell
       height: 'inherit', // Make the card take up the full height of the grid cell
       backgroundColor: theme.colors.background.secondary, // Ensure the background color takes up the whole space
+      borderRadius: '4px',
     }),
     verticalLine: css({
       borderLeft: `1px solid ${theme.colors.border.weak}`,
