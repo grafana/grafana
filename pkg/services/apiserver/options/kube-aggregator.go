@@ -81,7 +81,7 @@ func (o *KubeAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Co
 	if err := etcdOptions.ApplyTo(&genericConfig.Config); err != nil {
 		return err
 	}
-	// TODO(JP): Do we need feature flags here?
+	// provide an empty feature registry, for now.
 	features := featuremgmt.WithFeatures()
 	// override the RESTOptionsGetter to use the in memory storage options
 	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, features)
