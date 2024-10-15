@@ -8,16 +8,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -95,7 +94,11 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(b.gv)
 }
 
-func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
+func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
+	optsGetter := opts.OptsGetter
+	dualWriteBuilder := opts.DualWriteBuilder
+
 	legacyStore := &legacyStorage{
 		service:        b.folderSvc,
 		namespacer:     b.namespacer,
@@ -154,7 +157,9 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			if !attr.IsResourceRequest() || attr.GetName() == "" {
+			verb := attr.GetVerb()
+			name := attr.GetName()
+			if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
@@ -164,24 +169,24 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
 
-			action := dashboards.ActionFoldersRead
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(attr.GetName())
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
+			eval := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 
 			// "get" is used for sub-resources with GET http (parents, access, count)
-			switch attr.GetVerb() {
-			case "patch":
+			switch verb {
+			case utils.VerbCreate:
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+			case utils.VerbPatch:
 				fallthrough
-			case "create":
+			case utils.VerbUpdate:
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
+			case utils.VerbDeleteCollection:
 				fallthrough
-			case "update":
-				action = dashboards.ActionFoldersWrite
-			case "deletecollection":
-				fallthrough
-			case "delete":
-				action = dashboards.ActionFoldersDelete
+			case utils.VerbDelete:
+				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
 			}
 
-			ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
+			ok, err := b.accessControl.Evaluate(ctx, user, eval)
 			if ok {
 				return authorizer.DecisionAllow, "", nil
 			}

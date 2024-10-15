@@ -779,9 +779,9 @@ const (
 	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
 	FlagHomeSetupGuide = "homeSetupGuide"
 
-	// FlagAppPlatformAccessTokens
-	// Enables the use of access tokens for the App Platform
-	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
+	// FlagAppPlatformGrpcClientAuth
+	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
+	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
 	// FlagAppSidecar
 	// Enable the app sidecar feature that allows rendering 2 apps at the same time

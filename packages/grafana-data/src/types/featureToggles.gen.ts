@@ -211,7 +211,7 @@ export interface FeatureToggles {
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
   homeSetupGuide?: boolean;
-  appPlatformAccessTokens?: boolean;
+  appPlatformGrpcClientAuth?: boolean;
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
   alertingQueryAndExpressionsStepMode?: boolean;

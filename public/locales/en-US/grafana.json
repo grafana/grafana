@@ -1096,7 +1096,6 @@
   "help-wizard": {
     "download-snapshot": "Download snapshot",
     "github-comment": "Copy Github comment",
-    "preview-snapshot": "Preview snapshot",
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
     "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
   },
@@ -1409,7 +1408,8 @@
       "dashboards": "dashboards",
       "datasources": "data sources",
       "folders": "folders",
-      "library_elements": "library elements"
+      "library_elements": "library elements",
+      "mute_timings": "mute timings"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1443,6 +1443,7 @@
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
       "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-message-generic": "Successfully migrated {{successCount}} resources to your Grafana Cloud instance.",
       "success-title": "Migration completed!",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
@@ -1492,6 +1493,7 @@
       "datasource": "Data source",
       "folder": "Folder",
       "library_element": "Library Element",
+      "mute_timing": "Mute Timing",
       "unknown": "Unknown"
     },
     "summary": {
