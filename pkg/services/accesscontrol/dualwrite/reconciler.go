@@ -32,7 +32,7 @@ type ZanzanaReconciler struct {
 	// These are deprecated and everything should move be resourceReconcilers that are periodically synced
 	// between grafana db and zanzana store.
 	collectors []TupleCollector
-	// reconcilers are migrations that tried to reconcile the state of grafana db to zanzana store.
+	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
 	reconcilers []resourceReconciler
 }
