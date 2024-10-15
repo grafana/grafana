@@ -156,9 +156,7 @@ def lint_starlark_step():
             "go install github.com/bazelbuild/buildtools/buildifier@latest",
             "buildifier --lint=warn -mode=check -r .",
         ],
-        "depends_on": [
-            "compile-build-cmd",
-        ],
+        "depends_on": [],
     }
 
 def enterprise_downstream_step(ver_mode):

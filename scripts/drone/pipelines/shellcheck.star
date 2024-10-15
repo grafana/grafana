@@ -2,7 +2,6 @@
 This module returns a Drone step and pipeline for linting with shellcheck.
 """
 
-load("scripts/drone/steps/lib.star", "compile_build_cmd")
 load(
     "scripts/drone/utils/images.star",
     "images",
@@ -39,7 +38,6 @@ def shellcheck_step():
 def shellcheck_pipeline():
     environment = {"EDITION": "oss"}
     steps = [
-        compile_build_cmd(),
         shellcheck_step(),
     ]
     return pipeline(

@@ -112,22 +112,7 @@ def publish_artifacts_step():
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
-            "./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}",
-        ],
-        "depends_on": ["compile-build-cmd"],
-    }
-
-def publish_static_assets_step():
-    return {
-        "name": "publish-static-assets",
-        "image": images["publish"],
-        "environment": {
-            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
-            "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
-            "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
-        },
-        "commands": [
-            "./bin/build artifacts static-assets --tag ${DRONE_TAG} --static-asset-editions=grafana-oss",
+            "./bin/build artifacts packages --artifacts-editions=oss --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}",
         ],
         "depends_on": ["compile-build-cmd"],
     }
@@ -163,9 +148,8 @@ def publish_artifacts_pipelines(mode):
     steps = [
         compile_build_cmd(),
         publish_artifacts_step(),
-        publish_static_assets_step(),
         publish_storybook_step(),
-        release_pr_step(depends_on = ["publish-artifacts", "publish-static-assets"]),
+        release_pr_step(depends_on = ["publish-artifacts"]),
     ]
 
     return [

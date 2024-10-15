@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/urfave/cli/v2"
 )
 
 const (
@@ -28,6 +30,12 @@ func logError(message string, err error) int {
 	log.Println(message, err)
 
 	return 1
+}
+
+func RunCmdCLI(c *cli.Context) error {
+	os.Exit(RunCmd())
+
+	return nil
 }
 
 // RunCmd runs the build command and returns the exit code
