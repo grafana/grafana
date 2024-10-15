@@ -373,6 +373,43 @@ func TestIntegrationServiceAccountDedupOrgMigration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "handle conflicts",
+			serviceAccounts: []*user.User{
+				{
+					ID:               5,
+					UID:              "u5",
+					Name:             "sa-2-conflict",
+					Login:            "sa-2-conflict",
+					Email:            "sa-2-conflict@example.org",
+					OrgID:            2,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+				{
+					ID:               6,
+					UID:              "u6",
+					Name:             "sa-2b-conflict",
+					Login:            "sa-2-2-conflict",
+					Email:            "sa-2b-conflict@example.org",
+					OrgID:            2,
+					Created:          now,
+					Updated:          now,
+					IsServiceAccount: true,
+				},
+			},
+			wantServiceAccounts: []*user.User{
+				{
+					ID:    5,
+					Login: "sa-2-conflict",
+				},
+				{
+					ID:    6,
+					Login: "sa-2-2-conflict",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
