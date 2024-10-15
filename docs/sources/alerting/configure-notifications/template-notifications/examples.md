@@ -110,7 +110,7 @@ There are {{ len $alert.Labels }}
 
 ### Iterate over alerts
 
-To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which is initialized with the data listed in [ExtendedData](ref:reference-notification-data).
+To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which are initialized with data. See [ExtendedData](ref:reference-notification-data).
 
 ```
 {{ range .Alerts }}
@@ -121,7 +121,7 @@ To print just the labels of each alert, rather than all information about the al
 Used functions and syntax:
 
 - [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
-- [ExtendedData](ref:reference-extended-data): the data that the [dot](ref:language-dot) cursor is initialized with.
+- [ExtendedData](ref:reference-extended-data): additional data that is not part of the standard set of fields the [dot](ref:language-dot) cursor is initialized with.
 
 ### Iterate over annotations and labels
 
@@ -159,7 +159,7 @@ This is alert {{ $index }} out of {{ $num_alerts }}
 
 Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-language). 
 
-> Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See more details in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
+> Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See the note in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
 
 ### Listing multiple alert instances in a single notification
 
@@ -184,7 +184,7 @@ The following instances have high CPU usage:
 
 ### Firing and resolved alerts, with summary annotation
 
-This template prints the summary of all firing and resolved alerts. It requires a summary annotation in each alert. More details in the [Notification templates examples](#notification-template-examples) section.
+This template prints the summary of all firing and resolved alerts. It requires a summary annotation in each alert.
 
 ```
 {{ define "alerts.message" -}}
