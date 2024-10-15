@@ -1410,6 +1410,7 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "contact_points": "contact points",
       "dashboards": "dashboards",
       "datasources": "data sources",
       "folders": "folders",
@@ -1495,6 +1496,7 @@
       "unknown-datasource-type": "Unknown data source"
     },
     "resource-type": {
+      "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
       "folder": "Folder",
