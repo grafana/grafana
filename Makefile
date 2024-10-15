@@ -180,6 +180,10 @@ update-workspace:
 
 .PHONY: build-go
 build-go: gen-go update-workspace ## Build all Go binaries.
+	@echo "build go files with updated workspace"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
+build-go-fast: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
