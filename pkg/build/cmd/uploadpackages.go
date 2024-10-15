@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -14,8 +15,27 @@ import (
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/droneutil"
 	"github.com/grafana/grafana/pkg/build/gcloud"
-	"github.com/grafana/grafana/pkg/build/packaging"
 )
+
+// PackageRegexp returns a regexp for matching packages corresponding to a certain Grafana edition.
+func PackageRegexp(edition config.Edition) *regexp.Regexp {
+	var sfx string
+	switch edition {
+	case config.EditionOSS:
+	case config.EditionEnterprise:
+		sfx = "-enterprise"
+	case config.EditionEnterprise2:
+		sfx = "-enterprise2"
+	default:
+		panic(fmt.Sprintf("unrecognized edition %q", edition))
+	}
+	rePkg, err := regexp.Compile(fmt.Sprintf(`^grafana%s(?:-rpi)?[-_][^-_]+.*$`, sfx))
+	if err != nil {
+		panic(fmt.Sprintf("Failed to compile regexp: %s", err))
+	}
+
+	return rePkg
+}
 
 const releaseFolder = "release"
 const mainFolder = "main"
@@ -181,7 +201,7 @@ func uploadPackages(cfg uploadConfig) error {
 		return fmt.Errorf("failed to list packages: %w", err)
 	}
 	fpaths := []string{}
-	rePkg := packaging.PackageRegexp(cfg.edition)
+	rePkg := PackageRegexp(cfg.edition)
 	for _, fpath := range matches {
 		fname := filepath.Base(fpath)
 		if strings.Contains(fname, "latest") || !rePkg.MatchString(fname) {
