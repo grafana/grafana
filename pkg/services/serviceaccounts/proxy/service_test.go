@@ -54,7 +54,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
-				_, err := svc.CreateServiceAccount(context.Background(), autoAssignOrgID, &tc.form)
+				_, err := svc.CreateServiceAccount(context.Background(), autoAssignOrgID, nil, &tc.form)
 				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
 		}

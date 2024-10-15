@@ -138,6 +138,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 				env.SaSvc.On("CreateServiceAccount",
 					mock.Anything,
 					extSvcOrgID,
+					mock.Anything,
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
 						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == identity.RoleNone
 					})).
@@ -302,6 +303,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 				env.SaSvc.On("CreateServiceAccount",
 					mock.Anything,
 					autoAssignOrgID,
+					mock.Anything,
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
 						return cmd.Name == sa.ExtSvcPrefix+extSvcSlug && *cmd.Role == identity.RoleNone
 					})).

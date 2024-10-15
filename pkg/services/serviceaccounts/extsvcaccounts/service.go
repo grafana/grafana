@@ -286,7 +286,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 	if cmd.SaID <= 0 {
 		// Create a service account
 		ctxLogger.Info("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
-		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
+		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, nil, &sa.CreateServiceAccountForm{
 			Name:       sa.ExtSvcPrefix + cmd.ExtSvcSlug,
 			Role:       newRole(identity.RoleNone),
 			IsDisabled: newBool(false),
