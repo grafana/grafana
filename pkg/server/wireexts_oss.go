@@ -6,7 +6,6 @@ package server
 
 import (
 	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
+	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
