@@ -69,7 +69,7 @@ var storageListWith3itemsMissingFoo2 = &example.PodList{TypeMeta: metav1.TypeMet
 		*storageObj4,
 	}}
 
-func TestMode2_DataSyncer(t *testing.T) {
+func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn   func(m *mock.Mock)
 		setupStorageFn  func(m *mock.Mock)
@@ -178,8 +178,9 @@ func TestMode2_DataSyncer(t *testing.T) {
 			},
 		}
 
+	// mode 1
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run("Mode-1-"+tt.name, func(t *testing.T) {
 			l := (LegacyStorage)(nil)
 			s := (Storage)(nil)
 			lm := &mock.Mock{}
@@ -195,7 +196,36 @@ func TestMode2_DataSyncer(t *testing.T) {
 				tt.setupStorageFn(um)
 			}
 
-			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode2, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
+			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode1, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedOutcome, outcome)
+		})
+	}
+
+	// mode 2
+	for _, tt := range tests {
+		t.Run("Mode-2-"+tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			lm := &mock.Mock{}
+			um := &mock.Mock{}
+
+			ls := legacyStoreMock{lm, l}
+			us := storageMock{um, s}
+
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(lm)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(um)
+			}
+
+			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode1, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

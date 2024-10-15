@@ -219,13 +219,10 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, mode DualWriterMode, 
 				log.Info("deleting item from unified storage", "name", name)
 
 				deletedS, _, err := storage.Delete(ctx, name, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
-				if err != nil {
-					if !apierrors.IsNotFound(err) {
-						log.WithValues("objectList", deletedS).Error(err, "could not delete from storage")
-					} else {
-						syncErr++
-						continue
-					}
+				if err != nil && !apierrors.IsNotFound(err) {
+					log.WithValues("objectList", deletedS).Error(err, "could not delete from storage")
+					syncErr++
+					continue
 				}
 
 				syncSuccess++
