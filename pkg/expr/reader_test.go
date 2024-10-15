@@ -11,7 +11,6 @@ import (
 )
 
 func TestReaderReduceMode(t *testing.T) {
-
 	testData := []struct {
 		name          string
 		bytes         []byte
