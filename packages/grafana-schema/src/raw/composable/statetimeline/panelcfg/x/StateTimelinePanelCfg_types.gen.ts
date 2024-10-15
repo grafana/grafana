@@ -44,7 +44,7 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
 }
 
 export const defaultOptions: Partial<Options> = {
-  alignName: 'left',
+  alignName: 'right',
   alignValue: 'left',
   mergeValues: true,
   perPage: 20,

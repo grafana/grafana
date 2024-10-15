@@ -179,7 +179,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
-    placement: alignName === 'right' ? AxisPlacement.Right : AxisPlacement.Left,
+    placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
     values: coreConfig.yValues,
     grid: { show: false },
@@ -187,6 +187,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     gap: 16,
     theme,
     size: yAxisWidth,
+    align: alignName === 'left' ? 1 : 2,
   });
 
   let seriesIndex = 0;
