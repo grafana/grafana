@@ -8,10 +8,6 @@ const dataQueries = [dataQuery];
 const expressionQueries = [reduceExpression, thresholdExpression];
 
 describe('determineAdvancedMode', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should return true if simplifiedQueryEditor is false', () => {
     const editorSettings = { simplifiedQueryEditor: false };
     const isGrafanaAlertingType = true;
