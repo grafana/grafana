@@ -223,6 +223,8 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
       return <Icon size="xl" name="bell-slash" />;
     case 'NOTIFICATION_TEMPLATE':
       return <Icon size="xl" name="gf-layout-simple" />;
+    case 'CONTACT_POINT':
+      return <Icon size="xl" name="user-arrows" />;
     default:
       return undefined;
   }
