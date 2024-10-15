@@ -114,7 +114,6 @@ const (
 
 type metrics struct {
 	fallbackCounter *prometheus.CounterVec
-	sync            sync.Once
 }
 
 func newMetrics(reg prometheus.Registerer) *metrics {
