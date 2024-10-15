@@ -220,7 +220,7 @@ export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<
     (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
   const conditionsFromThreshold = thresholdExpression?.model.conditions ?? [];
-  const whenField = reduceExpression?.model.reducer ?? ReducerID.last;
+  const whenField = reduceExpression?.model.reducer;
   const params = conditionsFromThreshold[0]?.evaluator?.params
     ? [...conditionsFromThreshold[0]?.evaluator?.params]
     : [0];
