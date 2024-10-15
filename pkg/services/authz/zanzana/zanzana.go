@@ -3,6 +3,7 @@ package zanzana
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -110,4 +111,15 @@ func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.Tu
 
 func TranslateBasicRole(role string) string {
 	return basicRolesTranslations[role]
+}
+
+func TranslateFixedRole(role string) string {
+	role = strings.ReplaceAll(role, ":", "_")
+	role = strings.ReplaceAll(role, ".", "_")
+	return role
+}
+
+// Translate "read" for the dashboard into "dashboard_read" for folder
+func TranslateToFolderRelation(relation, objectType string) string {
+	return fmt.Sprintf("%s_%s", objectType, relation)
 }

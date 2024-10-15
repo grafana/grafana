@@ -23,7 +23,6 @@ type PluginExtensionBase = {
   description: string;
   pluginId: string;
 };
-
 export type PluginExtensionLink = PluginExtensionBase & {
   type: PluginExtensionTypes.link;
   path?: string;
@@ -41,66 +40,24 @@ export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
 
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
-export type PluginExtensionLinkConfig<Context extends object = object> = {
-  type: PluginExtensionTypes.link;
+
+type PluginExtensionConfigBase = {
+  /**
+   * The title of the link extension
+   */
   title: string;
-  description: string;
-
-  // A URL path that will be used as the href for the rendered link extension
-  // (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
-  path?: string;
-
-  // A function that will be called when the link is clicked
-  // (It is called with the original event object)
-  onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
 
   /**
-   * The unique identifier of the Extension Point
-   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+   * A short description
    */
-  extensionPointId: string;
-
-  // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
-  configure?: (context?: Readonly<Context>) =>
-    | Partial<{
-        title: string;
-        description: string;
-        path: string;
-        onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-        icon: IconName;
-        category: string;
-      }>
-    | undefined;
-
-  // (Optional) A icon that can be displayed in the ui for the extension option.
-  icon?: IconName;
-
-  // (Optional) A category to be used when grouping the options in the ui
-  category?: string;
+  description: string;
 };
 
-export type PluginExtensionComponentConfig<Props = {}> = {
-  type: PluginExtensionTypes.component;
-  title: string;
-  description: string;
-
-  // The React component that will be rendered as the extension
-  // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
-  component: React.ComponentType<Props>;
-
+export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
   /**
-   * The unique identifier of the Extension Point
-   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+   * The target extension points where the component will be added
    */
-  extensionPointId: string;
-};
-
-export type PluginExposedComponentConfig<Props = {}> = {
-  /**
-   * The unique identifier of the component
-   * Shoud be in the format of `<pluginId>/<componentName>/<componentVersion>`. e.g. `myorg-todo-app/todo-list/v1`
-   */
-  id: string;
+  targets: string | string[];
 
   /**
    * The title of the component
@@ -111,6 +68,63 @@ export type PluginExposedComponentConfig<Props = {}> = {
    * A short description of the component
    */
   description: string;
+
+  /**
+   * The React component that will added to the target extension points
+   */
+  component: React.ComponentType<Props>;
+};
+
+export type PluginAddedLinksConfigureFunc<Context extends object> = (
+  context: Readonly<Context> | undefined,
+  helpers: PluginExtensionHelpers
+) =>
+  | Partial<{
+      title: string;
+      description: string;
+      path: string;
+      onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+      icon: IconName;
+      category: string;
+    }>
+  | undefined;
+
+export type PluginExtensionAddedLinkConfig<Context extends object = object> = PluginExtensionConfigBase & {
+  /**
+   * The target extension points where the link will be added
+   */
+  targets: string | string[];
+
+  /** A URL path that will be used as the href for the rendered link extension
+   * (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
+   */
+  path?: string;
+
+  /** A URL path that will be used as the href for the rendered link extension
+   * (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
+   * path?: string;
+   *
+   * A function that will be called when the link is clicked
+   *  (It is called with the original event object)
+   */
+  onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+
+  // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
+  configure?: PluginAddedLinksConfigureFunc<Context>;
+
+  // (Optional) A icon that can be displayed in the ui for the extension option.
+  icon?: IconName;
+
+  // (Optional) A category to be used when grouping the options in the ui
+  category?: string;
+};
+
+export type PluginExtensionExposedComponentConfig<Props = {}> = PluginExtensionConfigBase & {
+  /**
+   * The unique identifier of the component
+   * Shoud be in the format of `<pluginId>/<componentName>/<componentVersion>`. e.g. `myorg-todo-app/todo-list/v1`
+   */
+  id: string;
 
   /**
    * The React component that will be exposed to other plugins
@@ -131,11 +145,27 @@ export type PluginExtensionOpenModalOptions = {
   height?: string | number;
 };
 
+type PluginExtensionHelpers = {
+  /** Checks if the app plugin (that registers the extension) is currently visible (either in the main view or in the side view)
+   * @experimental
+   */
+  isAppOpened: () => boolean;
+};
+
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
-};
+
+  /** Opens the app plugin (that registers the extensions) in a side view
+   * @experimental
+   */
+  openAppInSideview: (context?: unknown) => void;
+  /** Closes the side view for the app plugin (that registers the extensions) in case it was open
+   * @experimental
+   */
+  closeAppInSideview: () => void;
+} & PluginExtensionHelpers;
 
 // Extension Points & Contexts
 // --------------------------------------------------------
@@ -189,4 +219,62 @@ type Dashboard = {
   uid: string;
   title: string;
   tags: string[];
+};
+
+// deprecated types
+
+/** @deprecated - use PluginAddedComponentConfig instead */
+export type PluginExtensionLinkConfig<Context extends object = object> = {
+  type: PluginExtensionTypes.link;
+  title: string;
+  description: string;
+
+  // A URL path that will be used as the href for the rendered link extension
+  // (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
+  path?: string;
+
+  // A function that will be called when the link is clicked
+  // (It is called with the original event object)
+  onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+
+  /**
+   * The unique identifier of the Extension Point
+   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+   */
+  extensionPointId: string;
+
+  // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
+  configure?: (context?: Readonly<Context>) =>
+    | Partial<{
+        title: string;
+        description: string;
+        path: string;
+        onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+        icon: IconName;
+        category: string;
+      }>
+    | undefined;
+
+  // (Optional) A icon that can be displayed in the ui for the extension option.
+  icon?: IconName;
+
+  // (Optional) A category to be used when grouping the options in the ui
+  category?: string;
+};
+
+/** @deprecated - use PluginAddedLinkConfig instead */
+export type PluginExtensionComponentConfig<Props = {}> = {
+  type: PluginExtensionTypes.component;
+  title: string;
+  description: string;
+
+  // The React component that will be rendered as the extension
+  // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
+  component: React.ComponentType<Props>;
+
+  /**
+   * The unique identifier of the Extension Point
+   * (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+   */
+  extensionPointId: string;
 };

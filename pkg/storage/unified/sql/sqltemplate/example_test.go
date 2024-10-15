@@ -152,5 +152,5 @@ func Example() {
 	fmt.Println(query)
 
 	// Output:
-	// SELECT "id", "type", "name" FROM "users" WHERE "id" = ?;
+	// SELECT `id`, `type`, `name` FROM `users` WHERE `id` = ?;
 }

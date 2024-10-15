@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
@@ -11,7 +11,7 @@ export interface RestoreModalProps {
   onConfirm: (restoreTarget: string) => Promise<void>;
   onDismiss: () => void;
   selectedDashboards: string[];
-  dashboardOrigin: { [key: string]: string };
+  dashboardOrigin: string[];
   isLoading: boolean;
 }
 
@@ -23,14 +23,14 @@ export const RestoreModal = ({
   isLoading,
   ...props
 }: RestoreModalProps) => {
-  const [restoreTarget, setRestoreTarget] = useState<string>();
+  const [restoreTarget, setRestoreTarget] = useState<string | undefined>(() => {
+    // Preselect the restore target and therefore enable the confirm button if all selected dashboards come from the same folder
+    return dashboardOrigin.length > 0 &&
+      dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
+      ? dashboardOrigin[0]
+      : undefined;
+  });
   const numberOfDashboards = selectedDashboards.length;
-
-  useEffect(() => {
-    if (Object.entries(dashboardOrigin).length === 1 && dashboardOrigin[selectedDashboards[0]] !== 'general') {
-      setRestoreTarget(dashboardOrigin[selectedDashboards[0]]);
-    }
-  }, [dashboardOrigin, selectedDashboards]);
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {

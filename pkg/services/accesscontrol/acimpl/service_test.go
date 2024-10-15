@@ -42,7 +42,7 @@ func setupTestEnv(t testing.TB) *Service {
 		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		store:         database.ProvideService(db.InitTestReplDB(t)),
+		store:         database.ProvideService(db.InitTestDB(t)),
 		permRegistry:  permreg.ProvidePermissionRegistry(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
@@ -66,7 +66,7 @@ func TestUsageMetrics(t *testing.T) {
 
 			s := ProvideOSSService(
 				cfg,
-				database.ProvideService(db.InitTestReplDB(t)),
+				database.ProvideService(db.InitTestDB(t)),
 				&resourcepermissions.FakeActionSetSvc{},
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
@@ -900,6 +900,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
+			ac.cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 			for _, r := range tt.runs {
 				err := ac.SaveExternalServiceRole(ctx, r.cmd)
@@ -946,6 +947,7 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
+			ac.cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 			if tt.initCmd != nil {

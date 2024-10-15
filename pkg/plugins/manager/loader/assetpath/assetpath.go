@@ -57,13 +57,14 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "")
 	}
 	if n.parent != nil {
+		relPath, err := n.parent.fs.Rel(n.fs.Base())
+		if err != nil {
+			return "", err
+		}
 		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
-			relPath, err := n.parent.fs.Rel(n.fs.Base())
-			if err != nil {
-				return "", err
-			}
 			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, relPath)
 		}
+		return path.Join("public/plugins", n.parent.pluginJSON.ID, relPath), nil
 	}
 
 	return path.Join("public/plugins", n.pluginJSON.ID), nil
@@ -87,13 +88,14 @@ func (s *Service) Module(n PluginInfo) (string, error) {
 		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "module.js")
 	}
 	if n.parent != nil {
+		relPath, err := n.parent.fs.Rel(n.fs.Base())
+		if err != nil {
+			return "", err
+		}
 		if s.cdn.PluginSupported(n.parent.pluginJSON.ID) {
-			relPath, err := n.parent.fs.Rel(n.fs.Base())
-			if err != nil {
-				return "", err
-			}
 			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, path.Join(relPath, "module.js"))
 		}
+		return path.Join("public/plugins", n.parent.pluginJSON.ID, relPath, "module.js"), nil
 	}
 
 	return path.Join("public/plugins", n.pluginJSON.ID, "module.js"), nil
@@ -116,10 +118,6 @@ func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
 			}
 			return s.cdn.AssetURL(n.parent.pluginJSON.ID, n.parent.pluginJSON.Info.Version, path.Join(relPath, pathStr))
 		}
-	}
-
-	if s.cdn.PluginSupported(n.pluginJSON.ID) {
-		return s.cdn.NewCDNURLConstructor(n.pluginJSON.ID, n.pluginJSON.Info.Version).StringPath(pathStr)
 	}
 	// Local
 	u, err := url.Parse(pathStr)

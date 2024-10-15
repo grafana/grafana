@@ -39,12 +39,12 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 		teamMembershipCollector(store),
 		managedPermissionsCollector(store),
 		folderTreeCollector(store),
-		dashboardFolderCollector(store),
 		basicRolesCollector(store),
 		customRolesCollector(store),
 		basicRoleAssignemtCollector(store),
 		userRoleAssignemtCollector(store),
 		teamRoleAssignemtCollector(store),
+		fixedRoleTuplesCollector(store),
 	)
 
 	return &ZanzanaSynchroniser{
@@ -57,6 +57,7 @@ func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...Tu
 // Sync runs all collectors and tries to write all collected tuples.
 // It will skip over any "sync group" that has already been written.
 func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
+	z.log.Info("Starting zanzana permissions sync")
 	ctx, span := tracer.Start(ctx, "accesscontrol.migrator.Sync")
 	defer span.End()
 
@@ -93,12 +94,12 @@ func (z *ZanzanaSynchroniser) Sync(ctx context.Context) error {
 func managedPermissionsCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "managed"
-		const query = `
+		query := `
 			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN user_role ur ON r.id = ur.role_id
-			LEFT JOIN user u ON u.id = ur.user_id
+			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ur.user_id
 			LEFT JOIN team_role tr ON r.id = tr.role_id
 			LEFT JOIN team t ON tr.team_id = t.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
@@ -155,11 +156,11 @@ func teamMembershipCollector(store db.DB) TupleCollector {
 		defer span.End()
 
 		const collectorID = "team_membership"
-		const query = `
+		query := `
 			SELECT t.uid as team_uid, u.uid as user_uid, tm.permission
 			FROM team_member tm
 			INNER JOIN team t ON tm.team_id = t.id
-			INNER JOIN user u ON tm.user_id = u.id
+			INNER JOIN ` + store.GetDialect().Quote("user") + ` u ON tm.user_id = u.id
 		`
 
 		type membership struct {
@@ -238,45 +239,6 @@ func folderTreeCollector(store db.DB) TupleCollector {
 					User:     zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(f.OrgID, 10), ""),
 				}
 			}
-			tuples[collectorID] = append(tuples[collectorID], tuple)
-		}
-
-		return nil
-	}
-}
-
-// dashboardFolderCollector collects information about dashboards parent folders
-func dashboardFolderCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.dashboardFolderCollector")
-		defer span.End()
-
-		const collectorID = "folder"
-		const query = `
-			SELECT org_id, uid, folder_uid, is_folder FROM dashboard WHERE is_folder = 0 AND folder_uid IS NOT NULL
-		`
-		type dashboard struct {
-			OrgID     int64  `xorm:"org_id"`
-			UID       string `xorm:"uid"`
-			ParentUID string `xorm:"folder_uid"`
-		}
-
-		var dashboards []dashboard
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&dashboards)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		for _, d := range dashboards {
-			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, d.ParentUID, "", strconv.FormatInt(d.OrgID, 10)),
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeDashboard, d.UID, "", strconv.FormatInt(d.OrgID, 10)),
-				Relation: zanzana.RelationParent,
-			}
-
 			tuples[collectorID] = append(tuples[collectorID], tuple)
 		}
 
@@ -425,10 +387,10 @@ func customRolesCollector(store db.DB) TupleCollector {
 func basicRoleAssignemtCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "basic_role_assignment"
-		const query = `
+		query := `
 			SELECT ou.org_id, u.uid as user_uid, ou.role as org_role, u.is_admin
 			FROM org_user ou
-			LEFT JOIN user u ON u.id = ou.user_id
+			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ou.user_id
 		`
 		type Assignment struct {
 			OrgID   int64  `xorm:"org_id"`
@@ -473,17 +435,19 @@ func basicRoleAssignemtCollector(store db.DB) TupleCollector {
 func userRoleAssignemtCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "user_role_assignment"
-		const query = `
-			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid
+		query := `
+			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid, r.name AS role_name
 			FROM user_role ur
 			LEFT JOIN role r ON r.id = ur.role_id
-			LEFT JOIN user u ON u.id = ur.user_id
+			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ur.user_id
+			WHERE r.name NOT LIKE 'managed:%'
 		`
 
 		type Assignment struct {
-			OrgID   int64  `xorm:"org_id"`
-			UserUID string `xorm:"user_uid"`
-			RoleUID string `xorm:"role_uid"`
+			OrgID    int64  `xorm:"org_id"`
+			UserUID  string `xorm:"user_uid"`
+			RoleUID  string `xorm:"role_uid"`
+			RoleName string `xorm:"role_name"`
 		}
 
 		var assignments []Assignment
@@ -495,21 +459,32 @@ func userRoleAssignemtCollector(store db.DB) TupleCollector {
 		}
 
 		for _, a := range assignments {
-			var subject string
-			if a.UserUID != "" && a.RoleUID != "" {
-				subject = zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
-			} else {
+			if a.UserUID == "" || a.RoleUID == "" {
 				continue
 			}
 
-			tuple := &openfgav1.TupleKey{
-				User:     subject,
-				Relation: zanzana.RelationAssignee,
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
-			}
+			subject := zanzana.NewTupleEntry(zanzana.TypeUser, a.UserUID, "")
+			if strings.HasPrefix(a.RoleUID, "fixed_") {
+				// Fixed roles are defined in shema, so they are relations itself. Assignment should look like:
+				// user:<uid> fixed_folders_reader org:1
+				relation := zanzana.TranslateFixedRole(a.RoleName)
+				tuple := &openfgav1.TupleKey{
+					User:     subject,
+					Relation: relation,
+					Object:   zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(a.OrgID, 10), ""),
+				}
+				key := fmt.Sprintf("%s-%s", collectorID, relation)
+				tuples[key] = append(tuples[key], tuple)
+			} else {
+				tuple := &openfgav1.TupleKey{
+					User:     subject,
+					Relation: zanzana.RelationAssignee,
+					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+				}
 
-			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
-			tuples[key] = append(tuples[key], tuple)
+				key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+				tuples[key] = append(tuples[key], tuple)
+			}
 		}
 
 		return nil
@@ -520,16 +495,18 @@ func teamRoleAssignemtCollector(store db.DB) TupleCollector {
 	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "team_role_assignment"
 		const query = `
-			SELECT tr.org_id, t.uid AS team_uid, r.uid AS role_uid
+			SELECT tr.org_id, t.uid AS team_uid, r.uid AS role_uid, r.name AS role_name
 			FROM team_role tr
 			LEFT JOIN role r ON r.id = tr.role_id
 			LEFT JOIN team t ON t.id = tr.team_id
+			WHERE r.name NOT LIKE 'managed:%'
 		`
 
 		type Assignment struct {
-			OrgID   int64  `xorm:"org_id"`
-			TeamUID string `xorm:"team_uid"`
-			RoleUID string `xorm:"role_uid"`
+			OrgID    int64  `xorm:"org_id"`
+			TeamUID  string `xorm:"team_uid"`
+			RoleUID  string `xorm:"role_uid"`
+			RoleName string `xorm:"role_name"`
 		}
 
 		var assignments []Assignment
@@ -541,21 +518,83 @@ func teamRoleAssignemtCollector(store db.DB) TupleCollector {
 		}
 
 		for _, a := range assignments {
-			var subject string
-			if a.TeamUID != "" && a.RoleUID != "" {
-				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, a.TeamUID, "member")
-			} else {
+			if a.TeamUID == "" || a.RoleUID == "" {
 				continue
 			}
 
-			tuple := &openfgav1.TupleKey{
-				User:     subject,
-				Relation: zanzana.RelationAssignee,
-				Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
-			}
+			subject := zanzana.NewTupleEntry(zanzana.TypeTeam, a.TeamUID, "member")
+			if strings.HasPrefix(a.RoleUID, "fixed_") {
+				// Fixed roles are defined in shema, so they are relations itself. Assignment should look like:
+				// team:<uid> fixed_folders_reader org:1
+				relation := zanzana.TranslateFixedRole(a.RoleName)
+				tuple := &openfgav1.TupleKey{
+					User:     subject,
+					Relation: relation,
+					Object:   zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(a.OrgID, 10), ""),
+				}
+				key := fmt.Sprintf("%s-%s", collectorID, relation)
+				tuples[key] = append(tuples[key], tuple)
+			} else {
+				tuple := &openfgav1.TupleKey{
+					User:     subject,
+					Relation: zanzana.RelationAssignee,
+					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeRole, a.RoleUID, "", strconv.FormatInt(a.OrgID, 10)),
+				}
 
-			key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
-			tuples[key] = append(tuples[key], tuple)
+				key := fmt.Sprintf("%s-%s", collectorID, zanzana.RelationAssignee)
+				tuples[key] = append(tuples[key], tuple)
+			}
+		}
+
+		return nil
+	}
+}
+
+// fixedRoleTuplesCollector migrates fixed roles permissions that cannot be described in schema.
+// Those are permissions like general folder read and create that have specific resource id.
+func fixedRoleTuplesCollector(store db.DB) TupleCollector {
+	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+		const collectorID = "fixed_role"
+		type Org struct {
+			Id   int64
+			Name string
+		}
+		var orgs []Org
+		orgsQuery := "SELECT id, name FROM org"
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(orgsQuery).Find(&orgs)
+		})
+		if err != nil {
+			return err
+		}
+
+		type Assignment struct {
+			RoleName   string
+			Action     string
+			Kind       string
+			Identifier string
+		}
+
+		assignments := []Assignment{
+			{RoleName: "fixed:dashboards:creator", Action: "folders:read", Kind: "folders", Identifier: "general"},
+			{RoleName: "fixed:dashboards:creator", Action: "dashboards:create", Kind: "folders", Identifier: "general"},
+			{RoleName: "fixed:folders:creator", Action: "folders:create", Kind: "folders", Identifier: "general"},
+			{RoleName: "fixed:folders.general:reader", Action: "folders:read", Kind: "folders", Identifier: "general"},
+		}
+
+		for _, a := range assignments {
+			fixedRole := zanzana.TranslateFixedRole(a.RoleName)
+			subject := zanzana.NewTupleEntry(zanzana.TypeRole, fixedRole, "assignee")
+
+			for _, org := range orgs {
+				tuple, ok := zanzana.TranslateToTuple(subject, a.Action, a.Kind, a.Identifier, org.Id)
+				if !ok {
+					continue
+				}
+
+				key := fmt.Sprintf("%s-%s", collectorID, a.Action)
+				tuples[key] = append(tuples[key], tuple)
+			}
 		}
 
 		return nil

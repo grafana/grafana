@@ -19,6 +19,7 @@ export enum GrafanaQueryType {
   List = 'list',
   Read = 'read',
   Search = 'search',
+  SearchNext = 'searchNext',
 }
 
 export interface GrafanaQuery extends DataQuery {
@@ -28,6 +29,7 @@ export interface GrafanaQuery extends DataQuery {
   buffer?: number;
   path?: string; // for list and read
   search?: SearchQuery;
+  searchNext?: SearchQuery;
   snapshot?: DataFrameJSON[];
   timeRegion?: TimeRegionConfig;
   file?: GrafanaQueryFile;

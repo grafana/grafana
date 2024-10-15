@@ -184,6 +184,45 @@ describe('Moving a Data source managed rule', () => {
     expect(serializedRequests).toMatchSnapshot();
   });
 
+  it('should move a rule in a namespace to another existing namespace', async () => {
+    const capture = captureRequests((r) => r.method === 'POST' || r.method === 'DELETE');
+
+    const ruleToMove = group1.rules[0];
+
+    const coreRuleGroup = {
+      dataSourceName: MIMIR_DATASOURCE_UID,
+      groupName: group1.name,
+    };
+
+    const currentRuleGroupID: RuleGroupIdentifier = {
+      ...coreRuleGroup,
+      namespaceName: NAMESPACE_1,
+    };
+
+    const targetRuleGroupID: RuleGroupIdentifier = {
+      ...coreRuleGroup,
+      namespaceName: NAMESPACE_2,
+    };
+
+    const ruleID = fromRulerRuleAndRuleGroupIdentifier(currentRuleGroupID, ruleToMove);
+
+    const { user } = render(
+      <MoveRuleTestComponent
+        currentRuleGroupIdentifier={currentRuleGroupID}
+        targetRuleGroupIdentifier={targetRuleGroupID}
+        ruleID={ruleID}
+        rule={ruleToMove}
+      />
+    );
+    await user.click(byRole('button').get());
+
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+
   it('should fail if the rule group does not exist', async () => {
     const groupToUpdate = group1;
     const ruleToUpdate = groupToUpdate.rules[0];

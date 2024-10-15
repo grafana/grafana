@@ -51,7 +51,7 @@ export function DataTrailCard(props: Props) {
 
   return (
     <Card onClick={onSelect} className={styles.card}>
-      <Card.Heading>{getMetricName(metric)}</Card.Heading>
+      <Card.Heading className={styles.wordwrap}>{getMetricName(metric)}</Card.Heading>
       <div className={styles.description}>
         <Stack gap={1.5} wrap="wrap">
           {filters.map((f) => (
@@ -106,9 +106,16 @@ function getStyles(theme: GrafanaTheme2) {
       margin: theme.spacing(1, 0, 0),
       color: theme.colors.text.secondary,
       lineHeight: theme.typography.body.lineHeight,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
     actions: css({
       marginRight: theme.spacing(1),
+    }),
+    wordwrap: css({
+      overflow: 'hidden',
+      overflowWrap: 'anywhere',
     }),
   };
 }

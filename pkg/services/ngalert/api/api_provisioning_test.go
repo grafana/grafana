@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -43,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -99,8 +101,10 @@ func TestProvisioningApi(t *testing.T) {
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
 				require.Equal(t, 400, response.Status())
-				expBody := `{"message":"invalid object specification: invalid policy tree"}`
-				require.Equal(t, expBody, string(response.Body()))
+				expBody := definitions.ValidationError{Message: "invalid object specification: invalid policy tree"}
+				expBodyJSON, marshalErr := json.Marshal(expBody)
+				require.NoError(t, marshalErr)
+				require.Equal(t, string(expBodyJSON), string(response.Body()))
 			})
 		})
 
@@ -136,7 +140,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 
 			t.Run("PUT returns 500", func(t *testing.T) {
@@ -149,7 +152,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 
 			t.Run("DELETE returns 500", func(t *testing.T) {
@@ -161,7 +163,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 		})
 	})
@@ -1630,7 +1631,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@email.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"[REDACTED]","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"[REDACTED]"},"disableResolveMessage":true}]}]}`
+			expectedRedactedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@email.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"[REDACTED]","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"[REDACTED]","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"[REDACTED]"},"disableResolveMessage":true}]}]}`
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createProvisioningSrvSutFromEnv(t, &env)
@@ -1683,14 +1684,14 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
-				expectedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]}]}`
+				expectedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"[REDACTED]","use_discord_username":true},"disableResolveMessage":false}]}]}`
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
 		})
 
 		t.Run("yaml body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@email.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: '[REDACTED]'\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: '[REDACTED]'\n          disableResolveMessage: true\n"
+			expectedRedactedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@email.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: '[REDACTED]'\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: '[REDACTED]'\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: '[REDACTED]'\n          disableResolveMessage: true\n"
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createProvisioningSrvSutFromEnv(t, &env)
@@ -1743,7 +1744,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
-				expectedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n"
+				expectedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: '[REDACTED]'\n            use_discord_username: true\n          disableResolveMessage: false\n"
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
@@ -1790,8 +1791,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	replDB, cfg := db.InitTestReplDBWithCfg(t)
-	sqlStore := replDB.DB()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -1815,11 +1815,14 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	dashboardStore, err := database.ProvideDashboardStore(replDB, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderService := folderimpl.ProvideService(actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderService := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
+		featuremgmt.WithFeatures(), cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,
@@ -1827,6 +1830,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			BaseInterval: time.Second * 10,
 		},
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -1889,20 +1893,23 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
-
+	tracer := tracing.InitializeTracerForTest()
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
 		configStore,
 		env.prov,
+		env.store,
 		env.secrets,
 		env.xact,
 		env.log,
+		ngalertfakes.NewFakeReceiverPermissionsService(),
+		tracer,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
+		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
@@ -1977,16 +1984,16 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
 	if orgID != 1 {
-		return definitions.Route{}, store.ErrNoAlertmanagerConfiguration
+		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
 	result := f.tree
 	result.Provenance = definitions.Provenance(f.prov)
-	return result, nil
+	return result, "", nil
 }
 
-func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	if orgID != 1 {
 		return store.ErrNoAlertmanagerConfiguration
 	}
@@ -1995,36 +2002,36 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	return nil
 }
 
-func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	f.tree = definitions.Route{} // TODO
 	return f.tree, nil
 }
 
 type fakeFailingNotificationPolicyService struct{}
 
-func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
+	return definitions.Route{}, "", fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	return fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
 type fakeRejectingNotificationPolicyService struct{}
 
-func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, nil
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
+	return definitions.Route{}, "", nil
 }
 
-func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
-func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	return definitions.Route{}, nil
 }
 
@@ -2299,10 +2306,11 @@ var testContactPointConfig = `
             "disableResolveMessage":false,
             "settings":{
                "avatar_url":"some avatar",
-               "url":"some url",
                "use_discord_username":true
             },
-            "secureSettings":{}
+            "secureSettings":{
+     		  "url":"some url"
+            }
          }
       ]
    },

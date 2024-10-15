@@ -9,7 +9,7 @@ labels:
     - enterprise
     - oss
 title: Logs in Explore
-weight: 15
+weight: 25
 ---
 
 # Logs in Explore

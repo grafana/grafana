@@ -228,7 +228,7 @@
     },
     "/access-control/roles/{roleUID}/assignments": {
       "get": {
-        "description": "Get role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
+        "description": "Get role assignments for the role with the given UID.\nDoes not include role assignments mapped through group attribute sync.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
         "tags": [
           "access_control",
           "enterprise"
@@ -582,7 +582,7 @@
         }
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nRoles mapped through group attribute sync are not impacted.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": [
           "access_control",
           "enterprise"
@@ -2184,7 +2184,7 @@
     },
     "/auth/keys": {
       "get": {
-        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
+        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.",
         "tags": [
           "api_keys"
         ],
@@ -2225,41 +2225,16 @@
         "summary": "Creates an API key.",
         "operationId": "addAPIkey",
         "deprecated": true,
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/AddAPIKeyCommand"
-            }
-          }
-        ],
         "responses": {
-          "200": {
-            "$ref": "#/responses/postAPIkeyResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
+          "410": {
+            "$ref": "#/responses/goneError"
           }
         }
       }
     },
     "/auth/keys/{id}": {
       "delete": {
-        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
+        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.",
         "tags": [
           "api_keys"
         ],
@@ -2351,41 +2326,6 @@
         }
       }
     },
-    "/cloudmigration/migration/run/{runUID}": {
-      "get": {
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Get the result of a single migration run.",
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "RunUID of a migration run",
-            "name": "runUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/cloudmigration/migration/{uid}": {
       "get": {
         "tags": [
@@ -2436,75 +2376,6 @@
           }
         ],
         "responses": {
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/cloudmigration/migration/{uid}/run": {
-      "get": {
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Get a list of migration runs for a migration.",
-        "operationId": "getCloudMigrationRunList",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID of a migration",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunListResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "It returns migrations that has been created.",
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Trigger the run of a migration to the Grafana Cloud.",
-        "operationId": "runCloudMigration",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID of a migration",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
-          },
           "400": {
             "$ref": "#/responses/badRequestError"
           },
@@ -2729,6 +2600,12 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "name": "sort",
+            "in": "query"
           }
         ],
         "responses": {
@@ -4648,7 +4525,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/getTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -4679,11 +4556,18 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/UpdateTeamLBACCommand"
+            }
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/updateTeamLBACRulesResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -11498,9 +11382,9 @@
             }
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11536,9 +11420,9 @@
             "description": " The mute timing was deleted successfully."
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11747,9 +11631,9 @@
             }
           },
           "404": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11792,15 +11676,15 @@
             }
           },
           "400": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -11831,9 +11715,9 @@
             "description": " The template was deleted successfully."
           },
           "409": {
-            "description": "GenericPublicError",
+            "description": "PublicError",
             "schema": {
-              "$ref": "#/definitions/GenericPublicError"
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -12510,6 +12394,14 @@
         }
       }
     },
+    "AlertRuleEditorSettings": {
+      "type": "object",
+      "properties": {
+        "simplified_query_and_expressions_section": {
+          "type": "boolean"
+        }
+      }
+    },
     "AlertRuleExport": {
       "type": "object",
       "title": "AlertRuleExport is the provisioned file export of models.AlertRule.",
@@ -12630,6 +12522,14 @@
         "interval": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "AlertRuleMetadata": {
+      "type": "object",
+      "properties": {
+        "editor_settings": {
+          "$ref": "#/definitions/AlertRuleEditorSettings"
         }
       }
     },
@@ -13839,6 +13739,9 @@
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
         },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
+        },
         "uid": {
           "description": "Unique identifier of the correlation",
           "type": "string",
@@ -13850,7 +13753,6 @@
       "type": "object",
       "required": [
         "field",
-        "type",
         "target"
       ],
       "properties": {
@@ -13872,12 +13774,9 @@
           "$ref": "#/definitions/Transformations"
         },
         "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
+          "$ref": "#/definitions/CorrelationType"
         }
       }
-    },
-    "CorrelationConfigType": {
-      "type": "string"
     },
     "CorrelationConfigUpdateDTO": {
       "type": "object",
@@ -13912,11 +13811,12 @@
               "variable": "name"
             }
           ]
-        },
-        "type": {
-          "$ref": "#/definitions/CorrelationConfigType"
         }
       }
+    },
+    "CorrelationType": {
+      "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
+      "type": "string"
     },
     "CounterResetHint": {
       "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
@@ -13954,9 +13854,12 @@
           "type": "boolean"
         },
         "targetUID": {
-          "description": "Target data source UID to which the correlation is created. required if config.type = query",
+          "description": "Target data source UID to which the correlation is created. required if type = query",
           "type": "string",
           "example": "PE1C5CBDA0504A6A3"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
         }
       }
     },
@@ -15554,14 +15457,6 @@
         "$ref": "#/definitions/Frame"
       }
     },
-    "GenericPublicError": {
-      "type": "object",
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/PublicError"
-        }
-      }
-    },
     "GetAccessTokenResponseDTO": {
       "type": "object",
       "properties": {
@@ -15920,6 +15815,9 @@
         "is_paused": {
           "type": "boolean"
         },
+        "metadata": {
+          "$ref": "#/definitions/AlertRuleMetadata"
+        },
         "namespace_uid": {
           "type": "string"
         },
@@ -16007,10 +15905,23 @@
     "GettableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
@@ -16995,6 +16906,12 @@
         "message": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
+        "parentName": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },
@@ -17013,7 +16930,13 @@
           "enum": [
             "DASHBOARD",
             "DATASOURCE",
-            "FOLDER"
+            "FOLDER",
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING"
           ]
         }
       }
@@ -18204,6 +18127,9 @@
         "is_paused": {
           "type": "boolean"
         },
+        "metadata": {
+          "$ref": "#/definitions/AlertRuleMetadata"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -18242,16 +18168,35 @@
     "PostableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -18430,7 +18375,8 @@
           "example": "project_x"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "type": "string",
+          "format": "duration"
         },
         "id": {
           "type": "integer",
@@ -19280,6 +19226,9 @@
         "orientation": {
           "type": "string"
         },
+        "pdfShowTemplateVariables": {
+          "type": "boolean"
+        },
         "timeRange": {
           "$ref": "#/definitions/ReportTimeRange"
         }
@@ -19716,10 +19665,23 @@
     "RuleGroupConfigResponse": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
@@ -20721,6 +20683,31 @@
         }
       }
     },
+    "TeamLBACRule": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "teamId": {
+          "type": "string"
+        }
+      }
+    },
+    "TeamLBACRules": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TeamLBACRule"
+          }
+        }
+      }
+    },
     "TeamMemberDTO": {
       "type": "object",
       "properties": {
@@ -21419,6 +21406,9 @@
           "description": "Optional label identifying the correlation",
           "type": "string",
           "example": "My label"
+        },
+        "type": {
+          "$ref": "#/definitions/CorrelationType"
         }
       }
     },
@@ -21742,6 +21732,17 @@
         }
       }
     },
+    "UpdateTeamLBACCommand": {
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TeamLBACRule"
+          }
+        }
+      }
+    },
     "UpdateTeamMemberCommand": {
       "type": "object",
       "properties": {
@@ -21929,6 +21930,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "ExternalSessionId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "Id": {
           "type": "integer",
           "format": "int64"
@@ -21971,7 +21976,7 @@
     "ValidationError": {
       "type": "object",
       "properties": {
-        "msg": {
+        "message": {
           "type": "string",
           "example": "error message"
         }
@@ -22165,7 +22170,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -22355,7 +22359,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -22480,7 +22483,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
@@ -23162,6 +23164,9 @@
           "teamId": {
             "type": "integer",
             "format": "int64"
+          },
+          "uid": {
+            "type": "string"
           }
         }
       }
@@ -23748,6 +23753,12 @@
         }
       }
     },
+    "getTeamLBACRulesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/TeamLBACRules"
+      }
+    },
     "getTeamMembersResponse": {
       "description": "(empty)",
       "schema": {
@@ -23782,6 +23793,12 @@
         "items": {
           "$ref": "#/definitions/TeamDTO"
         }
+      }
+    },
+    "goneError": {
+      "description": "GoneError is returned when the requested endpoint was removed.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
       }
     },
     "helpFlagResponse": {
@@ -23966,12 +23983,6 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
-      }
-    },
-    "postAPIkeyResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/NewApiKeyResult"
       }
     },
     "postAnnotationResponse": {
@@ -24195,6 +24206,12 @@
         "$ref": "#/definitions/SnapshotListResponseDTO"
       }
     },
+    "statusMovedPermanently": {
+      "description": "StatusMovedPermanently",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
     "unauthorisedError": {
       "description": "UnauthorizedError is returned when the request is not authenticated.",
       "schema": {
@@ -24248,6 +24265,30 @@
           },
           "serviceaccount": {
             "$ref": "#/definitions/ServiceAccountProfileDTO"
+          }
+        }
+      }
+    },
+    "updateTeamLBACRulesResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lbacRules": {
+            "$ref": "#/definitions/TeamLBACRules"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
           }
         }
       }

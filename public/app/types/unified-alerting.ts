@@ -42,7 +42,7 @@ interface RuleBase {
 
 export interface AlertingRule extends RuleBase {
   alerts?: Alert[];
-  labels: {
+  labels?: {
     [key: string]: string;
   };
   annotations?: {
@@ -50,6 +50,11 @@ export interface AlertingRule extends RuleBase {
   };
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
+
+  /**
+   * Pending period in seconds, aka for. 0 or undefined means no pending period
+   */
+  duration?: number;
   totals?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   totalsFiltered?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   activeAt?: string; // ISO timestamp

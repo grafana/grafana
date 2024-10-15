@@ -217,7 +217,7 @@ export class LokiDatasource
         }
 
         const dropErrorExpression = `${expr} | drop __error__`;
-        const field = options.field || 'level';
+        const field = options.field || 'level, detected_level';
         if (isQueryWithError(this.interpolateString(dropErrorExpression, placeHolderScopedVars)) === false) {
           expr = dropErrorExpression;
         }
@@ -228,7 +228,6 @@ export class LokiDatasource
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
           expr: `sum by (${field}) (count_over_time(${expr}[$__auto]))`,
-          legendFormat: `{{ ${field} }}`,
         };
 
       case SupplementaryQueryType.LogsSample:

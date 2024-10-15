@@ -284,19 +284,24 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		return nil
 	})
 
+	serviceAPIGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(servicev0alpha1.GROUP, aggregatorscheme.Scheme, metav1.ParameterCodec, aggregatorscheme.Codecs)
 	for _, b := range config.Builders {
-		serviceAPIGroupInfo, err := b.GetAPIGroupInfo(
-			aggregatorscheme.Scheme,
-			aggregatorscheme.Codecs,
-			aggregatorConfig.GenericConfig.RESTOptionsGetter,
-			nil, // no dual writer
+		err := b.UpdateAPIGroupInfo(
+			&serviceAPIGroupInfo,
+			builder.APIGroupOptions{
+				Scheme:           aggregatorscheme.Scheme,
+				OptsGetter:       aggregatorConfig.GenericConfig.RESTOptionsGetter,
+				DualWriteBuilder: nil, // no dual writer
+				MetricsRegister:  reg,
+			},
 		)
 		if err != nil {
 			return nil, err
 		}
-		if err := aggregatorServer.GenericAPIServer.InstallAPIGroup(serviceAPIGroupInfo); err != nil {
-			return nil, err
-		}
+	}
+
+	if err := aggregatorServer.GenericAPIServer.InstallAPIGroup(&serviceAPIGroupInfo); err != nil {
+		return nil, err
 	}
 
 	return aggregatorServer, nil

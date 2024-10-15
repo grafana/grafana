@@ -636,7 +636,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 	}
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
-		sqlStore := db.InitTestReplDB(t)
+		sqlStore := db.InitTestDB(t)
 		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg(), tracing.InitializeTracerForTest())
 		require.NoError(t, err)
 		team1, err := teamSvc.CreateTeam(context.Background(), "team1 name", "", 1)
@@ -714,10 +714,10 @@ func TestIntegrationMergeUser(t *testing.T) {
 			}
 
 			// get users
-			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore.SQLStore)
+			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
 			r := ConflictResolver{
-				Store:       sqlStore.SQLStore,
+				Store:       sqlStore,
 				userService: usertest.NewUserServiceFake(),
 				ac:          actest.FakeService{},
 			}

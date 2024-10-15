@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
+import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/datasource';
 import { CombinedRule, RuleIdentifier, RulesSource, RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -10,7 +11,8 @@ import { getDataSourceByName } from '../utils/datasource';
 import * as ruleId from '../utils/rule-id';
 import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { attachRulerRulesToCombinedRules } from './useCombinedRuleNamespaces';
+import { attachRulerRulesToCombinedRules, combineRulesNamespace } from './useCombinedRuleNamespaces';
+import { stringifyFolder, useFolder } from './useFolder';
 
 export function useCloudCombinedRulesMatching(
   ruleName: string,
@@ -100,7 +102,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   } = useRuleLocation(ruleIdentifier);
 
   const {
-    currentData: promRuleNs,
+    currentData: promRuleNs = [],
     isLoading: isLoadingPromRules,
     error: promRuleNsError,
   } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
@@ -116,15 +118,14 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
       refetchOnMountOrArgChange: true,
     }
   );
+  // in case of Grafana folder, we need to use the folder name instead of uid, as in promrules we don't use uid
+  const isGrafanaRule = isGrafanaRulesSource(ruleSourceName);
+  const folder = useFolder(isGrafanaRule ? ruleLocation?.namespace : undefined);
+  const namespaceName = isGrafanaRule && folder.folder ? stringifyFolder(folder.folder) : ruleLocation?.namespace;
 
   const [
     fetchRulerRuleGroup,
-    {
-      currentData: rulerRuleGroup,
-      isLoading: isLoadingRulerGroup,
-      error: rulerRuleGroupError,
-      isUninitialized: rulerRuleGroupUninitialized,
-    },
+    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
   ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
@@ -140,45 +141,37 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   }, [dsFeatures, fetchRulerRuleGroup, ruleLocation]);
 
   const rule = useMemo(() => {
-    if (!promRuleNs || !ruleSource) {
+    if (!ruleSource || !ruleLocation) {
       return;
     }
 
-    if (promRuleNs.length > 0) {
-      const namespaces = promRuleNs.map((ns) =>
-        attachRulerRulesToCombinedRules(ruleSource, ns, rulerRuleGroup ? [rulerRuleGroup] : [])
-      );
+    const rulerConfig = rulerRuleGroup && namespaceName ? { [namespaceName]: [rulerRuleGroup] } : {};
 
-      for (const namespace of namespaces) {
-        for (const group of namespace.groups) {
-          for (const rule of group.rules) {
-            const id = ruleId.fromCombinedRule(ruleSourceName, rule);
+    const combinedNamespaces = combineRulesNamespace(ruleSource, promRuleNs, rulerConfig);
+    const combinedRules = combinedNamespaces.flatMap((ns) => ns.groups).flatMap((group) => group.rules);
 
-            if (ruleId.equal(id, ruleIdentifier)) {
-              return rule;
-            }
-          }
-        }
-      }
-    }
+    const matchingRule = combinedRules.find((rule) =>
+      ruleId.equal(ruleId.fromCombinedRule(ruleSourceName, rule), ruleIdentifier)
+    );
 
-    return;
-  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource]);
+    return matchingRule;
+  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource, ruleLocation, namespaceName]);
 
   return {
-    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || rulerRuleGroupUninitialized,
+    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
     error: ruleLocationError ?? promRuleNsError ?? rulerRuleGroupError,
     result: rule,
   };
 }
 
-interface RuleLocation {
+export interface RuleLocation {
+  datasource: string;
   namespace: string;
   group: string;
   ruleName: string;
 }
 
-function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
+export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
   const { isLoading, currentData, error, isUninitialized } = alertRuleApi.endpoints.getAlertRule.useQuery(
     { uid: isGrafanaRuleIdentifier(ruleIdentifier) ? ruleIdentifier.uid : '' },
     { skip: !isGrafanaRuleIdentifier(ruleIdentifier), refetchOnMountOrArgChange: true }
@@ -188,6 +181,7 @@ function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocat
     if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
       return {
         result: {
+          datasource: ruleIdentifier.ruleSourceName,
           namespace: ruleIdentifier.namespace,
           group: ruleIdentifier.groupName,
           ruleName: ruleIdentifier.ruleName,
@@ -207,6 +201,7 @@ function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocat
       if (currentData) {
         return {
           result: {
+            datasource: ruleIdentifier.ruleSourceName,
             namespace: currentData.grafana_alert.namespace_uid,
             group: currentData.grafana_alert.rule_group,
             ruleName: currentData.grafana_alert.title,

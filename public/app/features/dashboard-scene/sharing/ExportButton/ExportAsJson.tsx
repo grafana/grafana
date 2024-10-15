@@ -8,20 +8,22 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
-import { getDashboardSceneFor } from '../../utils/utils';
 import { ShareExportTab } from '../ShareExportTab';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
 export class ExportAsJson extends ShareExportTab {
   static Component = ExportAsJsonRenderer;
+
+  public getTabLabel(): string {
+    return t('export.json.title', 'Export dashboard JSON');
+  }
 }
 
 function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
-  const dashboard = getDashboardSceneFor(model);
   const styles = useStyles2(getStyles);
 
   const { isSharingExternally } = model.useState();
@@ -40,7 +42,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   const switchLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
 
   return (
-    <>
+    <div data-testid={selector.container} className={styles.container}>
       <p>
         <Trans i18nKey="export.json.info-text">
           Copy or download a JSON file containing the JSON of your dashboard
@@ -76,7 +78,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           }}
         </AutoSizer>
       </div>
-      <div className={styles.container}>
+      <div className={styles.buttonsContainer}>
         <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
           <Button
             data-testid={selector.saveToFileButton}
@@ -98,24 +100,27 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           <Button
             data-testid={selector.cancelButton}
             variant="secondary"
-            onClick={() => dashboard.closeModal()}
+            onClick={model.useState().onDismiss}
             fill="outline"
           >
             <Trans i18nKey="export.json.cancel-button">Cancel</Trans>
           </Button>
         </Stack>
       </div>
-    </>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    container: css({
+      height: '100%',
+    }),
     codeEditorBox: css({
-      margin: `${theme.spacing(2)} 0`,
+      margin: `${theme.spacing(2, 0)}`,
       height: '75%',
     }),
-    container: css({
+    buttonsContainer: css({
       paddingBottom: theme.spacing(2),
     }),
   };
