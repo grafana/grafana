@@ -158,10 +158,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     throw new Error('Snapshot not found');
   }
 
-  public async loadDashboard(options: LoadDashboardOptions, params?: string) {
+  public async loadDashboard(options: LoadDashboardOptions) {
     try {
       startMeasure(LOAD_SCENE_MEASUREMENT);
-      const dashboard = await this.loadScene(options, params);
+      const dashboard = await this.loadScene(options);
       if (!dashboard) {
         return;
       }
@@ -189,13 +189,38 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public async reloadDashboard(params?: string | undefined) {
-    return this.loadDashboard(this.state.options!, params);
+    try {
+      this.setState({ isLoading: true });
+
+      const rsp = await this.fetchDashboard(this.state.options!, params);
+      const fromCache = this.getSceneFromCache(this.state.options!.uid);
+
+      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+        this.setState({ isLoading: false });
+        return;
+      }
+
+      if (!rsp?.dashboard) {
+        this.setState({ isLoading: false, loadError: 'Dashboard not found' });
+        return;
+      }
+
+      const scene = transformSaveModelToScene(rsp);
+
+      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
+      this.setSceneCache(this.state.options!.uid, scene);
+
+      this.setState({ dashboard: scene, isLoading: false });
+    } catch (err) {
+      const msg = getMessageFromError(err);
+      this.setState({ isLoading: false, loadError: msg });
+    }
   }
 
-  private async loadScene(options: LoadDashboardOptions, params?: string): Promise<DashboardScene | null> {
+  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
-    const rsp = await this.fetchDashboard(options, params);
+    const rsp = await this.fetchDashboard(options);
 
     const fromCache = this.getSceneFromCache(options.uid);
     if (fromCache && fromCache.state.version === rsp?.dashboard.version) {

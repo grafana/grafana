@@ -1,4 +1,4 @@
-import { debounce, isEqual } from 'lodash';
+import { isEqual } from 'lodash';
 
 import {
   formatRegistry,
@@ -28,7 +28,7 @@ export class DashboardReloadBehavior extends SceneObjectBase {
 
     super({});
 
-    this.reloadDashboard = debounce(this.reloadDashboard.bind(this), 1000);
+    this.reloadDashboard = this.reloadDashboard.bind(this);
 
     if (shouldReload) {
       this.addActivationHandler(() => {
@@ -57,8 +57,12 @@ export class DashboardReloadBehavior extends SceneObjectBase {
     return this.parent && 'isEditing' in this.parent.state && this.parent.state.isEditing;
   }
 
+  private isWaitingForVariables() {
+    return sceneGraph.getVariables(this.parent!).state.variables.some((variable) => variable.state.loading) ?? false;
+  }
+
   private reloadDashboard() {
-    if (!this.isEditing()) {
+    if (!this.isEditing() && !this.isWaitingForVariables()) {
       const timeRange = sceneGraph.getTimeRange(this);
 
       const format = formatRegistry.get(VariableFormatID.QueryParam);
@@ -73,7 +77,6 @@ export class DashboardReloadBehavior extends SceneObjectBase {
       }
 
       const variablesParams = sceneGraph.getVariables(this).state.variables.reduce<string[]>((acc, variable) => {
-        console.log(variable.state.name, 1);
         if (variable instanceof MultiValueVariable && variable.hasAllValue() && !variable.state.allValue) {
           acc.push(format.formatter(ALL_VARIABLE_VALUE, [], variable));
           return acc;
