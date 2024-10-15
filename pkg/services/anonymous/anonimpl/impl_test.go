@@ -2,7 +2,6 @@ package anonimpl
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"net/http"
 	"testing"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
+	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
