@@ -71,7 +71,6 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 	}
 
 	// FIXME: batch them together
-	req := &openfgav1.WriteRequest{}
 	if len(writes) > 0 {
 		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
 			return r.client.Write(ctx, &openfgav1.WriteRequest{
@@ -96,5 +95,5 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 		}
 	}
 
-	return r.client.Write(ctx, req)
+	return nil
 }
