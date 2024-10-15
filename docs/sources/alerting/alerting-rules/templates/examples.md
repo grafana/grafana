@@ -153,8 +153,6 @@ This would print:
 CPU usage for Instance-1 has exceeded 81.23% for the last 5 minutes.
 ```
 
-Used functions and syntax:
-
 - [`$labels`](ref:reference-labels): Used to access alert labels.
 - [`$values`](ref:reference-values): Used to access the query values that triggered the alert.
 - [`{{ }}`](ref:language-print): Go templating syntax for embedding values within the template.
@@ -189,8 +187,6 @@ For example, given an alert with the labels `instance=server1`, this would print
 The host server1 has exceeded 80% CPU usage for the last 5 minutes
 ```
 
-Used functions and syntax:
-
 - [`{{ index }}`](ref:language-index): Used to access specific elements from a map or slice, helping to extract label values.
 
 #### Print all labels, one per line
@@ -210,8 +206,6 @@ alertname=High CPU usage
 grafana_folder=CPU alerts
 instance=server1
 ```
-
-Used functions and syntax:
 
 - [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
 
@@ -279,8 +273,6 @@ low
 {{- end }}
 ```
 
-Used functions and syntax:
-
 - [`$values`](ref:reference-values): Used to access the query value that triggered the alert.
 - [`{{ if }}`](ref:language-if): Introduces conditional logic in Go templating to set the severity label dynamically.
 - [`{{ gt }}`](ref:language-comparison): A function that checks if one value is greater than another, useful for implementing threshold logic.
@@ -301,8 +293,6 @@ This would print:
 - For instance `prod-server-1`, the label would be `production`.
 - For `staging-server-1`, the label would be `staging`.
 - All other instances would be labeled `development`.
-
-Used functions and syntax:
 
 - [`{{ eq }}`](ref:language-comparison): A function that checks if two values are equal, allowing you to customize messages based on the environment.
 

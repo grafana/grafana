@@ -40,6 +40,25 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#extendeddata
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#extendeddata
+  language-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#variables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#variables
+  language-if:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#if
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#if
+  language-index:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#functions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#functions
+
+
+
+
 ---
 
 # Notification template examples
@@ -64,6 +83,8 @@ The name of the alert is {{ index .Labels "alertname" }}
 {{ end }}
 ```
 
+- [`{{ index }}`](ref:language-index): Used to access specific elements from a map or slice, helping to extract label values.
+
 ### If statements
 
 You can use if statements in templates. For example, to print `There are no alerts` if there are no alerts in `.Alerts` you would write the following:
@@ -75,6 +96,8 @@ There are alerts
 There are no alerts
 {{ end }}
 ```
+
+- [`{{ if }}`](ref:language-if): Introduces conditional logic  to set the severity label dynamically.
 
 ### With
 
@@ -88,15 +111,11 @@ There are no alerts
 {{ end }}
 ```
 
+- ['{{with}}`](ref:language-with): a control structure that updates the [dot](ref:language-dot) cursor to refer to the value passed to with. If the value is empty or false, it falls back to the `else` block.
+
 ### Variables
 
-Variables in text/template must be created within the template. For example, to create a variable called `$variable` with the current value of dot you would write the following:
-
-```
-{{ $variable := . }}
-```
-
-You can use `$variable` inside a range or `with` and it will refer to the value of dot at the time the variable was defined, not the current value of dot.
+Variables are used to store values within a template. Variables are defined using `{{ $variable := value }}` and can be reused throughout the template.
 
 ```
 {{ range .Alerts }}
@@ -108,17 +127,18 @@ There are {{ len $alert.Labels }}
 {{ end }}
 ```
 
+- [`Variables`](ref:language-variables) must be created within the template.
+- You can use `$variable` inside a range or `with` and it will refer to the value of dot at the time the variable was defined, not the current value of dot.
+
 ### Iterate over alerts
 
-To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which are initialized with data. See [ExtendedData](ref:reference-notification-data).
+To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which are initialized with data. See [ExtendedData](ref:reference-extended-data).
 
 ```
 {{ range .Alerts }}
 {{ .Labels }}
 {{ end }}
 ```
-
-Used functions and syntax:
 
 - [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
 - [ExtendedData](ref:reference-extended-data): additional data that is not part of the standard set of fields the [dot](ref:language-dot) cursor is initialized with.
@@ -137,8 +157,6 @@ The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
 {{ end }}
 {{ end }}
 ```
-
-Used functions and syntax:
 
 - `Outer Range`: `{{ range .Alerts }}` iterates over each alert in the list.
 - `.Labels`: The inner range `{{ range .Labels.SortedPairs }}` accesses each label, printing its name and value.
@@ -322,7 +340,7 @@ This template alters the content of alert notifications depending on the namespa
 
 ** Make sure to replace the `.namespace` label with a label that exists in your alert rule. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values. **
 
-Used functions and syntax:
+
 
 - `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
 
