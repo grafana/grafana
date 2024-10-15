@@ -100,9 +100,10 @@ func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
 	return nil
 }
 
-// Reoncilie schedules as job that will run and reconcile resources between
+// Reconcile schedules as job that will run and reconcile resources between
 // legacy access control and zanzana.
 func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
+	// TODO: make this configurable
 	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {

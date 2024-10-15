@@ -2,6 +2,7 @@ package backgroundsvcs
 
 import (
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/extensions/accesscontrol"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -65,6 +66,7 @@ func ProvideBackgroundServiceRegistry(
 	ssoSettings *ssosettingsimpl.Service,
 	pluginExternal *pluginexternal.Service,
 	pluginInstaller *plugininstaller.Service,
+	accessControl accesscontrol.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -108,6 +110,7 @@ func ProvideBackgroundServiceRegistry(
 		ssoSettings,
 		pluginExternal,
 		pluginInstaller,
+		accessControl,
 	)
 }
 
