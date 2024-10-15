@@ -111,7 +111,7 @@ export function PayloadEditor({
               </Dropdown>
               <Toggletip content={<AlertTemplateDataTable />} placement="top" fitContent>
                 <Button variant="secondary" fill="outline" size="sm" icon="question-circle">
-                  Help
+                  Reference
                 </Button>
               </Toggletip>
             </Stack>

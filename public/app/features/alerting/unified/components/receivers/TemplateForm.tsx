@@ -11,9 +11,11 @@ import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
+  Dropdown,
   FieldSet,
   Input,
   LinkButton,
+  Menu,
   useStyles2,
   Stack,
   useSplitter,
@@ -43,6 +45,7 @@ import {
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
+import { GlobalTemplateDataExamples } from './TemplateDataExamples';
 import { TemplateEditor } from './TemplateEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { snippets } from './editor/templateDataSuggestions';
@@ -157,6 +160,11 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     }
   };
 
+  const appendExample = (example: string) => {
+    const newValue = `${getValues('content')}\n\n${example}`;
+    setValue('content', newValue);
+  };
+
   const actionButtons = (
     <Stack>
       <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
@@ -223,20 +231,48 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                   <div {...columnSplitter.primaryProps}>
                     {/* primaryProps will set "minHeight: min-content;" so we have to make sure to apply minHeight to the child */}
                     <div className={cx(styles.flexColumn, styles.containerWithBorderAndRadius, styles.minEditorSize)}>
-                      <EditorColumnHeader
-                        label="Template"
-                        actions={
-                          <Button
-                            icon="question-circle"
-                            size="sm"
-                            fill="outline"
-                            variant="secondary"
-                            onClick={toggleCheatsheetOpened}
-                          >
-                            Help
-                          </Button>
-                        }
-                      />
+                      <div>
+                        <EditorColumnHeader
+                          label="Template"
+                          actions={
+                            <>
+                              <Dropdown
+                                overlay={
+                                  <Menu>
+                                    {GlobalTemplateDataExamples.map((item, index) => (
+                                      <Menu.Item
+                                        key={index}
+                                        label={item.description}
+                                        onClick={() => appendExample(item.example)}
+                                      />
+                                    ))}
+                                    <Menu.Divider />
+                                    <Menu.Item
+                                      label={'Examples documentation'}
+                                      url="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
+                                      target="_blank"
+                                      icon="external-link-alt"
+                                    />
+                                  </Menu>
+                                }
+                              >
+                                <Button variant="secondary" size="sm" icon="angle-down">
+                                  Add example
+                                </Button>
+                              </Dropdown>
+                              <Button
+                                icon="question-circle"
+                                size="sm"
+                                fill="outline"
+                                variant="secondary"
+                                onClick={toggleCheatsheetOpened}
+                              >
+                                Reference
+                              </Button>
+                            </>
+                          }
+                        />
+                      </div>
                       <Box flex={1}>
                         <AutoSizer>
                           {({ width, height }) => (
