@@ -148,11 +148,6 @@ describe('NotificationPolicies', () => {
     ]);
   });
 
-  afterEach(() => {
-    jest.resetAllMocks();
-    jest.restoreAllMocks();
-  });
-
   it('loads and shows routes', async () => {
     const { alertmanager_config: testConfig } = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
