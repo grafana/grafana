@@ -34,6 +34,7 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.DashboardDataType,
 	cloudmigration.MuteTimingType,
 	cloudmigration.NotificationTemplateType,
+	cloudmigration.ContactPointType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
@@ -74,10 +75,17 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Alerts: Contact Points
+	contactPoints, err := s.getContactPoints(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert contact points", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
 		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
-			len(muteTimings)+len(notificationTemplates),
+			len(muteTimings)+len(notificationTemplates)+len(contactPoints),
 	)
 
 	for _, ds := range dataSources {
@@ -139,6 +147,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: notificationTemplate.Name,
 			Name:  notificationTemplate.Name,
 			Data:  notificationTemplate,
+		})
+	}
+
+	for _, contactPoint := range contactPoints {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.ContactPointType,
+			RefID: contactPoint.UID,
+			Name:  contactPoint.Name,
+			Data:  contactPoint,
 		})
 	}
 
