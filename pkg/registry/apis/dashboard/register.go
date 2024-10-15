@@ -129,7 +129,6 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	scheme := opts.Scheme
 
-
 	optsGetter := opts.OptsGetter
 	dualWriteBuilder := opts.DualWriteBuilder
 	dash := b.legacy.resource
