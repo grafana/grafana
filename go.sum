@@ -2284,8 +2284,8 @@ github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkr
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.251.0 h1:gnOtxrC/1rqFvpSbQYyoZqkr47oWDlz4Q2L6Ozmsi3w=
-github.com/grafana/grafana-plugin-sdk-go v0.251.0/go.mod h1:gCGN9kHY3KeX4qyni3+Kead38Q+85pYOrsDcxZp6AIk=
+github.com/grafana/grafana-plugin-sdk-go v0.253.0 h1:KaCrqqsDgVIoT8hwvwuUMKV7QbHVlvRoFN5+U2rOXR8=
+github.com/grafana/grafana-plugin-sdk-go v0.253.0/go.mod h1:gCGN9kHY3KeX4qyni3+Kead38Q+85pYOrsDcxZp6AIk=
 github.com/grafana/grafana/apps/playlist v0.0.0-20240917082838-e2bce38a7990 h1:uQMZE/z+Y+o/U0z/g8ckAHss7U7LswedilByA2535DU=
 github.com/grafana/grafana/apps/playlist v0.0.0-20240917082838-e2bce38a7990/go.mod h1:3Vi0xv/4OBkBw4R9GAERkSrBnx06qrjpmNBRisucuSM=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 h1:2H9x4q53pkfUGtSNYD1qSBpNnxrFgylof/TYADb5xMI=

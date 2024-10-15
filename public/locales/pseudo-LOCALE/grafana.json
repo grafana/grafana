@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": "ŦØ"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Mįşčőŉƒįģūřęđ",
+      "misconfigured-warning": "Ŧĥįş ŧęmpľäŧę įş mįşčőŉƒįģūřęđ.",
+      "misconfigured-warning-details": "Ŧęmpľäŧęş mūşŧ þę đęƒįŉęđ įŉ þőŧĥ ŧĥę <1></1> äŉđ <4></4> şęčŧįőŉş őƒ yőūř äľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉ."
     }
   },
   "annotations": {
@@ -1409,7 +1414,8 @@
       "datasources": "đäŧä şőūřčęş",
       "folders": "ƒőľđęřş",
       "library_elements": "ľįþřäřy ęľęmęŉŧş",
-      "mute_timings": "mūŧę ŧįmįŉģş"
+      "mute_timings": "mūŧę ŧįmįŉģş",
+      "notification_templates": "ŉőŧįƒįčäŧįőŉ ŧęmpľäŧęş"
     },
     "migration-token": {
       "delete-button": "Đęľęŧę ŧőĸęŉ",
@@ -1494,6 +1500,7 @@
       "folder": "Főľđęř",
       "library_element": "Ŀįþřäřy Ēľęmęŉŧ",
       "mute_timing": "Mūŧę Ŧįmįŉģ",
+      "notification_template": "Ńőŧįƒįčäŧįőŉ Ŧęmpľäŧę",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {
