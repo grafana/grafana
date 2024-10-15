@@ -5,7 +5,7 @@
     "provisioned-template": "{{ define \"provisioned-template\" }}  Custom provisioned template {{ end }}",
     "template with spaces": "{{ define \"template with spaces\" }}  Custom template with spaces in the name {{ end }}",
     "misconfigured-template": "{{ define \"misconfigured template\" }} Template that is defined in template_files but not templates {{ end }}",
-    "misconfigured and provisioned": "{{ define \"misconfigured template\" }} Provisioned template that is defined in template_files but not templates {{ end }}"
+    "misconfigured and provisioned": "{{ define \"misconfigured and provisioned template\" }} Provisioned template that is defined in template_files but not templates {{ end }}"
   },
   "template_file_provenances": {
     "provisioned-template": "api",
