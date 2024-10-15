@@ -1,5 +1,5 @@
 import { locationUtil } from '@grafana/data';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -60,7 +60,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions, params?: string): Promise<DashboardDTO | null> {
+  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions, params?: BackendSrvRequest['params']): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
     if (!params) {
@@ -188,7 +188,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  public async reloadDashboard(params?: string | undefined) {
+  public async reloadDashboard(params?: BackendSrvRequest['params'] | undefined) {
     try {
       this.setState({ isLoading: true });
 

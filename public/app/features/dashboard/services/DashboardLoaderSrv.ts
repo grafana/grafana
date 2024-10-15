@@ -3,7 +3,7 @@ import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-sco
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
@@ -39,7 +39,7 @@ export class DashboardLoaderSrv {
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: string
+    params?: BackendSrvRequest['params']
   ): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager();
     let promise;

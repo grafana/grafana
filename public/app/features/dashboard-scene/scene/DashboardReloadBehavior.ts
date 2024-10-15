@@ -1,18 +1,9 @@
 import { isEqual } from 'lodash';
 
-import {
-  formatRegistry,
-  isCustomVariableValue,
-  MultiValueVariable,
-  sceneGraph,
-  SceneObjectBase,
-  SceneObjectState,
-  VariableDependencyConfig,
-} from '@grafana/scenes';
-import { VariableFormatID } from '@grafana/schema';
+import { BackendSrvRequest } from '@grafana/runtime';
+import { sceneGraph, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { appEvents } from 'app/core/core';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
-import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { ReloadDashboardEvent } from 'app/types/events';
 
 export interface DashboardReloadBehaviorState extends SceneObjectState {
@@ -63,43 +54,20 @@ export class DashboardReloadBehavior extends SceneObjectBase {
 
   private reloadDashboard() {
     if (!this.isEditing() && !this.isWaitingForVariables()) {
-      const timeRange = sceneGraph.getTimeRange(this);
+      let params: BackendSrvRequest['params'] = {
+        scopes: this._scopesFacade?.value.map((scope) => scope.metadata.name),
+        ...sceneGraph.getTimeRange(this).urlSync?.getUrlState(),
+      };
 
-      const format = formatRegistry.get(VariableFormatID.QueryParam);
+      params = sceneGraph.getVariables(this).state.variables.reduce<BackendSrvRequest['params']>(
+        (acc, variable) => ({
+          ...acc,
+          ...variable.urlSync?.getUrlState(),
+        }),
+        params
+      );
 
-      const timeParams = [
-        `from=${timeRange.state.value.from.toISOString()}`,
-        `to=${timeRange.state.value.to.toISOString()}`,
-      ];
-
-      if (timeRange.state.timeZone) {
-        timeParams.push(`timeZone=${timeRange.state.timeZone}`);
-      }
-
-      const variablesParams = sceneGraph.getVariables(this).state.variables.reduce<string[]>((acc, variable) => {
-        if (variable instanceof MultiValueVariable && variable.hasAllValue() && !variable.state.allValue) {
-          acc.push(format.formatter(ALL_VARIABLE_VALUE, [], variable));
-          return acc;
-        }
-
-        const value = variable.getValue();
-
-        if (!value || (Array.isArray(value) && value.length === 0)) {
-          return acc;
-        }
-
-        if (isCustomVariableValue(value)) {
-          acc.push(value.formatter(VariableFormatID.QueryParam));
-        } else {
-          acc.push(format.formatter(value, [], variable));
-        }
-
-        return acc;
-      }, []);
-
-      const scopesParams = this._scopesFacade?.value.map((scope) => `scopes=${scope.metadata.name}`) ?? [];
-
-      appEvents.publish(new ReloadDashboardEvent([...timeParams, ...variablesParams, ...scopesParams].join('&')));
+      appEvents.publish(new ReloadDashboardEvent(params));
     }
   }
 }
