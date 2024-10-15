@@ -3,11 +3,9 @@ import { render, screen, userEvent, within } from 'test/test-utils';
 import { config } from '@grafana/runtime';
 import { defaultConfig } from 'app/features/alerting/unified/MuteTimings.test';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import {
-  setGrafanaAlertmanagerConfig,
-  setMuteTimingsListError,
-} from 'app/features/alerting/unified/mocks/server/configure';
+import { setMuteTimingsListError } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
+import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/mock-entities/alertmanagers';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -31,7 +29,7 @@ setupMswServer();
 describe('MuteTimingsTable', () => {
   describe('with necessary permissions', () => {
     beforeEach(() => {
-      setGrafanaAlertmanagerConfig(defaultConfig);
+      setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, defaultConfig);
       config.featureToggles.alertingApiServer = false;
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,

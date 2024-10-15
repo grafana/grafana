@@ -5,10 +5,8 @@ import server, { mockFeatureDiscoveryApi } from 'app/features/alerting/unified/m
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   ALERTMANAGER_UPDATE_ERROR_RESPONSE,
-  getAlertmanagerConfigHandler,
-  getGrafanaAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
-  updateGrafanaAlertmanagerConfigHandler,
+  updateAlertmanagerConfigHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
@@ -18,7 +16,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
-import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
 import { setupDataSources } from '../../testSetup/datasources';
@@ -58,20 +56,6 @@ export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']
 export const setFolderResponse = (response: Partial<FolderDTO>) => {
   const handler = http.get<{ folderUid: string }>(`/api/folders/${response.uid}`, () => HttpResponse.json(response));
   server.use(handler);
-};
-
-/**
- * Makes the mock server respond with different Grafana Alertmanager config
- */
-export const setGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
-  server.use(getGrafanaAlertmanagerConfigHandler(config));
-};
-
-/**
- * Makes the mock server respond with different (other) Alertmanager config
- */
-export const setAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
-  server.use(getAlertmanagerConfigHandler(config));
 };
 
 /**
@@ -140,6 +124,15 @@ export const disablePlugin = (pluginId: SupportedPlugin) => {
 };
 
 /** Make alertmanager config update fail */
-export const makeGrafanaAlertmanagerConfigUpdateFail = () => {
-  server.use(updateGrafanaAlertmanagerConfigHandler(ALERTMANAGER_UPDATE_ERROR_RESPONSE));
+export const makeAlertmanagerConfigUpdateFail = () => {
+  server.use(updateAlertmanagerConfigHandler(ALERTMANAGER_UPDATE_ERROR_RESPONSE));
+};
+
+/** Make fetching alertmanager config fail */
+export const makeAllAlertmanagerConfigFetchFail = ({ message }: { message?: string }) => {
+  server.use(
+    http.get('/api/alertmanager/:name/config/api/v1/alerts', () =>
+      HttpResponse.json({ message: message || 'Unknown error' }, { status: 500 })
+    )
+  );
 };

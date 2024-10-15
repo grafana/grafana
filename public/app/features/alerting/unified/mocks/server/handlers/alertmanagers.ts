@@ -1,10 +1,14 @@
 import { http, HttpResponse } from 'msw';
 
-import alertmanagerConfigMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
 import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
+import {
+  getAlertmanagerConfig,
+  getAlertmanagerStatus,
+  setAlertmanagerConfig,
+} from 'app/features/alerting/unified/mocks/server/mock-entities/alertmanagers';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
@@ -58,11 +62,29 @@ export const alertmanagerAlertsListHandler = () =>
     ]);
   });
 
-export const getGrafanaAlertmanagerConfigHandler = (config: AlertManagerCortexConfig = alertmanagerConfigMock) =>
-  http.get('/api/alertmanager/grafana/config/api/v1/alerts', () => HttpResponse.json(config));
+export const getAlertmanagerConfigHandler = () =>
+  http.get<{ name: string }>('/api/alertmanager/:name/config/api/v1/alerts', ({ params }) => {
+    const { name: alertmanagerName } = params;
 
-export const getAlertmanagerConfigHandler = (config: AlertManagerCortexConfig = alertmanagerConfigMock) =>
-  http.get('/api/alertmanager/:name/config/api/v1/alerts', () => HttpResponse.json(config));
+    const configToReturn = getAlertmanagerConfig(alertmanagerName);
+
+    if (configToReturn) {
+      return HttpResponse.json(configToReturn);
+    }
+    return HttpResponse.json({ message: 'Not found.' }, { status: 404 });
+  });
+
+const getAlertmanagerStatusHandler = () =>
+  http.get<{ name: string }>('/api/alertmanager/:name/api/v2/status', ({ params }) => {
+    const { name: alertmanagerName } = params;
+
+    const statusToReturn = getAlertmanagerStatus(alertmanagerName);
+
+    if (!statusToReturn) {
+      return HttpResponse.json({ message: 'data source not found', traceID: '' }, { status: 404 });
+    }
+    return HttpResponse.json(statusToReturn);
+  });
 
 export const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
 
@@ -92,20 +114,17 @@ const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => 
   return null;
 };
 
-export const updateGrafanaAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
-  http.post('/api/alertmanager/grafana/config/api/v1/alerts', async ({ request }) => {
+export const updateAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
+  http.post<{ name: string }>('/api/alertmanager/:name/config/api/v1/alerts', async ({ request, params }) => {
     if (responseOverride) {
       return responseOverride;
     }
+    const { name: alertmanagerName } = params;
     const body: AlertManagerCortexConfig = await request.clone().json();
     const potentialError = validateGrafanaAlertmanagerConfig(body);
-    return potentialError ? potentialError : HttpResponse.json({ message: 'configuration created' });
-  });
-
-const updateAlertmanagerConfigHandler = () =>
-  http.post('/api/alertmanager/:name/config/api/v1/alerts', async ({ request }) => {
-    const body: AlertManagerCortexConfig = await request.clone().json();
-    const potentialError = validateGrafanaAlertmanagerConfig(body);
+    if (!potentialError) {
+      setAlertmanagerConfig(alertmanagerName, body);
+    }
     return potentialError ? potentialError : HttpResponse.json({ message: 'configuration created' });
   });
 
@@ -140,13 +159,12 @@ const getGroupsHandler = () =>
 const handlers = [
   alertmanagerAlertsListHandler(),
   grafanaAlertingConfigurationStatusHandler(),
-  getGrafanaAlertmanagerConfigHandler(),
   getAlertmanagerConfigHandler(),
-  updateGrafanaAlertmanagerConfigHandler(),
   updateAlertmanagerConfigHandler(),
   getGrafanaAlertmanagerTemplatePreview(),
   getReceiversHandler(),
   testReceiversHandler(),
   getGroupsHandler(),
+  getAlertmanagerStatusHandler(),
 ];
 export default handlers;
