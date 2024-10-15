@@ -101,7 +101,7 @@ export function getStyles(theme: GrafanaTheme2) {
       textOverflow: 'ellipsis',
     }),
     card: css({
-      // padding: theme.spacing(1),
+      padding: `12px ${theme.spacing(2)} ${theme.spacing(1)} ${theme.spacing(2)}`,
       height: '152px',
       alignItems: 'start',
       marginBottom: 0,
@@ -110,7 +110,6 @@ export function getStyles(theme: GrafanaTheme2) {
       borderLeft: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
       borderBottom: 'none', // Remove the bottom border
       borderRadius: '4px 4px 0 0', // Top-left and top-right corners are 4px, bottom-left and bottom-right are 0
-      // border: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
     }),
     secondary: css({
       color: theme.colors.text.secondary,
@@ -121,8 +120,7 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     date: css({
       border: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
-      borderRadius: '0 0 4px 4px', // Top-left and top-right corners are 0, bottom-left and bottom-right are 4px
-      // borderRadius: theme.shape.radius.default,
+      borderRadius: '0 0 4px 4px',
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
       backgroundColor: theme.colors.background.primary,
     }),
@@ -139,9 +137,8 @@ export function getStyles(theme: GrafanaTheme2) {
       // lineHeight: theme.typography.body.lineHeight,
     }),
     primaryFont: css({
-      display: 'inline',  // so that the key and value are on the same line (not vertically stacked)
+      display: 'inline', // render the key and value are on the same line (not vertically stacked)
       color: 'var(--text-primary, #CCCCDC)',
-      /* Body Small Bold */
       fontFamily: 'Inter',
       fontSize: '12px',
       fontStyle: 'normal',
@@ -152,9 +149,8 @@ export function getStyles(theme: GrafanaTheme2) {
       // wordWrap: 'break-word',
     }),
     secondaryFont: css({
-      display: 'inline', // so that the key and value are on the same line (not vertically stacked)
+      display: 'inline', // render the key and value are on the same line (not vertically stacked)
       color: 'var(--text-secondary, rgba(204, 204, 220, 0.65))',
-      /* Body Small */
       fontFamily: 'Inter',
       fontSize: '12px',
       fontStyle: 'normal',

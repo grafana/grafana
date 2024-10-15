@@ -245,7 +245,7 @@ function getStyles(theme: GrafanaTheme2) {
     trailList: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns
-      gap: theme.spacing(3),
+      gap: `${theme.spacing(3)} 31px`,
       alignItems: 'stretch', // vertically center cards in their boxes
       justifyItems: 'center',
     }),
