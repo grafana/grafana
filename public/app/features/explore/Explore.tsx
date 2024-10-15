@@ -573,7 +573,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
               <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
             )}
             <ScrollContainer
-              data-test-id={selectors.pages.Explore.General.scrollView}
+              data-testid={selectors.pages.Explore.General.scrollView}
               ref={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
               width="100%"
             >
