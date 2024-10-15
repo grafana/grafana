@@ -21,7 +21,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 import { PrometheusDatasource } from '../../datasource';
 import { truncateResult } from '../../language_utils';

@@ -35,8 +35,9 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
       minHeight: 0,
     };
     const boxProps = { ...defaults, ...rest };
+
     return (
-      <Box {...boxProps} display="flex" direction="column" flex={1} style={{ position: 'relative' }}>
+      <Box {...boxProps} display="flex" direction="column" flex={1} position="relative">
         <div onScroll={onScroll} className={styles.innerWrapper} ref={ref}>
           {hideScrollIndicators ? children : <ScrollIndicators>{children}</ScrollIndicators>}
         </div>

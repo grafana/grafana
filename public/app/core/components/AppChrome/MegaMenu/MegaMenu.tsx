@@ -7,7 +7,7 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { setBookmark } from 'app/core/reducers/navBarTree';

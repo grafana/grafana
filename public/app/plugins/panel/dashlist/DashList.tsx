@@ -12,7 +12,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { useStyles2, IconButton } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { updateNavIndex } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
 import { appEvents } from 'app/core/core';

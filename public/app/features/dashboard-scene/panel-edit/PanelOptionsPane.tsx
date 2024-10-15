@@ -22,7 +22,7 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { Button, Card, FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';

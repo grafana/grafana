@@ -6,7 +6,7 @@ import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafa
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Modal, FileDropzone, FileDropzoneDefaultChildren, useStyles2, Input, Icon } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { t, Trans } from 'app/core/internationalization';
 import * as DFImport from 'app/features/dataframe-import';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';

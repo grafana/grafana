@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { dateTimeFormat, systemDateFormats, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Spinner, useTheme2, clearButtonStyles } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 import { LogsPage } from './LogsNavigation';
 

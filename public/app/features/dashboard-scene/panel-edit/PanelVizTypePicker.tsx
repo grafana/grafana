@@ -6,7 +6,7 @@ import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
 import { Button, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/components/ScrollContainer/ScrollContainer';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
