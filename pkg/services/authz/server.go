@@ -2,6 +2,8 @@ package authz
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
@@ -51,14 +53,18 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 
 	action := req.GetAction()
 	subject := req.GetSubject()
-	stackID := req.GetStackId() // TODO can we consider the stackID as the orgID?
+	namespace := req.GetNamespace() // TODO can we consider the stackID as the orgID?
+	orgId, err := strconv.Atoi(namespace)
+	if err != nil {
+		return nil, fmt.Errorf("invalid org id format: %s", err)
+	}
 
 	ctxLogger := s.logger.FromContext(ctx)
-	ctxLogger.Debug("Read", "action", action, "subject", subject, "stackID", stackID)
+	ctxLogger.Debug("Read", "action", action, "subject", subject, "namespace", namespace)
 
 	permissions, err := s.acSvc.SearchUserPermissions(
 		ctx,
-		stackID,
+		int64(orgId),
 		accesscontrol.SearchOptions{Action: action, TypedID: subject},
 	)
 	if err != nil {
@@ -68,7 +74,7 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 
 	data := make([]*authzv1.ReadResponse_Data, 0, len(permissions))
 	for _, perm := range permissions {
-		data = append(data, &authzv1.ReadResponse_Data{Object: perm.Scope})
+		data = append(data, &authzv1.ReadResponse_Data{Scope: perm.Scope})
 	}
 	return &authzv1.ReadResponse{
 		Data:  data,
