@@ -3,9 +3,9 @@ package grpcutils
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
+
+var once sync.Once
 
 func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error) {
 	authCfg, err := ReadGrpcServerConfig(cfg)
@@ -82,16 +84,11 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 
 	legacyAuthenticator := &grpc.Authenticator{}
 
-	metrics, err := newMetrics(reg)
-	if err != nil {
-		return nil, err
-	}
-
 	return &AuthenticatorWithFallback{
 		authenticator:       authenticator,
 		legacyAuthenticator: legacyAuthenticator,
 		fallbackEnabled:     authCfg.LegacyFallback,
-		metrics:             metrics,
+		metrics:             newMetrics(reg),
 	}, nil
 }
 
@@ -117,9 +114,10 @@ const (
 
 type metrics struct {
 	fallbackCounter *prometheus.CounterVec
+	sync            sync.Once
 }
 
-func newMetrics(reg prometheus.Registerer) (*metrics, error) {
+func newMetrics(reg prometheus.Registerer) *metrics {
 	m := &metrics{
 		fallbackCounter: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -130,16 +128,11 @@ func newMetrics(reg prometheus.Registerer) (*metrics, error) {
 			}, []string{"result"}),
 	}
 
-	if err := reg.Register(m.fallbackCounter); err != nil {
-		// If the counter is already registered, reuse it.
-		// This has the benefit of allowing multiple calls to `newMetrics()`.
-		var are prometheus.AlreadyRegisteredError
-		if errors.As(err, &are) {
-			m.fallbackCounter = are.ExistingCollector.(*prometheus.CounterVec)
-		} else {
-			return nil, err
-		}
+	if reg != nil {
+		once.Do(func() {
+			reg.MustRegister(m.fallbackCounter)
+		})
 	}
 
-	return m, nil
+	return m
 }
