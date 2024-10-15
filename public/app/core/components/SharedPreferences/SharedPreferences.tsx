@@ -20,9 +20,7 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
-import { backendSrv } from "app/core/services/backend_srv";// LOGZ.IO GRAFANA CHANGE :: DEV-20609 Home dashboard
 import { changeTheme } from 'app/core/services/theme';
-import { DashboardSearchItem } from 'app/features/search/types';
 
 export interface Props {
   resourceUri: string;
@@ -31,7 +29,7 @@ export interface Props {
   onConfirm?: () => Promise<boolean>;
 }
 
-export type State = UserPreferencesDTO & { homeDashboardId?: number; dashboards: Array<DashboardSearchItem & {id?: number}>}; // LOGZ.IO GRAFANA CHANGE :: DEV-20609 Home dashboard
+export type State = UserPreferencesDTO;
 
 function getLanguageOptions(): Array<SelectableValue<string>> {
   const languageOptions = LANGUAGES.map((v) => ({
@@ -64,7 +62,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: '',
       language: '',
       queryHistory: { homeTab: '' },
-      dashboards: [],
     };
 
     this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
@@ -77,35 +74,16 @@ export class SharedPreferences extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    // LOGZ.IO GRAFANA CHANGE :: DEV-20609 Home dashboard
-    const prefs = await backendSrv.get(`/api/${this.props.resourceUri.toLowerCase()}/preferences`);
-    const dashboards = await backendSrv.search({ starred: true });
-    //
-    // this.setState({
-    //   homeDashboardUID: prefs.homeDashboardUID,
-    //   theme: prefs.theme,
-    //   timezone: prefs.timezone,
-    //   weekStart: prefs.weekStart,
-    //   language: prefs.language,
-    //   queryHistory: prefs.queryHistory,
-    // });
-
-    if (prefs.homeDashboardId > 0 && !dashboards.find((d) => d.id === prefs.homeDashboardId)) {
-      const missing = await backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
-      if (missing && missing.length > 0) {
-        dashboards.push(missing[0]);
-      }
-    }
+    const prefs = await this.service.load();
 
     this.setState({
-      homeDashboardId: prefs.homeDashboardId,
       homeDashboardUID: prefs.homeDashboardUID,
       theme: prefs.theme,
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
-      dashboards,
+      language: prefs.language,
+      queryHistory: prefs.queryHistory,
     });
-    // LOGZ.IO GRAFANA CHANGE :: DEV-20609 Remove default dashboard end
   }
 
   onSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -113,15 +91,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
 
     if (confirmationResult) {
-      // LOGZ.IO GRAFANA CHANGE :: DEV-20609 Home dashboard
-      const { homeDashboardUID, theme, timezone } = this.state;
-      const homeDashboard = this.state.dashboards.find(d => d.uid === homeDashboardUID);
-      await backendSrv.put(`/api/${this.props.resourceUri.toLowerCase()}/preferences`, {
-        homeDashboardId: homeDashboard?.id || null,
-        theme,
-        timezone,
-      });
-      // LOGZ.IO GRAFANA CHANGE :: end
+      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
+      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
       window.location.reload();
     }
   };
