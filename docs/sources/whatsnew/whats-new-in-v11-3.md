@@ -181,30 +181,6 @@ For more information, refer to the [GitHub data source documentation](https://gr
 
 [Documentation](https://grafana.com/docs/plugins/grafana-github-datasource/latest/)
 
-## OnCall
-
-### Improved onboarding for OnCall users
-
-<!-- #gops-irm -->
-
-_Generally available in all editions of Grafana_
-
-We've streamlined the onboarding process for OnCall, making it quicker and easier for new users to get started.
-
-Now, new users can access OnCall immediately without waiting for an admin to log in. OnCall initialization has been moved to the backend, reducing setup time and minimizing potential errors. Additionally, user synchronization between Grafana and OnCall is significantly faster, so newly created users can start using OnCall within minutes—without any delays or extra steps.
-
-### Manual trigger for webhooks
-
-<!-- #gops-irm -->
-
-_Generally available in all editions of Grafana_
-
-Webhooks are a useful and flexible way to interact with third-party services. While OnCall has supported advanced webhook integrations for some time, they were previously limited to automatic triggers, such as event-based triggers (e.g., alert group status changes) or escalation chain steps.
-
-Now, you can manually trigger webhooks within the context of an alert group. This new feature enables you to push alert group data to external systems on demand, giving you greater flexibility and control over your integrations.
-
-{{< figure src="/static/img/oncall/screenshot-oncall-trigger-webhook.png" >}}
-
 ## Announcement banner
 
 <!-- #grafana-frontend-platform -->
