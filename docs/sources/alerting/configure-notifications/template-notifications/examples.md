@@ -92,7 +92,7 @@ There are no alerts
 {{ end }}
 ```
 
-- [`{{ if }}`](ref:language-if): Introduces conditional logic  to set the severity label dynamically.
+- [`{{ if }}`](ref:language-if): Introduces conditional logic to set the severity label dynamically.
 
 ### With
 
@@ -170,7 +170,7 @@ This is alert {{ $index }} out of {{ $num_alerts }}
 
 ## Common use cases
 
-Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-language). 
+Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-language).
 
 > Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See the note in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
 
@@ -317,23 +317,23 @@ Template alert notifications based on a label. In this example the label represe
 
 Use the following code in your notification template to display different messages based on the namespace:
 
-   ```go
-   {{ define "my_conditional_notification" }}
-   {{ if eq .CommonLabels.namespace "namespace-a" }}
-   Alert: CPU limits have reached 80% in namespace-a.
-   {{ else if eq .CommonLabels.namespace "namespace-b" }}
-   Alert: CPU limits have reached 80% in namespace-b.
-   {{ else if eq .CommonLabels.namespace "namespace-c" }}
-   Alert: CPU limits have reached 80% in namespace-c.
-   {{ else }}
-   Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
-   {{ end }}
-   {{ end }}
-   ```
+```go
+{{ define "my_conditional_notification" }}
+{{ if eq .CommonLabels.namespace "namespace-a" }}
+Alert: CPU limits have reached 80% in namespace-a.
+{{ else if eq .CommonLabels.namespace "namespace-b" }}
+Alert: CPU limits have reached 80% in namespace-b.
+{{ else if eq .CommonLabels.namespace "namespace-c" }}
+Alert: CPU limits have reached 80% in namespace-c.
+{{ else }}
+Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
+{{ end }}
+{{ end }}
+```
 
 This template alters the content of alert notifications depending on the namespace value.
 
-- Make sure to replace the `.namespace` label with a label that exists in your alert rule. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values. **
+- Make sure to replace the `.namespace` label with a label that exists in your alert rule. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values. \*\*
 
 - `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
 
@@ -497,7 +497,6 @@ Template the content of a Slack message to contain a description of all firing a
 This template is for Grafana-managed alerts only.
 To use the template for data source-managed alerts, delete the references to DashboardURL and SilenceURL.
 For more information, see the [Prometheus documentation on notifications](https://prometheus.io/docs/alerting/latest/notifications/).
-
 
 1. Create a template called `slack` with two templates in the content: `slack.print_alert` and `slack.message`.
 
