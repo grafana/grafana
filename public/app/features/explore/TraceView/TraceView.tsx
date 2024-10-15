@@ -44,14 +44,14 @@ import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  noDataMsg: css`
-    height: 100%;
-    width: 100%;
-    display: grid;
-    place-items: center;
-    font-size: ${theme.typography.h4.fontSize};
-    color: ${theme.colors.text.secondary};
-  `,
+  noDataMsg: css({
+    height: '100%',
+    width: '100%',
+    display: 'grid',
+    placeItems: 'center',
+    fontSize: theme.typography.h4.fontSize,
+    color: theme.colors.text.secondary,
+  }),
 });
 
 type Props = {

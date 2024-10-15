@@ -1,5 +1,6 @@
 import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rxjs';
 
+import { ExtensionsLog, log } from '../logs/log';
 import { deepFreeze } from '../utils';
 
 export const MSG_CANNOT_REGISTER_READ_ONLY = 'Cannot register to a read-only registry';
@@ -19,6 +20,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
   private isReadOnly: boolean;
   // This is the subject that receives extension configs for a loaded plugin.
   private resultSubject: Subject<PluginExtensionConfigs<TMapType>>;
+  protected logger: ExtensionsLog;
   // This is the subject that we expose.
   // (It will buffer the last value on the stream - the registry - and emit it to new subscribers immediately.)
   protected registrySubject: ReplaySubject<RegistryType<TRegistryValue>>;
@@ -26,8 +28,10 @@ export abstract class Registry<TRegistryValue, TMapType> {
   constructor(options: {
     registrySubject?: ReplaySubject<RegistryType<TRegistryValue>>;
     initialState?: RegistryType<TRegistryValue>;
+    log?: ExtensionsLog;
   }) {
     this.resultSubject = new Subject<PluginExtensionConfigs<TMapType>>();
+    this.logger = options.log ?? log;
     this.isReadOnly = false;
 
     // If the registry subject (observable) is provided, it means that all the registry updates are taken care of outside of this class -> it is read-only.
@@ -41,7 +45,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
     this.registrySubject = new ReplaySubject<RegistryType<TRegistryValue>>(1);
     this.resultSubject
       .pipe(
-        scan(this.mapToRegistry, options.initialState ?? {}),
+        scan(this.mapToRegistry.bind(this), options.initialState ?? {}),
         // Emit an empty registry to start the stream (it is only going to do it once during construction, and then just passes down the values)
         startWith(options.initialState ?? {}),
         map((registry) => deepFreeze(registry))

@@ -46,6 +46,15 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			return err
 		}
 		logger.Debug("Deleted alert rules", "count", rows)
+		if rows > 0 {
+			keys := make([]ngmodels.AlertRuleKey, 0, len(ruleUID))
+			for _, uid := range ruleUID {
+				keys = append(keys, ngmodels.AlertRuleKey{OrgID: orgID, UID: uid})
+			}
+			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+				RuleKeys: keys,
+			})
+		}
 
 		rows, err = sess.Table(alertRuleVersion{}).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
 		if err != nil {
@@ -173,6 +182,7 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 // Returns the UID and ID of rules that were created in the same order as the input rules.
 func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
+	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		newRules := make([]alertRule, 0, len(rules))
 		ruleVersions := make([]alertRuleVersion, 0, len(rules))
@@ -211,13 +221,10 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
 				r := newRules[i]
-				ids = append(ids, ngmodels.AlertRuleKeyWithId{
-					AlertRuleKey: ngmodels.AlertRuleKey{
-						OrgID: r.OrgID,
-						UID:   r.UID,
-					},
-					ID: r.ID,
-				})
+				key := ngmodels.AlertRuleKey{OrgID: r.OrgID, UID: r.UID}
+
+				ids = append(ids, ngmodels.AlertRuleKeyWithId{AlertRuleKey: key, ID: r.ID})
+				keys = append(keys, key)
 			}
 		}
 
@@ -225,6 +232,12 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
+		}
+
+		if len(keys) > 0 {
+			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+				RuleKeys: keys,
+			})
 		}
 		return nil
 	})
@@ -239,6 +252,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 		}
 
 		ruleVersions := make([]alertRuleVersion, 0, len(rules))
+		keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 		for i := range rules {
 			// We do indexed access way to avoid "G601: Implicit memory aliasing in for loop."
 			// Doing this will be unnecessary with go 1.22 https://stackoverflow.com/a/68247837/767660
@@ -269,14 +283,74 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			v.Version++
 			v.ParentVersion = r.Existing.Version
 			ruleVersions = append(ruleVersions, v)
+			keys = append(keys, ngmodels.AlertRuleKey{OrgID: r.New.OrgID, UID: r.New.UID})
 		}
 		if len(ruleVersions) > 0 {
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
+
+			for _, rule := range ruleVersions {
+				// delete old versions of alert rule
+				_, err = st.deleteOldAlertRuleVersions(ctx, rule.RuleUID, rule.RuleOrgID, st.Cfg.RuleVersionRecordLimit)
+				if err != nil {
+					st.Logger.Warn("Failed to delete old alert rule versions", "org", rule.RuleOrgID, "rule", rule.RuleUID, "error", err)
+				}
+			}
+		}
+		if len(keys) > 0 {
+			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+				RuleKeys: keys,
+			})
 		}
 		return nil
 	})
+}
+
+func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID int64, limit int) (int64, error) {
+	if limit < 0 {
+		return 0, fmt.Errorf("failed to delete old alert rule versions: limit is set to '%d' but needs to be > 0", limit)
+	}
+
+	if limit < 1 {
+		return 0, nil
+	}
+
+	var affectedRows int64
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		highest := &alertRuleVersion{}
+		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).Limit(1, limit).Get(highest)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			// No alert rule versions past the limit exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
+		res, err := sess.Exec(`
+			DELETE FROM
+				alert_rule_version
+			WHERE
+				rule_org_id = ? AND rule_uid = ?
+			AND
+				id <= ?
+		`, orgID, ruleUID, highest.ID)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		affectedRows = rows
+		if affectedRows > 0 {
+			st.Logger.Info("Deleted old alert_rule_version(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
+		}
+		return nil
+	})
+	return affectedRows, err
 }
 
 // preventIntermediateUniqueConstraintViolations prevents unique constraint violations caused by an intermediate update.
@@ -352,7 +426,7 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
+func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, _ identity.Requester) (int64, error) {
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}

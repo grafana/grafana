@@ -137,7 +137,7 @@ describe('QueryLibrary', () => {
     expect(testEventBus.publish).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'alert-success',
-        payload: ['Query template successfully added to the library'],
+        payload: ['Query successfully saved to the library'],
       })
     );
     await assertAddToQueryLibraryButtonExists(false);
