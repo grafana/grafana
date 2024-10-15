@@ -28,10 +28,12 @@ type TupleCollector func(ctx context.Context, tuples map[string][]*openfgav1.Tup
 type ZanzanaReconciler struct {
 	log    log.Logger
 	client zanzana.Client
-	// Collectors are one time best effort migrations that gives up on first conflict.
-	// These are depricated and everything should move be resourceReconcilers that are periodically synced
+	// collectors are one time best effort migrations that gives up on first conflict.
+	// These are deprecated and everything should move be resourceReconcilers that are periodically synced
 	// between grafana db and zanzana store.
-	collectors  []TupleCollector
+	collectors []TupleCollector
+	// reconcilers are migrations that tried to reconcile the state of grafana db to zanzana store.
+	// These are run periodically to try to maintain a consistent state.
 	reconcilers []resourceReconciler
 }
 
@@ -114,10 +116,10 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 			}
 			r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
 		case <-ctx.Done():
+			return ctx.Err()
 
 		}
 	}
-	return nil
 }
 
 // managedPermissionsCollector collects managed permissions into provided tuple map.

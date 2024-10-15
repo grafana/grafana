@@ -8,20 +8,20 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-// LegacyTupleCollector collects tuples groupd by object and tupleKey
-type LegacyTupleCollector func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error)
+// legacyTupleCollector collects tuples groupd by object and tupleKey
+type legacyTupleCollector func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error)
 
-// ZanzanaTupleCollector collects tuples from zanzana for given object
-type ZanzanaTupleCollector func(ctx context.Context, client zanzana.Client, object string) (map[string]*openfgav1.TupleKey, error)
+// zanzanaTupleCollector collects tuples from zanzana for given object
+type zanzanaTupleCollector func(ctx context.Context, client zanzana.Client, object string) (map[string]*openfgav1.TupleKey, error)
 
 type resourceReconciler struct {
 	name    string
-	legacy  LegacyTupleCollector
-	zanzana ZanzanaTupleCollector
+	legacy  legacyTupleCollector
+	zanzana zanzanaTupleCollector
 	client  zanzana.Client
 }
 
-func newResourceReconciler(name string, legacy LegacyTupleCollector, zanzana ZanzanaTupleCollector, client zanzana.Client) resourceReconciler {
+func newResourceReconciler(name string, legacy legacyTupleCollector, zanzana zanzanaTupleCollector, client zanzana.Client) resourceReconciler {
 	return resourceReconciler{name, legacy, zanzana, client}
 }
 
@@ -38,11 +38,14 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 	)
 
 	for object, tuples := range res {
+		// 2. Fetch all tuples for given object.
+		// Due to limitations in open fga api we need to collect tuples per object
 		zanzanaTuples, err := r.zanzana(ctx, r.client, object)
 		if err != nil {
 			return fmt.Errorf("failed to collect zanzanaa tuples for %s: %w", r.name, err)
 		}
 
+		// 3. Check if tuples from grafana db exists in zanzana and if not add them to writes
 		for key, t := range tuples {
 			_, ok := zanzanaTuples[key]
 			if !ok {
@@ -50,6 +53,7 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 			}
 		}
 
+		// 4. Check if tuple from zanzana don't exists in grafana db, if not add them to deletes.
 		for key, tuple := range zanzanaTuples {
 			_, ok := tuples[key]
 			if !ok {
@@ -67,14 +71,30 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 		return nil
 	}
 
+	// FIXME: batch them together
 	req := &openfgav1.WriteRequest{}
-
 	if len(writes) > 0 {
-		req.Writes = &openfgav1.WriteRequestWrites{TupleKeys: writes}
+		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
+			return r.client.Write(ctx, &openfgav1.WriteRequest{
+				Writes: &openfgav1.WriteRequestWrites{TupleKeys: items},
+			})
+		})
+
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(deletes) > 0 {
-		req.Deletes = &openfgav1.WriteRequestDeletes{TupleKeys: deletes}
+		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
+			return r.client.Write(ctx, &openfgav1.WriteRequest{
+				Deletes: &openfgav1.WriteRequestDeletes{TupleKeys: items},
+			})
+		})
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return r.client.Write(ctx, req)
