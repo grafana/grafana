@@ -57,6 +57,7 @@ export function CommandPalette() {
 
   // Get the right position of the input element to align the command palette
   useLayoutEffect(() => {
+    const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
     const handleResize = () => {
       setRightPosition(input?.getBoundingClientRect().right ?? null);
     };
@@ -64,7 +65,7 @@ export function CommandPalette() {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  });
+  }, []);
 
   return actions.length > 0 ? (
     <KBarPortal>
@@ -161,14 +162,14 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   );
 };
 
-const getCommandPalettePosition = (theme: GrafanaTheme2, inputRightPosition: number) => {
+const getCommandPalettePosition = (inputRightPosition: number) => {
   const screenWidth = document.body.clientWidth;
   const lateralSpace = screenWidth - inputRightPosition;
   return lateralSpace;
 };
 // eslint-disable-next-line
 const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
-  const lateralSpace = getCommandPalettePosition(theme, rightPosition);
+  const lateralSpace = getCommandPalettePosition(rightPosition);
   const isSingleTopNav = config.featureToggles.singleTopNav;
 
   return {
