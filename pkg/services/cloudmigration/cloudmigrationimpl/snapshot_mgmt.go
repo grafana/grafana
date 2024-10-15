@@ -32,6 +32,9 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.FolderDataType,
 	cloudmigration.LibraryElementDataType,
 	cloudmigration.DashboardDataType,
+	cloudmigration.MuteTimingType,
+	cloudmigration.NotificationTemplateType,
+	cloudmigration.ContactPointType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
@@ -58,9 +61,31 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Alerts: Mute Timings
+	muteTimings, err := s.getAlertMuteTimings(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert mute timings", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Notification Templates
+	notificationTemplates, err := s.getNotificationTemplates(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert notification templates", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Contact Points
+	contactPoints, err := s.getContactPoints(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert contact points", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashs)+len(folders)+len(libraryElements),
+		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
+			len(muteTimings)+len(notificationTemplates)+len(contactPoints),
 	)
 
 	for _, ds := range dataSources {
@@ -104,6 +129,33 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: libraryElement.UID,
 			Name:  libraryElement.Name,
 			Data:  libraryElement,
+		})
+	}
+
+	for _, muteTiming := range muteTimings {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.MuteTimingType,
+			RefID: muteTiming.Name,
+			Name:  muteTiming.Name,
+			Data:  muteTiming,
+		})
+	}
+
+	for _, notificationTemplate := range notificationTemplates {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.NotificationTemplateType,
+			RefID: notificationTemplate.Name,
+			Name:  notificationTemplate.Name,
+			Data:  notificationTemplate,
+		})
+	}
+
+	for _, contactPoint := range contactPoints {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.ContactPointType,
+			RefID: contactPoint.UID,
+			Name:  contactPoint.Name,
+			Data:  contactPoint,
 		})
 	}
 
