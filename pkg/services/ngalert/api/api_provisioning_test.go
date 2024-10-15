@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -139,7 +140,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 
 			t.Run("PUT returns 500", func(t *testing.T) {
@@ -152,7 +152,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 
 			t.Run("DELETE returns 500", func(t *testing.T) {
@@ -164,7 +163,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 		})
 	})
@@ -1793,8 +1791,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	replDB, cfg := db.InitTestReplDBWithCfg(t)
-	sqlStore := replDB.DB()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -1818,11 +1815,14 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	dashboardStore, err := database.ProvideDashboardStore(replDB, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderService := folderimpl.ProvideService(actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderService := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
+		featuremgmt.WithFeatures(), cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,
@@ -1830,6 +1830,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			BaseInterval: time.Second * 10,
 		},
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -1892,7 +1893,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
-
+	tracer := tracing.InitializeTracerForTest()
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
@@ -1903,6 +1904,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.xact,
 		env.log,
 		ngalertfakes.NewFakeReceiverPermissionsService(),
+		tracer,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
@@ -1982,16 +1984,16 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
 	if orgID != 1 {
-		return definitions.Route{}, store.ErrNoAlertmanagerConfiguration
+		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
 	result := f.tree
 	result.Provenance = definitions.Provenance(f.prov)
-	return result, nil
+	return result, "", nil
 }
 
-func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	if orgID != 1 {
 		return store.ErrNoAlertmanagerConfiguration
 	}
@@ -2000,36 +2002,36 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	return nil
 }
 
-func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	f.tree = definitions.Route{} // TODO
 	return f.tree, nil
 }
 
 type fakeFailingNotificationPolicyService struct{}
 
-func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
+	return definitions.Route{}, "", fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	return fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
 type fakeRejectingNotificationPolicyService struct{}
 
-func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
-	return definitions.Route{}, nil
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
+	return definitions.Route{}, "", nil
 }
 
-func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
-func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	return definitions.Route{}, nil
 }
 

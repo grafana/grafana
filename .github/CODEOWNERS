@@ -43,12 +43,12 @@
 /docs/sources/dashboards/                                                         @imatwawana
 /docs/sources/datasources/                                                        @jdbaldry
 /docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
-/docs/sources/fundamentals                                                        @chri2547
-/docs/sources/getting-started/                                                    @chri2547
-/docs/sources/introduction/                                                       @chri2547
+/docs/sources/fundamentals                                                        @irenerl24
+/docs/sources/getting-started/                                                    @irenerl24
+/docs/sources/introduction/                                                       @irenerl24
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @Eve832 @GrafanaWriter
-/docs/sources/setup-grafana/                                                      @chri2547
+/docs/sources/setup-grafana/                                                      @irenerl24
 /docs/sources/upgrade-guide/                                                      @imatwawana
 /docs/sources/whatsnew/                                                           @imatwawana
 
@@ -80,7 +80,16 @@
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/cmd/ @grafana/grafana-backend-group
-/pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
+/pkg/cmd/grafana-cli/commands/install_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/install_command_test.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/listremote_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/listversions_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/ls_command_test.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/ls_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/remove_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/upgrade_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/upgrade_all_command.go @grafana/plugins-platform-backend
+/pkg/cmd/grafana-cli/commands/upgrade_all_command_test.go @grafana/plugins-platform-backend
 /pkg/components/apikeygen/ @grafana/identity-squad
 /pkg/components/satokengen/ @grafana/identity-squad
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
@@ -232,7 +241,6 @@
 /devenv/docker/rpmtest/ @grafana/grafana-backend-services-squad
 /devenv/jsonnet/ @grafana/dataviz-squad
 /devenv/local-npm/ @grafana/frontend-ops
-/devenv/vscode/ @grafana/frontend-ops
 /devenv/setup.sh @grafana/grafana-backend-services-squad
 /devenv/plugins.yaml @grafana/plugins-platform-frontend
 
@@ -289,6 +297,7 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-search-and-storage
 /pkg/generated @grafana/grafana-app-platform-squad
+/pkg/services/unifiedSearch/ @grafana/grafana-search-and-storage
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend
@@ -440,7 +449,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/invites/ @grafana/grafana-frontend-platform
 /public/app/features/library-panels/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
-/public/app/features/live/ @grafana/grafana-app-platform-squad
+/public/app/features/live/ @grafana/dashboards-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
@@ -492,7 +501,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
 /public/app/plugins/panel/canvas/ @grafana/dataviz-squad
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
-/public/app/plugins/panel/live/ @grafana/grafana-app-platform-squad
+/public/app/plugins/panel/live/ @grafana/dashboards-squad
 /public/app/plugins/panel/news/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/grafana-frontend-platform
@@ -721,7 +730,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/remove-milestone.yml @grafana/grafana-release-guild
 /.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
-/.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-release-guild
 /.github/workflows/update-changelog.yml @grafana/grafana-release-guild
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
@@ -737,7 +745,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
-/.github/workflows/run-scenes-e2e.yml @grafana/dashboards-squad
 /.github/workflows/go_lint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/changelog.yml @zserge

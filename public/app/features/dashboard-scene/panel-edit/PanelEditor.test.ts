@@ -21,6 +21,7 @@ import * as libAPI from 'app/features/library-panels/state/api';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
@@ -124,7 +125,8 @@ describe('PanelEditor', () => {
       const { panelEditor, dashboard } = await setup({ isNewPanel: true });
       panelEditor.onDiscard();
 
-      expect((dashboard.state.body as SceneGridLayout).state.children.length).toBe(0);
+      const panels = dashboard.state.body.getVizPanels();
+      expect(panels.length).toBe(0);
     });
 
     it('should discard query runner changes', async () => {
@@ -212,8 +214,10 @@ describe('PanelEditor', () => {
         editPanel: editScene,
         $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
         isEditing: true,
-        body: new SceneGridLayout({
-          children: [gridItem],
+        body: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [gridItem],
+          }),
         }),
       });
 
@@ -273,13 +277,17 @@ describe('PanelEditor', () => {
 
   describe('PanelDataPane', () => {
     it('should not exist if panel is skipDataQuery', async () => {
-      const { panelEditor } = await setup({ pluginSkipDataQuery: true });
+      const { panelEditor, panel } = await setup({ pluginSkipDataQuery: true });
       expect(panelEditor.state.dataPane).toBeUndefined();
+
+      expect(panel.state.$data).toBeUndefined();
     });
 
     it('should exist if panel is supporting querying', async () => {
-      const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+      const { panelEditor, panel } = await setup({ pluginSkipDataQuery: false });
       expect(panelEditor.state.dataPane).toBeDefined();
+
+      expect(panel.state.$data).toBeDefined();
     });
   });
 });
@@ -332,8 +340,10 @@ async function setup(options: SetupOptions = {}) {
         }),
       ],
     }),
-    body: new SceneGridLayout({
-      children: [gridItem],
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [gridItem],
+      }),
     }),
   });
 

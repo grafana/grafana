@@ -73,8 +73,15 @@ export interface GrafanaTableState extends TableState {
   lastExpandedOrCollapsedIndex?: number;
 }
 
-export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> { }
+export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
 
+export interface TableStateReducerProps {
+  onColumnResize?: TableColumnResizeActionCallback;
+  onSortByChange?: TableSortByActionCallback;
+  data: DataFrame;
+}
+
+// export interface Props {
 export interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
@@ -100,7 +107,6 @@ export interface BaseTableProps {
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
-
 }
 
 export interface GeneralTableProps extends BaseTableProps {
@@ -112,13 +118,12 @@ export interface GeneralTableProps extends BaseTableProps {
 /**
  * Props for the react-data-grid based table.
  */
-export interface TableNGProps extends BaseTableProps { }
-
+export interface TableNGProps extends BaseTableProps {}
 
 /**
  * Props for the react-table based table.
  */
-export interface TableRTProps extends BaseTableProps { }
+export interface TableRTProps extends BaseTableProps {}
 
 /**
  * @alpha

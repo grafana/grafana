@@ -56,6 +56,10 @@
     "pause": "Pause evaluation"
   },
   "alerting": {
+    "annotations": {
+      "description": "Add more context to your alert notifications.",
+      "title": "Configure notification message"
+    },
     "central-alert-history": {
       "details": {
         "error": "Error loading rule for this event.",
@@ -108,7 +112,18 @@
     },
     "contact-point": "Contact Point",
     "contact-points": {
+      "create": "Create contact point",
+      "delete-reasons": {
+        "heading": "Contact point cannot be deleted for the following reasons:",
+        "no-permissions": "You do not have the required permission to delete this contact point",
+        "policies": "Contact point is referenced by one or more notification policies",
+        "provisioned": "Contact point is provisioned and cannot be deleted via the UI",
+        "rules": "Contact point is referenced by one or more alert rules"
+      },
       "delivery-duration": "Last delivery took <1></1>",
+      "empty-state": {
+        "title": "You don't have any contact points yet"
+      },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
       "no-delivery-attempts": "No delivery attempts",
@@ -119,7 +134,9 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policy"
+      "used-by_other": "Used by {{ count }} notification policies",
+      "used-by-rules_one": "Used by {{ count }} alert rule",
+      "used-by-rules_other": "Used by {{ count }} alert rules"
     },
     "contactPointFilter": {
       "label": "Contact point"
@@ -141,6 +158,10 @@
           "title": "Grafana-managed"
         }
       }
+    },
+    "manage-permissions": {
+      "button": "Manage permissions",
+      "title": "Manage permissions"
     },
     "mute_timings": {
       "error-loading": {
@@ -169,7 +190,7 @@
         "inherited": "Inherited",
         "mute-time": "Muted when",
         "n-instances_one": "instance",
-        "n-instances_other": "instance",
+        "n-instances_other": "instances",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -185,7 +206,7 @@
           }
         }
       },
-      "n-more-policies_one": "{{count}} additional policies",
+      "n-more-policies_one": "{{count}} additional policy",
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
@@ -194,6 +215,13 @@
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
       "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI"
+    },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": "The selected queries and expressions cannot be converted to default. If you deactivate advanced options, your query and condition will be reset to default settings."
+      },
+      "preview": "Preview",
+      "previewCondition": "Preview alert rule condition"
     },
     "rule-groups": {
       "delete": {
@@ -214,6 +242,12 @@
       "deleting": "Deleting",
       "paused": "Paused",
       "recording-rule": "Recording rule"
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
+        "alert-title": "Update in progress"
+      }
     },
     "rules": {
       "add-rule": {
@@ -244,6 +278,12 @@
         "state": "State"
       },
       "save-query": "Save current search"
+    },
+    "simpleCondition": {
+      "alertCondition": "Alert condition",
+      "ofQuery": {
+        "To": "TO"
+      }
     }
   },
   "annotations": {
@@ -289,17 +329,20 @@
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
     },
+    "actions": {
+      "button-to-recently-deleted": "Recently deleted"
+    },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -711,6 +754,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "Open JSON editor",
+      "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
+      "angular-deprecation-heading": "Panel options"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -783,8 +831,8 @@
       "private": "Private",
       "public": "Public",
       "query-deleted": "Query deleted",
-      "query-template-add-error": "Error attempting to add this query to the library",
-      "query-template-added": "Query template successfully added to the library",
+      "query-template-add-error": "Error attempting to save this query to the library",
+      "query-template-added": "Query successfully saved to the library",
       "query-template-edit-error": "Error attempting to edit this query",
       "query-template-edited": "Query template successfully edited",
       "save": "Save"
@@ -1045,6 +1093,12 @@
     },
     "title": "Shortcuts"
   },
+  "help-wizard": {
+    "download-snapshot": "Download snapshot",
+    "github-comment": "Copy Github comment",
+    "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
+    "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
+  },
   "inspector": {
     "query": {
       "collapse-all": "Collapse all",
@@ -1057,7 +1111,7 @@
   },
   "ldap-drawer": {
     "attributes-section": {
-      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "description": "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
       "email-label": "Email",
       "label": "Attributes",
       "member-of-label": "Member Of",
@@ -1084,11 +1138,11 @@
       "root-ca-cert-label": "Root CA certificate path",
       "root-ca-cert-placeholder": "/path/to/root_ca_cert.pem",
       "root-ca-cert-value-label": "Root CA certificate content",
+      "root-ca-cert-value-placeholder": "example: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t",
       "start-tls-description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
       "start-tls-label": "Start TLS",
-      "tls-ciphers-description": "List of comma- or space-separated ciphers",
       "tls-ciphers-label": "TLS ciphers",
-      "tls-ciphers-placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]",
+      "tls-ciphers-placeholder": "example: TLS_AES_256_GCM_SHA384",
       "use-ssl-description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
       "use-ssl-label": "Use SSL",
       "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to:"
@@ -1118,8 +1172,8 @@
         "button": "Add group mapping"
       },
       "description": "Map LDAP groups to Grafana org roles",
-      "group-search-base-dns-description": "Separate by commas or spaces",
       "group-search-base-dns-label": "Group search base DNS",
+      "group-search-base-dns-placeholder": "example: ou=groups,dc=example,dc=com",
       "group-search-filter-description": "Used to filter and identify group entries within the directory",
       "group-search-filter-label": "Group search filter",
       "group-search-filter-user-attribute-description": "Identifies users within group entries for filtering purposes",
@@ -1130,7 +1184,7 @@
     },
     "misc-section": {
       "allow-sign-up-descrition": "If not enabled, only existing Grafana users can log in using LDAP",
-      "allow-sign-up-label": "Allow sign up",
+      "allow-sign-up-label": "Allow sign-up",
       "label": "Misc",
       "port-description": "Default port is 389 without SSL or 636 with SSL",
       "port-label": "Port",
@@ -1162,20 +1216,16 @@
       "label": "Bind password"
     },
     "buttons-section": {
+      "disable-button": "Disable",
       "discard-button": "Discard",
       "save-and-enable-button": "Save and enable",
       "save-button": "Save"
     },
-    "discard-modal": {
-      "cancel-button": "Back to editing",
-      "description": "Are you sure you want to abandon the changes you&lsquo;ve made to the LDAP configuration? All changes will be lost.",
-      "discard-button": "Abandon LDAP",
-      "title": "Leave LDAP configuration?"
-    },
     "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
-      "label": "Server host *",
+      "error": "Server host is a required field",
+      "label": "Server host",
       "placeholder": "example: 127.0.0.1"
     },
     "login-form-alert": {
@@ -1184,12 +1234,15 @@
     },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
-      "label": "Search filter *",
+      "error": "Search filter is a required field",
+      "label": "Search filter",
       "placeholder": "example: cn=%s"
     },
     "search-base-dns": {
       "description": "An array of base dns to search through.",
-      "label": "Search base DNS *"
+      "error": "Search base DNS is a required field",
+      "label": "Search base DNS",
+      "placeholder": "example: dc=grafana,dc=org"
     },
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><0>documentation</0></2>.",
     "title": "Basic Settings"
@@ -1354,7 +1407,9 @@
     "migrated-counts": {
       "dashboards": "dashboards",
       "datasources": "data sources",
-      "folders": "folders"
+      "folders": "folders",
+      "library_elements": "library elements",
+      "mute_timings": "mute timings"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1388,6 +1443,7 @@
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
       "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-message-generic": "Successfully migrated {{successCount}} resources to your Grafana Cloud instance.",
       "success-title": "Migration completed!",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
@@ -1426,6 +1482,9 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "dashboard-load-error": "Unable to load dashboard",
+      "error-library-element-sub": "Library Element {uid}",
+      "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
       "unknown-datasource-type": "Unknown data source"
     },
@@ -1433,6 +1492,8 @@
       "dashboard": "Dashboard",
       "datasource": "Data source",
       "folder": "Folder",
+      "library_element": "Library Element",
+      "mute_timing": "Mute Timing",
       "unknown": "Unknown"
     },
     "summary": {
@@ -1534,7 +1595,7 @@
     },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
-      "title": "Apps"
+      "title": "More apps"
     },
     "authentication": {
       "title": "Authentication"
@@ -1745,6 +1806,9 @@
       "subtitle": "Use service accounts to run automated workloads in Grafana",
       "title": "Service accounts"
     },
+    "setup-guide": {
+      "title": "Setup guide"
+    },
     "shared-dashboard": {
       "subtitle": "Manage your organization's externally shared dashboards",
       "title": "Shared dashboards"
@@ -1807,6 +1871,7 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "list-label": "Navigation",
+      "open": "Open menu",
       "undock": "Undock menu"
     },
     "toolbar": {
@@ -1836,6 +1901,9 @@
       "server-discovery-modal-close": "Close",
       "server-discovery-modal-loading": "Loading...",
       "server-discovery-modal-submit": "Submit"
+    },
+    "login": {
+      "error": "Login provider denied login request"
     }
   },
   "panel": {
@@ -1860,6 +1928,10 @@
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
     }
+  },
+  "panel-search": {
+    "no-matches": "No matches found",
+    "unsupported-layout": "Unsupported layout"
   },
   "playlist-edit": {
     "error-prefix": "Error loading playlist:",
@@ -1917,13 +1989,16 @@
         "button": "Update all",
         "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
         "error": "Error updating plugin:",
+        "error-status-text": "failed - see error messages",
         "header": "The following plugins have update available",
         "installed-header": "Installed",
         "modal-confirmation": "Update",
         "modal-dismiss": "Close",
+        "modal-in-progress": "Updating...",
         "modal-title": "Update Plugins",
         "name-header": "Name",
-        "update-header": "Update"
+        "update-header": "Update",
+        "update-status-text": "plugins updated"
       }
     },
     "details": {
@@ -2145,7 +2220,12 @@
     }
   },
   "query-library": {
-    "delete-query-button": "Delete query"
+    "datasource-names": "Datasource name(s):",
+    "delete-query-button": "Delete query",
+    "query-template-get-error": "Error attempting to get query template from the library: {{error}}",
+    "search": "Search by data source, query content or description",
+    "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
+    "user-names": "User name(s):"
   },
   "query-operation": {
     "header": {
@@ -2176,16 +2256,16 @@
       "confirm-text": "Delete",
       "delete-button": "Delete",
       "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboard.",
       "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
       "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
-      "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
+      "folder-picker-text_one": "Please choose a folder where your dashboard will be restored.",
       "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
@@ -2314,7 +2394,6 @@
     "menu": {
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
-      "share-internally-description": "Link settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
     },
@@ -2604,6 +2683,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+    },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",
