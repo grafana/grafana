@@ -55,7 +55,8 @@ func (b *InstrumentedBucket) initMetrics(reg prometheus.Registerer) {
 		cdkBucketStatusLabel,
 	})
 	b.latency = promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-		Name: "cdk_blobstorage_latency_seconds",
+		Name:    "cdk_blobstorage_latency_seconds",
+		Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 	}, []string{
 		cdkBucketOperationLabel,
 		cdkBucketStatusLabel,

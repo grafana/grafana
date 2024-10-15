@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
@@ -24,6 +25,7 @@ func ProvideUnifiedStorageClient(
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	tracer tracing.Tracer,
+	reg prometheus.Registerer,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
@@ -81,7 +83,7 @@ func ProvideUnifiedStorageClient(
 
 	// Use the local SQL
 	default:
-		server, err := sql.NewResourceServer(ctx, db, cfg, features, tracer)
+		server, err := sql.NewResourceServer(ctx, db, cfg, features, tracer, reg)
 		if err != nil {
 			return nil, err
 		}
