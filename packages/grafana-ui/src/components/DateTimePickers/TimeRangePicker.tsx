@@ -36,7 +36,8 @@ export interface TimeRangePickerProps {
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
 
-    /** If you handle sync state between pickers yourself use this prop to pass the sync button component. 
+  /**
+   * If you handle sync state between pickers yourself use this prop to pass the sync button component.
    * Otherwise, a default one will show automatically if sync is possible.
    */
   timeSyncButton?: JSX.Element;
@@ -337,7 +338,7 @@ function useTimeSync(options: {
   const { value, onChangeProp, isSyncedProp, initialIsSynced, timeSyncButtonProp } = options;
   const timeRangeContext = useTimeRangeContext(initialIsSynced && value ? value : undefined);
 
-  // Destructure to make it easier to use in hook deps
+  // Destructure to make it easier to use in hook deps.
   const timeRangeContextSynced = timeRangeContext?.synced;
   const timeRangeContextSyncedValue = timeRangeContext?.syncedValue;
   const timeRangeContextSyncFunc = timeRangeContext?.sync;

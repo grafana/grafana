@@ -35,16 +35,13 @@ const TimeRangeContext = createContext<TimeRangeContextValue | undefined>(undefi
 export function TimeRangeProvider({ children }: { children: ReactNode }) {
   // We simply keep the count of the pickers visible by letting them call the addPicker and removePicker functions.
   const [pickersCount, setPickersCount] = useState(0);
-  const [synced, setSynced] = useState(false);
   const [syncedValue, setSyncedValue] = useState<TimeRange>();
 
   const sync = useCallback((value: TimeRange) => {
-    setSynced(true);
     setSyncedValue(value);
   }, []);
 
   const unSync = useCallback(() => {
-    setSynced(false);
     setSyncedValue(undefined);
   }, []);
 
@@ -55,10 +52,10 @@ export function TimeRangeProvider({ children }: { children: ReactNode }) {
       addPicker: () => setPickersCount((val) => val + 1),
       removePicker: () => setPickersCount((val) => val - 1),
       syncPossible: pickersCount > 1,
-      synced,
+      synced: Boolean(syncedValue),
       syncedValue,
     };
-  }, [pickersCount, sync, unSync, synced, syncedValue]);
+  }, [pickersCount, sync, unSync, syncedValue]);
 
   return <TimeRangeContext.Provider value={contextVal}>{children}</TimeRangeContext.Provider>;
 }
