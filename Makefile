@@ -174,7 +174,7 @@ gen-jsonnet:
 	go generate ./devenv/jsonnet
 
 .PHONY: update-workspace
-update-workspace:
+update-workspace: gen-go
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
