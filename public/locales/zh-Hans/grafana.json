@@ -1087,7 +1087,6 @@
   "help-wizard": {
     "download-snapshot": "",
     "github-comment": "",
-    "preview-snapshot": "",
     "support-bundle": "",
     "troubleshooting-help": ""
   },
@@ -1433,6 +1432,7 @@
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
       "success-message": "",
+      "success-message-generic": "",
       "success-title": "",
       "upload-snapshot-error-title": ""
     },

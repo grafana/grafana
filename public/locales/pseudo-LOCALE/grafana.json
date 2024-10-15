@@ -1101,7 +1101,6 @@
   "help-wizard": {
     "download-snapshot": "Đőŵŉľőäđ şŉäpşĥőŧ",
     "github-comment": "Cőpy Ğįŧĥūþ čőmmęŉŧ",
-    "preview-snapshot": "Přęvįęŵ şŉäpşĥőŧ",
     "support-bundle": "Ÿőū čäŉ äľşő řęŧřįęvę ä şūppőřŧ þūŉđľę čőŉŧäįŉįŉģ įŉƒőřmäŧįőŉ čőŉčęřŉįŉģ yőūř Ğřäƒäŉä įŉşŧäŉčę äŉđ čőŉƒįģūřęđ đäŧäşőūřčęş įŉ ŧĥę <1>şūppőřŧ þūŉđľęş şęčŧįőŉ</1>.",
     "troubleshooting-help": "Ŧő řęqūęşŧ ŧřőūþľęşĥőőŧįŉģ ĥęľp, şęŉđ ä şŉäpşĥőŧ őƒ ŧĥįş päŉęľ ŧő Ğřäƒäŉä Ŀäþş Ŧęčĥŉįčäľ Ŝūppőřŧ. Ŧĥę şŉäpşĥőŧ čőŉŧäįŉş qūęřy řęşpőŉşę đäŧä äŉđ päŉęľ şęŧŧįŉģş."
   },
@@ -1414,7 +1413,8 @@
       "dashboards": "đäşĥþőäřđş",
       "datasources": "đäŧä şőūřčęş",
       "folders": "ƒőľđęřş",
-      "library_elements": "ľįþřäřy ęľęmęŉŧş"
+      "library_elements": "ľįþřäřy ęľęmęŉŧş",
+      "mute_timings": "mūŧę ŧįmįŉģş"
     },
     "migration-token": {
       "delete-button": "Đęľęŧę ŧőĸęŉ",
@@ -1448,6 +1448,7 @@
       "snapshot-error-status-body": "Ŧĥęřę ŵäş äŉ ęřřőř čřęäŧįŉģ ŧĥę şŉäpşĥőŧ őř şŧäřŧįŉģ ŧĥę mįģřäŧįőŉ přőčęşş. Ŝęę ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş",
       "snapshot-error-status-title": "Ēřřőř mįģřäŧįŉģ řęşőūřčęş",
       "success-message": "Ŝūččęşşƒūľľy mįģřäŧęđ {{successCount}} {{types, list}} ŧő yőūř Ğřäƒäŉä Cľőūđ įŉşŧäŉčę.",
+      "success-message-generic": "Ŝūččęşşƒūľľy mįģřäŧęđ {{successCount}} řęşőūřčęş ŧő yőūř Ğřäƒäŉä Cľőūđ įŉşŧäŉčę.",
       "success-title": "Mįģřäŧįőŉ čőmpľęŧęđ!",
       "upload-snapshot-error-title": "Ēřřőř ūpľőäđįŉģ şŉäpşĥőŧ"
     },
@@ -1497,6 +1498,7 @@
       "datasource": "Đäŧä şőūřčę",
       "folder": "Főľđęř",
       "library_element": "Ŀįþřäřy Ēľęmęŉŧ",
+      "mute_timing": "Mūŧę Ŧįmįŉģ",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {
