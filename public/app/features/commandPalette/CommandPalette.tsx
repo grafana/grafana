@@ -162,9 +162,8 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
 };
 
 const getCommandPalettePosition = (theme: GrafanaTheme2, inputRightPosition: number) => {
-  const paddingSet = parseInt(theme.spacing(2), 10);
-  const screenWidth = window.innerWidth;
-  const lateralSpace = screenWidth - (inputRightPosition + paddingSet);
+  const screenWidth = document.body.clientWidth;
+  const lateralSpace = screenWidth - inputRightPosition;
   return lateralSpace;
 };
 // eslint-disable-next-line
@@ -198,11 +197,12 @@ const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
       ...(isSingleTopNav && {
-        [`@media (min-width: ${theme.breakpoints.values.lg}px)`]: {
+        [theme.breakpoints.up('lg')]: {
           position: 'fixed',
           right: lateralSpace,
           left: lateralSpace,
-          maxWidth: `calc(100% - (${lateralSpace}px * 2))`,
+          maxWidth: 'unset',
+          width: 'unset',
         },
       }),
     }),
