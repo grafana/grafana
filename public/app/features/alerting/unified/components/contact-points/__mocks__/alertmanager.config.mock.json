@@ -13,10 +13,61 @@
   },
   "alertmanager_config": {
     "route": {
+      "group_by": ["alertname"],
       "receiver": "grafana-default-email",
       "routes": [
         {
-          "receiver": "provisioned-contact-point"
+          "match": {
+            "sub1matcher1": "sub1value1",
+            "sub1matcher2": "sub1value2"
+          },
+          "match_re": {
+            "sub1matcher3": "sub1value3",
+            "sub1matcher4": "sub1value4"
+          },
+          "group_by": ["sub1group1", "sub1group2"],
+          "receiver": "a-receiver",
+          "continue": true,
+          "group_wait": "3s",
+          "group_interval": "2m",
+          "repeat_interval": "3m",
+          "routes": [
+            {
+              "match": {
+                "sub1sub1matcher1": "sub1sub1value1",
+                "sub1sub1matcher2": "sub1sub1value2"
+              },
+              "match_re": {
+                "sub1sub1matcher3": "sub1sub1value3",
+                "sub1sub1matcher4": "sub1sub1value4"
+              },
+              "group_by": ["sub1sub1group1", "sub1sub1group2"],
+              "receiver": "another-receiver"
+            },
+            {
+              "match": {
+                "sub1sub2matcher1": "sub1sub2value1",
+                "sub1sub2matcher2": "sub1sub2value2"
+              },
+              "match_re": {
+                "sub1sub2matcher3": "sub1sub2value3",
+                "sub1sub2matcher4": "sub1sub2value4"
+              },
+              "group_by": ["sub1sub2group1", "sub1sub2group2"],
+              "receiver": "another-receiver"
+            }
+          ]
+        },
+        {
+          "match": {
+            "sub2matcher1": "sub2value1",
+            "sub2matcher2": "sub2value2"
+          },
+          "match_re": {
+            "sub2matcher3": "sub2value3",
+            "sub2matcher4": "sub2value4"
+          },
+          "receiver": "another-receiver"
         }
       ]
     },
@@ -29,7 +80,10 @@
             "name": "grafana-default-email",
             "type": "email",
             "disableResolveMessage": false,
-            "settings": { "addresses": "gilles.demey@grafana.com", "singleEmail": false },
+            "settings": {
+              "addresses": "gilles.demey@grafana.com",
+              "singleEmail": false
+            },
             "secureFields": {}
           }
         ]
@@ -42,7 +96,10 @@
             "name": "provisioned-contact-point",
             "type": "email",
             "disableResolveMessage": false,
-            "settings": { "addresses": "gilles.demey@grafana.com", "singleEmail": false },
+            "settings": {
+              "addresses": "gilles.demey@grafana.com",
+              "singleEmail": false
+            },
             "secureFields": {},
             "provenance": "api"
           }
@@ -72,16 +129,24 @@
             "name": "Slack with multiple channels",
             "type": "slack",
             "disableResolveMessage": false,
-            "settings": { "recipient": "test-alerts" },
-            "secureFields": { "token": true }
+            "settings": {
+              "recipient": "test-alerts"
+            },
+            "secureFields": {
+              "token": true
+            }
           },
           {
             "uid": "b286a3be-f690-49e2-8605-b075cbace2df",
             "name": "Slack with multiple channels",
             "type": "slack",
             "disableResolveMessage": false,
-            "settings": { "recipient": "test-alerts2" },
-            "secureFields": { "token": true }
+            "settings": {
+              "recipient": "test-alerts2"
+            },
+            "secureFields": {
+              "token": true
+            }
           }
         ]
       },
@@ -100,7 +165,16 @@
       }
     ],
     "templates": ["slack-template", "custom-email", "provisioned-template", "template with spaces"],
-    "time_intervals": [],
+    "time_intervals": [
+      {
+        "name": "Some interval",
+        "time_intervals": []
+      },
+      {
+        "name": "A provisioned interval",
+        "time_intervals": []
+      }
+    ],
     "mute_time_intervals": []
   }
 }
