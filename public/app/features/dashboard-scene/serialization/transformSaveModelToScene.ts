@@ -252,11 +252,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
       new DashboardScopesFacade({
-        reloadOnParamsChange: oldModel.meta.reloadOnParamsChange,
+        reloadOnParamsChange:
+          config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
         uid: oldModel.uid,
       }),
       new DashboardReloadBehavior({
-        reloadOnParamsChange: oldModel.meta.reloadOnParamsChange,
+        reloadOnParamsChange:
+          config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
         uid: oldModel.uid,
       }),
     ],

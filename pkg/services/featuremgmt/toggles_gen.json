@@ -2349,12 +2349,12 @@
     },
     {
       "metadata": {
-        "name": "passReloadParamsToDashboardApi",
+        "name": "reloadDashboardsOnParamsChange",
         "resourceVersion": "1728903221522",
         "creationTimestamp": "2024-10-14T10:53:41Z"
       },
       "spec": {
-        "description": "Enables the passing of scopes, time range and filters to dashboards fetching in Grafana",
+        "description": "Enables reload of dashboards on scopes, time range and filters changes",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
