@@ -221,6 +221,8 @@ export type SuggestionsResponse = {
   warnings?: string[];
 };
 
+// Suggestions API is an API that receives adhoc filters, scopes and queries and returns the labels or label values that match the provided parameters
+// Under the hood it does exactly what the label and label values API where doing but the processing is done in the BE rather than in the FE
 export async function callSuggestionsApi(
   dataSourceUid: string,
   timeRange: RawTimeRange,
