@@ -67,8 +67,11 @@ func (f *FakeService) IsClientEnabled(name string) bool {
 	return true
 }
 
-func (f *FakeService) GetClientConfig(name string) authn.SSOClientConfig {
-	return f.ExpectedClientConfig
+func (f *FakeService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+	if f.ExpectedClientConfig == nil {
+		return nil, false
+	}
+	return f.ExpectedClientConfig, true
 }
 
 func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}

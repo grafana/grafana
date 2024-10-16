@@ -130,9 +130,8 @@ type Service interface {
 	// - "github" = "auth.client.github"
 	IsClientEnabled(client string) bool
 
-	// GetClientConfig returns the client configuration for the given client.
-	// If the client is not found and/or does not implement the SSOClientConfig, it will return a nil value.
-	GetClientConfig(client string) SSOClientConfig
+	// GetClientConfig returns the client configuration for the given client and a boolean indicating if the config was present.
+	GetClientConfig(client string) (SSOClientConfig, bool)
 }
 
 type IdentitySynchronizer interface {

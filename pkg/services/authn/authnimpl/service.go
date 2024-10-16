@@ -380,18 +380,18 @@ func (s *Service) IsClientEnabled(name string) bool {
 	return client.IsEnabled()
 }
 
-func (s *Service) GetClientConfig(name string) authn.SSOClientConfig {
+func (s *Service) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
 	client, ok := s.clients[name]
 	if !ok {
-		return nil
+		return nil, false
 	}
 
 	ssoSettingsAwareClient, ok := client.(authn.SSOSettingsAwareClient)
 	if !ok {
-		return nil
+		return nil, false
 	}
 
-	return ssoSettingsAwareClient.GetConfig()
+	return ssoSettingsAwareClient.GetConfig(), true
 }
 
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
