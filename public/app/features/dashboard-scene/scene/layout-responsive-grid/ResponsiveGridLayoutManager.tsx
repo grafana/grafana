@@ -5,7 +5,7 @@ import { Button, Field, Select } from '@grafana/ui';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, DashboardLayoutElement } from '../types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps } from '../types';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
@@ -19,19 +19,15 @@ export class ResponsiveGridLayoutManager
 {
   public editModeChanged(isEditing: boolean): void {}
 
-  public removePanel(panel: VizPanel): void {
-    throw new Error('Method not implemented.');
-  }
-
-  public duplicatePanel(panel: VizPanel): void {
-    throw new Error('Method not implemented.');
-  }
-
   public addPanel(vizPanel: VizPanel): void {
     const panelId = this.getNextPanelId();
 
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
+
+    this.state.layout.setState({
+      children: [...this.state.layout.state.children, new ResponsiveGridItem({ body: vizPanel })],
+    });
   }
 
   public addNewRow(): void {
@@ -54,11 +50,12 @@ export class ResponsiveGridLayoutManager
     return max;
   }
 
-  public removeElement(element: DashboardLayoutElement) {
+  public removePanel(panel: VizPanel) {
+    const element = panel.parent;
     this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
   }
 
-  public duplicateElement(element: DashboardLayoutElement) {
+  public duplicatePanel(panel: VizPanel): void {
     throw new Error('Method not implemented.');
   }
 
@@ -100,7 +97,7 @@ export class ResponsiveGridLayoutManager
     const children: ResponsiveGridItem[] = [];
 
     for (let panel of panels) {
-      children.push(new ResponsiveGridItem({ body: panel }));
+      children.push(new ResponsiveGridItem({ body: panel.clone() }));
     }
 
     return new ResponsiveGridLayoutManager({
