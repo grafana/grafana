@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
-// import useState from 'react'; // add to above react import after uncommenting bookmark code
+import { useEffect, useState } from 'react';
 import { Trans } from 'react-i18next';
 // import { Trans } from 'app/core/internationalization'; swap with above import after adding i18nKey property to tags
 
@@ -22,7 +21,7 @@ import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
 // import { DataTrailsBookmarks } from './DataTrailsBookmarks';
 import { RecentExplorationScene, RecentExplorationState } from './DataTrailsRecentMetrics';
-import { getTrailStore } from './TrailStore/TrailStore';
+import { getBookmarkKey, getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
 import { VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
@@ -101,14 +100,14 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
-    // const [_, setLastDelete] = useState(Date.now());
+    const [_, setLastDelete] = useState(Date.now());
     const styles = useStyles2(getStyles);
 
-    // const onDelete = (index: number) => {
-    //   getTrailStore().removeBookmark(index);
-    //   reportExploreMetrics('bookmark_changed', { action: 'deleted' });
-    //   setLastDelete(Date.now()); // trigger re-render
-    // };
+    const onDelete = (index: number) => {
+      getTrailStore().removeBookmark(index);
+      reportExploreMetrics('bookmark_changed', { action: 'deleted' });
+      setLastDelete(Date.now()); // trigger re-render
+    };
 
     const { recentExplorations } = model.useState(); // current state list of recent explorations in scene format, we want to iterate over it with map
 
@@ -183,22 +182,25 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           })}
         </div>
         <div className={styles.verticalLine} />
-        {/* <DataTrailsBookmarks /> */}
-        {/* <div className={styles.column}>
-            <Text variant="h4">Bookmarks</Text>
+        <div>
+          {getTrailStore().bookmarks.length > 0 && (
             <div className={styles.trailList}>
-              {getTrailStore().bookmarks.map((bookmark, index) => {
-                return (
-                  <DataTrailCard
-                    key={getBookmarkKey(bookmark)}
-                    bookmark={bookmark}
-                    onSelect={() => model.onSelectBookmark(index)}
-                    onDelete={() => onDelete(index)}
-                  />
-                );
-              })}
+              <Text variant="h4" textAlignment="center">Or view bookmarks</Text>
+              <div className={styles.trailList}>
+                {getTrailStore().bookmarks.map((bookmark, index) => {
+                  return (
+                    <DataTrailCard
+                      key={getBookmarkKey(bookmark)}
+                      bookmark={bookmark}
+                      onSelect={() => model.onSelectBookmark(index)}
+                      onDelete={() => onDelete(index)}
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div> */}
+          )}
+        </div>
         {/* </Stack> */}
       </div>
     );
