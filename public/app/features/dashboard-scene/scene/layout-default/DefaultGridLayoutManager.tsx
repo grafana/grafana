@@ -8,7 +8,6 @@ import {
   sceneGraph,
   sceneUtils,
   SceneComponentProps,
-  SceneObject,
 } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
