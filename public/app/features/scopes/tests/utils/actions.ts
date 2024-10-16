@@ -3,7 +3,6 @@ import { act, fireEvent } from '@testing-library/react';
 import { DateTime, makeTimeRange, dateMath } from '@grafana/data';
 import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
-import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { scopesSelectorScene } from '../../instance';
@@ -90,11 +89,6 @@ export const expandDashboardFolder = (folder: string) => click(() => getDashboar
 export const enterEditMode = async (dashboardScene: DashboardScene) =>
   act(async () => dashboardScene.onEnterEditMode());
 
-export const getDashboardDTO = async () => {
-  setDashboardAPI(undefined);
-  await getDashboardAPI().getDashboardDTO('1');
-};
-
 export const updateTimeRange = async (
   dashboardScene: DashboardScene,
   from: DateTime | string = 'now-6h',
@@ -116,5 +110,3 @@ export const updateVariable = async (dashboardScene: DashboardScene, name: strin
 
 export const updateMyVar = async (dashboardScene: DashboardScene, value: '1' | '2') =>
   updateVariable(dashboardScene, 'myVar', value);
-export const updateMyVar2 = async (dashboardScene: DashboardScene, value: '1' | '2') =>
-  updateVariable(dashboardScene, 'myVar2', value);

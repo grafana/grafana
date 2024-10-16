@@ -1,13 +1,8 @@
-import { BackendSrvRequest, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
-import { enterEditMode, getDashboardDTO, updateMyVar, updateScopes, updateTimeRange } from './utils/actions';
-import {
-  expectDashboardReload,
-  expectNewDashboardDTO,
-  expectNotDashboardReload,
-  expectOldDashboardDTO,
-} from './utils/assertions';
+import { enterEditMode, updateMyVar, updateScopes, updateTimeRange } from './utils/actions';
+import { expectDashboardReload, expectNotDashboardReload } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
@@ -22,33 +17,47 @@ jest.mock('@grafana/runtime', () => ({
 
 const runTest = async (
   reloadDashboardsOnParamsChange: boolean,
-  kubernetesApi: boolean,
-  params: BackendSrvRequest['params']
+  reloadOnParamsChange: boolean,
+  withUid: boolean,
+  editMode: boolean
 ) => {
-  config.featureToggles.scopeFilters = true;
   config.featureToggles.reloadDashboardsOnParamsChange = reloadDashboardsOnParamsChange;
-  config.featureToggles.kubernetesDashboards = kubernetesApi;
   setDashboardAPI(undefined);
-  renderDashboard({}, { reloadOnParamsChange: true });
-  await updateScopes(['grafana', 'mimir']);
-  await getDashboardDTO();
+  const uid = 'dash-1';
+  const dashboardScene = renderDashboard({ uid: withUid ? uid : undefined }, { reloadOnParamsChange });
 
-  if (kubernetesApi) {
-    return expectNewDashboardDTO();
+  if (editMode) {
+    await enterEditMode(dashboardScene);
   }
 
-  if (reloadDashboardsOnParamsChange) {
-    return expectOldDashboardDTO(['grafana', 'mimir']);
+  const shouldReload = reloadDashboardsOnParamsChange && reloadOnParamsChange && withUid && !editMode;
+
+  await updateTimeRange(dashboardScene);
+  if (!shouldReload) {
+    expectNotDashboardReload();
+  } else {
+    expectDashboardReload();
   }
 
-  return expectOldDashboardDTO();
+  await updateMyVar(dashboardScene, '2');
+  if (!shouldReload) {
+    expectNotDashboardReload();
+  } else {
+    expectDashboardReload();
+  }
+
+  await updateScopes(['grafana']);
+  if (!shouldReload) {
+    expectNotDashboardReload();
+  } else {
+    expectDashboardReload();
+  }
 };
 
 describe('Dashboard reload', () => {
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
-    config.featureToggles.reloadDashboardsOnParamsChange = true;
   });
 
   afterEach(async () => {
@@ -56,52 +65,34 @@ describe('Dashboard reload', () => {
     await resetScenes();
   });
 
-  describe('Reload on scopes change', () => {
-    it('Does not reload the dashboard without UID', async () => {
-      renderDashboard({ uid: undefined }, { reloadOnParamsChange: true });
-      await updateScopes(['grafana']);
-      expectNotDashboardReload();
+  describe('reloadDashboardsOnParamsChange off', () => {
+    describe('reloadOnParamsChange off', () => {
+      it('with UID - no reload', () => runTest(false, false, true, false));
+      it('without UID - no reload', () => runTest(false, false, false, false));
     });
 
-    it('Reloads the dashboard with UID', async () => {
-      renderDashboard({}, { reloadOnParamsChange: true });
-      await updateScopes(['grafana']);
-      expectDashboardReload();
+    describe('reloadOnParamsChange on', () => {
+      it('with UID - no reload', () => runTest(false, true, true, false));
+      it('without UID - no reload', () => runTest(false, true, false, false));
     });
   });
 
-  describe('Reload on time range change', () => {
-    it('Does not reload the dashboard without UID', async () => {
-      const dashboardScene = renderDashboard({ uid: undefined }, { reloadOnParamsChange: true });
-      await updateTimeRange(dashboardScene);
-      expectNotDashboardReload();
+  describe('reloadDashboardsOnParamsChange on', () => {
+    describe('reloadOnParamsChange off', () => {
+      it('with UID - no reload', () => runTest(true, false, true, false));
+      it('without UID - no reload', () => runTest(true, false, false, false));
     });
 
-    it('Reloads the dashboard with UID', async () => {
-      const dashboardScene = renderDashboard({}, { reloadOnParamsChange: true });
-      await updateTimeRange(dashboardScene);
-      expectDashboardReload();
-    });
-  });
+    describe('reloadOnParamsChange on', () => {
+      describe('edit mode on', () => {
+        it('with UID - no reload', () => runTest(true, true, true, true));
+        it('without UID - no reload', () => runTest(true, true, false, true));
+      });
 
-  describe('Reload on scope filters change', () => {
-    it('Does not reload the dashboard without UID', async () => {
-      const dashboardScene = renderDashboard({ uid: undefined }, { reloadOnParamsChange: true });
-      await updateMyVar(dashboardScene, '2');
-      expectNotDashboardReload();
-    });
-
-    it('Does not reload if the dashboard is in edit mode', async () => {
-      const dashboardScene = renderDashboard({}, { reloadOnParamsChange: true });
-      await enterEditMode(dashboardScene);
-      await updateMyVar(dashboardScene, '2');
-      expectNotDashboardReload();
-    });
-
-    it('Reloads the dashboard with UID', async () => {
-      const dashboardScene = renderDashboard({}, { reloadOnParamsChange: true });
-      await updateMyVar(dashboardScene, '2');
-      expectDashboardReload();
+      describe('edit mode off', () => {
+        it('with UID - reload', () => runTest(true, true, true, false));
+        it('without UID - no reload', () => runTest(true, true, false, false));
+      });
     });
   });
 });
