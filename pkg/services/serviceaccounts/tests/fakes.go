@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type FakeServiceAccountService struct {
@@ -26,7 +25,7 @@ func (f *FakeServiceAccountService) AddServiceAccountToken(ctx context.Context, 
 	return f.ExpectedAPIKey, f.ExpectedErr
 }
 
-func (f *FakeServiceAccountService) CreateServiceAccount(ctx context.Context, orgID int64, user *user.SignedInUser, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+func (f *FakeServiceAccountService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	return f.ExpectedServiceAccount, f.ExpectedErr
 }
 

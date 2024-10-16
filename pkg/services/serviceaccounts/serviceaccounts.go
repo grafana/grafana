@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 /*
@@ -16,7 +15,7 @@ do not have a password.
 
 //go:generate mockery --name Service --structname MockServiceAccountService --output tests --outpkg tests --filename mocks.go
 type Service interface {
-	CreateServiceAccount(ctx context.Context, orgID int64, user *user.SignedInUser, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
+	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*ServiceAccountProfileDTO, error)
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)

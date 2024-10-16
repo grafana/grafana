@@ -151,7 +151,7 @@ func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 			Role:       string(serviceAccountRole),
 			IsDisabled: isDisabled,
 		}
-		_, err := svc.CreateServiceAccount(context.Background(), int64(testOrgId), nil, saForm)
+		_, err := svc.CreateServiceAccount(context.Background(), int64(testOrgId), saForm)
 		require.NoError(t, err)
 	})
 

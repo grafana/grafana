@@ -94,7 +94,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create service account", err)
 	}
 
-	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser, &cmd)
+	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), &cmd)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}

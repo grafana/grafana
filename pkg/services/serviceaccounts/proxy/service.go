@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -66,14 +65,14 @@ func (s *ServiceAccountsProxy) AddServiceAccountToken(ctx context.Context, servi
 	return s.proxiedService.AddServiceAccountToken(ctx, serviceAccountID, cmd)
 }
 
-func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID int64, user *user.SignedInUser, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if s.isProxyEnabled {
 		if !isNameValid(saForm.Name) {
 			s.log.Error("Unable to create service account with a protected name", "name", saForm.Name)
 			return nil, extsvcaccounts.ErrInvalidName
 		}
 	}
-	return s.proxiedService.CreateServiceAccount(ctx, orgID, user, saForm)
+	return s.proxiedService.CreateServiceAccount(ctx, orgID, saForm)
 }
 
 func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {

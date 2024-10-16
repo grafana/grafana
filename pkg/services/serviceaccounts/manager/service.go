@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -153,7 +154,7 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 var _ serviceaccounts.Service = (*ServiceAccountsService)(nil)
 
-func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, user *user.SignedInUser, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
 	}
@@ -166,6 +167,10 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 			return err
 		}
 
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			return err
+		}
 		if user != nil && sa.cfg.RBAC.PermissionsOnCreation("service-account") {
 			if user.IsIdentityType(claims.TypeUser) {
 				userID, err := user.GetInternalID()
