@@ -108,7 +108,7 @@ describe('AnnotationsWorker', () => {
       const dashboard = { annotations: { list: [] } } as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
-      await expect(worker.work(options)).toEmitValues([{ alertStates: [], annotations: [] }]);
+      await expect(worker.work(options)).toEmitValues([{ alertStates: [], annotations: [], correlations: [] }]);
     });
   });
 
@@ -151,6 +151,7 @@ describe('AnnotationsWorker', () => {
               isRegion: false,
             },
           ],
+          correlations: [],
         });
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
@@ -185,6 +186,7 @@ describe('AnnotationsWorker', () => {
               isRegion: false,
             },
           ],
+          correlations: [],
         });
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
@@ -222,6 +224,7 @@ describe('AnnotationsWorker', () => {
                 isRegion: false,
               },
             ],
+            correlations: [],
           });
           expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
           expect(annotationQueryMock).toHaveBeenCalledTimes(1);
@@ -262,6 +265,7 @@ describe('AnnotationsWorker', () => {
               isRegion: false,
             },
           ],
+          correlations: [],
         });
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
@@ -279,7 +283,7 @@ describe('AnnotationsWorker', () => {
       await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
         const result = received[0];
-        expect(result).toEqual({ alertStates: [], annotations: [] });
+        expect(result).toEqual({ alertStates: [], annotations: [], correlations: [] });
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
       });
@@ -294,7 +298,7 @@ describe('AnnotationsWorker', () => {
       await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
         const result = received[0];
-        expect(result).toEqual({ alertStates: [], annotations: [] });
+        expect(result).toEqual({ alertStates: [], annotations: [], correlations: [] });
         expect(executeAnnotationQueryMock).not.toHaveBeenCalled();
         expect(annotationQueryMock).not.toHaveBeenCalled();
       });
