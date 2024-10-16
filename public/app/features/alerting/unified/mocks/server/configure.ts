@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import server, { mockFeatureDiscoveryApi } from 'app/features/alerting/unified/mockApi';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
-  ALERTMANAGER_UPDATE_ERROR_RESPONSE,
+  getAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
   updateAlertmanagerConfigHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
@@ -123,16 +123,21 @@ export const disablePlugin = (pluginId: SupportedPlugin) => {
   server.use(getDisabledPluginHandler(pluginId));
 };
 
+/** Get an error response for use in a API response, in the format:
+ * ```
+ * {
+ *   message: string,
+ * }
+ * ```
+ */
+export const getErrorResponse = (message: string, status = 500) => HttpResponse.json({ message }, { status });
+
 /** Make alertmanager config update fail */
-export const makeAlertmanagerConfigUpdateFail = () => {
-  server.use(updateAlertmanagerConfigHandler(ALERTMANAGER_UPDATE_ERROR_RESPONSE));
+export const makeAlertmanagerConfigUpdateFail = (responseOverride?: ReturnType<typeof getErrorResponse>) => {
+  server.use(updateAlertmanagerConfigHandler(responseOverride));
 };
 
 /** Make fetching alertmanager config fail */
-export const makeAllAlertmanagerConfigFetchFail = ({ message }: { message?: string }) => {
-  server.use(
-    http.get('/api/alertmanager/:name/config/api/v1/alerts', () =>
-      HttpResponse.json({ message: message || 'Unknown error' }, { status: 500 })
-    )
-  );
+export const makeAllAlertmanagerConfigFetchFail = (responseOverride?: ReturnType<typeof getErrorResponse>) => {
+  server.use(getAlertmanagerConfigHandler(responseOverride || getErrorResponse('Unknown error')));
 };

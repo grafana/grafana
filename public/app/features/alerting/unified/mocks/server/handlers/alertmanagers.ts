@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, JsonBodyType, StrictResponse } from 'msw';
 
 import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
@@ -62,8 +62,11 @@ export const alertmanagerAlertsListHandler = () =>
     ]);
   });
 
-export const getAlertmanagerConfigHandler = () =>
+export const getAlertmanagerConfigHandler = (responseOverride?: StrictResponse<JsonBodyType>) =>
   http.get<{ name: string }>('/api/alertmanager/:name/config/api/v1/alerts', ({ params }) => {
+    if (responseOverride) {
+      return responseOverride;
+    }
     const { name: alertmanagerName } = params;
 
     const configToReturn = getAlertmanagerConfig(alertmanagerName);

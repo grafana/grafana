@@ -5,7 +5,10 @@ import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector'
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { makeAllAlertmanagerConfigFetchFail } from 'app/features/alerting/unified/mocks/server/configure';
+import {
+  getErrorResponse,
+  makeAllAlertmanagerConfigFetchFail,
+} from 'app/features/alerting/unified/mocks/server/configure';
 import {
   getAlertmanagerConfig,
   setAlertmanagerConfig,
@@ -270,7 +273,7 @@ describe('NotificationPolicies', () => {
   });
 
   it('Show error message if loading Alertmanager config fails', async () => {
-    makeAllAlertmanagerConfigFetchFail({ message: "Alertmanager has exploded. it's gone. Forget about it." });
+    makeAllAlertmanagerConfigFetchFail(getErrorResponse("Alertmanager has exploded. it's gone. Forget about it."));
 
     renderNotificationPolicies();
     await screen.findByText(/error loading alertmanager config/i);
@@ -413,7 +416,7 @@ describe('NotificationPolicies', () => {
   });
 
   it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
-    makeAllAlertmanagerConfigFetchFail({ message: 'alertmanager storage object not found' });
+    makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
     setAlertmanagerStatus(dataSources.mimir.uid, someCloudAlertManagerStatus);
     renderNotificationPolicies(dataSources.mimir.name);
 
