@@ -4,7 +4,7 @@ import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } fr
 
 import { VAR_METRIC } from '../shared';
 
-import { LogsIntegrationContext } from './LogsIntegrationScene';
+import { LogsIntegrationContext } from './LogsIntegrationContext';
 
 export interface RelatedLogsSceneState extends SceneObjectState {}
 

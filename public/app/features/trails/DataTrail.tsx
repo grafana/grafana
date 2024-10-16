@@ -41,7 +41,7 @@ import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
-import { LogsIntegrationContextProvider } from './RelatedLogs/LogsIntegrationScene';
+import { LogsIntegrationContextProvider } from './RelatedLogs/LogsIntegrationContext';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
