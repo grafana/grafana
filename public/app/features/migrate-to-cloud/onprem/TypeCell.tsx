@@ -13,6 +13,12 @@ export function prettyTypeName(type: ResourceTableItem['type']) {
       return t('migrate-to-cloud.resource-type.folder', 'Folder');
     case 'LIBRARY_ELEMENT':
       return t('migrate-to-cloud.resource-type.library_element', 'Library Element');
+    case 'MUTE_TIMING':
+      return t('migrate-to-cloud.resource-type.mute_timing', 'Mute Timing');
+    case 'NOTIFICATION_TEMPLATE':
+      return t('migrate-to-cloud.resource-type.notification_template', 'Notification Template');
+    case 'CONTACT_POINT':
+      return t('migrate-to-cloud.resource-type.contact_point', 'Contact Point');
     default:
       return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
   }
