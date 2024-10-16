@@ -38,7 +38,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/profiles/access/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/simplified-exploration/profiles/access/
-provisioning-data-sources:
+  provisioning-data-sources:
   - pattern: /docs/grafana/
     destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
   - pattern: /docs/grafana-cloud/
