@@ -330,37 +330,7 @@ export class DefaultGridLayoutManager
    */
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
-    const children: SceneObject[] = [];
-
-    let currentY = 0;
-    let currentX = 0;
-
-    const panelHeight = 10;
-    const panelWidth = GRID_COLUMN_COUNT / 3;
-
-    for (let panel of panels) {
-      children.push(
-        new DashboardGridItem({
-          key: `griditem-${getPanelIdForVizPanel(panel)}`,
-          x: currentX,
-          y: currentY,
-          width: panelWidth,
-          height: panelHeight,
-          body: panel,
-        })
-      );
-
-      currentX += panelWidth;
-
-      if (currentX + panelWidth >= GRID_COLUMN_COUNT) {
-        currentX = 0;
-        currentY += panelHeight;
-      }
-    }
-
-    return new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({ children: children, isDraggable: true, isResizable: true }),
-    });
+    return DefaultGridLayoutManager.fromVizPanels(panels);
   }
 
   /**
