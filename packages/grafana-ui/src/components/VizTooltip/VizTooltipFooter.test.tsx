@@ -8,19 +8,6 @@ import { userEvent } from '../../../../../public/test/test-utils';
 import { VizTooltipFooter } from './VizTooltipFooter';
 
 describe('VizTooltipFooter', () => {
-  let windowSpy: jest.SpyInstance;
-
-  beforeAll(() => {
-    windowSpy = jest.spyOn(window, 'location', 'get');
-    windowSpy.mockImplementation(() => ({
-      origin: 'http://www.grafana.com',
-    }));
-  });
-
-  afterAll(() => {
-    windowSpy.mockRestore();
-  });
-
   it('should fire onclick', async () => {
     const onClick = jest.fn();
     const field: Field = {
