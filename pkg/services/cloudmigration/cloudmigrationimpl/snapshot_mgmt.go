@@ -143,7 +143,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	for _, muteTiming := range muteTimings {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.MuteTimingType,
-			RefID: muteTiming.Name,
+			RefID: muteTiming.UID,
 			Name:  muteTiming.Name,
 			Data:  muteTiming,
 		})
@@ -152,7 +152,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	for _, notificationTemplate := range notificationTemplates {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.NotificationTemplateType,
-			RefID: notificationTemplate.Name,
+			RefID: notificationTemplate.UID,
 			Name:  notificationTemplate.Name,
 			Data:  notificationTemplate,
 		})
@@ -170,7 +170,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
 	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 		Type:  cloudmigration.NotificationPolicyType,
-		RefID: notificationPolicies.Name,
+		RefID: notificationPolicies.Name, // no UID available
 		Name:  notificationPolicies.Name,
 		Data:  notificationPolicies.Routes,
 	})

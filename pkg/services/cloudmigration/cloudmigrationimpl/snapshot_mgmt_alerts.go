@@ -14,6 +14,8 @@ import (
 )
 
 type muteTimeInterval struct {
+	UID string `json:"uid"`
+
 	// There is a lot of custom (de)serialization logic from Alertmanager,
 	// and this is the same type used by the underlying API, hence we can use the type as-is.
 	config.MuteTimeInterval `json:",inline"`
@@ -33,6 +35,7 @@ func (s *Service) getAlertMuteTimings(ctx context.Context, signedInUser *user.Si
 
 	for _, muteTiming := range muteTimings {
 		muteTimeIntervals = append(muteTimeIntervals, muteTimeInterval{
+			UID: muteTiming.UID,
 			MuteTimeInterval: config.MuteTimeInterval{
 				Name:          muteTiming.Name,
 				TimeIntervals: muteTiming.TimeIntervals,
@@ -44,6 +47,7 @@ func (s *Service) getAlertMuteTimings(ctx context.Context, signedInUser *user.Si
 }
 
 type notificationTemplate struct {
+	UID      string `json:"uid"`
 	Name     string `json:"name"`
 	Template string `json:"template"`
 }
@@ -62,6 +66,7 @@ func (s *Service) getNotificationTemplates(ctx context.Context, signedInUser *us
 
 	for _, template := range templates {
 		notificationTemplates = append(notificationTemplates, notificationTemplate{
+			UID:      template.UID,
 			Name:     template.Name,
 			Template: template.Template,
 		})
