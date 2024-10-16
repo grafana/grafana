@@ -21,8 +21,8 @@ import {
   restoreCustomOverrideRules,
   getNextRefId,
   VariableInterpolation,
-  builtInVariables,
   safeStringifyValue,
+  builtInVariables,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
@@ -676,6 +676,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     return getTemplateSrv().replace(value, vars, format);
   }
 
+  // this has a close equivalent in explore/utils/links but this does the actual replacement. Consider unifying at some point.
   enhancedReplaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     let variables: VariableInterpolation[] = [];
     const lastRequest = this.getQueryRunner().getLastRequest();

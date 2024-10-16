@@ -5,7 +5,6 @@ import {
   DataSourceJsonData,
   dateTime,
   Field,
-  getVariableUsageInfo,
   LinkModel,
   mapInternalLinkToExplore,
   rangeUtil,
@@ -26,7 +25,7 @@ import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { getFieldLinksForExplore } from '../utils/links';
+import { getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';
@@ -221,10 +220,7 @@ function legacyCreateSpanLinkFactory(
 
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
-        if (
-          getVariableUsageInfo(dataLink.internal!.query, scopedVars, getTemplateSrv().replace.bind(getTemplateSrv()))
-            .allVariablesDefined
-        ) {
+        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
           const link = mapInternalLinkToExplore({
             link: dataLink,
             internalLink: dataLink.internal!,
