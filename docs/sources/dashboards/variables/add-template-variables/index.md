@@ -270,18 +270,20 @@ To create an ad hoc filter, follow these steps:
 1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Back to dashboard** and **Exit edit**.
 
-### Create dashboard filters
+Now you can [filter data on the dashboard](#filter-dashboard-data).
 
-Once you've added an ad hoc filter in the dashboard settings, you can create key/value filter pairs on the dashboard.
-Filters you apply in this manner are applied to all panels on the dashboard.
+### Filter dashboard data
 
-To create dashboard filters, follow these steps:
+Once you've [added an ad hoc filter](#add-ad-hoc-filters) in the dashboard settings, you can create key/value filter pairs on the dashboard.
+These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
 
-1. In the dashboard, click in the filter field.
+To filter dashboard data, follow these steps:
+
+1. On the dashboard, click in the filter field.
 1. Select a label, operator, and value.
 1. Repeat this process as needed until you have all the filters you need.
 
-![Ad hoc filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
+   ![Ad hoc filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
 
 You can edit or delete a filter in the following ways:
 
