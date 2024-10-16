@@ -56,7 +56,6 @@ export enum PromApplication {
 
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
-  queryTimeout?: string;
   httpMethod?: string;
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;

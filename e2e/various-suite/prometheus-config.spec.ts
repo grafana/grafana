@@ -36,8 +36,6 @@ describe('Prometheus config', () => {
     cy.get(`#${selectors.components.DataSource.Prometheus.configPage.manageAlerts}`).scrollIntoView().should('exist');
     // scrape interval
     e2e.components.DataSource.Prometheus.configPage.scrapeInterval().scrollIntoView().should('exist');
-    // query timeout
-    e2e.components.DataSource.Prometheus.configPage.queryTimeout().scrollIntoView().should('exist');
     // default editor
     e2e.components.DataSource.Prometheus.configPage.defaultEditor().scrollIntoView().should('exist');
     // disable metric lookup

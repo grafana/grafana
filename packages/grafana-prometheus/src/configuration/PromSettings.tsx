@@ -74,13 +74,11 @@ export const PromSettings = (props: Props) => {
 
   type ValidDuration = {
     timeInterval: string;
-    queryTimeout: string;
     incrementalQueryOverlapWindow: string;
   };
 
   const [validDuration, updateValidDuration] = useState<ValidDuration>({
     timeInterval: '',
-    queryTimeout: '',
     incrementalQueryOverlapWindow: '',
   });
 
@@ -129,36 +127,6 @@ export const PromSettings = (props: Props) => {
                     data-testid={selectors.components.DataSource.Prometheus.configPage.scrapeInterval}
                   />
                   {validateInput(validDuration.timeInterval, DURATION_REGEX, durationError)}
-                </>
-              </InlineField>
-            </div>
-          </div>
-          {/* Query Timeout */}
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineField
-                label="Query timeout"
-                labelWidth={PROM_CONFIG_LABEL_WIDTH}
-                tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
-                interactive={true}
-                disabled={options.readOnly}
-              >
-                <>
-                  <Input
-                    className="width-20"
-                    value={options.jsonData.queryTimeout}
-                    onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
-                    spellCheck={false}
-                    placeholder="60s"
-                    onBlur={(e) =>
-                      updateValidDuration({
-                        ...validDuration,
-                        queryTimeout: e.currentTarget.value,
-                      })
-                    }
-                    data-testid={selectors.components.DataSource.Prometheus.configPage.queryTimeout}
-                  />
-                  {validateInput(validDuration.queryTimeout, DURATION_REGEX, durationError)}
                 </>
               </InlineField>
             </div>
