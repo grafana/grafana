@@ -18,7 +18,7 @@ import { Box, Button, Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 
 import { DataTrail } from './DataTrail';
-// import { DataTrailCard } from './DataTrailCard';
+import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
 // import { DataTrailsBookmarks } from './DataTrailsBookmarks';
 import { RecentExplorationScene, RecentExplorationState } from './DataTrailsRecentMetrics';
@@ -165,26 +165,23 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             </div>
           </Stack>
         </div>
-        {/* separate recent metircs + bookmarks code into separate components, then can conditionally render based on if there's a length */}
-        {/* <Stack gap={5}> */}
-        {/* <div className={styles.column}> */}
         <div className={styles.gap20}>
           <Text variant="h4" textAlignment="center">
             Or view a recent exploration
           </Text>
         </div>
         <div className={styles.trailList}>
-          {recentExplorations &&
-            recentExplorations.map((recent, index, total) => {
-              return (
-                <div key={index} className={styles.trailCard}>
-                  <recent.Component model={recent} key={recent.state.key} />{' '}
-                  {/* how we mount a scene inside of react */}
-                </div>
-              );
-            })}
+          {getTrailStore().recent.map((trail, index) => {
+            const resolvedTrail = trail.resolve();
+            return (
+              <DataTrailCard
+                key={(resolvedTrail.state.key || '') + index}
+                trail={resolvedTrail}
+                onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
+              />
+            );
+          })}
         </div>
-        {/* </div> */}
         <div className={styles.verticalLine} />
         {/* <DataTrailsBookmarks /> */}
         {/* <div className={styles.column}>
@@ -242,7 +239,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     trailCard: css({
       boxSizing: 'border-box',
-      maxWidth: '318px',
       width: '100%', // Make the card take up the full width of the grid cell
       height: 'inherit', // Make the card take up the full height of the grid cell
       backgroundColor: theme.colors.background.secondary, // Ensure the background color takes up the whole space
