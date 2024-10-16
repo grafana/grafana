@@ -190,7 +190,7 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 		return nil, err
 	}
 
-	return serviceAccount, err
+	return serviceAccount, nil
 }
 
 func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
