@@ -77,7 +77,7 @@ func ProvideUnifiedStorageClient(
 		}
 
 		// Create a client instance
-		client, err := newResourceClient(ctx, conn, cfg, features)
+		client, err := newResourceClient(conn, cfg, features)
 		if err != nil {
 			return nil, err
 		}
@@ -93,8 +93,8 @@ func ProvideUnifiedStorageClient(
 	}
 }
 
-func newResourceClient(ctx context.Context, conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
-	if !features.IsEnabled(ctx, featuremgmt.FlagAppPlatformGrpcClientAuth) {
+func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
 
