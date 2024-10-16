@@ -48,6 +48,8 @@ type Folder struct {
 	URL          string
 	UpdatedBy    int64
 	CreatedBy    int64
+	UpdatedByUID string
+	CreatedByUID string
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
