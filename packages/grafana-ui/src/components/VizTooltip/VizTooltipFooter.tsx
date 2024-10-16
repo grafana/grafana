@@ -25,6 +25,16 @@ const renderDataLinks = (dataLinks: LinkModel[]) => {
           weight={'medium'}
           inline={false}
           variant={'bodySmall'}
+          onClick={
+            link.onClick
+              ? (event) => {
+                  if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                    event.preventDefault();
+                    link.onClick(event);
+                  }
+                }
+              : undefined
+          }
         >
           {link.title}
         </TextLink>
