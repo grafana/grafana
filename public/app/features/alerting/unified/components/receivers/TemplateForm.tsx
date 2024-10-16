@@ -161,7 +161,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   };
 
   const appendExample = (example: string) => {
-    const newValue = `${getValues('content')}\n\n${example}`;
+    const content = getValues('content'),
+      newValue = !content ? example : `${content}\n${example}`;
     setValue('content', newValue);
   };
 
@@ -249,7 +250,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                     <Menu.Divider />
                                     <Menu.Item
                                       label={'Examples documentation'}
-                                      url="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
+                                      url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
                                       target="_blank"
                                       icon="external-link-alt"
                                     />

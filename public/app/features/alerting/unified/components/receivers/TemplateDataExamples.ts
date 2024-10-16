@@ -5,78 +5,136 @@ export interface TemplateExampleItem {
 
 export const GlobalTemplateDataExamples: TemplateExampleItem[] = [
   {
-    description: 'Default template for titles',
-    example: `{{ define "copy_default.title" }}
-    [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
-{{ end }}`,
+    description: 'Default template for notification titles',
+    example: `{{- /* This is a copy of the "default.title" template. */ -}}
+{{- /* Edit the template name and template content as needed. */ -}}
+{{ define "default.title.copy" }}
+  [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
+{{ end }}
+`,
   },
   {
-    description: 'Default template for messages',
-    example: `{{ define "copy_default.message" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
-{{ template "print_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
+    description: 'Default template for notification messages',
+    example: `{{- /* This is a copy of the "default.message" template. */ -}}
+{{- /* Edit the template name and template content as needed. */ -}}
+{{ define "default.message.copy" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
+{{ template "__text_alert_list.copy" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
 
 {{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
-{{ template "print_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}`,
+{{ template "__text_alert_list.copy" .Alerts.Resolved }}{{ end }}{{ end }}
+
+{{ define "__text_alert_list.copy" }}{{ range . }}
+Value: {{ template "__text_values_list.copy" . }}
+Labels:
+{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}Annotations:
+{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}{{ if gt (len .GeneratorURL) 0 }}Source: {{ .GeneratorURL }}
+{{ end }}{{ if gt (len .SilenceURL) 0 }}Silence: {{ .SilenceURL }}
+{{ end }}{{ if gt (len .DashboardURL) 0 }}Dashboard: {{ .DashboardURL }}
+{{ end }}{{ if gt (len .PanelURL) 0 }}Panel: {{ .PanelURL }}
+{{ end }}{{ end }}{{ end }}
+
+{{ define "__text_values_list.copy" }}{{ if len .Values }}{{ $first := true }}{{ range $refID, $value := .Values -}}
+{{ if $first }}{{ $first = false }}{{ else }}, {{ end }}{{ $refID }}={{ $value }}{{ end -}}
+{{ else }}[no value]{{ end }}{{ end }}
+`,
   },
   {
     description: 'Print alerts with summary and description',
-    example: `{{ define "Table" }}
-{{- "\nHost\t\tValue\n" -}}
+    example: `{{- /* Example displaying the summary and description annotations of each alert in the notification. */ -}}
+{{- /* Edit the template name and template content as needed. */ -}}
+{{ define "custom.alerts" -}}
+{{ len .Alerts }} alert(s)
 {{ range .Alerts -}}
-{{ range .Annotations.SortedPairs -}}
-{{ if (eq .Name  "ServerInfo") -}}
-{{ .Value -}}
-{{- end }}
-{{- end }}
-{{- end }}
-{{ end }}`,
+  {{ template "alert.summary_and_description" . -}}
+{{ end -}}
+{{ end -}}
+
+{{ define "alert.summary_and_description" }}
+  Summary: {{.Annotations.summary}}
+  Status: {{ .Status }}
+  Description: {{.Annotations.description}}
+{{ end -}}
+`,
   },
   {
     description: 'Print firing and resolved alerts',
-    example: `{{ define "my_conditional_notification" }}
-{{ if eq .CommonLabels.namespace "namespace-a" }}
-Alert: CPU limits have reached 80% in namespace-a.
-{{ else if eq .CommonLabels.namespace "namespace-b" }}
-Alert: CPU limits have reached 80% in namespace-b.
-{{ else if eq .CommonLabels.namespace "namespace-c" }}
-Alert: CPU limits have reached 80% in namespace-c.
-{{ else }}
-Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
+    example: `{{- /* Example displaying firing and resolved alerts separately in the notification. */ -}}
+{{- /* Edit the template name and template content as needed. */ -}}
+{{ define "custom.firing_and_resolved_alerts" -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ range .Alerts.Resolved -}}
+  {{ template "alert.summary_and_description" . -}}
 {{ end }}
-{{ end }}`,
+{{ len .Alerts.Firing }} firing alert(s)
+{{ range .Alerts.Firing -}}
+  {{ template "alert.summary_and_description" . -}}
+{{ end -}}
+{{ end -}}
+
+{{ define "alert.summary_and_description" }}
+  Summary: {{.Annotations.summary}}
+  Status: {{ .Status }}
+  Description: {{.Annotations.description}}
+{{ end -}}
+`,
+  },
+  {
+    description: 'Print common labels and annotations',
+    example: `{{- /* Example displaying labels and annotations that are common to all alerts in the notification.*/ -}}
+{{- /* Edit the template name and template content as needed. */ -}}
+{{ define "custom.common_labels_and_annotations" -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ len .Alerts.Firing }} firing alert(s)
+
+Common labels: {{ len .CommonLabels.SortedPairs }} 
+{{ range .CommonLabels.SortedPairs -}}
+- {{ .Name }} = {{ .Value }}
+{{ end }}
+
+Common annotations: {{ len .CommonAnnotations.SortedPairs }}
+{{ range .CommonAnnotations.SortedPairs }}
+- {{ .Name }} = {{ .Value }}
+{{ end }}
+
+{{ end -}}
+`,
   },
   {
     description: 'Print individual labels and annotations',
-    example: `{{ define "slack.title" }}
-{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
-{{ end }}`,
-  },
-  {
-    description: 'Print common labels and common annotations',
-    example: `{{ define "slack.print_alert" -}}
-[{{.Status}}] {{ .Labels.alertname }}
-Labels:
+    example: `{{- /* Example displaying all labels and annotations for each alert in the notification.*/ -}}
+{{- /* Edit the template name and template content as needed. */ -}}
+{{ define "custom.alert_labels_and_annotations" -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ range .Alerts.Resolved -}}
+  {{ template "alert.labels_and_annotations" . -}}
+{{ end }}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ range .Alerts.Firing -}}
+  {{ template "alert.labels_and_annotations" . -}}
+{{ end -}}
+{{ end -}}
+
+{{ define "alert.labels_and_annotations" }}
+Alert labels: {{ len .Labels.SortedPairs }} 
 {{ range .Labels.SortedPairs -}}
-- {{ .Name }}: {{ .Value }}
+- {{ .Name }} = {{ .Value }}
 {{ end -}}
-{{ if .Annotations -}}
-Annotations:
+Alert annotations: {{ len .Annotations.SortedPairs }}
 {{ range .Annotations.SortedPairs -}}
-- {{ .Name }}: {{ .Value }}
+- {{ .Name }} = {{ .Value }}
 {{ end -}}
 {{ end -}}
-{{ if .SilenceURL -}}
-Silence: {{ .SilenceURL }}
-{{ end -}}
-{{ if .DashboardURL -}}
-Go to dashboard: {{ .DashboardURL }}
-{{- end }}
-{{- end }}`,
+`,
   },
   {
     description: 'Print runbook and Grafana URLs',
-    example: `{{ define "common.subject_title" }}
+    example: `{{- /* Example displaying additional information, such as runbook link, DashboardURL and SilenceURL, for each alert in the notification.*/ -}}
+{{- /* Edit the template name and template content as needed. */ -}}
+{{ define "slack.title" }}
 {{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
-{{ end }}`,
+{{ end }}
+`,
   },
 ];
