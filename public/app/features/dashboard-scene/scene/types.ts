@@ -47,6 +47,14 @@ export interface DashboardLayoutManager extends SceneObject {
    * For dynamic panels that need to be viewed in isolation (SoloRoute)
    */
   activateRepeaters?(): void;
+  /**
+   * Get's the layout descriptor (which has the name and id)
+   */
+  getDescriptor(): LayoutRegistryItem;
+  /**
+   * Renders options and layout actions
+   */
+  renderEditor?(): React.ReactNode;
 }
 
 /**
@@ -93,10 +101,6 @@ export interface DashboardLayoutElement extends SceneObject {
    * Return layout elements options (like repeat, repeat direction, etc for the default DashboardGridItem)
    */
   getOptions?(): OptionsPaneItemDescriptor[];
-  /**
-   * Needed when for example editing
-   */
-  getVariableScope?(): SceneVariableSet | undefined;
   /**
    * Used by panel edit to commit changes
    */

@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneGridLayout,
@@ -7,20 +8,25 @@ import {
   sceneGraph,
   sceneUtils,
   SceneComponentProps,
+  SceneObject,
 } from '@grafana/scenes';
+import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
+  getDefaultVizPanel,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
 import { RowActions } from '../row-actions/RowActions';
-import { DashboardLayoutManager } from '../types';
+import { DashboardLayoutManager, LayoutEditorProps, LayoutRegistryItem } from '../types';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
@@ -304,6 +310,59 @@ export class DefaultGridLayoutManager
     });
   }
 
+  public getDescriptor(): LayoutRegistryItem {
+    return DefaultGridLayoutManager.getDescriptor();
+  }
+
+  public static getDescriptor(): LayoutRegistryItem {
+    return {
+      name: 'Default grid',
+      description: 'The default grid layout',
+      id: 'default-grid',
+      createFromLayout: DefaultGridLayoutManager.createFromLayout,
+    };
+  }
+
+  /**
+   * Handle switching to the manual grid layout from other layouts
+   * @param currentLayout
+   * @returns
+   */
+  public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
+    const panels = currentLayout.getVizPanels();
+    const children: SceneObject[] = [];
+
+    let currentY = 0;
+    let currentX = 0;
+
+    const panelHeight = 10;
+    const panelWidth = GRID_COLUMN_COUNT / 3;
+
+    for (let panel of panels) {
+      children.push(
+        new DashboardGridItem({
+          key: `griditem-${getPanelIdForVizPanel(panel)}`,
+          x: currentX,
+          y: currentY,
+          width: panelWidth,
+          height: panelHeight,
+          body: panel,
+        })
+      );
+
+      currentX += panelWidth;
+
+      if (currentX + panelWidth >= GRID_COLUMN_COUNT) {
+        currentX = 0;
+        currentY += panelHeight;
+      }
+    }
+
+    return new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({ children: children, isDraggable: true, isResizable: true }),
+    });
+  }
+
   /**
    * For simple test grids
    * @param panels
@@ -344,7 +403,48 @@ export class DefaultGridLayoutManager
     });
   }
 
+  public renderEditor() {
+    return <DefaultGridLayoutEditor layoutManager={this} />;
+  }
+
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
-    return <model.state.grid.Component model={model.state.grid} />;
+    if (!config.featureToggles.dashboardNewLayouts) {
+      return <model.state.grid.Component model={model.state.grid} />;
+    }
+
+    return (
+      <LayoutEditChrome layoutManager={model}>
+        <model.state.grid.Component model={model.state.grid} />
+      </LayoutEditChrome>
+    );
   };
+}
+
+function DefaultGridLayoutEditor({ layoutManager }: LayoutEditorProps<DefaultGridLayoutManager>) {
+  return (
+    <>
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          const vizPanel = getDefaultVizPanel();
+          layoutManager.addPanel(vizPanel);
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
+        }}
+      >
+        Panel
+      </Button>
+
+      <Button
+        fill="outline"
+        icon="plus"
+        onClick={() => {
+          layoutManager.addNewRow!();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      >
+        Row
+      </Button>
+    </>
+  );
 }

@@ -1,11 +1,4 @@
-import {
-  SceneObjectState,
-  VizPanel,
-  SceneObjectBase,
-  SceneVariableSet,
-  SceneObject,
-  SceneComponentProps,
-} from '@grafana/scenes';
+import { SceneObjectState, VizPanel, SceneObjectBase, SceneObject, SceneComponentProps } from '@grafana/scenes';
 import { Switch } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 

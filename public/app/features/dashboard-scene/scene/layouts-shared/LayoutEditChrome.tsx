@@ -6,7 +6,7 @@ import { useStyles2, Field, Select } from '@grafana/ui';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from '../types';
 
-import { layoutRegistry } from './registry';
+import { layoutRegistry } from './layoutRegistry';
 
 interface Props {
   layoutManager: DashboardLayoutManager;

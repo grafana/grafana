@@ -3,8 +3,8 @@ import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectSt
 import { Button, Field, Select } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../utils/utils';
-import { LayoutEditChrome } from '../LayoutEditChrome';
+import { getDefaultVizPanel, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
 import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, DashboardLayoutElement } from '../types';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
@@ -17,44 +17,25 @@ export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  removePanel(panel: VizPanel): void {
-    throw new Error('Method not implemented.');
-  }
-
-  duplicatePanel(panel: VizPanel): void {
-    throw new Error('Method not implemented.');
-  }
-
-  addPanel(panel: VizPanel): void {
-    throw new Error('Method not implemented.');
-  }
-
-  addNewRow(): void {
-    throw new Error('Method not implemented.');
-  }
-
-  getVizPanels(): VizPanel[] {
-    throw new Error('Method not implemented.');
-  }
-
-  toSaveModel?() {
-    throw new Error('Method not implemented.');
-  }
-
-  activateRepeaters?(): void {
-    throw new Error('Method not implemented.');
-  }
-
   public editModeChanged(isEditing: boolean): void {}
 
-  public addNewPanel(): VizPanel {
-    const vizPanel = getDefaultVizPanel();
+  public removePanel(panel: VizPanel): void {
+    throw new Error('Method not implemented.');
+  }
 
-    this.state.layout.setState({
-      children: [...this.state.layout.state.children, vizPanel],
-    });
+  public duplicatePanel(panel: VizPanel): void {
+    throw new Error('Method not implemented.');
+  }
 
-    return vizPanel;
+  public addPanel(vizPanel: VizPanel): void {
+    const panelId = this.getNextPanelId();
+
+    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
+    vizPanel.clearParent();
+  }
+
+  public addNewRow(): void {
+    throw new Error('Method not implemented.');
   }
 
   public getNextPanelId(): number {
@@ -81,33 +62,33 @@ export class ResponsiveGridLayoutManager
     throw new Error('Method not implemented.');
   }
 
-  public getDescriptor(): LayoutRegistryItem {
-    return ResponsiveGridLayoutManager.getDescriptor();
+  public getVizPanels(): VizPanel[] {
+    const panels: VizPanel[] = [];
+
+    for (const child of this.state.layout.state.children) {
+      if (child instanceof ResponsiveGridItem) {
+        panels.push(child.state.body);
+      }
+    }
+
+    return panels;
   }
 
   public renderEditor() {
     return <AutomaticGridEditor layoutManager={this} />;
   }
 
+  public getDescriptor(): LayoutRegistryItem {
+    return ResponsiveGridLayoutManager.getDescriptor();
+  }
+
   public static getDescriptor(): LayoutRegistryItem {
     return {
       name: 'Responsive grid',
       description: 'CSS layout that adjusts to the available space',
-      id: 'responsive-grid-layout',
+      id: 'responsive-grid',
       createFromLayout: ResponsiveGridLayoutManager.createFromLayout,
     };
-  }
-
-  public getElements(): DashboardLayoutElement[] {
-    const elements: DashboardLayoutElement[] = [];
-
-    for (const child of this.state.layout.state.children) {
-      if (child instanceof ResponsiveGridItem) {
-        elements.push(child);
-      }
-    }
-
-    return elements;
   }
 
   public static createEmpty() {
@@ -115,13 +96,11 @@ export class ResponsiveGridLayoutManager
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): ResponsiveGridLayoutManager {
-    const elements = layout.getElements();
+    const panels = layout.getVizPanels();
     const children: ResponsiveGridItem[] = [];
 
-    for (let element of elements) {
-      if (element.getVizPanel) {
-        children.push(new ResponsiveGridItem({ body: element.getVizPanel() }));
-      }
+    for (let panel of panels) {
+      children.push(new ResponsiveGridItem({ body: panel }));
     }
 
     return new ResponsiveGridLayoutManager({
@@ -192,9 +171,9 @@ function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGrid
         fill="outline"
         icon="plus"
         onClick={() => {
-          layoutManager.addNewPanel();
+          const vizPanel = getDefaultVizPanel();
+          layoutManager.addPanel(vizPanel);
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-          // dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
         }}
       >
         Panel

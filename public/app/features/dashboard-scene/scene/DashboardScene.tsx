@@ -55,7 +55,6 @@ import {
   getDashboardSceneFor,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
-  getVizPanelKeyForPanelId,
   isPanelClone,
 } from '../utils/utils';
 
@@ -504,11 +503,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
     const gridItem = buildGridItemForPanel(panelModel);
-    const panelId = dashboardSceneGraph.getNextPanelId(this);
     const panel = gridItem.state.body;
-
-    panel.setState({ key: getVizPanelKeyForPanelId(panelId) });
-    panel.clearParent();
 
     this.addPanel(panel);
 
@@ -581,6 +576,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.addPanel(vizPanel);
 
     return vizPanel;
+  }
+
+  public switchLayout(layout: DashboardLayoutManager) {
+    this.setState({ body: layout });
   }
 
   /**
