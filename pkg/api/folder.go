@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -807,16 +806,13 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
-	toID := func(rawIdentifier string) (int64, error) {
+	// #TODO Is there a preexisting function we can use instead, something along the lines of UserIdentifier?
+	toUID := func(rawIdentifier string) string {
 		parts := strings.Split(rawIdentifier, ":")
 		if len(parts) < 2 {
-			return 0, fmt.Errorf("invalid user identifier")
+			return ""
 		}
-		userID, err := strconv.ParseInt(parts[1], 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("faild to parse user identifier")
-		}
-		return userID, nil
+		return parts[1]
 	}
 
 	toDTO := func(fold *folder.Folder, checkCanView bool) (dtos.Folder, error) {
@@ -835,18 +831,10 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
 		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
 		if len(fDTO.CreatedBy) > 0 {
-			id, err := toID(fDTO.CreatedBy)
-			if err != nil {
-				return dtos.Folder{}, err
-			}
-			creator = fk8s.getUserLogin(ctx, id)
+			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy), orgID)
 		}
 		if len(fDTO.UpdatedBy) > 0 {
-			id, err := toID(fDTO.UpdatedBy)
-			if err != nil {
-				return dtos.Folder{}, err
-			}
-			updater = fk8s.getUserLogin(ctx, id)
+			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy), orgID)
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
@@ -917,12 +905,15 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 	return folderDTO, nil
 }
 
-func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userID int64) string {
+func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string, orgID int64) string {
 	ctx, span := tracer.Start(ctx, "api.getUserLogin")
 	defer span.End()
 
-	query := user.GetUserByIDQuery{ID: userID}
-	user, err := fk8s.userService.GetByID(ctx, &query)
+	query := user.GetUserByUIDQuery{
+		UID:   userUID,
+		OrgID: orgID,
+	}
+	user, err := fk8s.userService.GetByUID(ctx, &query)
 	if err != nil {
 		return anonString
 	}
