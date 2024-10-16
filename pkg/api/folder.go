@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -635,8 +635,6 @@ type folderK8sHandler struct {
 	// #TODO check if it makes more sense to move this to FolderAPIBuilder
 	accesscontrolService accesscontrol.Service
 	userService          user.Service
-	// #TODO remove after we handle the nested folder case
-	folderService folder.Service
 }
 
 //-----------------------------------------------------------------------------------------
@@ -650,7 +648,6 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 		clientConfigProvider: hs.clientConfigProvider,
 		accesscontrolService: hs.accesscontrolService,
 		userService:          hs.userService,
-		folderService:        hs.folderService,
 	}
 }
 
@@ -809,16 +806,13 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
-	toID := func(rawIdentifier string) (int64, error) {
+	// #TODO Is there a preexisting function we can use instead, something along the lines of UserIdentifier?
+	toUID := func(rawIdentifier string) string {
 		parts := strings.Split(rawIdentifier, ":")
 		if len(parts) < 2 {
-			return 0, fmt.Errorf("invalid user identifier")
+			return ""
 		}
-		userID, err := strconv.ParseInt(parts[1], 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("faild to parse user identifier")
-		}
-		return userID, nil
+		return parts[1]
 	}
 
 	toDTO := func(fold *folder.Folder, checkCanView bool) (dtos.Folder, error) {
@@ -837,18 +831,10 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
 		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
 		if len(fDTO.CreatedBy) > 0 {
-			id, err := toID(fDTO.CreatedBy)
-			if err != nil {
-				return dtos.Folder{}, err
-			}
-			creator = fk8s.getUserLogin(ctx, id)
+			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy), orgID)
 		}
 		if len(fDTO.UpdatedBy) > 0 {
-			id, err := toID(fDTO.UpdatedBy)
-			if err != nil {
-				return dtos.Folder{}, err
-			}
-			updater = fk8s.getUserLogin(ctx, id)
+			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy), orgID)
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
@@ -884,64 +870,50 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
-	parents := []*folder.Folder{}
-	if folderDTO.ParentUID != "" {
-		parents, err = fk8s.folderService.GetParents(
-			c.Req.Context(),
-			folder.GetParentsQuery{
-				UID:   folderDTO.UID,
-				OrgID: folderDTO.OrgID,
-			})
-		if err != nil {
-			return dtos.Folder{}, err
-		}
+	if len(f.Fullpath) == 0 || len(f.FullpathUIDs) == 0 {
+		return folderDTO, nil
 	}
 
-	// #TODO refactor so that we have just one function for converting to folder DTO
-	toParentDTO := func(fold *folder.Folder, checkCanView bool) (dtos.Folder, error) {
-		g, err := guardian.NewByFolder(c.Req.Context(), fold, c.SignedInUser.GetOrgID(), c.SignedInUser)
-		if err != nil {
-			return dtos.Folder{}, err
-		}
+	parentsFullPath, err := internalfolders.GetParentTitles(f.Fullpath)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
+	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
 
-		if checkCanView {
-			canView, _ := g.CanView()
-			if !canView {
-				return dtos.Folder{
-					UID:   REDACTED,
-					Title: REDACTED,
-				}, nil
-			}
-		}
-		metrics.MFolderIDsAPICount.WithLabelValues(metrics.NewToFolderDTO).Inc()
-
-		return dtos.Folder{
-			UID:   fold.UID,
-			Title: fold.Title,
-			URL:   fold.URL,
-		}, nil
+	// The first part of the path is the newly created folder which we don't need to include
+	// in the parents field
+	if len(parentsFullPath) < 2 || len(parentsFullPathUIDs) < 2 {
+		return folderDTO, nil
 	}
 
-	folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
-	for _, f := range parents {
-		DTO, err := toParentDTO(f, true)
-		if err != nil {
-			// #TODO add logging
-			// fk8s.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
-			continue
-		}
-		folderDTO.Parents = append(folderDTO.Parents, DTO)
+	parents := []dtos.Folder{}
+	for i, v := range parentsFullPath[1:] {
+		slug := slugify.Slugify(v)
+		uid := parentsFullPathUIDs[1:][i]
+		url := dashboards.GetFolderURL(uid, slug)
+
+		parents = append(parents, dtos.Folder{
+			UID:   uid,
+			OrgID: c.SignedInUser.GetOrgID(),
+			Title: v,
+			URL:   url,
+		})
 	}
+
+	folderDTO.Parents = parents
 
 	return folderDTO, nil
 }
 
-func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userID int64) string {
+func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string, orgID int64) string {
 	ctx, span := tracer.Start(ctx, "api.getUserLogin")
 	defer span.End()
 
-	query := user.GetUserByIDQuery{ID: userID}
-	user, err := fk8s.userService.GetByID(ctx, &query)
+	query := user.GetUserByUIDQuery{
+		UID:   userUID,
+		OrgID: orgID,
+	}
+	user, err := fk8s.userService.GetByUID(ctx, &query)
 	if err != nil {
 		return anonString
 	}
@@ -953,23 +925,19 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		return nil, nil
 	}
 
-	var err error
-	parents := []*folder.Folder{}
-	if f.ParentUID != "" {
-		parents, err = fk8s.folderService.GetParents(
-			c.Req.Context(),
-			folder.GetParentsQuery{
-				UID:   f.UID,
-				OrgID: c.SignedInUser.GetOrgID(),
-			})
-		if err != nil {
-			return nil, err
-		}
+	if len(f.FullpathUIDs) == 0 {
+		return map[string]bool{}, nil
+	}
+
+	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
+	// The first part of the path is the newly created folder which we don't need to check here
+	if len(parentsFullPathUIDs) < 2 {
+		return map[string]bool{}, nil
 	}
 
 	folderIDs := map[string]bool{f.UID: true}
-	for _, p := range parents {
-		folderIDs[p.UID] = true
+	for _, uid := range parentsFullPathUIDs[1:] {
+		folderIDs[uid] = true
 	}
 
 	allMetadata := getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)

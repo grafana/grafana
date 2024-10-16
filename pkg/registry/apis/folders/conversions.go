@@ -2,6 +2,7 @@ package folders
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -85,10 +86,12 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *fo
 		// #TODO add created by field if necessary
 		// CreatedBy: meta.GetCreatedBy(),
 		// UpdatedBy: meta.GetCreatedBy(),
-		URL:     getURL(meta, title),
-		Created: createdTime,
-		Updated: createdTime,
-		OrgID:   orgID,
+		URL:          getURL(meta, title),
+		Created:      createdTime,
+		Updated:      createdTime,
+		OrgID:        orgID,
+		Fullpath:     meta.GetFullPath(),
+		FullpathUIDs: meta.GetFullPathUIDs(),
 	}
 	return f
 }
@@ -174,14 +177,20 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
-	if v.CreatedBy > 0 {
-		meta.SetCreatedBy(fmt.Sprintf("user:%d", v.CreatedBy))
+	if v.CreatedByUID != "" {
+		meta.SetCreatedBy(v.UpdatedByUID)
 	}
-	if v.UpdatedBy > 0 {
-		meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
+	if v.UpdatedByUID != "" {
+		meta.SetUpdatedBy(v.UpdatedByUID)
 	}
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
+	}
+	if v.Fullpath != "" {
+		meta.SetFullPath(v.Fullpath)
+	}
+	if v.FullpathUIDs != "" {
+		meta.SetFullPathUIDs(v.FullpathUIDs)
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
@@ -225,4 +234,23 @@ func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
 		return nil, err
 	}
 	return created, nil
+}
+
+func GetParentTitles(fullPath string) ([]string, error) {
+	// Find all forward slashes which aren't escaped
+	r, err := regexp.Compile(`[^\\](/)`)
+	if err != nil {
+		return nil, err
+	}
+	indices := r.FindAllStringIndex(fullPath, -1)
+
+	var start int
+	titles := []string{}
+	for _, i := range indices {
+		titles = append(titles, fullPath[start:i[0]+1])
+		start = i[0] + 2
+	}
+
+	titles = append(titles, fullPath[start:])
+	return titles, nil
 }

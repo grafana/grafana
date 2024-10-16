@@ -140,7 +140,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 
 			t.Run("PUT returns 500", func(t *testing.T) {
@@ -164,7 +163,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 		})
 	})
@@ -1832,6 +1830,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			BaseInterval: time.Second * 10,
 		},
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -1894,7 +1893,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
-
+	tracer := tracing.InitializeTracerForTest()
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
@@ -1905,6 +1904,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.xact,
 		env.log,
 		ngalertfakes.NewFakeReceiverPermissionsService(),
+		tracer,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
@@ -2002,7 +2002,7 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	return nil
 }
 
-func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	f.tree = definitions.Route{} // TODO
 	return f.tree, nil
 }
@@ -2017,7 +2017,7 @@ func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Cont
 	return fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
@@ -2031,7 +2031,7 @@ func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Co
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
-func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	return definitions.Route{}, nil
 }
 

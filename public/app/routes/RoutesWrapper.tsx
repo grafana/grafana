@@ -5,12 +5,11 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { HistoryWrapper, locationService, LocationServiceProvider } from '@grafana/runtime';
+import { HistoryWrapper, locationService, LocationServiceProvider, useChromeHeaderHeight } from '@grafana/runtime';
 import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } from '@grafana/ui';
 
 import { AngularRoot } from '../angular/AngularRoot';
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
-import { TOP_BAR_LEVEL_HEIGHT } from '../core/components/AppChrome/types';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { useSidecar } from '../core/context/SidecarContext';
@@ -74,10 +73,8 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
   primaryProps = alterStyles(primaryProps);
   secondaryProps = alterStyles(secondaryProps);
 
-  // TODO: this should be used to calculate the height of the header but right now results in a error loop when
-  //   navigating to explore "Cannot destructure property 'range' of 'itemState' as it is undefined."
-  // const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, TOP_BAR_LEVEL_HEIGHT * 2);
+  const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, headerHeight);
   const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
 
   return (

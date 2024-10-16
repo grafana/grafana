@@ -54,6 +54,19 @@ func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIden
 				return []string{fmt.Sprintf("serviceaccounts:id:%d", res.ID)}, nil
 			}),
 		},
+		accesscontrol.ResourceAuthorizerOptions{
+			Resource: iamv0.TeamResourceInfo.GetName(),
+			Attr:     "id",
+			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns claims.NamespaceInfo, name string) ([]string, error) {
+				res, err := store.GetTeamInternalID(ctx, ns, legacy.GetTeamInternalIDQuery{
+					UID: name,
+				})
+				if err != nil {
+					return nil, err
+				}
+				return []string{fmt.Sprintf("teams:id:%d", res.ID)}, nil
+			}),
+		},
 	)
 
 	return gfauthorizer.NewResourceAuthorizer(client), client

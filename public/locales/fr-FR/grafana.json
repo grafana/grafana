@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": ""
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "",
+      "misconfigured-warning": "",
+      "misconfigured-warning-details": ""
     }
   },
   "annotations": {
@@ -1096,7 +1101,6 @@
   "help-wizard": {
     "download-snapshot": "",
     "github-comment": "",
-    "preview-snapshot": "",
     "support-bundle": "",
     "troubleshooting-help": ""
   },
@@ -1225,6 +1229,7 @@
     "documentation": "",
     "host": {
       "description": "",
+      "error": "",
       "label": "",
       "placeholder": ""
     },
@@ -1234,11 +1239,13 @@
     },
     "search_filter": {
       "description": "",
+      "error": "",
       "label": "",
       "placeholder": ""
     },
     "search-base-dns": {
       "description": "",
+      "error": "",
       "label": "",
       "placeholder": ""
     },
@@ -1406,7 +1413,9 @@
       "dashboards": "",
       "datasources": "",
       "folders": "",
-      "library_elements": ""
+      "library_elements": "",
+      "mute_timings": "",
+      "notification_templates": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1440,6 +1449,7 @@
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
       "success-message": "",
+      "success-message-generic": "",
       "success-title": "",
       "upload-snapshot-error-title": ""
     },
@@ -1489,6 +1499,8 @@
       "datasource": "Source de données",
       "folder": "",
       "library_element": "",
+      "mute_timing": "",
+      "notification_template": "",
       "unknown": "Inconnu"
     },
     "summary": {
@@ -2218,7 +2230,9 @@
     "datasource-names": "",
     "delete-query-button": "",
     "query-template-get-error": "",
-    "search": ""
+    "search": "",
+    "user-info-get-error": "",
+    "user-names": ""
   },
   "query-operation": {
     "header": {

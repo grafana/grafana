@@ -116,6 +116,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesDashboardsAPI?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -198,7 +199,6 @@ export interface FeatureToggles {
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
-  dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
@@ -212,7 +212,7 @@ export interface FeatureToggles {
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
   homeSetupGuide?: boolean;
-  appPlatformAccessTokens?: boolean;
+  appPlatformGrpcClientAuth?: boolean;
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
   alertingQueryAndExpressionsStepMode?: boolean;

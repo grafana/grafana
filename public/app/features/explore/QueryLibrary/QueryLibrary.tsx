@@ -1,3 +1,6 @@
+import { useLocalStorage } from 'react-use';
+
+import { QueryLibraryExpmInfo } from './QueryLibraryExpmInfo';
 import { QueryTemplatesList } from './QueryTemplatesList';
 
 export interface QueryLibraryProps {
@@ -6,6 +9,26 @@ export interface QueryLibraryProps {
   activeDatasources?: string[];
 }
 
+export const QUERY_LIBRARY_LOCAL_STORAGE_KEYS = {
+  explore: {
+    notifyUserAboutQueryLibrary: 'grafana.explore.query-library.notifyUserAboutQueryLibrary',
+    newButton: 'grafana.explore.query-library.newButton',
+  },
+};
+
 export function QueryLibrary({ activeDatasources }: QueryLibraryProps) {
-  return <QueryTemplatesList activeDatasources={activeDatasources} />;
+  const [notifyUserAboutQueryLibrary, setNotifyUserAboutQueryLibrary] = useLocalStorage(
+    QUERY_LIBRARY_LOCAL_STORAGE_KEYS.explore.notifyUserAboutQueryLibrary,
+    true
+  );
+
+  return (
+    <>
+      <QueryLibraryExpmInfo
+        isOpen={notifyUserAboutQueryLibrary || false}
+        onDismiss={() => setNotifyUserAboutQueryLibrary(false)}
+      />
+      <QueryTemplatesList activeDatasources={activeDatasources} />
+    </>
+  );
 }
