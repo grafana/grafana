@@ -142,10 +142,12 @@ const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
  * The current provider functions for adhoc filter variables are the functions getTagKeys and getTagValues in the data source.
  * This function still uses these functions from inside the data source helper.
  *
+ * @param dataTrail
  * @param filtersVariable
  * @param datasourceHelper
  */
 export function limitAdhocProviders(
+  dataTrail: DataTrail,
   filtersVariable: SceneVariable<SceneVariableState> | null,
   datasourceHelper: MetricDatasourceHelper
 ) {
@@ -168,8 +170,14 @@ export function limitAdhocProviders(
       // as the series match[] parameter in Prometheus labels endpoint
       const filters = filtersVariable.state.filters;
       // call getTagKeys and truncate the response
+      // we're passing the queries so we get the labels that adhere to the queries
+      // we're also passing the scopes so we get the labels that adhere to the scopes filters
       const values = (
-        await datasourceHelper.getTagKeys({ filters, scopes: getClosestScopesFacade(variable)?.value })
+        await datasourceHelper.getTagKeys({
+          filters,
+          scopes: getClosestScopesFacade(variable)?.value,
+          queries: dataTrail.getQueries(),
+        })
       ).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
@@ -190,11 +198,14 @@ export function limitAdhocProviders(
       // remove current selected filter if updating a chosen filter
       const filters = filtersValues.filter((f) => f.key !== filter.key);
       // call getTagValues and truncate the response
+      // we're passing the queries so we get the label values that adhere to the queries
+      // we're also passing the scopes so we get the label values that adhere to the scopes filters
       const values = (
         await datasourceHelper.getTagValues({
           key: filter.key,
           filters,
           scopes: getClosestScopesFacade(variable)?.value,
+          queries: dataTrail.getQueries(),
         })
       ).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
