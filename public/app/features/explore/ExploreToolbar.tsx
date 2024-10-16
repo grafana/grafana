@@ -223,6 +223,8 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
         </ToolbarButton>
       );
     }
+  } else {
+    navBarActions.push(<div style={{ flex: 1 }} key="spacer0" />);
   }
 
   return (
