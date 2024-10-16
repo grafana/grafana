@@ -168,7 +168,7 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 		}
 
 		user, err := identity.GetRequester(ctx)
-		if err == nil && user != nil && sa.cfg.RBAC.PermissionsOnCreation("service-account") {
+		if err == nil && sa.cfg.RBAC.PermissionsOnCreation("service-account") {
 			if user.IsIdentityType(claims.TypeUser) {
 				userID, err := user.GetInternalID()
 				if err != nil {
