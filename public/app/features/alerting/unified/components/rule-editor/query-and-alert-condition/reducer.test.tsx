@@ -1,17 +1,25 @@
 import { getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import {
+  ExpressionDatasourceUID,
+  ExpressionQuery,
+  ExpressionQueryType,
+  ReducerMode,
+} from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { SIMPLE_CONDITION_REDUCER_ID, SIMPLE_CONDITION_THRESHOLD_ID } from './SimpleCondition';
 import {
   addNewDataQuery,
   addNewExpression,
+  addReducerAtFirstPosition,
   duplicateQuery,
   queriesAndExpressionsReducer,
   QueriesAndExpressionsState,
   removeExpression,
+  removeFirstReducer,
   rewireExpressions,
   setDataQueries,
   updateExpression,
@@ -19,6 +27,26 @@ import {
   updateExpressionTimeRange,
   updateExpressionType,
 } from './reducer';
+
+const reduceExpression: AlertQuery<ExpressionQuery> = {
+  refId: SIMPLE_CONDITION_REDUCER_ID,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.reduce,
+    refId: SIMPLE_CONDITION_REDUCER_ID,
+    settings: { mode: ReducerMode.Strict },
+  },
+};
+const thresholdExpression: AlertQuery<ExpressionQuery> = {
+  refId: SIMPLE_CONDITION_THRESHOLD_ID,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.threshold,
+    refId: SIMPLE_CONDITION_THRESHOLD_ID,
+  },
+};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -357,5 +385,64 @@ describe('Query and expressions reducer', () => {
     );
 
     expect(newState).toMatchSnapshot();
+  });
+  it('should remove first reducer', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, reduceExpression, thresholdExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    expect(newState).toMatchSnapshot();
+  });
+
+  it('should not remove first reducer if reducer is not the first expression', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, thresholdExpression, reduceExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    expect(newState).toEqual(initialState);
+  });
+
+  it('should not remove first reducer if we have more than two expressions', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, reduceExpression, thresholdExpression, reduceExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    expect(newState).toEqual(initialState);
+  });
+  it('should not remove first reducer if queries length is not 1', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, alertQuery, reduceExpression, thresholdExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    expect(newState).toEqual(initialState);
+  });
+
+  it('should add reduce expression if there is no reduce expression', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, thresholdExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, addReducerAtFirstPosition());
+    expect(newState).toMatchSnapshot();
+  });
+  it('should not add reduce expression if there is already a reduce expression', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, reduceExpression, thresholdExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, addReducerAtFirstPosition());
+    expect(newState).toEqual(initialState);
+  });
+  it('should not add reduce expression if there are more than two expressions', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, reduceExpression, thresholdExpression, reduceExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, addReducerAtFirstPosition());
+    expect(newState).toEqual(initialState);
   });
 });

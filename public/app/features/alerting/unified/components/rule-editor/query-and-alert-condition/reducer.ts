@@ -230,13 +230,19 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       state.queries = queriesWithUpdatedReferences(state.queries, payload.oldRefId, payload.newRefId);
     })
     .addCase(removeFirstReducer, (state) => {
+      const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
+      const dataQueries = state.queries.filter((query) => !isExpressionQuery(query.model));
+
+      if (dataQueries.length !== 1 || expressionQueries.length !== 2) {
+        return;
+      }
       const removedReducerQueries = state.queries.filter(
         (query, index) =>
           !isExpressionQuery(query.model) ||
           (isExpressionQuery(query.model) && !(query.model.type === ExpressionQueryType.reduce && index === 1))
       );
       state.queries = removedReducerQueries.map((query, index) => {
-        if (index === 1) {
+        if (index === 1 && removedReducerQueries.length === 2) {
           // we update the only expression (threshold) to point to the query as in this case we removed the reducer
           return {
             ...query,
