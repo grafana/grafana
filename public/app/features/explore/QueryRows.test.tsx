@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
 import { DataSourceApi } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreState } from 'app/types';
@@ -71,6 +71,11 @@ function setup(queries: DataQuery[]) {
     datasources,
   };
 }
+
+setPluginLinksHook(() => ({
+  links: [],
+  isLoading: false,
+}));
 
 describe('Explore QueryRows', () => {
   it('Should duplicate a query and generate a valid refId', async () => {
