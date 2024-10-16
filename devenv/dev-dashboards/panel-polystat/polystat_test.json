@@ -456,6 +456,10 @@
             {
               "text": "Bulgarian Lev (BGN)",
               "value": "currencyBGN"
+            },
+            {
+              "text": "Generic (No prefix)",
+              "value": "currency"
             }
           ],
           "text": "currency"
@@ -1619,6 +1623,10 @@
             {
               "text": "Bulgarian Lev (BGN)",
               "value": "currencyBGN"
+            },
+            {
+              "text": "Generic (No prefix)",
+              "value": "currency"
             }
           ],
           "text": "currency"
