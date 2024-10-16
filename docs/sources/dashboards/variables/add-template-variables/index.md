@@ -245,10 +245,13 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 ## Add ad hoc filters
 
-_Ad hoc filters_ enable you to add key/value filters that are automatically added to all metric queries that use the specified data source. Unlike other variables, you do not use ad hoc filters in queries. Instead, you use ad hoc filters to write filters for existing queries.
+_Ad hoc filters_ enable you to add key/value filters that are automatically added to all metric queries that use the specified data source.
+Unlike other variables, you do not use ad hoc filters in queries.
+Instead, you use ad hoc filters to write filters for existing queries.
 
 {{% admonition type="note" %}}
-Not all data sources support ad hoc filters. Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
+Not all data sources support ad hoc filters.
+Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
 {{% /admonition %}}
 
 1. [Enter general options](#enter-general-options).
@@ -264,7 +267,9 @@ Not all data sources support ad hoc filters. Examples of those that do include P
 
 ### Create dashboard filters
 
-Ad hoc filters are one of the most complex and flexible variable options available. Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query. Filters you apply in this manner are applied to all panels on the dashboard.
+Ad hoc filters are one of the most complex and flexible variable options available.
+Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query.
+Filters you apply in this manner are applied to all panels on the dashboard.
 
 Once you've added an ad hoc filter in the dashboard settings, you can add label/value pairs to the filter.
 
