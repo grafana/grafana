@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -45,7 +46,7 @@ func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.O
 }
 
 func ProvideAccessControlTest() *AccessControl {
-	return ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
+	return ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
 }
 
 type AccessControl struct {

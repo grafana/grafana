@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
@@ -45,6 +46,15 @@ type OpenFGAClient struct {
 	tenantID string
 	storeID  string
 	modelID  string
+}
+
+func NewOpenFGAClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*OpenFGAClient, error) {
+	return New(
+		ctx,
+		cc,
+		WithTenantID(fmt.Sprintf("stack-%s", cfg.StackID)),
+		WithLogger(log.New("zanzana-client")),
+	)
 }
 
 func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*OpenFGAClient, error) {

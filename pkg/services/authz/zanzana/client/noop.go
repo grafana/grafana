@@ -6,7 +6,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-func NewNoop() *NoopOpenFGAClient {
+func NewNoopOpenFGAClient() *NoopOpenFGAClient {
 	return &NoopOpenFGAClient{}
 }
 

@@ -19,7 +19,7 @@ import (
 	ftestutil "github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol/testutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -227,7 +227,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopOpenFGAClient())
+		ac := acimpl.ProvideAccessControl(features, zclient.NewNoopOpenFGAClient())
 		folderPermissions, err := ftestutil.ProvideFolderPermissions(features, cfg, sql)
 		require.NoError(t, err)
 		fStore := folderimpl.ProvideStore(sql)

@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -41,7 +41,7 @@ func SetupAPITestServer(t *testing.T, teamService team.Service, opts ...func(a *
 	a := ProvideTeamAPI(router,
 		teamService,
 		actest.FakeService{},
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()),
 		&actest.FakePermissionsService{},
 		&usertest.FakeUserService{},
 		&licensing.OSSLicensingService{},
@@ -296,7 +296,7 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 			tapi := ProvideTeamAPI(routing.NewRouteRegister(),
 				teamSvc,
 				actest.FakeService{},
-				acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()),
+				acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()),
 				&actest.FakePermissionsService{},
 				userService,
 				&licensing.OSSLicensingService{},
