@@ -1,11 +1,13 @@
 import { Suspense, useEffect, useLayoutEffect } from 'react';
+import { Navigate } from 'react-router-dom-v5-compat';
 // @ts-ignore
 import Drop from 'tether-drop';
 
-import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { locationSearchToObject, locationService, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
 
 import { useGrafana } from '../context/GrafanaContext';
+import { contextSrv } from '../services/context_srv';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
 import { GrafanaRouteLoading } from './GrafanaRouteLoading';
@@ -60,6 +62,17 @@ export function GrafanaRoute(props: Props) {
   );
 }
 
+export function GrafanaRouteWrapper({ route }: Pick<Props, 'route'>) {
+  const location = locationService.getLocation();
+  const roles = route.roles ? route.roles() : [];
+  if (roles?.length) {
+    if (!roles.some((r: string) => contextSrv.hasRole(r))) {
+      return <Navigate replace to="/" />;
+    }
+  }
+
+  return <GrafanaRoute route={route} location={location} />;
+}
 function getPageClasses(route: RouteDescriptor) {
   return route.pageClass ? route.pageClass.split(' ') : [];
 }

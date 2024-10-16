@@ -1,9 +1,9 @@
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
-import { Navigate, Route, Routes } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 
-import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -12,10 +12,9 @@ import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabl
 import { GrafanaApp } from './app';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { SidecarContext } from './core/context/SidecarContext';
-import { GrafanaRoute } from './core/navigation/GrafanaRoute';
+import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { sidecarService } from './core/services/SidecarService';
-import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
@@ -59,7 +58,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
         caseSensitive={route.sensitive === undefined ? false : route.sensitive}
         path={route.path}
         key={route.path}
-        element={<RouteElement route={route} />}
+        element={<GrafanaRouteWrapper route={route} />}
       />
     );
   };
@@ -117,20 +116,4 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
       </Provider>
     );
   }
-}
-
-type RouteElementProps = {
-  route: RouteDescriptor;
-};
-
-function RouteElement({ route }: RouteElementProps) {
-  const location = locationService.getLocation();
-  const roles = route.roles ? route.roles() : [];
-  if (roles?.length) {
-    if (!roles.some((r: string) => contextSrv.hasRole(r))) {
-      return <Navigate replace to="/" />;
-    }
-  }
-
-  return <GrafanaRoute route={route} location={location} />;
 }
