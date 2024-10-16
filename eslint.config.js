@@ -134,7 +134,7 @@ module.exports = [
     },
   },
   {
-    name: 'grafana/tests-overrides',
+    name: 'grafana/jsx-a11y-overrides',
     files: ['**/*.tsx'],
     ignores: ['**/*.{spec,test}.tsx'],
     rules: {
