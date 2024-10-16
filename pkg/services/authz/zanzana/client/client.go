@@ -95,7 +95,7 @@ func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfg
 }
 
 func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
 	defer span.End()
 
 	in.StoreId = c.storeID
