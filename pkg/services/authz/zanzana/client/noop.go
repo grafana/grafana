@@ -3,8 +3,26 @@ package client
 import (
 	"context"
 
+	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
+
+func NewNoopZanzanaClient() *NoopZanzanaClient {
+	return &NoopZanzanaClient{}
+}
+
+type NoopZanzanaClient struct{}
+
+func (nc NoopZanzanaClient) Check(ctx context.Context, caller claims.AuthInfo, req *authzlib.CheckRequest) (authzlib.CheckResponse, error) {
+	return authzlib.CheckResponse{}, nil
+}
+
+func (nc NoopZanzanaClient) List(ctx context.Context, caller claims.AuthInfo, req *zanzana.ListRequest) ([]string, error) {
+	return []string{}, nil
+}
 
 func NewNoopOpenFGAClient() *NoopOpenFGAClient {
 	return &NoopOpenFGAClient{}

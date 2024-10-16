@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -38,6 +39,8 @@ func WithSchema(modules []transformer.ModuleFile) OpenFGAClientOption {
 		c.modules = modules
 	}
 }
+
+var _ zanzana.OpenFGAClient = (*OpenFGAClient)(nil)
 
 type OpenFGAClient struct {
 	logger   log.Logger

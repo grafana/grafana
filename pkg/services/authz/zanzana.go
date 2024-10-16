@@ -22,6 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func ProvideZanzanaClient(openfgaClient zanzana.OpenFGAClient) (zanzana.ZanzanaClient, error) {
+	return zclient.NewZanzanaClient(openfgaClient)
+}
+
 // ProvideZanzana used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
 func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureToggles) (zanzana.OpenFGAClient, error) {
