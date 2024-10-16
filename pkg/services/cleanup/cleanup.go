@@ -103,10 +103,13 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 		{"delete expired images", srv.deleteExpiredImages},
 		{"cleanup old annotations", srv.cleanUpOldAnnotations},
 		{"expire old user invites", srv.expireOldUserInvites},
-		{"delete stale short URLs", srv.deleteStaleShortURLs},
 		{"delete stale query history", srv.deleteStaleQueryHistory},
 		{"expire old email verifications", srv.expireOldVerifications},
 		{"cleanup trash dashboards", srv.cleanUpTrashDashboards},
+	}
+
+	if srv.Cfg.ShortLinkExpiration > 0 {
+		cleanupJobs = append(cleanupJobs, cleanUpJob{"delete stale short URLs", srv.deleteStaleShortURLs})
 	}
 
 	logger := srv.log.FromContext(ctx)
