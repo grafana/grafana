@@ -3,6 +3,8 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaConfig, locationUtil } from '@grafana/data';
 
+import { userEvent } from '../../../../../public/test/test-utils';
+
 import { TextLink } from './TextLink';
 
 describe('TextLink', () => {
@@ -47,5 +49,19 @@ describe('TextLink', () => {
       </MemoryRouter>
     );
     expect(screen.getByRole('link')).toHaveAttribute('href', '/after-sub-url');
+  });
+  it('should fire onclick', async () => {
+    const onClick = jest.fn();
+
+    render(
+      <MemoryRouter>
+        <TextLink onClick={onClick} href={link}>
+          Link to Grafana
+        </TextLink>
+      </MemoryRouter>
+    );
+    await userEvent.click(screen.getByRole('link'));
+    screen.getByRole('link');
+    expect(onClick).toHaveBeenCalled();
   });
 });
