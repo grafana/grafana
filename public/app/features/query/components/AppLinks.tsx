@@ -9,6 +9,7 @@ import { usePluginLinks } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { useStyles2, Tooltip } from '@grafana/ui/';
 
+import { Trans } from '../../../core/internationalization';
 import { getPluginMeta } from '../../plugins/admin/api';
 
 type Props = {
@@ -60,7 +61,7 @@ export const AppLinks = ({ query }: Props) => {
   return (
     <Tooltip content={firstLink.description}>
       <LinkButton variant="secondary" fill="text" className={styles.goQueryLessLink}>
-        Go Queryless
+        <Trans i18nKey="query-operation.header.go-queryless">Go Queryless</Trans>
         <img className={styles.goQueryLessIcon} alt={firstLink.title} src={plugin.info.logos.small} />
       </LinkButton>
     </Tooltip>
