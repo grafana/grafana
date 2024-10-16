@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { CSSProperties } from 'react';
 import * as React from 'react';
 
-import { ActionModel, LinkModel } from '@grafana/data';
+import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { useStyles2 } from '../../themes';
 import { actionModelToContextMenuItems, linkModelToContextMenuItems } from '../../utils/dataLinks';
 import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
@@ -23,6 +24,8 @@ export interface DataLinksContextMenuApi {
 }
 
 export const DataLinksContextMenu = ({ children, links, actions, style }: DataLinksContextMenuProps) => {
+  const styles = useStyles2(getStyles);
+
   const itemsGroup: MenuItemsGroup[] = [
     { items: linkModelToContextMenuItems(links), label: Boolean(links().length) ? 'Data links' : '' },
   ];
@@ -44,6 +47,7 @@ export const DataLinksContextMenu = ({ children, links, actions, style }: DataLi
             icon={item.icon}
             active={item.active}
             onClick={item.onClick}
+            className={styles.itemWrapper}
           />
         ))}
       </MenuGroup>
@@ -79,3 +83,9 @@ export const DataLinksContextMenu = ({ children, links, actions, style }: DataLi
     );
   }
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  itemWrapper: css({
+    fontSize: 12,
+  }),
+});
