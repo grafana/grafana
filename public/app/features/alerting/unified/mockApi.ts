@@ -8,7 +8,7 @@ import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers
 import {
   setupAlertmanagerConfigMapDefaultState,
   setupAlertmanagerStatusMapDefaultState,
-} from 'app/features/alerting/unified/mocks/server/mock-entities/alertmanagers';
+} from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,

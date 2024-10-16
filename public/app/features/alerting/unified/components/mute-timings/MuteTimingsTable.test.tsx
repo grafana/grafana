@@ -4,8 +4,8 @@ import { config } from '@grafana/runtime';
 import { defaultConfig } from 'app/features/alerting/unified/MuteTimings.test';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setMuteTimingsListError } from 'app/features/alerting/unified/mocks/server/configure';
+import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/mock-entities/alertmanagers';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 

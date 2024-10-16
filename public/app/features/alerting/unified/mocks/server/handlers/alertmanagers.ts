@@ -3,12 +3,12 @@ import { http, HttpResponse } from 'msw';
 import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
-import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import {
   getAlertmanagerConfig,
   getAlertmanagerStatus,
   setAlertmanagerConfig,
-} from 'app/features/alerting/unified/mocks/server/mock-entities/alertmanagers';
+} from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
 

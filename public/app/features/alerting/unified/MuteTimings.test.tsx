@@ -7,13 +7,13 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/mock-entities/alertmanagers';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';

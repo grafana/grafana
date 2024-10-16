@@ -1,4 +1,4 @@
-import alertmanagerConfigMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
+import grafanaAlertmanagerConfig from 'app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertManagerCortexConfig, AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
 
@@ -8,7 +8,8 @@ import { AlertManagerCortexConfig, AlertmanagerStatus } from 'app/plugins/dataso
 
 /** **INITIAL** state of alertmanager configs for different scenarios */
 const ALERTMANAGER_CONFIGS: Record<string, AlertManagerCortexConfig> = {
-  [GRAFANA_RULES_SOURCE_NAME]: alertmanagerConfigMock,
+  // TODO in followup PR: Move mock AM config to TS file rather than JSON
+  [GRAFANA_RULES_SOURCE_NAME]: grafanaAlertmanagerConfig,
 };
 
 let ALERTMANAGER_CONFIG_MAP: Map<string, AlertManagerCortexConfig> = new Map(Object.entries(ALERTMANAGER_CONFIGS));

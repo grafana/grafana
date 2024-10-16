@@ -7,14 +7,14 @@ import { AppNotificationList } from 'app/core/components/AppNotifications/AppNot
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { makeAllAlertmanagerConfigFetchFail } from 'app/features/alerting/unified/mocks/server/configure';
 import {
-  TIME_INTERVAL_NAME_FILE_PROVISIONED,
-  TIME_INTERVAL_NAME_HAPPY_PATH,
-} from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import {
   getAlertmanagerConfig,
   setAlertmanagerConfig,
   setAlertmanagerStatus,
-} from 'app/features/alerting/unified/mocks/server/mock-entities/alertmanagers';
+} from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import {
+  TIME_INTERVAL_NAME_FILE_PROVISIONED,
+  TIME_INTERVAL_NAME_HAPPY_PATH,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
   AlertManagerCortexConfig,
