@@ -199,6 +199,26 @@ The following list contains role-based access control actions used by Grafana Ad
 | `grafana‑adaptive‑metrics‑app.exemptions:read`       | None              | Read recommendation exemptions.                       |
 | `grafana‑adaptive‑metrics‑app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
 
+### Grafana Alerting Notification action definitions
+
+To enable these permissions, enable the `alertingApiServer` feature toggle.
+
+| Action                                       | Applicable scopes                  | Description                                                                                                     |
+| -------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*` | Read contact points. None                                                                                       |
+| `alert.notifications.receivers.secrets:read` | `receivers:*`<br>`receivers:uid:*` | Export contact points with decrypted secrets.None                                                               |
+| `alert.notifications.receivers:create`       | None                               | Create a new contact points. The creator is automatically granted full access to the created contact point.None |
+| `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*` | Update existing contact points.None                                                                             |
+| `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*` | Update and delete existing contact points.None                                                                  |
+| `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*` | Read permissions for contact points.None                                                                        |
+| `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*` | Manage permissions for contact points.None                                                                      |
+| `alert.notifications.time-intervals:read`    | None                               | Read mute time intervals.None                                                                                   |
+| `alert.notifications.time-intervals:write`   | None                               | Create new or update existing mute time intervals.None                                                          |
+| `alert.notifications.time-intervals:delete`  | None                               | Delete existing time intervals.None                                                                             |
+| `alert.notifications.templates:read`         | None                               | Read templates.                                                                                                 |
+| `alert.notifications.templates:write`        | None                               | Create new or update existing templates.None                                                                    |
+| `alert.notifications.templates:delete`       | None                               | Delete existing templates.None                                                                                  |
+
 ## Scope definitions
 
 The following list contains role-based access control scopes.

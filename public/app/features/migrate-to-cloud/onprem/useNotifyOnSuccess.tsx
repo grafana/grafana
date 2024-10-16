@@ -56,6 +56,8 @@ function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
       types.push(t('migrate-to-cloud.migrated-counts.mute_timings', 'mute timings'));
     } else if (type === 'NOTIFICATION_TEMPLATE') {
       types.push(t('migrate-to-cloud.migrated-counts.notification_templates', 'notification templates'));
+    } else if (type === 'CONTACT_POINT') {
+      types.push(t('migrate-to-cloud.migrated-counts.contact_points', 'contact points'));
     }
 
     distinctItems += 1;
