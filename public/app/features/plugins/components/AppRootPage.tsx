@@ -100,7 +100,7 @@ export function AppRootPage({ pluginId, pluginNavSection, initialContext }: Prop
   }
 
   const pluginRoot = plugin.root && (
-    <PluginContextProvider meta={plugin.meta}>
+    <PluginContextProvider meta={plugin.meta} initialContext={initialContext}>
       <ExtensionRegistriesProvider
         registries={{
           addedLinksRegistry: addedLinksRegistry.readOnly(),
@@ -114,7 +114,6 @@ export function AppRootPage({ pluginId, pluginNavSection, initialContext }: Prop
           onNavChanged={onNavChanged}
           query={queryParams}
           path={location.pathname}
-          initialContext={initialContext}
         />
       </ExtensionRegistriesProvider>
     </PluginContextProvider>

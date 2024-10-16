@@ -6,6 +6,7 @@ import { Context } from './PluginContext';
 
 export type PluginContextProviderProps = {
   meta: PluginMeta;
+  initialContext?: unknown;
 };
 
 export function PluginContextProvider(props: PropsWithChildren<PluginContextProviderProps>): ReactElement {
