@@ -101,30 +101,33 @@ The following table lists the types of variables shipped with Grafana.
 ## Enter General options
 
 You must enter general options for any type of variable that you create.
+To create a variable, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click **Settings**.
 1. Go to the **Variables** tab.
 1. Click **New variable**.
-1. In the **Select variable type** drop-down list, choose one of the following:
-
-   - **Query**
-   - **Custom**
-   - **Textbox**
-   - **Constant**
-   - **Data source**
-   - **Interval**
-   - **Ad hoc filters**
-
+1. Choose an option in the **Select variable type** drop-down list.
 1. Enter a **Name** for the variable.
 1. (Optional) In the **Label** field, enter the display name for the variable drop-down list.
 
    If you don't enter a display name, then the drop-down list label is the variable name.
 
 1. Choose a **Show on dashboard** option:
+
    - **Label and value** - The variable drop-down list displays the variable **Name** or **Label** value. This is the default.
    - **Value:** The variable drop-down list only displays the selected variable value and a down arrow.
    - **Nothing:** No variable drop-down list is displayed on the dashboard.
+
+1. Click one of the following links to complete the steps for adding your selected variable type:
+
+   - [Query](#add-a-query-variable)
+   - [Custom](#add-a-custom-variable)
+   - [Textbox](#add-a-text-box-variable)
+   - [Constant](#add-a-constant-variable)
+   - [Data source](#add-a-data-source-variable)
+   - [Interval](#add-an-interval-variable)
+   - [Ad hoc filters](#add-ad-hoc-filters)
 
 ## Add a query variable
 
