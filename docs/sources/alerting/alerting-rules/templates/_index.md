@@ -120,10 +120,16 @@ However, if you want to display dynamic query values in annotations, you need to
 For instance, you can template the previous example to display the specific instance and CPU value that triggered the alert:
 
 ```
+CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
+```
+
+Alternatively, you can use the `index` function to print query values:
+
+```
 CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
 ```
 
-The result of this annotation would now be:
+The result of the annotation would now be:
 
 ```
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
@@ -180,7 +186,7 @@ low
 In this example, the value of the `severity` label is determined by the query value, and the possible options are `critical`, `high`, `medium`, or `low`. You can then use the `severity` label to change their notifications—for instance, sending `critical` alerts immediately or routing `low` alerts to a specific team for further review.
 
 {{% admonition type="note" %}}
-You should avoid displaying query values in labels, as this may create numerous unique alert instances when only one instance is necessary. Instead, use annotations to inform about query values.
+You should avoid displaying query values in labels, as this may create numerous unique alert instances—one for each distinct label value. Instead, use annotations to inform about query values.
 {{% /admonition %}}
 
 ### How to template a label

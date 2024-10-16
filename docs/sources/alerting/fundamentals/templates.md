@@ -98,7 +98,7 @@ Annotations can contain plain text, but you should template annotations if you n
 Here’s an example of templating an annotation, which explains where and why the alert was triggered. In this case, the alert triggers when CPU usage exceeds a threshold, and the `summary` annotation provides the relevant details.
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
+CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
 ```
 
 The outcome of this template would be:

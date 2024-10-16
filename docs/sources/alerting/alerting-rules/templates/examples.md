@@ -121,12 +121,6 @@ To provide additional context, you can include labels from the query. For instan
 CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
 ```
 
-Alternatively, you can use the `index()` function:
-
-```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
-```
-
 ```template_output
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```

@@ -21,12 +21,17 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  template-language:
+  language:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/
-  template-language-functions:
+  language-functions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
+  language-index:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
     - pattern: /docs/grafana-cloud/
@@ -61,7 +66,7 @@ The `$` and `.` symbols are used to reference variables and their properties. Yo
 {{ $values.A.Value }}
 ```
 
-Templates are based on the **Go templating system**. Refer to [Template language](ref:template-language) for additional information.
+Templates are based on the **Go templating system**. Refer to [Template language](ref:language) for additional information.
 
 The following variables are available when templating annotations and labels:
 
@@ -80,7 +85,7 @@ The `$labels` variable contains all labels from the query.
 For example, suppose you have a query that returns CPU usage for all of your servers, and you have an alert rule that fires when any of your servers have exceeded 80% CPU usage for the last 5 minutes. You want to add a summary annotation to the alert that tells you which server is experiencing high CPU usage. With the `$labels` variable you can write a template that prints a human-readable sentence such as:
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes
+CPU usage for {{ $labels.instance }} has exceeded 80% for the last 5 minutes
 ```
 
 The outcome of this template would be:
@@ -105,7 +110,7 @@ Each Ref IDs, such as `$values.A`, has the following properties
 Here's the previous example printing now the value of the instant query with Ref ID `A`:
 
 ```
-{{ $values.A.Value }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
+{{ $values.A.Value }} CPU usage for {{ $labels.instance }} over the last 5 minutes.
 ```
 
 If the alert has the label `instance=server1` and the query returns `81.2345`, the template would print:
@@ -117,7 +122,7 @@ If the alert has the label `instance=server1` and the query returns `81.2345`, t
 If the query in Ref ID `A` is a range query rather than an instant query then add a reduce expression with Ref ID `B` and replace `$values.A.Value` with `$values.B.Value`:
 
 ```
-{{ $values.B.Value }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
+{{ $values.B.Value }} CPU usage for {{ $labels.instance }} over the last 5 minutes.
 ```
 
 Alternatively, you can use the `index()` function to retrieve the query value:
@@ -148,7 +153,7 @@ Instead, we recommend using [$values](#values), which contains the same informat
 
 Functions can perform actions in templates such as transforming or formatting data.
 
-Note that the [functions provided by Go's template language](ref:template-language-functions), such as `index`, `and`, `printf`, and `len`, are available, along with many others.
+Note that the [functions provided by Go's template language](ref:language-functions), such as `index`, `and`, `printf`, and `len`, are available, along with many others.
 
 In addition, the following functions are also available for templating annotations and labels:
 
