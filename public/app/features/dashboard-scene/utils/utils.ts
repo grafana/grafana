@@ -19,8 +19,6 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 
-import { dashboardSceneGraph } from './dashboardSceneGraph';
-
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
 
@@ -216,12 +214,9 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
-  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
-
+export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
-    key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,

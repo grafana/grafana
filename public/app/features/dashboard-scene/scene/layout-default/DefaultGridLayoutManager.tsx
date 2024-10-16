@@ -38,17 +38,12 @@ export class DefaultGridLayoutManager
     forceRenderChildren(this.state.grid, true);
   }
 
-  /**
-   * Removes the first panel
-   */
-  public cleanUpStateFromExplore(): void {
-    this.state.grid.setState({
-      children: this.state.grid.state.children.slice(1),
-    });
-  }
-
   public addPanel(vizPanel: VizPanel): void {
-    const panelId = getPanelIdForVizPanel(vizPanel);
+    const panelId = this.getNextPanelId();
+
+    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
+    vizPanel.clearParent();
+
     const newGridItem = new DashboardGridItem({
       height: NEW_PANEL_HEIGHT,
       width: NEW_PANEL_WIDTH,

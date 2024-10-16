@@ -460,10 +460,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.onEnterEditMode();
     }
 
-    const panelId = dashboardSceneGraph.getNextPanelId(this);
-    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
-    vizPanel.clearParent();
-
     this.state.body.addPanel(vizPanel);
   }
 
@@ -580,7 +576,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewPanel(): VizPanel {
-    const vizPanel = getDefaultVizPanel(this);
+    const vizPanel = getDefaultVizPanel();
 
     this.addPanel(vizPanel);
 

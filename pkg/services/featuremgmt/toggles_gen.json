@@ -822,6 +822,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardNewLayouts",
+        "resourceVersion": "1729068245357",
+        "creationTimestamp": "2024-10-16T08:44:05Z"
+      },
+      "spec": {
+        "description": "Enables experimental new dashboard layouts",
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardRestore",
         "resourceVersion": "1728397491294",
         "creationTimestamp": "2024-05-16T17:36:26Z",
