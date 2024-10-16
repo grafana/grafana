@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode, useMemo } from 'react';
+import { PropsWithChildren, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -21,11 +21,15 @@ import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
+import { groupRulesByFileName } from '../api/prometheus';
+import { prometheusApi } from '../api/prometheusApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
-import { getAllRulesSources, isGrafanaRulesSource } from '../utils/datasource';
+import { useRulesFilter } from '../hooks/useFilteredRules';
+import { RulesFilter as RulesFilterState } from '../search/rulesSearchParser';
+import { getAllRulesSources, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
@@ -37,8 +41,8 @@ import { DataSourceIcon } from './components/Namespace';
 import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { LoadingIndicator } from './components/RuleGroup';
 
-const noop = () => {};
-const { usePrometheusRuleNamespacesQuery, useGetRuleGroupForNamespaceQuery } = alertRuleApi;
+const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
+const { useLazyGroupsQuery } = prometheusApi;
 
 const RuleList = withErrorBoundary(
   () => {
@@ -112,12 +116,24 @@ function PaginatedDataSourceLoader({
   uid,
   application,
 }: PaginatedDataSourceLoaderProps) {
-  const { data: ruleNamespaces = [], isLoading } = usePrometheusRuleNamespacesQuery({
-    ruleSourceName,
-    maxGroups: 25,
-    limitAlerts: 0,
-    excludeAlerts: true,
-  });
+  const { filterState } = useRulesFilter();
+
+  const {
+    page: ruleNamespaces,
+    nextPage,
+    previousPage,
+    isLoading,
+  } = usePaginatedPrometheusRuleNamespaces(ruleSourceName, 25, filterState);
+
+  const pageNumber = useRef(1);
+  const onPageChange = (page: number) => {
+    if (page > pageNumber.current) {
+      nextPage();
+    } else {
+      previousPage();
+    }
+    pageNumber.current = page;
+  };
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
@@ -174,10 +190,56 @@ function PaginatedDataSourceLoader({
             ))}
           </ListSection>
         ))}
-        {!isLoading && <Pagination currentPage={1} numberOfPages={0} onNavigate={noop} />}
+        {!isLoading && <Pagination currentPage={pageNumber.current} numberOfPages={0} onNavigate={onPageChange} />}
       </Stack>
     </DataSourceSection>
   );
+}
+
+function usePaginatedPrometheusRuleNamespaces(ruleSourceName: string, pageSize: number, filterState: RulesFilterState) {
+  const [fetchGroups, { isLoading, data }] = useLazyGroupsQuery();
+  const nextTokens = useRef<string[]>([]);
+
+  const pageNamespaces = useMemo(() => {
+    // groupRulesByFileName mutates the array and RTKQ query freezes the response data
+    return groupRulesByFileName(structuredClone(data?.data.groups ?? []), ruleSourceName);
+  }, [data, ruleSourceName]);
+
+  const fetchPage = useCallback(
+    async (nextToken?: string) => {
+      const ruleSourceUid = getDatasourceAPIUid(ruleSourceName);
+
+      const response = await fetchGroups({
+        ruleSource: { uid: ruleSourceUid },
+        nextToken,
+        maxGroups: pageSize,
+      });
+
+      return response.data?.data;
+    },
+    [fetchGroups, ruleSourceName, pageSize]
+  );
+
+  const nextPage = useCallback(async () => {
+    const page = await fetchPage(nextTokens.current.at(-1));
+    if (page?.nextToken) {
+      nextTokens.current.push(page.nextToken);
+    }
+  }, [fetchPage]);
+
+  const previousPage = useCallback(async () => {
+    // We go backwards so, we need to remove the last next token
+    // and the current one
+    nextTokens.current.pop();
+    await fetchPage(nextTokens.current.at(-2));
+  }, [fetchPage]);
+
+  // fetch first page
+  useEffect(() => {
+    nextPage();
+  }, [nextPage]);
+
+  return { isLoading, page: pageNamespaces, nextPage, previousPage };
 }
 
 interface AlertRuleLoaderProps {
