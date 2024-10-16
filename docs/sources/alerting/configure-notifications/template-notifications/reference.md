@@ -100,7 +100,7 @@ Here's an example that prints all available notification data from dot (`.`):
 | `Fingerprint`  | string    | A unique string that identifies the alert                                            |
 | `ValueString`  | string    | A string that contains the labels and value of each reduced expression in the alert. |
 
-This example iterates over the list of firing and resolved alerts in the notification and prints the data for each alert:
+This example iterates over the list of firing and resolved alerts (`.Alerts`) in the notification and prints the data for each alert:
 
 ```
 {{ define "custom_template" }}

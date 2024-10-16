@@ -34,11 +34,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#range
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#range
-  reference-extended-data:
+  reference-notification-data:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#extendeddata
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#extendeddata
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#notification-data
   language-variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#variables
@@ -127,7 +127,7 @@ There are {{ len $alert.Labels }}
 
 ### Iterate over alerts
 
-To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which are initialized with data. See [ExtendedData](ref:reference-extended-data).
+To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which are initialized with data. See [ExtendedData](ref:reference-notification-data).
 
 ```
 {{ range .Alerts }}
@@ -136,7 +136,7 @@ To print just the labels of each alert, rather than all information about the al
 ```
 
 - [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
-- [ExtendedData](ref:reference-extended-data): additional data that is not part of the standard set of fields the [dot](ref:language-dot) cursor is initialized with.
+- [ExtendedData](ref:reference-notification-data): additional data that is not part of the standard set of fields the [dot](ref:language-dot) cursor is initialized with.
 
 ### Iterate over annotations and labels
 

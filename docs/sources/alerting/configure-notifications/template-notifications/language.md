@@ -33,11 +33,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  reference-extendeddata:
+  reference-notificationdata:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#extendeddata
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#extendeddata
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#notification-data
 ---
 
 # Alerting template language
@@ -68,7 +68,7 @@ To print the value of something, use `{{` and `}}`. You can print the value of a
 
 In `text/template`, there is a special cursor called dot, written as `.`. You can think of this cursor as a variable whose value changes depending on where in the template it is used.
 
-At the start of notification templates, dot (`.`) refers to [ExtendedData](ref:reference-extendeddata).
+At the start of notification templates, dot (`.`) refers to [Notification Data](ref:reference-notificationdata).
 
 ```
 {{ .Alerts }}
