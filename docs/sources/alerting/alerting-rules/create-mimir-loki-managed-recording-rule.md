@@ -152,7 +152,7 @@ It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:
 
 #### Set evaluation behavior
 
-Use recording rule evaluation to determine how frequently an recording rule should be evaluated and how quickly it should change its state.
+Use recording rule evaluation to determine how frequently a recording rule should be evaluated and how quickly it should change its state.
 
 To do this, you need to make sure that your recording rule is in the right evaluation group and set a pending period time that works best for your use case.
 
