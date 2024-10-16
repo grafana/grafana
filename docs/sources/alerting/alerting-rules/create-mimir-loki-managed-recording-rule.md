@@ -31,6 +31,8 @@ refs:
 
 # Configure recording rules
 
+{{< admonition type="note" >}}
+
 In Grafana OSS and Enterprise, you can create both Grafana-managed and data source-managed recording rules if you enable the `grafanaManagedRecordingRules` feature flag.
 
 For more information on enabling feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles).
