@@ -219,6 +219,12 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
       return <Icon size="xl" name="database" />;
     case 'LIBRARY_ELEMENT':
       return <Icon size="xl" name="library-panel" />;
+    case 'MUTE_TIMING':
+      return <Icon size="xl" name="bell" />;
+    case 'NOTIFICATION_TEMPLATE':
+      return <Icon size="xl" name="bell" />;
+    case 'CONTACT_POINT':
+      return <Icon size="xl" name="bell" />;
     default:
       return undefined;
   }

@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": "ŦØ"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Mįşčőŉƒįģūřęđ",
+      "misconfigured-warning": "Ŧĥįş ŧęmpľäŧę įş mįşčőŉƒįģūřęđ.",
+      "misconfigured-warning-details": "Ŧęmpľäŧęş mūşŧ þę đęƒįŉęđ įŉ þőŧĥ ŧĥę <1></1> äŉđ <4></4> şęčŧįőŉş őƒ yőūř äľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉ."
     }
   },
   "annotations": {
@@ -1405,10 +1410,13 @@
       "title": "Ŀęŧ ūş ĥęľp yőū mįģřäŧę ŧő ŧĥįş şŧäčĸ"
     },
     "migrated-counts": {
+      "contact_points": "čőŉŧäčŧ pőįŉŧş",
       "dashboards": "đäşĥþőäřđş",
       "datasources": "đäŧä şőūřčęş",
       "folders": "ƒőľđęřş",
-      "library_elements": "ľįþřäřy ęľęmęŉŧş"
+      "library_elements": "ľįþřäřy ęľęmęŉŧş",
+      "mute_timings": "mūŧę ŧįmįŉģş",
+      "notification_templates": "ŉőŧįƒįčäŧįőŉ ŧęmpľäŧęş"
     },
     "migration-token": {
       "delete-button": "Đęľęŧę ŧőĸęŉ",
@@ -1488,10 +1496,13 @@
       "unknown-datasource-type": "Ůŉĸŉőŵŉ đäŧä şőūřčę"
     },
     "resource-type": {
+      "contact_point": "Cőŉŧäčŧ Pőįŉŧ",
       "dashboard": "Đäşĥþőäřđ",
       "datasource": "Đäŧä şőūřčę",
       "folder": "Főľđęř",
       "library_element": "Ŀįþřäřy Ēľęmęŉŧ",
+      "mute_timing": "Mūŧę Ŧįmįŉģ",
+      "notification_template": "Ńőŧįƒįčäŧįőŉ Ŧęmpľäŧę",
       "unknown": "Ůŉĸŉőŵŉ"
     },
     "summary": {
