@@ -6,7 +6,7 @@ import { DataQuery, PluginExtensionPoints, PluginMeta } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
 import { QueryToAppPluginContext } from '@grafana/data/src/types/pluginExtensions';
 import { usePluginLinks } from '@grafana/runtime';
-import { Link } from '@grafana/ui';
+import { LinkButton } from '@grafana/ui';
 import { useStyles2, Tooltip } from '@grafana/ui/';
 
 import { getPluginMeta } from '../../plugins/admin/api';
@@ -19,11 +19,14 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     goQueryLessLink: css({
       marginRight: '3px',
+      height: '20px',
+      paddingLeft: '5px',
+      paddingRight: '5px',
       fontSize: theme.typography.bodySmall.fontSize,
     }),
     goQueryLessIcon: css({
       marginLeft: '5px',
-      marginTop: '-5px',
+      marginTop: '-1px',
       width: '11px',
     }),
   };
@@ -56,10 +59,10 @@ export const AppLinks = ({ query }: Props) => {
 
   return (
     <Tooltip content={firstLink.description}>
-      <Link className={styles.goQueryLessLink} href={firstLink.path} target="_blank">
+      <LinkButton variant="secondary" fill="text" className={styles.goQueryLessLink}>
         Go Queryless
         <img className={styles.goQueryLessIcon} alt={firstLink.title} src={plugin.info.logos.small} />
-      </Link>
+      </LinkButton>
     </Tooltip>
   );
 };
