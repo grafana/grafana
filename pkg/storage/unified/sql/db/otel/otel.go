@@ -95,7 +95,7 @@ func consumeAttributes(ctx context.Context) []attribute.KeyValue {
 	return ret
 }
 
-type dbOtel struct {
+type otelDB struct {
 	db.DB
 	withTxFunc db.WithTxFunc
 	tracer     trace.Tracer
@@ -110,7 +110,7 @@ type dbOtel struct {
 func NewInstrumentedDB(d db.DB, tracer trace.Tracer) db.DB {
 	// TODO: periodically report metrics for stats returned by `db.Stats`
 
-	ret := &dbOtel{
+	ret := &otelDB{
 		DB:              d,
 		tracer:          tracer,
 		driverName:      d.DriverName(),
@@ -120,10 +120,10 @@ func NewInstrumentedDB(d db.DB, tracer trace.Tracer) db.DB {
 	return ret
 }
 
-func (x *dbOtel) init(ctx context.Context) {
+func (x *otelDB) init(ctx context.Context) {
 	x.initOnce.Do(func() {
 		// there is a chance that the context of the first operation run on the
-		// `*dbOtel` has a very soon deadline, is cancelled by the client while
+		// `*otelDB` has a very soon deadline, is cancelled by the client while
 		// we use it, or is even already done. This would cause this operation,
 		// which is run only once, to fail and we would no longer be able to
 		// know the database details. Thus, we impose a long timeout that we
@@ -152,7 +152,7 @@ func (x *dbOtel) init(ctx context.Context) {
 	})
 }
 
-func (x *dbOtel) startSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+func (x *otelDB) startSpan(ctx context.Context, name string) (context.Context, trace.Span) {
 	x.init(ctx)
 
 	attrs := append(consumeAttributes(ctx),
@@ -166,7 +166,7 @@ func (x *dbOtel) startSpan(ctx context.Context, name string) (context.Context, t
 	return ctx, span
 }
 
-func (x *dbOtel) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+func (x *otelDB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	ctx, span := x.startSpan(ctx, dbTraceExecContext)
 	defer span.End()
 	res, err := x.DB.ExecContext(ctx, query, args...)
@@ -174,7 +174,7 @@ func (x *dbOtel) ExecContext(ctx context.Context, query string, args ...any) (sq
 	return res, err
 }
 
-func (x *dbOtel) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+func (x *otelDB) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	ctx, span := x.startSpan(ctx, dbTraceQueryContext)
 	defer span.End()
 	rows, err := x.DB.QueryContext(ctx, query, args...)
@@ -182,7 +182,7 @@ func (x *dbOtel) QueryContext(ctx context.Context, query string, args ...any) (*
 	return rows, err
 }
 
-func (x *dbOtel) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+func (x *otelDB) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	ctx, span := x.startSpan(ctx, dbTraceQueryRowContext)
 	defer span.End()
 	row := x.DB.QueryRowContext(ctx, query, args...)
@@ -190,7 +190,7 @@ func (x *dbOtel) QueryRowContext(ctx context.Context, query string, args ...any)
 	return row
 }
 
-func (x *dbOtel) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
+func (x *otelDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
 	parentSpanID := trace.SpanFromContext(ctx).SpanContext().SpanID().String()
 
 	// create a new span that will encompass the whole transaction as a single
@@ -210,7 +210,7 @@ func (x *dbOtel) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error
 		}
 	}()
 
-	ret := txOtel{
+	ret := otelTx{
 		// we only miss defining `tx` here, which is defined later
 		span: txSpan, // will only be used during COMMIT/ROLLBACK
 		tracerStartFunc: func(n string, o ...trace.SpanStartOption) trace.Span {
@@ -232,11 +232,11 @@ func (x *dbOtel) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error
 	return ret, nil
 }
 
-func (x *dbOtel) WithTx(ctx context.Context, opts *sql.TxOptions, f db.TxFunc) error {
+func (x *otelDB) WithTx(ctx context.Context, opts *sql.TxOptions, f db.TxFunc) error {
 	return x.withTxFunc(ctx, opts, f)
 }
 
-func (x *dbOtel) PingContext(ctx context.Context) error {
+func (x *otelDB) PingContext(ctx context.Context) error {
 	ctx, span := x.startSpan(ctx, dbTracePingContext)
 	defer span.End()
 	err := x.DB.PingContext(ctx)
@@ -244,7 +244,7 @@ func (x *dbOtel) PingContext(ctx context.Context) error {
 	return err
 }
 
-type txOtel struct {
+type otelTx struct {
 	tx              db.Tx
 	span            trace.Span
 	tracerStartFunc func(string, ...trace.SpanStartOption) trace.Span
@@ -310,7 +310,7 @@ type txOtel struct {
 // In this case, it is not straightforward to know what operations are part of
 // the transaction. When looking at the traces, it will be very easy to be
 // confused and think that `nonTxQuerySpan` was part of the transaction.
-func (x txOtel) startSpan(optionalCtx context.Context, name string) (context.Context, trace.Span) {
+func (x otelTx) startSpan(optionalCtx context.Context, name string) (context.Context, trace.Span) {
 	// minimum number of options for the span
 	startOpts := make([]trace.SpanStartOption, 0, 2)
 	startOpts = append(startOpts, spanOptKindClient)
@@ -340,7 +340,7 @@ func (x txOtel) startSpan(optionalCtx context.Context, name string) (context.Con
 	return optionalCtx, span
 }
 
-func (x txOtel) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+func (x otelTx) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	ctx, span := x.startSpan(ctx, txTraceExecContext)
 	defer span.End()
 	res, err := x.tx.ExecContext(ctx, query, args...)
@@ -349,7 +349,7 @@ func (x txOtel) ExecContext(ctx context.Context, query string, args ...any) (sql
 	return res, err
 }
 
-func (x txOtel) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+func (x otelTx) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	ctx, span := x.startSpan(ctx, txTraceQueryContext)
 	defer span.End()
 	rows, err := x.tx.QueryContext(ctx, query, args...)
@@ -358,7 +358,7 @@ func (x txOtel) QueryContext(ctx context.Context, query string, args ...any) (*s
 	return rows, err
 }
 
-func (x txOtel) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+func (x otelTx) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	ctx, span := x.startSpan(ctx, txTraceQueryRowContext)
 	defer span.End()
 	row := x.tx.QueryRowContext(ctx, query, args...)
@@ -366,7 +366,7 @@ func (x txOtel) QueryRowContext(ctx context.Context, query string, args ...any) 
 	return row
 }
 
-func (x txOtel) Commit() error {
+func (x otelTx) Commit() error {
 	x.span.SetAttributes(attribute.String(attrTxTerminationOp,
 		attrValTxTerminationOpCommit))
 	defer x.span.End()
@@ -378,7 +378,7 @@ func (x txOtel) Commit() error {
 	return err
 }
 
-func (x txOtel) Rollback() error {
+func (x otelTx) Rollback() error {
 	x.span.SetAttributes(attribute.String(attrTxTerminationOp,
 		attrValTxTerminationOpRollback))
 	defer x.span.End()
