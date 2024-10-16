@@ -245,8 +245,11 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 ## Add ad hoc filters
 
-_Ad hoc filters_ enable you to add key/value filters that are automatically added to all metric queries that use the specified data source.
-Unlike other variables, you do not use ad hoc filters in queries.
+_Ad hoc filters_ are one of the most complex and flexible variable options available.
+Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query.
+
+Ad hoc filters let you add key/value filters that are automatically added to all metric queries that use the specified data source.
+Unlike other variables, you don't use ad hoc filters in queries.
 Instead, you use ad hoc filters to write filters for existing queries.
 
 {{% admonition type="note" %}}
@@ -254,24 +257,23 @@ Not all data sources support ad hoc filters.
 Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
 {{% /admonition %}}
 
+To create an ad hoc filter, follow these steps:
+
 1. [Enter general options](#enter-general-options).
-1. Under **Ad-hoc options**, select a target data source in **Data source** drop-down list.
+1. Under the **Ad-hoc options** section of the page, select a target data source in the **Data source** drop-down list.
 
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
    For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
-1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on and enter the values in the provided space.
+1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on, and then enter the values in the space provided.
 1. Click **Save dashboard**.
-1. Enter and optional description of your dashboard changes, and then click **Save**.
+1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Back to dashboard** and **Exit edit**.
 
 ### Create dashboard filters
 
-Ad hoc filters are one of the most complex and flexible variable options available.
-Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query.
+Once you've added an ad hoc filter in the dashboard settings, you can create key/value filter pairs on the dashboard.
 Filters you apply in this manner are applied to all panels on the dashboard.
-
-Once you've added an ad hoc filter in the dashboard settings, you can add label/value pairs to the filter.
 
 To create dashboard filters, follow these steps:
 
