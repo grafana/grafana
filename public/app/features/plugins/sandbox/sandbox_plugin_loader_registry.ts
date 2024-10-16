@@ -1,4 +1,7 @@
+import { PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
+import { getPluginSettings } from '../pluginSettings';
 
 type SandboxEligibilityCheckParams = {
   isAngular?: boolean;
@@ -22,7 +25,7 @@ export async function shouldLoadPluginInFrontendSandbox({
   pluginId,
 }: SandboxEligibilityCheckParams): Promise<boolean> {
   // basic check if the plugin is eligible for the sandbox
-  if (!isPluginFrontendSandboxElegible({ isAngular })) {
+  if (!(await isPluginFrontendSandboxElegible({ isAngular, pluginId }))) {
     return false;
   }
 
@@ -38,7 +41,10 @@ export async function shouldLoadPluginInFrontendSandbox({
  * This is a basic check that checks if the plugin is eligible to run in the sandbox.
  * It does not check if the plugin is actually enabled for the sandbox.
  */
-function isPluginFrontendSandboxElegible({ isAngular }: { isAngular?: boolean }): boolean {
+async function isPluginFrontendSandboxElegible({
+  isAngular,
+  pluginId,
+}: SandboxEligibilityCheckParams): Promise<boolean> {
   // Only if the feature is not enabled no support for sandbox
   if (!Boolean(config.featureToggles.pluginsFrontendSandbox)) {
     return false;
@@ -57,6 +63,12 @@ function isPluginFrontendSandboxElegible({ isAngular }: { isAngular?: boolean })
 
   // no sandbox in test mode. it often breaks e2e tests
   if (process.env.NODE_ENV === 'test') {
+    return false;
+  }
+
+  // don't run grafana-signed plugins in sandbox
+  const pluginMeta = await getPluginSettings(pluginId);
+  if (pluginMeta.signatureType === PluginSignatureType.grafana) {
     return false;
   }
 
