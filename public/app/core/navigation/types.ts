@@ -1,5 +1,5 @@
 import { Location } from 'history';
-import * as React from 'react';
+import { ComponentType } from 'react';
 
 import { UrlQueryMap } from '@grafana/data';
 
@@ -9,7 +9,7 @@ export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> 
   location: Location;
 }
 
-export type GrafanaRouteComponent<T extends {} = any> = React.ComponentType<GrafanaRouteComponentProps<T>>;
+export type GrafanaRouteComponent<T extends {} = any> = ComponentType<GrafanaRouteComponentProps<T>>;
 
 export interface RouteDescriptor {
   path: string;
