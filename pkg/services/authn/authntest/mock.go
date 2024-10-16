@@ -9,8 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
-var _ authn.Service = new(MockService)
-var _ authn.IdentitySynchronizer = new(MockService)
+var (
+	_ authn.Service              = new(MockService)
+	_ authn.IdentitySynchronizer = new(MockService)
+)
 
 type MockService struct {
 	SyncIdentityFunc         func(ctx context.Context, identity *authn.Identity) error
@@ -22,6 +24,10 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 }
 
 func (m *MockService) IsClientEnabled(name string) bool {
+	panic("unimplemented")
+}
+
+func (m *MockService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
 	panic("unimplemented")
 }
 
@@ -66,10 +72,12 @@ func (m *MockService) SyncIdentity(ctx context.Context, identity *authn.Identity
 	return nil
 }
 
-var _ authn.HookClient = new(MockClient)
-var _ authn.LogoutClient = new(MockClient)
-var _ authn.ContextAwareClient = new(MockClient)
-var _ authn.IdentityResolverClient = new(MockClient)
+var (
+	_ authn.HookClient             = new(MockClient)
+	_ authn.LogoutClient           = new(MockClient)
+	_ authn.ContextAwareClient     = new(MockClient)
+	_ authn.IdentityResolverClient = new(MockClient)
+)
 
 type MockClient struct {
 	NameFunc            func() string
@@ -98,6 +106,10 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 
 func (m MockClient) IsEnabled() bool {
 	return true
+}
+
+func (m MockClient) GetConfig() authn.SSOClientConfig {
+	return nil
 }
 
 func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {
