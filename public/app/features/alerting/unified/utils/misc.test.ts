@@ -134,7 +134,13 @@ describe('create links', () => {
   it('should make dashboard link', () => {
     expect(makeDashboardLink('abc123 def456')).toBe('/d/abc123%20def456');
   });
-  it('should make panel link', () => {
+  it('should make panel view link', () => {
     expect(makePanelLink('dashboard uid', '1')).toBe('/d/dashboard%20uid?viewPanel=1');
+  });
+  it('should make panel edit link', () => {
+    expect(makePanelLink('dashboard uid', '1', 'edit')).toBe('/d/dashboard%20uid?editPanel=1');
+  });
+  it('should make panel edit link with tab', () => {
+    expect(makePanelLink('dashboard uid', '1', 'edit', 'alert')).toBe('/d/dashboard%20uid?editPanel=1&tab=alert');
   });
 });

@@ -155,8 +155,19 @@ export function makeDashboardLink(dashboardUID: string): string {
   return createUrl(`/d/${encodeURIComponent(dashboardUID)}`);
 }
 
-export function makePanelLink(dashboardUID: string, panelId: string): string {
-  const panelParams = new URLSearchParams({ viewPanel: panelId });
+export function makePanelLink(
+  dashboardUID: string,
+  panelId: string,
+  mode: 'view' | 'edit' = 'view',
+  tab?: 'alert' | 'transform' | 'query'
+): string {
+  const panelIdParam = mode === 'edit' ? 'editPanel' : 'viewPanel';
+  const panelParams = new URLSearchParams({ [panelIdParam]: panelId });
+
+  if (tab) {
+    panelParams.set('tab', tab);
+  }
+
   return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 

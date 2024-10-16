@@ -61,10 +61,7 @@ function LegacyAlertsWarning({ dashboardUid, panels }: Props) {
       id: 'title',
       header: 'Title',
       cell: (cell) => (
-        <TextLink
-          external
-          href={makePanelLink(dashboardUid, String(cell.row.id), { editPanel: cell.row.id, tab: 'alert' })}
-        >
+        <TextLink external href={makePanelLink(dashboardUid, String(cell.row.id), 'edit', 'alert')}>
           {cell.value}
         </TextLink>
       ),
