@@ -3658,7 +3658,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/eslint-config@portal:/Users/jackwestbrook/dev/grafana/eslint-config-grafana::locator=grafana%40workspace%3A."
   peerDependencies:
-    "@stylistic/eslint-plugin-ts": ^2.9.0
+    "@stylistic/eslint-plugin-ts": ">=2.9.0"
     "@typescript-eslint/eslint-plugin": ">=6.18.0"
     "@typescript-eslint/parser": ">=6.18.0"
     eslint: ">=8.0.0"
