@@ -3,8 +3,8 @@ package accesscontrol
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type recordingAccessControlFake struct {
@@ -32,8 +32,16 @@ func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix strin
 	panic("implement me")
 }
 
-func (a *recordingAccessControlFake) IsDisabled() bool {
-	return a.Disabled
+func (a *recordingAccessControlFake) WithoutResolvers() accesscontrol.AccessControl {
+	panic("unimplemented")
+}
+
+func (a *recordingAccessControlFake) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
+	return false, nil
+}
+
+func (a *recordingAccessControlFake) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
+	return nil, nil
 }
 
 var _ accesscontrol.AccessControl = &recordingAccessControlFake{}

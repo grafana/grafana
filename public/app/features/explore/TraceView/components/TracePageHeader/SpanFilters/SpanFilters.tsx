@@ -20,7 +20,17 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
-import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Collapse,
+  HorizontalGroup,
+  Icon,
+  InlineField,
+  InlineFieldRow,
+  Select,
+  Tooltip,
+  useStyles2,
+  Input,
+} from '@grafana/ui';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import SearchBarInput from '../../common/SearchBarInput';
@@ -418,26 +428,44 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                           }),
                         });
                       }}
-                      options={[toOption('='), toOption('!=')]}
+                      options={[toOption('='), toOption('!='), toOption('=~'), toOption('!~')]}
                       value={tag.operator}
                     />
                     <span className={styles.tagValues}>
-                      <Select
-                        aria-label="Select tag value"
-                        isClearable
-                        key={tag.value}
-                        onChange={(v) => {
-                          setSpanFiltersSearch({
-                            ...search,
-                            tags: search.tags?.map((x) => {
-                              return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
-                            }),
-                          });
-                        }}
-                        options={tagValues[tag.id] ? tagValues[tag.id] : []}
-                        placeholder="Select value"
-                        value={tag.value}
-                      />
+                      {(tag.operator === '=' || tag.operator === '!=') && (
+                        <Select
+                          aria-label="Select tag value"
+                          isClearable
+                          key={tag.value}
+                          onChange={(v) => {
+                            setSpanFiltersSearch({
+                              ...search,
+                              tags: search.tags?.map((x) => {
+                                return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
+                              }),
+                            });
+                          }}
+                          options={tagValues[tag.id] ? tagValues[tag.id] : []}
+                          placeholder="Select value"
+                          value={tag.value}
+                        />
+                      )}
+                      {(tag.operator === '=~' || tag.operator === '!~') && (
+                        <Input
+                          aria-label="Input tag value"
+                          onChange={(v) => {
+                            setSpanFiltersSearch({
+                              ...search,
+                              tags: search.tags?.map((x) => {
+                                return x.id === tag.id ? { ...x, value: v?.currentTarget?.value || '' } : x;
+                              }),
+                            });
+                          }}
+                          placeholder="Tag value"
+                          width={18}
+                          value={tag.value || ''}
+                        />
+                      )}
                     </span>
                     {(tag.key || tag.value || search.tags.length > 1) && (
                       <AccessoryButton
@@ -488,46 +516,44 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
 SpanFilters.displayName = 'SpanFilters';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css`
-      label: SpanFilters;
-      margin: 0.5em 0 -${theme.spacing(1)} 0;
-      z-index: 5;
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    label: 'SpanFilters',
+    margin: `0.5em 0 -${theme.spacing(1)} 0`,
+    zIndex: 5,
 
-      & > div {
-        border-left: none;
-        border-right: none;
-      }
-    `,
-    collapseLabel: css`
-      svg {
-        color: #aaa;
-        margin: -2px 0 0 10px;
-      }
-    `,
-    flexContainer: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-    }),
-    addTag: css({
-      marginLeft: theme.spacing(1),
-    }),
-    intervalInput: css`
-      margin: 0 -4px 0 0;
-    `,
-    tagsRow: css`
-      margin: -4px 0 0 0;
-    `,
-    tagValues: css`
-      max-width: 200px;
-    `,
-    nextPrevResult: css`
-      flex: 1;
-      align-items: center;
-      display: flex;
-      justify-content: flex-end;
-      margin-right: ${theme.spacing(1)};
-    `,
-  };
-};
+    '& > div': {
+      borderLeft: 'none',
+      borderRight: 'none',
+    },
+  }),
+  collapseLabel: css({
+    svg: {
+      color: '#aaa',
+      margin: '-2px 0 0 10px',
+    },
+  }),
+  flexContainer: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
+  addTag: css({
+    marginLeft: theme.spacing(1),
+  }),
+  intervalInput: css({
+    margin: '0 -4px 0 0',
+  }),
+  tagsRow: css({
+    margin: '-4px 0 0 0',
+  }),
+  tagValues: css({
+    maxWidth: '200px',
+  }),
+  nextPrevResult: css({
+    flex: 1,
+    alignItems: 'center',
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginRight: theme.spacing(1),
+  }),
+});

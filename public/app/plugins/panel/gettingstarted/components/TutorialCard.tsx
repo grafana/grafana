@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent } from 'react';
+import { MouseEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -36,7 +36,6 @@ export const TutorialCard = ({ card }: Props) => {
 };
 
 const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: TutorialCardType) => {
-  event.preventDefault();
   const isSet = store.get(card.key);
   if (!isSet) {
     store.set(card.key, true);

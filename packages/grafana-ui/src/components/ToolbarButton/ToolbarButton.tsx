@@ -1,5 +1,6 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef, ButtonHTMLAttributes } from 'react';
+import { forwardRef, ButtonHTMLAttributes } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -223,6 +224,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
     }),
     content: css({
+      display: 'flex',
       flexGrow: 1,
     }),
     contentWithIcon: css({

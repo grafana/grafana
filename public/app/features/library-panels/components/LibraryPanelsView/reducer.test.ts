@@ -108,7 +108,7 @@ function mockLibraryPanel({
   name = 'Test Panel',
   model = { type: 'text', title: 'Test Panel' } as Panel,
   meta = {
-    folderName: 'General',
+    folderName: 'Dashboards',
     folderUid: '',
     connectedDashboards: 0,
     created: '2021-01-01T00:00:00',

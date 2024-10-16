@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/build/config"
-	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 )
 
 // writeRpmMacros writes ~/.rpmmacros.
@@ -31,7 +31,7 @@ func writeRpmMacros(homeDir, gpgPassPath string) error {
 // Import imports the GPG package signing key.
 // ~/.rpmmacros also gets written.
 func Import(cfg config.Config) error {
-	exists, err := fs.Exists(cfg.GPGPrivateKey)
+	exists, err := fsutil.Exists(cfg.GPGPrivateKey)
 	if err != nil {
 		return err
 	}

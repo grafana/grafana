@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { CallToActionCard, EmptyState, LinkButton } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';

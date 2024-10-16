@@ -1,12 +1,10 @@
-import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
-import { locationService, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -29,13 +27,12 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, DashboardDataDTO } from 'app/types';
 import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
 
@@ -51,8 +48,8 @@ jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
 
-setPluginExtensionsHook(() => ({
-  extensions: [],
+setPluginLinksHook(() => ({
+  links: [],
   isLoading: false,
 }));
 
@@ -78,11 +75,7 @@ const mocks = {
 };
 
 const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: ReturnType<typeof configureStore>) => {
-  render(
-    <TestProvider store={initialStore}>
-      <PanelDataAlertingTabRendered model={model}></PanelDataAlertingTabRendered>
-    </TestProvider>
-  );
+  render(<PanelDataAlertingTabRendered model={model} />);
 };
 
 const promResponse: PromRulesResponse = {
@@ -144,7 +137,7 @@ const dashboard = {
     from: 'now-6h',
     to: 'now',
   },
-  timepicker: { refresh_intervals: 5 },
+  timepicker: { refresh_intervals: ['5s', '30s', '1m'] },
   meta: {
     canSave: true,
     folderId: 1,
@@ -350,9 +343,9 @@ async function clickNewButton() {
   const oldPush = locationService.push;
   locationService.push = pushMock;
   const button = await ui.createButton.find();
-  await act(async () => {
-    await userEvent.click(button);
-  });
+
+  await userEvent.click(button);
+
   const match = pushMock.mock.lastCall[0].match(/alerting\/new\?defaults=(.*)&returnTo=/);
   const defaults = JSON.parse(decodeURIComponent(match![1]));
   locationService.push = oldPush;
@@ -360,9 +353,9 @@ async function clickNewButton() {
 }
 
 function createModel(dashboard: DashboardModel) {
-  const scene = createDashboardSceneFromDashboardModel(dashboard);
+  const scene = createDashboardSceneFromDashboardModel(dashboard, {} as DashboardDataDTO);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
-  const model = new PanelDataAlertingTab(VizPanelManager.createFor(vizPanel));
+  const model = new PanelDataAlertingTab({ panelRef: vizPanel.getRef() });
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);
   return model;
 }

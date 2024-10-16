@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

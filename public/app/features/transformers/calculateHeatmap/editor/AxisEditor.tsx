@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';

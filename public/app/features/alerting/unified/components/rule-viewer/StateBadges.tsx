@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { Stack, Text } from '@grafana/ui';
 import { RuleHealth } from 'app/types/unified-alerting';

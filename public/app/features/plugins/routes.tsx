@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { NavModelItem } from '@grafana/data';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { getRootSectionForNode } from 'app/core/selectors/navModel';
@@ -35,7 +33,7 @@ export function getAppPluginRoutes(): RouteDescriptor[] {
     {
       path: '/a/:pluginId',
       exact: false, // route everything under this path to the plugin, so it can define more routes under this path
-      component: ({ match }) => <AppRootPage pluginId={match.params.pluginId} pluginNavSection={navIndex.home} />,
+      component: () => <AppRootPage pluginNavSection={navIndex.home} />,
     },
   ];
 }

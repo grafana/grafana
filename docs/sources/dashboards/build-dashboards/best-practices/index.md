@@ -15,6 +15,57 @@ labels:
 menuTitle: Best practices
 title: Grafana dashboard best practices
 weight: 800
+refs:
+  text-panel:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
+  text-panel-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
+  data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  url-parameters:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#data-link-variables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#data-link-variables
+  variable-examples:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#examples-of-templates-and-variables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#examples-of-templates-and-variables
+  dashboard-list-panel:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/dashboard-list/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/dashboard-list/
+  manage-dashboard-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
+  usage-insights:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/
+  templates-and-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+  thresholds:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
 ---
 
 # Grafana dashboard best practices
@@ -100,7 +151,7 @@ How can you tell you are here?
 
 - Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends.
 
-  Refer to the list of [Variable examples][] if you want some ideas.
+  Refer to the list of [Variable examples](ref:variable-examples) if you want some ideas.
 
 - Methodical dashboards according to an [observability strategy](#common-observability-strategies).
 - Hierarchical dashboards with drill-downs to the next level.
@@ -113,12 +164,12 @@ How can you tell you are here?
 
 - Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
 - Expressive charts with meaningful use of color and normalizing axes where you can.
-  - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds][] can help with that.
+  - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds](ref:thresholds) can help with that.
   - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because machines can have a different number of cores. Normalizing CPU usage by the number of cores reduces cognitive load because the viewer can trust that at 100% all cores are being used, without having to know the number of CPUs.
 - Directed browsing cuts down on "guessing."
   - Template variables make it harder to “just browse” randomly or aimlessly.
   - Most dashboards should be linked to by alerts.
-  - Browsing is directed with links. For more information, refer to [Manage dashboard links][].
+  - Browsing is directed with links. For more information, refer to [Manage dashboard links](ref:manage-dashboard-links).
 - Version-controlled dashboard JSON.
 
 ### High - optimized use
@@ -128,7 +179,7 @@ At this stage, you have optimized your dashboard management use with a consisten
 - Actively reducing sprawl.
   - Regularly review existing dashboards to make sure they are still relevant.
   - Only approved dashboards added to master dashboard list.
-  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights][].
+  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights](ref:usage-insights).
 - Consistency by design.
 - Use scripting libraries to generate dashboards, ensure consistency in pattern and style.
   - grafonnet (Jsonnet)
@@ -177,13 +228,13 @@ Once you have a strategy or design guidelines, write them down to help maintain 
   - Consider including your name or initials in the dashboard name or as a tag so that people know who owns the dashboard.
   - Remove temporary experiment dashboards when you are done with them.
 - If you create many related dashboards, think about how to cross-reference them for easy navigation. Refer to [Best practices for managing dashboards](#best-practices-for-managing-dashboards) for more information.
-- Grafana retrieves data from a data source. A basic understanding of [data sources][] in general and your specific is important.
+- Grafana retrieves data from a data source. A basic understanding of [data sources](ref:data-sources) in general and your specific is important.
 - Avoid unnecessary dashboard refreshing to reduce the load on the network or backend. For example, if your data changes every hour, then you don't need to set the dashboard refresh rate to 30 seconds.
 - Use the left and right Y-axes when displaying time series with different units or ranges.
 - Add documentation to dashboards and panels.
-  - To add documentation to a dashboard, add a [Text panel visualization][] to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
+  - To add documentation to a dashboard, add a [Text panel visualization](ref:text-panel-visualization) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
   - To add documentation to a panel, edit the panel settings and add a description. Any text you add will appear if you hover your cursor over the small `i` in the top left corner of the panel.
-- Reuse your dashboards and enforce consistency by using [templates and variables][].
+- Reuse your dashboards and enforce consistency by using [templates and variables](ref:templates-and-variables).
 - Be careful with stacking graph data. The visualizations can be misleading, and hide important data. We recommend turning it off in most cases.
 
 ## Best practices for managing dashboards
@@ -211,41 +262,9 @@ What is your dashboard maturity level? Analyze your current dashboard setup and 
   - If you create a temporary dashboard, perhaps to test something, prefix the name with `TEST: `. Delete the dashboard when you are finished.
 - Copying dashboards with no significant changes is not a good idea.
   - You miss out on updates to the original dashboard, such as documentation changes, bug fixes, or additions to metrics.
-  - In many cases copies are being made to simply customize the view by setting template parameters. This should instead be done by maintaining a link to the master dashboard and customizing the view with [URL parameters][].
+  - In many cases copies are being made to simply customize the view by setting template parameters. This should instead be done by maintaining a link to the master dashboard and customizing the view with [URL parameters](ref:url-parameters).
 - When you must copy a dashboard, clearly rename it and _do not_ copy the dashboard tags. Tags are important metadata for dashboards that are used during search. Copying tags can result in false matches.
 - Maintain a dashboard of dashboards or cross-reference dashboards. This can be done in several ways:
-  - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Manage dashboard links][].
-  - Add a [Dashboard list panel][]. You can then customize what you see by doing tag or folder searches.
-  - Add a [Text panel][] and use markdown to customize the display.
-
-{{% docs/reference %}}
-[Variable examples]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables#examples-of-templates-and-variables"
-[Variable examples]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables#examples-of-templates-and-variables"
-
-[templates and variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-
-[URL parameters]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links#data-link-variables"
-[URL parameters]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links#data-link-variables"
-
-[Dashboard list panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/dashboard-list"
-[Dashboard list panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/dashboard-list"
-
-[Thresholds]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-thresholds"
-[Thresholds]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-thresholds"
-
-[Text panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text"
-[Text panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text"
-
-[Manage dashboard links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/manage-dashboard-links"
-[Manage dashboard links]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/manage-dashboard-links"
-
-[Text panel visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text"
-[Text panel visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text"
-
-[data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-
-[Usage insights]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage"
-[Usage insights]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage"
-{{% /docs/reference %}}
+  - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Manage dashboard links](ref:manage-dashboard-links).
+  - Add a [Dashboard list panel](ref:dashboard-list-panel). You can then customize what you see by doing tag or folder searches.
+  - Add a [Text panel](ref:text-panel) and use markdown to customize the display.

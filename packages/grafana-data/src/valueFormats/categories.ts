@@ -147,6 +147,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'CFP franc (XPF)', id: 'currencyXPF', fn: currency('XPF') },
       { name: 'Bulgarian Lev (BGN)', id: 'currencyBGN', fn: currency('BGN') },
       { name: 'Guaraní (₲)', id: 'currencyPYG', fn: currency('₲') },
+      { name: 'Uruguay Peso (UYU)', id: 'currencyUYU', fn: currency('UYU') },
+      { name: 'Israeli New Shekels (₪)', id: 'currencyILS', fn: currency('₪') },
     ],
   },
   {

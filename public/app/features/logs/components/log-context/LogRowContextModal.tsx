@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { partition } from 'lodash';
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {

@@ -1,15 +1,16 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { advanceTo, clear } from 'jest-date-mock';
-import React from 'react';
 
 import { dateTime } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
-import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
+import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { activateFullSceneTree } from '../utils/test-utils';
 
 import { ShareLinkTab } from './ShareLinkTab';
 
@@ -17,6 +18,11 @@ jest.mock('app/core/utils/shortLinks', () => ({
   ...jest.requireActual('app/core/utils/shortLinks'),
   createShortLink: jest.fn().mockResolvedValue(`http://localhost:3000/goto/shortend-uid`),
 }));
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 describe('ShareLinkTab', () => {
   const fakeCurrentDate = dateTime('2019-02-11T19:00:00.000Z').toDate();
@@ -48,7 +54,7 @@ describe('ShareLinkTab', () => {
   describe('with disabled locked range range', () => {
     it('should generate share url with relative time', async () => {
       const tab = buildAndRenderScenario({});
-      act(() => tab.onToggleLockedTime());
+      await act(() => tab.onToggleLockedTime());
 
       expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
         'http://dashboards.grafana.com/grafana/d/dash-1?from=now-6h&to=now&viewPanel=panel-12'
@@ -58,7 +64,7 @@ describe('ShareLinkTab', () => {
 
   it('should add theme when specified', async () => {
     const tab = buildAndRenderScenario({});
-    act(() => tab.onThemeChange('light'));
+    await act(() => tab.onThemeChange('light'));
 
     expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
       'http://dashboards.grafana.com/grafana/d/dash-1?from=2019-02-11T13:00:00.000Z&to=2019-02-11T19:00:00.000Z&viewPanel=panel-12&theme=light'
@@ -97,29 +103,19 @@ function buildAndRenderScenario(options: ScenarioOptions) {
     pluginId: 'table',
     key: 'panel-12',
   });
-
-  const dashboard = new DashboardScene({
+  const tab = new ShareLinkTab({ panelRef: panel.getRef() });
+  const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
     meta: {
       canEdit: true,
     },
     $timeRange: new SceneTimeRange({}),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
+    overlay: tab,
   });
 
-  const tab = new ShareLinkTab({ dashboardRef: dashboard.getRef(), panelRef: panel.getRef() });
+  activateFullSceneTree(scene);
 
   render(<tab.Component model={tab} />);
 

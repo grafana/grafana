@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
@@ -26,7 +27,10 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
 
-export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;
+export type Props = Omit<
+  GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>,
+  'match' | 'history'
+>;
 
 const selectors = e2eSelectors.pages.PublicDashboard;
 
@@ -52,10 +56,12 @@ const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
 };
 
 const PublicDashboardPage = (props: Props) => {
-  const { match, route, location } = props;
+  const { route } = props;
+  const location = useLocation();
+  const { accessToken } = useParams();
   const dispatch = useDispatch();
   const context = useGrafana();
-  const prevProps = usePrevious(props);
+  const prevProps = usePrevious({ ...props, location });
   const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel();
@@ -65,11 +71,11 @@ const PublicDashboardPage = (props: Props) => {
       initDashboard({
         routeName: route.routeName,
         fixUrl: false,
-        accessToken: match.params.accessToken,
+        accessToken,
         keybindingSrv: context.keybindings,
       })
     );
-  }, [route.routeName, match.params.accessToken, context.keybindings, dispatch]);
+  }, [route.routeName, accessToken, context.keybindings, dispatch]);
 
   useEffect(() => {
     if (prevProps?.location.search !== location.search) {
@@ -88,7 +94,7 @@ const PublicDashboardPage = (props: Props) => {
         getTimeSrv().setAutoRefresh(urlParams.refresh);
       }
     }
-  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden, match.params.accessToken]);
+  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden, accessToken]);
 
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;

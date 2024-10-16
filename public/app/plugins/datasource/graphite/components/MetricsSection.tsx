@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { GraphiteQueryEditorState } from '../state/store';
 import { GraphiteSegment } from '../types';
 

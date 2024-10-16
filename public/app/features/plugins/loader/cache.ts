@@ -1,35 +1,40 @@
+import { PluginLoadingStrategy } from '@grafana/data';
+
 import { clearPluginSettingsCache } from '../pluginSettings';
 
-const cache: Record<string, CacheablePlugin> = {};
-const initializedAt: number = Date.now();
+import { CACHE_INITIALISED_AT } from './constants';
+
+const cache: Record<string, CachedPlugin> = {};
 
 type CacheablePlugin = {
   path: string;
   version: string;
-  isAngular?: boolean;
+  loadingStrategy: PluginLoadingStrategy;
 };
 
-export function registerPluginInCache({ path, version, isAngular }: CacheablePlugin): void {
-  const key = extractPath(path);
+type CachedPlugin = Omit<CacheablePlugin, 'path'>;
+
+export function registerPluginInCache({ path, version, loadingStrategy }: CacheablePlugin): void {
+  const key = extractCacheKeyFromPath(path);
+
   if (key && !cache[key]) {
     cache[key] = {
       version: encodeURI(version),
-      isAngular,
-      path,
+      loadingStrategy,
     };
   }
 }
 
 export function invalidatePluginInCache(pluginId: string): void {
-  const path = `plugins/${pluginId}/module`;
+  const path = pluginId;
   if (cache[path]) {
     delete cache[path];
   }
   clearPluginSettingsCache(pluginId);
 }
 
-export function resolveWithCache(url: string, defaultBust = initializedAt): string {
-  const path = extractPath(url);
+export function resolveWithCache(url: string, defaultBust = CACHE_INITIALISED_AT): string {
+  const path = getCacheKey(url);
   if (!path) {
     return `${url}?_cache=${defaultBust}`;
   }
@@ -38,22 +43,24 @@ export function resolveWithCache(url: string, defaultBust = initializedAt): stri
   return `${url}?_cache=${bust}`;
 }
 
-export function getPluginFromCache(path: string): CacheablePlugin | undefined {
-  const key = extractPath(path);
+export function getPluginFromCache(path: string): CachedPlugin | undefined {
+  const key = getCacheKey(path);
   if (!key) {
     return;
   }
   return cache[key];
 }
 
-function extractPath(address: string): string | undefined {
-  const match = /\/?.+\/(plugins\/.+\/module)\.js/i.exec(address);
-  if (!match) {
+export function extractCacheKeyFromPath(path: string) {
+  const regex = /\/?public\/plugins\/([^\/]+)\//;
+  const match = path.match(regex);
+  return match ? match[1] : null;
+}
+
+function getCacheKey(address: string): string | undefined {
+  const key = Object.keys(cache).find((key) => address.includes(key));
+  if (!key) {
     return;
   }
-  const [_, path] = match;
-  if (!path) {
-    return;
-  }
-  return path;
+  return key;
 }

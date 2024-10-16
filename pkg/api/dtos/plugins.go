@@ -17,6 +17,7 @@ type PluginSetting struct {
 	Info             plugins.Info         `json:"info"`
 	Includes         []*plugins.Includes  `json:"includes"`
 	Dependencies     plugins.Dependencies `json:"dependencies"`
+	Extensions       plugins.Extensions   `json:"extensions"`
 	JsonData         map[string]any       `json:"jsonData"`
 	SecureJsonFields map[string]bool      `json:"secureJsonFields"`
 	DefaultNavUrl    string               `json:"defaultNavUrl"`
@@ -28,7 +29,8 @@ type PluginSetting struct {
 	SignatureType   plugins.SignatureType   `json:"signatureType"`
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AngularDetected bool                    `json:"angularDetected"`
-	APIVersion      string                  `json:"apiVersion"`
+	LoadingStrategy plugins.LoadingStrategy `json:"loadingStrategy"`
+	ModuleHash      string                  `json:"moduleHash,omitempty"`
 }
 
 type PluginListItem struct {
@@ -50,7 +52,6 @@ type PluginListItem struct {
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
 	IAM             *pfs.IAM                `json:"iam,omitempty"`
-	APIVersion      string                  `json:"apiVersion"`
 }
 
 type PluginList []PluginListItem

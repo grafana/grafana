@@ -5,9 +5,9 @@ import (
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
@@ -19,7 +19,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
-			user, err := appcontext.User(ctx)
+			user, err := identity.GetRequester(ctx)
 			if err != nil {
 				return authorizer.DecisionDeny, "", err
 			}
@@ -27,7 +27,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			if attr.GetName() == "" {
 				// Discourage use of the "list" command for non super admin users
 				if attr.GetVerb() == "list" && attr.GetResource() == v0alpha1.DashboardResourceInfo.GroupResource().Resource {
-					if !user.IsGrafanaAdmin {
+					if !user.GetIsGrafanaAdmin() {
 						return authorizer.DecisionDeny, "list summary objects (or connect as GrafanaAdmin)", err
 					}
 				}
@@ -39,7 +39,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "expected namespace", nil
 			}
 
-			info, err := request.ParseNamespace(attr.GetNamespace())
+			info, err := claims.ParseNamespace(attr.GetNamespace())
 			if err != nil {
 				return authorizer.DecisionDeny, "error reading org from namespace", err
 			}

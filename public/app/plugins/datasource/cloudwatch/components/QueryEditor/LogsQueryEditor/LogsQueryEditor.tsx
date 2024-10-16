@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';

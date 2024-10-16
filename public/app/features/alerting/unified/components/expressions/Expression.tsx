@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { Alert, AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -20,7 +20,7 @@ import {
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
@@ -51,7 +51,7 @@ export const Expression: FC<ExpressionProps> = ({
   onSetCondition,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType,
+  onUpdateExpressionType, // this method is not used? maybe we should remove it
   onChangeQuery,
 }) => {
   const styles = useStyles2(getStyles);
@@ -138,7 +138,6 @@ export const Expression: FC<ExpressionProps> = ({
           queryType={queryType}
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
-          onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
           onSetCondition={onSetCondition}
           query={query}
           alertCondition={alertCondition}
@@ -286,7 +285,6 @@ interface HeaderProps {
   queryType: ExpressionQueryType;
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
-  onUpdateExpressionType: (type: ExpressionQueryType) => void;
   onSetCondition: (refId: string) => void;
   query: ExpressionQuery;
   alertCondition: boolean;
@@ -361,6 +359,11 @@ interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
   index: number;
 }
 
+const OpeningBracket = () => <span>{'{'}</span>;
+const ClosingBracket = () => <span>{'}'}</span>;
+const Quote = () => <span>{'&quot;'}</span>;
+const Equals = () => <span>{'='}</span>;
+
 const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   const styles = useStyles2(getStyles);
 
@@ -379,23 +382,26 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
         <div className={styles.expression.resultLabel} title={title}>
-          <span>{hasLabels ? '' : name}</span>
-          {hasLabels && (
-            <>
-              <span>{'{'}</span>
-              {labels.map(([key, value], index) => (
-                <span key={uniqueId()}>
-                  <span className={styles.expression.labelKey}>{key}</span>
-                  <span>=</span>
-                  <span>&quot;</span>
-                  <span className={styles.expression.labelValue}>{value}</span>
-                  <span>&quot;</span>
-                  {index < labels.length - 1 && <span>, </span>}
-                </span>
-              ))}
-              <span>{'}'}</span>
-            </>
-          )}
+          <Text variant="code">
+            {hasLabels ? (
+              <>
+                <OpeningBracket />
+                {labels.map(([key, value], index) => (
+                  <Text variant="body" key={uniqueId()}>
+                    <span className={styles.expression.labelKey}>{key}</span>
+                    <Equals />
+                    <Quote />
+                    <span className={styles.expression.labelValue}>{value}</span>
+                    <Quote />
+                    {index < labels.length - 1 && <span>, </span>}
+                  </Text>
+                ))}
+                <ClosingBracket />
+              </>
+            ) : (
+              <span className={styles.expression.labelKey}>{title}</span>
+            )}
+          </Text>
         </div>
         <div className={styles.expression.resultValue}>{value}</div>
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
@@ -426,7 +432,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
           {name}
         </span>
         <div className={styles.expression.resultValue}>
-          <HoverCard
+          <PopupCard
             placement="right"
             wrapperClassName={styles.timeseriesTableWrapper}
             content={
@@ -449,7 +455,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
             }
           >
             <span>Time series data</span>
-          </HoverCard>
+          </PopupCard>
         </div>
       </Stack>
     </div>

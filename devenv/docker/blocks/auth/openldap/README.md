@@ -54,3 +54,41 @@ The default configuration between Grafana and the OpenLDAP container is configur
   - ldap-posix-admin
 - no groups
   - ldap-posix
+
+## Configure LDAP with TLS
+
+After the `openldap` container has been deployed, you have to copy the CA from the docker container:
+```bash
+# get the container ID
+docker ps
+
+docker cp CONTAINER-ID:"/container/service/:ssl-tools/assets/default-ca/default-ca.pem" devenv/docker/blocks/auth/openldap/certs
+```
+
+To configure TLS you need the following lines in the .toml file under the `[[servers]]` section:
+
+```ini
+tls_ciphers = ["TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]
+min_tls_version = "TLS1.2"
+ssl_skip_verify = true
+root_ca_cert = "devenv/docker/blocks/auth/openldap/certs/default-ca.pem"
+client_cert = "devenv/docker/blocks/auth/openldap/certs/ldap.crt"
+client_key = "devenv/docker/blocks/auth/openldap/certs/ldap.key"
+```
+
+For simplicity, the same private key is shared between the server and the client. To generate your own private keys and certificates please follow this guide: https://enlook.wordpress.com/2015/09/30/howto-generate-certificate-for-openldap-and-using-it-for-certificate-authentication/.
+
+- To connect over LDAPS include this config:
+
+```ini
+port = 636
+use_ssl = true
+start_tls = false
+```
+- To connect with STARTTLS use this config: 
+
+```ini
+port = 389
+use_ssl = true
+start_tls = true
+```

@@ -1,6 +1,5 @@
 // Libraries
 import { css } from '@emotion/css';
-import React from 'react';
 
 // Components
 import { GrafanaTheme2 } from '@grafana/data';
@@ -17,7 +16,7 @@ import { LoginLayout, InnerBox } from './LoginLayout';
 import { LoginServiceButtons } from './LoginServiceButtons';
 import { UserSignup } from './UserSignup';
 
-export const LoginPage = () => {
+const LoginPage = () => {
   const styles = useStyles2(getStyles);
   document.title = Branding.AppTitle;
 
@@ -79,6 +78,8 @@ export const LoginPage = () => {
     </LoginCtrl>
   );
 };
+
+export default LoginPage;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

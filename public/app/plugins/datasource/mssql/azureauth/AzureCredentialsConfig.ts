@@ -19,15 +19,15 @@ export const getDefaultCredentials = (managedIdentityEnabled: boolean, cloud: st
 };
 
 export const getSecret = (
-  clientSecretStoredServerSide: boolean,
-  clientSecret: string | symbol | undefined
+  storedServerSide: boolean,
+  secret: string | symbol | undefined
 ): undefined | string | ConcealedSecretType => {
   const concealedSecret: ConcealedSecretType = Symbol('Concealed client secret');
-  if (clientSecretStoredServerSide) {
+  if (storedServerSide) {
     // The secret is concealed server side, so return the symbol
     return concealedSecret;
   } else {
-    return typeof clientSecret === 'string' && clientSecret.length > 0 ? clientSecret : undefined;
+    return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
   }
 };
 
@@ -41,6 +41,8 @@ export const getCredentials = (
   // Secure JSON data/fields
   const clientSecretStoredServerSide = dsSettings.secureJsonFields?.azureClientSecret;
   const clientSecret = dsSettings.secureJsonData?.azureClientSecret;
+  const passwordStoredServerSide = dsSettings.secureJsonFields?.password;
+  const password = dsSettings.secureJsonData?.password;
 
   // BootConfig data
   const managedIdentityEnabled = !!bootConfig.azure?.managedIdentityEnabled;
@@ -73,6 +75,13 @@ export const getCredentials = (
         tenantId: credentials.tenantId,
         clientId: credentials.clientId,
         clientSecret: getSecret(clientSecretStoredServerSide, clientSecret),
+      };
+    case AzureAuthType.AD_PASSWORD:
+      return {
+        authType: AzureAuthType.AD_PASSWORD,
+        userId: credentials.userId,
+        clientId: credentials.clientId,
+        password: getSecret(passwordStoredServerSide, password),
       };
   }
 };
@@ -130,5 +139,29 @@ export const updateCredentials = (
       };
 
       return dsSettings;
+
+    case AzureAuthType.AD_PASSWORD:
+      return {
+        ...dsSettings,
+        jsonData: {
+          ...dsSettings.jsonData,
+          azureCredentials: {
+            authType: AzureAuthType.AD_PASSWORD,
+            userId: credentials.userId,
+            clientId: credentials.clientId,
+          },
+        },
+        secureJsonData: {
+          ...dsSettings.secureJsonData,
+          password:
+            typeof credentials.password === 'string' && credentials.password.length > 0
+              ? credentials.password
+              : undefined,
+        },
+        secureJsonFields: {
+          ...dsSettings.secureJsonFields,
+          password: typeof credentials.password === 'symbol',
+        },
+      };
   }
 };

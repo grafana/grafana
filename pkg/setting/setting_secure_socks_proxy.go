@@ -75,7 +75,7 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 		s.ClientKey = string(keyPEMBlock)
 	}
 
-	var rootCAs []string
+	rootCAs := make([]string, 0, len(s.RootCAFilePaths))
 	for _, rootCAFile := range s.RootCAFilePaths {
 		// nolint:gosec
 		// The gosec G304 warning can be ignored because `rootCAFile` comes from config ini, and we check below if

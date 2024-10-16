@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Badge } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 

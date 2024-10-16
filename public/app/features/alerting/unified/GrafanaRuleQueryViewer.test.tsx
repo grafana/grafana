@@ -1,6 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
-import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, waitFor, screen } from 'test/test-utils';
 
 import { DataSourceRef } from '@grafana/schema';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -74,12 +72,9 @@ describe('GrafanaRuleQueryViewer', () => {
       getExpression('C', { type: '' }),
       getExpression('D', { type: '' }),
     ];
-    const { getByTestId } = render(
-      <GrafanaRuleQueryViewer queries={[...queries, ...expressions]} condition="A" rule={rule} />,
-      { wrapper: TestProvider }
-    );
+    render(<GrafanaRuleQueryViewer queries={[...queries, ...expressions]} condition="A" rule={rule} />);
 
-    await waitFor(() => expect(getByTestId('queries-container')).toHaveStyle('flex-wrap: wrap'));
-    expect(getByTestId('expressions-container')).toHaveStyle('flex-wrap: wrap');
+    await waitFor(() => expect(screen.getByTestId('queries-container')).toHaveStyle('flex-wrap: wrap'));
+    expect(screen.getByTestId('expressions-container')).toHaveStyle('flex-wrap: wrap');
   });
 });

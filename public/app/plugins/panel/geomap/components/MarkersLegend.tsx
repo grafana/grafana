@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import BaseLayer from 'ol/layer/Base';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 

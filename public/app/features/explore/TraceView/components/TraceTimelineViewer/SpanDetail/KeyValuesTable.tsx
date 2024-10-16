@@ -14,14 +14,15 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
+import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
+import { TraceLink, TNil } from '../../types';
 
 import jsonMarkup from './jsonMarkup';
 
@@ -29,49 +30,50 @@ const copyIconClassName = 'copyIcon';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    KeyValueTable: css`
-      label: KeyValueTable;
-      background: ${autoColor(theme, '#fff')};
-      border: 1px solid ${autoColor(theme, '#ddd')};
-      margin-bottom: 0.5rem;
-      max-height: 450px;
-      overflow: auto;
-    `,
+    KeyValueTable: css({
+      label: 'KeyValueTable',
+      background: autoColor(theme, '#fff'),
+      border: `1px solid ${autoColor(theme, '#ddd')}`,
+      marginBottom: '0.5rem',
+      maxHeight: '450px',
+      overflow: 'auto',
+    }),
     table: css({
       width: '100%',
     }),
-    body: css`
-      label: body;
-      vertical-align: baseline;
-    `,
-    row: css`
-      label: row;
-      & > td {
-        padding: 0rem 0.5rem;
-        height: 30px;
-      }
-      &:nth-child(2n) > td {
-        background: ${autoColor(theme, '#f5f5f5')};
-      }
-      &:not(:hover) .${copyIconClassName} {
-        visibility: hidden;
-      }
-    `,
-    keyColumn: css`
-      label: keyColumn;
-      color: ${autoColor(theme, '#888')};
-      white-space: pre;
-      width: 125px;
-    `,
-    copyColumn: css`
-      label: copyColumn;
-      text-align: right;
-    `,
-    linkIcon: css`
-      label: linkIcon;
-      vertical-align: middle;
-      font-weight: bold;
-    `,
+    body: css({
+      label: 'body',
+      verticalAlign: 'baseline',
+    }),
+    row: css({
+      label: 'row',
+      '& > td': {
+        padding: '0.5rem 0.5rem',
+        height: '30px',
+      },
+      '&:nth-child(2n) > td': {
+        background: autoColor(theme, '#f5f5f5'),
+      },
+      [`&:not(:hover) .${copyIconClassName}`]: {
+        visibility: 'hidden',
+      },
+    }),
+    keyColumn: css({
+      label: 'keyColumn',
+      color: autoColor(theme, '#888'),
+      whiteSpace: 'pre',
+      width: '125px',
+      verticalAlign: 'top',
+    }),
+    copyColumn: css({
+      label: 'copyColumn',
+      textAlign: 'right',
+    }),
+    linkIcon: css({
+      label: 'linkIcon',
+      verticalAlign: 'middle',
+      fontWeight: 'bold',
+    }),
     jsonTable: css({
       display: 'inline-block',
     }),

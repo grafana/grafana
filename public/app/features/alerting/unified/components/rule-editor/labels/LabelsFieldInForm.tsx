@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Button, Stack, Text } from '@grafana/ui';
@@ -40,7 +39,14 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
         ) : (
           <Stack direction="row" gap={2} alignItems="center">
             <Text>No labels selected</Text>
-            <Button icon="plus" type="button" variant="secondary" onClick={onEditClick} size="sm">
+            <Button
+              icon="plus"
+              type="button"
+              variant="secondary"
+              onClick={onEditClick}
+              size="sm"
+              data-testid="add-labels-button"
+            >
               Add labels
             </Button>
           </Stack>

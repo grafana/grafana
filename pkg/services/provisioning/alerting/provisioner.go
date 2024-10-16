@@ -6,12 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 type ProvisionerConfig struct {
 	Path                       string
-	DashboardService           dashboards.DashboardService
+	FolderService              folder.Service
 	DashboardProvService       dashboards.DashboardProvisioningService
 	RuleService                provisioning.AlertRuleService
 	ContactPointService        provisioning.ContactPointService
@@ -63,7 +64,7 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	}
 	ruleProvisioner := NewAlertRuleProvisioner(
 		logger,
-		cfg.DashboardService,
+		cfg.FolderService,
 		cfg.DashboardProvService,
 		cfg.RuleService)
 	err = ruleProvisioner.Provision(ctx, files)

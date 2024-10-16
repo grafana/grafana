@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SeriesColorPicker, SeriesIcon } from '@grafana/ui';

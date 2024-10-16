@@ -1,9 +1,11 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { DataFrameDTO, Field, FieldType, TableData, TimeSeries } from '../types/index';
+import { TimeSeries, TableData } from '../types/data';
+import { FieldType, DataFrameDTO, Field } from '../types/dataFrame';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
 import {
   createDataFrame,
+  getFieldTypeFromValue,
   guessFieldTypeForField,
   guessFieldTypeFromValue,
   guessFieldTypes,
@@ -14,8 +16,6 @@ import {
   toDataFrame,
   toLegacyResponseData,
 } from './processDataFrame';
-
-import { getFieldTypeFromValue } from '.';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {

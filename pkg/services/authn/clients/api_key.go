@@ -3,9 +3,13 @@ package clients
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -27,6 +30,11 @@ var (
 var _ authn.HookClient = new(APIKey)
 var _ authn.ContextAwareClient = new(APIKey)
 var _ authn.IdentityResolverClient = new(APIKey)
+
+const (
+	metaKeyID           = "keyID"
+	metaKeySkipLastUsed = "keySkipLastUsed"
+)
 
 func ProvideAPIKey(apiKeyService apikey.Service) *APIKey {
 	return &APIKey{
@@ -59,6 +67,14 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 	if err := validateApiKey(r.OrgID, key); err != nil {
 		return nil, err
+	}
+
+	// Set keyID so we can use it in last used hook
+	r.SetMeta(metaKeyID, strconv.FormatInt(key.ID, 10))
+	if !shouldUpdateLastUsedAt(key) {
+		// Hack to just have some value, we will check this key in the hook
+		// and if its not an empty string we will not update last used.
+		r.SetMeta(metaKeySkipLastUsed, "true")
 	}
 
 	// if the api key don't belong to a service account construct the identity and return it
@@ -106,7 +122,6 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 	if err != nil {
 		return nil, err
 	}
-
 	// fetch key
 	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
 	key, err := s.apiKeyService.GetApiKeyByName(ctx, &keyQuery)
@@ -134,16 +149,16 @@ func (s *APIKey) Priority() uint {
 	return 30
 }
 
-func (s *APIKey) Namespace() string {
-	return authn.NamespaceAPIKey.String()
+func (s *APIKey) IdentityType() claims.IdentityType {
+	return claims.TypeAPIKey
 }
 
-func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
-	if !namespaceID.IsNamespace(authn.NamespaceAPIKey) {
-		return nil, authn.ErrInvalidNamespaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
+func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
+	if !claims.IsIdentityType(typ, claims.TypeAPIKey) {
+		return nil, identity.ErrInvalidTypedID.Errorf("got unexpected type: %s", typ)
 	}
 
-	apiKeyID, err := namespaceID.ParseInt()
+	apiKeyID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -160,57 +175,37 @@ func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID a
 	}
 
 	if key.ServiceAccountId != nil && *key.ServiceAccountId >= 1 {
-		return nil, authn.ErrInvalidNamespaceID.Errorf("api key belongs to service account")
+		return nil, identity.ErrInvalidTypedID.Errorf("api key belongs to service account")
 	}
 
 	return newAPIKeyIdentity(key), nil
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	id, exists := s.getAPIKeyID(ctx, identity, r)
-
-	if !exists {
+	if r.GetMeta(metaKeySkipLastUsed) != "" {
 		return nil
 	}
 
-	go func(apikeyID int64) {
+	go func(keyID string) {
 		defer func() {
 			if err := recover(); err != nil {
 				s.log.Error("Panic during user last seen sync", "err", err)
 			}
 		}()
-		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), apikeyID); err != nil {
-			s.log.Warn("Failed to update last use date for api key", "id", apikeyID)
+
+		id, err := strconv.ParseInt(keyID, 10, 64)
+		if err != nil {
+			s.log.Warn("Invalid api key id", "id", keyID, "err", err)
+			return
 		}
-	}(id)
+
+		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
+			s.log.Warn("Failed to update last used date for api key", "id", keyID, "err", err)
+			return
+		}
+	}(r.GetMeta(metaKeyID))
 
 	return nil
-}
-
-func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
-	id, err := identity.ID.ParseInt()
-	if err != nil {
-		s.log.Warn("Failed to parse ID from identifier", "err", err)
-		return -1, false
-	}
-
-	if identity.ID.IsNamespace(authn.NamespaceAPIKey) {
-		return id, true
-	}
-
-	if identity.ID.IsNamespace(authn.NamespaceServiceAccount) {
-		// When the identity is service account, the ID in from the namespace is the service account ID.
-		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
-		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
-		if err != nil {
-			s.log.Warn("Failed to fetch the API Key from request")
-			return -1, false
-		}
-
-		return apiKey.ID, true
-	}
-
-	return -1, false
 }
 
 func looksLikeApiKey(token string) bool {
@@ -255,7 +250,8 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 
 func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              authn.NewNamespaceID(authn.NamespaceAPIKey, key.ID),
+		ID:              strconv.FormatInt(key.ID, 10),
+		Type:            claims.TypeAPIKey,
 		OrgID:           key.OrgID,
 		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
 		ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -265,9 +261,14 @@ func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              authn.NewNamespaceID(authn.NamespaceServiceAccount, *key.ServiceAccountId),
+		ID:              strconv.FormatInt(*key.ServiceAccountId, 10),
+		Type:            claims.TypeServiceAccount,
 		OrgID:           key.OrgID,
 		AuthenticatedBy: login.APIKeyAuthModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 	}
+}
+
+func shouldUpdateLastUsedAt(key *apikey.APIKey) bool {
+	return key.LastUsedAt == nil || time.Since(*key.LastUsedAt) > 5*time.Minute
 }

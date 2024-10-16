@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useLayoutEffect } from 'react';
+import { Suspense, useEffect, useLayoutEffect } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
@@ -25,7 +25,7 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     updateBodyClassNames(props.route);
     cleanupDOM();
-    navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
+    navigationLogger('GrafanaRoute', false, 'Mounted', props.route);
 
     return () => {
       navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);

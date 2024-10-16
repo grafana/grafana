@@ -3,9 +3,7 @@ import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime'
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
-import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
+import { PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
   Input,
@@ -16,7 +14,7 @@ import {
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
-import { DashboardJson, DeleteDashboardResponse } from '../types';
+import { DashboardJson } from '../types';
 
 import {
   clearDashboard,
@@ -262,79 +260,9 @@ const getDataSourceDescription = (input: { usage?: InputUsage }): string | undef
   return undefined;
 };
 
-export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
-  const result = {
-    totalCount: folderUIDs.length,
-    successCount: 0,
-  };
-
-  for (const folderUID of folderUIDs) {
-    try {
-      const newFolderDTO = await moveFolder(folderUID, toFolder);
-      if (newFolderDTO !== null) {
-        result.successCount += 1;
-      }
-    } catch (err) {
-      console.error('Failed to move a folder', err);
-    }
-  }
-
-  return result;
-}
-
-function createTask(fn: (...args: any[]) => Promise<any>, ignoreRejections: boolean, ...args: any[]) {
-  return async (result: any) => {
-    try {
-      const res = await fn(...args);
-      return Array.prototype.concat(result, [res]);
-    } catch (err) {
-      if (ignoreRejections) {
-        return result;
-      }
-
-      throw err;
-    }
-  };
-}
-
-export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: string[]) {
-  const tasks = [];
-
-  for (const folderUid of folderUids) {
-    tasks.push(createTask(deleteFolder, true, folderUid, true));
-  }
-
-  for (const dashboardUid of dashboardUids) {
-    tasks.push(createTask(deleteDashboard, true, dashboardUid, true));
-  }
-
-  return executeInOrder(tasks);
-}
-
-export function saveDashboard(options: SaveDashboardCommand) {
-  dashboardWatcher.ignoreNextSave();
-
-  return getBackendSrv().post('/api/dashboards/db/', {
-    dashboard: options.dashboard,
-    message: options.message ?? '',
-    overwrite: options.overwrite ?? false,
-    folderUid: options.folderUid,
-  });
-}
-
-function deleteFolder(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
-}
-
+/** @deprecated Use RTK Query methods from features/browse-dashboards/api/browseDashboardsAPI.ts instead */
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
-}
-
-export function moveFolder(uid: string, toFolder: FolderInfo) {
-  const payload = {
-    parentUid: toFolder.uid,
-  };
-  return getBackendSrv().post(`/api/folders/${uid}/move`, payload, { showErrorAlert: false });
 }
 
 export const SLICE_FOLDER_RESULTS_TO = 1000;
@@ -357,14 +285,4 @@ export function getFolderByUid(uid: string): Promise<{ uid: string; title: strin
 }
 export function getFolderById(id: number): Promise<{ id: number; title: string }> {
   return getBackendSrv().get(`/api/folders/id/${id}`);
-}
-
-export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
-}
-
-function executeInOrder(tasks: any[]): Promise<unknown> {
-  return tasks.reduce((acc, task) => {
-    return Promise.resolve(acc).then(task);
-  }, []);
 }

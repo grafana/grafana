@@ -1,31 +1,20 @@
-import { render, screen } from '@testing-library/react';
-import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
-
-import { locationService } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
+import { screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { getMockDataSources } from '../__mocks__';
 
 import { DataSourcesListView } from './DataSourcesList';
 
 const setup = () => {
-  const store = configureStore();
-
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <DataSourcesListView
-          dataSources={getMockDataSources(3)}
-          dataSourcesCount={3}
-          isLoading={false}
-          hasCreateRights={true}
-          hasWriteRights={true}
-          hasExploreRights={true}
-        />
-      </Router>
-    </Provider>
+    <DataSourcesListView
+      dataSources={getMockDataSources(3)}
+      dataSourcesCount={3}
+      isLoading={false}
+      hasCreateRights={true}
+      hasWriteRights={true}
+      hasExploreRights={true}
+    />
   );
 };
 

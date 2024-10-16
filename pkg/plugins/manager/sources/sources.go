@@ -38,22 +38,25 @@ func (s *Service) externalPluginSources() []plugins.PluginSource {
 		return []plugins.PluginSource{}
 	}
 
-	var srcs []plugins.PluginSource
-	for _, src := range localSrcs {
-		srcs = append(srcs, src)
+	srcs := make([]plugins.PluginSource, len(localSrcs))
+	for i, src := range localSrcs {
+		srcs[i] = src
 	}
+
 	return srcs
 }
 
 func (s *Service) pluginSettingSources() []plugins.PluginSource {
-	var sources []plugins.PluginSource
+	sources := make([]plugins.PluginSource, 0, len(s.cfg.PluginSettings))
 	for _, ps := range s.cfg.PluginSettings {
 		path, exists := ps["path"]
 		if !exists || path == "" {
 			continue
 		}
+
 		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{path}))
 	}
+
 	return sources
 }
 

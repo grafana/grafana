@@ -27,6 +27,7 @@ global.$ = global.jQuery = $;
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {
   angularSupportEnabled: true,
+  featureToggles: {},
 };
 global.grafanaBootData = {
   settings,
@@ -67,6 +68,8 @@ global.IntersectionObserver = mockIntersectionObserver;
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+// add scrollTo interface since it's not implemented in jsdom
+Element.prototype.scrollTo = () => {};
 
 jest.mock('../app/core/core', () => ({
   ...jest.requireActual('../app/core/core'),
@@ -85,8 +88,6 @@ throwUnhandledRejections();
 
 // Used by useMeasure
 global.ResizeObserver = class ResizeObserver {
-  //callback: ResizeObserverCallback;
-
   constructor(callback: ResizeObserverCallback) {
     setTimeout(() => {
       callback(
@@ -102,8 +103,11 @@ global.ResizeObserver = class ResizeObserver {
               left: 100,
               right: 0,
             },
-            target: {},
-          } as ResizeObserverEntry,
+            target: {
+              // Needed for react-virtual to work in tests
+              getAttribute: () => 1,
+            },
+          } as unknown as ResizeObserverEntry,
         ],
         this
       );
@@ -112,4 +116,13 @@ global.ResizeObserver = class ResizeObserver {
   observe() {}
   disconnect() {}
   unobserve() {}
+};
+
+global.BroadcastChannel = class BroadcastChannel {
+  onmessage() {}
+  onmessageerror() {}
+  postMessage(data: unknown) {}
+  close() {}
+  addEventListener() {}
+  removeEventListener() {}
 };

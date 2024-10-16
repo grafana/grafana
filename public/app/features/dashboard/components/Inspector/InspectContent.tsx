@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import {
   CoreApp,

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';

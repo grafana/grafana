@@ -68,6 +68,11 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 1. Use the [Alerting provisioning HTTP API](ref:alerting_http_provisioning) to manage alerting resources.
 
    {{< admonition type="note" >}}
+
+   The Alerting provisioning HTTP API can be used to create, modify, and delete resources for Grafana-managed alerts.
+
+   To manage resources related to data source-managed alerts, including recording rules, use the Mimir or Cortex tool.
+
    The JSON output from the majority of Alerting HTTP endpoints isn't compatible for provisioning via configuration files.
 
    If you need the alerting resources for file provisioning, use [Export Alerting endpoints](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints) to return or download them in provisioning format.

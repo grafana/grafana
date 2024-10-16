@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
-import React from 'react';
 
 import { QueriesDrawerContextProviderMock } from './QueriesDrawer/mocks';
 import { SecondaryActions } from './SecondaryActions';

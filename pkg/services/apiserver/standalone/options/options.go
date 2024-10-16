@@ -1,6 +1,8 @@
 package options
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/spf13/pflag"
@@ -15,7 +17,9 @@ type Options struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
 	TracingOptions     *TracingOptions
 	MetricsOptions     *MetricsOptions
+	ProfilingOptions   *ProfilingOptions
 	ServerRunOptions   *genericoptions.ServerRunOptions
+	StorageOptions     *options.StorageOptions
 }
 
 func New(logger log.Logger, codec runtime.Codec) *Options {
@@ -24,8 +28,10 @@ func New(logger log.Logger, codec runtime.Codec) *Options {
 		ExtraOptions:       options.NewExtraOptions(),
 		RecommendedOptions: options.NewRecommendedOptions(codec),
 		TracingOptions:     NewTracingOptions(logger),
-		MetricsOptions:     NewMetrcicsOptions(logger),
+		MetricsOptions:     NewMetricsOptions(logger),
+		ProfilingOptions:   NewProfilingOptions(logger),
 		ServerRunOptions:   genericoptions.NewServerRunOptions(),
+		StorageOptions:     options.NewStorageOptions(),
 	}
 }
 
@@ -35,7 +41,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
 	o.TracingOptions.AddFlags(fs)
 	o.MetricsOptions.AddFlags(fs)
+	o.ProfilingOptions.AddFlags(fs)
 	o.ServerRunOptions.AddUniversalFlags(fs)
+	o.internalFlags(fs)
 }
 
 func (o *Options) Validate() []error {
@@ -55,7 +63,15 @@ func (o *Options) Validate() []error {
 		return errs
 	}
 
+	if errs := o.ProfilingOptions.Validate(); len(errs) != 0 {
+		return errs
+	}
+
 	if errs := o.ServerRunOptions.Validate(); len(errs) != 0 {
+		return errs
+	}
+
+	if errs := o.internalFlagsValidate(); len(errs) != 0 {
 		return errs
 	}
 
@@ -166,11 +182,35 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		}
 	}
 
+	if o.ProfilingOptions != nil {
+		if err := o.ProfilingOptions.ApplyTo(serverConfig); err != nil {
+			return err
+		}
+	}
+
 	if o.ServerRunOptions != nil {
 		if err := o.ServerRunOptions.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func (o *Options) internalFlags(fs *pflag.FlagSet) {
+	// We also want to be able to set the MaxRequestSize by using flags. This is
+	// usually not exposed by k8s. The value is already set to the upstream default
+	// at this stage, so we can use it as the default.
+	// Reference: https://github.com/kubernetes/kubernetes/blob/v1.31.1/staging/src/k8s.io/apiserver/pkg/server/config.go#L453
+	fs.Int64Var(&o.ServerRunOptions.MaxRequestBodyBytes, "max-request-body-bytes",
+		o.ServerRunOptions.MaxRequestBodyBytes, ""+
+			"Specifies the maximum allowable size for a request payload sent to the API server in bytes."+
+			"The default is 3MB.")
+}
+
+func (o *Options) internalFlagsValidate() []error {
+	if o.ServerRunOptions.MaxRequestBodyBytes < 0 {
+		return []error{fmt.Errorf("--max-request-body-bytes can not be a negative value")}
+	}
 	return nil
 }

@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 
 import { ReturnToPrevious, ReturnToPreviousProps } from './ReturnToPrevious';
 
@@ -36,14 +35,9 @@ const setup = () => {
 };
 
 describe('ReturnToPrevious', () => {
-  beforeEach(() => {
-    /* We enabled the feature toggle */
-    config.featureToggles.returnToPrevious = true;
-  });
   afterEach(() => {
     window.sessionStorage.clear();
     jest.resetAllMocks();
-    config.featureToggles.returnToPrevious = false;
   });
   it('should render component', async () => {
     setup();

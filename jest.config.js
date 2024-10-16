@@ -17,6 +17,7 @@ const esModules = [
   'monaco-promql',
   '@kusto/monaco-kusto',
   'monaco-editor',
+  '@msagl',
   'lodash-es',
   'vscode-languageserver-types',
 ].join('|');

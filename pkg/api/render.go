@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
@@ -45,15 +45,29 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 		scale = hs.Cfg.RendererDefaultImageScale
 	}
 
+	theme := c.QueryStrings("theme")
+	var themeModel models.Theme
+	if len(theme) > 0 {
+		themeStr := theme[0]
+		_, err := models.ParseTheme(themeStr)
+		if err != nil {
+			c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error: theme can only be light or dark", err)
+			return
+		}
+		themeModel = models.Theme(themeStr)
+	} else {
+		themeModel = models.ThemeDark
+	}
+
 	headers := http.Header{}
 	acceptLanguageHeader := c.Req.Header.Values("Accept-Language")
 	if len(acceptLanguageHeader) > 0 {
 		headers["Accept-Language"] = acceptLanguageHeader
 	}
 
-	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
-	if errID != nil {
-		hs.log.Error("Failed to parse user id", "err", errID)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
+		hs.log.Debug("Failed to parse user id", "err", err)
 	}
 
 	encoding := queryReader.Get("encoding", "")
@@ -81,7 +95,7 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 		Width:             width,
 		Height:            height,
 		DeviceScaleFactor: scale,
-		Theme:             models.ThemeDark,
+		Theme:             themeModel,
 	}, nil)
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {

@@ -1,6 +1,6 @@
-import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
+import { PropsWithChildren, ReactElement, useMemo } from 'react';
 
-import { DataSourceInstanceSettings } from '../../types';
+import { DataSourceInstanceSettings } from '../../types/datasource';
 
 import { Context, DataSourcePluginContextType } from './PluginContext';
 

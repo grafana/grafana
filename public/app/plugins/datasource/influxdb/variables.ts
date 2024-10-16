@@ -30,8 +30,19 @@ export class InfluxVariableSupport extends CustomVariableSupport<InfluxDatasourc
       return of({ data: [] });
     }
 
-    const interpolated = this.templateSrv.replace(query, request.scopedVars, this.datasource.interpolateQueryExpr);
-    const metricFindStream = from(this.datasource.metricFindQuery(interpolated, request.range));
+    const q = this.templateSrv.replace(query, request.scopedVars, this.datasource.interpolateQueryExpr);
+    const timeFilter = this.datasource.getTimeFilter({ rangeRaw: request.range.raw, timezone: request.timezone });
+    const interpolated = q.replace('$timeFilter', timeFilter);
+    const metricFindStream = from(
+      this.datasource.metricFindQuery(
+        {
+          refId: request.targets[0].refId,
+          query: interpolated,
+          maxDataPoints: request.targets[0].maxDataPoints ?? 1000,
+        },
+        { range: request.range }
+      )
+    );
     return metricFindStream.pipe(map((results) => ({ data: results })));
   }
 }

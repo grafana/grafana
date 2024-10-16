@@ -17,13 +17,19 @@ labels:
     - oss
 title: Candlestick
 weight: 100
+refs:
+  time-series-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Candlestick
 
 The candlestick visualization allows you to visualize data that includes a number of consistent dimensions focused on price movements, such as stock prices. The candlestick visualization includes an [Open-High-Low-Close (OHLC) mode](#open-high-low-close), as well as support for additional dimensions based on time series data.
 
-Candlestick visualizations build upon the foundation of the [time series visualization][] and include many common configuration settings.
+Candlestick visualizations build upon the foundation of the [time series visualization](ref:time-series-visualization) and include many common configuration settings.
 
 You can use a candlestick if you want to visualize, at a glance, how a price moved over time, whether it went up, down, or stayed the same, and how much it fluctuated:
 
@@ -116,7 +122,7 @@ If your data can't be mapped to these dimensions for some reason (for example, b
 
 ### Additional fields
 
-The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series][time series visualization] visualization.
+The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
 
 ## Standard options
 
@@ -145,8 +151,3 @@ The candlestick visualization is based on the time series visualization. It can 
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series"
-[time series visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
-{{% /docs/reference %}}

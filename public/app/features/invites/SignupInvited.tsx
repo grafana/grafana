@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import { css, cx } from '@emotion/css';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Button, Field, Input } from '@grafana/ui';
+import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { w3cStandardEmailValidator } from '../admin/utils';
 
@@ -30,13 +32,12 @@ const navModel = {
   },
 };
 
-export interface Props extends GrafanaRouteComponentProps<{ code: string }> {}
-
-export const SignupInvitedPage = ({ match }: Props) => {
-  const code = match.params.code;
+export const SignupInvitedPage = () => {
+  const { code } = useParams();
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
   const [invitedBy, setInvitedBy] = useState<string>();
+  const styles = useStyles2(getStyles);
 
   useAsync(async () => {
     const invite = await getBackendSrv().get(`/api/user/invite/${code}`);
@@ -65,7 +66,7 @@ export const SignupInvitedPage = ({ match }: Props) => {
       <Page.Contents>
         <h3 className="page-sub-heading">Hello {greeting || 'there'}.</h3>
 
-        <div className="modal-tagline p-b-2">
+        <div className={cx('modal-tagline', styles.tagline)}>
           <em>{invitedBy || 'Someone'}</em> has invited you to join Grafana and the organization{' '}
           <span className="highlight-word">{contextSrv.user.orgName}</span>
           <br />
@@ -108,5 +109,11 @@ export const SignupInvitedPage = ({ match }: Props) => {
     </Page>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  tagline: css({
+    paddingBottom: theme.spacing(3),
+  }),
+});
 
 export default SignupInvitedPage;

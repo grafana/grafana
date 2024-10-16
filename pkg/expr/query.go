@@ -1,6 +1,8 @@
 package expr
 
 import (
+	"embed"
+
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
@@ -100,3 +102,10 @@ const (
 	// Replace non-numbers
 	ReduceModeReplace ReduceMode = "replaceNN"
 )
+
+//go:embed query.types.json
+var f embed.FS
+
+func QueryTypeDefinitionListJSON() ([]byte, error) {
+	return f.ReadFile("query.types.json")
+}

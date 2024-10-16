@@ -1,8 +1,8 @@
-import React, { PureComponent } from 'react';
+import { createRef, PureComponent } from 'react';
 
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { i18nDate } from 'app/core/internationalization';
+import { formatDate } from 'app/core/internationalization/dates';
 import { AccessControlAction, UserSession } from 'app/types';
 
 interface Props {
@@ -17,7 +17,7 @@ interface State {
 }
 
 class BaseUserSessions extends PureComponent<Props, State> {
-  forceAllLogoutButton = React.createRef<HTMLButtonElement>();
+  forceAllLogoutButton = createRef<HTMLButtonElement>();
   state: State = {
     showLogoutModal: false,
   };
@@ -68,21 +68,19 @@ class BaseUserSessions extends PureComponent<Props, State> {
                   sessions.map((session, index) => (
                     <tr key={`${session.id}-${index}`}>
                       <td>{session.isActive ? 'Now' : session.seenAt}</td>
-                      <td>{i18nDate(session.createdAt, { dateStyle: 'long' })}</td>
+                      <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
-                        <div className="pull-right">
-                          {canLogout && (
-                            <ConfirmButton
-                              confirmText="Confirm logout"
-                              confirmVariant="destructive"
-                              onConfirm={this.onSessionRevoke(session.id)}
-                            >
-                              Force logout
-                            </ConfirmButton>
-                          )}
-                        </div>
+                        {canLogout && (
+                          <ConfirmButton
+                            confirmText="Confirm logout"
+                            confirmVariant="destructive"
+                            onConfirm={this.onSessionRevoke(session.id)}
+                          >
+                            Force logout
+                          </ConfirmButton>
+                        )}
                       </td>
                     </tr>
                   ))}

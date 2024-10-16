@@ -1,54 +1,98 @@
-import * as pluginSettings from '../pluginSettings';
+import { PluginLoadingStrategy } from '@grafana/data';
 
-import { invalidatePluginInCache, resolveWithCache, registerPluginInCache } from './cache';
+import {
+  registerPluginInCache,
+  invalidatePluginInCache,
+  resolveWithCache,
+  getPluginFromCache,
+  extractCacheKeyFromPath,
+} from './cache';
 
-describe('Plugin Cache', () => {
-  const now = 12345;
+jest.mock('./constants', () => ({
+  CACHE_INITIALISED_AT: 123456,
+}));
 
-  it('should append plugin version as cache flag if plugin is registered in buster', () => {
-    const slug = 'bubble-chart-1';
-    const version = 'v1.0.0';
-    const path = `/public/plugins/${slug}/module.js`;
-    const address = `http://localhost:3000/public/${path}.js`;
+describe('Cache Functions', () => {
+  describe('registerPluginInCache', () => {
+    it('should register a plugin in the cache', () => {
+      const plugin = { version: '1.0.0', loadingStrategy: PluginLoadingStrategy.script };
+      registerPluginInCache({ path: 'public/plugins/plugin1/module.js', ...plugin });
+      expect(getPluginFromCache('plugin1')).toEqual(plugin);
+    });
 
-    registerPluginInCache({ path, version });
-
-    const url = `${address}?_cache=${encodeURI(version)}`;
-    expect(resolveWithCache(address, now)).toBe(url);
+    it('should not register a plugin if it already exists in the cache', () => {
+      const path = 'public/plugins/plugin2/module.js';
+      const plugin = { path, version: '2.0.0', loadingStrategy: PluginLoadingStrategy.script };
+      registerPluginInCache(plugin);
+      const plugin2 = { path, version: '2.5.0', loadingStrategy: PluginLoadingStrategy.script };
+      registerPluginInCache(plugin2);
+      expect(getPluginFromCache(path)?.version).toBe('2.0.0');
+    });
   });
 
-  it('should append Date.now as cache flag if plugin is not registered in buster', () => {
-    const slug = 'bubble-chart-2';
-    const address = `http://localhost:3000/public/plugins/${slug}/module.js`;
+  describe('invalidatePluginInCache', () => {
+    it('should invalidate a plugin in the cache', () => {
+      const path = 'public/plugins/plugin2/module.js';
+      const plugin = { path, version: '3.0.0', loadingStrategy: PluginLoadingStrategy.script };
+      registerPluginInCache(plugin);
+      invalidatePluginInCache('plugin2');
+      expect(getPluginFromCache('plugin2')).toBeUndefined();
+    });
 
-    const url = `${address}?_cache=${encodeURI(String(now))}`;
-    expect(resolveWithCache(address, now)).toBe(url);
+    it('should not throw an error if the plugin does not exist in the cache', () => {
+      expect(() => invalidatePluginInCache('nonExistentPlugin')).not.toThrow();
+    });
   });
 
-  it('should append Date.now as cache flag if plugin is invalidated in buster', () => {
-    const slug = 'bubble-chart-3';
-    const version = 'v1.0.0';
-    const path = `/public/plugins/${slug}/module.js`;
-    const address = `http://localhost:3000/public/${path}.js`;
+  describe('resolveWithCache', () => {
+    it('should resolve URL with timestamp cache bust parameter if plugin is not available in the cache', () => {
+      const url = 'http://localhost:3000/public/plugins/plugin4/module.js';
+      expect(resolveWithCache(url)).toContain('_cache=123456');
+    });
 
-    registerPluginInCache({ path, version });
-    invalidatePluginInCache(slug);
-
-    const url = `${address}?_cache=${encodeURI(String(now))}`;
-    expect(resolveWithCache(address, now)).toBe(url);
+    it('should resolve URL with plugin version as cache bust parameter if available', () => {
+      const url = 'http://localhost:3000/public/plugins/plugin5/module.js';
+      const plugin = { path: url, version: '5.0.0', loadingStrategy: PluginLoadingStrategy.script };
+      registerPluginInCache(plugin);
+      expect(resolveWithCache(url)).toContain('_cache=5.0.0');
+    });
   });
 
-  it('should also clear plugin settings cache', () => {
-    const slug = 'bubble-chart-3';
-    const version = 'v1.0.0';
-    const path = `/public/plugins/${slug}/module.js`;
+  describe('extractCacheKeyFromPath', () => {
+    it('should extract plugin ID from a path', () => {
+      expect(extractCacheKeyFromPath('public/plugins/plugin6/module.js')).toBe('plugin6');
+    });
 
-    const clearPluginSettingsCacheSpy = jest.spyOn(pluginSettings, 'clearPluginSettingsCache');
+    it('should extract plugin ID from a path', () => {
+      expect(extractCacheKeyFromPath('public/plugins/plugin6/datasource/module.js')).toBe('plugin6');
+    });
 
-    registerPluginInCache({ path, version });
-    invalidatePluginInCache(slug);
+    it('should extract plugin ID from a url', () => {
+      expect(extractCacheKeyFromPath('https://my-url.com/plugin6/1.0.0/public/plugins/plugin6/module.js')).toBe(
+        'plugin6'
+      );
+    });
 
-    expect(clearPluginSettingsCacheSpy).toBeCalledTimes(1);
-    expect(clearPluginSettingsCacheSpy).toBeCalledWith('bubble-chart-3');
+    it('should extract plugin ID from a nested plugin url', () => {
+      expect(
+        extractCacheKeyFromPath('https://my-url.com/plugin6/1.0.0/public/plugins/plugin6/datasource/module.js')
+      ).toBe('plugin6');
+    });
+
+    it('should return null if the path does not match the pattern', () => {
+      expect(extractCacheKeyFromPath('public/plugins/plugin7')).toBeNull();
+    });
+  });
+
+  describe('getPluginFromCache', () => {
+    it('should return plugin from cache if exists', () => {
+      const plugin = { version: '6.0.0', loadingStrategy: PluginLoadingStrategy.script };
+      registerPluginInCache({ path: 'public/plugins/plugin6/module.js', ...plugin });
+      expect(getPluginFromCache('plugin6')).toEqual(plugin);
+    });
+
+    it('should return undefined if plugin does not exist in cache', () => {
+      expect(getPluginFromCache('nonExistentPlugin')).toBeUndefined();
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { Segment, SegmentAsync } from '@grafana/ui';
 

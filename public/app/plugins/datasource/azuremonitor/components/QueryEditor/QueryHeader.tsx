@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect } from '@grafana/experimental';
@@ -37,7 +37,7 @@ export const QueryHeader = ({ query, onQueryChange }: QueryTypeFieldProps) => {
       <EditorHeader>
         <InlineSelect
           label="Service"
-          value={query.queryType}
+          value={query.queryType === AzureQueryType.TraceExemplar ? AzureQueryType.AzureTraces : query.queryType}
           placeholder="Service..."
           allowCustomValue
           options={queryTypes}

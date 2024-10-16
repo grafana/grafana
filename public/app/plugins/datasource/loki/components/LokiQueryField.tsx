@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { PureComponent, ReactNode } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 
@@ -18,7 +18,7 @@ interface LokiQueryFieldState {
   labelsLoaded: boolean;
 }
 
-export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
+export class LokiQueryField extends PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   _isMounted = false;
 
   constructor(props: LokiQueryFieldProps) {

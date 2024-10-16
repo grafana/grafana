@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { createRef } from 'react';
+import { createRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {

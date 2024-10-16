@@ -16,8 +16,9 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
         uid: defaultDs.uid,
       };
 
-      const fitlerVariable: VariableModel = {
+      const filterVariable = {
         datasource: datasourceRef,
+        filters: [],
         name: 'Filter',
         type: 'adhoc',
       };
@@ -28,7 +29,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
         type: 'groupby',
       };
 
-      variablesList = (variablesList || []).concat([fitlerVariable, groupByVariable]);
+      variablesList = (variablesList || []).concat([filterVariable as VariableModel, groupByVariable]);
     }
   }
 
@@ -45,6 +46,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
       uid: '',
       title: 'New dashboard',
       panels: [],
+      timezone: config.bootData.user?.timezone || defaultDashboard.timezone,
     },
   };
 

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -26,7 +26,7 @@ export const SeriesEditor = ({
   const style = useStyles2(getStyles);
 
   // reset opts when mapping changes (no way to do this in panel opts builder?)
-  const mapping = context.options?.mapping as SeriesMapping;
+  const mapping = context.options?.mapping;
   const prevMapping = usePrevious(mapping);
   const mappingChanged = prevMapping != null && mapping !== prevMapping;
 

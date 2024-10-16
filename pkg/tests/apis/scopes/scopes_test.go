@@ -3,6 +3,7 @@ package scopes
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -48,10 +49,19 @@ func TestIntegrationScopes(t *testing.T) {
 			"groupVersion": "scope.grafana.app/v0alpha1",
 			"resources": [
 			  {
-				"name": "find",
-				"singularName": "TreeResult",
+				"name": "scope_dashboard_bindings",
+				"singularName": "FindScopeDashboardsResult",
 				"namespaced": true,
-				"kind": "TreeResults",
+				"kind": "FindScopeDashboardBindingsResults",
+				"verbs": [
+				  "get"
+				]
+			  },
+			  {
+				"name": "scope_node_children",
+				"singularName": "FindScopeNodeChildrenResults",
+				"namespaced": true,
+				"kind": "FindScopeNodeChildrenResults",
 				"verbs": [
 				  "get"
 				]
@@ -70,6 +80,17 @@ func TestIntegrationScopes(t *testing.T) {
 				  "patch",
 				  "update",
 				  "watch"
+				]
+			  },
+			  {
+				"name": "scopedashboardbindings/status",
+				"singularName": "",
+				"namespaced": true,
+				"kind": "ScopeDashboardBinding",
+				"verbs": [
+				  "get",
+				  "patch",
+				  "update"
 				]
 			  },
 			  {
@@ -139,9 +160,28 @@ func TestIntegrationScopes(t *testing.T) {
 		)
 		require.NoError(t, err)
 
+		// Name length test
+		scope3 := helper.LoadYAMLOrJSONFile("testdata/example-scope3.yaml")
+
+		// Name too long (>253)
+		scope3.SetName(strings.Repeat("0", 254))
+		_, err = scopeClient.Resource.Create(ctx,
+			scope3,
+			createOptions,
+		)
+		require.Error(t, err)
+
+		// Maximum allowed length for name (253)
+		scope3.SetName(strings.Repeat("0", 253))
+		_, err = scopeClient.Resource.Create(ctx,
+			scope3,
+			createOptions,
+		)
+		require.NoError(t, err)
+
 		// Field Selector test
 		found, err := scopeClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.category=fun",
+			FieldSelector: "spec.title=foo-scope",
 		})
 		require.NoError(t, err)
 		require.Len(t, found.Items, 1)

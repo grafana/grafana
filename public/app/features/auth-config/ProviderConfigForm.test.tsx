@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { JSX } from 'react';
+import { JSX } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 
@@ -57,8 +57,17 @@ const testConfig: SSOProvider = {
     allowedDomains: '',
     allowedGroups: '',
     scopes: '',
+    orgMapping: '',
   },
 };
+
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      isGrafanaAdmin: true,
+    },
+  };
+});
 
 const emptyConfig = {
   ...testConfig,
@@ -120,6 +129,8 @@ describe('ProviderConfigForm', () => {
     await user.click(screen.getByText('User mapping'));
     await user.type(screen.getByRole('textbox', { name: /Role attribute path/i }), 'new-attribute-path');
     await user.click(screen.getByRole('checkbox', { name: /Role attribute strict mode/i }));
+    await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group A:1:Editor{enter}');
+    await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group B:2:Admin{enter}');
 
     await user.click(screen.getByText('Extra security measures'));
     await user.type(screen.getByRole('combobox', { name: /Allowed domains/i }), 'grafana.com{enter}');
@@ -143,6 +154,7 @@ describe('ProviderConfigForm', () => {
             clientSecret: 'test-client-secret',
             enabled: true,
             name: 'GitHub',
+            orgMapping: '["Group A:1:Editor","Group B:2:Admin"]',
             roleAttributePath: 'new-attribute-path',
             roleAttributeStrict: true,
             scopes: 'user:email',
@@ -203,6 +215,7 @@ describe('ProviderConfigForm', () => {
             tlsClientKey: '',
             usePkce: false,
             useRefreshToken: false,
+            orgMapping: '',
           },
         },
         { showErrorAlert: false }

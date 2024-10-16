@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { PanelProps, VizOrientation } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -24,16 +24,7 @@ const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
 
 export const BarChartPanel = (props: PanelProps<Options>) => {
-  const {
-    data,
-    options,
-    fieldConfig,
-    width,
-    height,
-    timeZone,
-    id,
-    // replaceVariables
-  } = props;
+  const { data, options, fieldConfig, width, height, timeZone, id, replaceVariables } = props;
 
   // will need this if joining on time to re-create data links
   // const { dataLinkPostProcessor } = usePanelContext();
@@ -92,12 +83,13 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   const xGroupsCount = vizSeries[0]?.length ?? 0;
   const seriesCount = vizSeries[0]?.fields.length ?? 0;
+  const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
 
   let { builder, prepData } = useMemo(
     () => {
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, color: info.color, orientation, options, timeZone, theme });
+        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -105,6 +97,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       timeZone,
       props.data.structureRev,
 
+      totalSeries,
       seriesCount,
       xGroupsCount,
 
@@ -175,6 +168,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     sortOrder={options.tooltip.sort}
                     isPinned={isPinned}
                     maxHeight={options.tooltip.maxHeight}
+                    replaceVariables={replaceVariables}
                   />
                 );
               }}

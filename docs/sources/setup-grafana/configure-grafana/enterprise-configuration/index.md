@@ -320,6 +320,10 @@ List of comma- or space-separated Organization:OrgId:Role mappings. Organization
 
 List of comma- or space-separated roles that will be mapped to the None role.
 
+### role_values_viewer
+
+List of comma- or space-separated roles that will be mapped to the Viewer role.
+
 ### role_values_editor
 
 List of comma- or space-separated roles that will be mapped to the Editor role.

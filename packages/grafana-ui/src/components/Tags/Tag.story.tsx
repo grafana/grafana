@@ -1,6 +1,5 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { Tag } from './Tag';
 import mdx from './Tag.mdx';

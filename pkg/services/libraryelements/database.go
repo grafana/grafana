@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -138,18 +138,14 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		}
 	}
 
-	userID := int64(0)
-	namespaceID, identifier := signedInUser.GetNamespacedID()
-	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
-		userID, err = identity.IntIdentifier(namespaceID, identifier)
-		if err != nil {
-			l.log.Warn("Error while parsing userID", "namespaceID", namespaceID, "userID", identifier)
-		}
+	var userID int64
+	if id, err := identity.UserIdentifier(signedInUser.GetID()); err == nil {
+		userID = id
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// folderUID *string will be changed to string
-	var folderUID string
+	var folderUID = ""
 	if cmd.FolderUID != nil {
 		folderUID = *cmd.FolderUID
 	}
@@ -176,9 +172,9 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		if l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
-			allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.FolderUID)))
+			allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
 			if !allowed {
-				return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", *cmd.FolderUID)
+				return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", folderUID)
 			}
 			if err != nil {
 				return err
@@ -240,9 +236,12 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			return err
 		}
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		// nolint:staticcheck
-		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
-			return err
+
+		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
+			// nolint:staticcheck
+			if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
+				return err
+			}
 		}
 
 		// Delete any hanging/invalid connections
@@ -538,17 +537,20 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 		toFolderID = fromFolderID
 	}
 
-	// FolderID was provided in the PATCH request
-	if toFolderID != -1 && toFolderID != fromFolderID {
-		if err := l.requireEditPermissionsOnFolder(ctx, user, toFolderID); err != nil {
+	if !l.features.IsEnabled(ctx, featuremgmt.FlagLibraryPanelRBAC) {
+		// FolderID was provided in the PATCH request
+		if toFolderID != -1 && toFolderID != fromFolderID {
+			if err := l.requireEditPermissionsOnFolder(ctx, user, toFolderID); err != nil {
+				return err
+			}
+		}
+
+		// Always check permissions for the folder where library element resides
+		if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
 			return err
 		}
 	}
 
-	// Always check permissions for the folder where library element resides
-	if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
-		return err
-	}
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// nolint:staticcheck
 	elementToPatch.FolderID = toFolderID
@@ -587,13 +589,8 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		}
 
 		var userID int64
-		namespaceID, identifier := signedInUser.GetNamespacedID()
-		if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
-			var errID error
-			userID, errID = identity.IntIdentifier(namespaceID, identifier)
-			if errID != nil {
-				l.log.Warn("Error while parsing userID", "namespaceID", namespaceID, "userID", identifier, "err", errID)
-			}
+		if id, err := identity.UserIdentifier(signedInUser.GetID()); err == nil {
+			userID = id
 		}
 
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
@@ -794,13 +791,9 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 				return err
 			}
 
-			namespaceID, identifier := signedInUser.GetNamespacedID()
-			userID := int64(0)
-			if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
-				userID, err = identity.IntIdentifier(namespaceID, identifier)
-				if err != nil {
-					l.log.Warn("Failed to parse user ID from namespace identifier", "namespace", namespaceID, "identifier", identifier, "error", err)
-				}
+			var userID int64
+			if id, err := identity.UserIdentifier(signedInUser.GetID()); err == nil {
+				userID = id
 			}
 
 			connection := model.LibraryElementConnection{

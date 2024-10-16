@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ComponentSize } from '../../types/size';
 import { Button } from '../Button';
 

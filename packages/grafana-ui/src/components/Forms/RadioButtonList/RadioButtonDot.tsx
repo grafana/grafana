@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 
-export interface RadioButtonDotProps<T> {
+export interface RadioButtonDotProps<T>
+  extends Omit<React.HTMLProps<HTMLInputElement>, 'label' | 'value' | 'onChange' | 'type'> {
   id: string;
   name: string;
   checked?: boolean;
@@ -25,12 +26,14 @@ export const RadioButtonDot = <T extends string | number | readonly string[]>({
   disabled,
   description,
   onChange,
+  ...props
 }: RadioButtonDotProps<T>) => {
   const styles = useStyles2(getStyles);
 
   return (
     <label title={description} className={styles.label}>
       <input
+        {...props}
         id={id}
         name={name}
         type="radio"

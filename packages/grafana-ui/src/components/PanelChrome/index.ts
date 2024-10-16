@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { LoadingIndicator } from './LoadingIndicator';
 import { PanelChrome as PanelChromeComponent, PanelChromeProps } from './PanelChrome';

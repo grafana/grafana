@@ -140,7 +140,7 @@ type fakeUserService struct {
 	OrgRole org.RoleType
 }
 
-func (f *fakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+func (f *fakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	return &user.SignedInUser{
 		UserID:      1,
 		OrgID:       1,

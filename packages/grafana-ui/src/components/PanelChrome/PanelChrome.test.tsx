@@ -1,5 +1,4 @@
 import { screen, render, fireEvent } from '@testing-library/react';
-import React from 'react';
 import { useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';

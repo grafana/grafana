@@ -1,10 +1,10 @@
 package peakq
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -14,7 +14,9 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -27,9 +29,10 @@ func NewPeakQAPIBuilder() *PeakQAPIBuilder {
 	return &PeakQAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *PeakQAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *PeakQAPIBuilder {
+	if !((features.IsEnabledGlobally(featuremgmt.FlagQueryService) && features.IsEnabledGlobally(featuremgmt.FlagQueryLibrary)) ||
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+		return nil // skip registration unless explicitly added (or all experimental are added)
 	}
 	builder := NewPeakQAPIBuilder()
 	apiregistration.RegisterAPI(NewPeakQAPIBuilder())
@@ -62,27 +65,22 @@ func (b *PeakQAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func (b *PeakQAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	optsGetter generic.RESTOptionsGetter,
-	_ bool, // dual write (not relevant)
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(peakq.GROUP, scheme, metav1.ParameterCodec, codecs)
-
+func (b *PeakQAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	resourceInfo := peakq.QueryTemplateResourceInfo
 	storage := map[string]rest.Storage{}
-	peakqStorage, err := newStorage(scheme, optsGetter)
+
+	peakqStorage, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
+
 	storage[resourceInfo.StoragePath()] = peakqStorage
 	storage[resourceInfo.StoragePath("render")] = &renderREST{
 		getter: peakqStorage,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[peakq.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *PeakQAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

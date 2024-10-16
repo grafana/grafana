@@ -1,5 +1,4 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React from 'react';
 
 import { Slider } from '@grafana/ui';
 

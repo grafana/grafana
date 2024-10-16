@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { IconButton } from '../IconButton/IconButton';
 import { TooltipProps, PopoverContent } from '../Tooltip';
 

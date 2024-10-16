@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';

@@ -94,6 +94,7 @@ describe('BarChart utils', () => {
   describe('preparePlotConfigBuilder', () => {
     const config: PrepConfigOpts = {
       series: [mockDataFrame()],
+      totalSeries: 2,
       // color?: Field | null;
       timeZone: defaultTimeZone,
       theme: createTheme(),

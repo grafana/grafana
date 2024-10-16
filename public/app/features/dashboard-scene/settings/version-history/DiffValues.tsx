@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { isArray, isObject, isUndefined } from 'lodash';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';

@@ -28,6 +28,7 @@ export function useSaveDashboard(isCopy = false) {
           message: options.message,
           overwrite: options.overwrite,
           showErrorAlert: false,
+          k8s: undefined, // TODO?  pass the original metadata
         });
 
         if ('error' in result) {
@@ -61,10 +62,7 @@ export function useSaveDashboard(isCopy = false) {
 
         if (newUrl !== currentLocation.pathname) {
           setTimeout(() => {
-            // Because the path changes we need to stop and restart url sync
-            scene.stopUrlSync();
             locationService.push({ pathname: newUrl, search: currentLocation.search });
-            scene.startUrlSync();
           });
         }
 

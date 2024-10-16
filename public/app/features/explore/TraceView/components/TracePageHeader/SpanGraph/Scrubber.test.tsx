@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import React from 'react';
 
 import Scrubber, { ScrubberProps } from './Scrubber';
 

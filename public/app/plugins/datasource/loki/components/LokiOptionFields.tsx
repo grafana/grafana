@@ -1,6 +1,7 @@
 // Libraries
 import { map } from 'lodash';
-import React, { memo } from 'react';
+import { memo } from 'react';
+import * as React from 'react';
 
 // Types
 import { SelectableValue } from '@grafana/data';
@@ -8,7 +9,7 @@ import { config } from '@grafana/runtime';
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select, Stack } from '@grafana/ui';
 
 import { getLokiQueryType } from '../queryUtils';
-import { LokiQuery, LokiQueryType } from '../types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
@@ -25,6 +26,15 @@ export const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
     value: LokiQueryType.Instant,
     label: 'Instant',
     description: 'Run query against a single point in time. For this query, the "To" time is used.',
+  },
+];
+
+export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
+  { value: LokiQueryDirection.Backward, label: 'Backward', description: 'Search in backward direction.' },
+  {
+    value: LokiQueryDirection.Forward,
+    label: 'Forward',
+    description: 'Search in forward direction.',
   },
 ];
 

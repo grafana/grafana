@@ -76,8 +76,9 @@ type PrometheusQueryProperties struct {
 }
 
 // ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix)
+// to avoid import (temp fix). This also has metadata.name inlined.
 type ScopeSpec struct {
+	Name        string        `json:"name"` // This is the identifier from metadata.name of the scope model.
 	Title       string        `json:"title"`
 	Type        string        `json:"type"`
 	Description string        `json:"description"`
@@ -88,8 +89,10 @@ type ScopeSpec struct {
 // ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
 // to avoid import (temp fix)
 type ScopeFilter struct {
-	Key      string         `json:"key"`
-	Value    string         `json:"value"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
+	// Values is used for operators that require multiple values (e.g. one-of and not-one-of).
+	Values   []string       `json:"values,omitempty"`
 	Operator FilterOperator `json:"operator"`
 }
 
@@ -102,6 +105,8 @@ const (
 	FilterOperatorNotEquals     FilterOperator = "not-equals"
 	FilterOperatorRegexMatch    FilterOperator = "regex-match"
 	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
+	FilterOperatorOneOf         FilterOperator = "one-of"
+	FilterOperatorNotOneOf      FilterOperator = "not-one-of"
 )
 
 // Internal interval and range variables
@@ -202,7 +207,7 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
-	expr := interpolateVariables(
+	expr := InterpolateVariables(
 		model.Expr,
 		query.Interval,
 		calculatedStep,
@@ -237,9 +242,11 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 			}()))
 		}
 
-		expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
-		if err != nil {
-			return nil, err
+		if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
+			expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -358,14 +365,14 @@ func calculateRateInterval(
 	return rateInterval
 }
 
-// interpolateVariables interpolates built-in variables
+// InterpolateVariables interpolates built-in variables
 // expr                         PromQL query
 // queryInterval                Requested interval in milliseconds. This value may be overridden by MinStep in query options
 // calculatedStep               Calculated final step value. It was calculated in calculatePrometheusInterval
 // requestedMinStep             Requested minimum step value. QueryModel.interval
 // dsScrapeInterval             Data source scrape interval in the config
 // timeRange                    Requested time range for query
-func interpolateVariables(
+func InterpolateVariables(
 	expr string,
 	queryInterval time.Duration,
 	calculatedStep time.Duration,
@@ -434,6 +441,6 @@ func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 var f embed.FS
 
 // QueryTypeDefinitionsJSON returns the query type definitions
-func QueryTypeDefinitionsJSON() (json.RawMessage, error) {
+func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
 	return f.ReadFile("query.types.json")
 }

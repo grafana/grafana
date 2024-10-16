@@ -1,5 +1,4 @@
-import React from 'react';
-import { DropResult } from 'react-beautiful-dnd';
+import { DropResult } from '@hello-pangea/dnd';
 
 import { StandardEditorProps } from '@grafana/data';
 import { Container } from '@grafana/ui';

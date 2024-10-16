@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { parser } from '@prometheus-io/lezer-promql';
 import { debounce } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -83,6 +83,11 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
     container: css({
       borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.components.input.borderColor}`,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'start',
+      alignItems: 'center',
+      height: '100%',
     }),
     placeholder: css({
       '::after': {

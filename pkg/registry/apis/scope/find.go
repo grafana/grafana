@@ -13,7 +13,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var logger = log.New("find-scopenode")
 
 type findREST struct {
 	scopeNodeStorage *storage
@@ -29,7 +32,7 @@ var (
 
 func (r *findREST) New() runtime.Object {
 	// This is added as the "ResponseType" regarless what ProducesObject() says :)
-	return &scope.TreeResults{}
+	return &scope.FindScopeNodeChildrenResults{}
 }
 
 func (r *findREST) Destroy() {}
@@ -39,7 +42,7 @@ func (r *findREST) NamespaceScoped() bool {
 }
 
 func (r *findREST) GetSingularName() string {
-	return "TreeResult" // Used for the
+	return "FindScopeNodeChildrenResults" // Used for the
 }
 
 func (r *findREST) ProducesMIMETypes(verb string) []string {
@@ -47,7 +50,7 @@ func (r *findREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *findREST) ProducesObject(verb string) interface{} {
-	return &scope.TreeResults{}
+	return &scope.FindScopeNodeChildrenResults{}
 }
 
 func (r *findREST) ConnectMethods() []string {
@@ -59,7 +62,7 @@ func (r *findREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	// See: /pkg/apiserver/builder/helper.go#L34
+	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
 		return nil, errors.NewNotFound(schema.GroupResource{}, name)
@@ -68,10 +71,10 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		parent := req.URL.Query().Get("parent")
 		query := req.URL.Query().Get("query")
-		results := &scope.TreeResults{}
+		results := &scope.FindScopeNodeChildrenResults{}
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
-			Limit: 1000,
+			Limit: 10000,
 		})
 
 		if err != nil {
@@ -80,6 +83,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		}
 
 		all, ok := raw.(*scope.ScopeNodeList)
+
 		if !ok {
 			responder.Error(fmt.Errorf("expected ScopeNodeList"))
 			return
@@ -89,11 +93,13 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 			filterAndAppendItem(item, parent, query, results)
 		}
 
+		logger.FromContext(req.Context()).Debug("find scopenode", "raw", len(all.Items), "filtered", len(results.Items))
+
 		responder.Object(200, results)
 	}), nil
 }
 
-func filterAndAppendItem(item scope.ScopeNode, parent string, query string, results *scope.TreeResults) {
+func filterAndAppendItem(item scope.ScopeNode, parent string, query string, results *scope.FindScopeNodeChildrenResults) {
 	if parent != item.Spec.ParentName {
 		return // Someday this will have an index in raw storage on parentName
 	}
@@ -104,12 +110,5 @@ func filterAndAppendItem(item scope.ScopeNode, parent string, query string, resu
 		return
 	}
 
-	results.Items = append(results.Items, scope.TreeItem{
-		NodeID:      item.Name,
-		NodeType:    item.Spec.NodeType,
-		Title:       item.Spec.Title,
-		Description: item.Spec.Description,
-		LinkType:    item.Spec.LinkType,
-		LinkID:      item.Spec.LinkID,
-	})
+	results.Items = append(results.Items, item)
 }

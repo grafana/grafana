@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Button, Icon } from '@grafana/ui';
 import { PluginDashboard } from 'app/types';
 

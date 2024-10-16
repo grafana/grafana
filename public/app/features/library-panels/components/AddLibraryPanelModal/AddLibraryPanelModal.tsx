@@ -1,23 +1,29 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { FetchError, isFetchError } from '@grafana/runtime';
-import { Button, Field, Input, Modal } from '@grafana/ui';
-import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { config, FetchError, isFetchError } from '@grafana/runtime';
+import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
+import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state';
 import { getLibraryPanelByName } from '../../state/api';
-import { LibraryElementDTO } from '../../types';
 import { usePanelSave } from '../../utils/usePanelSave';
 
 interface AddLibraryPanelContentsProps {
   onDismiss?: () => void;
   panel: PanelModel;
   initialFolderUid?: string;
+  onCreateLibraryPanel?: (libPanel: LibraryPanel) => void;
 }
 
-export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: AddLibraryPanelContentsProps) => {
+export const AddLibraryPanelContents = ({
+  panel,
+  initialFolderUid,
+  onCreateLibraryPanel,
+  onDismiss,
+}: AddLibraryPanelContentsProps) => {
   const [folderUid, setFolderUid] = useState(initialFolderUid);
   const [panelName, setPanelName] = useState(panel.title);
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
@@ -30,14 +36,16 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
 
   const onCreate = useCallback(() => {
     panel.libraryPanel = { uid: '', name: panelName };
-    saveLibraryPanel(panel, folderUid!).then((res: LibraryElementDTO | FetchError) => {
+
+    saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
         onDismiss?.();
+        onCreateLibraryPanel?.(res);
       } else {
         panel.libraryPanel = undefined;
       }
     });
-  }, [panel, panelName, folderUid, onDismiss, saveLibraryPanel]);
+  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel]);
 
   const isValidName = useAsync(async () => {
     try {
@@ -77,21 +85,31 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
           'Library panel permissions are derived from the folder permissions'
         )}
       >
-        <OldFolderPicker
-          onChange={({ uid }) => setFolderUid(uid)}
-          initialFolderUid={initialFolderUid}
+        <FolderPicker
+          onChange={(uid) => setFolderUid(uid)}
+          value={folderUid}
           inputId="share-panel-library-panel-folder-picker"
         />
       </Field>
-
-      <Modal.ButtonRow>
-        <Button variant="secondary" onClick={onDismiss} fill="outline">
-          <Trans i18nKey="library-panel.add-modal.cancel">Cancel</Trans>
-        </Button>
-        <Button onClick={onCreate} disabled={invalidInput}>
-          <Trans i18nKey="library-panel.add-modal.create">Create library panel</Trans>
-        </Button>
-      </Modal.ButtonRow>
+      {config.featureToggles.newDashboardSharingComponent ? (
+        <Stack gap={1} justifyContent={'start'}>
+          <Button onClick={onCreate} disabled={invalidInput}>
+            <Trans i18nKey="share-panel.new-library-panel.create-button">Create library panel</Trans>
+          </Button>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
+          </Button>
+        </Stack>
+      ) : (
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            <Trans i18nKey="library-panel.add-modal.cancel">Cancel</Trans>
+          </Button>
+          <Button onClick={onCreate} disabled={invalidInput}>
+            <Trans i18nKey="library-panel.add-modal.create">Create library panel</Trans>
+          </Button>
+        </Modal.ButtonRow>
+      )}
     </>
   );
 };

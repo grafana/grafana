@@ -494,7 +494,7 @@ export class GraphiteDatasource
   }
 
   metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
-    const options: any = optionalOptions || {};
+    const options = optionalOptions || {};
 
     const queryObject = convertToGraphiteQueryObject(findQuery);
     if (queryObject.queryType === GraphiteQueryType.Value || queryObject.queryType === GraphiteQueryType.MetricName) {
@@ -511,7 +511,7 @@ export class GraphiteDatasource
 
     // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
     let allParams = interpolatedQuery.match(/^tag_values\((.*)\)$/);
-    let expressions = allParams ? allParams[1].split(',').filter((p) => !!p) : undefined;
+    let expressions = allParams ? allParams[1].split(/,(?![^{]*\})/).filter((p) => !!p) : undefined;
     if (expressions) {
       options.limit = 10000;
       return this.getTagValuesAutoComplete(expressions.slice(1), expressions[0], undefined, options);

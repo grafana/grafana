@@ -136,6 +136,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
+  "preview-silenced-alerts": [
+    true,
+    false,
+  ],
   "update-external-configuration": [
     false,
     false,
@@ -235,7 +239,7 @@ exports[`alertmanager abilities should report everything except exporting for Mi
   ],
   "export-contact-point": [
     false,
-    true,
+    false,
   ],
   "export-mute-timings": [
     false,
@@ -243,6 +247,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
   ],
   "export-notification-policies": [
     false,
+    true,
+  ],
+  "preview-silenced-alerts": [
+    true,
     true,
   ],
   "update-external-configuration": [
@@ -351,6 +359,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
   ],
   "export-notification-policies": [
+    true,
+    true,
+  ],
+  "preview-silenced-alerts": [
     true,
     true,
   ],

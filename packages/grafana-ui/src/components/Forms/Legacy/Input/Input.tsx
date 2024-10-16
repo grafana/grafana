@@ -1,5 +1,6 @@
 import classNames from 'classnames';
-import React, { PureComponent, ChangeEvent } from 'react';
+import { PureComponent, ChangeEvent } from 'react';
+import * as React from 'react';
 
 import { ValidationEvents, ValidationRule } from '../../../../types';
 import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';

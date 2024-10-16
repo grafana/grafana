@@ -1,43 +1,17 @@
-import React from 'react';
+import { memo } from 'react';
 
-import { PluginExtension, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionAddedLinkConfig, PluginExtensionLinkConfig, PluginExtensionPoints } from '@grafana/data';
 
 import {
   assertConfigureIsValid,
   assertLinkPathIsValid,
-  assertExtensionPointIdIsValid,
-  assertPluginExtensionLink,
   assertStringProps,
-  isPluginExtensionConfigValid,
+  isExtensionPointIdValid,
+  isGrafanaCoreExtensionPoint,
   isReactComponent,
 } from './validators';
 
 describe('Plugin Extension Validators', () => {
-  describe('assertPluginExtensionLink()', () => {
-    it('should NOT throw an error if it is a link extension', () => {
-      expect(() => {
-        assertPluginExtensionLink({
-          id: 'id',
-          pluginId: 'myorg-b-app',
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          path: '...',
-        } as PluginExtension);
-      }).not.toThrowError();
-    });
-
-    it('should throw an error if it is not a link extension', () => {
-      expect(() => {
-        assertPluginExtensionLink({
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-        } as PluginExtension);
-      }).toThrowError();
-    });
-  });
-
   describe('assertLinkPathIsValid()', () => {
     it('should not throw an error if the link path is valid', () => {
       expect(() => {
@@ -80,45 +54,14 @@ describe('Plugin Extension Validators', () => {
     });
   });
 
-  describe('assertExtensionPointIdIsValid()', () => {
-    it('should throw an error if the extensionPointId does not have the right prefix', () => {
-      expect(() => {
-        assertExtensionPointIdIsValid({
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'wrong-extension-point-id',
-        });
-      }).toThrowError();
-    });
-
-    it('should NOT throw an error if the extensionPointId is correct', () => {
-      expect(() => {
-        assertExtensionPointIdIsValid({
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        });
-
-        assertExtensionPointIdIsValid({
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'plugins/my-super-plugin/some-page/extension-point-a',
-        });
-      }).not.toThrowError();
-    });
-  });
-
   describe('assertConfigureIsValid()', () => {
     it('should NOT throw an error if the configure() function is missing', () => {
       expect(() => {
         assertConfigureIsValid({
           title: 'Title',
           description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        } as PluginExtensionLinkConfig);
+          targets: 'grafana/some-page/extension-point-a',
+        } as PluginExtensionAddedLinkConfig);
       }).not.toThrowError();
     });
 
@@ -127,9 +70,9 @@ describe('Plugin Extension Validators', () => {
         assertConfigureIsValid({
           title: 'Title',
           description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-          configure: () => {},
-        } as PluginExtensionLinkConfig);
+          targets: 'grafana/some-page/extension-point-a',
+          configure: (_, {}) => {},
+        } as PluginExtensionAddedLinkConfig);
       }).not.toThrowError();
     });
 
@@ -203,70 +146,6 @@ describe('Plugin Extension Validators', () => {
     });
   });
 
-  describe('isPluginExtensionConfigValid()', () => {
-    it('should return TRUE if the plugin extension configuration is valid', () => {
-      const pluginId = 'my-super-plugin';
-
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          onClick: jest.fn(),
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        } as PluginExtensionLinkConfig)
-      ).toBe(true);
-
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-          path: `/a/${pluginId}/page`,
-        } as PluginExtensionLinkConfig)
-      ).toBe(true);
-    });
-
-    it('should return FALSE if the plugin extension configuration is invalid', () => {
-      const pluginId = 'my-super-plugin';
-
-      global.console.warn = jest.fn();
-
-      // Link (wrong path)
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-          path: '/administration/users',
-        } as PluginExtensionLinkConfig)
-      ).toBe(false);
-
-      // Link (no path and no onClick)
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-        } as PluginExtensionLinkConfig)
-      ).toBe(false);
-
-      // Link (missing title)
-      expect(
-        isPluginExtensionConfigValid(pluginId, {
-          type: PluginExtensionTypes.link,
-          title: '',
-          description: 'Description',
-          extensionPointId: 'grafana/some-page/extension-point-a',
-          path: `/a/${pluginId}/page`,
-        } as PluginExtensionLinkConfig)
-      ).toBe(false);
-    });
-  });
-
   describe('isReactComponent()', () => {
     it('should return TRUE if we pass in a valid React component', () => {
       expect(isReactComponent(() => <div>Some text</div>)).toBe(true);
@@ -274,7 +153,7 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE if we pass in a component wrapped with React.memo()', () => {
       const Component = () => <div>Some text</div>;
-      const wrapped = React.memo(() => (
+      const wrapped = memo(() => (
         <div>
           <Component />
         </div>
@@ -290,6 +169,66 @@ describe('Plugin Extension Validators', () => {
       expect(isReactComponent(false)).toBe(false);
       expect(isReactComponent(undefined)).toBe(false);
       expect(isReactComponent(null)).toBe(false);
+    });
+  });
+
+  describe('isGrafanaCoreExtensionPoint()', () => {
+    it('should return TRUE if we pass an PluginExtensionPoints value', () => {
+      expect(isGrafanaCoreExtensionPoint(PluginExtensionPoints.AlertingAlertingRuleAction)).toBe(true);
+    });
+
+    it('should return TRUE if we pass a string that is not listed under the PluginExtensionPoints enum', () => {
+      expect(isGrafanaCoreExtensionPoint('grafana/alerting/alertingrule/action')).toBe(true);
+    });
+
+    it('should return FALSE if we pass a string that is not listed under the PluginExtensionPoints enum', () => {
+      expect(isGrafanaCoreExtensionPoint('grafana/dashboard/alertingrule/action')).toBe(false);
+    });
+  });
+
+  describe('isExtensionPointIdValid()', () => {
+    test.each([
+      // We (for now allow core Grafana extension points to run without a version)
+      ['grafana/extension-point', ''],
+      ['grafana/extension-point', 'grafana'],
+      ['myorg-extensions-app/extension-point', 'myorg-extensions-app'],
+      ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/myorg-basic-app/start', 'myorg-basic-app'],
+      ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/grafana-app-observability-app/service/action', 'grafana-app-observability-app'],
+      ['plugins/grafana-k8s-app/cluster/action', 'grafana-k8s-app'],
+      ['plugins/grafana-oncall-app/alert-group/action', 'grafana-oncall-app'],
+      ['plugins/grafana-oncall-app/alert-group/action/v1', 'grafana-oncall-app'],
+      ['plugins/grafana-oncall-app/alert-group/action/v1.0.0', 'grafana-oncall-app'],
+    ])('should return TRUE if the extension point id is valid ("%s", "%s")', (extensionPointId, pluginId) => {
+      expect(
+        isExtensionPointIdValid({
+          extensionPointId,
+          pluginId,
+        })
+      ).toBe(true);
+    });
+
+    test.each([
+      [
+        // Plugin id mismatch
+        'myorg-extensions-app/extension-point/v1',
+        'myorgs-other-app',
+      ],
+      [
+        // Missing plugin id prefix
+        'extension-point/v1',
+        'myorgs-extensions-app',
+      ],
+    ])('should return FALSE if the extension point id is invalid ("%s", "%s")', (extensionPointId, pluginId) => {
+      expect(
+        isExtensionPointIdValid({
+          extensionPointId,
+          pluginId,
+        })
+      ).toBe(false);
     });
   });
 });

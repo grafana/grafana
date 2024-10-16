@@ -52,6 +52,8 @@ var (
 	empty_scopes =
 	hosted_domain = test_hosted_domain
 	signout_redirect_url = test_signout_redirect_url
+	org_attribute_path = groups
+	org_mapping = Group1:*:Editor
 	`
 
 	expectedOAuthInfo = map[string]any{
@@ -92,6 +94,8 @@ var (
 		"login_attribute_path":       "login",
 		"name_attribute_path":        "name",
 		"team_ids":                   "first, second",
+		"org_attribute_path":         "groups",
+		"org_mapping":                "Group1:*:Editor",
 	}
 )
 

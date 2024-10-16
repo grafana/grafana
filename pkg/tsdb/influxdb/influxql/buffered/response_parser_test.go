@@ -338,9 +338,15 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
-		result := ResponseParse(readJsonFile("error_on_top_level_response"), 200, generateQuery("Test raw query", "time_series", ""))
+		result := ResponseParse(readJsonFile("error_on_top_level_response"), 400, generateQuery("Test raw query", "time_series", ""))
 		require.Nil(t, result.Frames)
-		require.EqualError(t, result.Error, "error parsing query: found THING")
+		require.EqualError(t, result.Error, "InfluxDB returned error: error parsing query: found THING")
+	})
+
+	t.Run("Influxdb response parser with error message", func(t *testing.T) {
+		result := ResponseParse(readJsonFile("invalid_response"), 400, generateQuery("Test raw query", "time_series", ""))
+		require.Nil(t, result.Frames)
+		require.EqualError(t, result.Error, "InfluxDB returned error: failed to parse query: found WERE, expected ; at line 1, char 38")
 	})
 
 	t.Run("Influxdb response parser parseNumber nil", func(t *testing.T) {
@@ -380,10 +386,11 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 	})
 
-	t.Run("Influxdb response parser parseTimestamp valid JSON.number", func(t *testing.T) {
+	t.Run("Influxdb response parser parseTimestamp valid number", func(t *testing.T) {
 		// currently we use milliseconds-precision with influxdb, so the test works with that.
 		// if we change this to for example nanoseconds-precision, the tests will have to change.
-		timestamp, err := util.ParseTimestamp(json.Number("1609556645000"))
+		ts := float64(1609556645000)
+		timestamp, err := util.ParseTimestamp(ts)
 		require.NoError(t, err)
 		require.Equal(t, timestamp.Format(time.RFC3339), "2021-01-02T03:04:05Z")
 	})

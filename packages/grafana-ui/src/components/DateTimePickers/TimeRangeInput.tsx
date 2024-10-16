@@ -1,16 +1,19 @@
 import { css, cx } from '@emotion/css';
-import React, { FormEvent, MouseEvent, useState } from 'react';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import { createRef, FormEvent, MouseEvent, useState } from 'react';
 
 import { dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeRangeLabel } from './TimeRangePicker/TimeRangeLabel';
+import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
 import { isValidTimeRange } from './utils';
 
@@ -28,6 +31,8 @@ export interface TimeRangeInputProps {
   hideQuickRanges?: boolean;
   disabled?: boolean;
   showIcon?: boolean;
+  /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
+  weekStart?: WeekStart;
 }
 
 const noop = () => {};
@@ -37,6 +42,7 @@ export const TimeRangeInput = ({
   onChange,
   onChangeTimeZone = noop,
   clearable,
+  weekStart,
   hideTimeZone = true,
   timeZone = 'browser',
   placeholder = 'Select time range',
@@ -73,6 +79,22 @@ export const TimeRangeInput = ({
     onChange({ from, to, raw: { from, to } });
   };
 
+  const overlayRef = createRef<HTMLElement>();
+  const buttonRef = createRef<HTMLButtonElement>();
+
+  const { dialogProps } = useDialog({}, overlayRef);
+
+  const { overlayProps } = useOverlay(
+    {
+      onClose,
+      isDismissable: true,
+      isOpen,
+      shouldCloseOnInteractOutside: (element) => {
+        return !buttonRef.current?.contains(element);
+      },
+    },
+    overlayRef
+  );
   return (
     <div className={styles.container}>
       <button
@@ -80,6 +102,7 @@ export const TimeRangeInput = ({
         className={styles.pickerInput}
         data-testid={selectors.components.TimePicker.openButton}
         onClick={onOpen}
+        ref={buttonRef}
       >
         {showIcon && <Icon name="clock-nine" size={'sm'} className={styles.icon} />}
 
@@ -95,19 +118,22 @@ export const TimeRangeInput = ({
         )}
       </button>
       {isOpen && (
-        <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
-          <TimePickerContent
-            timeZone={timeZone}
-            value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
-            onChange={onRangeChange}
-            quickOptions={quickOptions}
-            onChangeTimeZone={onChangeTimeZone}
-            className={styles.content}
-            hideTimeZone={hideTimeZone}
-            isReversed={isReversed}
-            hideQuickRanges={hideQuickRanges}
-          />
-        </ClickOutsideWrapper>
+        <FocusScope contain autoFocus restoreFocus>
+          <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
+            <TimePickerContent
+              timeZone={timeZone}
+              value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
+              onChange={onRangeChange}
+              quickOptions={quickOptions}
+              onChangeTimeZone={onChangeTimeZone}
+              className={styles.content}
+              hideTimeZone={hideTimeZone}
+              isReversed={isReversed}
+              hideQuickRanges={hideQuickRanges}
+              weekStart={weekStart}
+            />
+          </section>
+        </FocusScope>
       )}
     </div>
   );

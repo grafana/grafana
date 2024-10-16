@@ -17,6 +17,17 @@ labels:
 description: Configure options for Grafana's text visualization
 title: Text
 weight: 100
+refs:
+  disable_sanitize_html:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html
+  variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/
 ---
 
 # Text
@@ -39,7 +50,11 @@ Use a text visualization when you need to:
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Mode
+## Text options
+
+Use the following options to refine your text visualization.
+
+### Mode
 
 **Mode** determines how embedded content appears.
 
@@ -54,7 +69,7 @@ This option formats the content as [markdown](https://en.wikipedia.org/wiki/Mark
 ### HTML
 
 This setting renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the
-[disable_sanitize_html][] flag which enables you to directly enter HTML.
+[disable_sanitize_html](ref:disable_sanitize_html) flag which enables you to directly enter HTML.
 
 ### Code
 
@@ -63,12 +78,4 @@ to the embedded text.
 
 ## Variables
 
-[Variables][] in the content will be expanded for display.
-
-{{% docs/reference %}}
-[disable_sanitize_html]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
-[disable_sanitize_html]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
-
-[Variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax"
-[Variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax"
-{{% /docs/reference %}}
+[Variables](ref:variables) in the content will be expanded for display.

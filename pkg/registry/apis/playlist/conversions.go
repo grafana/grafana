@@ -10,10 +10,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	playlist "github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) unstructured.Unstructured {
@@ -32,6 +34,9 @@ func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) un
 				"items":    items,
 			},
 		},
+	}
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
 	}
 	obj.SetName(cmd.UID)
 	return obj
@@ -66,13 +71,13 @@ func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlistsv
 }
 
 func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.NamespaceMapper) *playlist.Playlist {
-	spec := playlist.Spec{
+	spec := playlist.PlaylistSpec{
 		Title:    v.Name,
 		Interval: v.Interval,
 	}
 	for _, item := range v.Items {
-		spec.Items = append(spec.Items, playlist.Item{
-			Type:  playlist.ItemType(item.Type),
+		spec.Items = append(spec.Items, playlist.PlaylistItem{
+			Type:  playlist.PlaylistItemType(item.Type),
 			Value: item.Value,
 		})
 	}
@@ -94,13 +99,13 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 			createdAt := time.UnixMilli(v.CreatedAt)
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name:      "SQL",
-				Key:       fmt.Sprintf("%d", v.Id),
+				Path:      fmt.Sprintf("%d", v.Id),
 				Timestamp: &createdAt,
 			})
 		}
 	}
 
-	p.UID = utils.CalculateClusterWideUID(p)
+	p.UID = gapiutil.CalculateClusterWideUID(p)
 	return p
 }
 
@@ -113,7 +118,7 @@ func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlists
 		OrgId:    orgId,
 	}
 	for _, item := range spec.Items {
-		if item.Type == playlist.ItemTypeDashboardById {
+		if item.Type == playlist.PlaylistItemTypeDashboardById {
 			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
 		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
@@ -132,7 +137,7 @@ func getLegacyID(item *unstructured.Unstructured) int64 {
 	}
 	info, _ := meta.GetOriginInfo()
 	if info != nil && info.Name == "SQL" {
-		i, err := strconv.ParseInt(info.Key, 10, 64)
+		i, err := strconv.ParseInt(info.Path, 10, 64)
 		if err == nil {
 			return i
 		}

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { pickBy } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
 
 import {
@@ -24,32 +25,34 @@ import {
   Stack,
   TextArea,
   useStyles2,
+  withErrorBoundary,
 } from '@grafana/ui';
 import { alertSilencesApi, SilenceCreatedResponse } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
-import { getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
+import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import MatchersField from './MatchersField';
 import { SilencePeriod } from './SilencePeriod';
 import { SilencedInstancesPreview } from './SilencedInstancesPreview';
 import { getDefaultSilenceFormValues, getFormFieldsForSilence } from './utils';
 
-interface Props {
-  silenceId: string;
-  alertManagerSourceName: string;
-}
-
 /**
  * Silences editor for editing an existing silence.
  *
  * Fetches silence details from API, based on `silenceId`
  */
-export const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => {
+const ExistingSilenceEditor = () => {
+  const { id: silenceId = '' } = useParams();
+  const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
   const {
     data: silence,
     isLoading: getSilenceIsLoading,
@@ -57,9 +60,11 @@ export const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Pro
   } = alertSilencesApi.endpoints.getSilence.useQuery({
     id: silenceId,
     datasourceUid: getDatasourceAPIUid(alertManagerSourceName),
+    ruleMetadata: true,
+    accessControl: true,
   });
-
   const ruleUid = silence?.matchers?.find((m) => m.name === MATCHER_ALERT_RULE_UID)?.value;
+  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const defaultValues = useMemo(() => {
     if (!silence) {
@@ -80,8 +85,17 @@ export const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Pro
     return <Alert title={`Existing silence "${silenceId}" not found`} severity="warning" />;
   }
 
+  const canEditSilence = isGrafanaAlertManager ? silence?.accessControl?.write : true;
+
+  if (!canEditSilence) {
+    return <Alert title={`You do not have permission to edit/recreate this silence`} severity="error" />;
+  }
+
   return (
-    <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
+    <>
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
+      <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
+    </>
   );
 };
 
@@ -104,6 +118,11 @@ export const SilencesEditor = ({
   onCancel,
   ruleUid,
 }: SilencesEditorProps) => {
+  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.PreviewSilencedInstances
+  );
+  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
@@ -227,7 +246,9 @@ export const SilencesEditor = ({
               />
             </Field>
           )}
-          <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchers} ruleUid={ruleUid} />
+          {canPreview && (
+            <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchers} ruleUid={ruleUid} />
+          )}
         </FieldSet>
         <Stack gap={1}>
           {isLoading && (
@@ -258,7 +279,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'flex-start',
     gap: theme.spacing(1),
     maxWidth: theme.breakpoints.values.sm,
+    paddingTop: theme.spacing(2),
   }),
 });
 
-export default ExistingSilenceEditor;
+function ExistingSilenceEditorPage() {
+  const pageNav = {
+    id: 'silence-edit',
+    text: 'Edit silence',
+    subTitle: 'Recreate existing silence to stop notifications from a particular alert rule',
+  };
+  return (
+    <AlertmanagerPageWrapper navId="silences" pageNav={pageNav} accessType="instance">
+      <ExistingSilenceEditor />
+    </AlertmanagerPageWrapper>
+  );
+}
+export default withErrorBoundary(ExistingSilenceEditorPage, { style: 'page' });

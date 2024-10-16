@@ -12,7 +12,7 @@ func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	testScenario(t, "When users tries to create query in query history it should succeed",
+	testScenario(t, "When users tries to create query in query history it should succeed", true, true,
 		func(t *testing.T, sc scenarioContext) {
 			command := CreateQueryInQueryHistoryCommand{
 				DatasourceUID: "NCzh67i",
@@ -21,7 +21,25 @@ func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
 				}),
 			}
 			sc.reqContext.Req.Body = mockRequestBody(command)
-			resp := sc.service.createHandler(sc.reqContext)
+			permissionsMiddlewareCallback := sc.service.permissionsMiddleware(sc.service.createHandler, "Failed to create query history")
+
+			resp := permissionsMiddlewareCallback(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
+		})
+
+	testScenario(t, "When users tries to create query in query history without permissions it should fail", true, false,
+		func(t *testing.T, sc scenarioContext) {
+			command := CreateQueryInQueryHistoryCommand{
+				DatasourceUID: "NCzh67i",
+				Queries: simplejson.NewFromAny(map[string]any{
+					"expr": "test",
+				}),
+			}
+
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			permissionsMiddlewareCallback := sc.service.permissionsMiddleware(sc.service.createHandler, "Failed to create query history")
+
+			resp := permissionsMiddlewareCallback(sc.reqContext)
+			require.Equal(t, 401, resp.Status())
 		})
 }

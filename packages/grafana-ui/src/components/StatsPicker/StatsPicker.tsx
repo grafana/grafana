@@ -1,5 +1,5 @@
 import { difference } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { fieldReducers, SelectableValue, FieldReducerInfo } from '@grafana/data';
 

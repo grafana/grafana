@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
@@ -8,6 +7,7 @@ import { Button, clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
+import { TableCellInspectorMode } from './TableCellInspector';
 import { TableCellProps } from './types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
@@ -52,7 +52,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
           </DataLinksContextMenu>
         )}
       </div>
-      {inspectEnabled && <CellActions {...props} previewMode="code" />}
+      {inspectEnabled && <CellActions {...props} previewMode={TableCellInspectorMode.code} />}
     </div>
   );
 }

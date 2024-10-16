@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import { PureComponent, ChangeEvent } from 'react';
 
 import {
   DataTransformerID,
@@ -24,7 +24,7 @@ const nameModes: Array<SelectableValue<ConcatenateFrameNameMode>> = [
   { value: ConcatenateFrameNameMode.Drop, label: 'Ignore the frame name' },
 ];
 
-export class ConcatenateTransformerEditor extends React.PureComponent<ConcatenateTransformerEditorProps> {
+export class ConcatenateTransformerEditor extends PureComponent<ConcatenateTransformerEditorProps> {
   constructor(props: ConcatenateTransformerEditorProps) {
     super(props);
   }

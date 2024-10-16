@@ -110,10 +110,10 @@ func UnmarshalThresholdCommand(rn *rawNode, features featuremgmt.FeatureToggles)
 	}
 	if firstCondition.UnloadEvaluator != nil && features.IsEnabledGlobally(featuremgmt.FlagRecoveryThreshold) {
 		unloading, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
-		unloading.Invert = true
 		if err != nil {
 			return nil, fmt.Errorf("invalid unloadCondition: %w", err)
 		}
+		unloading.Invert = true
 		var d Fingerprints
 		if firstCondition.LoadedDimensions != nil {
 			d, err = FingerprintsFromFrame(firstCondition.LoadedDimensions)

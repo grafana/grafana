@@ -42,4 +42,6 @@ DataSourceRef: {
 	type?: string
 	// Specific datasource instance
 	uid?: string
+	//  Datasource API version
+	apiVersion?: string
 } @cuetsy(kind="interface")

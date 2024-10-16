@@ -32,7 +32,6 @@ var mtx sync.Mutex
 // Legacy UID pattern
 var validUIDCharPattern = `a-zA-Z0-9\-\_`
 var validUIDPattern = regexp.MustCompile(`^[` + validUIDCharPattern + `]*$`).MatchString
-var validUIDReplacer = regexp.MustCompile(`[^` + validUIDCharPattern + `]`).ReplaceAllString
 
 // IsValidShortUID checks if short unique identifier contains valid characters
 // NOTE: future Grafana UIDs will need conform to https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L43
@@ -92,14 +91,4 @@ func ValidateUID(uid string) error {
 		return ErrUIDFormatInvalid
 	}
 	return nil
-}
-
-func AutofixUID(uid string) string {
-	if IsShortUIDTooLong(uid) {
-		return uid[:MaxUIDLength]
-	}
-	if !IsValidShortUID(uid) {
-		uid = validUIDReplacer(uid, "-")
-	}
-	return uid
 }

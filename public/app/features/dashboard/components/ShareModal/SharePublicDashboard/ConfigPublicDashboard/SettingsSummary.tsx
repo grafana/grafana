@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Spinner, TimeRangeLabel, useStyles2 } from '@grafana/ui';

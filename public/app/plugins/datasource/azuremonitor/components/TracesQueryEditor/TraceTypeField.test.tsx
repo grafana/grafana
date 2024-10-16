@@ -1,5 +1,4 @@
 import { render, screen, act } from '@testing-library/react';
-import React from 'react';
 import { openMenu } from 'react-select-event';
 
 import createMockDatasource from '../../__mocks__/datasource';

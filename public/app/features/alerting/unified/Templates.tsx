@@ -1,33 +1,23 @@
-import React from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 
 import { withErrorBoundary } from '@grafana/ui';
-import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
+import DuplicateMessageTemplate from './components/contact-points/DuplicateMessageTemplate';
+import EditMessageTemplate from './components/contact-points/EditMessageTemplate';
+import NewMessageTemplate from './components/contact-points/NewMessageTemplate';
 
-const EditMessageTemplate = SafeDynamicImport(() => import('./components/contact-points/EditMessageTemplate'));
-const NewMessageTemplate = SafeDynamicImport(() => import('./components/contact-points/NewMessageTemplate'));
-const DuplicateMessageTemplate = SafeDynamicImport(
-  () => import('./components/contact-points/DuplicateMessageTemplate')
-);
-
-const NotificationTemplates = (_props: GrafanaRouteComponentProps): JSX.Element => (
+const NotificationTemplates = (): JSX.Element => (
   <AlertmanagerPageWrapper
     navId="receivers"
     accessType="notification"
     pageNav={{ id: 'templates', text: 'Notification templates', subTitle: 'Create and edit notification templates' }}
   >
-    <Switch>
-      <Route exact={true} path="/alerting/notifications/templates/:name/edit" component={EditMessageTemplate} />
-      <Route exact={true} path="/alerting/notifications/templates/new" component={NewMessageTemplate} />
-      <Route
-        exact={true}
-        path="/alerting/notifications/templates/:name/duplicate"
-        component={DuplicateMessageTemplate}
-      />
-    </Switch>
+    <Routes>
+      <Route path=":name/edit" element={<EditMessageTemplate />} />
+      <Route path="new" element={<NewMessageTemplate />} />
+      <Route path=":name/duplicate" element={<DuplicateMessageTemplate />} />
+    </Routes>
   </AlertmanagerPageWrapper>
 );
 

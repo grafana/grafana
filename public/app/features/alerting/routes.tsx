@@ -3,6 +3,7 @@ import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types';
 
+import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -44,7 +45,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/MuteTimings')
+        () =>
+          import(
+            /* webpackChunkName: "NewMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/NewMuteTiming'
+          )
       ),
     },
     {
@@ -54,7 +58,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "MuteTimings" */ 'app/features/alerting/unified/MuteTimings')
+        () =>
+          import(
+            /* webpackChunkName: "EditMuteTiming" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTiming'
+          )
       ),
     },
     {
@@ -62,9 +69,13 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingSilenceRead,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () =>
+          import(
+            /* webpackChunkName: "SilencesTablePage" */ 'app/features/alerting/unified/components/silences/SilencesTable'
+          )
       ),
     },
     {
@@ -72,19 +83,20 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceCreate,
         AccessControlAction.AlertingInstancesExternalWrite,
+        AccessControlAction.AlertingSilenceCreate,
+        AccessControlAction.AlertingSilenceUpdate,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () => import(/* webpackChunkName: "NewSilencePage" */ 'app/features/alerting/unified/NewSilencePage')
       ),
     },
     {
       path: '/alerting/silence/:id/edit',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingInstanceUpdate,
-        AccessControlAction.AlertingInstancesExternalWrite,
-      ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
+        () =>
+          import(
+            /* webpackChunkName: "ExistingSilenceEditorPage" */ 'app/features/alerting/unified/components/silences/SilencesEditor'
+          )
       ),
     },
     {
@@ -92,9 +104,46 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
+        ...PERMISSIONS_CONTACT_POINTS,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
+        () =>
+          import(
+            /* webpackChunkName: "ContactPoints" */ 'app/features/alerting/unified/components/contact-points/ContactPoints'
+          )
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/new',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        ...PERMISSIONS_CONTACT_POINTS,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "NewReceiverView" */ 'app/features/alerting/unified/components/receivers/NewReceiverView'
+          )
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/:name/edit',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsWrite,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        // We check any contact point permission here because a user without edit permissions
+        // still has to be able to visit the "edit" page, because we don't have a separate view for edit vs view
+        // (we just disable the form instead)
+        ...PERMISSIONS_CONTACT_POINTS,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "EditContactPoint" */ 'app/features/alerting/unified/components/contact-points/EditContactPoint'
+          )
       ),
     },
     {
@@ -108,55 +157,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/notifications/:type/new',
+      path: '/alerting/notifications/global-config',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
-      ),
-    },
-    {
-      path: '/alerting/notifications/receivers/:id/edit',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingNotificationsWrite,
-        AccessControlAction.AlertingNotificationsExternalWrite,
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsExternalRead,
-      ]),
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
-      ),
-    },
-    {
-      path: '/alerting/notifications/:type/:id/edit',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingNotificationsWrite,
-        AccessControlAction.AlertingNotificationsExternalWrite,
-      ]),
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
-      ),
-    },
-    {
-      path: '/alerting/notifications/:type/:id/duplicate',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingNotificationsWrite,
-        AccessControlAction.AlertingNotificationsExternalWrite,
-      ]),
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
-      ),
-    },
-    {
-      path: '/alerting/notifications/:type',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingNotificationsWrite,
-        AccessControlAction.AlertingNotificationsExternalWrite,
-      ]),
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
+        () =>
+          import(
+            /* webpackChunkName: "GlobalConfig" */ 'app/features/alerting/unified/components/contact-points/components/GlobalConfig'
+          )
       ),
     },
     {
@@ -167,6 +177,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertGroups" */ 'app/features/alerting/unified/AlertGroups')
+      ),
+    },
+    {
+      path: '/alerting/history/',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "HistoryPage" */ 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryPage'
+          )
       ),
     },
     {

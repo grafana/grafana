@@ -66,6 +66,8 @@ import { EmptyState } from '@grafana/ui';
 <EmptyState variant="not-found" message="No playlists found" />;
 ```
 
+If the empty state is rendered as you are typing in a search box, use the `role="alert"` prop to announce the empty state to screen readers. Verify that the use case makes sense, as this approach may be very disruptive if used the wrong way.
+
 ### `variant="completed"`
 
 For when a user has completed all tasks on a page, such as reading all their notifications.

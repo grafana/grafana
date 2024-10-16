@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import * as React from 'react';
 import { select, openMenu } from 'react-select-event';
 
 import * as ui from '@grafana/ui';
@@ -16,6 +16,15 @@ jest.mock('@grafana/ui', () => ({
   CodeEditor: function CodeEditor({ value, onSave }: { value: string; onSave: (newQuery: string) => void }) {
     return <input data-testid="mockeditor" value={value} onChange={(event) => onSave(event.target.value)} />;
   },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
+    },
+  }),
 }));
 
 const defaultProps = {

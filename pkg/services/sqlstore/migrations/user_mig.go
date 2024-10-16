@@ -158,9 +158,15 @@ func addUserMigrations(mg *Migrator) {
 	// Service accounts login were not unique per org. this migration is part of making it unique per org
 	// to be able to create service accounts that are unique per org
 	mg.AddMigration(usermig.AllowSameLoginCrossOrgs, &usermig.ServiceAccountsSameLoginCrossOrgs{})
+	// Before it was fixed, the previous migration introduced the org_id again in logins that already had it.
+	// This migration removes the duplicate org_id from the login.
+	// TODO(aarongodin): this migration was causing instances to fail to start. It must be corrected before being added
+	// mg.AddMigration(usermig.DedupOrgInLogin, &usermig.ServiceAccountsDeduplicateOrgInLogin{})
 
 	// Users login and email should be in lower case
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
+	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
+	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;

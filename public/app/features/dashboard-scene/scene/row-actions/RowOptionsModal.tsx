@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { SceneObject } from '@grafana/scenes';
 import { Modal, useStyles2 } from '@grafana/ui';
@@ -21,7 +21,7 @@ export const RowOptionsModal = ({ repeat, title, parent, onDismiss, onUpdate, wa
   return (
     <Modal isOpen={true} title="Row options" onDismiss={onDismiss} className={styles.modal}>
       <RowOptionsForm
-        parent={parent}
+        sceneContext={parent}
         repeat={repeat}
         title={title}
         onCancel={onDismiss}

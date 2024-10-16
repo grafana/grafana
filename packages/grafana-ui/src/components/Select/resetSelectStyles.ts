@@ -21,6 +21,7 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
         padding: 0,
         // Set an explicit z-index here to ensure this element always overlays the singleValue
         zIndex: 1,
+        overflow: 'hidden',
       };
     },
     loadingIndicator: () => ({}),

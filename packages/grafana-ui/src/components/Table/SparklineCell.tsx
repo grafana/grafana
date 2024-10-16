@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import {
   FieldType,
@@ -8,6 +8,7 @@ import {
   isDataFrame,
   Field,
   isDataFrameWithValue,
+  formattedValueToString,
 } from '@grafana/data';
 import {
   BarAlignment,
@@ -92,9 +93,7 @@ export const SparklineCell = (props: TableCellProps) => {
     const displayValue = field.display!(value);
     const alignmentFactor = getAlignmentFactor(field, displayValue, cell.row.index);
 
-    valueWidth =
-      measureText(`${alignmentFactor.prefix ?? ''}${alignmentFactor.text}${alignmentFactor.suffix ?? ''}`, 16).width +
-      theme.spacing.gridSize;
+    valueWidth = measureText(formattedValueToString(alignmentFactor), 16).width + theme.spacing.gridSize;
 
     valueElement = (
       <FormattedValueDisplay

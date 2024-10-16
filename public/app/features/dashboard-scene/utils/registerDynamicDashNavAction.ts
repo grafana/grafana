@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DashboardModel } from '../../dashboard/state';
 

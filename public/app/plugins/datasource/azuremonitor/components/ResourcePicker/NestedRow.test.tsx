@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import NestedRow from './NestedRow';
 import { ResourceRowType } from './types';

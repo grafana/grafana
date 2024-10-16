@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
 

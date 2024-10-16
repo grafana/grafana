@@ -18,27 +18,23 @@ import {
   Matcher,
   Identifier,
   Range,
-  formatLokiQuery,
   Logfmt,
   Json,
   OrFilter,
   FilterOp,
 } from '@grafana/lezer-logql';
-import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { LokiDatasource } from './datasource';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
-import { ErrorId, replaceVariables, returnVariables } from './querybuilder/parsingUtils';
+import { ErrorId } from './querybuilder/parsingUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 /**
  * Returns search terms from a LogQL query.
- * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.
+ * E.g., `{} |= "foo" |= "bar" != "baz"` returns `['foo', 'bar']`.
  */
 export function getHighlighterExpressionsFromQuery(input = ''): string[] {
-  const results = [];
+  const results: string[] = [];
 
   const filters = getNodesFromQuery(input, [LineFilter]);
 
@@ -80,6 +76,10 @@ export function getHighlighterExpressionsFromQuery(input = ''): string[] {
   return results;
 }
 
+export function getExpressionFromExecutedQuery(executedQueryString: string) {
+  return executedQueryString.replace('Expr: ', '');
+}
+
 export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
   const nodes: SyntaxNode[] = [];
   let node: SyntaxNode | null = filter;
@@ -95,9 +95,16 @@ export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
 }
 
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
-  const queryType = getLokiQueryType(query);
+  let queryType = getLokiQueryType(query);
   // instant and range are deprecated, we want to remove them
   const { instant, range, ...rest } = query;
+
+  // if `query.expr` is not parsable this might throw an error
+  try {
+    if (isLogsQuery(query.expr) && queryType === LokiQueryType.Instant) {
+      queryType = LokiQueryType.Range;
+    }
+  } catch (e) {}
   return { ...rest, queryType };
 }
 
@@ -204,7 +211,8 @@ export function isQueryWithError(query: string): boolean {
 }
 
 export function isLogsQuery(query: string): boolean {
-  return !isQueryWithNode(query, MetricExpr);
+  // As a safeguard we are checking for a length of 2, because at least the query should be `{}`
+  return query.trim().length > 2 && !isQueryWithNode(query, MetricExpr);
 }
 
 export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
@@ -320,39 +328,3 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
 
   return query;
 };
-
-export function formatLogqlQuery(query: string, datasource: LokiDatasource) {
-  const isInvalid = isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars));
-
-  reportInteraction('grafana_loki_format_query_clicked', {
-    is_invalid: isInvalid,
-    query_type: isLogsQuery(query) ? 'logs' : 'metric',
-  });
-
-  if (isInvalid) {
-    return query;
-  }
-
-  let transformedQuery = replaceVariables(query);
-  const transformationMatches = [];
-  const tree = parser.parse(transformedQuery);
-
-  // Variables are considered errors inside of the parser, so we need to remove them before formatting
-  // We replace all variables with [0s] and keep track of the replaced variables
-  // After formatting we replace [0s] with the original variable
-  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
-    const pattern = /\[__V_[0-2]__\w+__V__\]/g;
-    transformationMatches.push(...transformedQuery.matchAll(pattern));
-    transformedQuery = transformedQuery.replace(pattern, '[0s]');
-  }
-
-  let formatted = formatLokiQuery(transformedQuery);
-
-  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
-    transformationMatches.forEach((match) => {
-      formatted = formatted.replace('[0s]', match[0]);
-    });
-  }
-
-  return returnVariables(formatted);
-}

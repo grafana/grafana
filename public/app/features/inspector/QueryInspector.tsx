@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import { LoadingState, PanelData } from '@grafana/data';
@@ -228,7 +228,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     return (
       <div className={styles.wrap}>
         <div aria-label={selectors.components.PanelInspector.Query.content}>
-          <h3 className="section-heading">Query inspector</h3>
+          <h3 className={styles.heading}>Query inspector</h3>
           <p className="small muted">
             <Trans i18nKey="inspector.query.description">
               Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a

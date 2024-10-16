@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -102,7 +102,7 @@ class UnthemedShareModal extends React.Component<Props, State> {
 
   onSelectTab: React.ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (t) => {
     this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
-    DashboardInteractions.sharingTabChanged({
+    DashboardInteractions.sharingCategoryClicked({
       item: t.value,
       shareResource: getTrackingSource(this.props.panel),
     });

@@ -2,9 +2,11 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,6 +33,7 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 		if cmd.RuleUID != "" {
 			addToQuery(` AND rule_uid = ?`, cmd.RuleUID)
 		}
+
 		if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNoNormalState) {
 			s.WriteString(fmt.Sprintf(" AND NOT (current_state = '%s' AND current_reason = '')", models.InstanceStateNormal))
 		}
@@ -55,12 +58,25 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.Al
 		if err != nil {
 			return err
 		}
-		params := append(make([]any, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix(), alertInstance.ResultFingerprint)
+		params := append(make([]any, 0),
+			alertInstance.RuleOrgID,
+			alertInstance.RuleUID,
+			labelTupleJSON,
+			alertInstance.LabelsHash,
+			alertInstance.CurrentState,
+			alertInstance.CurrentReason,
+			alertInstance.CurrentStateSince.Unix(),
+			alertInstance.CurrentStateEnd.Unix(),
+			alertInstance.LastEvalTime.Unix(),
+			nullableTimeToUnix(alertInstance.ResolvedAt),
+			nullableTimeToUnix(alertInstance.LastSentAt),
+			alertInstance.ResultFingerprint,
+		)
 
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_instance",
 			[]string{"rule_org_id", "rule_uid", "labels_hash"},
-			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time", "result_fingerprint"})
+			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time", "resolved_at", "last_sent_at", "result_fingerprint"})
 		_, err = sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
 			return err
@@ -192,7 +208,13 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 	return err
 }
 
-func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+// SaveAlertInstancesForRule is not implemented for instance database store.
+func (st DBstore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
+	st.Logger.Error("SaveAlertInstancesForRule is not implemented for instance database store.")
+	return errors.New("method SaveAlertInstancesForRule is not implemented for instance database store")
+}
+
+func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
 		return err
@@ -219,8 +241,20 @@ func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance
 				continue
 			}
 
-			_, err = sess.Exec("INSERT INTO alert_instance (rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time) VALUES (?,?,?,?,?,?,?,?,?)",
-				alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+			_, err = sess.Exec(
+				"INSERT INTO alert_instance (rule_org_id, rule_uid, labels, labels_hash, current_state, current_reason, current_state_since, current_state_end, last_eval_time, resolved_at, last_sent_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+				alertInstance.RuleOrgID,
+				alertInstance.RuleUID,
+				labelTupleJSON,
+				alertInstance.LabelsHash,
+				alertInstance.CurrentState,
+				alertInstance.CurrentReason,
+				alertInstance.CurrentStateSince.Unix(),
+				alertInstance.CurrentStateEnd.Unix(),
+				alertInstance.LastEvalTime.Unix(),
+				nullableTimeToUnix(alertInstance.ResolvedAt),
+				nullableTimeToUnix(alertInstance.LastSentAt),
+			)
 			if err != nil {
 				return fmt.Errorf("failed to insert into alert_instance table: %w", err)
 			}
@@ -230,4 +264,13 @@ func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance
 		}
 		return nil
 	})
+}
+
+// nullableTimeToUnix converts a nullable time.Time to nil, if it is nil, otherwise it converts the time.Time to a unix timestamp.
+func nullableTimeToUnix(t *time.Time) *int64 {
+	if t == nil {
+		return nil
+	}
+	unix := t.Unix()
+	return &unix
 }

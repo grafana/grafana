@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue, toOption } from '@grafana/data';
 
 import { COMMON_AGGREGATE_FNS } from '../../constants';

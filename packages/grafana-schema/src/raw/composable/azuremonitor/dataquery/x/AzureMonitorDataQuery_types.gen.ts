@@ -35,9 +35,9 @@ export interface AzureMonitorQuery extends common.DataQuery {
   grafanaTemplateVariableFn?: GrafanaTemplateVariableQuery;
   namespace?: string;
   /**
-   * Azure Monitor query type.
-   * queryType: #AzureQueryType
+   * Used only for exemplar queries from Prometheus
    */
+  query?: string;
   region?: string;
   resource?: string;
   /**
@@ -73,6 +73,7 @@ export enum AzureQueryType {
   ResourceGroupsQuery = 'Azure Resource Groups',
   ResourceNamesQuery = 'Azure Resource Names',
   SubscriptionsQuery = 'Azure Subscriptions',
+  TraceExemplar = 'traceql',
   WorkspacesQuery = 'Azure Workspaces',
 }
 
@@ -163,6 +164,10 @@ export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
  * Azure Monitor Logs sub-query properties
  */
 export interface AzureLogsQuery {
+  /**
+   * If set to true the query will be run as a basic logs query
+   */
+  basicLogsQuery?: boolean;
   /**
    * If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
    */

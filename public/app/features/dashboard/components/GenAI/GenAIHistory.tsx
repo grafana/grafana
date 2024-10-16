@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Icon, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { STOP_GENERATION_TEXT } from './GenAIButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
@@ -31,55 +32,36 @@ export const GenAIHistory = ({
   const styles = useStyles2(getStyles);
 
   const [currentIndex, setCurrentIndex] = useState(1);
-  const [showError, setShowError] = useState(false);
   const [customFeedback, setCustomPrompt] = useState('');
 
-  const { setMessages, setStopGeneration, reply, streamStatus, error } = useOpenAIStream(
-    DEFAULT_OAI_MODEL,
-    temperature
+  const onResponse = useCallback(
+    (response: string) => {
+      updateHistory(sanitizeReply(response));
+    },
+    [updateHistory]
   );
 
-  const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
+  const { setMessages, stopGeneration, reply, streamStatus, error } = useOpenAIStream({
+    model: DEFAULT_OAI_MODEL,
+    temperature,
+    onResponse,
+  });
 
   const reportInteraction = (item: AutoGenerateItem, otherMetadata?: object) =>
     reportAutoGenerateInteraction(eventTrackingSrc, item, otherMetadata);
-
-  useEffect(() => {
-    if (!isStreamGenerating && reply !== '') {
-      setCurrentIndex(1);
-    }
-  }, [isStreamGenerating, reply]);
-
-  useEffect(() => {
-    if (streamStatus === StreamStatus.COMPLETED) {
-      updateHistory(sanitizeReply(reply));
-    }
-  }, [streamStatus, reply, updateHistory]);
-
-  useEffect(() => {
-    if (error) {
-      setShowError(true);
-    }
-
-    if (streamStatus === StreamStatus.GENERATING) {
-      setShowError(false);
-    }
-  }, [error, streamStatus]);
 
   const onSubmitCustomFeedback = (text: string) => {
     onGenerateWithFeedback(text);
     reportInteraction(AutoGenerateItem.customFeedback, { customFeedback: text });
   };
 
+  const onStopGeneration = () => {
+    stopGeneration();
+    reply && onResponse(reply);
+  };
+
   const onApply = () => {
-    if (isStreamGenerating) {
-      setStopGeneration(true);
-      if (reply !== '') {
-        updateHistory(sanitizeReply(reply));
-      }
-    } else {
-      onApplySuggestion(history[currentIndex - 1]);
-    }
+    onApplySuggestion(history[currentIndex - 1]);
   };
 
   const onNavigate = (index: number) => {
@@ -87,14 +69,8 @@ export const GenAIHistory = ({
     reportInteraction(index > currentIndex ? AutoGenerateItem.backHistoryItem : AutoGenerateItem.forwardHistoryItem);
   };
 
-  const onGenerateWithFeedback = (suggestion: string | QuickFeedbackType) => {
-    if (suggestion !== QuickFeedbackType.Regenerate) {
-      messages = [...messages, ...getFeedbackMessage(history[currentIndex - 1], suggestion)];
-    } else {
-      messages = [...messages, ...getFeedbackMessage(history[currentIndex - 1], 'Please, regenerate')];
-    }
-
-    setMessages(messages);
+  const onGenerateWithFeedback = (suggestion: string) => {
+    setMessages((messages) => [...messages, ...getFeedbackMessage(history[currentIndex - 1], suggestion)]);
 
     if (suggestion in QuickFeedbackType) {
       reportInteraction(AutoGenerateItem.quickFeedback, { quickFeedbackItem: suggestion });
@@ -110,23 +86,24 @@ export const GenAIHistory = ({
 
   const onClickDocs = () => reportInteraction(AutoGenerateItem.linkToDocs);
 
+  const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
+  const showError = error && !isStreamGenerating;
+
   return (
     <div className={styles.container}>
       {showError && (
         <Alert title="">
-          <Stack direction={'column'}>
-            <p>Sorry, I was unable to complete your request. Please try again.</p>
+          <Stack direction="column">
+            <p>
+              <Trans i18nKey="gen-ai.incomplete-request-error">
+                Sorry, I was unable to complete your request. Please try again.
+              </Trans>
+            </p>
           </Stack>
         </Alert>
       )}
 
-      <GenerationHistoryCarousel
-        history={history}
-        index={currentIndex}
-        onNavigate={onNavigate}
-        reply={sanitizeReply(reply)}
-        streamStatus={streamStatus}
-      />
+      <GenerationHistoryCarousel history={history} index={currentIndex} onNavigate={onNavigate} />
 
       <div className={styles.actionButtons}>
         <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
@@ -141,9 +118,9 @@ export const GenAIHistory = ({
             fill="text"
             aria-label="Send custom feedback"
             onClick={onClickSubmitCustomFeedback}
-            disabled={customFeedback === ''}
+            disabled={!customFeedback}
           >
-            Send
+            <Trans i18nKey="gen-ai.send-custom-feedback">Send</Trans>
           </Button>
         }
         value={customFeedback}
@@ -152,10 +129,16 @@ export const GenAIHistory = ({
       />
 
       <div className={styles.applySuggestion}>
-        <Stack justifyContent={'flex-end'} direction={'row'}>
-          <Button icon={!isStreamGenerating ? 'check' : 'fa fa-spinner'} onClick={onApply}>
-            {isStreamGenerating ? STOP_GENERATION_TEXT : 'Apply'}
-          </Button>
+        <Stack justifyContent="flex-end" direction="row">
+          {isStreamGenerating ? (
+            <Button icon="fa fa-spinner" onClick={onStopGeneration}>
+              {STOP_GENERATION_TEXT}
+            </Button>
+          ) : (
+            <Button icon="check" onClick={onApply}>
+              <Trans i18nKey="gen-ai.apply-suggestion">Apply</Trans>
+            </Button>
+          )}
         </Stack>
       </div>
 

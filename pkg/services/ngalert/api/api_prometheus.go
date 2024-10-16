@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -24,9 +23,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type StatusReader interface {
+	Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
+}
+
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
+	status  StatusReader
 	store   RuleStore
 	authz   RuleAccessControlService
 }
@@ -97,8 +101,8 @@ func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatuses
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
-			Labels:      alertState.GetLabels(labelOptions...),
-			Annotations: alertState.Annotations,
+			Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
+			Annotations: apimodels.LabelsFromMap(alertState.Annotations),
 
 			// TODO: or should we make this two fields? Using one field lets the
 			// frontend use the same logic for parsing text on annotations and this.
@@ -222,7 +226,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		namespaces[namespaceUID] = folder.Fullpath
 	}
 
-	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.manager, srv.store, RuleGroupStatusesOptions{
+	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.manager, srv.status, srv.store, RuleGroupStatusesOptions{
 		Ctx:        c.Req.Context(),
 		OrgID:      c.OrgID,
 		Query:      c.Req.Form,
@@ -235,7 +239,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -292,16 +296,26 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		return ruleResponse
 	}
 
-	namespaceUIDs := make([]string, len(opts.Namespaces))
-	for k := range opts.Namespaces {
-		namespaceUIDs = append(namespaceUIDs, k)
+	namespaceUIDs := make([]string, 0, len(opts.Namespaces))
+
+	folderUID := opts.Query.Get("folder_uid")
+	_, exists := opts.Namespaces[folderUID]
+	if folderUID != "" && exists {
+		namespaceUIDs = append(namespaceUIDs, folderUID)
+	} else {
+		for k := range opts.Namespaces {
+			namespaceUIDs = append(namespaceUIDs, k)
+		}
 	}
+
+	ruleGroups := opts.Query["rule_group"]
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
+		RuleGroups:    ruleGroups,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
@@ -311,21 +325,13 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		return ruleResponse
 	}
 
-	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
-	// but in this API all rules belong to the same organization.
-	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
-	for _, rule := range ruleList {
-		groupKey := rule.GetGroupKey()
-		ruleGroup := groupedRules[groupKey]
-		ruleGroup = append(ruleGroup, rule)
-		groupedRules[groupKey] = ruleGroup
-	}
-	// Sort the rules in each rule group by index. We do this at the end instead of
-	// after each append to avoid having to sort each group multiple times.
-	for _, groupRules := range groupedRules {
-		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(groupRules)
+	ruleNames := opts.Query["rule_name"]
+	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
+	for _, rn := range ruleNames {
+		ruleNamesSet[rn] = struct{}{}
 	}
 
+	groupedRules := getGroupedRules(ruleList, ruleNamesSet)
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for groupKey, rules := range groupedRules {
 		folder, ok := opts.Namespaces[groupKey.NamespaceUID]
@@ -343,34 +349,15 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		if !ok {
 			continue
 		}
-		ruleGroup, totals := toRuleGroup(log, manager, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
+
+		ruleGroup, totals := toRuleGroup(log, manager, status, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
 		}
 
 		if len(withStates) > 0 {
-			// Filtering is weird but firing, pending, and normal filters also need to be
-			// applied to the rule. Others such as nodata and error should have no effect.
-			// This is to match the current behavior in the UI.
-			filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
-			for _, rule := range ruleGroup.Rules {
-				var state *eval.State
-				switch rule.State {
-				case "normal", "inactive":
-					state = util.Pointer(eval.Normal)
-				case "alerting", "firing":
-					state = util.Pointer(eval.Alerting)
-				case "pending":
-					state = util.Pointer(eval.Pending)
-				}
-				if state != nil {
-					if _, ok := withStatesFast[*state]; ok {
-						filteredRules = append(filteredRules, rule)
-					}
-				}
-			}
-			ruleGroup.Rules = filteredRules
+			filterRules(ruleGroup, withStatesFast)
 		}
 
 		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
@@ -391,6 +378,54 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	return ruleResponse
 }
 
+func getGroupedRules(ruleList ngmodels.RulesGroup, ruleNamesSet map[string]struct{}) map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule {
+	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
+	// but in this API all rules belong to the same organization. Also filter by rule name if
+	// it was provided as a query param.
+	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
+	for _, rule := range ruleList {
+		if len(ruleNamesSet) > 0 {
+			if _, exists := ruleNamesSet[rule.Title]; !exists {
+				continue
+			}
+		}
+		groupKey := rule.GetGroupKey()
+		ruleGroup := groupedRules[groupKey]
+		ruleGroup = append(ruleGroup, rule)
+		groupedRules[groupKey] = ruleGroup
+	}
+	// Sort the rules in each rule group by index. We do this at the end instead of
+	// after each append to avoid having to sort each group multiple times.
+	for _, groupRules := range groupedRules {
+		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(groupRules)
+	}
+	return groupedRules
+}
+
+func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
+	// Filtering is weird but firing, pending, and normal filters also need to be
+	// applied to the rule. Others such as nodata and error should have no effect.
+	// This is to match the current behavior in the UI.
+	filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
+	for _, rule := range ruleGroup.Rules {
+		var state *eval.State
+		switch rule.State {
+		case "normal", "inactive":
+			state = util.Pointer(eval.Normal)
+		case "alerting", "firing":
+			state = util.Pointer(eval.Alerting)
+		case "pending":
+			state = util.Pointer(eval.Pending)
+		}
+		if state != nil {
+			if _, ok := withStatesFast[*state]; ok {
+				filteredRules = append(filteredRules, rule)
+			}
+		}
+	}
+	ruleGroup.Rules = filteredRules
+}
+
 // This is the same as matchers.Matches but avoids the need to create a LabelSet
 func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	for _, m := range matchers {
@@ -401,7 +436,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusReader, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -412,20 +447,31 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
+		status, ok := sr.Status(rule.GetKey())
+		// Grafana by design return "ok" health and default other fields for unscheduled rules.
+		// This differs from Prometheus.
+		if !ok {
+			status = ngmodels.RuleStatus{
+				Health: "ok",
+			}
+		}
+
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
 			Name:        rule.Title,
 			Query:       ruleToQuery(log, rule),
 			Duration:    rule.For.Seconds(),
-			Annotations: rule.Annotations,
+			Annotations: apimodels.LabelsFromMap(rule.Annotations),
 		}
 
 		newRule := apimodels.Rule{
 			Name:           rule.Title,
-			Labels:         rule.GetLabels(labelOptions...),
-			Health:         "ok",
-			Type:           apiv1.RuleTypeAlerting,
-			LastEvaluation: time.Time{},
+			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
+			Health:         status.Health,
+			LastError:      errorOrEmpty(status.LastError),
+			Type:           rule.Type().String(),
+			LastEvaluation: status.EvaluationTimestamp,
+			EvaluationTime: status.EvaluationDuration.Seconds(),
 		}
 
 		states := manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
@@ -444,8 +490,8 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 				totals["error"] += 1
 			}
 			alert := apimodels.Alert{
-				Labels:      alertState.GetLabels(labelOptions...),
-				Annotations: alertState.Annotations,
+				Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
+				Annotations: apimodels.LabelsFromMap(alertState.Annotations),
 
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
@@ -453,12 +499,6 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 				ActiveAt: &activeAt,
 				Value:    valString,
 			}
-
-			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
-				newRule.LastEvaluation = alertState.LastEvaluationTime
-			}
-
-			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
 
 			switch alertState.State {
 			case eval.Normal:
@@ -472,14 +512,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 				}
 				alertingRule.State = "firing"
 			case eval.Error:
-				newRule.Health = "error"
 			case eval.NoData:
-				newRule.Health = "nodata"
-			}
-
-			if alertState.Error != nil {
-				newRule.LastError = alertState.Error.Error()
-				newRule.Health = "error"
 			}
 
 			if len(withStates) > 0 {
@@ -536,8 +569,8 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 // Returns the whole JSON model as a string if it fails to extract a minimum of 1 query.
 func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 	var queryErr error
-	var queries []string
 
+	queries := make([]string, 0, len(rule.Data))
 	for _, q := range rule.Data {
 		q, err := q.GetQuery()
 		if err != nil {
@@ -572,4 +605,11 @@ func encodedQueriesOrError(rules []ngmodels.AlertQuery) string {
 	}
 
 	return err.Error()
+}
+
+func errorOrEmpty(err error) string {
+	if err != nil {
+		return err.Error()
+	}
+	return ""
 }

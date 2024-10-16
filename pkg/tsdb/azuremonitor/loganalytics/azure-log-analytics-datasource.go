@@ -18,33 +18,136 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
+	if req.URL.Path == "/usage/basiclogs" {
+		newUrl := &url.URL{
+			Scheme: req.URL.Scheme,
+			Host:   req.URL.Host,
+			Path:   "/v1/query",
+		}
+		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
+	}
 	return e.Proxy.Do(rw, req, cli)
+}
+
+// builds and executes a new query request that will get the data ingeted for the given table in the basic logs query
+func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
+	// read the full body
+	originalPayload, readErr := io.ReadAll(reqBody)
+	if readErr != nil {
+		return rw, fmt.Errorf("failed to read request body %w", readErr)
+	}
+	var payload BasicLogsUsagePayload
+	jsonErr := json.Unmarshal(originalPayload, &payload)
+	if jsonErr != nil {
+		return rw, fmt.Errorf("error decoding basic logs table usage payload: %w", jsonErr)
+	}
+	table := payload.Table
+
+	from, fromErr := ConvertTime(payload.From)
+	if fromErr != nil {
+		return rw, fmt.Errorf("failed to convert from time: %w", fromErr)
+	}
+
+	to, toErr := ConvertTime(payload.To)
+	if toErr != nil {
+		return rw, fmt.Errorf("failed to convert to time: %w", toErr)
+	}
+
+	// basic logs queries only show data for last 8 days or less
+	// data volume query should also only calculate volume for last 8 days if time range exceeds that.
+	diff := to.Sub(from).Hours()
+	if diff > float64(MaxHoursBasicLogs) {
+		from = to.Add(-time.Duration(MaxHoursBasicLogs) * time.Hour)
+	}
+
+	dataVolumeQueryRaw := GetDataVolumeRawQuery(table)
+	dataVolumeQuery := &AzureLogAnalyticsQuery{
+		Query:         dataVolumeQueryRaw,
+		DashboardTime: true, // necessary to ensure TimeRange property is used since query will not have an in-query time filter
+		TimeRange: backend.TimeRange{
+			From: from,
+			To:   to,
+		},
+		TimeColumn: "TimeGenerated",
+		Resources:  []string{payload.Resource},
+		QueryType:  dataquery.AzureQueryTypeAzureLogAnalytics,
+		URL:        getApiURL(payload.Resource, false, false),
+	}
+
+	req, err := e.createRequest(ctx, url, dataVolumeQuery)
+	if err != nil {
+		return rw, err
+	}
+
+	_, span := tracing.DefaultTracer().Start(ctx, "azure basic logs usage query", trace.WithAttributes(
+		attribute.String("target", dataVolumeQuery.Query),
+		attribute.String("table", table),
+		attribute.Int64("from", dataVolumeQuery.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", dataVolumeQuery.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+	))
+	defer span.End()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return rw, err
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			e.Logger.Warn("Failed to close response body for data volume request", "err", err)
+		}
+	}()
+
+	logResponse, err := e.unmarshalResponse(resp)
+	if err != nil {
+		return rw, err
+	}
+
+	t, err := logResponse.GetPrimaryResultTable()
+	if err != nil {
+		return rw, err
+	}
+
+	num := t.Rows[0][0].(json.Number)
+	value, err := num.Float64()
+	if err != nil {
+		return rw, err
+	}
+	_, err = rw.Write([]byte(fmt.Sprintf("%f", value)))
+	if err != nil {
+		return rw, err
+	}
+
+	return rw, err
 }
 
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	queries, err := e.buildQueries(ctx, originalQueries, dsInfo)
-	if err != nil {
-		return nil, err
-	}
 
-	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
+	for _, query := range originalQueries {
+		logsQuery, err := e.buildQuery(ctx, query, dsInfo, fromAlert)
 		if err != nil {
-			result.Responses[query.RefID] = backend.DataResponse{Error: err}
+			errorsource.AddErrorToResponse(query.RefID, result, err)
+			continue
+		}
+		res, err := e.executeQuery(ctx, logsQuery, dsInfo, client, url)
+		if err != nil {
+			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -53,22 +156,42 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo, appInsightsRegExp *regexp.Regexp) (*AzureLogAnalyticsQuery, error) {
+func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo, appInsightsRegExp *regexp.Regexp, fromAlert bool) (*AzureLogAnalyticsQuery, error) {
 	queryJSONModel := types.LogJSONQuery{}
 	err := json.Unmarshal(query.JSON, &queryJSONModel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
 	}
+
 	var queryString string
 	appInsightsQuery := false
 	dashboardTime := false
 	timeColumn := ""
 	azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
+	basicLogsQuery := false
+	basicLogsEnabled := false
 
 	resultFormat := ParseResultFormat(azureLogAnalyticsTarget.ResultFormat, dataquery.AzureQueryTypeAzureLogAnalytics)
 
+	basicLogsQueryFlag := false
+	if azureLogAnalyticsTarget.BasicLogsQuery != nil {
+		basicLogsQueryFlag = *azureLogAnalyticsTarget.BasicLogsQuery
+	}
+
 	resources, resourceOrWorkspace := retrieveResources(azureLogAnalyticsTarget)
 	appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
+
+	if value, ok := dsInfo.JSONData["basicLogsEnabled"].(bool); ok {
+		basicLogsEnabled = value
+	}
+
+	if basicLogsQueryFlag {
+		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, basicLogsEnabled); meetsBasicLogsCriteriaErr != nil {
+			return nil, meetsBasicLogsCriteriaErr
+		} else {
+			basicLogsQuery = meetsBasicLogsCriteria
+		}
+	}
 
 	if azureLogAnalyticsTarget.Query != nil {
 		queryString = *azureLogAnalyticsTarget.Query
@@ -86,7 +209,7 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 		}
 	}
 
-	apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
+	apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery, basicLogsQuery)
 
 	rawQuery, err := macros.KqlInterpolate(query, dsInfo, queryString, "TimeGenerated")
 	if err != nil {
@@ -105,41 +228,48 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 		AppInsightsQuery: appInsightsQuery,
 		DashboardTime:    dashboardTime,
 		TimeColumn:       timeColumn,
+		BasicLogs:        basicLogsQuery,
 	}, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
-	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
-	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
+func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) (*AzureLogAnalyticsQuery, error) {
+	var azureLogAnalyticsQuery *AzureLogAnalyticsQuery
+	appInsightsRegExp, err := regexp.Compile("(?i)providers/microsoft.insights/components")
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile Application Insights regex")
 	}
 
-	for _, query := range queries {
-		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
-			azureLogAnalyticsQuery, err := buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp)
-			if err != nil {
-				return nil, fmt.Errorf("failed to build azure log analytics query: %w", err)
-			}
-			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, azureLogAnalyticsQuery)
-		}
-
-		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
-			azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp)
-			if err != nil {
-				return nil, fmt.Errorf("failed to build azure application insights query: %w", err)
-			}
-			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, azureAppInsightsQuery)
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
+		azureLogAnalyticsQuery, err = buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, fromAlert)
+		if err != nil {
+			errorMessage := fmt.Errorf("failed to build azure log analytics query: %w", err)
+			return nil, utils.ApplySourceFromError(errorMessage, err)
 		}
 	}
 
-	return azureLogAnalyticsQueries, nil
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+		if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+			cfg := backend.GrafanaConfigFromContext(ctx)
+			hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
+			if !hasPromExemplarsToggle {
+				return nil, errorsource.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"), false)
+			}
+		}
+		azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
+		if err != nil {
+			errorMessage := fmt.Errorf("failed to build azure application insights query: %w", err)
+			return nil, utils.ApplySourceFromError(errorMessage, err)
+		}
+		azureLogAnalyticsQuery = azureAppInsightsQuery
+	}
+
+	return azureLogAnalyticsQuery, nil
 }
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return nil, fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials")
+		return nil, errorsource.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"), false)
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
@@ -150,7 +280,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
 		if query.ResultFormat == dataquery.ResultFormatTrace && query.Query == "" {
-			return nil, fmt.Errorf("cannot visualise trace events using the trace visualiser")
+			return nil, errorsource.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"), false)
 		}
 	}
 
@@ -161,6 +291,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	_, span := tracing.DefaultTracer().Start(ctx, "azure log analytics query", trace.WithAttributes(
 		attribute.String("target", query.Query),
+		attribute.Bool("basic_logs", query.BasicLogs),
 		attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
 		attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
 		attribute.Int64("datasource_id", dsInfo.DatasourceID),
@@ -170,7 +301,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {
@@ -204,7 +335,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	if query.QueryType == dataquery.AzureQueryTypeAzureTraces && query.ResultFormat == dataquery.ResultFormatTrace {
+	if (query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceql) && query.ResultFormat == dataquery.ResultFormatTrace {
 		frame.Meta.PreferredVisualization = data.VisTypeTrace
 	}
 
@@ -262,7 +393,7 @@ func addDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl stri
 }
 
 func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl string, frame *data.Frame, dsInfo types.DatasourceInfo) error {
-	tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
+	tracesUrl, err := getTracesQueryUrl(azurePortalBaseUrl)
 	if err != nil {
 		return err
 	}
@@ -421,20 +552,12 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string, timeRa
 	return portalUrl, nil
 }
 
-func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error) {
+func getTracesQueryUrl(azurePortalUrl string) (string, error) {
 	portalUrl := azurePortalUrl
 	portalUrl += "/#view/AppInsightsExtension/DetailsV2Blade/ComponentId~/"
-	resource := struct {
-		ResourceId string `json:"ResourceId"`
-	}{
-		resources[0],
-	}
-	resourceMarshalled, err := json.Marshal(resource)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal application insights resource: %s", err)
-	}
 
-	portalUrl += url.PathEscape(string(resourceMarshalled))
+	resource := "%7B%22ResourceId%22:%22${__data.fields.resource:percentencode}%22%7D"
+	portalUrl += resource
 	portalUrl += "/DataModel~/"
 
 	// We're making use of data link variables to select the necessary fields in the frontend
@@ -473,11 +596,11 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, err
+			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
 		}
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, err
+			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
 		}
 
 		defer func() {
@@ -487,7 +610,7 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		}()
 
 		if res.StatusCode/100 != 2 {
-			return AzureCorrelationAPIResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
+			return AzureCorrelationAPIResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
 		}
 		var data AzureCorrelationAPIResponse
 		d := json.NewDecoder(bytes.NewReader(body))
@@ -551,7 +674,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
-		return AzureLogAnalyticsResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
+		return AzureLogAnalyticsResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
 	}
 
 	var data AzureLogAnalyticsResponse

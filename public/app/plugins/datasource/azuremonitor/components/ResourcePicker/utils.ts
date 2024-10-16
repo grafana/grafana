@@ -13,7 +13,7 @@ import { ResourceRow, ResourceRowGroup } from './types';
 //  - resource groups: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources
 //  - resources: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM
 const RESOURCE_URI_REGEX =
-  /\/subscriptions\/(?<subscription>[^/]+)(?:\/resourceGroups\/(?<resourceGroup>[^/]+)(?:\/providers\/(?<metricNamespaceAndResource>.+))?)?/;
+  /\/subscriptions\/(?<subscription>[^/]+)(?:\/resourceGroups\/(?<resourceGroup>[^/]+)(?:\/providers\/(?<metricNamespaceAndResource>.+))?)?/i;
 
 type RegexGroups = Record<string, string | undefined>;
 

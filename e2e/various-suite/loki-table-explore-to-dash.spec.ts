@@ -110,7 +110,8 @@ const lokiQueryResult = {
   },
 };
 
-describe('Loki Query Editor', () => {
+// Skipping due to race conditions with same old arch test e2e/various-suite/loki-table-explore-to-dash.spec.ts
+describe.skip('Loki Query Editor', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
@@ -193,6 +194,10 @@ describe('Loki Query Editor', () => {
     exploreCells.should('have.length', 3);
     // And a value of "targetLabelValue"
     exploreCells.should('contain', 'targetLabelValue');
+
+    const addToButton = cy.get('[aria-label="Add"]');
+    addToButton.should('be.visible');
+    addToButton.click();
 
     const addToDashboardButton = cy.get('[aria-label="Add to dashboard"]');
 

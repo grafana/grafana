@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { render, renderHook } from '@testing-library/react';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

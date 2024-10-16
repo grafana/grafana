@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';

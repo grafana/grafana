@@ -9,10 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/middleware"
 	internalplaylist "github.com/grafana/grafana/pkg/registry/apis/playlist"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -20,12 +20,13 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	// Register the actual handlers
+	// TODO: remove kubernetesPlaylists feature flag
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
 			// Use k8s client to implement legacy API
@@ -329,8 +330,13 @@ type playlistK8sHandler struct {
 //-----------------------------------------------------------------------------------------
 
 func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
+	gvr := schema.GroupVersionResource{
+		Group:    v0alpha1.PlaylistKind().Group(),
+		Version:  v0alpha1.PlaylistKind().Version(),
+		Resource: v0alpha1.PlaylistKind().Plural(),
+	}
 	return &playlistK8sHandler{
-		gvr:                  v0alpha1.PlaylistResourceInfo.GroupVersionResource(),
+		gvr:                  gvr,
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 	}
@@ -417,6 +423,12 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 	}
 	obj := internalplaylist.LegacyUpdateCommandToUnstructured(cmd)
 	obj.SetName(uid)
+	existing, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		pk8s.writeError(c, err)
+		return
+	}
+	obj.SetResourceVersion(existing.GetResourceVersion())
 	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
 	if err != nil {
 		pk8s.writeError(c, err)

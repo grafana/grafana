@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { buildNavModel, getAlertingTabID } from 'app/features/folders/state/navModel';
 import { useSelector } from 'app/types';
 
@@ -10,10 +10,8 @@ import { AlertsFolderView } from '../alerting/unified/AlertsFolderView';
 import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { FolderActionsButton } from './components/FolderActionsButton';
 
-export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
-
-export function BrowseFolderAlertingPage({ match }: OwnProps) {
-  const { uid: folderUID } = match.params;
+export function BrowseFolderAlertingPage() {
+  const { uid: folderUID = '' } = useParams();
   const { data: folderDTO } = useGetFolderQuery(folderUID);
   const folder = useSelector((state) => state.folder);
   const [saveFolder] = useSaveFolderMutation();

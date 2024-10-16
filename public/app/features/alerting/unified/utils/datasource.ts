@@ -8,12 +8,14 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
+import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
+import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
-import { instancesPermissions, notificationsPermissions } from './access-control';
+import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
@@ -43,6 +45,10 @@ export function getRulesDataSources() {
   return getAllDataSources()
     .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
+  return isGrafanaRulesSource(rulesSource) ? 'grafana' : (rulesSource.uid ?? rulesSource.id);
 }
 
 export function getRulesDataSource(rulesSourceName: string) {
@@ -139,9 +145,19 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   const permissions = {
     instance: instancesPermissions.read,
     notification: notificationsPermissions.read,
+    silence: silencesPermissions.read,
   };
 
-  if (contextSrv.hasPermission(permissions[permission].grafana)) {
+  const builtinAlertmanagerPermissions = [
+    ...Object.values(permissions).flatMap((permissions) => permissions.grafana),
+    ...PERMISSIONS_CONTACT_POINTS,
+  ];
+
+  const hasPermissionsForInternalAlertmanager = builtinAlertmanagerPermissions.some((permission) =>
+    contextSrv.hasPermission(permission)
+  );
+
+  if (hasPermissionsForInternalAlertmanager) {
     availableInternalDataSources.push(grafanaAlertManagerDataSource);
   }
 
@@ -272,4 +288,21 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
+}
+
+export function getApplicationFromRulesSource(rulesSource: RulesSource): RulesSourceApplication {
+  if (isGrafanaRulesSource(rulesSource)) {
+    return 'grafana';
+  }
+
+  // @TODO use buildinfo
+  if ('prometheusType' in rulesSource.jsonData) {
+    return rulesSource.jsonData?.prometheusType ?? PromApplication.Prometheus;
+  }
+
+  if (rulesSource.type === 'loki') {
+    return 'loki';
+  }
+
+  return PromApplication.Prometheus; // assume Prometheus if nothing matches
 }

@@ -1,18 +1,23 @@
-import React, { CSSProperties } from 'react';
+import * as React from 'react';
+import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
+import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ScopedVars, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
-import {
-  BackgroundImageSize,
-  CanvasElementItem,
-  CanvasElementOptions,
-  canvasElementRegistry,
-} from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
-import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
+import {
+  BackgroundImageSize,
+  Constraint,
+  HorizontalConstraint,
+  Placement,
+  VerticalConstraint,
+} from 'app/plugins/panel/canvas/panelcfg.gen';
+import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
-import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { getActions, getActionsDefaultField } from '../../actions/utils';
+import { CanvasElementItem, CanvasElementOptions } from '../element';
+import { canvasElementRegistry } from '../registry';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -39,6 +44,8 @@ export class ElementState implements LayerElement {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any; // depends on the type
 
+  getLinks?: (config: ValueLinkConfig) => LinkModel[];
+
   constructor(
     public item: CanvasElementItem,
     public options: CanvasElementOptions,
@@ -56,6 +63,7 @@ export class ElementState implements LayerElement {
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0, rotation: 0 };
     options.background = options.background ?? { color: { fixed: 'transparent' } };
     options.border = options.border ?? { color: { fixed: 'dark-green' } };
+    options.oneClickMode = options.oneClickMode ?? OneClickMode.Off;
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -363,6 +371,36 @@ export class ElementState implements LayerElement {
       this.revId++; // rerender
     }
 
+    const scene = this.getScene();
+    const frames = scene?.data?.series;
+
+    this.options.links = this.options.links?.filter((link) => link !== null);
+
+    if (frames) {
+      const defaultField = {
+        name: 'Default field',
+        type: FieldType.string,
+        config: { links: this.options.links ?? [], actions: this.options.actions ?? [] },
+        values: [],
+      };
+
+      this.getLinks = getLinksSupplier(
+        frames[0],
+        defaultField,
+        {
+          __dataContext: {
+            value: {
+              data: frames,
+              field: defaultField,
+              frame: frames[0],
+              frameIndex: 0,
+            },
+          },
+        },
+        scene?.panel.props.replaceVariables!
+      );
+    }
+
     const { background, border } = this.options;
     const css: CSSProperties = {};
     if (background) {
@@ -549,11 +587,75 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
-    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen) {
+
+    const shouldHandleTooltip =
+      !scene?.isEditingEnabled && !scene?.tooltip?.isOpen && this.options.oneClickMode === OneClickMode.Off;
+    if (shouldHandleTooltip) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);
     }
+
+    const shouldHandleOneClickLink =
+      this.options.oneClickMode === OneClickMode.Link && this.options.links && this.options.links.length > 0;
+
+    const shouldHandleOneClickAction =
+      this.options.oneClickMode === OneClickMode.Action && this.options.actions && this.options.actions.length > 0;
+
+    if (shouldHandleOneClickLink && this.div) {
+      const primaryDataLink = this.getPrimaryDataLink();
+      if (primaryDataLink) {
+        this.div.style.cursor = 'pointer';
+        this.div.title = `Navigate to ${primaryDataLink.title === '' ? 'data link' : primaryDataLink.title}`;
+      }
+    } else if (shouldHandleOneClickAction && this.div) {
+      const primaryAction = this.getPrimaryAction();
+      if (primaryAction) {
+        this.div.style.cursor = 'pointer';
+        this.div.title = primaryAction.title;
+      }
+    }
+  };
+
+  getPrimaryDataLink = () => {
+    if (this.getLinks) {
+      const links = this.getLinks({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
+      return links[0];
+    }
+
+    return undefined;
+  };
+
+  getPrimaryAction = () => {
+    const config: ValueLinkConfig = { valueRowIndex: getRowIndex(this.data.field, this.getScene()!) };
+    const actionsDefaultFieldConfig = { links: this.options.links ?? [], actions: this.options.actions ?? [] };
+    const frames = this.getScene()?.data?.series;
+
+    if (frames) {
+      const defaultField = getActionsDefaultField(actionsDefaultFieldConfig.links, actionsDefaultFieldConfig.actions);
+      const scopedVars: ScopedVars = {
+        __dataContext: {
+          value: {
+            data: frames,
+            field: defaultField,
+            frame: frames[0],
+            frameIndex: 0,
+          },
+        },
+      };
+
+      const actions = getActions(
+        frames[0],
+        defaultField,
+        scopedVars,
+        this.getScene()?.panel.props.replaceVariables!,
+        actionsDefaultFieldConfig.actions,
+        config
+      );
+      return actions[0];
+    }
+
+    return undefined;
   };
 
   handleTooltip = (event: React.MouseEvent) => {
@@ -570,14 +672,32 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && this.options.oneClickMode === OneClickMode.Off) {
       scene.tooltipCallback(undefined);
+    }
+
+    if (this.options.oneClickMode !== OneClickMode.Off && this.div) {
+      this.div.style.cursor = 'auto';
+      this.div.title = '';
     }
   };
 
   onElementClick = (event: React.MouseEvent) => {
-    this.handleTooltip(event);
-    this.onTooltipCallback();
+    // If one-click access is enabled, open the primary link
+    if (this.options.oneClickMode === OneClickMode.Link) {
+      let primaryDataLink = this.getPrimaryDataLink();
+      if (primaryDataLink) {
+        window.open(primaryDataLink.href, primaryDataLink.target);
+      }
+    } else if (this.options.oneClickMode === OneClickMode.Action) {
+      let primaryAction = this.getPrimaryAction();
+      if (primaryAction && primaryAction.onClick) {
+        primaryAction.onClick(event);
+      }
+    } else {
+      this.handleTooltip(event);
+      this.onTooltipCallback();
+    }
   };
 
   onElementKeyDown = (event: React.KeyboardEvent) => {
@@ -604,7 +724,6 @@ export class ElementState implements LayerElement {
   render() {
     const { item, div } = this;
     const scene = this.getScene();
-    // TODO: Rethink selected state handling
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (

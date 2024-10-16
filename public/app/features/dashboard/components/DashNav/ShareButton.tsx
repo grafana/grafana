@@ -1,11 +1,11 @@
-import React from 'react';
-
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+
+import { shareDashboardType } from '../ShareModal/utils';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   return (
@@ -15,7 +15,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
       size="sm"
       onClick={() => {
         DashboardInteractions.toolbarShareClick();
-        locationService.partial({ shareView: 'link' });
+        locationService.partial({ shareView: shareDashboardType.link });
       }}
     >
       <Trans i18nKey="dashboard.toolbar.share-button">Share</Trans>

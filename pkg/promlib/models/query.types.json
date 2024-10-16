@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1715781995240",
+        "resourceVersion": "1725885733879",
         "creationTimestamp": "2024-03-25T13:19:04Z"
       },
       "spec": {
@@ -31,6 +31,13 @@
                   },
                   "value": {
                     "type": "string"
+                  },
+                  "values": {
+                    "description": "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   }
                 },
                 "required": [
@@ -96,7 +103,7 @@
               "description": "A set of filters applied to apply to the query",
               "items": {
                 "additionalProperties": false,
-                "description": "ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
+                "description": "ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix).",
                 "properties": {
                   "category": {
                     "type": "string"
@@ -117,6 +124,13 @@
                         },
                         "value": {
                           "type": "string"
+                        },
+                        "values": {
+                          "description": "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
                         }
                       },
                       "required": [
@@ -128,6 +142,10 @@
                     },
                     "type": "array"
                   },
+                  "name": {
+                    "description": "This is the identifier from metadata.name of the scope model.",
+                    "type": "string"
+                  },
                   "title": {
                     "type": "string"
                   },
@@ -136,6 +154,7 @@
                   }
                 },
                 "required": [
+                  "name",
                   "title",
                   "type",
                   "description",

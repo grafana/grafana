@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, createDataFrame } from '@grafana/data';
+import { DataFrame, FieldType, createDataFrame, NodeGraphDataFrameFieldNames } from '@grafana/data';
 
 import { NodeDatum, NodeGraphOptions } from './types';
 import {
@@ -223,6 +223,49 @@ describe('processNodes', () => {
     expect(edgesFrame).toBeDefined();
     expect(edgesFrame?.fields.find((f) => f.name === 'mainStat')?.config).toEqual({ unit: 'r/sec' });
     expect(edgesFrame?.fields.find((f) => f.name === 'secondaryStat')?.config).toEqual({ unit: 'ft^2' });
+  });
+
+  it('processes nodes with fixedX/Y', async () => {
+    const nodesFrame = makeNodesDataFrame(3);
+    nodesFrame.fields.push({
+      name: NodeGraphDataFrameFieldNames.fixedX,
+      type: FieldType.number,
+      values: [1, 2, 3],
+      config: {},
+    });
+
+    nodesFrame.fields.push({
+      name: NodeGraphDataFrameFieldNames.fixedY,
+      type: FieldType.number,
+      values: [1, 2, 3],
+      config: {},
+    });
+    const result = processNodes(nodesFrame, undefined);
+    expect(result.hasFixedPositions).toBe(true);
+    expect(result.nodes[0].x).toBe(1);
+    expect(result.nodes[0].y).toBe(1);
+  });
+
+  it('throws error if fixedX/Y is used incorrectly', async () => {
+    const nodesFrame = makeNodesDataFrame(3);
+    nodesFrame.fields.push({
+      name: NodeGraphDataFrameFieldNames.fixedX,
+      type: FieldType.number,
+      values: [undefined, 2, 3],
+      config: {},
+    });
+
+    expect(() => processNodes(nodesFrame, undefined)).toThrow(/fixedX/);
+
+    // We still have one undefined value in fixedX field so this should still fail
+    nodesFrame.fields.push({
+      name: NodeGraphDataFrameFieldNames.fixedY,
+      type: FieldType.number,
+      values: [1, 2, 3],
+      config: {},
+    });
+
+    expect(() => processNodes(nodesFrame, undefined)).toThrow(/fixedX/);
   });
 });
 

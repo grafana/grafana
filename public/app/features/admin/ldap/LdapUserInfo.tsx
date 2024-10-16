@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Box, Stack, Text } from '@grafana/ui';
 import { LdapUser } from 'app/types';
 

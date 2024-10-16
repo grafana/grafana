@@ -27,7 +27,7 @@ declare -A env=(
 
 testFilesForSingleSuite="*.spec.ts"
 rootForEnterpriseSuite="./e2e/extensions-suite"
-rootForScenesSuite="./e2e/scenes"
+rootForOldArch="./e2e/old-arch"
 
 declare -A cypressConfig=(
   [screenshotsFolder]=./e2e/"${args[0]}"/screenshots
@@ -66,6 +66,7 @@ case "$1" in
         ;;
     "enterprise")
         echo "Enterprise"
+        env[SMTP_PLUGIN_ENABLED]=true
         CLEANUP="rm -rf ./e2e/extensions-suite"
         SETUP="cp -Lr ./e2e/extensions ./e2e/extensions-suite"
         enterpriseSuite=$(basename "${args[1]}")
@@ -87,11 +88,33 @@ case "$1" in
         ;;
     "")
         ;;
-   "scenes")
-      env[SCENES]=true
-      cypressConfig[specPattern]=$rootForScenesSuite/*/$testFilesForSingleSuite
+   "old-arch")
+      env[DISABLE_SCENES]=true
+      cypressConfig[specPattern]=$rootForOldArch/*/$testFilesForSingleSuite
       cypressConfig[video]=false
-      # CMD="cypress open"
+        case "$2" in
+            "debug")
+                echo -e "Debug mode"
+                env[SLOWMO]=1
+                PARAMS="--no-exit"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+            "dev")
+                echo "Dev mode"
+                CMD="cypress open"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+        esac
+      ;;
+    "old-arch/"*)
+      cypressConfig[specPattern]=./e2e/"${args[0]}"/$testFilesForSingleSuite
+      cypressConfig[video]=${args[1]}
+      env[DISABLE_SCENES]=true
+      ;;
+   "enterprise-smtp")
+      env[SMTP_PLUGIN_ENABLED]=true
+      cypressConfig[specPattern]=./e2e/extensions/enterprise/smtp-suite/$testFilesForSingleSuite
+      cypressConfig[video]=${args[1]}
       ;;
 
     *)

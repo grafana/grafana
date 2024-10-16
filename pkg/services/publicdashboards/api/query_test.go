@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -40,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -120,9 +121,6 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				assert.Equal(t, false, dashResp.Meta.CanEdit)
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)
-
-				// publicDashboardUID should be always empty
-				assert.Equal(t, "", dashResp.Meta.PublicDashboardUID)
 			} else if test.FixedErrorResponse != "" {
 				require.Equal(t, test.ExpectedHttpResponse, response.Code)
 				require.JSONEq(t, "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}", response.Body.String())
@@ -130,7 +128,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, "Public dashboard not found", errResp.Message)
+				assert.Equal(t, "Dashboard not found", errResp.Message)
 				assert.Equal(t, "publicdashboards.notFound", errResp.MessageID)
 			}
 		})
@@ -326,7 +324,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	dashService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStoreService, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-		foldertest.NewFakeService(), nil,
+		foldertest.NewFakeService(), folder.NewFakeStore(), nil,
 	)
 	require.NoError(t, err)
 

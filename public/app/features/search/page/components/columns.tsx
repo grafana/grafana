@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React from 'react';
+import { intervalToDuration } from 'date-fns';
 import Skeleton from 'react-loading-skeleton';
 
 import {
@@ -11,9 +11,10 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList, Text } from '@grafana/ui';
+import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -25,6 +26,7 @@ import { ExplainScorePopup } from './ExplainScorePopup';
 import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
+const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
@@ -89,8 +91,9 @@ export const generateColumns = (
         const kind = kindField ? kindField.values[p.row.index] : 'dashboard'; // HACK for now
         const selected = selection(kind, uid);
         const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
+        const { key, ...cellProps } = p.cellProps;
         return (
-          <div {...p.cellProps} className={styles.cell}>
+          <div key={key} {...cellProps} className={styles.cell}>
             <Checkbox
               disabled={!hasUID}
               value={selected && hasUID}
@@ -112,15 +115,21 @@ export const generateColumns = (
     Cell: (p) => {
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values[p.row.index];
+      const isDeleted = access.isDeleted?.values[p.row.index];
+
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
         name = loading ? 'Loading...' : 'Missing title'; // normal for panels
         classNames += ' ' + styles.missingTitleText;
       }
+      const { key, ...cellProps } = p.cellProps;
+
       return (
-        <div className={styles.cell} {...p.cellProps}>
+        <div key={key} className={styles.cell} {...cellProps}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
+          ) : isDeleted ? (
+            <span className={classNames}>{name}</span>
           ) : (
             <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
               {name}
@@ -136,9 +145,18 @@ export const generateColumns = (
   });
   availableWidth -= width;
 
-  width = TYPE_COLUMN_WIDTH;
-  columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
-  availableWidth -= width;
+  const showDeletedRemaining =
+    response.view.fields.permanentlyDeleteDate && hasValue(response.view.fields.permanentlyDeleteDate);
+
+  if (showDeletedRemaining && access.permanentlyDeleteDate) {
+    width = DURATION_COLUMN_WIDTH;
+    columns.push(makeDeletedRemainingColumn(response, access.permanentlyDeleteDate, width, styles));
+    availableWidth -= width;
+  } else {
+    width = TYPE_COLUMN_WIDTH;
+    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
+    availableWidth -= width;
+  }
 
   // Show datasources if we have any
   if (access.ds_uid && onDatasourceChange) {
@@ -164,8 +182,9 @@ export const generateColumns = (
     columns.push({
       Cell: (p) => {
         const parts = (access.location?.values[p.row.index] ?? '').split('/');
+        const { key, ...cellProps } = p.cellProps;
         return (
-          <div {...p.cellProps} className={styles.cell}>
+          <div key={key} {...cellProps} className={styles.cell}>
             {!response.isItemLoaded(p.row.index) ? (
               <Skeleton width={150} />
             ) : (
@@ -173,7 +192,7 @@ export const generateColumns = (
                 {parts.map((p) => {
                   let info = meta.locationInfo[p];
                   if (!info && p === 'general') {
-                    info = { kind: 'folder', url: '/dashboards', name: 'General' };
+                    info = { kind: 'folder', url: '/dashboards', name: 'Dashboards' };
                   }
                   return info ? (
                     <a key={p} href={info.url} className={styles.locationItem}>
@@ -209,8 +228,9 @@ export const generateColumns = (
     columns.push({
       Header: getFieldDisplayName(sortField),
       Cell: (p) => {
+        const { key, ...cellProps } = p.cellProps;
         return (
-          <div {...p.cellProps} className={styles.cell}>
+          <div key={key} {...cellProps} className={styles.cell}>
             {getDisplayValue({
               sortField,
               getDisplay: disp,
@@ -245,11 +265,13 @@ export const generateColumns = (
     columns.push({
       Header: () => <div className={styles.sortedHeader}>Score</div>,
       Cell: (p) => {
+        const { key, ...cellProps } = p.cellProps;
         return (
           // TODO: fix keyboard a11y
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div
-            {...p.cellProps}
+            key={key}
+            {...cellProps}
             className={cx(styles.cell, styles.explainItem)}
             onClick={() => showExplainPopup(p.row.index)}
           >
@@ -293,8 +315,9 @@ function makeDataSourceColumn(
       if (!dslist?.length) {
         return null;
       }
+      const { key, ...cellProps } = p.cellProps;
       return (
-        <div {...p.cellProps} className={cx(datasourceItemClass)}>
+        <div key={key} {...cellProps} className={cx(datasourceItemClass)}>
           {dslist.map((v, i) => {
             const settings = srv.getInstanceSettings(v);
             const icon = settings?.meta?.info?.logos?.small;
@@ -325,6 +348,47 @@ function makeDataSourceColumn(
       );
     },
     width,
+  };
+}
+
+function makeDeletedRemainingColumn(
+  response: QueryResponse,
+  deletedField: Field<Date | undefined>,
+  width: number,
+  styles: Record<string, string>
+): TableColumn {
+  return {
+    id: 'column-delete-age',
+    field: deletedField,
+    width,
+    Header: t('search.results-table.deleted-remaining-header', 'Time remaining'),
+    Cell: (p) => {
+      const i = p.row.index;
+      const deletedDate = deletedField.values[i];
+      const { key, ...cellProps } = p.cellProps;
+
+      if (!deletedDate || !response.isItemLoaded(p.row.index)) {
+        return (
+          <div key={key} {...cellProps} className={cx(styles.cell, styles.typeCell)}>
+            <Skeleton width={100} />
+          </div>
+        );
+      }
+
+      const duration = calcCoarseDuration(new Date(), deletedDate);
+      const isDeletingSoon = !Object.values(duration).some((v) => v > 0);
+      const formatted = isDeletingSoon
+        ? t('search.results-table.deleted-less-than-1-min', '< 1 min')
+        : formatDuration(duration, { style: 'long' });
+
+      return (
+        <div key={key} {...cellProps} className={cx(styles.cell, styles.typeCell)}>
+          <Tooltip content={formatDate(deletedDate, { dateStyle: 'medium', timeStyle: 'short' })}>
+            <span>{formatted}</span>
+          </Tooltip>
+        </div>
+      );
+    },
   };
 }
 
@@ -381,8 +445,9 @@ function makeTypeColumn(
             break;
         }
       }
+      const { key, ...cellProps } = p.cellProps;
       return (
-        <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
+        <div key={key} {...cellProps} className={cx(styles.cell, styles.typeCell)}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={100} />
           ) : (
@@ -408,8 +473,9 @@ function makeTagsColumn(
   return {
     Cell: (p) => {
       const tags = field.values[p.row.index];
+      const { key, ...cellProps } = p.cellProps;
       return (
-        <div {...p.cellProps} className={styles.cell}>
+        <div key={key} {...cellProps} className={styles.cell}>
           {!response.isItemLoaded(p.row.index) ? (
             <TagList.Skeleton />
           ) : (
@@ -441,4 +507,23 @@ function getDisplayValue({
     return '-';
   }
   return formattedValueToString(getDisplay(value));
+}
+
+/**
+ * Calculates the rough duration between two dates, keeping only the most significant unit
+ */
+function calcCoarseDuration(start: Date, end: Date) {
+  let { years = 0, months = 0, days = 0, hours = 0, minutes = 0 } = intervalToDuration({ start, end });
+
+  if (years > 0) {
+    return { years };
+  } else if (months > 0) {
+    return { months };
+  } else if (days > 0) {
+    return { days };
+  } else if (hours > 0) {
+    return { hours };
+  }
+
+  return { minutes };
 }

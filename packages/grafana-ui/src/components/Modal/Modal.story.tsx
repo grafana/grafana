@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { StoryFn, Meta } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 

@@ -1657,7 +1657,7 @@
           "count": 1
         },
         {
-          "path": "/packages/grafana-ui/src/components/Table/TableCellInspectModal.tsx",
+          "path": "/packages/grafana-ui/src/components/Table/TableCellInspector.tsx",
           "count": 1
         },
         {

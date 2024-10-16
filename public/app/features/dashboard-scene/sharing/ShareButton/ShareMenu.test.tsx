@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { DashboardGridItem } from '../../scene/DashboardGridItem';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { config } from '../../../../core/config';
+import { DashboardScene, DashboardSceneState } from '../../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 
 import ShareMenu from './ShareMenu';
 
@@ -17,18 +17,66 @@ jest.mock('app/core/utils/shortLinks', () => ({
 }));
 
 const selector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
+
 describe('ShareMenu', () => {
-  it('should call createAndCopyDashboardShortLink when share internally clicked', async () => {
+  afterEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+  });
+
+  it('should render menu items', async () => {
+    Object.defineProperty(contextSrv, 'isSignedIn', {
+      value: true,
+    });
+    config.featureToggles.publicDashboards = true;
+    config.publicDashboardsEnabled = true;
+    config.snapshotEnabled = true;
+    setup({ meta: { canEdit: true } });
+
+    expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
+  });
+  it('should not share externally when public dashboard is disabled', async () => {
+    config.featureToggles.publicDashboards = false;
+    config.publicDashboardsEnabled = false;
     setup();
 
-    const shareLink = await screen.findByTestId(selector.shareInternally);
+    expect(screen.queryByTestId(selector.shareExternally)).not.toBeInTheDocument();
+  });
 
-    await userEvent.click(shareLink);
-    expect(createAndCopyDashboardShortLinkMock).toHaveBeenCalled();
+  describe('ShareSnapshot', () => {
+    it('should not share snapshot when user is not signed in', async () => {
+      config.snapshotEnabled = true;
+      Object.defineProperty(contextSrv, 'isSignedIn', {
+        value: false,
+      });
+      setup({ meta: { canEdit: true } });
+
+      expect(screen.queryByTestId(selector.shareSnapshot)).not.toBeInTheDocument();
+    });
+    it('should not share snapshot when snapshot is not enabled', async () => {
+      Object.defineProperty(contextSrv, 'isSignedIn', {
+        value: true,
+      });
+      config.snapshotEnabled = false;
+      setup({ meta: { canEdit: true } });
+
+      expect(screen.queryByTestId(selector.shareSnapshot)).not.toBeInTheDocument();
+    });
+    it('should not share snapshot when dashboard cannot edit', async () => {
+      Object.defineProperty(contextSrv, 'isSignedIn', {
+        value: true,
+      });
+      config.snapshotEnabled = true;
+      setup({ meta: { canEdit: false } });
+
+      expect(screen.queryByTestId(selector.shareSnapshot)).not.toBeInTheDocument();
+    });
   });
 });
 
-function setup() {
+function setup(overrides?: Partial<DashboardSceneState>) {
   const panel = new VizPanel({
     title: 'Panel A',
     pluginId: 'table',
@@ -39,18 +87,8 @@ function setup() {
     title: 'hello',
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
+    ...overrides,
   });
 
   render(<ShareMenu dashboard={dashboard} />);

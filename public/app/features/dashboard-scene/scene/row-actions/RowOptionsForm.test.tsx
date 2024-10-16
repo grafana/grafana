@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,7 +24,7 @@ describe('DashboardRow', () => {
       <TestProvider>
         <RowOptionsForm
           repeat={'3'}
-          parent={scene}
+          sceneContext={scene}
           title=""
           onCancel={jest.fn()}
           onUpdate={jest.fn()}
@@ -41,7 +40,7 @@ describe('DashboardRow', () => {
   it('Should not show warning component when does not have warningMessage prop', () => {
     render(
       <TestProvider>
-        <RowOptionsForm repeat={'3'} parent={scene} title="" onCancel={jest.fn()} onUpdate={jest.fn()} />
+        <RowOptionsForm repeat={'3'} sceneContext={scene} title="" onCancel={jest.fn()} onUpdate={jest.fn()} />
       </TestProvider>
     );
     expect(

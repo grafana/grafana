@@ -23,8 +23,6 @@ import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
 import { getSubstringValueMatchers } from './matchers/valueMatchers/substringMatchers';
 
-export { type FieldValueMatcherConfig } from './matchers/fieldValueMatcher';
-
 /**
  * Registry that contains all of the built in field matchers.
  * @public

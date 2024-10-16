@@ -47,6 +47,12 @@ cards:
       href: ./query-transform-data/
       description: Learn about querying and transforming your data to refine your visualizations.
       height: 24
+refs:
+  query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
 {{< docs/hero-simple key="hero" >}}
@@ -55,7 +61,7 @@ cards:
 
 ## Overview
 
-Panels are the basic building block in Grafana dashboards, composed of a [query][] and a visualization, a graphical representation of query results.
+Panels are the basic building block in Grafana dashboards, composed of a [query](ref:query) and a visualization, a graphical representation of query results.
 
 Visualizations provide you several different ways to present your data within a panel, depending on what best suits the data and your needs. Grafana’s growing suite of visualizations, ranging from time series graphs to heatmaps to cutting-edge 3D charts, help you decode complex datasets.
 
@@ -64,8 +70,3 @@ Panels offer a wide variety of formatting and styling options from applying colo
 ## Explore
 
 {{< card-grid key="cards" type="simple" >}}
-
-{{% docs/reference %}}
-[query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data"
-[query]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data"
-{{% /docs/reference %}}

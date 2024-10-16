@@ -26,7 +26,7 @@ While an image is being rendered, the PNG image is temporarily written to the fi
 
 A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana#temp_data_lifetime" >}}) setting.
 
-You can also render a PNG by hovering over the panel to display the actions menu in the top right corner, and then clicking **Share > Direct link rendered image** in the Link tab.
+You can also render a PNG by hovering over the panel to display the actions menu in the top-right corner, and then clicking **Share > Share link**. The **Render image** option is displayed in the link settings.
 
 ## Alerting and render limits
 
@@ -82,8 +82,10 @@ AUTH_TOKEN=-
 
 ```json
 {
-  "security": {
-    "authToken": "-"
+  "service": {
+    "security": {
+      "authToken": "-"
+    }
   }
 }
 ```
@@ -203,6 +205,47 @@ HTTP_PORT=0
 {
   "service": {
     "port": 0
+  }
+}
+```
+
+#### HTTP protocol
+
+{{% admonition type="note" %}}
+HTTPS protocol is supported in the image renderer v3.11.0 and later.
+{{% /admonition %}}
+
+Change the protocol of the server, it can be `http` or `https`. Default is `http`.
+
+```json
+{
+  "service": {
+    "protocol": "http"
+  }
+}
+```
+
+#### HTTPS certificate and key file
+
+Path to the image renderer certificate and key file used to start an HTTPS server.
+
+```json
+{
+  "service": {
+    "certFile": "./path/to/cert",
+    "certKey": "./path/to/key"
+  }
+}
+```
+
+#### HTTPS min TLS version
+
+Minimum TLS version allowed. Accepted values are: `TLSv1.2`, `TLSv1.3`. Default is `TLSv1.2`.
+
+```json
+{
+  "service": {
+    "minTLSVersion": "TLSv1.2"
   }
 }
 ```

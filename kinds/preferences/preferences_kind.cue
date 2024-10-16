@@ -32,6 +32,9 @@ lineage: schemas: [{
 
 			// Cookie preferences
 			cookiePreferences?: #CookiePreferences
+
+			// Navigation preferences
+			navbar?: #NavbarPreference
 		} @cuetsy(kind="interface")
 
 		#QueryHistoryPreference: {
@@ -43,6 +46,10 @@ lineage: schemas: [{
 			analytics?: {}
 			performance?: {}
 			functional?: {}
+		} @cuetsy(kind="interface")
+
+		#NavbarPreference: {
+			bookmarkUrls: [...string]
 		} @cuetsy(kind="interface")
 	}
 }]

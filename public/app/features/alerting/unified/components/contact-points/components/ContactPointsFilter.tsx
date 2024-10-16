@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { Stack } from '@grafana/experimental';

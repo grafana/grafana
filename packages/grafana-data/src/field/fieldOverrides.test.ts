@@ -1,21 +1,17 @@
-import { ArrayDataFrame, createDataFrame, toDataFrame } from '../dataframe';
-import { rangeUtil } from '../datetime';
-import { createTheme } from '../themes';
-import { FieldMatcherID } from '../transformations';
-import {
-  DataFrame,
-  Field,
-  FieldColorModeId,
-  FieldConfig,
-  FieldConfigPropertyItem,
-  FieldConfigSource,
-  FieldType,
-  GrafanaConfig,
-  InterpolateFunction,
-  ScopedVars,
-  ThresholdsMode,
-} from '../types';
-import { locationUtil, Registry } from '../utils';
+import { ArrayDataFrame } from '../dataframe/ArrayDataFrame';
+import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
+import { relativeToTimeRange } from '../datetime/rangeutil';
+import { createTheme } from '../themes/createTheme';
+import { FieldMatcherID } from '../transformations/matchers/ids';
+import { ScopedVars } from '../types/ScopedVars';
+import { GrafanaConfig } from '../types/config';
+import { FieldType, DataFrame, Field, FieldConfig } from '../types/dataFrame';
+import { FieldColorModeId } from '../types/fieldColor';
+import { FieldConfigPropertyItem, FieldConfigSource } from '../types/fieldOverrides';
+import { InterpolateFunction } from '../types/panel';
+import { ThresholdsMode } from '../types/thresholds';
+import { Registry } from '../utils/Registry';
+import { locationUtil } from '../utils/location';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
@@ -311,6 +307,63 @@ describe('applyFieldOverrides', () => {
 
     // The override applied
     expect(config.decimals).toEqual(1);
+  });
+
+  it('displayName should be able to reference itself', () => {
+    const data = applyFieldOverrides({
+      data: [f0], // the frame
+      fieldConfig: {
+        defaults: {
+          displayName: '${__field.displayName} and more!',
+        },
+        overrides: [],
+      },
+      replaceVariables: (v, scopedVars) => {
+        const dataContext = scopedVars?.__dataContext?.value;
+        if (dataContext) {
+          // Trying to fake what would happen with the real interpolation function
+          return getFieldDisplayName(dataContext.field, dataContext.frame) + ' and more!';
+        }
+        return v;
+      },
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    const valueColumn = data.fields[1];
+    const displayName = getFieldDisplayName(valueColumn, data);
+
+    expect(displayName).toEqual('value and more!');
+  });
+
+  it('displayName should be able to reference itself in an override', () => {
+    const data = applyFieldOverrides({
+      data: [f0], // the frame
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'value' },
+            properties: [{ id: 'displayName', value: '${__field.displayName} and more!' }],
+          },
+        ],
+      },
+      replaceVariables: (v, scopedVars) => {
+        const dataContext = scopedVars?.__dataContext?.value;
+        if (dataContext) {
+          // Trying to fake what would happen with the real interpolation function
+          return getFieldDisplayName(dataContext.field, dataContext.frame) + ' and more!';
+        }
+        return v;
+      },
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    const valueColumn = data.fields[1];
+    const displayName = getFieldDisplayName(valueColumn, data);
+
+    expect(displayName).toEqual('value and more!');
   });
 
   it('will apply set min/max when asked', () => {
@@ -910,7 +963,7 @@ describe('getLinksSupplier', () => {
     });
 
     const datasourceUid = '1234';
-    const range = rangeUtil.relativeToTimeRange({ from: 600, to: 0 });
+    const range = relativeToTimeRange({ from: 600, to: 0 });
     const f0 = createDataFrame({
       name: 'A',
       fields: [
@@ -971,7 +1024,7 @@ describe('getLinksSupplier', () => {
     });
     it('handles link click handlers', () => {
       const onClickSpy = jest.fn();
-      const replaceSpy = jest.fn();
+      const replaceSpy = jest.fn().mockImplementation((value, vars, format) => value);
       const f0 = createDataFrame({
         name: 'A',
         fields: [
@@ -1008,8 +1061,8 @@ describe('getLinksSupplier', () => {
 
       links[0].onClick!({});
 
-      expect(onClickSpy).toBeCalledTimes(1);
-      expect(replaceSpy).toBeCalledTimes(4);
+      expect(onClickSpy).toHaveBeenCalledTimes(1);
+      expect(replaceSpy).toHaveBeenCalledTimes(5);
       // check that onClick variable replacer has scoped vars bound to it
       expect(replaceSpy.mock.calls[1][1]).toHaveProperty('foo', { text: 'bar', value: 'bar' });
     });
@@ -1056,6 +1109,49 @@ describe('getLinksSupplier', () => {
       // check that onBuildUrl variable replacer has scoped vars bound to it
       expect(replaceSpy.mock.calls[1][1]).toHaveProperty('foo', { text: 'bar', value: 'bar' });
     });
+  });
+
+  it('handles dynamic links with onclick handler', () => {
+    const replaceSpy = jest.fn().mockReturnValue('url interpolated 10');
+    const onClickUrlSpy = jest.fn();
+    const scopedVars = { foo: { text: 'bar', value: 'bar' } };
+    const f0 = createDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          config: {
+            links: [
+              {
+                url: 'should be ignored',
+                onClick: (evt) => {
+                  onClickUrlSpy();
+                  evt.replaceVariables?.('${foo}');
+                },
+                title: 'title to be interpolated',
+              },
+              {
+                url: 'should not be ignored',
+                title: 'title to be interpolated',
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const supplier = getLinksSupplier(f0, f0.fields[0], scopedVars, replaceSpy);
+    const links = supplier({});
+    links[0].onClick!({});
+
+    expect(onClickUrlSpy).toHaveBeenCalledTimes(1);
+    expect(links.length).toBe(2);
+    expect(links[0].href).toEqual('url interpolated 10');
+    expect(links[0].onClick).toBeDefined();
+    expect(replaceSpy).toHaveBeenCalledTimes(5);
+    // check that onClick variable replacer has scoped vars bound to it
+    expect(replaceSpy.mock.calls[1][1]).toHaveProperty('foo', { text: 'bar', value: 'bar' });
   });
 });
 

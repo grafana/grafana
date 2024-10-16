@@ -33,7 +33,7 @@ func TestLocalFS_Remove(t *testing.T) {
 
 	t.Run("Uninstall will search in nested dist folder for plugin.json", func(t *testing.T) {
 		pluginDistDir := filepath.Join(t.TempDir(), "dist")
-		err = os.Mkdir(pluginDistDir, os.ModePerm)
+		err = os.Mkdir(pluginDistDir, 0o750)
 		require.NoError(t, err)
 		pluginJSON = filepath.Join(pluginDistDir, "plugin.json")
 		//nolint:gosec
@@ -59,7 +59,7 @@ func TestLocalFS_Remove(t *testing.T) {
 
 	t.Run("Uninstall will not delete folder if cannot recognize plugin structure", func(t *testing.T) {
 		pluginDir = filepath.Join(t.TempDir(), "system32")
-		err = os.Mkdir(pluginDir, os.ModePerm)
+		err = os.Mkdir(pluginDir, 0o750)
 		require.NoError(t, err)
 		testFile := filepath.Join(pluginDir, "important.exe")
 		//nolint:gosec

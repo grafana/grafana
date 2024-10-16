@@ -1,16 +1,17 @@
 import { useMemo } from 'react';
 
 import { contextSrv as ctx } from 'app/core/services/context_srv';
+import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRecordingRule, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -52,6 +53,7 @@ export enum AlertmanagerAction {
   CreateSilence = 'create-silence',
   ViewSilence = 'view-silence',
   UpdateSilence = 'update-silence',
+  PreviewSilencedInstances = 'preview-silenced-alerts',
 
   // mute timings
   ViewMuteTiming = 'view-mute-timing',
@@ -82,6 +84,7 @@ export enum AlertingAction {
   UpdateAlertRule = 'update-alert-rule',
   DeleteAlertRule = 'delete-alert-rule',
   ExportGrafanaManagedRules = 'export-grafana-managed-rules',
+  ReadConfigurationStatus = 'read-configuration-status',
 
   // external (any compatible alerting data source)
   CreateExternalAlertRule = 'create-external-alert-rule',
@@ -109,6 +112,11 @@ export const useAlertingAbilities = (): Abilities<AlertingAction> => {
     [AlertingAction.UpdateAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleUpdate),
     [AlertingAction.DeleteAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleDelete),
     [AlertingAction.ExportGrafanaManagedRules]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleRead),
+    [AlertingAction.ReadConfigurationStatus]: [
+      AlwaysSupported,
+      ctx.hasPermission(AccessControlAction.AlertingInstanceRead) ||
+        ctx.hasPermission(AccessControlAction.AlertingNotificationsRead),
+    ],
 
     // external
     [AlertingAction.CreateExternalAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleExternalWrite),
@@ -142,17 +150,12 @@ export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleActi
   }, [abilities, actions]);
 }
 
+// This hook is being called a lot in different places
+// In some cases multiple times for ~80 rules (e.g. on the list page)
+// We need to investigate further if some of these calls are redundant
+// In the meantime, memoizing the result helps
 export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRuleAction> {
-  const rulesSource = rule.namespace.rulesSource;
-  const rulesSourceName = typeof rulesSource === 'string' ? rulesSource : rulesSource.name;
-
-  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-  const isFederated = isFederatedRuleGroup(rule.group);
-  const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
-  const isPluginProvided = isPluginProvidedRule(rule);
-
-  // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
-  const immutableRule = isProvisioned || isFederated || isPluginProvided;
+  const rulesSourceName = getRulesSourceName(rule.namespace.rulesSource);
 
   const {
     isEditable,
@@ -161,27 +164,39 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
     loading,
   } = useIsRuleEditable(rulesSourceName, rule.rulerRule);
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+  const canSilence = useCanSilence(rule);
 
-  // while we gather info, pretend it's not supported
-  const MaybeSupported = loading ? NotSupported : isRulerAvailable;
-  const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
+  const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
+    const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+    const isFederated = isFederatedRuleGroup(rule.group);
+    const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
+    const isPluginProvided = isPluginProvidedRule(rule);
 
-  // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
-  const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+    // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
+    const immutableRule = isProvisioned || isFederated || isPluginProvided;
 
-  const rulesPermissions = getRulesPermissions(rulesSourceName);
-  const canSilence = useCanSilence(rulesSource);
+    // while we gather info, pretend it's not supported
+    const MaybeSupported = loading ? NotSupported : isRulerAvailable;
+    const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
-  const abilities: Abilities<AlertRuleAction> = {
-    [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
-    [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
-    [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
-    [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
-    [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
-    [AlertRuleAction.Silence]: canSilence,
-    [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
-    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
-  };
+    // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
+    const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+
+    const rulesPermissions = getRulesPermissions(rulesSourceName);
+
+    const abilities: Abilities<AlertRuleAction> = {
+      [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
+      [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
+      [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
+      [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
+      [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
+      [AlertRuleAction.Silence]: canSilence,
+      [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
+      [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+    };
+
+    return abilities;
+  }, [rule, loading, isRulerAvailable, isEditable, isRemovable, rulesSourceName, exportAllowed, canSilence]);
 
   return abilities;
 }
@@ -210,12 +225,19 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       AccessControlAction.AlertingNotificationsExternalWrite
     ),
     // -- contact points --
-    [AlertmanagerAction.CreateContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
+    [AlertmanagerAction.CreateContactPoint]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.create,
+      // TODO: Move this into the permissions config and generalise that code to allow for an array of permissions
+      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversCreate : null
+    ),
     [AlertmanagerAction.ViewContactPoint]: toAbility(AlwaysSupported, notificationsPermissions.read),
     [AlertmanagerAction.UpdateContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
     [AlertmanagerAction.DeleteContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
-    // only Grafana flavored alertmanager supports exporting
-    [AlertmanagerAction.ExportContactPoint]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
+    // At the time of writing, only Grafana flavored alertmanager supports exporting,
+    // and if a user can view the contact point, then they can also export it
+    // So the only check we make is if the alertmanager is Grafana flavored
+    [AlertmanagerAction.ExportContactPoint]: [isGrafanaFlavoredAlertmanager, isGrafanaFlavoredAlertmanager],
     // -- notification templates --
     [AlertmanagerAction.CreateNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
     [AlertmanagerAction.ViewNotificationTemplate]: toAbility(AlwaysSupported, notificationsPermissions.read),
@@ -240,6 +262,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.CreateSilence]: toAbility(AlwaysSupported, instancePermissions.create),
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
     [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
+    [AlertmanagerAction.PreviewSilencedInstances]: toAbility(AlwaysSupported, instancePermissions.read),
     // -- mute timtings --
     [AlertmanagerAction.CreateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
     [AlertmanagerAction.ViewMuteTiming]: toAbility(AlwaysSupported, notificationsPermissions.read),
@@ -272,17 +295,22 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
  * 1. the user has no permissions to create silences
  * 2. the admin has configured to only send instances to external AMs
  */
-function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
+function useCanSilence(rule: CombinedRule): [boolean, boolean] {
+  const rulesSource = rule.namespace.rulesSource;
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
+  const isGrafanaRecording = isGrafanaRecordingRule(rule.rulerRule);
 
   const { currentData: amConfigStatus, isLoading } =
     alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {
       skip: !isGrafanaManagedRule,
     });
 
-  // we don't support silencing when the rule is not a Grafana managed rule
+  const folderUID = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.namespace_uid : undefined;
+  const { loading: folderIsLoading, folder } = useFolder(folderUID);
+
+  // we don't support silencing when the rule is not a Grafana managed alerting rule
   // we simply don't know what Alertmanager the ruler is sending alerts to
-  if (!isGrafanaManagedRule || isLoading) {
+  if (!isGrafanaManagedRule || isGrafanaRecording || isLoading || folderIsLoading || !folder) {
     return [false, false];
   }
 
@@ -290,8 +318,20 @@ function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
   const silenceSupported = !interactsOnlyWithExternalAMs || interactsWithAll;
 
-  return toAbility(silenceSupported, AccessControlAction.AlertingInstanceCreate);
+  const { accessControl = {} } = folder;
+
+  // User is permitted to silence if they either have the "global" permissions of "AlertingInstanceCreate",
+  // or the folder specific access control of "AlertingSilenceCreate"
+  const allowedToSilence = Boolean(
+    ctx.hasPermission(AccessControlAction.AlertingInstanceCreate) ||
+      accessControl[AccessControlAction.AlertingSilenceCreate]
+  );
+
+  return [silenceSupported, allowedToSilence];
 }
 
 // just a convenient function
-const toAbility = (supported: boolean, action: AccessControlAction): Ability => [supported, ctx.hasPermission(action)];
+const toAbility = (supported: boolean, ...actions: Array<AccessControlAction | null>): Ability => [
+  supported,
+  actions.some((action) => action && ctx.hasPermission(action)),
+];

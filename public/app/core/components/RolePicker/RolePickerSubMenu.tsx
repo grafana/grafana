@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import React from 'react';
 
 import { Button, CustomScrollbar, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';

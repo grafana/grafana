@@ -18,7 +18,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { FieldConfig, YAxisConfig } from './types';
+import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -51,10 +51,22 @@ interface PrepConfigOpts {
   hideGE?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
+  selectionMode?: HeatmapSelectionMode;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
-  const { dataRef, theme, timeZone, getTimeRange, cellGap, hideLE, hideGE, yAxisConfig, ySizeDivisor } = opts;
+  const {
+    dataRef,
+    theme,
+    timeZone,
+    getTimeRange,
+    cellGap,
+    hideLE,
+    hideGE,
+    yAxisConfig,
+    ySizeDivisor,
+    selectionMode = HeatmapSelectionMode.X,
+  } = opts;
 
   const xScaleKey = 'x';
   let isTime = true;
@@ -355,8 +367,8 @@ export function prepConfig(opts: PrepConfigOpts) {
           if (meta.yOrdinalDisplay) {
             return splits.map((v) =>
               v < 0
-                ? meta.yMinDisplay ?? '' // Check prometheus style labels
-                : meta.yOrdinalDisplay[v] ?? ''
+                ? (meta.yMinDisplay ?? '') // Check prometheus style labels
+                : (meta.yOrdinalDisplay[v] ?? '')
             );
           }
           return splits;
@@ -449,10 +461,13 @@ export function prepConfig(opts: PrepConfigOpts) {
     scaleKey: '', // facets' scales used (above)
   });
 
+  const dragX = selectionMode === HeatmapSelectionMode.X || selectionMode === HeatmapSelectionMode.Xy;
+  const dragY = selectionMode === HeatmapSelectionMode.Y || selectionMode === HeatmapSelectionMode.Xy;
+
   const cursor: Cursor = {
     drag: {
-      x: true,
-      y: false,
+      x: dragX,
+      y: dragY,
       setScale: false,
     },
     dataIdx: (u, seriesIdx) => {
@@ -582,7 +597,7 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         );
 
         for (let i = 0; i < dlen; i++) {
-          if (counts[i] > hideLE && counts[i] < hideGE) {
+          if (counts[i] != null && counts[i] > hideLE && counts[i] < hideGE) {
             let cx = cxs[~~(i / yBinQty)];
             let cy = cys[i % yBinQty];
 
@@ -811,7 +826,7 @@ export const boundedMinMax = (
     minValue = Infinity;
 
     for (let i = 0; i < values.length; i++) {
-      if (values[i] > hideLE && values[i] < hideGE) {
+      if (values[i] != null && values[i] > hideLE && values[i] < hideGE) {
         minValue = Math.min(minValue, values[i]);
       }
     }
@@ -821,7 +836,7 @@ export const boundedMinMax = (
     maxValue = -Infinity;
 
     for (let i = 0; i < values.length; i++) {
-      if (values[i] > hideLE && values[i] < hideGE) {
+      if (values[i] != null && values[i] > hideLE && values[i] < hideGE) {
         maxValue = Math.max(maxValue, values[i]);
       }
     }

@@ -1,21 +1,18 @@
 import { useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { useGrafanaContactPoints } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
-import {
-  isOnCallContactPointReady,
-  useGetContactPoints,
-  useGetDefaultContactPoint,
-  useIsCreateAlertRuleDone,
-} from './alerting/hooks';
+import { isOnCallContactPointReady, useGetDefaultContactPoint, useIsCreateAlertRuleDone } from './alerting/hooks';
 import { isContactPointReady } from './alerting/utils';
 import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from './components/ConfigureIRM';
 import { useGetIncidentPluginConfig } from './incidents/hooks';
 import { useOnCallChatOpsConnections, useOnCallOptions } from './onCall/hooks';
+import { useSloChecks } from './slo/hooks';
 
 interface UrlLink {
-  url: string;
+  url: RelativeUrl;
   queryParams?: Record<string, string>;
 }
 export interface StepButtonDto {
@@ -52,7 +49,8 @@ export interface EssentialsConfigurationData {
 
 function useGetConfigurationForApps() {
   // configuration checks for alerting
-  const { contactPoints, isLoading: isLoadingContactPoints } = useGetContactPoints();
+  const { contactPoints, isLoading: isLoadingContactPoints } = useGrafanaContactPoints();
+  // TODO: Switch to k8s API/refactored notification policies hook when available
   const { defaultContactpoint, isLoading: isLoadingDefaultContactPoint } = useGetDefaultContactPoint();
   const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
   // configuration checks for incidents
@@ -68,13 +66,17 @@ function useGetConfigurationForApps() {
     is_integration_chatops_connected,
     isLoading: isOnCallConfigLoading,
   } = useOnCallChatOpsConnections();
+  // configuration checks for slo
+  const { hasSlo, hasSloWithAlert, isLoading: isSloLoading } = useSloChecks();
+
   // check if any of the configurations are loading
   const isLoading =
     isLoadingContactPoints ||
     isLoadingDefaultContactPoint ||
     isLoadingAlertCreatedDone ||
     isIncidentsConfigLoading ||
-    isOnCallConfigLoading;
+    isOnCallConfigLoading ||
+    isSloLoading;
 
   return {
     alerting: {
@@ -91,6 +93,10 @@ function useGetConfigurationForApps() {
       is_chatops_connected,
       is_integration_chatops_connected,
     },
+    slo: {
+      hasSlo,
+      hasSloWithAlert,
+    },
     isLoading,
   };
 }
@@ -100,11 +106,12 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     alerting: { contactPoints, defaultContactpoint, isCreateAlertRuleDone },
     incidents: { isChatOpsInstalled, isIncidentsInstalled },
     onCall: { onCallOptions, is_chatops_connected, is_integration_chatops_connected },
+    slo: { hasSlo, hasSloWithAlert },
     isLoading,
   } = useGetConfigurationForApps();
 
-  function onIntegrationClick(integrationId: string, url: string) {
-    const urlToGoWithIntegration = createUrl(url + integrationId, {
+  function onIntegrationClick(integrationId: string, url: RelativeUrl) {
+    const urlToGoWithIntegration = createRelativeUrl(`${url} + ${integrationId}`, {
       returnTo: location.pathname + location.search,
     });
     locationService.push(urlToGoWithIntegration);
@@ -122,8 +129,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: `/alerting/notifications/receivers/${defaultContactpoint}/edit`,
-                queryParams: { alertmanager: 'grafana' },
+                url: `/alerting/notifications`,
+                queryParams: { search: defaultContactpoint, alertmanager: 'grafana' },
               },
               label: 'Edit',
               labelOnDone: 'View',
@@ -164,6 +171,40 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               labelOnDone: 'View',
             },
             done: isCreateAlertRuleDone,
+          },
+          {
+            title: 'Create your first SLO',
+            description: 'Create SLOs to monitor your service.',
+            button: {
+              type: 'openLink',
+              urlLink: {
+                url: '/a/grafana-slo-app/wizard/new',
+              },
+              label: 'Create',
+              urlLinkOnDone: {
+                url: '/a/grafana-slo-app/manage-slos',
+              },
+              labelOnDone: 'View',
+            },
+            done: hasSlo,
+          },
+          {
+            title: 'Enable SLO alerting',
+            description: 'Configure SLO alerting to receive notifications when your SLOs are breached.',
+            button: {
+              type: 'openLink',
+              urlLink: {
+                queryParams: { alertsEnabled: 'disabled' },
+                url: '/a/grafana-slo-app/manage-slos',
+              },
+              label: 'Enable',
+              urlLinkOnDone: {
+                queryParams: { alertsEnabled: 'enabled' },
+                url: '/a/grafana-slo-app/manage-slos',
+              },
+              labelOnDone: 'View',
+            },
+            done: hasSloWithAlert,
           },
         ],
       },
@@ -244,7 +285,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
         description: '',
         steps: [
           {
-            title: 'Send OnCall demo alert',
+            title: 'Send OnCall demo alert via Alerting integration',
             description: 'In the integration page, click Send demo alert, to review your notification',
             button: {
               type: 'dropDown',
@@ -296,7 +337,7 @@ export const useGetConfigurationForUI = ({
     function getConnectDataSourceConfiguration() {
       const description = dataSourceCompatibleWithAlerting
         ? 'You have connected a datasource.'
-        : 'Connect at least one data source to start receiving data.';
+        : 'Connect at least one data source to start receiving data';
       const actionButtonTitle = dataSourceCompatibleWithAlerting ? 'View' : 'Connect';
       return {
         id: ConfigurationStepsEnum.CONNECT_DATASOURCE,
@@ -312,8 +353,8 @@ export const useGetConfigurationForUI = ({
         id: ConfigurationStepsEnum.ESSENTIALS,
         title: 'Essentials',
         titleIcon: 'star',
-        description: 'Configure the features you need to start using Grafana IRM workflows',
-        actionButtonTitle: 'Start',
+        description: 'Set up the necessary features to start using Grafana IRM workflows',
+        actionButtonTitle: stepsDone === totalStepsToDo ? 'View' : 'Configure',
         stepsDone,
         totalStepsToDo,
       },

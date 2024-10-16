@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -25,6 +24,11 @@ jest.mock('@grafana/ui', () => ({
 jest.mock('@grafana/runtime', () => ({
   ___esModule: true,
   ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
+    },
+  }),
 }));
 
 describe('Azure Monitor QueryEditor', () => {

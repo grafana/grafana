@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { SendResetMailPage } from './SendResetMailPage';
 
@@ -10,6 +9,7 @@ jest.mock('@grafana/runtime', () => ({
     post: postMock,
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     buildInfo: {
       version: 'v1.0',
       commit: '1',

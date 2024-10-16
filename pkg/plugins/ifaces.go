@@ -69,6 +69,7 @@ type FS interface {
 
 	Base() string
 	Files() ([]string, error)
+	Rel(string) (string, error)
 }
 
 type FSRemover interface {
@@ -87,11 +88,7 @@ type FoundPlugin struct {
 
 // Client is used to communicate with backend plugin implementations.
 type Client interface {
-	backend.QueryDataHandler
-	backend.CheckHealthHandler
-	backend.StreamHandler
-	backend.CallResourceHandler
-	backend.CollectMetricsHandler
+	backend.Handler
 }
 
 // BackendFactoryProvider provides a backend factory for a provided plugin.
@@ -126,28 +123,6 @@ type Licensing interface {
 	Path() string
 
 	AppURL() string
-}
-
-// RoleRegistry handles the plugin RBAC roles and their assignments
-type RoleRegistry interface {
-	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
-}
-
-// ClientMiddleware is an interface representing the ability to create a middleware
-// that implements the Client interface.
-type ClientMiddleware interface {
-	// CreateClientMiddleware creates a new client middleware.
-	CreateClientMiddleware(next Client) Client
-}
-
-// The ClientMiddlewareFunc type is an adapter to allow the use of ordinary
-// functions as ClientMiddleware's. If f is a function with the appropriate
-// signature, ClientMiddlewareFunc(f) is a ClientMiddleware that calls f.
-type ClientMiddlewareFunc func(next Client) Client
-
-// CreateClientMiddleware implements the ClientMiddleware interface.
-func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
-	return fn(next)
 }
 
 type SignatureCalculator interface {

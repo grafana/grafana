@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+
+import { selectors } from '@grafana/e2e-selectors';
 
 import { QueryEditor, Props } from './QueryEditor';
 import { scenarios } from './__mocks__/scenarios';
@@ -42,7 +43,7 @@ describe('Test Datasource Query Editor', () => {
 
     let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
     await fireEvent.keyDown(select, { keyCode: 40 });
-    const scs = screen.getAllByLabelText('Select option');
+    const scs = screen.getAllByTestId(selectors.components.Select.option);
 
     expect(scs).toHaveLength(scenarios.length);
 

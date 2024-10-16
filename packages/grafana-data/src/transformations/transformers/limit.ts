@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { DataTransformerInfo } from '../../types';
+import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 import { transformationsVariableSupport } from './utils';
@@ -33,6 +33,10 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
           } else {
             limit = options.limitField;
           }
+        }
+        // Prevent negative limit
+        if (limit < 0) {
+          limit = 0;
         }
         return data.map((frame) => {
           if (frame.length > limit) {

@@ -27,12 +27,13 @@ composableKinds: PanelCfg: {
 			schema: {
 				Options: {
 					common.SingleStatBaseOptions
-					graphMode:         common.BigValueGraphMode & (*"area" | _)
-					colorMode:         common.BigValueColorMode & (*"value" | _)
-					justifyMode:       common.BigValueJustifyMode & (*"auto" | _)
-					textMode:          common.BigValueTextMode & (*"auto" | _)
-					wideLayout:        bool | *true
-					showPercentChange: bool | *false
+					graphMode:              common.BigValueGraphMode & (*"area" | _)
+					colorMode:              common.BigValueColorMode & (*"value" | _)
+					justifyMode:            common.BigValueJustifyMode & (*"auto" | _)
+					textMode:               common.BigValueTextMode & (*"auto" | _)
+					wideLayout:             bool | *true
+					showPercentChange:      bool | *false
+					percentChangeColorMode: common.PercentChangeColorMode & (*"standard" | _)
 				} @cuetsy(kind="interface")
 			}
 		}]

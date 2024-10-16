@@ -1,6 +1,7 @@
-import { isUndefined, omitBy, sum } from 'lodash';
+import { isUndefined, omitBy, pick, sum } from 'lodash';
 import pluralize from 'pluralize';
-import React, { Fragment } from 'react';
+import * as React from 'react';
+import { Fragment, useDeferredValue, useMemo } from 'react';
 
 import { Badge, Stack } from '@grafana/ui';
 import {
@@ -26,24 +27,16 @@ const emptyStats: Required<AlertGroupTotals> = {
   nodata: 0,
 };
 
-export const RuleStats = ({ namespaces }: Props) => {
-  const stats = { ...emptyStats };
+// Stats calculation is an expensive operation
+// Make sure we repeat that as few times as possible
+export const RuleStats = React.memo(({ namespaces }: Props) => {
+  const deferredNamespaces = useDeferredValue(namespaces);
 
-  // sum all totals for all namespaces
-  namespaces.forEach(({ groups }) => {
-    groups.forEach((group) => {
-      const groupTotals = omitBy(group.totals, isUndefined);
-      for (let key in groupTotals) {
-        // @ts-ignore
-        stats[key] += groupTotals[key];
-      }
-    });
-  });
+  const stats = useMemo(() => statsFromNamespaces(deferredNamespaces), [deferredNamespaces]);
+  const total = totalFromStats(stats);
 
   const statsComponents = getComponentsFromStats(stats);
   const hasStats = Boolean(statsComponents.length);
-
-  const total = sum(Object.values(stats));
 
   statsComponents.unshift(
     <Fragment key="total">
@@ -60,10 +53,38 @@ export const RuleStats = ({ namespaces }: Props) => {
       )}
     </Stack>
   );
-};
+});
+
+RuleStats.displayName = 'RuleStats';
 
 interface RuleGroupStatsProps {
   group: CombinedRuleGroup;
+}
+
+function statsFromNamespaces(namespaces: CombinedRuleNamespace[]): AlertGroupTotals {
+  const stats = { ...emptyStats };
+
+  // sum all totals for all namespaces
+  namespaces.forEach(({ groups }) => {
+    groups.forEach((group) => {
+      const groupTotals = omitBy(group.totals, isUndefined);
+      for (const key in groupTotals) {
+        // @ts-ignore
+        stats[key] += groupTotals[key];
+      }
+    });
+  });
+
+  return stats;
+}
+
+export function totalFromStats(stats: AlertGroupTotals): number {
+  // countable stats will pick only the states that indicate a single rule – health indicators like "error" and "nodata" should
+  // not be counted because they are already counted by their state
+  const countableStats = pick(stats, ['alerting', 'pending', 'inactive', 'recording']);
+  const total = sum(Object.values(countableStats));
+
+  return total;
 }
 
 export const RuleGroupStats = ({ group }: RuleGroupStatsProps) => {
@@ -100,7 +121,7 @@ export function getComponentsFromStats(
   }
 
   if (stats.error) {
-    statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} errors`} />);
+    statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} ${pluralize('error', stats.error)}`} />);
   }
 
   if (stats.nodata) {

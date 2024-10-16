@@ -70,6 +70,7 @@ import (
 //     Responses:
 //       202: MuteTimeInterval
 //       400: ValidationError
+//       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming
 //
@@ -77,18 +78,29 @@ import (
 //
 //     Responses:
 //       204: description: The mute timing was deleted successfully.
-//       409: GenericPublicError
+//       409: PublicError
 
 // swagger:route
 
 // swagger:model
 type MuteTimings []MuteTimeInterval
 
-// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming RouteExportMuteTiming
+// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable  RouteExportMuteTiming
 type RouteGetMuteTimingParam struct {
 	// Mute timing name
 	// in:path
 	Name string `json:"name"`
+}
+
+// swagger:parameters stable RouteDeleteMuteTiming
+type RouteDeleteMuteTimingParam struct {
+	// Mute timing name
+	// in:path
+	Name string `json:"name"`
+
+	// Version of mute timing to use for optimistic concurrency. Leave empty to disable validation
+	// in:query
+	Version string `json:"version"`
 }
 
 // swagger:parameters RoutePostMuteTiming RoutePutMuteTiming
@@ -97,7 +109,7 @@ type MuteTimingPayload struct {
 	Body MuteTimeInterval
 }
 
-// swagger:parameters RoutePostMuteTiming RoutePutMuteTiming
+// swagger:parameters RoutePostMuteTiming RoutePutMuteTiming RouteDeleteMuteTiming
 type MuteTimingHeaders struct {
 	// in:header
 	XDisableProvenance string `json:"X-Disable-Provenance"`
@@ -105,7 +117,9 @@ type MuteTimingHeaders struct {
 
 // swagger:model
 type MuteTimeInterval struct {
+	UID                     string `json:"-" yaml:"-"`
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
+	Version                 string     `json:"version,omitempty"`
 	Provenance              Provenance `json:"provenance,omitempty"`
 }
 

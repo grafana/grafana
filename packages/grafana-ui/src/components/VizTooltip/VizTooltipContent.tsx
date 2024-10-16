@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -28,7 +28,7 @@ export const VizTooltipContent = ({
   const scrollableStyle: CSSProperties = scrollable
     ? {
         maxHeight: maxHeight,
-        overflowY: 'scroll',
+        overflowY: 'auto',
       }
     : {};
 
@@ -46,6 +46,7 @@ export const VizTooltipContent = ({
           justify={'space-between'}
           isPinned={isPinned}
           lineStyle={lineStyle}
+          showValueScroll={!scrollable}
         />
       ))}
       {children}
@@ -58,7 +59,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    gap: 4,
+    gap: 2,
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
   }),

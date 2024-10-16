@@ -1,4 +1,3 @@
-import React from 'react';
 import { components, InputProps } from 'react-select';
 
 /**

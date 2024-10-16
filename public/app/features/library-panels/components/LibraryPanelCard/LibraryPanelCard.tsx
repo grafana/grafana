@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement, useState } from 'react';
+import { ReactElement, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -80,11 +80,12 @@ function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
     return null;
   }
 
+  // LibraryPanels API returns folder-less library panels with an empty string folder UID
   if (!libraryPanel.meta.folderUid) {
     return (
       <span className={styles.metaContainer}>
         <Icon name={'folder'} size="sm" />
-        <span>{libraryPanel.meta.folderName}</span>
+        <span>Dashboards</span>
       </span>
     );
   }

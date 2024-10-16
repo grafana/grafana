@@ -34,4 +34,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     WebkitLineClamp: 1,
     overflow: 'hidden',
   }),
+  cell: css({
+    display: 'flex',
+    alignItems: 'center',
+    '&:last-child': {
+      justifyContent: 'end',
+    },
+  }),
+  actionButton: css({
+    padding: theme.spacing(1),
+  }),
 });

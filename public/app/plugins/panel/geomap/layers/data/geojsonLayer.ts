@@ -2,7 +2,7 @@ import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
-import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
 import VectorSource from 'ol/source/Vector';
 import { Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
@@ -112,7 +112,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     const polyStyleStrings: string[] = Object.values(GeoJSONPolyStyles);
     const pointStyleStrings: string[] = Object.values(GeoJSONPointStyles);
     const lineStyleStrings: string[] = Object.values(GeoJSONLineStyles);
-    const vectorLayer = new VectorLayer({
+    const vectorLayer = new VectorImage({
       source,
       style: (feature: FeatureLike) => {
         const featureType = feature.getGeometry()?.getType();

@@ -288,11 +288,9 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			UserID:  u.ID,
 			OrgID:   u.OrgID,
 			OrgRole: org.RoleAdmin,
-			Permissions: map[int64]map[string][]string{u.OrgID: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
+			Permissions: map[int64]map[string][]string{u.OrgID: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersCreate,
-				}, {
-					Action: dashboards.ActionFoldersWrite,
 					Scope:  dashboards.ScopeFoldersAll,
 				}}),
 			},
@@ -305,7 +303,10 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+		folderPermissions := mock.NewMockedPermissionsService()
+		folderStore := folderimpl.ProvideStore(sqlStore)
+		folderSvc := folderimpl.ProvideService(folderStore, mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore),
+			sqlStore, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		parentUID := ""
 		for i := 0; ; i++ {

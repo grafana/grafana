@@ -1,4 +1,4 @@
-import React from 'react';
+import { PureComponent } from 'react';
 
 import { StandardEditorProps, SelectFieldConfigSettings, SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
@@ -14,7 +14,7 @@ type Props<T> = StandardEditorProps<T[], SelectFieldConfigSettings<T>>;
  * MultiSelect for options UI
  * @alpha
  */
-export class MultiSelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>> {
+export class MultiSelectValueEditor<T> extends PureComponent<Props<T>, State<T>> {
   state: State<T> = {
     isLoading: true,
     options: [],

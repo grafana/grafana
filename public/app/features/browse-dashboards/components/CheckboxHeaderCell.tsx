@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Checkbox } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 

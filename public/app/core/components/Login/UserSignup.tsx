@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';

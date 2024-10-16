@@ -2,9 +2,11 @@ package notifier
 
 import (
 	"context"
+	"crypto/tls"
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,13 +23,14 @@ import (
 )
 
 type redisConfig struct {
-	addr     string
-	username string
-	password string
-	db       int
-	name     string
-	prefix   string
-	maxConns int
+	addr        string
+	username    string
+	password    string
+	db          int
+	name        string
+	prefix      string
+	maxConns    int
+	clusterMode bool
 
 	tlsEnabled bool
 	tls        dstls.ClientConfig
@@ -55,12 +58,13 @@ const (
 
 type redisPeer struct {
 	name      string
-	redis     *redis.Client
+	redis     redis.UniversalClient
 	prefix    string
 	logger    log.Logger
 	states    map[string]alertingCluster.State
 	subs      map[string]*redis.PubSub
 	statesMtx sync.RWMutex
+	subsMtx   sync.RWMutex
 
 	readyc    chan struct{}
 	shutdownc chan struct{}
@@ -95,25 +99,34 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		poolSize = cfg.maxConns
 	}
 
-	opts := &redis.Options{
-		Addr:     cfg.addr,
-		Username: cfg.username,
-		Password: cfg.password,
-		DB:       cfg.db,
-		PoolSize: poolSize,
-	}
+	addrs := strings.Split(cfg.addr, ",")
 
+	var tlsClientConfig *tls.Config
+	var err error
 	if cfg.tlsEnabled {
-		tlsClientConfig, err := cfg.tls.GetTLSConfig()
+		tlsClientConfig, err = cfg.tls.GetTLSConfig()
 		if err != nil {
 			logger.Error("Failed to get TLS config", "err", err)
 			return nil, err
-		} else {
-			opts.TLSConfig = tlsClientConfig
 		}
 	}
 
-	rdb := redis.NewClient(opts)
+	opts := &redis.UniversalOptions{
+		Addrs:     addrs,
+		Username:  cfg.username,
+		Password:  cfg.password,
+		DB:        cfg.db,
+		PoolSize:  poolSize,
+		TLSConfig: tlsClientConfig,
+	}
+
+	var rdb redis.UniversalClient
+	if cfg.clusterMode {
+		rdb = redis.NewClusterClient(opts.Cluster())
+	} else {
+		rdb = redis.NewClient(opts.Simple())
+	}
+
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
 		logger.Error("Failed to ping redis - redis-based alertmanager clustering may not be available", "err", cmd.Err())
@@ -213,8 +226,10 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	p.nodePingDuration = nodePingDuration
 	p.nodePingFailures = nodePingFailures
 
+	p.subsMtx.Lock()
 	p.subs[fullStateChannel] = p.redis.Subscribe(context.Background(), p.withPrefix(fullStateChannel))
 	p.subs[fullStateChannelReq] = p.redis.Subscribe(context.Background(), p.withPrefix(fullStateChannelReq))
+	p.subsMtx.Unlock()
 
 	go p.heartbeatLoop()
 	go p.membersSyncLoop()
@@ -449,7 +464,9 @@ func (p *redisPeer) AddState(key string, state alertingCluster.State, _ promethe
 	// As we also want to get the state from other nodes, we subscribe to the key.
 	sub := p.redis.Subscribe(context.Background(), p.withPrefix(key))
 	go p.receiveLoop(sub)
+	p.subsMtx.Lock()
 	p.subs[key] = sub
+	p.subsMtx.Unlock()
 	return newRedisChannel(p, key, p.withPrefix(key), update)
 }
 
@@ -495,17 +512,29 @@ func (p *redisPeer) fullStateReqReceiveLoop() {
 		select {
 		case <-p.shutdownc:
 			return
-		case data := <-p.subs[fullStateChannelReq].Channel():
-			// The payload of a full state request is the name of the peer that is
-			// requesting the full state. In case we received our own request, we
-			// can just ignore it. Redis pub/sub fanouts to all clients, regardless
-			// if a client was also the publisher.
-			if data.Payload == p.name {
+		default:
+			p.subsMtx.RLock()
+			sub, ok := p.subs[fullStateChannelReq]
+			p.subsMtx.RUnlock()
+
+			if !ok {
+				time.Sleep(waitForMsgIdle)
 				continue
 			}
-			p.fullStateSyncPublish()
-		default:
-			time.Sleep(waitForMsgIdle)
+
+			select {
+			case data := <-sub.Channel():
+				// The payload of a full state request is the name of the peer that is
+				// requesting the full state. In case we received our own request, we
+				// can just ignore it. Redis pub/sub fanouts to all clients, regardless
+				// if a client was also the publisher.
+				if data.Payload == p.name {
+					continue
+				}
+				p.fullStateSyncPublish()
+			default:
+				time.Sleep(waitForMsgIdle)
+			}
 		}
 	}
 }
@@ -515,10 +544,22 @@ func (p *redisPeer) fullStateSyncReceiveLoop() {
 		select {
 		case <-p.shutdownc:
 			return
-		case data := <-p.subs[fullStateChannel].Channel():
-			p.mergeFullState([]byte(data.Payload))
 		default:
-			time.Sleep(waitForMsgIdle)
+			p.subsMtx.RLock()
+			sub, ok := p.subs[fullStateChannel]
+			p.subsMtx.RUnlock()
+
+			if !ok {
+				time.Sleep(waitForMsgIdle)
+				continue
+			}
+
+			select {
+			case data := <-sub.Channel():
+				p.mergeFullState([]byte(data.Payload))
+			default:
+				time.Sleep(waitForMsgIdle)
+			}
 		}
 	}
 }

@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 import * as reactUse from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
@@ -21,6 +20,8 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
     updateFilters: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     loadMoreRichHistory: jest.fn(),
+    activeDatasources: ['test-ds'],
+    listOfDatasources: [{ name: 'test-ds', uid: 'test-123' }],
     richHistorySearchFilters: {
       search: '',
       sortOrder: SortOrder.Descending,

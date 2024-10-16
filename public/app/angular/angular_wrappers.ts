@@ -17,10 +17,11 @@ import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasourc
 
 import EmptyListCTA from '../core/components/EmptyListCTA/EmptyListCTA';
 import { Footer } from '../core/components/Footer/Footer';
-import { PageHeader } from '../core/components/PageHeader/PageHeader';
 import { MetricSelect } from '../core/components/Select/MetricSelect';
 import { TagFilter } from '../core/components/TagFilter/TagFilter';
 import { HelpModal } from '../core/components/help/HelpModal';
+
+import { PageHeader } from './components/PageHeader/PageHeader';
 
 const { SecretFormField } = LegacyForms;
 

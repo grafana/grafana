@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import { useCallback, ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
@@ -52,7 +52,7 @@ export function GeneralSettingsUnconnected({
     setRenderCounter(renderCounter + 1);
   };
 
-  const onTitleChange = React.useCallback(
+  const onTitleChange = useCallback(
     (title: string) => {
       dashboard.title = title;
       setDashboardTitle(title);
@@ -60,7 +60,7 @@ export function GeneralSettingsUnconnected({
     [setDashboardTitle, dashboard]
   );
 
-  const onDescriptionChange = React.useCallback(
+  const onDescriptionChange = useCallback(
     (description: string) => {
       dashboard.description = description;
       setDashboardDescription(description);

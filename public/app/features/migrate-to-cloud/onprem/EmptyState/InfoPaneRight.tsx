@@ -1,13 +1,11 @@
-import React from 'react';
-
-import { Box } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { InfoItem } from '../../shared/InfoItem';
 
 export const InfoPaneRight = () => {
   return (
-    <Box alignItems="flex-start" display="flex" direction="column" gap={2} padding={2} backgroundColor="secondary">
+    <Stack gap={4} direction="column">
       <InfoItem
         title={t('migrate-to-cloud.pdc.title', 'Not all my data sources are on the public internet')}
         linkTitle={t('migrate-to-cloud.pdc.link-title', 'Learn about PDC')}
@@ -38,6 +36,6 @@ export const InfoPaneRight = () => {
           dashboards.
         </Trans>
       </InfoItem>
-    </Box>
+    </Stack>
   );
 };

@@ -87,6 +87,7 @@ example-apiserver/
 /devenv/docker/blocks/tempo/tempo-data/
 /devenv/docker/ha-test-unified-alerting/logs/webhook/dumps/
 /devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
+/devenv/docker/blocks/auth/openldap/certs/
 
 conf/custom.ini
 
@@ -216,3 +217,9 @@ public/app/plugins/**/dist/
 
 # Go coverage files created with go test -cover -coverprogile=something.out ...
 *.out
+
+# Locally enabling the Go race detector until we can globally do so
+.go-race-enabled-locally
+
+# Mock service worker used for fake API responses in frontend development
+public/mockServiceWorker.js

@@ -1,7 +1,6 @@
+/** @jsxImportSource @emotion/react */
 /** @jsxRuntime classic */
-/** @jsx jsx */
 import { css, cx } from '@emotion/css';
-import { jsx } from '@emotion/react';
 import classnames from 'classnames';
 import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 

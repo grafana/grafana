@@ -31,7 +31,6 @@ import {
   dedupLogRows,
   filterLogLevels,
   getSeriesProperties,
-  infiniteScrollRefId,
   LIMIT_LABEL,
   logRowToSingleRowDataFrame,
   logSeriesToLogsModel,
@@ -350,6 +349,87 @@ describe('dataFrameToLogsModel', () => {
       label: COMMON_LABELS,
       value: {
         filename: '/var/log/grafana/grafana.log',
+        job: 'grafana',
+      },
+      kind: LogsMetaKind.LabelsMap,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
+      label: LIMIT_LABEL,
+      value: `1000 (2 returned)`,
+      kind: LogsMetaKind.String,
+    });
+  });
+
+  it('given one series should return expected logs model with detected_level', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['foo=bar', 'foo=bar'],
+            labels: {
+              job: 'grafana',
+            },
+          },
+          {
+            name: 'detected_level',
+            type: FieldType.string,
+            values: ['info', 'error'],
+          },
+        ],
+        meta: {
+          limit: 1000,
+        },
+        refId: 'A',
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.hasUniqueLabels).toBeFalsy();
+    expect(logsModel.rows).toHaveLength(2);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'foo=bar',
+        labels: { job: 'grafana' },
+        logLevel: 'info',
+        uniqueLabels: {},
+        uid: 'A_0',
+      },
+      {
+        entry: 'foo=bar',
+        labels: { job: 'grafana' },
+        logLevel: 'error',
+        uniqueLabels: {},
+        uid: 'A_1',
+      },
+    ]);
+
+    expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.series).toMatchObject([
+      {
+        name: 'info',
+        fields: [
+          { type: 'time', values: [1556270891000, 1556289770000] },
+          { type: 'number', values: [1, 0] },
+        ],
+      },
+      {
+        name: 'error',
+        fields: [
+          { type: 'time', values: [1556289770000] },
+          { type: 'number', values: [1] },
+        ],
+      },
+    ]);
+    expect(logsModel.meta).toHaveLength(2);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: COMMON_LABELS,
+      value: {
         job: 'grafana',
       },
       kind: LogsMetaKind.LabelsMap,
@@ -1023,12 +1103,12 @@ describe('dataFrameToLogsModel', () => {
     let frameA: DataFrame, frameB: DataFrame;
     beforeEach(() => {
       const { logFrameA, logFrameB } = getMockFrames();
-      logFrameA.refId = `${infiniteScrollRefId}-A`;
+      logFrameA.refId = `A`;
       logFrameA.fields[0].values = [1, 1];
       logFrameA.fields[1].values = ['line', 'line'];
       logFrameA.fields[3].values = ['3000000', '3000000'];
       logFrameA.fields[4].values = ['id', 'id'];
-      logFrameB.refId = `${infiniteScrollRefId}-B`;
+      logFrameB.refId = `B`;
       logFrameB.fields[0].values = [2, 2];
       logFrameB.fields[1].values = ['line 2', 'line 2'];
       logFrameB.fields[3].values = ['4000000', '4000000'];
@@ -1037,18 +1117,21 @@ describe('dataFrameToLogsModel', () => {
       frameB = logFrameB;
     });
 
-    it('deduplicates repeated log frames when invoked from infinite scrolling results', () => {
-      const logsModel = dataFrameToLogsModel([frameA, frameB], 1, { from: 1556270591353, to: 1556289770991 }, [
-        { refId: `${infiniteScrollRefId}-A` },
-        { refId: `${infiniteScrollRefId}-B` },
-      ]);
+    it('deduplicates repeated log frames when called with deduplicate', () => {
+      const logsModel = dataFrameToLogsModel(
+        [frameA, frameB],
+        1,
+        { from: 1556270591353, to: 1556289770991 },
+        [{ refId: `A` }, { refId: `B` }],
+        true
+      );
 
       expect(logsModel.rows).toHaveLength(2);
       expect(logsModel.rows[0].entry).toBe(frameA.fields[1].values[0]);
       expect(logsModel.rows[1].entry).toBe(frameB.fields[1].values[0]);
     });
 
-    it('does not remove repeated log frames when invoked from other contexts', () => {
+    it('does not remove repeated log frames when invoked without deduplicate', () => {
       frameA.refId = 'A';
       frameB.refId = 'B';
       const logsModel = dataFrameToLogsModel([frameA, frameB], 1, { from: 1556270591353, to: 1556289770991 }, [

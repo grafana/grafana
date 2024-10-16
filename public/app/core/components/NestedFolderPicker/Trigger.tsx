@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
+import { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
+import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';

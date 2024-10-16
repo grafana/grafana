@@ -12,16 +12,16 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ExtraGithubSettingKeys = map[string]ExtraKeyInfo{
@@ -61,12 +61,12 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
+func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.GitHubProviderName, orgRoleMapper, info, features, cfg),
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -82,13 +82,18 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+func (s *SocialGithub) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info, requester)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	if err != nil {
+		oldInfo = &social.OAuthInfo{}
+	}
+
+	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
 	}
@@ -127,7 +132,7 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GitHubProviderName, newInfo)
+	s.updateInfo(ctx, social.GitHubProviderName, newInfo)
 
 	s.teamIds = teamIds
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
@@ -185,7 +190,7 @@ func (s *SocialGithub) fetchPrivateEmail(ctx context.Context, client *http.Clien
 		Verified bool   `json:"verified"`
 	}
 
-	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.info.ApiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/emails")
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
@@ -208,7 +213,7 @@ func (s *SocialGithub) fetchPrivateEmail(ctx context.Context, client *http.Clien
 }
 
 func (s *SocialGithub) fetchTeamMemberships(ctx context.Context, client *http.Client) ([]GithubTeam, error) {
-	url := fmt.Sprintf(s.info.ApiUrl + "/teams?per_page=100")
+	url := s.info.ApiUrl + "/teams?per_page=100"
 	hasMore := true
 	teams := make([]GithubTeam, 0)
 
@@ -307,42 +312,42 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, fmt.Errorf("error getting user teams: %s", err)
 	}
 
-	teams := convertToGroupList(teamMemberships)
-
-	var role roletype.RoleType
-	var isGrafanaAdmin *bool = nil
-
-	if !s.info.SkipOrgRoleSync {
-		var grafanaAdmin bool
-		role, grafanaAdmin, err = s.extractRoleAndAdmin(response.Body, teams)
-		if err != nil {
-			return nil, err
-		}
-
-		if s.info.AllowAssignGrafanaAdmin {
-			isGrafanaAdmin = &grafanaAdmin
-		}
+	userInfo := &social.BasicUserInfo{
+		Name:   data.Login,
+		Login:  data.Login,
+		Id:     fmt.Sprintf("%d", data.Id),
+		Email:  data.Email,
+		Groups: convertToGroupList(teamMemberships),
 	}
 
-	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	userInfo := &social.BasicUserInfo{
-		Name:           data.Login,
-		Login:          data.Login,
-		Id:             fmt.Sprintf("%d", data.Id),
-		Email:          data.Email,
-		Role:           role,
-		Groups:         teams,
-		IsGrafanaAdmin: isGrafanaAdmin,
+	var directlyMappedRole org.RoleType
+
+	if !s.info.SkipOrgRoleSync {
+		var grafanaAdmin bool
+		directlyMappedRole, grafanaAdmin, err = s.extractRoleAndAdminOptional(response.Body, userInfo.Groups)
+		if err != nil {
+			s.log.Warn("Failed to extract role", "err", err)
+		}
+
+		if s.info.AllowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
 	}
+
 	if data.Name != "" {
 		userInfo.Name = data.Name
 	}
 
-	organizationsUrl := fmt.Sprintf(s.info.ApiUrl + "/orgs?per_page=100")
+	organizationsUrl := s.info.ApiUrl + "/orgs?per_page=100"
 
 	if !s.isTeamMember(ctx, client) {
 		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", s.teamIds)

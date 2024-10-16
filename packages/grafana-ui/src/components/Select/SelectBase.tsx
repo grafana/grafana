@@ -1,5 +1,7 @@
 import { t } from 'i18next';
-import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import { isArray, negate } from 'lodash';
+import { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import {
   default as ReactSelect,
   IndicatorsContainerProps,
@@ -24,11 +26,12 @@ import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
 import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
+import { SelectOptionGroupHeader } from './SelectOptionGroupHeader';
 import { Props, SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
-import { ActionMeta, InputActionMeta, SelectBaseProps } from './types';
+import { ActionMeta, InputActionMeta, SelectBaseProps, ToggleAllState } from './types';
 import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 const CustomControl = (props: any) => {
@@ -73,6 +76,16 @@ interface SelectPropsWithExtras extends ReactSelectProps {
   maxVisibleValues?: number | undefined;
   showAllSelectedWhenOpen: boolean;
   noMultiValueWrap?: boolean;
+}
+
+function determineToggleAllState(selectedValue: SelectableValue[], options: SelectableValue[]) {
+  if (options.length === selectedValue.length) {
+    return ToggleAllState.allSelected;
+  } else if (selectedValue.length === 0) {
+    return ToggleAllState.noneSelected;
+  } else {
+    return ToggleAllState.indeterminate;
+  }
 }
 
 export function SelectBase<T, Rest = {}>({
@@ -124,6 +137,7 @@ export function SelectBase<T, Rest = {}>({
   onMenuScrollToTop,
   onOpenMenu,
   onFocus,
+  toggleAllOptions,
   openMenuOnFocus = false,
   options = [],
   placeholder = t('grafana-ui.select.placeholder', 'Choose'),
@@ -204,8 +218,6 @@ export function SelectBase<T, Rest = {}>({
     }
   }
 
-  const [internalInputValue, setInternalInputValue] = useState('');
-
   const commonSelectProps = {
     'aria-label': ariaLabel,
     'data-testid': dataTestid,
@@ -281,35 +293,6 @@ export function SelectBase<T, Rest = {}>({
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
-
-    // code needed to allow editing a custom value once entered
-    // we only want to do this for single selects, not multi
-    if (!isMulti) {
-      creatableProps.inputValue = internalInputValue;
-      creatableProps.onMenuOpen = () => {
-        // make sure we call the base onMenuOpen if it exists
-        commonSelectProps.onMenuOpen?.();
-
-        // restore the input state to the selected value
-        setInternalInputValue(selectedValue?.[0]?.label ?? '');
-      };
-      creatableProps.onInputChange = (val, actionMeta) => {
-        // make sure we call the base onInputChange
-        commonSelectProps.onInputChange(val, actionMeta);
-
-        // update the input value state on change since we're explicitly controlling it
-        if (actionMeta.action === 'input-change') {
-          setInternalInputValue(val);
-        }
-      };
-      creatableProps.onMenuClose = () => {
-        // make sure we call the base onMenuClose if it exists
-        commonSelectProps.onMenuClose?.();
-
-        // clear the input state on menu close, else react-select won't show the SingleValue component correctly
-        setInternalInputValue('');
-      };
-    }
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
@@ -324,6 +307,30 @@ export function SelectBase<T, Rest = {}>({
 
   const SelectMenuComponent = virtualized ? VirtualizedSelectMenu : SelectMenu;
 
+  let toggleAllState = ToggleAllState.noneSelected;
+  if (toggleAllOptions?.enabled && isArray(selectedValue)) {
+    if (toggleAllOptions?.determineToggleAllState) {
+      toggleAllState = toggleAllOptions.determineToggleAllState(selectedValue, options);
+    } else {
+      toggleAllState = determineToggleAllState(selectedValue, options);
+    }
+  }
+
+  const toggleAll = useCallback(() => {
+    let toSelect = toggleAllState === ToggleAllState.noneSelected ? options : [];
+    if (toggleAllOptions?.optionsFilter) {
+      toSelect =
+        toggleAllState === ToggleAllState.noneSelected
+          ? options.filter(toggleAllOptions.optionsFilter)
+          : options.filter(negate(toggleAllOptions.optionsFilter));
+    }
+
+    onChange(toSelect, {
+      action: 'select-option',
+      option: {},
+    });
+  }, [options, toggleAllOptions, onChange, toggleAllState]);
+
   return (
     <>
       <ReactSelectComponent
@@ -331,6 +338,7 @@ export function SelectBase<T, Rest = {}>({
         components={{
           MenuList: SelectMenuComponent,
           Group: SelectOptionGroup,
+          GroupHeading: SelectOptionGroupHeader,
           ValueContainer,
           IndicatorsContainer: CustomIndicatorsContainer,
           IndicatorSeparator: IndicatorSeparator,
@@ -375,6 +383,13 @@ export function SelectBase<T, Rest = {}>({
           Input: CustomInput,
           ...components,
         }}
+        toggleAllOptions={
+          toggleAllOptions?.enabled && {
+            state: toggleAllState,
+            selectAllClicked: toggleAll,
+            selectedCount: isArray(selectedValue) ? selectedValue.length : undefined,
+          }
+        }
         styles={selectStyles}
         className={className}
         {...commonSelectProps}

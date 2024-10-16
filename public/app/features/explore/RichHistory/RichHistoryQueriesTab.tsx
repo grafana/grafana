@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -7,17 +7,13 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import {
-  createDatasourcesList,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
   SortOrder,
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
-
-import { selectExploreDSMaps } from '../state/selectors';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
@@ -31,6 +27,8 @@ export interface RichHistoryQueriesTabProps {
   loadMoreRichHistory: () => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
+  activeDatasources: string[];
+  listOfDatasources: Array<{ name: string; uid: string }>;
   height: number;
 }
 
@@ -125,21 +123,18 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     loadMoreRichHistory,
     richHistorySettings,
     height,
+    listOfDatasources,
+    activeDatasources,
   } = props;
 
-  const exploreActiveDS = useSelector(selectExploreDSMaps);
   const styles = useStyles2(getStyles, height);
-
-  const listOfDatasources = createDatasourcesList();
 
   // on mount, set filter to either active datasource or all datasources
   useEffect(() => {
     const datasourceFilters =
       !richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
         ? richHistorySettings.lastUsedDatasourceFilters
-        : exploreActiveDS.dsToExplore
-            .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
-            .filter((name): name is string => !!name);
+        : activeDatasources;
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -156,13 +151,9 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // whenever the filter changes, get all datasource information for the filtered datasources
   const { value: datasourceFilterApis, loading: loadingDs } = useAsync(async () => {
-    const datasourcesToGet =
-      richHistorySearchFilters?.datasourceFilters && richHistorySearchFilters?.datasourceFilters.length > 0
-        ? richHistorySearchFilters?.datasourceFilters
-        : listOfDatasources.map((ds) => ds.uid);
-    const dsGetProm = await datasourcesToGet.map(async (dsf) => {
+    const datasourcesToGet = listOfDatasources.map((ds) => ds.uid);
+    const dsGetProm = datasourcesToGet.map(async (dsf) => {
       try {
         // this get works off datasource names
         return getDataSourceSrv().get(dsf);

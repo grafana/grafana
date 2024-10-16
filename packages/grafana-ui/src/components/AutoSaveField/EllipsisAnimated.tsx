@@ -1,11 +1,11 @@
 import { css, keyframes } from '@emotion/css';
-import React from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
-export const EllipsisAnimated = React.memo(() => {
+export const EllipsisAnimated = memo(() => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.ellipsis}>

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Icon, Stack, Tag, Tooltip } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
@@ -34,7 +32,7 @@ export const UserListPublicDashboardPage = () => {
                   'Earliest time user has been an active user to a dashboard'
                 )}
               >
-                <Icon name="question-circle" />
+                <Icon name="info-circle" />
               </Tooltip>
             </th>
             <th>

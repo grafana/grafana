@@ -1,7 +1,7 @@
 package buffered
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -24,7 +25,11 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 	response, jsonErr := parseJSON(buf)
 
 	if statusCode/100 != 2 {
-		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
+		errorStr := response.Error
+		if errorStr == "" {
+			errorStr = response.Message
+		}
+		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", errorStr)}
 	}
 
 	if jsonErr != nil {
@@ -32,12 +37,12 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 	}
 
 	if response.Error != "" {
-		return &backend.DataResponse{Error: fmt.Errorf(response.Error)}
+		return &backend.DataResponse{Error: errors.New(response.Error)}
 	}
 
 	result := response.Results[0]
 	if result.Error != "" {
-		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
+		return &backend.DataResponse{Error: errors.New(result.Error)}
 	}
 
 	if query.ResultFormat == "table" {
@@ -50,8 +55,9 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 func parseJSON(buf io.Reader) (models.Response, error) {
 	var response models.Response
 
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	dec := json.NewDecoder(buf)
-	dec.UseNumber()
 
 	err := dec.Decode(&response)
 
@@ -154,6 +160,12 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				case "json.Number":
 					value := util.ParseNumber(valuePair[colIdx])
 					floatArray = append(floatArray, value)
+				case "float64":
+					if value, ok := valuePair[colIdx].(float64); ok {
+						floatArray = append(floatArray, &value)
+					} else {
+						floatArray = append(floatArray, nil)
+					}
 				case "bool":
 					value, ok := valuePair[colIdx].(bool)
 					if ok {
@@ -195,6 +207,8 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 			case "string":
 				valueField = data.NewField(row.Columns[colIdx], labels, stringArray)
 			case "json.Number":
+				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+			case "float64":
 				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
 			case "bool":
 				valueField = data.NewField(row.Columns[colIdx], labels, boolArray)
@@ -241,12 +255,6 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 
 		if !hasTimeCol {
 			newFrame := newFrameWithoutTimeField(row, query)
-			if len(frames) == 0 {
-				newFrame.Meta = &data.FrameMeta{
-					ExecutedQueryString:    query.RawQuery,
-					PreferredVisualization: util.GetVisType(query.ResultFormat),
-				}
-			}
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
@@ -254,14 +262,15 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 					continue
 				}
 				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
-				if len(frames) == 0 {
-					newFrame.Meta = &data.FrameMeta{
-						ExecutedQueryString:    query.RawQuery,
-						PreferredVisualization: util.GetVisType(query.ResultFormat),
-					}
-				}
 				frames = append(frames, newFrame)
 			}
+		}
+	}
+
+	if len(frames) > 0 {
+		frames[0].Meta = &data.FrameMeta{
+			ExecutedQueryString:    query.RawQuery,
+			PreferredVisualization: util.GetVisType(query.ResultFormat),
 		}
 	}
 
@@ -269,12 +278,12 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 }
 
 func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte) *data.Frame {
-	var timeArray []time.Time
 	var floatArray []*float64
 	var stringArray []*string
 	var boolArray []*bool
 	valType := util.Typeof(row.Values, colIndex)
 
+	timeArray := make([]time.Time, 0, len(row.Values))
 	for _, valuePair := range row.Values {
 		timestamp, timestampErr := util.ParseTimestamp(valuePair[0])
 		// we only add this row if the timestamp is valid
@@ -294,6 +303,12 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 		case "json.Number":
 			value := util.ParseNumber(valuePair[colIndex])
 			floatArray = append(floatArray, value)
+		case "float64":
+			if value, ok := valuePair[colIndex].(float64); ok {
+				floatArray = append(floatArray, &value)
+			} else {
+				floatArray = append(floatArray, nil)
+			}
 		case "bool":
 			value, ok := valuePair[colIndex].(bool)
 			if ok {
@@ -314,6 +329,8 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 	case "string":
 		valueField = data.NewField("Value", row.Tags, stringArray)
 	case "json.Number":
+		valueField = data.NewField("Value", row.Tags, floatArray)
+	case "float64":
 		valueField = data.NewField("Value", row.Tags, floatArray)
 	case "bool":
 		valueField = data.NewField("Value", row.Tags, boolArray)

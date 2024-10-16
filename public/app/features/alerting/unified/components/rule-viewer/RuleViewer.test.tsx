@@ -1,31 +1,32 @@
-import React from 'react';
+import { within } from '@testing-library/react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setBackendSrv, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
-  MockDataSourceSrv,
   getCloudRule,
   getGrafanaRule,
+  getVanillaPromRule,
   grantUserPermissions,
   mockDataSource,
   mockPluginLinkExtension,
+  mockPromAlertingRule,
 } from '../../mocks';
+import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { DataSourceType } from '../../utils/datasource';
 import * as ruleId from '../../utils/rule-id';
+import { stringifyIdentifier } from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
-import RuleViewer from './RuleViewer';
+import RuleViewer, { ActiveTab } from './RuleViewer';
 
 // metadata and interactive elements
 const ELEMENTS = {
@@ -36,6 +37,12 @@ const ELEMENTS = {
     dashboardAndPanel: byRole('link', { name: 'View panel' }),
     evaluationInterval: (interval: string) => byText(`Every ${interval}`),
     label: ([key, value]: [string, string]) => byRole('listitem', { name: `${key}: ${value}` }),
+  },
+  details: {
+    pendingPeriod: byText(/Pending period/i),
+  },
+  tabs: {
+    details: byRole('tab', { name: /Details/i }),
   },
   actions: {
     edit: byRole('link', { name: 'Edit' }),
@@ -59,8 +66,8 @@ const ELEMENTS = {
 
 setupMswServer();
 setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
-setPluginExtensionsHook(() => ({
-  extensions: [
+setPluginLinksHook(() => ({
+  links: [
     mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
     mockPluginLinkExtension({
       pluginId: 'grafana-asserts-app',
@@ -71,15 +78,31 @@ setPluginExtensionsHook(() => ({
   isLoading: false,
 }));
 
+/**
+ * "Grants" permissions via contextSrv mock, and additionally sets folder access control
+ * API response to match
+ */
+const grantPermissionsHelper = (permissions: AccessControlAction[]) => {
+  const permissionsHash = permissions.reduce((hash, permission) => ({ ...hash, [permission]: true }), {});
+  grantUserPermissions(permissions);
+  setFolderAccessControl(permissionsHash);
+};
+
+const openSilenceDrawer = async () => {
+  const user = userEvent.setup();
+  await user.click(ELEMENTS.actions.more.button.get());
+  await user.click(ELEMENTS.actions.more.actions.silence.get());
+  await screen.findByText(/Configure silences/i);
+};
+
 beforeAll(() => {
-  grantUserPermissions([
+  grantPermissionsHelper([
     AccessControlAction.AlertingRuleCreate,
     AccessControlAction.AlertingRuleRead,
     AccessControlAction.AlertingRuleUpdate,
     AccessControlAction.AlertingRuleDelete,
     AccessControlAction.AlertingInstanceCreate,
   ]);
-  setBackendSrv(backendSrv);
 });
 
 describe('RuleViewer', () => {
@@ -104,27 +127,33 @@ describe('RuleViewer', () => {
           totals: { alerting: 1 },
         },
       },
-      { uid: 'test1' }
+      { uid: grafanaRulerRule.grafana_alert.uid }
     );
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
 
     beforeAll(() => {
-      grantUserPermissions([
+      grantPermissionsHelper([
         AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleUpdate,
         AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstanceCreate,
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingInstancesExternalWrite,
       ]);
-      setBackendSrv(backendSrv);
 
-      setFolderAccessControl({
-        [AccessControlAction.AlertingRuleCreate]: true,
-        [AccessControlAction.AlertingRuleRead]: true,
-        [AccessControlAction.AlertingRuleUpdate]: true,
-        [AccessControlAction.AlertingRuleDelete]: true,
-        [AccessControlAction.AlertingInstanceCreate]: true,
-      });
+      const dataSources = {
+        am: mockDataSource<AlertManagerDataSourceJsonData>({
+          name: 'Alertmanager',
+          type: DataSourceType.Alertmanager,
+          jsonData: {
+            handleGrafanaManagedAlerts: true,
+          },
+        }),
+      };
+      setupDataSources(dataSources.am);
     });
 
     it('should render a Grafana managed alert rule', async () => {
@@ -150,10 +179,8 @@ describe('RuleViewer', () => {
       }
 
       // actions
-      await waitFor(() => {
-        expect(ELEMENTS.actions.edit.get()).toBeInTheDocument();
-        expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
-      });
+      expect(await ELEMENTS.actions.edit.find()).toBeInTheDocument();
+      expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
       // check the "more actions" button
       await userEvent.click(ELEMENTS.actions.more.button.get());
@@ -163,33 +190,14 @@ describe('RuleViewer', () => {
       }
     });
 
-    it.skip('renders silencing form correctly and shows alert rule name', async () => {
-      const dataSources = {
-        grafana: mockDataSource<AlertManagerDataSourceJsonData>({
-          name: GRAFANA_RULES_SOURCE_NAME,
-          type: DataSourceType.Alertmanager,
-          jsonData: {
-            handleGrafanaManagedAlerts: true,
-          },
-        }),
-        am: mockDataSource<AlertManagerDataSourceJsonData>({
-          name: 'Alertmanager',
-          type: DataSourceType.Alertmanager,
-          jsonData: {
-            handleGrafanaManagedAlerts: true,
-          },
-        }),
-      };
-      setupDataSources(dataSources.grafana, dataSources.am);
-      setDataSourceSrv(new MockDataSourceSrv(dataSources));
-
+    it('renders silencing form correctly and shows alert rule name', async () => {
       await renderRuleViewer(mockRule, mockRuleIdentifier);
+      await openSilenceDrawer();
 
-      const user = userEvent.setup();
-      await user.click(ELEMENTS.actions.more.button.get());
-      await user.click(ELEMENTS.actions.more.actions.silence.get());
-
-      expect(await screen.findByLabelText(/^alert rule/i)).toHaveValue(MOCK_GRAFANA_ALERT_RULE_TITLE);
+      const silenceDrawer = await screen.findByRole('dialog', { name: 'Drawer title Silence alert rule' });
+      expect(await within(silenceDrawer).findByLabelText(/^alert rule/i)).toHaveValue(
+        grafanaRulerRule.grafana_alert.title
+      );
     });
   });
 
@@ -260,13 +268,39 @@ describe('RuleViewer', () => {
       await waitFor(() => expect(ELEMENTS.actions.more.pluginActions.declareIncident.get()).toBeEnabled());
     });
   });
+
+  describe('Vanilla Prometheus rule', () => {
+    const mockRule = getVanillaPromRule({
+      name: 'prom test alert',
+      annotations: { [Annotation.summary]: 'prom summary', [Annotation.runbookURL]: 'https://runbook.example.com' },
+      promRule: {
+        ...mockPromAlertingRule(),
+        duration: 900, // 15 minutes
+      },
+    });
+
+    const mockRuleIdentifier = ruleId.fromCombinedRule('prometheus', mockRule);
+
+    it('should render pending period for vanilla Prometheus alert rule', async () => {
+      renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Details);
+
+      expect(screen.getByText('prom test alert')).toBeInTheDocument();
+
+      // One summary is rendered by the Title component, and the other by the DetailsTab component
+      expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
+
+      expect(within(ELEMENTS.details.pendingPeriod.get()).getByText(/15m/i)).toBeInTheDocument();
+    });
+  });
 });
 
-const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier) => {
+const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, tab: ActiveTab = ActiveTab.Query) => {
+  const path = `/alerting/${identifier.ruleSourceName}/${stringifyIdentifier(identifier)}/view?tab=${tab}`;
   render(
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
-    </AlertRuleProvider>
+    </AlertRuleProvider>,
+    { historyOptions: { initialEntries: [path] } }
   );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());

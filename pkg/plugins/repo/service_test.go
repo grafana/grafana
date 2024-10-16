@@ -174,7 +174,8 @@ func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 								"sha256": "%s"
 							}
 						},
-						"url": "%s"
+						"url": "%s",
+						"isCompatible": true
 					}]
 				}
 			`, data.version, platform, data.sha, data.url),
@@ -192,16 +193,17 @@ func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 }
 
 type versionArg struct {
-	version string
-	arch    []string
+	version      string
+	arch         []string
+	isCompatible *bool
 }
 
 func createPluginVersions(versions ...versionArg) []Version {
-	var vs []Version
-
-	for _, version := range versions {
+	vs := make([]Version, len(versions))
+	for i, version := range versions {
 		ver := Version{
-			Version: version.version,
+			Version:      version.version,
+			IsCompatible: version.isCompatible,
 		}
 		if version.arch != nil {
 			ver.Arch = map[string]ArchMeta{}
@@ -211,7 +213,8 @@ func createPluginVersions(versions ...versionArg) []Version {
 				}
 			}
 		}
-		vs = append(vs, ver)
+
+		vs[i] = ver
 	}
 
 	return vs

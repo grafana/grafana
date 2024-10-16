@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { EmotionPerfTest } from '@grafana/ui/src/components/ThemeDemos/EmotionPerfTest';
 
 export const BenchmarksPage = () => {

@@ -1,32 +1,16 @@
-import React from 'react';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
-import { Alert } from '@grafana/ui';
-
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { NewTemplateView } from '../receivers/NewTemplateView';
+import { TemplateForm } from '../receivers/TemplateForm';
 
 const NewMessageTemplate = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
-  if (isLoading && !data) {
-    return 'loading...';
+  if (!selectedAlertmanager) {
+    return <EntityNotFound entity="Alertmanager" />;
   }
 
-  if (error) {
-    return (
-      <Alert severity="error" title="Failed to fetch notification template">
-        {String(error)}
-      </Alert>
-    );
-  }
-
-  if (!data) {
-    return null;
-  }
-
-  return <NewTemplateView alertManagerSourceName={selectedAlertmanager!} config={data} />;
+  return <TemplateForm alertmanager={selectedAlertmanager} />;
 };
 
 export default NewMessageTemplate;

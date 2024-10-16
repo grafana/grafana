@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { openMenu } from 'react-select-event';
 
 import { MetricKind, ValueTypes } from '../types/query';

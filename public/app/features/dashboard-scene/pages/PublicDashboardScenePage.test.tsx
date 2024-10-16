@@ -1,8 +1,7 @@
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
-import React from 'react';
+import { screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
-import { TestProvider } from 'test/helpers/TestProvider';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState, PanelData, PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
@@ -31,25 +30,22 @@ jest.mock('@grafana/runtime', () => ({
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
-function setup(props?: Partial<PublicDashboardSceneProps>) {
-  const context = getGrafanaContextMock();
-
+function setup(token = 'an-access-token') {
   const pubdashProps: PublicDashboardSceneProps = {
     ...getRouteComponentProps({
-      match: { params: { accessToken: 'an-access-token' }, isExact: true, url: '', path: '' },
       route: {
         routeName: DashboardRoutes.Public,
         path: '/public-dashboards/:accessToken',
         component: () => null,
       },
     }),
-    ...props,
   };
 
   return render(
-    <TestProvider grafanaContext={context}>
-      <PublicDashboardScenePage {...pubdashProps} />
-    </TestProvider>
+    <Routes>
+      <Route path="/public-dashboards/:accessToken" element={<PublicDashboardScenePage {...pubdashProps} />} />
+    </Routes>,
+    { historyOptions: { initialEntries: [`/public-dashboards/${token}`] } }
   );
 }
 
@@ -182,9 +178,7 @@ describe('PublicDashboardScenePage', () => {
       dashboard: { ...simpleDashboard, timepicker: { hidden: true } },
       meta: {},
     });
-    setup({
-      match: { params: { accessToken }, isExact: true, url: '', path: '' },
-    });
+    setup(accessToken);
 
     await waitForDashboardGridToRender();
 
@@ -202,7 +196,7 @@ describe('given unavailable public dashboard', () => {
       dashboard: simpleDashboard,
       meta: { publicDashboardEnabled: false, dashboardNotFound: false },
     });
-    setup({ match: { params: { accessToken }, isExact: true, url: '', path: '' } });
+    setup(accessToken);
 
     await waitForElementToBeRemoved(screen.getByTestId(publicDashboardSceneSelector.loadingPage));
 
@@ -218,7 +212,7 @@ describe('given unavailable public dashboard', () => {
       dashboard: simpleDashboard,
       meta: { dashboardNotFound: true },
     });
-    setup({ match: { params: { accessToken }, isExact: true, url: '', path: '' } });
+    setup(accessToken);
 
     await waitForElementToBeRemoved(screen.getByTestId(publicDashboardSceneSelector.loadingPage));
 

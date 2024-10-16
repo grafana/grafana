@@ -16,35 +16,82 @@ labels:
     - oss
 title: Bar chart
 weight: 100
+refs:
+  standard-calculations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
+  standard-options-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#max
+  add-a-field-override:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/#add-a-field-override
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/#add-a-field-override
+  configure-data-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
 ---
 
 # Bar chart
 
-Bar charts allow you to graph categorical data.
+A bar chart is a visual representation that uses rectangular bars, where the length of each bar represents each value.
+You can use the bar chart visualization when you want to compare values over different categories or time periods. The visualization can display the bars horizontally or vertically, and can be customized to group or stack bars for more complex data analysis.
 
-{{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" caption="Bar chart" >}}
+{{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" alt="Bar chart" >}}
+
+You can use the bar chart visualization if you need to show:
+
+- Population distribution by age or location
+- CPU usage per application
+- Sales per division
+- Server cost distribution
+
+## Configure a bar chart
+
+The following video shows you how to create and configure a bar chart visualization:
+
+{{< youtube id="qyKE9-71KkE" >}}
 
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
 
 ## Supported data formats
 
-Only one data frame is supported and it must have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+To create a bar chart visualization, you need a dataset containing one string or time field (or column) and at least one numeric field, though preferably more than one to make best use of the visualization.
 
-Example:
+The text or time field is used to label the bars or values in each row of data and the numeric fields are represented by proportionally sized bars.
 
-| Browser | Market share |
-| ------- | ------------ |
-| Chrome  | 50           |
-| IE      | 17.5         |
+### Example 1
 
-If you have more than one numerical field the visualization will show grouped bars.
+| Group | Value1 | Value2 | Value3 |
+| ----- | ------ | ------ | ------ |
+| uno   | 5      | 3      | 2      |
 
-### Visualizing time series or multiple result sets
+![Bar chart single row example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-barchart-example1.png 'Bar chart single row example')
 
-If you have multiple time series or tables you first need to join them using a join or reduce transform. For example if you
-have multiple time series and you want to compare their last and max value add the **Reduce** transform and specify **Max** and **Last** as options under **Calculations**.
+If you have more than one text or time field, by default, the visualization uses the first one, but you can change this in the x-axis option as described in the [Bar chart options](#bar-chart-options) section.
 
-{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-time-series-v8-0.png" max-width="1025px" caption="Bar chart time series example" >}}
+### Example 2
+
+If your dataset contains multiple rows, the visualization displays multiple bar chart groups where each group contains multiple bars representing all the numeric values for a row.
+
+| Group | Value1 | Value2 | Value3 |
+| ----- | ------ | ------ | ------ |
+| uno   | 5      | 3      | 2      |
+| dos   | 10     | 6      | 4      |
+| tres  | 20     | 8      | 2      |
+
+![Bar chart multiple row example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-barchart-example2.png 'Bar chart multiple row example')
+
+While the first field can be time-based and you can use a bar chart to plot time-series data, for large amounts of time-series data, we recommend that you use the [time series visualization](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/) and configure it to be displayed as bars.
+
+We recommend that you only use one dataset in a bar chart because using multiple datasets can result in unexpected behavior.
 
 ## Panel options
 
@@ -53,6 +100,10 @@ have multiple time series and you want to compare their last and max value add t
 ## Bar chart options
 
 Use these options to refine your visualization.
+
+### X Axis
+
+Specify which field is used for the x-axis.
 
 ### Orientation
 
@@ -133,6 +184,22 @@ Transparency of the gradient is calculated based on the values on the y-axis. Op
 
 Gradient color is generated based on the hue of the line color.
 
+#### Scheme gradient mode
+
+The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the bar receives a gradient color defined from the selected **Color scheme**.
+
+##### From thresholds
+
+If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the bar color changes as they cross the defined thresholds.
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
+
+##### Gradient color schemes
+
+The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+
 ## Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -171,7 +238,7 @@ Display all Y-axes on the right side.
 
 Hide all axes.
 
-To selectively hide axes, [Add a field override][] that targets specific fields.
+To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
 
 ### Label
 
@@ -191,7 +258,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a defined point.
 
-You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions][].
+You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions](ref:standard-options-definitions).
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
@@ -214,17 +281,3 @@ You can set standard min/max options to define hard limits of the Y-axis. For mo
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
-[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides#add-a-field-override"
-
-[standard calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[standard calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-
-[Standard options definitions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#max"
-[Standard options definitions]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#max"
-
-[Configure data links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links"
-[Configure data links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links"
-{{% /docs/reference %}}

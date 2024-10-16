@@ -1,6 +1,6 @@
 package plugins
 
-import "github.com/grafana/grafana/pkg/util/errutil"
+import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 var (
 	errPluginNotRegisteredBase = errutil.NotFound("plugin.notRegistered",

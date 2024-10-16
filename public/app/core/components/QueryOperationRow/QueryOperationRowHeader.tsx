@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React, { MouseEventHandler } from 'react';
-import { DraggableProvided } from 'react-beautiful-dnd';
+import { DraggableProvided } from '@hello-pangea/dnd';
+import { MouseEventHandler } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
@@ -110,6 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: Column;
     display: flex;
     align-items: center;
+    overflow: hidden;
   `,
   dragIcon: css`
     cursor: grab;

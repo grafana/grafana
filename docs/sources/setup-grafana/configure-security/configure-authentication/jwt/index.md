@@ -94,7 +94,7 @@ you can use JWT authentication to authenticate the iframe.
 
 {{% admonition type="note" %}}
 For Grafana Cloud, or scenarios where verifying viewer identity is not required,
-embed [public dashboards]({{< relref "../../../../dashboards/dashboard-public" >}}).
+embed [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
 {{% /admonition %}}
 
 In this scenario, you will need to configure Grafana to accept a JWT
@@ -192,7 +192,7 @@ expect_claims = {"iss": "https://your-token-issuer", "your-custom-claim": "foo"}
 
 ## Roles
 
-Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to JWT token claims. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
+Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to JWT token claims. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `None`, `Viewer`, `Editor` or `Admin`.
 
 The organization that the role is assigned to can be configured using the `X-Grafana-Org-Id` header.
 
@@ -206,7 +206,7 @@ If the `role_attribute_path` property does not return a role, then the user is a
 
 **Basic example:**
 
-In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `None`, `Viewer`, `Editor` or `Admin`.
 
 Payload:
 

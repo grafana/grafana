@@ -1,9 +1,9 @@
 // ConfigCard.tsx
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { IrmCardConfiguration } from './ConfigureIRM';
 import { ProgressBar, StepsStatus } from './ProgressBar';
@@ -21,17 +21,21 @@ export function ConfigCard({ config, handleActionClick, isLoading = false }: Con
       <div className={styles.cardContent}>
         <Stack direction={'column'} gap={1}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
-            <Stack direction={'row'} gap={1} alignItems={'center'}>
-              {config.title}
-              {config.titleIcon && <Icon name={config.titleIcon} />}
-              {/* Only show check icon when not loading */}
-              {config.isDone && !isLoading && <Icon name="check-circle" color="green" size="lg" />}
-            </Stack>
-            {config.stepsDone && config.totalStepsToDo && !isLoading && (
-              <Stack direction="row" gap={0.5}>
-                <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
-                complete
+            <div className="fs-unmask">
+              <Stack direction={'row'} gap={1} alignItems={'center'}>
+                {config.title}
+                {config.titleIcon && <Icon name={config.titleIcon} />}
+                {/* Only show check icon when not loading */}
+                {config.isDone && !isLoading && <Icon name="check-circle" color="green" size="lg" />}
               </Stack>
+            </div>
+            {config.stepsDone && config.totalStepsToDo && !isLoading && (
+              <div className="fs-unmask">
+                <Stack direction="row" gap={0.5}>
+                  <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
+                  <Trans i18nKey="configuration-tracker.config-card.complete">complete</Trans>
+                </Stack>
+              </div>
             )}
           </Stack>
           <Stack direction={'column'}>
@@ -43,7 +47,7 @@ export function ConfigCard({ config, handleActionClick, isLoading = false }: Con
           </Stack>
         </Stack>
         <Stack direction={'row'} gap={1} justifyContent={'flex-start'} alignItems={'flex-end'}>
-          <Button variant="secondary" onClick={() => handleActionClick(config.id, config.isDone)}>
+          <Button variant="secondary" onClick={() => handleActionClick(config.id, config.isDone)} className="fs-unmask">
             {config.actionButtonTitle}
           </Button>
         </Stack>

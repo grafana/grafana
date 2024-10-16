@@ -1,11 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { LogRowModel } from '@grafana/data';
 
 import { makeLogs } from '../__mocks__/makeLogs';
 
 import { LiveLogsWithTheme } from './LiveLogs';
+
+// Avoids errors caused by circular dependencies
+jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
+  ignoreNextSave: jest.fn(),
+}));
 
 const setup = (rows: LogRowModel[]) =>
   render(

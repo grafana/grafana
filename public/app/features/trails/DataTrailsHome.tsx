@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
-import { Redirect } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, Stack, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Trans } from '@grafana/ui/src/utils/i18n';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
-import { getTrailStore } from './TrailStore/TrailStore';
+import { getBookmarkKey, getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
 import { getDatasourceForNewTrail, getUrlForTrail, newMetricsTrail } from './utils';
 
@@ -29,9 +30,17 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     app.goToUrlForTrail(trail);
   };
 
-  public onSelectTrail = (trail: DataTrail, isBookmark: boolean) => {
+  public onSelectRecentTrail = (trail: DataTrail) => {
     const app = getAppFor(this);
-    reportExploreMetrics('exploration_started', { cause: isBookmark ? 'bookmark_clicked' : 'recent_clicked' });
+    reportExploreMetrics('exploration_started', { cause: 'recent_clicked' });
+    getTrailStore().setRecentTrail(trail);
+    app.goToUrlForTrail(trail);
+  };
+
+  public onSelectBookmark = (bookmarkIndex: number) => {
+    const app = getAppFor(this);
+    reportExploreMetrics('exploration_started', { cause: 'bookmark_clicked' });
+    const trail = getTrailStore().getTrailForBookmarkIndex(bookmarkIndex);
     getTrailStore().setRecentTrail(trail);
     app.goToUrlForTrail(trail);
   };
@@ -49,11 +58,8 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     // If there are no recent trails, don't show home page and create a new trail
     if (!getTrailStore().recent.length) {
       const trail = newMetricsTrail(getDatasourceForNewTrail());
-      return <Redirect to={getUrlForTrail(trail)} />;
+      return <Navigate replace to={getUrlForTrail(trail)} />;
     }
-
-    const onSelectRecent = (trail: DataTrail) => model.onSelectTrail(trail, false);
-    const onSelectBookmark = (trail: DataTrail) => model.onSelectTrail(trail, true);
 
     return (
       <div className={styles.container}>
@@ -65,7 +71,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
         <Stack gap={5}>
           <div className={styles.column}>
-            <Text variant="h4">Recent metrics</Text>
+            <Text variant="h4">Recent metrics explorations</Text>
             <div className={styles.trailList}>
               {getTrailStore().recent.map((trail, index) => {
                 const resolvedTrail = trail.resolve();
@@ -73,7 +79,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
                   <DataTrailCard
                     key={(resolvedTrail.state.key || '') + index}
                     trail={resolvedTrail}
-                    onSelect={onSelectRecent}
+                    onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
                   />
                 );
               })}
@@ -83,17 +89,25 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           <div className={styles.column}>
             <Text variant="h4">Bookmarks</Text>
             <div className={styles.trailList}>
-              {getTrailStore().bookmarks.map((trail, index) => {
-                const resolvedTrail = trail.resolve();
-                return (
-                  <DataTrailCard
-                    key={(resolvedTrail.state.key || '') + index}
-                    trail={resolvedTrail}
-                    onSelect={onSelectBookmark}
-                    onDelete={() => onDelete(index)}
-                  />
-                );
-              })}
+              {getTrailStore().bookmarks.length ? (
+                getTrailStore().bookmarks.map((bookmark, index) => {
+                  return (
+                    <DataTrailCard
+                      key={getBookmarkKey(bookmark)}
+                      bookmark={bookmark}
+                      onSelect={() => model.onSelectBookmark(index)}
+                      onDelete={() => onDelete(index)}
+                    />
+                  );
+                })
+              ) : (
+                <EmptyState variant="call-to-action" message="" image={false}>
+                  <Trans i18nKey="trails.bookmarks.empty-state">
+                    You haven&apos;t created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your
+                    panels as bookmarks.
+                  </Trans>
+                </EmptyState>
+              )}
             </div>
           </div>
         </Stack>

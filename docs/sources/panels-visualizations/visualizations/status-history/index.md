@@ -15,6 +15,17 @@ labels:
     - oss
 title: Status history
 weight: 100
+refs:
+  color-scheme:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
+  value-mappings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings/
 ---
 
 # Status history
@@ -96,6 +107,10 @@ Use these options to refine the visualization.
 
 Controls whether values are rendered inside the value boxes. Auto will render values if there is sufficient space.
 
+### Row height
+
+Controls the height of boxes. 1 = maximum space and 0 = minimum space.
+
 ### Column width
 
 Controls the width of boxes. 1 = maximum space and 0 = minimum space.
@@ -108,10 +123,6 @@ Controls line width of state regions.
 
 Controls the opacity of state regions.
 
-## Standard options
-
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
 ## Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -119,6 +130,10 @@ Controls the opacity of state regions.
 ## Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Data links
 
@@ -137,11 +152,3 @@ Controls the opacity of state regions.
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Value mappings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings"
-[Value mappings]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings"
-
-[Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[Color scheme]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
-{{% /docs/reference %}}

@@ -1,7 +1,7 @@
-import { css, cx } from '@emotion/css';
-import React from 'react';
+import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneObjectState,
   SceneObject,
@@ -11,6 +11,10 @@ import {
   SceneRefreshPicker,
   SceneDebugger,
   VariableDependencyConfig,
+  sceneGraph,
+  SceneObjectUrlSyncConfig,
+  SceneObjectUrlValues,
+  CancelActivationHandler,
 } from '@grafana/scenes';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
@@ -19,12 +23,15 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardLinksControls } from './DashboardLinksControls';
 
-interface DashboardControlsState extends SceneObjectState {
+export interface DashboardControlsState extends SceneObjectState {
   variableControls: SceneObject[];
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
   hideTimeControls?: boolean;
+  hideVariableControls?: boolean;
+  hideLinksControls?: boolean;
 }
+
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   static Component = DashboardControlsRenderer;
 
@@ -32,12 +39,58 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     onAnyVariableChanged: this._onAnyVariableChanged.bind(this),
   });
 
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, {
+    keys: ['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks'],
+  });
+
+  /**
+   * We want the hideXX url keys to only sync one way (url => state) on init
+   * We don't want these flags to be added to URL.
+   */
+  getUrlState() {
+    return {};
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues) {
+    const { hideTimeControls, hideVariableControls, hideLinksControls } = this.state;
+    const isEnabledViaUrl = (key: string) => values[key] === 'true' || values[key] === '';
+
+    // Only allow hiding, never "unhiding" from url
+    // Becasue this should really only change on first init it's fine to do multiple setState here
+
+    if (!hideTimeControls && isEnabledViaUrl('_dash.hideTimePicker')) {
+      this.setState({ hideTimeControls: true });
+    }
+
+    if (!hideVariableControls && isEnabledViaUrl('_dash.hideVariables')) {
+      this.setState({ hideVariableControls: true });
+    }
+
+    if (!hideLinksControls && isEnabledViaUrl('_dash.hideLinks')) {
+      this.setState({ hideLinksControls: true });
+    }
+  }
+
   public constructor(state: Partial<DashboardControlsState>) {
     super({
       variableControls: [],
       timePicker: state.timePicker ?? new SceneTimePicker({}),
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
       ...state,
+    });
+
+    this.addActivationHandler(() => {
+      let refreshPickerDeactivation: CancelActivationHandler | undefined;
+
+      if (this.state.hideTimeControls) {
+        refreshPickerDeactivation = this.state.refreshPicker.activate();
+      }
+
+      return () => {
+        if (refreshPickerDeactivation) {
+          refreshPickerDeactivation();
+        }
+      };
     });
   }
 
@@ -50,23 +103,40 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
       this.forceRender();
     }
   }
+
+  public hasControls(): boolean {
+    const hasVariables = sceneGraph
+      .getVariables(this)
+      ?.state.variables.some((v) => v.state.hide !== VariableHide.hideVariable);
+    const hasAnnotations = sceneGraph.getDataLayers(this).some((d) => d.state.isEnabled && !d.state.isHidden);
+    const hasLinks = getDashboardSceneFor(this).state.links?.length > 0;
+    const hideLinks = this.state.hideLinksControls || !hasLinks;
+    const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
+    const hideTimePicker = this.state.hideTimeControls;
+
+    return !(hideVariables && hideLinks && hideTimePicker);
+  }
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
-  const { variableControls, refreshPicker, timePicker, hideTimeControls } = model.useState();
+  const { variableControls, refreshPicker, timePicker, hideTimeControls, hideVariableControls, hideLinksControls } =
+    model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, meta, editPanel } = dashboard.useState();
+  const { links, editPanel, $timeRange } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = location.search.includes('scene-debugger');
+  $timeRange!.useState();
+
+  if (!model.hasControls()) {
+    return null;
+  }
 
   return (
-    <div className={cx(styles.controls, meta.isEmbedded && styles.embedded)}>
+    <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
       <Stack grow={1} wrap={'wrap'}>
-        {variableControls.map((c) => (
-          <c.Component model={c} key={c.state.key} />
-        ))}
+        {!hideVariableControls && variableControls.map((c) => <c.Component model={c} key={c.state.key} />)}
         <Box grow={1} />
-        {!editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (
@@ -89,10 +159,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       flexDirection: 'row',
       flexWrap: 'nowrap',
-      position: 'sticky',
-      top: 0,
-      background: theme.colors.background.canvas,
-      zIndex: theme.zIndex.activePanel,
+      position: 'relative',
       width: '100%',
       marginLeft: 'auto',
       [theme.breakpoints.down('sm')]: {

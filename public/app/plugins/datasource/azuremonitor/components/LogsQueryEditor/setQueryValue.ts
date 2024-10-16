@@ -1,3 +1,5 @@
+import { SelectableValue } from '@grafana/data';
+
 import { AzureMonitorQuery, ResultFormat } from '../../types';
 
 export function setKustoQuery(query: AzureMonitorQuery, kustoQuery: string): AzureMonitorQuery {
@@ -20,12 +22,12 @@ export function setFormatAs(query: AzureMonitorQuery, formatAs: ResultFormat): A
   };
 }
 
-export function setDashboardTime(query: AzureMonitorQuery, dashboardTime: boolean): AzureMonitorQuery {
+export function setDashboardTime(query: AzureMonitorQuery, dashboardTime: string): AzureMonitorQuery {
   return {
     ...query,
     azureLogAnalytics: {
       ...query.azureLogAnalytics,
-      dashboardTime,
+      dashboardTime: dashboardTime === 'dashboard' ? true : false,
     },
   };
 }
@@ -38,4 +40,27 @@ export function setTimeColumn(query: AzureMonitorQuery, timeColumn: string): Azu
       timeColumn,
     },
   };
+}
+
+export function setBasicLogsQuery(query: AzureMonitorQuery, basicLogsQuery: boolean): AzureMonitorQuery {
+  return {
+    ...query,
+    azureLogAnalytics: {
+      ...query.azureLogAnalytics,
+      basicLogsQuery,
+    },
+  };
+}
+export function onLoad(
+  query: AzureMonitorQuery,
+  defaultValue: ResultFormat,
+  handleChange: (change: SelectableValue<ResultFormat>) => void
+) {
+  if (!query.azureLogAnalytics) {
+    handleChange({ value: defaultValue });
+    return;
+  }
+  if (!query.azureLogAnalytics.resultFormat) {
+    handleChange({ value: ResultFormat.TimeSeries });
+  }
 }

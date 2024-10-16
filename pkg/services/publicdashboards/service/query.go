@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // FindAnnotations returns annotations for a public dashboard
@@ -368,20 +368,20 @@ func sanitizeData(data *simplejson.Json) {
 	}
 }
 
-// NewDataTimeRange declared to be able to stub this function in tests
-var NewDataTimeRange = legacydata.NewDataTimeRange
+// NewTimeRange declared to be able to stub this function in tests
+var NewTimeRange = gtime.NewTimeRange
 
 // BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
 func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, pd *models.PublicDashboard) models.TimeSettings {
 	from, to, timezone := getTimeRangeValuesOrDefault(reqDTO, d, pd.TimeSelectionEnabled)
 
-	timeRange := NewDataTimeRange(from, to)
+	timeRange := NewTimeRange(from, to)
 
 	timeFrom, _ := timeRange.ParseFrom(
-		legacydata.WithLocation(timezone),
+		gtime.WithLocation(timezone),
 	)
 	timeTo, _ := timeRange.ParseTo(
-		legacydata.WithLocation(timezone),
+		gtime.WithLocation(timezone),
 	)
 	timeToAsEpoch := timeTo.UnixMilli()
 	timeFromAsEpoch := timeFrom.UnixMilli()

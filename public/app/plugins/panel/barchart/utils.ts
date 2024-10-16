@@ -18,7 +18,6 @@ import {
   AxisColorMode,
   AxisPlacement,
   FieldColorModeId,
-  GraphGradientMode,
   GraphThresholdsStyleMode,
   GraphTransform,
   ScaleDistribution,
@@ -52,7 +51,7 @@ interface BarSeries {
 
 export function prepSeries(
   frames: DataFrame[],
-  fieldConfig: FieldConfigSource<any>,
+  fieldConfig: FieldConfigSource,
   stacking: StackingMode,
   theme: GrafanaTheme2,
   xFieldName?: string,
@@ -148,7 +147,8 @@ export function prepSeries(
 }
 
 export interface PrepConfigOpts {
-  series: DataFrame[];
+  series: DataFrame[]; // series with hideFrom.viz: false
+  totalSeries: number; // total series count (including hidden)
   color?: Field | null;
   orientation: VizOrientation;
   options: Options;
@@ -156,7 +156,7 @@ export interface PrepConfigOpts {
   theme: GrafanaTheme2;
 }
 
-export const prepConfig = ({ series, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
   let {
     showValue,
     groupWidth,
@@ -205,8 +205,11 @@ export const prepConfig = ({ series, color, orientation, options, timeZone, them
   const vizOrientation = getScaleOrientation(orientation);
 
   // Use bar width when only one field
-  if (frame.fields.length === 2) {
-    groupWidth = barWidth;
+  if (frame.fields.length === 2 && stacking === StackingMode.None) {
+    if (totalSeries === 1) {
+      groupWidth = barWidth;
+    }
+
     barWidth = 1;
   }
 
@@ -226,9 +229,7 @@ export const prepConfig = ({ series, color, orientation, options, timeZone, them
     getColor = (seriesIdx: number, valueIdx: number) => disp(color!.values[valueIdx]).color!;
   } else {
     const hasPerBarColor = frame.fields.some((f) => {
-      const fromThresholds =
-        f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
-        f.config.color?.mode === FieldColorModeId.Thresholds;
+      const fromThresholds = f.config.color?.mode === FieldColorModeId.Thresholds;
 
       return (
         fromThresholds ||

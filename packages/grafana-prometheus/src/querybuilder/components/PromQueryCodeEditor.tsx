@@ -1,6 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryCodeEditor.tsx
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { PromQueryField } from '../../components/PromQueryField';
 import { PromQueryEditorProps } from '../../components/types';
+import { QueryEditorHints } from '../shared/QueryEditorHints';
 
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 
@@ -34,8 +34,8 @@ export function PromQueryCodeEditor(props: PromQueryCodeEditorProps) {
         data={data}
         app={app}
       />
-
       {showExplain && <PromQueryBuilderExplained query={query.expr} />}
+      <QueryEditorHints query={query} datasource={datasource} data={data} onChange={onChange} onRunQuery={onRunQuery} />
     </div>
   );
 }

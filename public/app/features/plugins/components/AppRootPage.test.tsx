@@ -1,19 +1,18 @@
-import { act, render, screen } from '@testing-library/react';
-import React, { Component } from 'react';
-import { Provider } from 'react-redux';
+import { act, screen } from '@testing-library/react';
+import { Component } from 'react';
 import { Route, Router } from 'react-router-dom';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import { AppPlugin, PluginType, AppRootProps, NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { locationService, setEchoSrv } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
-import { configureStore } from 'app/store/configureStore';
 
+import { ExtensionRegistriesProvider } from '../extensions/ExtensionRegistriesContext';
+import { setupPluginExtensionRegistries } from '../extensions/registry/setup';
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
 
@@ -88,8 +87,8 @@ async function renderUnderRouter(page = '') {
 
   appPluginNavItem.parentItem = appsSection;
 
+  const registries = setupPluginExtensionRegistries();
   const pagePath = page ? `/${page}` : '';
-  const store = configureStore();
   const route = {
     component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} />,
   } as unknown as RouteDescriptor;
@@ -100,11 +99,9 @@ async function renderUnderRouter(page = '') {
 
   render(
     <Router history={locationService.getHistory()}>
-      <Provider store={store}>
-        <GrafanaContext.Provider value={getGrafanaContextMock()}>
-          <Route path={`/a/:pluginId${pagePath}`} exact render={(props) => <GrafanaRoute {...props} route={route} />} />
-        </GrafanaContext.Provider>
-      </Provider>
+      <ExtensionRegistriesProvider registries={registries}>
+        <Route path={`/a/:pluginId${pagePath}`} exact render={(props) => <GrafanaRoute {...props} route={route} />} />
+      </ExtensionRegistriesProvider>
     </Router>
   );
 }

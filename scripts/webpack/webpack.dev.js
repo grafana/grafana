@@ -6,11 +6,12 @@ const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
-const { DefinePlugin } = require('webpack');
+const { DefinePlugin, EnvironmentPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { merge } = require('webpack-merge');
 const WebpackBar = require('webpackbar');
 
+const getEnvConfig = require('./env-util.js');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 // esbuild-loader 3.0.0+ requires format to be set to prevent it
@@ -18,6 +19,7 @@ const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTarg
 const esbuildOptions = {
   target: esbuildTargets,
   format: undefined,
+  jsx: 'automatic',
 };
 
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
@@ -25,6 +27,8 @@ function getDecoupledPlugins() {
   const { packages } = getPackagesSync(process.cwd());
   return packages.filter((pkg) => pkg.dir.includes('plugins/datasource')).map((pkg) => `${pkg.dir}/**`);
 }
+
+const envConfig = getEnvConfig();
 
 module.exports = (env = {}) => {
   return merge(common, {
@@ -45,12 +49,16 @@ module.exports = (env = {}) => {
     resolve: {
       alias: {
         // Packages linked for development need react to be resolved from the same location
-        react: require.resolve('react'),
+        react: path.resolve('./node_modules/react'),
 
         // Also Grafana packages need to be resolved from the same location so they share
         // the same singletons
         '@grafana/runtime': path.resolve(__dirname, '../../packages/grafana-runtime'),
         '@grafana/data': path.resolve(__dirname, '../../packages/grafana-data'),
+
+        // This is required to correctly resolve react-router-dom when linking with
+        //  local version of @grafana/scenes
+        'react-router-dom': path.resolve('./node_modules/react-router-dom'),
       },
     },
 
@@ -134,6 +142,7 @@ module.exports = (env = {}) => {
         color: '#eb7b18',
         name: 'Grafana',
       }),
+      new EnvironmentPlugin(envConfig),
     ],
 
     stats: 'minimal',

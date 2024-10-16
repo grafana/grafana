@@ -1,4 +1,4 @@
-import React, { FormEvent, PureComponent } from 'react';
+import { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceVariableModel, SelectableValue, VariableWithMultiSupport } from '@grafana/data';

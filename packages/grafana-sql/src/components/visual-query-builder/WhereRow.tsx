@@ -1,6 +1,6 @@
 import { injectGlobal } from '@emotion/css';
 import { Builder, Config, ImmutableTree, Query, Utils } from '@react-awesome-query-builder/ui';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { SQLExpression } from '../../types';
 

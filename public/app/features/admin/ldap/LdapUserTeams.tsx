@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { Column, InteractiveTable, CellProps } from '@grafana/ui';
 import { LdapTeam } from 'app/types';

@@ -349,7 +349,7 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * `custom`: Define the variable options manually using a comma-separated list.
  * `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
  */
-export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
+export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'snapshot');
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -1063,6 +1063,10 @@ export interface Dashboard {
    */
   panels?: Array<(Panel | RowPanel)>;
   /**
+   * When set to true, the dashboard will load all panels in the dashboard when it's loaded.
+   */
+  preload?: boolean;
+  /**
    * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */
   refresh?: string;
@@ -1182,7 +1186,7 @@ export const defaultDashboard: Partial<Dashboard> = {
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
-  schemaVersion: 36,
+  schemaVersion: 39,
   tags: [],
   timezone: 'browser',
 };

@@ -12,7 +12,18 @@ import * as common from '@grafana/schema';
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
+  displayedFields?: Array<string>;
   enableLogDetails: boolean;
+  isFilterLabelActive?: unknown;
+  /**
+   * TODO: figure out how to define callbacks
+   */
+  onClickFilterLabel?: unknown;
+  onClickFilterOutLabel?: unknown;
+  onClickFilterOutString?: unknown;
+  onClickFilterString?: unknown;
+  onClickHideField?: unknown;
+  onClickShowField?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
   showLabels: boolean;
@@ -21,3 +32,7 @@ export interface Options {
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;
 }
+
+export const defaultOptions: Partial<Options> = {
+  displayedFields: [],
+};

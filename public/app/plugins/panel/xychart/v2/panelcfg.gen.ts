@@ -10,6 +10,11 @@
 
 import * as common from '@grafana/schema';
 
+export enum PointShape {
+  Circle = 'circle',
+  Square = 'square',
+}
+
 export enum SeriesMapping {
   Auto = 'auto',
   Manual = 'manual',
@@ -42,17 +47,21 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
 };
 
 export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
+  fillOpacity?: number;
   lineStyle?: common.LineStyle;
   lineWidth?: number;
+  pointShape?: PointShape;
   pointSize?: {
     fixed?: number;
     min?: number;
     max?: number;
   };
+  pointStrokeWidth?: number;
   show?: XYShowMode;
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  fillOpacity: 50,
   show: XYShowMode.Points,
 };
 

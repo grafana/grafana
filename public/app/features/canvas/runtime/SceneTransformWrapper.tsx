@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 
 import { config } from '@grafana/runtime';

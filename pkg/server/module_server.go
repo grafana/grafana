@@ -13,9 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	storageServer "github.com/grafana/grafana/pkg/services/store/entity/server"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
@@ -113,7 +114,7 @@ func (s *ModuleServer) Run() error {
 		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
-		return NewInstrumentationService(s.log)
+		return NewInstrumentationService(s.log, s.cfg)
 	})
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
@@ -130,7 +131,11 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return storageServer.ProvideService(s.cfg, s.features, s.log)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log)
+	})
+
+	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
+		return authz.ProvideZanzanaService(s.cfg, s.features)
 	})
 
 	m.RegisterModule(modules.All, nil)

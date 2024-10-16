@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginMetaInfo, PluginType } from '@grafana/data';
@@ -157,7 +156,6 @@ describe('SearchForm', () => {
     await user.click(asyncOperationSelect);
     jest.advanceTimersByTime(3000);
 
-    await user.clear(asyncOperationSelect);
     await user.type(asyncOperationSelect, '$');
     const operationOption = await screen.findByText('$operation');
     expect(operationOption).toBeDefined();

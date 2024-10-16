@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
 
 import {

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable } from '@hello-pangea/dnd';
+import { ReactElement } from 'react';
 
 import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

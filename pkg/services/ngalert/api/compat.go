@@ -6,6 +6,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -32,9 +33,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		Labels:               a.Labels,
 		IsPaused:             a.IsPaused,
 		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
-		// Recording Rule fields will be implemented in the future.
-		// For now, no rules can be recording rules. So, we force these to be empty.
-		Record: nil,
+		Record:               ModelRecordFromApiRecord(a.Record),
 	}, nil
 }
 
@@ -58,6 +57,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Provenance:           definitions.Provenance(provenance), // TODO validate enum conversion?
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
+		Record:               ApiRecordFromModelRecord(rule.Record),
 	}
 }
 
@@ -135,11 +135,11 @@ func ApiAlertRuleGroupFromAlertRuleGroup(d models.AlertRuleGroup) definitions.Al
 	}
 }
 
-// AlertingFileExportFromAlertRuleGroupWithFolderTitle creates an definitions.AlertingFileExport DTO from []models.AlertRuleGroupWithFolderTitle.
-func AlertingFileExportFromAlertRuleGroupWithFolderTitle(groups []models.AlertRuleGroupWithFolderTitle) (definitions.AlertingFileExport, error) {
+// AlertingFileExportFromAlertRuleGroupWithFolderFullpath creates an definitions.AlertingFileExport DTO from []models.AlertRuleGroupWithFolderTitle.
+func AlertingFileExportFromAlertRuleGroupWithFolderFullpath(groups []models.AlertRuleGroupWithFolderFullpath) (definitions.AlertingFileExport, error) {
 	f := definitions.AlertingFileExport{APIVersion: 1}
 	for _, group := range groups {
-		export, err := AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(group)
+		export, err := AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath(group)
 		if err != nil {
 			return definitions.AlertingFileExport{}, err
 		}
@@ -148,8 +148,8 @@ func AlertingFileExportFromAlertRuleGroupWithFolderTitle(groups []models.AlertRu
 	return f, nil
 }
 
-// AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle creates a definitions.AlertRuleGroupExport DTO from models.AlertRuleGroup.
-func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGroupWithFolderTitle) (definitions.AlertRuleGroupExport, error) {
+// AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath creates a definitions.AlertRuleGroupExport DTO from models.AlertRuleGroup.
+func AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath(d models.AlertRuleGroupWithFolderFullpath) (definitions.AlertRuleGroupExport, error) {
 	rules := make([]definitions.AlertRuleExport, 0, len(d.Rules))
 	for i := range d.Rules {
 		alert, err := AlertRuleExportFromAlertRule(d.Rules[i])
@@ -161,7 +161,7 @@ func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGro
 	return definitions.AlertRuleGroupExport{
 		OrgID:           d.OrgID,
 		Name:            d.Title,
-		Folder:          d.FolderTitle,
+		Folder:          d.FolderFullpath,
 		FolderUID:       d.FolderUID,
 		Interval:        model.Duration(time.Duration(d.Interval) * time.Second),
 		IntervalSeconds: d.Interval,
@@ -180,18 +180,35 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		data = append(data, query)
 	}
 
+	cPtr := &rule.Condition
+	if rule.Condition == "" {
+		cPtr = nil
+	}
+
+	noDataState := definitions.NoDataState(rule.NoDataState)
+	ndsPtr := &noDataState
+	if noDataState == "" {
+		ndsPtr = nil
+	}
+	execErrorState := definitions.ExecutionErrorState(rule.ExecErrState)
+	eesPtr := &execErrorState
+	if execErrorState == "" {
+		eesPtr = nil
+	}
+
 	result := definitions.AlertRuleExport{
 		UID:                  rule.UID,
 		Title:                rule.Title,
 		For:                  model.Duration(rule.For),
-		Condition:            rule.Condition,
+		Condition:            cPtr,
 		Data:                 data,
 		DashboardUID:         rule.DashboardUID,
 		PanelID:              rule.PanelID,
-		NoDataState:          definitions.NoDataState(rule.NoDataState),
-		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState),
+		NoDataState:          ndsPtr,
+		ExecErrState:         eesPtr,
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
+		Record:               AlertRuleRecordExportFromRecord(rule.Record),
 	}
 	if rule.For.Seconds() > 0 {
 		result.ForString = util.Pointer(model.Duration(rule.For).String())
@@ -398,6 +415,20 @@ func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeInterva
 	return result, err
 }
 
+// AlertRuleEditorSettingsFromEditorSettings converts models.EditorSettings to definitions.AlertRuleEditorSettings
+func AlertRuleEditorSettingsFromModelEditorSettings(es models.EditorSettings) *definitions.AlertRuleEditorSettings {
+	return &definitions.AlertRuleEditorSettings{
+		SimplifiedQueryAndExpressionsSection: es.SimplifiedQueryAndExpressionsSection,
+	}
+}
+
+// AlertRuleMetadataFromMetadata converts models.AlertRuleMetadata to definitions.AlertRuleMetadata
+func AlertRuleMetadataFromModelMetadata(es models.AlertRuleMetadata) *definitions.AlertRuleMetadata {
+	return &definitions.AlertRuleMetadata{
+		EditorSettings: *AlertRuleEditorSettingsFromModelEditorSettings(es.EditorSettings),
+	}
+}
+
 // AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings
 func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
 	if len(ns) == 0 {
@@ -454,4 +485,87 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 			MuteTimeIntervals: ns.MuteTimeIntervals,
 		},
 	}
+}
+
+func AlertRuleRecordExportFromRecord(r *models.Record) *definitions.AlertRuleRecordExport {
+	if r == nil {
+		return nil
+	}
+	return &definitions.AlertRuleRecordExport{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func ModelRecordFromApiRecord(r *definitions.Record) *models.Record {
+	if r == nil {
+		return nil
+	}
+	return &models.Record{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
+	if r == nil {
+		return nil
+	}
+	return &definitions.Record{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func GettableGrafanaReceiverFromReceiver(r *models.Integration, provenance models.Provenance) (definitions.GettableGrafanaReceiver, error) {
+	out := definitions.GettableGrafanaReceiver{
+		UID:                   r.UID,
+		Name:                  r.Name,
+		Type:                  r.Config.Type,
+		Provenance:            definitions.Provenance(provenance),
+		DisableResolveMessage: r.DisableResolveMessage,
+		SecureFields:          r.SecureFields(),
+	}
+
+	if len(r.Settings) > 0 {
+		jsonBytes, err := json.Marshal(r.Settings)
+		if err != nil {
+			return definitions.GettableGrafanaReceiver{}, err
+		}
+		out.Settings = jsonBytes
+	}
+
+	return out, nil
+}
+
+func GettableApiReceiverFromReceiver(r *models.Receiver) (*definitions.GettableApiReceiver, error) {
+	out := definitions.GettableApiReceiver{
+		Receiver: amConfig.Receiver{
+			Name: r.Name,
+		},
+		GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
+			GrafanaManagedReceivers: make([]*definitions.GettableGrafanaReceiver, 0, len(r.Integrations)),
+		},
+	}
+
+	for _, integration := range r.Integrations {
+		gettable, err := GettableGrafanaReceiverFromReceiver(integration, r.Provenance)
+		if err != nil {
+			return nil, err
+		}
+		out.GrafanaManagedReceivers = append(out.GrafanaManagedReceivers, &gettable)
+	}
+	return &out, nil
+}
+
+func GettableApiReceiversFromReceivers(recvs []*models.Receiver) ([]*definitions.GettableApiReceiver, error) {
+	out := make([]*definitions.GettableApiReceiver, 0, len(recvs))
+	for _, r := range recvs {
+		gettables, err := GettableApiReceiverFromReceiver(r)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, gettables)
+	}
+	return out, nil
 }

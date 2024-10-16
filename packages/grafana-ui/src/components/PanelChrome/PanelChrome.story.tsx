@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
-import React, { CSSProperties, useState, ReactNode } from 'react';
+import { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';

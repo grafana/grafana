@@ -9,13 +9,17 @@ import {
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
+  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
+  VizPanelMenu,
 } from '@grafana/scenes';
 
-import { getMultiVariableValues } from '../utils/utils';
+import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
+import { DashboardGridItem } from './DashboardGridItem';
+import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
@@ -34,6 +38,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
   public isWaitingForVariables = false;
   private _prevRepeatValues?: VariableValueSingle[];
+  private _clonedRows?: SceneGridRow[];
 
   public constructor(state: RowRepeaterBehaviorState) {
     super(state);
@@ -41,8 +46,67 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
+    const allRows = [this._getRow(), ...(this._clonedRows ?? [])];
+
+    for (const row of allRows) {
+      for (const gridItem of row.state.children) {
+        if (!(gridItem instanceof DashboardGridItem)) {
+          continue;
+        }
+
+        const queryRunner = getQueryRunnerFor(gridItem.state.body);
+        if (queryRunner) {
+          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
+        }
+      }
+    }
+  }
+
   private _activationHandler() {
     this.performRepeat();
+
+    const layout = this._getLayout();
+    const originalRow = this._getRow();
+    const filterKey = originalRow.state.key + '-clone-';
+
+    const sub = layout.subscribeToState(() => {
+      const repeatedRows = layout.state.children.filter(
+        (child) => child instanceof SceneGridRow && child.state.key?.includes(filterKey)
+      );
+
+      // go through cloned rows, search for panels that are not clones
+      for (const row of repeatedRows) {
+        if (!(row instanceof SceneGridRow)) {
+          continue;
+        }
+
+        // if no differences in row children compared to original, then no new panel added to clone
+        if (row.state.children.length === originalRow.state.children.length) {
+          continue;
+        }
+
+        //if there are differences, find the new panel, move it to the original and perform re peat
+        const gridItem = row.state.children.find((gridItem) => !gridItem.state.key?.includes('clone'));
+        if (gridItem) {
+          const newGridItem = gridItem.clone();
+          row.setState({ children: row.state.children.filter((item) => item !== gridItem) });
+
+          // if we are moving a panel from the origin row to a clone row, we just return
+          // this means we are modifying the origin row, retriggering the repeat and losing that panel
+          if (originalRow.state.children.find((item) => item.state.key === newGridItem.state.key)) {
+            return;
+          }
+
+          originalRow.setState({ children: [...originalRow.state.children, newGridItem] });
+          this.performRepeat(true);
+        }
+      }
+    });
+
+    return () => {
+      sub.unsubscribe();
+    };
   }
 
   private _getRow(): SceneGridRow {
@@ -63,7 +127,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     return layout;
   }
 
-  public performRepeat() {
+  public performRepeat(force = false) {
     this.isWaitingForVariables = this._variableDependency.hasDependencyInLoadingState();
 
     if (this.isWaitingForVariables) {
@@ -87,22 +151,32 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     const { values, texts } = getMultiVariableValues(variable);
 
     // Do nothing if values are the same
-    if (isEqual(this._prevRepeatValues, values)) {
+    if (isEqual(this._prevRepeatValues, values) && !force) {
       return;
     }
 
     this._prevRepeatValues = values;
 
-    const rows: SceneGridRow[] = [];
+    this._clonedRows = [];
     const rowContent = rowToRepeat.state.children;
     const rowContentHeight = getRowContentHeight(rowContent);
 
     let maxYOfRows = 0;
 
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    //  adding a placeholder in this case so that there is at least empty panel that can display error
+    const emptyVariablePlaceholderOption = {
+      values: [''],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
+
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+
     // Loop through variable values and create repeates
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < variableValues.length; index++) {
       const children: SceneGridItemLike[] = [];
-      const localValue = values[index];
+      const localValue = variableValues[index];
 
       // Loop through panels inside row
       for (const source of rowContent) {
@@ -111,9 +185,23 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         const itemKey = index > 0 ? `${source.state.key}-clone-${localValue}` : source.state.key;
         const itemClone = source.clone({ key: itemKey, y: itemY });
 
-        //Make sure all the child scene objects have unique keys
+        // Make sure all the child scene objects have unique keys
+        // and add proper menu to the repeated panel
         if (index > 0) {
           ensureUniqueKeys(itemClone, localValue);
+
+          //disallow clones to be dragged around or out of the row
+          if (itemClone instanceof DashboardGridItem) {
+            itemClone.setState({
+              isDraggable: false,
+            });
+
+            itemClone.state.body.setState({
+              menu: new VizPanelMenu({
+                $behaviors: [repeatPanelMenuBehavior],
+              }),
+            });
+          }
         }
 
         children.push(itemClone);
@@ -123,11 +211,19 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
       }
 
-      const rowClone = this.getRowClone(rowToRepeat, index, localValue, texts[index], rowContentHeight, children);
-      rows.push(rowClone);
+      const rowClone = this.getRowClone(
+        rowToRepeat,
+        index,
+        localValue,
+        variableTexts[index],
+        rowContentHeight,
+        children,
+        variable
+      );
+      this._clonedRows.push(rowClone);
     }
 
-    updateLayout(layout, rows, maxYOfRows, rowToRepeat);
+    updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat);
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
@@ -139,13 +235,22 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     value: VariableValueSingle,
     text: VariableValueSingle,
     rowContentHeight: number,
-    children: SceneGridItemLike[]
+    children: SceneGridItemLike[],
+    variable: MultiValueVariable
   ): SceneGridRow {
     if (index === 0) {
       rowToRepeat.setState({
         // not activated
         $variables: new SceneVariableSet({
-          variables: [new LocalValueVariable({ name: this.state.variableName, value, text: String(text) })],
+          variables: [
+            new LocalValueVariable({
+              name: this.state.variableName,
+              value,
+              text: String(text),
+              isMulti: variable.state.isMulti,
+              includeAll: variable.state.includeAll,
+            }),
+          ],
         }),
         children,
       });
@@ -157,7 +262,15 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     return rowToRepeat.clone({
       key: `${rowToRepeat.state.key}-clone-${value}`,
       $variables: new SceneVariableSet({
-        variables: [new LocalValueVariable({ name: this.state.variableName, value, text: String(text) })],
+        variables: [
+          new LocalValueVariable({
+            name: this.state.variableName,
+            value,
+            text: String(text),
+            isMulti: variable.state.isMulti,
+            includeAll: variable.state.includeAll,
+          }),
+        ],
       }),
       $behaviors: [],
       children,

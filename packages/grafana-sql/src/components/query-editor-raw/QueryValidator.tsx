@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 import useDebounce from 'react-use/lib/useDebounce';
 

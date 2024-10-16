@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataFrame } from '@grafana/data';
 import { MenuItem, MenuGroup, ContextMenu, IconName } from '@grafana/ui';
 

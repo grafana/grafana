@@ -10,7 +10,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import React, { useState } from 'react';
+import { memo, useState } from 'react';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { FlexItem } from '@grafana/experimental';
@@ -23,7 +23,7 @@ export interface Props {
   def: QueryBuilderOperationDef;
 }
 
-export const OperationInfoButton = React.memo<Props>(({ def, operation }) => {
+export const OperationInfoButton = memo<Props>(({ def, operation }) => {
   const styles = useStyles2(getStyles);
   const [show, setShow] = useState(false);
 
@@ -118,5 +118,5 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 function getOperationDocs(def: QueryBuilderOperationDef, op: QueryBuilderOperation): string {
-  return renderMarkdown(def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs');
+  return renderMarkdown(def.explainHandler ? def.explainHandler(op, def) : (def.documentation ?? 'no docs'));
 }

@@ -1,7 +1,6 @@
-import React from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, DataSourceRef, MetricFindValue } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GroupByVariable } from '@grafana/scenes';
 
@@ -25,10 +24,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     : 'This data source does not support group by variable yet.';
 
   const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
-    const dsRef: DataSourceRef = {
-      uid: ds.uid,
-      type: ds.type,
-    };
+    const dsRef = getDataSourceRef(ds);
 
     variable.setState({ datasource: dsRef });
     onRunQuery();

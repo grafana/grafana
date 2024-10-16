@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { clamp, throttle } from 'lodash';
-import React, { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -299,6 +300,16 @@ export function useSplitter(options: UseSplitterOptions) {
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
   const id = useId();
 
+  const primaryStyles: React.CSSProperties = {
+    flexGrow: clamp(initialSize ?? 0.5, 0, 1),
+    [minDimProp]: 'min-content',
+  };
+
+  const secondaryStyles: React.CSSProperties = {
+    flexGrow: clamp(1 - initialSize, 0, 1),
+    [minDimProp]: 'min-content',
+  };
+
   return {
     containerProps: {
       ref: containerRef,
@@ -307,18 +318,12 @@ export function useSplitter(options: UseSplitterOptions) {
     primaryProps: {
       ref: firstPaneRef,
       className: styles.panel,
-      style: {
-        [minDimProp]: 'min-content',
-        flexGrow: clamp(initialSize ?? 0.5, 0, 1),
-      },
+      style: primaryStyles,
     },
     secondaryProps: {
       ref: secondPaneRef,
       className: styles.panel,
-      style: {
-        flexGrow: clamp(1 - initialSize, 0, 1),
-        [minDimProp]: 'min-content',
-      },
+      style: secondaryStyles,
     },
     splitterProps: {
       onPointerUp,

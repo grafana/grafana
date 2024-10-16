@@ -1,5 +1,5 @@
 import { useObservable } from 'react-use';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -12,6 +12,7 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
@@ -56,6 +57,31 @@ export class AppChromeService {
     returnToPrevious: this.returnToPreviousData,
   });
 
+  public headerHeightObservable = this.state
+    .pipe(
+      map(({ actions, chromeless, kioskMode, searchBarHidden }) => {
+        if (config.featureToggles.singleTopNav) {
+          if (kioskMode || chromeless) {
+            return 0;
+          } else if (actions) {
+            return TOP_BAR_LEVEL_HEIGHT * 2;
+          } else {
+            return TOP_BAR_LEVEL_HEIGHT;
+          }
+        } else {
+          if (kioskMode || chromeless) {
+            return 0;
+          } else if (searchBarHidden) {
+            return TOP_BAR_LEVEL_HEIGHT;
+          } else {
+            return TOP_BAR_LEVEL_HEIGHT * 2;
+          }
+        }
+      })
+    )
+    // only emit if the state has actually changed
+    .pipe(distinctUntilChanged());
+
   public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {
       this.currentRoute = route;
@@ -90,10 +116,6 @@ export class AppChromeService {
   }
 
   public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
-    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
-    if (!isReturnToPreviousEnabled) {
-      return;
-    }
     const previousPage = this.state.getValue().returnToPrevious;
     reportInteraction('grafana_return_to_previous_button_created', {
       page: returnToPrevious.href,
@@ -105,10 +127,6 @@ export class AppChromeService {
   };
 
   public clearReturnToPrevious = (interactionAction: 'clicked' | 'dismissed' | 'auto_dismissed') => {
-    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
-    if (!isReturnToPreviousEnabled) {
-      return;
-    }
     const existingRtp = this.state.getValue().returnToPrevious;
     if (existingRtp) {
       reportInteraction('grafana_return_to_previous_button_dismissed', {
@@ -221,8 +239,8 @@ export class AppChromeService {
   private getNextKioskMode() {
     const { kioskMode, searchBarHidden } = this.state.getValue();
 
-    if (searchBarHidden || kioskMode === KioskMode.TV) {
-      appEvents.emit(AppEvents.alertSuccess, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
+    if (searchBarHidden || kioskMode === KioskMode.TV || config.featureToggles.singleTopNav) {
+      appEvents.emit(AppEvents.alertInfo, [t('navigation.kiosk.tv-alert', 'Press ESC to exit kiosk mode')]);
       return KioskMode.Full;
     }
 

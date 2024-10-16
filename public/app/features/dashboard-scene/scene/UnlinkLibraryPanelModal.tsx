@@ -1,15 +1,12 @@
-import React from 'react';
-
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 
 import { ModalSceneObjectLike } from '../sharing/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { LibraryVizPanel } from './LibraryVizPanel';
 import { UnlinkModal } from './UnlinkModal';
 
 interface UnlinkLibraryPanelModalState extends SceneObjectState {
-  panelRef?: SceneObjectRef<LibraryVizPanel>;
+  panelRef?: SceneObjectRef<VizPanel>;
 }
 
 export class UnlinkLibraryPanelModal

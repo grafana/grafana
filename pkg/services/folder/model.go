@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
@@ -54,7 +54,7 @@ type Folder struct {
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
-var RootFolder = &Folder{ID: 0, Title: "Root", UID: GeneralFolderUID, ParentUID: ""}
+var RootFolder = &Folder{ID: 0, Title: "Dashboards", UID: GeneralFolderUID, ParentUID: ""}
 var SharedWithMeFolder = Folder{
 	Title:       "Shared with me",
 	Description: "Dashboards and folders shared with me",
@@ -148,11 +148,12 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID           *int64
-	Title        *string
-	ParentUID    *string
-	OrgID        int64
-	WithFullpath bool
+	ID               *int64
+	Title            *string
+	ParentUID        *string
+	OrgID            int64
+	WithFullpath     bool
+	WithFullpathUIDs bool
 
 	SignedInUser identity.Requester `json:"-"`
 }

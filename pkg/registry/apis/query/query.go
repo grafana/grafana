@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -17,13 +18,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -48,7 +49,7 @@ func newQueryREST(builder *QueryAPIBuilder) *queryREST {
 }
 
 func (r *queryREST) New() runtime.Object {
-	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	// This is added as the "ResponseType" regardless what ProducesObject() says :)
 	return &query.QueryDataResponse{}
 }
 
@@ -78,8 +79,8 @@ func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
-func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
-	// See: /pkg/apiserver/builder/helper.go#L34
+func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
+	// See: /pkg/services/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
 		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
@@ -87,28 +88,23 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
-		start := time.Now()
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
-
-		logger := r.logger.FromContext(ctx)
+		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode int, obj runtime.Object) {
 				if statusCode >= 400 {
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
 				}
-
-				logRequest(logger, start, statusCode)
 			},
 			func(err error) {
-				span.SetStatus(codes.Error, "request failed")
+				span.SetStatus(codes.Error, "query error")
 				if err == nil {
 					return
 				}
 
 				span.RecordError(err)
-				logRequestError(logger, start, err)
 			})
 
 		raw := &query.QueryDataRequest{}
@@ -123,21 +119,31 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 			responder.Error(err)
 			return
 		}
-
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
+			reason := metav1.StatusReasonInvalid
+			message := err.Error()
+
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				reason = metav1.StatusReasonNotFound
 				// TODO, can we wrap the error somehow?
-				err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
-					Status:  metav1.StatusFailure,
-					Code:    http.StatusBadRequest, // the URL is found, but includes bad requests
-					Reason:  metav1.StatusReasonNotFound,
-					Message: "datasource not found",
-				}}
+				message = "datasource not found"
 			}
+
+			err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusBadRequest,
+				Reason:  reason,
+				Message: message,
+			}}
+
 			responder.Error(err)
 			return
+		}
+
+		for i := range req.Requests {
+			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
 		}
 
 		// Actually run the query
@@ -156,9 +162,12 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
 	switch len(req.Requests) {
 	case 0:
-		break // nothing to do
+		qdr = &backend.QueryDataResponse{}
 	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
+		if alertQueryWithoutExpression(req) {
+			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
+		}
 	default:
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
 	}
@@ -198,11 +207,14 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	// Add user headers... here or in client.QueryData
-	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
-		Type: req.PluginId,
-		UID:  req.UID,
-	})
+	client, err := b.client.GetDataSourceClient(
+		ctx,
+		v0alpha1.DataSourceRef{
+			Type: req.PluginId,
+			UID:  req.UID,
+		},
+		req.Headers,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +277,7 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 			if theErr, ok := r.(error); ok {
 				err = theErr
 			} else if theErrString, ok := r.(string); ok {
-				err = fmt.Errorf(theErrString)
+				err = errors.New(theErrString)
 			} else {
 				err = fmt.Errorf("unexpected error - %s", b.userFacingDefaultError)
 			}
@@ -309,7 +321,7 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 // Unlike the implementation in expr/node.go, all datasource queries have been processed first
 func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedRequestInfo, data *backend.QueryDataResponse) (qdr *backend.QueryDataResponse, err error) {
 	start := time.Now()
-	ctx, span := b.tracer.Start(ctx, "SSE.handleExpressions")
+	ctx, span := b.tracer.Start(ctx, "Query.handleExpressions")
 	defer func() {
 		var respStatus string
 		switch {
@@ -370,28 +382,33 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	return qdr, nil
 }
 
-// logRequest short-term hack until k8s have added support for traceIDs in request logs.
-func logRequest(logger log.Logger, startTime time.Time, statusCode int) {
-	duration := time.Since(startTime)
-	logger.Debug("Query request completed", "status", statusCode, "duration", duration.String())
-}
-
-func logRequestError(logger log.Logger, startTime time.Time, err error) {
-	var args []any
-	var gfErr errutil.Error
-	if !errors.As(err, &gfErr) {
-		args = []any{"error", err.Error()}
-	} else {
-		args = []any{
-			"errorReason", gfErr.Reason,
-			"errorMessageID", gfErr.MessageID,
-			"error", gfErr.LogMessage,
-		}
+func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
+	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
+	if len(req.Request.Queries) == 0 {
+		return nil, errors.New("no queries to convert")
 	}
-
-	duration := time.Since(startTime)
-	args = append(args, "duration", duration.String())
-	logger.Error("Query request completed", args...)
+	if qdr == nil {
+		return nil, errors.New("queryDataResponse is nil")
+	}
+	allowLongFrames := false
+	refID := req.Request.Queries[0].RefID
+	if _, exist := qdr.Responses[refID]; !exist {
+		return nil, fmt.Errorf("refID '%s' does not exist", refID)
+	}
+	frames := qdr.Responses[refID].Frames
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, allowLongFrames)
+	if err != nil {
+		results.Error = err
+	}
+	qdr = &backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			refID: {
+				Frames: results.Values.AsDataFrames(refID),
+				Error:  results.Error,
+			},
+		},
+	}
+	return qdr, err
 }
 
 type responderWrapper struct {
@@ -409,11 +426,30 @@ func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode in
 }
 
 func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
-	r.onObjectFn(statusCode, obj)
+	if r.onObjectFn != nil {
+		r.onObjectFn(statusCode, obj)
+	}
+
 	r.wrapped.Object(statusCode, obj)
 }
 
 func (r responderWrapper) Error(err error) {
-	r.onErrorFn(err)
+	if r.onErrorFn != nil {
+		r.onErrorFn(err)
+	}
+
 	r.wrapped.Error(err)
+}
+
+// Checks if the request only contains a single query and not expression.
+func alertQueryWithoutExpression(req parsedRequestInfo) bool {
+	if len(req.Requests) != 1 {
+		return false
+	}
+	headers := req.Requests[0].Headers
+	_, exist := headers[models.FromAlertHeaderName]
+	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
+		return true
+	}
+	return false
 }
