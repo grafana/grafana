@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": ""
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "",
+      "misconfigured-warning": "",
+      "misconfigured-warning-details": ""
     }
   },
   "annotations": {
@@ -1408,7 +1413,9 @@
       "dashboards": "",
       "datasources": "",
       "folders": "",
-      "library_elements": ""
+      "library_elements": "",
+      "mute_timings": "",
+      "notification_templates": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1492,6 +1499,8 @@
       "datasource": "Datenquelle",
       "folder": "Ordner",
       "library_element": "",
+      "mute_timing": "",
+      "notification_template": "",
       "unknown": "Unbekannt"
     },
     "summary": {
