@@ -38,7 +38,7 @@ type gmsClientImpl struct {
 	getStatusLastQueried time.Time
 }
 
-func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) (createSessErr *cloudmigration.CreateSessionError) {
+func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) (err error) {
 	// TODO: there is a lot of boilerplate code in these methods, we should consolidate them when we have a gardening period
 	path := fmt.Sprintf("%s/api/v1/validate-key", c.buildBasePath(cm.ClusterSlug))
 
@@ -49,7 +49,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	req, err := http.NewRequestWithContext(ctx, "POST", path, bytes.NewReader(nil))
 	if err != nil {
 		c.log.Error("error creating http request for token validation", "err", err.Error())
-		return &cloudmigration.ErrTokenRequestError
+		return fmt.Errorf("create http request error: %w", cloudmigration.ErrTokenRequestError)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
@@ -57,12 +57,12 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request for token validation", "err", err.Error())
-		return &cloudmigration.ErrTokenRequestError
+		return fmt.Errorf("send http request error: %w", cloudmigration.ErrTokenRequestError)
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			c.log.Error("error closing the request body", "err", err.Error())
-			createSessErr = &cloudmigration.ErrTokenRequestError
+			err = errors.Join(err, fmt.Errorf("closing response body: %w", cloudmigration.ErrTokenRequestError))
 		}
 	}()
 
@@ -71,7 +71,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 		if gmsErr := c.handleGMSErrors(body); gmsErr != nil {
 			return gmsErr
 		}
-		return &cloudmigration.ErrTokenRequestError
+		return fmt.Errorf("token validation failure: %w", cloudmigration.ErrTokenRequestError)
 	}
 
 	return nil
@@ -264,19 +264,19 @@ func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
 }
 
 // handleGMSErrors parses the error message from GMS and translates it to an appropriate error message
-func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) *cloudmigration.CreateSessionError {
+func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) error {
 	var apiError GMSAPIError
 	if err := json.Unmarshal(responseBody, &apiError); err != nil {
-		return &cloudmigration.ErrTokenInvalid
+		return cloudmigration.ErrTokenInvalid
 	}
 
 	if strings.Contains(apiError.Message, GMSErrorMessageInstanceUnreachable) {
-		return &cloudmigration.ErrInstanceUnreachable
+		return cloudmigration.ErrInstanceUnreachable
 	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceNotFound) {
-		return &cloudmigration.ErrInstanceNotFound
+		return cloudmigration.ErrInstanceNotFound
 	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceCheckingError) {
-		return &cloudmigration.ErrInstanceRequestError
+		return cloudmigration.ErrInstanceRequestError
 	}
 
-	return &cloudmigration.ErrTokenInvalid
+	return cloudmigration.ErrTokenInvalid
 }

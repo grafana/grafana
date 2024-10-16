@@ -22,7 +22,7 @@ type memoryClientImpl struct {
 	snapshot *cloudmigration.StartSnapshotResponse
 }
 
-func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) *cloudmigration.CreateSessionError {
+func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	return nil
 }
 

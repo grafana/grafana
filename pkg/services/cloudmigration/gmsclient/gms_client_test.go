@@ -82,32 +82,32 @@ func Test_handleGMSErrors(t *testing.T) {
 
 	testscases := []struct {
 		gmsResBody    []byte
-		expectedError *cloudmigration.CreateSessionError
+		expectedError error
 	}{
 		{
 			gmsResBody:    []byte(`{"message":"instance is unreachable, make sure the instance is running"}`),
-			expectedError: &cloudmigration.ErrInstanceUnreachable,
+			expectedError: cloudmigration.ErrInstanceUnreachable,
 		},
 		{
 			gmsResBody:    []byte(`{"message":"checking if instance is reachable"}`),
-			expectedError: &cloudmigration.ErrInstanceRequestError,
+			expectedError: cloudmigration.ErrInstanceRequestError,
 		},
 		{
 			gmsResBody:    []byte(`{"message":"instance not found"}`),
-			expectedError: &cloudmigration.ErrInstanceNotFound,
+			expectedError: cloudmigration.ErrInstanceNotFound,
 		},
 		{
 			gmsResBody:    []byte(`{"status":"error","error":"authentication error: invalid token"}`),
-			expectedError: &cloudmigration.ErrTokenInvalid,
+			expectedError: cloudmigration.ErrTokenInvalid,
 		},
 		{
 			gmsResBody:    []byte(""),
-			expectedError: &cloudmigration.ErrTokenInvalid,
+			expectedError: cloudmigration.ErrTokenInvalid,
 		},
 	}
 
 	for _, tc := range testscases {
 		resError := client.handleGMSErrors(tc.gmsResBody)
-		require.Equal(t, resError, tc.expectedError)
+		require.ErrorIs(t, resError, tc.expectedError)
 	}
 }

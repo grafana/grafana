@@ -855,7 +855,7 @@ type gmsClientMock struct {
 	getSnapshotResponse *cloudmigration.GetSnapshotStatusResponse
 }
 
-func (m *gmsClientMock) ValidateKey(_ context.Context, _ cloudmigration.CloudMigrationSession) *cloudmigration.CreateSessionError {
+func (m *gmsClientMock) ValidateKey(_ context.Context, _ cloudmigration.CloudMigrationSession) error {
 	m.validateKeyCalled++
 	return nil
 }

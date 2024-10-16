@@ -319,7 +319,7 @@ func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, access
 	return nil, nil
 }
 
-func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigrationSession) *cloudmigration.CreateSessionError {
+func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.ValidateToken")
 	defer span.End()
 
@@ -391,29 +391,29 @@ func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigr
 	return &cloudmigration.CloudMigrationSessionListResponse{Sessions: migrations}, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, *cloudmigration.CreateSessionError) {
+func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CreateSession")
 	defer span.End()
 
 	base64Token := cmd.AuthToken
 	b, err := base64.StdEncoding.DecodeString(base64Token)
 	if err != nil {
-		return nil, &cloudmigration.ErrTokenInvalid
+		return nil, fmt.Errorf("token could not be decoded: %w", cloudmigration.ErrTokenInvalid)
 	}
 	var token cloudmigration.Base64EncodedTokenPayload
 	if err := json.Unmarshal(b, &token); err != nil {
-		return nil, &cloudmigration.ErrTokenInvalid // don't want to leak info here
+		return nil, fmt.Errorf("invalid token: %w", cloudmigration.ErrTokenInvalid) // don't want to leak info here
 	}
 
 	migration := token.ToMigration()
 	// validate token against GMS before saving
 	if err := s.ValidateToken(ctx, migration); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("token validation: %w", err)
 	}
 
 	cm, err := s.store.CreateMigrationSession(ctx, migration)
 	if err != nil {
-		return nil, &cloudmigration.ErrSessionCreationFailure
+		return nil, fmt.Errorf("error creating migration: %w", cloudmigration.ErrSessionCreationFailure)
 	}
 
 	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)

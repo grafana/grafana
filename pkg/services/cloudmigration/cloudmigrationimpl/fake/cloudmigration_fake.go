@@ -34,7 +34,7 @@ func (m FakeServiceImpl) CreateToken(_ context.Context) (cloudmigration.CreateAc
 	return cloudmigration.CreateAccessTokenResponse{Token: "mock_token"}, nil
 }
 
-func (m FakeServiceImpl) ValidateToken(ctx context.Context, migration cloudmigration.CloudMigrationSession) *cloudmigration.CreateSessionError {
+func (m FakeServiceImpl) ValidateToken(ctx context.Context, migration cloudmigration.CloudMigrationSession) error {
 	panic("implement me")
 }
 
@@ -45,9 +45,9 @@ func (m FakeServiceImpl) DeleteToken(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m FakeServiceImpl) CreateSession(_ context.Context, _ cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, *cloudmigration.CreateSessionError) {
+func (m FakeServiceImpl) CreateSession(_ context.Context, _ cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	if m.ReturnError {
-		return nil, &cloudmigration.ErrSessionCreationFailure
+		return nil, cloudmigration.ErrSessionCreationFailure
 	}
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     "fake_uid",

@@ -140,32 +140,36 @@ type CreateSessionError struct {
 	Message   string
 }
 
+func (e *CreateSessionError) Error() string {
+	return e.Message
+}
+
 var (
-	ErrTokenInvalid = CreateSessionError{
+	ErrTokenInvalid = &CreateSessionError{
 		ErrorCode: "TOKEN_INVALID",
 		Message:   "Token is not valid. Generate a new token on your cloud instance and try again.",
 	}
-	ErrTokenRequestError = CreateSessionError{
+	ErrTokenRequestError = &CreateSessionError{
 		ErrorCode: "TOKEN_REQUEST_ERROR",
 		Message:   "An error occurred while validating the token. Please check the Grafana instance logs.",
 	}
-	ErrInstanceNotFound = CreateSessionError{
+	ErrInstanceNotFound = &CreateSessionError{
 		ErrorCode: "INSTANCE_NOT_FOUND",
 		Message:   "The cloud instance cannot be found. Please ensure the cloud instance exists and is active.",
 	}
-	ErrInstanceUnreachable = CreateSessionError{
+	ErrInstanceUnreachable = &CreateSessionError{
 		ErrorCode: "INSTANCE_UNREACHABLE",
 		Message:   "The cloud instance cannot be reached. Make sure the instance is running and try again.",
 	}
-	ErrInstanceRequestError = CreateSessionError{
+	ErrInstanceRequestError = &CreateSessionError{
 		ErrorCode: "INSTANCE_REQUEST_ERROR",
 		Message:   "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status.'",
 	}
-	ErrSessionCreationFailure = CreateSessionError{
+	ErrSessionCreationFailure = &CreateSessionError{
 		ErrorCode: "SESSION_CREATION_FAILURE",
 		Message:   "There was an error creating the migration. Please try again.",
 	}
-	ErrMigrationDisabled = CreateSessionError{
+	ErrMigrationDisabled = &CreateSessionError{
 		ErrorCode: "MIGRATION_DISABLED",
 		Message:   "Cloud migrations are disabled on this instance.",
 	}
