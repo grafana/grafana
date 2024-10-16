@@ -80,10 +80,10 @@ const getAlertmanagerStatusHandler = () =>
 
     const statusToReturn = getAlertmanagerStatus(alertmanagerName);
 
-    if (!statusToReturn) {
-      return HttpResponse.json({ message: 'data source not found', traceID: '' }, { status: 404 });
+    if (statusToReturn) {
+      return HttpResponse.json(statusToReturn);
     }
-    return HttpResponse.json(statusToReturn);
+    return HttpResponse.json({ message: 'data source not found', traceID: '' }, { status: 404 });
   });
 
 export const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
@@ -121,8 +121,11 @@ export const updateAlertmanagerConfigHandler = (responseOverride?: typeof ALERTM
     }
     const { name: alertmanagerName } = params;
     const body: AlertManagerCortexConfig = await request.clone().json();
+    // TODO: Validate the config depending on alertmanager type
+    // e.g. validate other AMs differently where required for tests
     const potentialError = validateGrafanaAlertmanagerConfig(body);
     if (!potentialError) {
+      // Only update the mock entity the endpoint is going to "succeed"
       setAlertmanagerConfig(alertmanagerName, body);
     }
     return potentialError ? potentialError : HttpResponse.json({ message: 'configuration created' });
