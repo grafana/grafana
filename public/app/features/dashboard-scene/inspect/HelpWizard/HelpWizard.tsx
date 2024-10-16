@@ -192,7 +192,9 @@ export function HelpWizard({ panel, onClose }: Props) {
             </Stack>
           </Field>
 
-          <div style={{ height: '100%', overflow: 'auto', display: 'flex' }}>{scene && <scene.Component model={scene} />}</div>
+          <div style={{ height: '100%', overflow: 'auto', display: 'flex' }}>
+            {scene && <scene.Component model={scene} />}
+          </div>
         </>
       )}
     </Drawer>
