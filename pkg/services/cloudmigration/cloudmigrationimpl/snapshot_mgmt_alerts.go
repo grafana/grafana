@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -105,4 +106,25 @@ func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.Signe
 	}
 
 	return contactPoints, nil
+}
+
+type notificationPolicy struct {
+	Name   string
+	Routes definitions.Route
+}
+
+func (s *Service) getNotificationPolicies(ctx context.Context, signedInUser *user.SignedInUser) (notificationPolicy, error) {
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) {
+		return notificationPolicy{}, nil
+	}
+
+	policyTree, _, err := s.ngAlert.Api.Policies.GetPolicyTree(ctx, signedInUser.GetOrgID())
+	if err != nil {
+		return notificationPolicy{}, fmt.Errorf("fetching ngalert notification policy tree: %w", err)
+	}
+
+	return notificationPolicy{
+		Name:   "Notification Policy Tree",
+		Routes: policyTree,
+	}, nil
 }
