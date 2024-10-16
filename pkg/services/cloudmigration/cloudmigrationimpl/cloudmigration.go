@@ -391,7 +391,7 @@ func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigr
 	return &cloudmigration.CloudMigrationSessionListResponse{Sessions: migrations}, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
+func (s *Service) CreateSession(ctx context.Context, signedInUser *user.SignedInUser, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CreateSession")
 	defer span.End()
 
@@ -416,7 +416,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
-	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)
+	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil, signedInUser.UserUID)
 
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,
@@ -426,18 +426,18 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	}, nil
 }
 
-func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *Service) DeleteSession(ctx context.Context, signedInUser *user.SignedInUser, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.DeleteSession")
 	defer span.End()
 
 	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, sessionUID)
 	if err != nil {
-		s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
+		s.report(ctx, session, gmsclient.EventDisconnect, 0, err, signedInUser.UserUID)
 		return nil, fmt.Errorf("deleting migration from db for session %v: %w", sessionUID, err)
 	}
 
 	err = s.deleteLocalFiles(snapshots)
-	s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
+	s.report(ctx, session, gmsclient.EventDisconnect, 0, err, signedInUser.UserUID)
 	return session, nil
 }
 
@@ -503,7 +503,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		asyncCtx, cancelFunc := context.WithCancel(asyncCtx)
 		s.cancelFunc = cancelFunc
 
-		s.report(asyncCtx, session, gmsclient.EventStartBuildingSnapshot, 0, nil)
+		s.report(asyncCtx, session, gmsclient.EventStartBuildingSnapshot, 0, nil, signedInUser.UserUID)
 
 		start := time.Now()
 		err := s.buildSnapshot(asyncCtx, signedInUser, initResp.MaxItemsPerPartition, initResp.Metadata, snapshot)
@@ -524,7 +524,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 		}
 
 		span.SetStatus(codes.Ok, "snapshot built")
-		s.report(asyncCtx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err)
+		s.report(asyncCtx, session, gmsclient.EventDoneBuildingSnapshot, time.Since(start), err, signedInUser.UserUID)
 	}()
 
 	return &snapshot, nil
@@ -612,7 +612,7 @@ func (s *Service) GetSnapshotList(ctx context.Context, query cloudmigration.List
 	return snapshotList, nil
 }
 
-func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+func (s *Service) UploadSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string, snapshotUid string) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot",
 		trace.WithAttributes(
 			attribute.String("sessionUid", sessionUid),
@@ -666,7 +666,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 
 		asyncCtx, s.cancelFunc = context.WithCancel(asyncCtx)
 
-		s.report(asyncCtx, session, gmsclient.EventStartUploadingSnapshot, 0, nil)
+		s.report(asyncCtx, session, gmsclient.EventStartUploadingSnapshot, 0, nil, signedInUser.UserUID)
 
 		start := time.Now()
 		err := s.uploadSnapshot(asyncCtx, session, snapshot, uploadUrl)
@@ -686,7 +686,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 			}
 		}
 
-		s.report(asyncCtx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err)
+		s.report(asyncCtx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err, signedInUser.UserUID)
 	}()
 
 	return nil
@@ -734,6 +734,7 @@ func (s *Service) report(
 	t gmsclient.LocalEventType,
 	d time.Duration,
 	evtErr error,
+	userUID string,
 ) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.report")
 	defer span.End()
@@ -758,6 +759,7 @@ func (s *Service) report(
 	e := gmsclient.EventRequestDTO{
 		Event:   t,
 		LocalID: id,
+		UserUID: userUID,
 	}
 
 	if d != 0 {
