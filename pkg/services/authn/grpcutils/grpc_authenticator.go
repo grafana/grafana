@@ -67,7 +67,6 @@ func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
 type AuthenticatorWithFallback struct {
 	authenticator       *authnlib.GrpcAuthenticator
 	legacyAuthenticator *grpc.Authenticator
-	fallbackEnabled     bool
 	metrics             *metrics
 }
 
@@ -82,12 +81,15 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 		return nil, err
 	}
 
+	if !authCfg.LegacyFallback {
+		return authenticator, nil
+	}
+
 	legacyAuthenticator := &grpc.Authenticator{}
 
 	return &AuthenticatorWithFallback{
 		authenticator:       authenticator,
 		legacyAuthenticator: legacyAuthenticator,
-		fallbackEnabled:     authCfg.LegacyFallback,
 		metrics:             newMetrics(reg),
 	}, nil
 }
@@ -95,8 +97,8 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
 	// Try to authenticate with the new authenticator first
 	newCtx, err := f.authenticator.Authenticate(ctx)
-	// If allowed fallback to the legacy authenticator
-	if err != nil && f.fallbackEnabled {
+	if err != nil {
+		// In case of error, fallback to the legacy authenticator
 		newCtx, err = f.legacyAuthenticator.Authenticate(ctx)
 		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
 	}
