@@ -40,7 +40,10 @@ module.exports = [
     ],
   },
   grafanaConfig,
-  reactPlugin.configs.flat['jsx-runtime'],
+  {
+    name: 'react/jsx-runtime',
+    ...reactPlugin.configs.flat['jsx-runtime'],
+  },
   {
     name: 'grafana/defaults',
     linterOptions: {
@@ -151,6 +154,111 @@ module.exports = [
           depth: 2,
         },
       ],
+    },
+  },
+  {
+    name: 'grafana/data-overrides',
+    files: ['packages/grafana-data/**/*.{ts,tsx}'],
+    ignores: ['packages/grafana-data/src/**/*.{spec,test}.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: ['@grafana/runtime', '@grafana/ui', '@grafana/data'],
+        },
+      ],
+    },
+  },
+  {
+    name: 'grafana/ui-overrides',
+    files: ['packages/grafana-ui/**/*.{ts,tsx}'],
+    ignores: ['packages/grafana-ui/**/*.{test,story}.{ts,tsx}'],
+    rules: {
+      '@emotion/syntax-preference': [2, 'object'],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: ['@grafana/runtime', '@grafana/data/*', '@grafana/ui', '@grafana/e2e-selectors/*'],
+          paths: [
+            {
+              name: 'react-i18next',
+              importNames: ['Trans', 't'],
+              message: 'Please import from grafana-ui/src/utils/i18n instead',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    name: 'grafana/schema-overrides',
+    files: ['packages/grafana-schema/**/*.{ts,tsx}'],
+    ignores: ['packages/grafana-schema/**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: ['@grafana/*'],
+        },
+      ],
+    },
+  },
+  {
+    name: 'grafana/runtime-overrides',
+    files: ['packages/grafana-runtime/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: ['@grafana/runtime', '@grafana/data/*', '@grafana/ui/*', '@grafana/e2e/*'],
+        },
+      ],
+    },
+  },
+  {
+    name: 'grafana/flamegraph-overrides',
+    files: ['packages/grafana-flamegraph/**/*.{ts,tsx}'],
+    ignores: ['packages/grafana-flamegraph/**/*.{test,story}.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: ['@grafana/runtime', '@grafana/e2e', '@grafana/e2e-selectors/*'],
+        },
+      ],
+    },
+  },
+  {
+    name: 'grafana/alerting-overrides',
+    ...testingLibraryPlugin.configs['flat/react'],
+    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
+    plugins: {
+      'testing-library': testingLibraryPlugin,
+      'jest-dom': require('eslint-plugin-jest-dom'),
+    },
+    rules: {
+      'dot-notation': 'error',
+      'prefer-const': 'error',
+      'react/no-unused-prop-types': 'error',
+    },
+  },
+  {
+    name: 'grafana/alerting-test-overrides',
+    ...testingLibraryPlugin.configs['flat/react'],
+    files: [
+      'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
+      'public/app/features/alerting/**/?(*.)+(spec|test).[jt]s?(x)',
+    ],
+    rules: {
+      'testing-library/prefer-user-event': 'error',
+      'jest/expect-expect': ['error', { assertFunctionNames: ['expect*', 'reducerTester'] }],
+    },
+  },
+  {
+    name: 'grafana/explore-traceview-overrides',
+    files: ['public/app/features/explore/TraceView/components/demo/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'import/no-extraneous-dependencies': 'off',
     },
   },
   {
