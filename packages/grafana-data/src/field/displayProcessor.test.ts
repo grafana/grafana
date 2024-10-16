@@ -3,7 +3,7 @@ import { createTheme } from '../themes/createTheme';
 import { FieldConfig, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { ThresholdsMode } from '../types/thresholds';
-import { MappingType, ValueMapping } from '../types/valueMapping';
+import {MappingType, SpecialValueMatch, ValueMapping} from '../types/valueMapping';
 
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 
@@ -276,6 +276,18 @@ describe('Format value', () => {
     const result = instance(value);
 
     expect(result.text).toEqual('1.0');
+  });
+
+  it('should not map null to NULL and mapping don\'t work on xAxis', () => {
+    const valueMappings: ValueMapping[] = [{ type: MappingType.SpecialValue, options: { 'match': SpecialValueMatch.Null, 'result': { text: 'NULL' } } }];
+    const value = null;
+    const instance = getDisplayProcessorFromConfig({ decimals: null, mappings: valueMappings, unit: 'watt' });
+
+    let result = instance(value);
+    expect(result.text).toEqual('NULL');
+
+    result = instance(value, null, true);
+    expect(result.text).toEqual('');
   });
 
   it('With null value and thresholds should use base color', () => {

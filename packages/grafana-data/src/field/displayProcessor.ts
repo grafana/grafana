@@ -15,6 +15,7 @@ import { getValueMappingResult } from '../utils/valueMappings';
 import { FormattedValue, getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 
 import { getScaleCalculator } from './scale';
+import {map} from "rxjs/operators";
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -85,7 +86,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: unknown, adjacentDecimals?: DecimalCount) => {
+  return (value: unknown, adjacentDecimals?: DecimalCount, isXAxis?: boolean) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -102,19 +103,21 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     let percent: number | undefined;
 
     if (mappings && mappings.length > 0) {
-      const mappingResult = getValueMappingResult(mappings, value);
+      if (!isXAxis) {
+        const mappingResult = getValueMappingResult(mappings, value);
 
-      if (mappingResult) {
-        if (mappingResult.text != null) {
-          text = mappingResult.text;
-        }
+        if (mappingResult) {
+          if (mappingResult.text != null) {
+            text = mappingResult.text;
+          }
 
-        if (mappingResult.color != null) {
-          color = options.theme.visualization.getColorByName(mappingResult.color);
-        }
+          if (mappingResult.color != null) {
+            color = options.theme.visualization.getColorByName(mappingResult.color);
+          }
 
-        if (mappingResult.icon != null) {
-          icon = mappingResult.icon;
+          if (mappingResult.icon != null) {
+            icon = mappingResult.icon;
+          }
         }
       }
     } else if (field.type === FieldType.enum) {
