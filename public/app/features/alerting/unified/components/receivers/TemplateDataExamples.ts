@@ -129,12 +129,27 @@ Alert annotations: {{ len .Annotations.SortedPairs }}
 `,
   },
   {
-    description: 'Print runbook and Grafana URLs',
+    description: 'Print URLs for runbook and alert data in Grafana',
     example: `{{- /* Example displaying additional information, such as runbook link, DashboardURL and SilenceURL, for each alert in the notification.*/ -}}
 {{- /* Edit the template name and template content as needed. */ -}}
-{{ define "slack.title" }}
-{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
+{{ define "custom.alert_additional_details" -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ range .Alerts.Resolved -}}
+  {{ template "alert.additional_details" . -}}
 {{ end }}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ range .Alerts.Firing -}}
+  {{ template "alert.additional_details" . -}}
+{{ end -}}
+{{ end -}}
+
+{{ define "alert.additional_details" }}
+- Dashboard: {{ .DashboardURL }}
+- Panel: {{ .PanelURL }}
+- AlertGenerator: {{ .GeneratorURL }}
+- Silence: {{ .SilenceURL }}
+- RunbookURL: {{ .Annotations.runbook_url}}
+{{ end -}}
 `,
   },
 ];
