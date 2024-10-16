@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -808,12 +807,12 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 	}
 
 	// #TODO Is there a preexisting function we can use instead, something along the lines of UserIdentifier?
-	toUID := func(rawIdentifier string) (string, error) {
+	toUID := func(rawIdentifier string) string {
 		parts := strings.Split(rawIdentifier, ":")
 		if len(parts) < 2 {
-			return "", fmt.Errorf("invalid user identifier")
+			return ""
 		}
-		return parts[1], nil
+		return parts[1]
 	}
 
 	toDTO := func(fold *folder.Folder, checkCanView bool) (dtos.Folder, error) {
@@ -832,18 +831,10 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
 		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
 		if len(fDTO.CreatedBy) > 0 {
-			userUID, err := toUID(fDTO.CreatedBy)
-			if err != nil {
-				return dtos.Folder{}, err
-			}
-			creator = fk8s.getUserLogin(ctx, userUID, orgID)
+			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy), orgID)
 		}
 		if len(fDTO.UpdatedBy) > 0 {
-			userUID, err := toUID(fDTO.UpdatedBy)
-			if err != nil {
-				return dtos.Folder{}, err
-			}
-			updater = fk8s.getUserLogin(ctx, userUID, orgID)
+			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy), orgID)
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
