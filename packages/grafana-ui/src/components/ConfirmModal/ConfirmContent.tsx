@@ -92,7 +92,14 @@ export const ConfirmContent = ({
   const { handleSubmit } = useForm();
 
   return (
-    <form onSubmit={handleSubmit(onConfirmClick)}>
+    <form
+      onSubmit={(e) => {
+        // handleSubmit() seems to be an async function (promise), so we need to preventDefault and stopPropagation
+        e.stopPropagation();
+        e.preventDefault();
+        handleSubmit(onConfirmClick)(e);
+      }}
+    >
       <div className={styles.text}>
         {body}
         {description ? <div className={styles.description}>{description}</div> : null}
