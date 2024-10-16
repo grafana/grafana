@@ -80,6 +80,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
+  filter-dashboard:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#filter-dashboard-data
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#filter-dashboard-data
 ---
 
 # Add variables
@@ -270,7 +275,7 @@ To create an ad hoc filter, follow these steps:
 1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Back to dashboard** and **Exit edit**.
 
-Now you can [filter data on the dashboard](#filter-dashboard-data).
+Now you can [filter data on the dashboard](ref:filter-dashboard).
 
 ## Configure variable selection options
 

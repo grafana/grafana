@@ -71,6 +71,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/#export-dashboards
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/#export-dashboards
+  add-ad-hoc-filters:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters
 ---
 
 # Use dashboards
@@ -275,7 +280,7 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 ## Filter dashboard data
 
-Once you've [added an ad hoc filter](#add-ad-hoc-filters) in the dashboard settings, you can create key/value filter pairs on the dashboard.
+Once you've [added an ad hoc filter](ref:add-ad-hoc-filters) in the dashboard settings, you can create key/value filter pairs on the dashboard.
 These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
 
 To filter dashboard data, follow these steps:
@@ -286,11 +291,16 @@ To filter dashboard data, follow these steps:
 
    ![Ad hoc filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
 
-You can edit or delete a filter in the following ways:
+### Edit or delete filters
 
-- To edit the operator or value of a filter, click anywhere on the filter and update it.
+To edit or delete filters, follow these steps:
 
-  ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
+1. On the dashboard, click anywhere on the filter you want to change.
+1. Do one of the following:
 
-- To change the filter label, you must delete the filter and create a new one.
-- To delete a filter, click the **X** next to it.
+   - To edit the operator or value of a filter, click anywhere on the filter and update it.
+
+     ![Editing an ad hoc filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
+
+   - To change the filter label, you must delete the filter and create a new one.
+   - To delete a filter, click the **X** next to it.
