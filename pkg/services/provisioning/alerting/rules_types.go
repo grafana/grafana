@@ -97,11 +97,17 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no UID set", alertRule.Title)
 	}
 	alertRule.OrgID = orgID
-	duration, err := model.ParseDuration(rule.For.Value())
-	if err != nil {
-		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
+
+	duration := model.Duration(0)
+	if rule.For.Value() != "" {
+		var err error
+		duration, err = model.ParseDuration(rule.For.Value())
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse 'for' field: %w", alertRule.Title, err)
+		}
 	}
 	alertRule.For = time.Duration(duration)
+
 	dasboardUID := rule.DasboardUID.Value()
 	dashboardUID := rule.DashboardUID.Value()
 	alertRule.DashboardUID = withFallback(dashboardUID, dasboardUID) // Use correct spelling over supported typo.
