@@ -144,7 +144,7 @@ It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:
 
    b. Click **Preview** to verify that the expression is successful.
 
-3. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your recording rule should stop metting the condition.
+3. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your recording rule should stop meeting the condition.
 
    You can only add one recovery threshold in a query and it must be the recording rule condition.
 
