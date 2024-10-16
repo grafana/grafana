@@ -132,12 +132,17 @@ export const disablePlugin = (pluginId: SupportedPlugin) => {
  */
 export const getErrorResponse = (message: string, status = 500) => HttpResponse.json({ message }, { status });
 
+const defaultError = getErrorResponse('Unknown error');
 /** Make alertmanager config update fail */
-export const makeAlertmanagerConfigUpdateFail = (responseOverride?: ReturnType<typeof getErrorResponse>) => {
+export const makeAlertmanagerConfigUpdateFail = (
+  responseOverride: ReturnType<typeof getErrorResponse> = defaultError
+) => {
   server.use(updateAlertmanagerConfigHandler(responseOverride));
 };
 
 /** Make fetching alertmanager config fail */
-export const makeAllAlertmanagerConfigFetchFail = (responseOverride?: ReturnType<typeof getErrorResponse>) => {
-  server.use(getAlertmanagerConfigHandler(responseOverride || getErrorResponse('Unknown error')));
+export const makeAllAlertmanagerConfigFetchFail = (
+  responseOverride: ReturnType<typeof getErrorResponse> = defaultError
+) => {
+  server.use(getAlertmanagerConfigHandler(responseOverride));
 };
