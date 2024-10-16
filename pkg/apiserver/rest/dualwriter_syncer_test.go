@@ -225,7 +225,7 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				tt.setupStorageFn(um)
 			}
 
-			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode1, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
+			outcome, err := legacyToUnifiedStorageDataSyncer(context.Background(), Mode2, ls, us, "test.kind", p, &fakeServerLock{}, &request.RequestInfo{})
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
