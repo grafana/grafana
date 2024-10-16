@@ -1,21 +1,11 @@
 import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
-import { SceneObjectState } from '@grafana/scenes';
-
 import {
   ExtractedRecordingRules,
   fetchAndExtractLokiRecordingRules,
   FoundLokiDataSource,
   getLogsUidOfMetric,
 } from '../Integrations/logsIntegration';
-
-export interface LogsIntegrationSceneState extends SceneObjectState {}
-
-// export class LogsIntegrationContext extends SceneObjectBase<LogsIntegrationSceneState> {
-//   constructor(state: Partial<LogsIntegrationSceneState>) {
-//     super(state);
-//   }
-// }
 
 export type LogsIntegrationContextValue = {
   findLogsDsForSelectedMetric: (metricName: string) => FoundLokiDataSource[];
