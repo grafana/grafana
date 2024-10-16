@@ -19,21 +19,21 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
-type ClientOption func(c *OpenFGAClient)
+type OpenFGAClientOption func(c *OpenFGAClient)
 
-func WithTenantID(tenantID string) ClientOption {
+func WithTenantID(tenantID string) OpenFGAClientOption {
 	return func(c *OpenFGAClient) {
 		c.tenantID = tenantID
 	}
 }
 
-func WithLogger(logger log.Logger) ClientOption {
+func WithLogger(logger log.Logger) OpenFGAClientOption {
 	return func(c *OpenFGAClient) {
 		c.logger = logger
 	}
 }
 
-func WithSchema(modules []transformer.ModuleFile) ClientOption {
+func WithSchema(modules []transformer.ModuleFile) OpenFGAClientOption {
 	return func(c *OpenFGAClient) {
 		c.modules = modules
 	}
@@ -57,7 +57,7 @@ func NewOpenFGAClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *set
 	)
 }
 
-func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*OpenFGAClient, error) {
+func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...OpenFGAClientOption) (*OpenFGAClient, error) {
 	c := &OpenFGAClient{
 		client: openfgav1.NewOpenFGAServiceClient(cc),
 	}
