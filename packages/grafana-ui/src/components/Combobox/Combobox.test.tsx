@@ -197,7 +197,7 @@ describe('Combobox', () => {
       expect(item).toBeInTheDocument();
       expect(firstItem).not.toBeInTheDocument();
 
-      await act(() => {
+      act(() => {
         jest.advanceTimersByTime(1100); // Resolve the first request
       });
 
