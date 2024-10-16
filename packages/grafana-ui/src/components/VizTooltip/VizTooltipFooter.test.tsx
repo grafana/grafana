@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { Field, FieldType, LinkModel } from '@grafana/data';
-
-import { userEvent } from '../../../../../public/test/test-utils';
 
 import { VizTooltipFooter } from './VizTooltipFooter';
 
