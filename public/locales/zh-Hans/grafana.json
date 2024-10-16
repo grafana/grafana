@@ -1400,6 +1400,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "contact_points": "",
       "dashboards": "",
       "datasources": "",
       "folders": "",
@@ -1485,6 +1486,7 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "contact_point": "",
       "dashboard": "仪表板",
       "datasource": "数据源",
       "folder": "",
