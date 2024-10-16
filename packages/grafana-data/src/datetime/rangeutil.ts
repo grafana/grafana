@@ -148,11 +148,15 @@ export function describeTextRange(expr: string): TimeOption {
  * ```
  * @category TimeUtils
  * @param range - a time range (usually specified by the TimePicker)
+ * @param timeZone - optional time zone.
+ * @param quickRanges - optional dashboard's custom quick ranges to pick range names from.
  * @alpha
  */
-export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone): string {
-  const option = rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
-
+export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]): string {
+  const qr = (quickRanges || []).find(
+    qr => range.from.toString() == qr.from && range.to.toString() === qr.to
+  );
+  const option = qr || rangeIndex[range.from.toString() + ' to ' + range.to.toString()];
   if (option) {
     return option.display;
   }
