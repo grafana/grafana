@@ -30,7 +30,7 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
   textToDownload = textToDownload + '\n\n';
 
   logsModel.rows.forEach((row) => {
-    const newRow = dateTimeFormat(row.timeEpochMs, { defaultWithMS: true }) + '\t' + row.entry + '\n';
+    const newRow = row.timeEpochMs + '\t' + row.entry + '\n';
     textToDownload = textToDownload + newRow;
   });
 
