@@ -440,7 +440,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
         label: customConfig.axisLabel,
         size: customConfig.axisWidth,
         placement,
-        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
+        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals, true)),
         filter: vizOrientation.yOri === 0 ? config.hFilter : undefined,
         tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
