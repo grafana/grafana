@@ -187,6 +187,7 @@ describe('SearchField', () => {
           type: 'keyword',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
     } as unknown as TempoLanguageProvider;
 
     const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
@@ -235,6 +236,7 @@ describe('SearchField', () => {
           type: 'int',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
     } as unknown as TempoLanguageProvider;
 
     const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
@@ -280,6 +282,7 @@ const renderSearchField = (
           type: 'string',
         },
       ]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
     } as unknown as TempoLanguageProvider);
 
   const datasource: TempoDatasource = {

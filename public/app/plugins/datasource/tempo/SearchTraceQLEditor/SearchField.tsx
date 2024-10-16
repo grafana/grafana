@@ -53,7 +53,10 @@ const SearchField = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
-  const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
+  const scopedTag = useMemo(
+    () => filterScopedTag(filter, datasource.languageProvider),
+    [datasource.languageProvider, filter]
+  );
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
   // there's only one value selected, so we store the previous operator and value

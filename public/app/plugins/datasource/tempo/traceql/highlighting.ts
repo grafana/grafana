@@ -116,7 +116,7 @@ export const getErrorNodes = (query: string): SyntaxNode[] => {
 };
 
 /**
- * Use red markers (squiggles) to highlight syntax errors in queries.
+ * Use markers (squiggles) to highlight syntax errors or warnings in queries.
  *
  */
 export const setMarkers = (
