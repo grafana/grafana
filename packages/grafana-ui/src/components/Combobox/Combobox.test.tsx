@@ -132,6 +132,12 @@ describe('Combobox', () => {
   });
 
   describe('async', () => {
+    let user: ReturnType<typeof userEvent.setup>;
+
+    beforeAll(() => {
+      user = userEvent.setup({ delay: null });
+    });
+
     beforeAll(() => {
       jest.useFakeTimers();
     });
@@ -148,7 +154,7 @@ describe('Combobox', () => {
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
-      await userEvent.click(input, { delay: null });
+      await user.click(input);
 
       expect(asyncOptions).toHaveBeenCalled();
     });
@@ -158,10 +164,10 @@ describe('Combobox', () => {
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
-      await userEvent.click(input, { delay: null });
+      await user.click(input);
 
       const item = await screen.findByRole('option', { name: 'Option 3' });
-      await userEvent.click(item, { delay: null });
+      await user.click(item);
 
       expect(onChangeHandler).toHaveBeenCalledWith(simpleAsyncOptions[2]);
       expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
@@ -180,9 +186,9 @@ describe('Combobox', () => {
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
-      await userEvent.click(input, { delay: null }); // First request
+      await user.click(input); // First request
 
-      await userEvent.keyboard('ab', { delay: null }); // Second request
+      await user.keyboard('ab'); // Second request
       jest.advanceTimersByTime(210); // Resolve the second request
 
       let item: HTMLElement | null = await screen.findByRole('option', { name: 'second' });
@@ -210,10 +216,10 @@ describe('Combobox', () => {
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} createCustomValue />);
 
       const input = screen.getByRole('combobox');
-      await userEvent.click(input, { delay: null });
+      await user.click(input);
 
       await act(async () => {
-        await userEvent.type(input, 'fir', { delay: null });
+        await user.type(input, 'fir');
         jest.advanceTimersByTime(500); // Custom value while typing
       });
 
