@@ -565,7 +565,7 @@ func setupTests(t *testing.T, service ssosettings.Service) *webtest.Server {
 	api := &Api{
 		Log:                logger,
 		RouteRegister:      routing.NewRouteRegister(),
-		AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		AccessControl:      acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()),
 		SSOSettingsService: service,
 	}
 

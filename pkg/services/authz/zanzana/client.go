@@ -13,14 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// Client is a wrapper around [openfgav1.OpenFGAServiceClient]
-type Client interface {
+// OpenFGAClient is a wrapper around [openfgav1.OpenFGAServiceClient]
+type OpenFGAClient interface {
 	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
 	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 	Write(ctx context.Context, in *openfgav1.WriteRequest) error
 }
 
-func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*client.Client, error) {
+func NewOpenFGAClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*client.OpenFGAClient, error) {
 	return client.New(
 		ctx,
 		cc,
@@ -29,6 +29,6 @@ func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cf
 	)
 }
 
-func NewNoopClient() *client.NoopClient {
+func NewNoopOpenFGAClient() *client.NoopOpenFGAClient {
 	return client.NewNoop()
 }

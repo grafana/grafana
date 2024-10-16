@@ -1859,7 +1859,7 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, sam
 	store := ssosettingstests.NewFakeStore()
 	fallbackStrategy := ssosettingstests.NewFakeFallbackStrategy()
 	secrets := secretsFakes.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 	reloadables := make(map[string]ssosettings.Reloadable)
 
 	fallbackStrategy.ExpectedIsMatch = true

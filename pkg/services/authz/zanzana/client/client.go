@@ -18,27 +18,27 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
-type ClientOption func(c *Client)
+type ClientOption func(c *OpenFGAClient)
 
 func WithTenantID(tenantID string) ClientOption {
-	return func(c *Client) {
+	return func(c *OpenFGAClient) {
 		c.tenantID = tenantID
 	}
 }
 
 func WithLogger(logger log.Logger) ClientOption {
-	return func(c *Client) {
+	return func(c *OpenFGAClient) {
 		c.logger = logger
 	}
 }
 
 func WithSchema(modules []transformer.ModuleFile) ClientOption {
-	return func(c *Client) {
+	return func(c *OpenFGAClient) {
 		c.modules = modules
 	}
 }
 
-type Client struct {
+type OpenFGAClient struct {
 	logger   log.Logger
 	client   openfgav1.OpenFGAServiceClient
 	modules  []transformer.ModuleFile
@@ -47,8 +47,8 @@ type Client struct {
 	modelID  string
 }
 
-func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*Client, error) {
-	c := &Client{
+func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*OpenFGAClient, error) {
+	c := &OpenFGAClient{
 		client: openfgav1.NewOpenFGAServiceClient(cc),
 	}
 
@@ -85,7 +85,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+func (c *OpenFGAClient) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
 	defer span.End()
 
@@ -94,7 +94,7 @@ func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfg
 	return c.client.Check(ctx, in)
 }
 
-func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+func (c *OpenFGAClient) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.ListObjects")
 	span.SetAttributes(attribute.String("resource.type", in.Type))
 	defer span.End()
@@ -104,14 +104,14 @@ func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsReque
 	return c.client.ListObjects(ctx, in)
 }
 
-func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+func (c *OpenFGAClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
 	_, err := c.client.Write(ctx, in)
 	return err
 }
 
-func (c *Client) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
+func (c *OpenFGAClient) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
 	store, err := c.getStore(ctx, name)
 
 	if errors.Is(err, errStoreNotFound) {
@@ -131,7 +131,7 @@ func (c *Client) getOrCreateStore(ctx context.Context, name string) (*openfgav1.
 
 var errStoreNotFound = errors.New("store not found")
 
-func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, error) {
+func (c *OpenFGAClient) getStore(ctx context.Context, name string) (*openfgav1.Store, error) {
 	var continuationToken string
 
 	// OpenFGA client does not support any filters for stores.
@@ -162,7 +162,7 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 	}
 }
 
-func (c *Client) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
+func (c *OpenFGAClient) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
 	var continuationToken string
 
 	model, err := schema.TransformModulesToModel(modules)

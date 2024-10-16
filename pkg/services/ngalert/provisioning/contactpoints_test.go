@@ -487,7 +487,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	receiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true),
+		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()), true),
 		legacy_storage.NewAlertmanagerConfigStore(configStore),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},

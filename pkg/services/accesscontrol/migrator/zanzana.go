@@ -28,11 +28,11 @@ type TupleCollector func(ctx context.Context, tuples map[string][]*openfgav1.Tup
 // needs to be cleared first.
 type ZanzanaSynchroniser struct {
 	log        log.Logger
-	client     zanzana.Client
+	client     zanzana.OpenFGAClient
 	collectors []TupleCollector
 }
 
-func NewZanzanaSynchroniser(client zanzana.Client, store db.DB, collectors ...TupleCollector) *ZanzanaSynchroniser {
+func NewZanzanaSynchroniser(client zanzana.OpenFGAClient, store db.DB, collectors ...TupleCollector) *ZanzanaSynchroniser {
 	// Append shared collectors that is used by both enterprise and oss
 	collectors = append(
 		collectors,

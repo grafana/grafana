@@ -6,20 +6,20 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-func NewNoop() *NoopClient {
-	return &NoopClient{}
+func NewNoop() *NoopOpenFGAClient {
+	return &NoopOpenFGAClient{}
 }
 
-type NoopClient struct{}
+type NoopOpenFGAClient struct{}
 
-func (nc NoopClient) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+func (nc NoopOpenFGAClient) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
 	return nil, nil
 }
 
-func (nc NoopClient) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+func (nc NoopOpenFGAClient) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	return nil, nil
 }
 
-func (nc NoopClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+func (nc NoopOpenFGAClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
 	return nil
 }

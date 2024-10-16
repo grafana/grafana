@@ -20,6 +20,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -900,7 +901,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, cfg
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopOpenFGAClient()),
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
@@ -1022,7 +1023,7 @@ func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secrets
 	var routes []*plugins.Route
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopOpenFGAClient()),
 		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
@@ -1078,7 +1079,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(dbtest.NewFakeDB(), secretsService, log.NewNopLogger())
 	features := featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
-	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
+	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopOpenFGAClient()),
 		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)

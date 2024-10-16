@@ -443,7 +443,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	service := ServiceImpl{
 		log:            log.New("navtree"),
 		cfg:            cfg,
-		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
 		pluginStore: &pluginstore.FakePluginStore{

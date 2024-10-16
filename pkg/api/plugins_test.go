@@ -12,11 +12,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -762,7 +763,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			}
 			hs.log = logger
 			hs.accesscontrolService = actest.FakeService{}
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tt.orgID,

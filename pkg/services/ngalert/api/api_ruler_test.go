@@ -654,7 +654,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())),
 		amConfigStore:  &fakeAMRefresher{},
 		amRefresher:    &fakeAMRefresher{},
 		featureManager: featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),

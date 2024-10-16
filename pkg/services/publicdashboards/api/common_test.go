@@ -57,7 +57,7 @@ func setupTestServer(
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 
 	// build mux
 	m := web.New()

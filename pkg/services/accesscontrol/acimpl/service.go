@@ -52,7 +52,7 @@ var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.E
 func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
-	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.OpenFGAClient, permRegistry permreg.PermissionRegistry,
 ) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db, permRegistry)
 
@@ -75,7 +75,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry,
+	zclient zanzana.OpenFGAClient, db db.DB, permRegistry permreg.PermissionRegistry,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,

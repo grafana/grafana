@@ -830,7 +830,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopOpenFGAClient())
 	folderPermissions := mock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
@@ -950,7 +950,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopOpenFGAClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
 

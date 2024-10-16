@@ -366,7 +366,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopOpenFGAClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
@@ -594,7 +594,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	interval2, err = adminClient.Create(ctx, interval2, v1.CreateOptions{})
 	require.NoError(t, err)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopOpenFGAClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
@@ -654,7 +654,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopOpenFGAClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()

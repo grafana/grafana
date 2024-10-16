@@ -66,7 +66,7 @@ func TestAccessControl_Evaluate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets), zanzana.NewNoopClient())
+			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets), zanzana.NewNoopOpenFGAClient())
 
 			if tt.scopeResolver != nil {
 				ac.RegisterScopeAttributeResolver(tt.resolverPrefix, tt.scopeResolver)

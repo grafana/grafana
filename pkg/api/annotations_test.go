@@ -403,7 +403,7 @@ func TestAPI_Annotations(t *testing.T) {
 				folderDB.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{UID: folderUID, ID: 1}, nil)
 				hs.DashboardService = dashService
 				hs.folderService = folderService
-				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, fStore))
 				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderDB, dashService, fStore))
 			})

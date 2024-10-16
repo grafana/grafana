@@ -456,12 +456,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService(features)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(),
+		features, tracing.InitializeTracerForTest(), zanzana.NewNoopOpenFGAClient(), sc.db, permreg.ProvidePermissionRegistry(),
 	)
 	fStore := folderimpl.ProvideStore(sc.db)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
@@ -496,7 +496,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		DashboardService: dashboardSvc,
 	}
 
-	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 
 	m.Get("/api/folders", hs.GetFolders)

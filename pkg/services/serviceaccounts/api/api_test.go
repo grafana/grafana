@@ -307,7 +307,7 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 		cfg:                  cfg,
 		service:              &satests.FakeServiceAccountService{},
 		accesscontrolService: &actest.FakeService{},
-		accesscontrol:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		accesscontrol:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()),
 		RouterRegister:       routing.NewRouteRegister(),
 		log:                  log.NewNopLogger(),
 		permissionService:    &actest.FakePermissionsService{},

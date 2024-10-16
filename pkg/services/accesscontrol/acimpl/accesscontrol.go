@@ -27,7 +27,7 @@ var (
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
-func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.Client) *AccessControl {
+func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.OpenFGAClient) *AccessControl {
 	logger := log.New("accesscontrol")
 
 	var m *acMetrics
@@ -45,14 +45,14 @@ func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.C
 }
 
 func ProvideAccessControlTest() *AccessControl {
-	return ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	return ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 }
 
 type AccessControl struct {
 	features  featuremgmt.FeatureToggles
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
-	zclient   zanzana.Client
+	zclient   zanzana.OpenFGAClient
 	metrics   *acMetrics
 }
 

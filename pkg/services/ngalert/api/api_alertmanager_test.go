@@ -565,9 +565,9 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	}
 	mam := createMultiOrgAlertmanager(t, configs)
 	log := log.NewNopLogger()
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 	ruleStore := ngfakes.NewRuleStore(t)
-	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()))
+	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()))
 	return AlertmanagerSrv{
 		mam:            mam,
 		crypto:         mam.Crypto,

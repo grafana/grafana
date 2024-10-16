@@ -61,7 +61,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
-		AccessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		AccessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()),
 	}
 
 	mockResult := user.SearchUserQueryResult{

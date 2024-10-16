@@ -131,7 +131,7 @@ func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
+		features, acimpl.ProvideAccessControl(features, zanzana.NewNoopOpenFGAClient()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
 	require.NoError(t, err)
 	return gLive
 }
@@ -148,7 +148,7 @@ func TestHTTPServer_GetDashboard_AccessControl(t *testing.T) {
 			hs.DashboardService = dashSvc
 
 			hs.Cfg = setting.NewCfg()
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 			hs.starService = startest.NewStarServiceFake()
 			hs.dashboardProvisioningService = mockDashboardProvisioningService{}
 
@@ -267,7 +267,7 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 			hs.DashboardService = dashSvc
 
 			hs.Cfg = setting.NewCfg()
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 			hs.starService = startest.NewStarServiceFake()
 
 			hs.LibraryPanelService = &mockLibraryPanelService{}
@@ -323,7 +323,7 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 			hs.DashboardService = dashSvc
 
 			hs.Cfg = setting.NewCfg()
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 			hs.starService = startest.NewStarServiceFake()
 
 			hs.dashboardVersionService = &dashvertest.FakeDashboardVersionService{

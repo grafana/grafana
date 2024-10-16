@@ -958,7 +958,7 @@ func setupAccessControlGuardianTest(
 	fakeDashboardService := dashboards.NewFakeDashboardService(t)
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())
 
 	fStore := folder.NewFakeStore()
 	folderStore := foldertest.NewFakeFolderStore(t)

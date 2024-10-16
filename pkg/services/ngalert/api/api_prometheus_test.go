@@ -562,7 +562,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			manager: fakeAIM,
 			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 			store:   ruleStore,
-			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())),
 		}
 
 		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
@@ -678,7 +678,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				manager: fakeAIM,
 				status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 				store:   ruleStore,
-				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient())),
 			}
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}

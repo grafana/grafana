@@ -37,7 +37,7 @@ func Test_provideLiveService_RedisUnavailable(t *testing.T) {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
+		featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopOpenFGAClient()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
 
 	// Proceeds without live HA if redis is unavaialble
 	require.NoError(t, err)
