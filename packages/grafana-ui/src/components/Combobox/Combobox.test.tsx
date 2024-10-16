@@ -132,8 +132,12 @@ describe('Combobox', () => {
   });
 
   describe('async', () => {
-    beforeEach(() => {
+    beforeAll(() => {
       jest.useFakeTimers();
+    });
+
+    afterAll(() => {
+      jest.useRealTimers();
     });
 
     // Assume that most apis only return with the value
