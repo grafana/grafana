@@ -783,7 +783,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	kvStore := kvstore.ProvideService(sqlStore)
 
 	bus := bus.ProvideBus(tracer)
-	fakeAccessControl := actest.FakeAccessControl{}
+	fakeAccessControl := actest.FakeAccessControl{ExpectedEvaluate: true}
 	fakeAccessControlService := actest.FakeService{}
 	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
 
@@ -799,9 +799,6 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	require.NoError(t, err)
 
 	var validConfig = `{
-		"template_files": {
-			"a": "template"
-		},
 		"alertmanager_config": {
 			"route": {
 				"receiver": "grafana-default-email"
