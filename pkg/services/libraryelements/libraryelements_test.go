@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -307,6 +308,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
+		client.NewNoopZanzanaClient(),
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
@@ -394,7 +396,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
+		features, folderPermissions, dashboardPermissions, ac, client.NewNoopZanzanaClient(),
 		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil,
 	)
@@ -456,7 +458,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
-			features, folderPermissions, dashboardPermissions, ac,
+			features, folderPermissions, dashboardPermissions, ac, client.NewNoopZanzanaClient(),
 			foldertest.NewFakeService(), folder.NewFakeStore(),
 			nil,
 		)

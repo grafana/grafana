@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -874,6 +875,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			folderPermissions,
 			dashboardPermissions,
 			ac,
+			client.NewNoopZanzanaClient(),
 			foldertest.NewFakeService(),
 			folder.NewFakeStore(),
 			nil,
@@ -940,6 +942,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		folderPermissions,
 		dashboardPermissions,
 		actest.FakeAccessControl{},
+		client.NewNoopZanzanaClient(),
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
@@ -965,6 +968,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
+		client.NewNoopZanzanaClient(),
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
@@ -1009,6 +1013,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		accesscontrolmock.NewMockedPermissionsService(),
 		dashboardPermissions,
 		actest.FakeAccessControl{},
+		client.NewNoopZanzanaClient(),
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,
@@ -1060,6 +1065,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		folderPermissions,
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
+		client.NewNoopZanzanaClient(),
 		foldertest.NewFakeService(),
 		folder.NewFakeStore(),
 		nil,

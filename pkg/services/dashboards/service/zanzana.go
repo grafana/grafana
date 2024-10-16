@@ -8,11 +8,10 @@ import (
 	"sync"
 	"time"
 
+	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/authlib/claims"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
@@ -193,23 +192,22 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashb
 					objectType = zanzana.TypeFolder
 				}
 
-				req := accesscontrol.CheckRequest{
+				req := &authzlib.CheckRequest{
 					Namespace: claims.OrgNamespaceFormatter(orgId),
-					User:      query.SignedInUser.GetUID(),
-					Relation:  "read",
-					Object:    zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
+					Action:    "read",
+					Name:      zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
 				}
 
 				if objectType != zanzana.TypeFolder {
 					// Pass parentn folder for the correct check
 					req.Parent = d.FolderUID
-					req.ObjectType = objectType
+					req.Resource = objectType
 				}
 
-				allowed, err := dr.ac.Check(ctx, req)
+				checkRes, err := dr.zclient.Check(ctx, query.SignedInUser, req)
 				if err != nil {
 					dr.log.Error("error checking access", "error", err)
-				} else if allowed {
+				} else if checkRes.Allowed {
 					allowedResults <- d
 				}
 			}
@@ -290,10 +288,9 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 }
 
 func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
-	res, err := dr.ac.ListObjects(ctx, accesscontrol.ListObjectsRequest{
-		User:     query.SignedInUser.GetUID(),
-		Type:     resourceType,
-		Relation: "read",
+	res, err := dr.zclient.List(ctx, query.SignedInUser, &zanzana.ListRequest{
+		Resource: resourceType,
+		Action:   "read",
 	})
 	if err != nil {
 		return nil, err
