@@ -14503,7 +14503,7 @@
           "type": "string"
         },
         "ErrorSource": {
-          "$ref": "#/definitions/ErrorSource"
+          "$ref": "#/definitions/Source"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -20478,6 +20478,10 @@
         }
       }
     },
+    "Source": {
+      "type": "string",
+      "title": "Source type defines the status source."
+    },
     "Span": {
       "type": "object",
       "title": "A Span defines a continuous sequence of buckets.",
@@ -23756,10 +23760,7 @@
     "getTeamLBACRulesResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/TeamLBACRules"
-        }
+        "$ref": "#/definitions/TeamLBACRules"
       }
     },
     "getTeamMembersResponse": {
