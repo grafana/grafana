@@ -119,7 +119,7 @@ For more information, refer to [Metrics and labels](https://prometheus.io/docs/c
 
 #### Define recording rule
 
-Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
+Define a query to get the data you want to measure and set the condition.
 
 1. Select a data source.
 1. From the **Options** dropdown, specify a time range.
@@ -134,11 +134,9 @@ It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:
 
    To add multiple queries, click **Add query**.
 
-   All alert rules are managed by Grafana by default. If you want to switch to a data source-managed alert rule, click **Switch to data source-managed alert rule**.
-
 2. Add one or more [expressions].
 
-   a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
+   a. For each expression, select either **Classic condition** to create a single recording rule, or choose from the **Math**, **Reduce**, and **Resample** options.
 
    {{% admonition type="note" %}}
    When using Prometheus, you can use an instant vector and built-in functions, so you don't need to add additional expressions.
@@ -146,17 +144,17 @@ It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:
 
    b. Click **Preview** to verify that the expression is successful.
 
-3. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
+3. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your recording rule should stop metting the condition.
 
-   You can only add one recovery threshold in a query and it must be the alert condition.
+   You can only add one recovery threshold in a query and it must be the recording rule condition.
 
-4. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
+4. Click **Set as recording rule condition** on the query or expression you want to set as your rule condition.
 
 #### Set evaluation behavior
 
-Use alert rule evaluation to determine how frequently an alert rule should be evaluated and how quickly it should change its state.
+Use recording rule evaluation to determine how frequently an recording rule should be evaluated and how quickly it should change its state.
 
-To do this, you need to make sure that your alert rule is in the right evaluation group and set a pending period time that works best for your use case.
+To do this, you need to make sure that your recording rule is in the right evaluation group and set a pending period time that works best for your use case.
 
 1. Select a folder or click **+ New folder**.
 1. Select an evaluation group or click **+ New evaluation group**.
@@ -165,20 +163,14 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    All rules within the same group are evaluated concurrently over the same time interval.
 
-1. Enter a pending period.
-
-   The pending period is the period in which an alert rule can be in breach of the condition until it fires.
-
-   Once a condition is met, the alert goes into the **Pending** state. If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
-
-1. Turn on pause alert notifications, if required.
+1. Turn on pause recording rule evaluation, if required.
 
    {{< admonition type="note" >}}
-   You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts.
-   Pausing stops alert rule evaluation and doesn't create any alert instances.
-   This is different to mute timings, which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
+   You can pause recording rule evaluation.
    {{< /admonition >}}
 
 #### Add labels
 
-Add labels to your rule for searching, silencing, or routing to a notification policy.
+1. Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
+
+1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
