@@ -15,588 +15,309 @@ title: Notification template examples
 menuTitle: Examples
 weight: 103
 refs:
+  template-annotations-and-labels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
+  template-notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
   manage-notification-templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/#create-a-notification-template
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/#create-a-notification-template
-  template-language:
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
+  reference:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
-  language-dot:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
-    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
-  language-range:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#range
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#range
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
   reference-notification-data:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#notification-data
-  language-variables:
+  reference-alert:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#alert
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#variables
-  language-if:
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#alert
+  language:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#if
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#if
-  language-index:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#functions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#functions
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
 ---
 
 # Notification template examples
 
-This document is a compilation of common use cases for templating within Grafana notification templates. Templating in notification templates allows you to dynamically customize the title, message, and format of alert notifications. The template can dynamically insert relevant information—such as alert labels, metrics, and values—into your notifications. Moreover, notification templates can be easily reused across contact points.
+Notification templates allows you to change the default notification messages.
 
-Each example provided here applies specifically to notification templates (note that the syntax and behavior may differ from alert rule templating). For examples related to templating within alert rules, please refer to the [labels and annotations template examples](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/templates/examples/) document.
+You can modify the content and format of notification messages. For example, you can customize the content to show only specific information or adjust the format to suit a particular contact point, such as Slack or Email.
 
-> Find step-by-step instructions on [how to create notification templates](ref:manage-notification-templates) for more detailed guidance.
+{{% admonition type="note" %}}
+Avoid adding extra information about alert instances in notification templates, as this information will only be visible in the notification message.
 
-## Examples utilizing templating constructs and functions
+Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
+{{% /admonition %}}
 
-This first collection of examples showcase the main templating elements that you can use to customize alert notifications.
+This page provides various examples illustrating how to template common notification messages. For more details about notification templates, refer to:
 
-### The index function
+- [Template notifications](ref:template-notifications)
+- [Select, create, and preview a notification template](ref:manage-notification-templates)
+- [Notification template reference](ref:reference)
 
-To print a specific annotation or label use the `index` function.
+## Basic examples
 
+Notification templates can access the [notification data](ref:reference-notification-data) using the dot (`.`). The following examples demonstrate some basic uses of the [template language](ref:language).
+
+For instance, to check if there are common labels (`.CommonLabels`) for all alerts in the notification, use `if`:
+
+```go
+{{ define "custom_message" -}}
+{{ if .CommonLabels }}
+Alerts have common labels
+{{ else }}
+There are no common labels
+{{ end }}
+{{ end }}
 ```
+
+To iterate over the alerts in the notification and print a specific label, use `range` and `index`:
+
+```go
+{{ define "custom_message" -}}
 {{ range .Alerts }}
 The name of the alert is {{ index .Labels "alertname" }}
 {{ end }}
-```
-
-- [`{{ index }}`](ref:language-index): Used to access specific elements from a map or slice, helping to extract label values.
-
-### If statements
-
-You can use if statements in templates. For example, to print `There are no alerts` if there are no alerts in `.Alerts` you would write the following:
-
-```
-{{ if .Alerts }}
-There are alerts
-{{ else }}
-There are no alerts
 {{ end }}
 ```
 
-- [`{{ if }}`](ref:language-if): Introduces conditional logic to set the severity label dynamically.
-
-### With
-
-With is similar to if statements, however unlike if statements, `with` updates dot to refer to the value of the with:
-
-```
-{{ with .Alerts }}
-There are {{ len . }} alert(s)
-{{ else }}
-There are no alerts
-{{ end }}
-```
-
-- [`{{ with }}`](ref:language-with): a control structure that updates the [dot](ref:language-dot) cursor to refer to the value passed to with. If the value is empty or false, it falls back to the `else` block.
-
-### Variables
-
-Variables are used to store values within a template. Variables are defined using `{{ $variable := value }}` and can be reused throughout the template.
-
-```
-{{ range .Alerts }}
-{{ $alert := . }}
-{{ range .Labels.SortedPairs }}
-{{ .Name }} = {{ .Value }}
-There are {{ len $alert.Labels }}
-{{ end }}
-{{ end }}
-```
-
-- [`Variables`](ref:language-variables) must be created within the template.
-- You can use `$variable` inside a range or `with` and it will refer to the value of dot at the time the variable was defined, not the current value of dot.
-
-### Iterate over alerts
-
-To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which are initialized with data. See [ExtendedData](ref:reference-notification-data).
-
-```
-{{ range .Alerts }}
-{{ .Labels }}
-{{ end }}
-```
-
-- [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
-- [ExtendedData](ref:reference-notification-data): additional data that is not part of the standard set of fields the [dot](ref:language-dot) cursor is initialized with.
-
-### Iterate over annotations and labels
-
-This template iterates over each alert and its associated labels and annotations. It formats the output to display the name and value of each label and annotation.
-
-```
-{{ range .Alerts }}
-{{ range .Labels.SortedPairs }}
-The name of the label is {{ .Name }}, and the value is {{ .Value }}
-{{ end }}
-{{ range .Annotations.SortedPairs }}
-The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
-{{ end }}
-{{ end }}
-```
-
-- `Outer Range`: `{{ range .Alerts }}` iterates over each alert in the list.
-- `.Labels`: The inner range `{{ range .Labels.SortedPairs }}` accesses each label, printing its name and value.
-- `.Annotations`: A similar inner range for annotations prints their names and values.
-
-### Range with index
-
-You can get the index of each alert within a range by defining index and value variables at the start of the range:
-
-```
-{{ $num_alerts := len .Alerts }}
-{{ range $index, $alert := .Alerts }}
-This is alert {{ $index }} out of {{ $num_alerts }}
-{{ end }}
-```
-
-## Common use cases
-
-Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-language).
-
-> Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See the note in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
-
-### Listing multiple alert instances in a single notification
-
-When multiple alerts are fired, a notification template can summarize affected instances, making it easier to track issues like high CPU usage across systems. For example, use this template to list all instances with high CPU usage when multiple alerts fire at once:
+Alternatively, you can use the `.` notation to print the value of the key.
 
 ```go
-{{ define "default.message" }}
-The following instances have high CPU usage:
-{{ range .Alerts.Firing }}
-  - Instance: {{ .Labels.instance }}, CPU Usage: {{ .Values.A }}%
+{{ define "custom_message" -}}
+{{ range .Alerts }}
+The name of the alert is {{ .Labels.alertname }}
 {{ end }}
 {{ end }}
 ```
 
-This would print:
+```template_output
+The name of the alert is InstanceDown
 
-```
-The following instances have high CPU usage:
-- Instance: est-03, CPU Usage: 79%
-- Instance: wst-02, CPU Usage: 74%
+The name of the alert is CpuOverload
 ```
 
-### Firing and resolved alerts, with summary annotation
+## Print alerts with summary and description
 
-This template prints the summary of all firing and resolved alerts. It requires a summary annotation in each alert.
-
-```
-{{ define "alerts.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s)
-{{ template "alerts.summarize" .Alerts.Firing }}
-{{- end }}
-{{- if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s)
-{{ template "alerts.summarize" .Alerts.Resolved }}
-{{- end }}
-{{- end }}
-
-{{ define "alerts.summarize" -}}
-{{ range . -}}
-- {{ index .Annotations "summary" }}
-{{ end }}
-{{ end }}
-```
-
-The output of this template looks like this:
-
-```
-1 firing alert(s)
-- The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
-
-1 resolved alert(s)
-- The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
-```
-
-### Firing and resolved alerts, with summary, description, and runbook URL
-
-This template shows the summary, the description, and the runbook URL of all firing and resolved alerts. The Description and Runbook URL are optional and are omitted if absent from the alert. It requires a summary annotation in each alert.
-
-```
-{{ define "alerts.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s)
-{{ template "alerts.summarize_large" .Alerts.Firing }}
-{{- end }}
-{{- if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s)
-{{ template "alerts.summarize_large" .Alerts.Resolved }}
-{{- end }}
-{{- end }}
-
-{{ define "alerts.summarize_large" -}}
-{{ range . }}
-Summary: {{ index .Annotations "summary" }}
-{{- if index .Annotations "description" }}
-Description: {{ index .Annotations "description" }}{{ end }}
-{{- if index .Annotations "runbook_url" }}
-Runbook: {{ index .Annotations "runbook_url" }}{{ end }}
-{{ end }}
-{{ end }}
-```
-
-The output of this template looks like this:
-
-```
-1 firing alert(s)
-Summary: The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
-Description: This alert fires when a database server is at risk of running out of disk space. You should take measures to increase the maximum available disk space as soon as possible to avoid possible corruption.
-Runbook: https://example.com/on-call/database_server_high_disk_usage
-
-1 resolved alert(s)
-Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
-Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service. Please refer to the runbook for more information.
-Runbook: https://example.com/on-call/web_server_high_5xx_rate
-```
-
-### Firing and resolved alerts, with labels, summary, and silencing
-
-This template example prints the summary annotation, and then links to both silence the alert and show in the alert in Grafana. It requires a summary annotation in each alert.
-
-```
-{{ define "alerts.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s)
-{{ template "alerts.summarize_with_links" .Alerts.Firing }}
-{{- end }}
-{{- if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s)
-{{ template "alerts.summarize_with_links" .Alerts.Resolved }}
-{{- end }}
-{{- end }}
-
-{{ define "alerts.summarize_with_links" -}}
-{{ range . -}}
-{{ range $k, $v := .Labels }}{{ $k }}={{ $v }} {{ end }}
-{{ index .Annotations "summary" }}
-{{- if eq .Status "firing" }}
-- Silence this alert: {{ .SilenceURL }}{{ end }}
-- View on Grafana: {{ .GeneratorURL }}
-{{ end }}
-{{ end }}
-```
-
-The output of this template looks like this:
-
-```
-1 firing alert(s):
-alertname=database_high_disk_usage server=db1
-The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
-- Silence this alert: https://example.com/grafana/alerting/silence/new
-- View on Grafana: https://example.com/grafana/alerting/grafana/view
-
-1 resolved alert(s):
-alertname=web_server_high_5xx_rate server=web1
-The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
-- View on Grafana: https://example.com/grafana/alerting/grafana/view
-```
-
-### Label-based conditional template
-
-Template alert notifications based on a label. In this example the label represents a namespace.
-
-Use the following code in your notification template to display different messages based on the namespace:
+Here's an example that displays the summary and description annotations for each alert in the notification.
 
 ```go
-{{ define "my_conditional_notification" }}
-{{ if eq .CommonLabels.namespace "namespace-a" }}
-Alert: CPU limits have reached 80% in namespace-a.
-{{ else if eq .CommonLabels.namespace "namespace-b" }}
-Alert: CPU limits have reached 80% in namespace-b.
-{{ else if eq .CommonLabels.namespace "namespace-c" }}
-Alert: CPU limits have reached 80% in namespace-c.
-{{ else }}
-Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
+{{ define "custom.alerts" -}}
+{{ len .Alerts }} alert(s)
+{{ range .Alerts -}}
+  {{ template "alert.summary_and_description" . -}}
+{{ end -}}
+{{ end -}}
+{{ define "alert.summary_and_description" }}
+  Summary: {{.Annotations.summary}}
+  Status: {{ .Status }}
+  Description: {{.Annotations.description}}
+{{ end -}}
+```
+
+In this example:
+
+- A template (`alert.summary_and_description`) is defined to print the `summary`, `status`, and `description` of one [alert](ref:reference-alert).
+- The main template `custom.alerts` iterates the list of alerts (`.Alerts`) in [notification data](ref:reference-notification-data), executing the `alert.summary_and_description` template to print the details of each alert.
+
+The notification message would look like this:
+
+```template_output
+2 alert(s)
+
+  Summary: The database server db1 has exceeded 75% of available disk space.
+  Status: firing
+  Description: This alert fires when a database server is at risk of running out of disk space. You should take measures to increase the maximum available disk space as soon as possible to avoid possible corruption.
+
+  Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
+  Status: resolved
+  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+```
+
+## Print firing and resolved alerts
+
+The following example is similar to the previous one, but it separates firing and resolved alerts.
+
+```go
+{{ define "custom.firing_and_resolved_alerts" -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ range .Alerts.Resolved -}}
+  {{ template "alert.summary_and_description" . -}}
 {{ end }}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ range .Alerts.Firing -}}
+  {{ template "alert.summary_and_description" . -}}
+{{ end -}}
+{{ end -}}
+{{ define "alert.summary_and_description" }}
+  Summary: {{.Annotations.summary}}
+  Status: {{ .Status }}
+  Description: {{.Annotations.description}}
+{{ end -}}
+```
+
+Instead of `.Alerts`, the template accesses `.Alerts.Firing` and `.Alerts.Resolved` separately to print details for each alert.
+
+The output might now look like this:
+
+```template_output
+1 resolved alert(s)
+
+  Summary: The database server db1 has exceeded 75% of available disk space.
+  Status: resolved
+  Description: This alert fires when a database server is at risk of running out of disk space. You should take measures to increase the maximum available disk space as soon as possible to avoid possible corruption.
+
+1 firing alert(s)
+
+  Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
+  Status: firing
+  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+```
+
+## Print common labels and annotations
+
+This example displays only the labels and annotations that are common to all alerts in the notification.
+
+```go
+{{ define "custom.common_labels_and_annotations" -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ len .Alerts.Firing }} firing alert(s)
+Common labels: {{ len .CommonLabels.SortedPairs }}
+{{ range .CommonLabels.SortedPairs -}}
+- {{ .Name }} = {{ .Value }}
 {{ end }}
+Common annotations: {{ len .CommonAnnotations.SortedPairs }}
+{{ range .CommonAnnotations.SortedPairs }}
+- {{ .Name }} = {{ .Value }}
+{{ end }}
+{{ end -}}
 ```
 
-This template alters the content of alert notifications depending on the namespace value.
+Note that `.CommonAnnotations` and `.CommonLabels` are part of [notification data](ref:reference-notification-data).
 
-- Make sure to replace the `.namespace` label with a label that exists in your alert rule. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values. \*\*
+```template_output
+1 resolved alert(s)
+1 firing alert(s)
+Common labels: 2
+- grafana_folder = server_alerts
+- team = server_admin
 
-- `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
-
-## Templates for contact points
-
-Though the way alerts are processed remains largely uniform across contact points, the templates are tailored to suit the unique characteristics of each platform. Each contact point has its own formatting standards, interaction methods, and message presentation styles. These templates are customized to ensure that alerts are displayed effectively and aligned with the communication model of each platform, delivering a cohesive user experience across different channels.
-
-### Email
-
-#### Template the subject of an email
-
-Template the subject of an email to contain the number of firing and resolved alerts:
-
-```
-1 firing alert(s), 0 resolved alerts(s)
+Common annotations: 0
 ```
 
-1. Create a template called `email.subject` with the following content:
+## Print individual labels and annotations
 
-   ```
-   {{ define "email.subject" }}
-   {{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
-   {{ end }}
-   ```
+This example displays all labels and annotations for each [alert](ref:reference-alert) in the notification.
 
-2. Execute the template from the subject field in your contact point integration:
-
-   ```
-   {{ template "email.subject" . }}
-   ```
-
-#### Template the message of an email
-
-Template the message of an email to contain a summary of all firing and resolved alerts:
-
-```
-There are 2 firing alert(s), and 1 resolved alert(s)
-
-Firing alerts:
-
-- alertname=Test 1 grafana_folder=GrafanaCloud has value(s) B=1
-- alertname=Test 2 grafana_folder=GrafanaCloud has value(s) B=2
-
-Resolved alerts:
-
-- alertname=Test 3 grafana_folder=GrafanaCloud has value(s) B=0
+```go
+{{ define "custom.alert_labels_and_annotations" -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ range .Alerts.Resolved -}}
+  {{ template "alert.labels_and_annotations" . -}}
+{{ end }}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ range .Alerts.Firing -}}
+  {{ template "alert.labels_and_annotations" . -}}
+{{ end -}}
+{{ end -}}
+{{ define "alert.labels_and_annotations" }}
+Alert labels: {{ len .Labels.SortedPairs }}
+{{ range .Labels.SortedPairs -}}
+- {{ .Name }} = {{ .Value }}
+{{ end -}}
+Alert annotations: {{ len .Annotations.SortedPairs }}
+{{ range .Annotations.SortedPairs -}}
+- {{ .Name }} = {{ .Value }}
+{{ end -}}
+{{ end -}}
 ```
 
-1. Create a notification template called `email` with two templates in the content: `email.message_alert` and `email.message`.
+In this example:
 
-   The `email.message_alert` template is used to print the labels and values for each firing and resolved alert while the `email.message` template contains the structure of the email.
+- The `custom.alert_labels_and_annotations` template iterates over the list of resolved and firing alerts, similar to previous examples. It then executes `alert.labels_and_annotations` for each alert.
+- The `alert.labels_and_annotations` template prints all the alert labels and annotations by accessing `.Labels.SortedPairs` and `.Annotations.SortedPairs`.
 
-   ```
-   {{- define "email.message_alert" -}}
-   {{- range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }} has value(s)
-   {{- range $k, $v := .Values }} {{ $k }}={{ $v }}{{ end }}
-   {{- end -}}
+```template_output
+1 resolved alert(s)
 
-   {{ define "email.message" }}
-   There are {{ len .Alerts.Firing }} firing alert(s), and {{ len .Alerts.Resolved }} resolved alert(s)
+Alert labels: 4
+- alertname = db_server_disk_space
+- grafana_folder = server_alerts
+- server = db1
+- team = server_admin
 
-   {{ if .Alerts.Firing -}}
-   Firing alerts:
-   {{- range .Alerts.Firing }}
-   - {{ template "email.message_alert" . }}
-   {{- end }}
-   {{- end }}
+Alert annotations: 2
+- summary = The database server db1 has exceeded 75% of available disk space.
+- description = This alert fires when a database server is at risk of running out of disk space. You should take measures to increase the maximum available disk space as soon as possible to avoid possible corruption.
 
-   {{ if .Alerts.Resolved -}}
-   Resolved alerts:
-   {{- range .Alerts.Resolved }}
-   - {{ template "email.message_alert" . }}
-   {{- end }}
-   {{- end }}
+1 firing alert(s)
 
-   {{ end }}
-   ```
+Alert labels: 4
+- alertname = web_server_http_errors
+- grafana_folder = server_alerts
+- server = web1
+- team = server_admin
 
-2. Execute the template from the message field in your contact point integration:
-
-   ```
-   {{ template "email.message" . }}
-   ```
-
-#### Group multiple alert instances into one email notification
-
-To make alerts more concise, you can group multiple instances of a firing alert into a single email notification in a table format. This way, you avoid long, repetitive emails and make alerts easier to digest.
-
-Follow these steps to create a custom notification template that consolidates alert instances into a table.
-
-1. Modify the alert rule to include an annotation that is referenced in the notification template later on.
-1. Enter a name for the **custom annotation**: In this example, _ServerInfo_.
-1. Enter the following code as the value for the annotation. It retrieves the server's instance name and a corresponding metric value, formatted as a table row:
-
-   ```
-   {{ index $labels "instance" }}{{- "\t" -}}{{ index $values "A"}}{{- "\n" -}}
-   ```
-
-   This line of code returns the labels and their values in the form of a table. Assuming $labels has `{"instance": "node1"}` and $values has `{"A": "123"}`, the output would be:
-
-   ```
-   node1    123
-   ```
-
-1. Create a notification template that references the _ServerInfo_ annotation.
-
-   ```go
-   {{ define "Table" }}
-   {{- "\nHost\t\tValue\n" -}}
-   {{ range .Alerts -}}
-   {{ range .Annotations.SortedPairs -}}
-   {{ if (eq .Name  "ServerInfo") -}}
-   {{ .Value -}}
-   {{- end }}
-   {{- end }}
-   {{- end }}
-   {{ end }}
-   ```
-
-   The notification template outputs a list of server information from the "ServerInfo" annotation for each alert instance.
-
-1. Navigate to your contact point in Grafana
-1. In the **Message** field, reference the template by name (see **Optional Email settings** section):
-
-   ```
-   {{ template "Table" . }}
-   ```
-
-   This generates a neatly formatted table in the email, grouping information for all affected servers into a single notification.
-
-### Slack
-
-#### Template the title of a Slack message
-
-Template the title of a Slack message to contain the number of firing and resolved alerts:
-
-```
-1 firing alert(s), 0 resolved alerts(s)
+Alert annotations: 2
+- summary = The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
+- description = This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
 ```
 
-1. Create a template called `slack.title` with the following content:
+## Print URLs for runbook and alert data in Grafana
 
-   ```
-   {{ define "slack.title" }}
-   {{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
-   {{ end }}
-   ```
+The following example displays additional [alert data](ref:reference-alert), such as the runbook link, `DashboardURL` and `SilenceURL`, for each alert in the notification.
 
-2. Execute the template from the title field in your contact point integration:
-
-   ```
-   {{ template "slack.title" . }}
-   ```
-
-#### Template the content of a Slack message
-
-Template the content of a Slack message to contain a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL.
-
-**Note:**
-
-This template is for Grafana-managed alerts only.
-To use the template for data source-managed alerts, delete the references to DashboardURL and SilenceURL.
-For more information, see the [Prometheus documentation on notifications](https://prometheus.io/docs/alerting/latest/notifications/).
-
-1. Create a template called `slack` with two templates in the content: `slack.print_alert` and `slack.message`.
-
-   The `slack.print_alert` template is used to print the labels, annotations, SilenceURL and DashboardURL while the `slack.message` template contains the structure of the notification.
-
-   ```
-   {{ define "slack.print_alert" -}}
-   [{{.Status}}] {{ .Labels.alertname }}
-   Labels:
-   {{ range .Labels.SortedPairs -}}
-   - {{ .Name }}: {{ .Value }}
-   {{ end -}}
-   {{ if .Annotations -}}
-   Annotations:
-   {{ range .Annotations.SortedPairs -}}
-   - {{ .Name }}: {{ .Value }}
-   {{ end -}}
-   {{ end -}}
-   {{ if .SilenceURL -}}
-     Silence: {{ .SilenceURL }}
-   {{ end -}}
-   {{ if .DashboardURL -}}
-     Go to dashboard: {{ .DashboardURL }}
-   {{- end }}
-   {{- end }}
-
-   {{ define "slack.message" -}}
-   {{ if .Alerts.Firing -}}
-   {{ len .Alerts.Firing }} firing alert(s):
-   {{ range .Alerts.Firing }}
-   {{ template "slack.print_alert" . }}
-   {{ end -}}
-   {{ end }}
-   {{ if .Alerts.Resolved -}}
-   {{ len .Alerts.Resolved }} resolved alert(s):
-   {{ range .Alerts.Resolved }}
-   {{ template "slack.print_alert" .}}
-   {{ end -}}
-   {{ end }}
-   {{- end }}
-   ```
-
-2. Execute the template from the text body field in your contact point integration:
-
-   ```
-   {{ template "slack.message" . }}
-   ```
-
-   Thiswould print:
-
-   ```
-   1 firing alert(s):
-
-   [firing] Test1
-   Labels:
-   - alertname: Test1
-   - grafana_folder: GrafanaCloud
-   Annotations:
-   - description: This is a test alert
-   Silence: https://example.com/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTest1&matcher=grafana_folder%3DGrafanaCloud
-   Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
-
-   1 resolved alert(s):
-
-   [firing] Test2
-   Labels:
-   - alertname: Test2
-   - grafana_folder: GrafanaCloud
-   Annotations:
-   - description: This is another test alert
-   Silence: https://example.com/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTest2&matcher=grafana_folder%3DGrafanaCloud
-   Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
-   ```
-
-### Template both email and Slack with shared templates
-
-Instead of creating separate notification templates for email and Slack, you can share the same template.
-
-For example, if you want to send an email with this subject and Slack message with this title:
-
-```
-1 firing alert(s), 0 resolved alerts(s)
+```go
+{{ define "custom.alert_additional_details" -}}
+{{ len .Alerts.Resolved }} resolved alert(s)
+{{ range .Alerts.Resolved -}}
+  {{ template "alert.additional_details" . -}}
+{{ end }}
+{{ len .Alerts.Firing }} firing alert(s)
+{{ range .Alerts.Firing -}}
+  {{ template "alert.additional_details" . -}}
+{{ end -}}
+{{ end -}}
+{{ define "alert.additional_details" }}
+- Dashboard: {{ .DashboardURL }}
+- Panel: {{ .PanelURL }}
+- AlertGenerator: {{ .GeneratorURL }}
+- Silence: {{ .SilenceURL }}
+- RunbookURL: {{ .Annotations.runbook_url}}
+{{ end -}}
 ```
 
-1. Create a template called `common.subject_title` with the following content:
+The output of this template looks like this:
 
-   ```
-   {{ define "common.subject_title" }}
-   {{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
-   {{ end }}
-   ```
+```template_output
+1 resolved alert(s)
 
-2. For email, execute the template from the subject field in your email contact point integration:
+- Dashboard: https://example.com/d/
+- Panel: https://example.com/d/
+- AlertGenerator: ?orgId=1
+- Silence: https://example.com/alerting/silence/new
+- RunbookURL: https://example.com/on-call/db_server_disk_space
 
-   ```
-   {{ template "common.subject_title" . }}
-   ```
+1 firing alert(s)
 
-3. For Slack, execute the template from the title field in your Slack contact point integration:
-
-   ```
-   {{ template "common.subject_title" . }}
-   ```
+- Dashboard: https://example.com/d/
+- Panel: https://example.com/d/
+- AlertGenerator: ?orgId=1
+- Silence: https://example.com/alerting/silence/new
+- RunbookURL: https://example.com/on-call/web_server_http_errors
+```
