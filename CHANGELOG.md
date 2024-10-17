@@ -1,12 +1,12 @@
-<!-- 11.2.1+security-01 START -->
+<!-- 11.2.2+security-01 START -->
 
-# 11.2.1+security-01 (2024-10-17)
+# 11.2.2+security-01 (2024-10-17)
 
 ### Bug fixes
 
 - **SQL Expressions**: Fixes CVE-2024-9264
 
-<!-- 11.2.1+security-01 END -->
+<!-- 11.2.2+security-01 END -->
 <!-- 11.2.2 START -->
 
 # 11.2.2 (2024-10-01)
@@ -30,6 +30,15 @@
 - **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93488](https://github.com/grafana/grafana/pull/93488), [@wbrowne](https://github.com/wbrowne)
 
 <!-- 11.2.2 END -->
+<!-- 11.2.1+security-01 START -->
+
+# 11.2.1+security-01 (2024-10-17)
+
+### Bug fixes
+
+- **SQL Expressions**: Fixes CVE-2024-9264
+
+<!-- 11.2.1+security-01 END -->
 <!-- 11.2.1 START -->
 
 # 11.2.1 (2024-09-26)
