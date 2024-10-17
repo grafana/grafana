@@ -1,63 +1,84 @@
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, userEvent, waitFor, within } from 'test/test-utils';
+import 'core-js/stable/structured-clone';
+import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import {
+  getErrorResponse,
+  makeAllAlertmanagerConfigFetchFail,
+} from 'app/features/alerting/unified/mocks/server/configure';
+import {
+  getAlertmanagerConfig,
+  setAlertmanagerConfig,
+  setAlertmanagerStatus,
+} from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import {
+  TIME_INTERVAL_NAME_FILE_PROVISIONED,
+  TIME_INTERVAL_NAME_HAPPY_PATH,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
   MatcherOperator,
-  MuteTimeInterval,
-  Route,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationPolicies';
-import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
-import { alertmanagerApi } from './api/alertmanagerApi';
-import { discoverAlertmanagerFeatures } from './api/buildInfo';
-import { MockDataSourceSrv, mockDataSource, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
-import { defaultGroupBy } from './utils/amroutes';
-import { getAllDataSources } from './utils/config';
+import {
+  grantUserPermissions,
+  mockDataSource,
+  someCloudAlertManagerConfig,
+  someCloudAlertManagerStatus,
+} from './mocks';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
-import 'core-js/stable/structured-clone';
-
-jest.mock('./api/alertmanager');
-jest.mock('./utils/config');
-jest.mock('app/core/services/context_srv');
-jest.mock('./api/buildInfo');
 jest.mock('./useRouteGroupsMatcher');
-
-const mocks = {
-  getAllDataSourcesMock: jest.mocked(getAllDataSources),
-
-  api: {
-    fetchAlertManagerConfig: jest.mocked(fetchAlertManagerConfig),
-    updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
-    fetchStatus: jest.mocked(fetchStatus),
-    discoverAlertmanagerFeatures: jest.mocked(discoverAlertmanagerFeatures),
-  },
-  contextSrv: jest.mocked(contextSrv),
-};
 
 setupMswServer();
 
-const renderNotificationPolicies = (alertManagerSourceName?: string) => {
-  return render(<NotificationPolicies />, {
-    historyOptions: {
-      initialEntries: [
-        '/alerting/routes' +
-          (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : ''),
-      ],
-    },
-  });
+const updateTiming = async (selectElement: HTMLElement, value: string): Promise<void> => {
+  const user = userEvent.setup();
+  const input = byRole('textbox').get(selectElement);
+  await user.clear(input);
+  await user.type(input, value);
 };
+
+const openDefaultPolicyEditModal = async () => {
+  const user = userEvent.setup();
+  await user.click(await ui.moreActionsDefaultPolicy.find());
+  await user.click(await ui.editButton.find());
+};
+
+const openEditModal = async (
+  /** (zero-based) Index of the policy in the list to open the edit modal for  */
+  index: number
+) => {
+  const user = userEvent.setup();
+  await user.click((await ui.moreActions.findAll())[index]);
+  await user.click(await ui.editButton.find());
+};
+
+const renderNotificationPolicies = (alertManagerSourceName: string = GRAFANA_RULES_SOURCE_NAME) =>
+  render(
+    <>
+      <AppNotificationList />
+      <NotificationPolicies />
+    </>,
+    {
+      historyOptions: {
+        initialEntries: [
+          '/alerting/routes' +
+            (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : ''),
+        ],
+      },
+    }
+  );
 
 const dataSources = {
   am: mockDataSource({
@@ -67,30 +88,36 @@ const dataSources = {
   promAlertManager: mockDataSource<AlertManagerDataSourceJsonData>({
     name: 'PromManager',
     type: DataSourceType.Alertmanager,
+    uid: 'prometheusAlertManager',
     jsonData: {
       implementation: AlertManagerImplementation.prometheus,
+    },
+  }),
+  mimir: mockDataSource<AlertManagerDataSourceJsonData>({
+    name: 'mimir',
+    type: DataSourceType.Alertmanager,
+    uid: 'mimir',
+    jsonData: {
+      implementation: AlertManagerImplementation.mimir,
     },
   }),
 };
 
 const ui = {
-  rootReceiver: byTestId('am-routes-root-receiver'),
-  rootGroupBy: byTestId('am-routes-root-group-by'),
-  rootTimings: byTestId('am-routes-root-timings'),
-  row: byTestId('am-routes-row'),
-
+  /** Row of policy tree containing default policy */
   rootRouteContainer: byTestId('am-root-route-container'),
+  /** (deeply) Nested rows of policies under the default/root policy */
+  row: byTestId('am-route-container'),
 
-  editButton: byRole('button', { name: 'Edit' }),
-  saveButton: byRole('button', { name: 'Save' }),
+  newChildPolicyButton: byRole('button', { name: /New child policy/ }),
+  newSiblingPolicyButton: byRole('button', { name: /Add new policy/ }),
 
-  setDefaultReceiverCTA: byRole('button', { name: 'Set a default contact point' }),
+  moreActionsDefaultPolicy: byLabelText(/more actions for default policy/i),
+  moreActions: byLabelText(/more actions for policy/i),
+  editButton: byRole('menuitem', { name: 'Edit' }),
 
-  editRouteButton: byLabelText('Edit route'),
-  deleteRouteButton: byLabelText('Delete route'),
-  newPolicyButton: byRole('button', { name: /Add policy/ }),
-  newPolicyCTAButton: byRole('button', { name: /Add specific policy/ }),
-  savePolicyButton: byRole('button', { name: /save policy/i }),
+  saveButton: byRole('button', { name: /update (default )?policy/i }),
+  deleteRouteButton: byRole('menuitem', { name: 'Delete' }),
 
   receiverSelect: byTestId('am-receiver-select'),
   groupSelect: byTestId('am-group-select'),
@@ -101,451 +128,217 @@ const ui = {
   groupRepeatContainer: byTestId('am-repeat-interval'),
 
   confirmDeleteModal: byRole('dialog'),
-  confirmDeleteButton: byLabelText('Confirm Modal Danger Button'),
+  confirmDeleteButton: byRole('button', { name: /yes, delete policy/i }),
+};
+
+const getRootRoute = async () => {
+  return ui.rootRouteContainer.find();
 };
 
 describe('NotificationPolicies', () => {
-  const subroutes: Route[] = [
-    {
-      match: {
-        sub1matcher1: 'sub1value1',
-        sub1matcher2: 'sub1value2',
-      },
-      match_re: {
-        sub1matcher3: 'sub1value3',
-        sub1matcher4: 'sub1value4',
-      },
-      group_by: ['sub1group1', 'sub1group2'],
-      receiver: 'a-receiver',
-      continue: true,
-      group_wait: '3s',
-      group_interval: '2m',
-      repeat_interval: '1s',
-      routes: [
-        {
-          match: {
-            sub1sub1matcher1: 'sub1sub1value1',
-            sub1sub1matcher2: 'sub1sub1value2',
-          },
-          match_re: {
-            sub1sub1matcher3: 'sub1sub1value3',
-            sub1sub1matcher4: 'sub1sub1value4',
-          },
-          group_by: ['sub1sub1group1', 'sub1sub1group2'],
-          receiver: 'another-receiver',
-        },
-        {
-          match: {
-            sub1sub2matcher1: 'sub1sub2value1',
-            sub1sub2matcher2: 'sub1sub2value2',
-          },
-          match_re: {
-            sub1sub2matcher3: 'sub1sub2value3',
-            sub1sub2matcher4: 'sub1sub2value4',
-          },
-          group_by: ['sub1sub2group1', 'sub1sub2group2'],
-          receiver: 'another-receiver',
-        },
-      ],
-    },
-    {
-      match: {
-        sub2matcher1: 'sub2value1',
-        sub2matcher2: 'sub2value2',
-      },
-      match_re: {
-        sub2matcher3: 'sub2value3',
-        sub2matcher4: 'sub2value4',
-      },
-      receiver: 'another-receiver',
-    },
-  ];
-
-  const emptyRoute: Route = {};
-
-  const simpleRoute: Route = {
-    receiver: 'simple-receiver',
-    matchers: ['hello=world', 'foo!=bar'],
-  };
-
-  const rootRoute: Route = {
-    receiver: 'default-receiver',
-    group_by: ['a-group', 'another-group'],
-    group_wait: '1s',
-    group_interval: '2m',
-    repeat_interval: '3d',
-    routes: subroutes,
-  };
-
-  const muteInterval: MuteTimeInterval = {
-    name: 'default-mute',
-    time_intervals: [
-      {
-        times: [{ start_time: '12:00', end_time: '24:00' }],
-        weekdays: ['monday:friday'],
-        days_of_month: ['1:7', '-1:-7'],
-        months: ['january:june'],
-        years: ['2020:2022'],
-      },
-    ],
-  };
-
   beforeEach(() => {
-    mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
-    mocks.contextSrv.hasPermission.mockImplementation(() => true);
-    mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
-    mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    setupDataSources(...Object.values(dataSources));
+    grantUserPermissions([
+      AccessControlAction.AlertingInstanceRead,
+      AccessControlAction.AlertingInstanceCreate,
+      AccessControlAction.AlertingInstanceUpdate,
+      AccessControlAction.AlertingInstancesExternalRead,
+      AccessControlAction.AlertingInstancesExternalWrite,
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingNotificationsExternalRead,
+      AccessControlAction.AlertingNotificationsExternalWrite,
+    ]);
   });
 
-  afterEach(() => {
-    jest.resetAllMocks();
+  it('loads and shows routes', async () => {
+    const { alertmanager_config: testConfig } = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
-    setDataSourceSrv(undefined as unknown as DataSourceSrv);
-  });
-
-  it.skip('loads and shows routes', async () => {
-    mocks.api.fetchAlertManagerConfig.mockResolvedValue({
-      alertmanager_config: {
-        route: rootRoute,
-        receivers: [
-          {
-            name: 'default-receiver',
-          },
-          {
-            name: 'a-receiver',
-          },
-          {
-            name: 'another-receiver',
-          },
-        ],
-      },
-      template_files: {},
-    });
+    const { route: defaultRoute } = testConfig;
 
     renderNotificationPolicies();
+    const rootRouteEl = await getRootRoute();
 
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
-
-    expect(ui.rootReceiver.get()).toHaveTextContent(rootRoute.receiver!);
-    expect(ui.rootGroupBy.get()).toHaveTextContent(rootRoute.group_by!.join(', '));
-    const rootTimings = ui.rootTimings.get();
-    expect(rootTimings).toHaveTextContent(rootRoute.group_wait!);
-    expect(rootTimings).toHaveTextContent(rootRoute.group_interval!);
-    expect(rootTimings).toHaveTextContent(rootRoute.repeat_interval!);
+    expect(rootRouteEl).toHaveTextContent(new RegExp(`delivered to ${defaultRoute?.receiver}`, 'i'));
+    expect(rootRouteEl).toHaveTextContent(new RegExp(`grouped by ${defaultRoute?.group_by?.join(', ')}`, 'i'));
+    expect(rootRouteEl).toHaveTextContent(/wait 30s to group/i);
+    expect(rootRouteEl).toHaveTextContent(/wait 5m before sending/i);
+    expect(rootRouteEl).toHaveTextContent(/repeated every 4h/i);
 
     const rows = await ui.row.findAll();
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(5);
 
-    subroutes.forEach((route, index) => {
+    defaultRoute?.routes?.forEach((route) => {
       Object.entries(route.match ?? {}).forEach(([label, value]) => {
-        expect(rows[index]).toHaveTextContent(`${label}=${value}`);
+        expect(screen.getByText(`${label} = ${value}`)).toBeInTheDocument();
       });
 
       Object.entries(route.match_re ?? {}).forEach(([label, value]) => {
-        expect(rows[index]).toHaveTextContent(`${label}=~${value}`);
+        expect(screen.getByText(`${label} =~ ${value}`)).toBeInTheDocument();
       });
 
       if (route.group_by) {
-        expect(rows[index]).toHaveTextContent(route.group_by.join(', '));
+        expect(rows.some((row) => row?.textContent?.includes(`Grouped by ${route.group_by?.join(', ')}`))).toBe(true);
       }
 
       if (route.receiver) {
-        expect(rows[index]).toHaveTextContent(route.receiver);
+        expect(rows.some((row) => row?.textContent?.includes(`Delivered to ${route.receiver}`))).toBe(true);
       }
     });
   });
 
-  it.skip('can edit root route if one is already defined', async () => {
-    const defaultConfig: AlertManagerCortexConfig = {
-      alertmanager_config: {
-        receivers: [{ name: 'default' }, { name: 'critical' }],
-        route: {
-          receiver: 'default',
-          group_by: ['alertname'],
-        },
-        templates: [],
-      },
-      template_files: {},
-    };
-    const currentConfig = { current: defaultConfig };
-    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
-      currentConfig.current = newConfig;
-      return Promise.resolve();
-    });
-
-    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
-      return Promise.resolve(currentConfig.current);
-    });
-
+  it('can edit root route if one is already defined', async () => {
     const { user } = renderNotificationPolicies();
-    expect(await ui.rootReceiver.find()).toHaveTextContent('default');
-    expect(ui.rootGroupBy.get()).toHaveTextContent('alertname');
+    let rootRoute = await getRootRoute();
 
-    // open root route for editing
-    const rootRouteContainer = await ui.rootRouteContainer.find();
-    await user.click(ui.editButton.get(rootRouteContainer));
+    expect(rootRoute).toHaveTextContent('default policy');
+    expect(rootRoute).toHaveTextContent(/delivered to grafana-default-email/i);
+    expect(rootRoute).toHaveTextContent(/grouped by alertname/i);
+
+    await openDefaultPolicyEditModal();
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
-    await clickSelectOption(receiverSelect, 'critical');
+
+    // The contact points are fetched from the k8s API, which we aren't overriding here
+    // when we use a different
+    await clickSelectOption(receiverSelect, 'lotsa-emails');
 
     const groupSelect = ui.groupSelect.get();
     await user.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
-    await user.click(byText('Timing options').get(rootRouteContainer));
+    await user.click(screen.getByText(/timing options/i));
 
-    await updateTiming(ui.groupWaitContainer.get(), '1', 'Minutes');
-    await updateTiming(ui.groupIntervalContainer.get(), '4', 'Minutes');
-    await updateTiming(ui.groupRepeatContainer.get(), '5', 'Hours');
+    await updateTiming(ui.groupWaitContainer.get(), '1m');
+    await updateTiming(ui.groupIntervalContainer.get(), '4m');
+    await updateTiming(ui.groupRepeatContainer.get(), '5h');
 
     //save
-    await user.click(ui.saveButton.get(rootRouteContainer));
+    await user.click(await screen.findByRole('button', { name: /update default policy/i }));
 
     // wait for it to go out of edit mode
-    await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
-
-    // check that appropriate api calls were made
-    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(3);
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledTimes(1);
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
-      alertmanager_config: {
-        receivers: [{ name: 'default' }, { name: 'critical' }],
-        route: {
-          continue: false,
-          group_by: ['alertname', 'namespace'],
-          receiver: 'critical',
-          routes: [],
-          group_interval: '4m',
-          group_wait: '1m',
-          repeat_interval: '5h',
-          mute_time_intervals: [],
-        },
-        templates: [],
-      },
-      template_files: {},
-    });
+    expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
 
     // check that new config values are rendered
-    await waitFor(() => expect(ui.rootReceiver.query()).toHaveTextContent('critical'));
-    expect(ui.rootGroupBy.get()).toHaveTextContent('alertname, namespace');
+    rootRoute = await getRootRoute();
+    expect(rootRoute).toHaveTextContent(/delivered to lotsa-emails/i);
+    expect(rootRoute).toHaveTextContent(/grouped by alertname, namespace/i);
   });
 
-  it.skip('can edit root route if one is not defined yet', async () => {
-    mocks.api.fetchAlertManagerConfig.mockResolvedValue({
+  it('can edit root route if one is not defined yet', async () => {
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, {
       alertmanager_config: {
-        receivers: [{ name: 'default' }],
+        route: {},
+        receivers: [{ name: 'grafana-default-email' }],
       },
       template_files: {},
     });
-
     const { user } = renderNotificationPolicies();
 
-    // open root route for editing
-    const rootRouteContainer = await ui.rootRouteContainer.find();
-    await user.click(ui.editButton.get(rootRouteContainer));
+    await openDefaultPolicyEditModal();
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
-    await clickSelectOption(receiverSelect, 'default');
+    await clickSelectOption(receiverSelect, 'lotsa-emails');
 
     const groupSelect = ui.groupSelect.get();
     await user.type(byRole('combobox').get(groupSelect), 'severity{enter}');
     await user.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
     //save
-    await user.click(ui.saveButton.get(rootRouteContainer));
+    await user.click(await screen.findByRole('button', { name: /update default policy/i }));
 
-    // wait for it to go out of edit mode
-    await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
+    expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
 
-    // check that appropriate api calls were made
-    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(3);
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledTimes(1);
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
-      alertmanager_config: {
-        receivers: [{ name: 'default' }],
-        route: {
-          continue: false,
-          group_by: defaultGroupBy.concat(['severity', 'namespace']),
-          receiver: 'default',
-          routes: [],
-          mute_time_intervals: [],
-        },
-      },
-      template_files: {},
-    });
+    const rootRoute = await getRootRoute();
+    expect(rootRoute).toHaveTextContent(/delivered to lotsa-emails/i);
+    expect(rootRoute).toHaveTextContent(/grouped by severity, namespace/i);
   });
 
   it('hides create and edit button if user does not have permission', async () => {
-    mocks.contextSrv.hasPermission.mockImplementation((action) =>
-      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsRead].includes(
-        action as AccessControlAction
-      )
-    );
+    grantUserPermissions([
+      AccessControlAction.AlertingInstanceRead,
+      AccessControlAction.AlertingInstancesExternalRead,
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsExternalRead,
+    ]);
 
-    renderNotificationPolicies();
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
+    const { user } = renderNotificationPolicies();
 
-    expect(ui.newPolicyButton.query()).not.toBeInTheDocument();
+    expect(ui.newChildPolicyButton.query()).not.toBeInTheDocument();
+    expect(ui.newSiblingPolicyButton.query()).not.toBeInTheDocument();
+
+    await user.click(await ui.moreActionsDefaultPolicy.find());
     expect(ui.editButton.query()).not.toBeInTheDocument();
   });
 
   it('Show error message if loading Alertmanager config fails', async () => {
-    mocks.api.fetchAlertManagerConfig.mockRejectedValue({
-      status: 500,
-      data: {
-        message: "Alertmanager has exploded. it's gone. Forget about it.",
-      },
-    });
-
-    jest.spyOn(alertmanagerApi, 'useGetAlertmanagerAlertGroupsQuery').mockImplementation(() => ({
-      currentData: [],
-      refetch: jest.fn(),
-    }));
+    makeAllAlertmanagerConfigFetchFail(getErrorResponse("Alertmanager has exploded. it's gone. Forget about it."));
 
     renderNotificationPolicies();
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
+    await screen.findByText(/error loading alertmanager config/i);
     expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
-    expect(ui.rootReceiver.query()).not.toBeInTheDocument();
-    expect(ui.editButton.query()).not.toBeInTheDocument();
+    expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
   });
 
-  it.skip('Converts matchers to object_matchers for grafana alertmanager', async () => {
-    const defaultConfig: AlertManagerCortexConfig = {
-      alertmanager_config: {
-        receivers: [{ name: 'default' }, { name: 'critical' }],
-        route: {
-          continue: false,
-          receiver: 'default',
-          group_by: ['alertname'],
-          routes: [simpleRoute],
-          group_interval: '4m',
-          group_wait: '1m',
-          repeat_interval: '5h',
-        },
-        templates: [],
-      },
-      template_files: {},
-    };
-
-    const currentConfig = { current: defaultConfig };
-    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
-      currentConfig.current = newConfig;
-      return Promise.resolve();
-    });
-
-    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
-      return Promise.resolve(currentConfig.current);
-    });
-
+  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
     const { user } = renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
-    expect(await ui.rootReceiver.find()).toHaveTextContent('default');
-    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
 
-    // Toggle a save to test new object_matchers
-    const rootRouteContainer = await ui.rootRouteContainer.find();
-    await user.click(ui.editButton.get(rootRouteContainer));
-    await user.click(ui.saveButton.get(rootRouteContainer));
+    const policyIndex = 0;
+    await openEditModal(policyIndex);
 
-    await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
+    // Save policy to test that format is converted to object_matchers
+    await user.click(await ui.saveButton.find());
 
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled();
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
-      alertmanager_config: {
-        receivers: [{ name: 'default' }, { name: 'critical' }],
-        route: {
-          continue: false,
-          group_by: ['alertname'],
-          group_interval: '4m',
-          group_wait: '1m',
-          receiver: 'default',
-          repeat_interval: '5h',
-          mute_time_intervals: [],
-          routes: [
-            {
-              continue: false,
-              group_by: [],
-              object_matchers: [
-                ['hello', '=', 'world'],
-                ['foo', '!=', 'bar'],
-              ],
-              receiver: 'simple-receiver',
-              mute_time_intervals: [],
-              routes: [],
-            },
-          ],
-        },
-        templates: [],
-      },
-      template_files: {},
-    });
+    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
+
+    const updatedConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
+    expect(updatedConfig.alertmanager_config.route?.routes?.[policyIndex].object_matchers).toMatchSnapshot();
   });
 
-  it.skip('Should be able to delete an empty route', async () => {
-    const routeConfig = {
-      continue: false,
-      receiver: 'default',
-      group_by: ['alertname'],
-      routes: [emptyRoute],
-      group_interval: '4m',
-      group_wait: '1m',
-      repeat_interval: '5h',
-      mute_time_intervals: [],
-    };
-
+  it('Should be able to delete an empty route', async () => {
     const defaultConfig: AlertManagerCortexConfig = {
       alertmanager_config: {
-        receivers: [{ name: 'default' }, { name: 'critical' }],
-        route: routeConfig,
-        templates: [],
+        route: {
+          routes: [{}],
+        },
       },
       template_files: {},
     };
 
-    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
-      return Promise.resolve(defaultConfig);
-    });
-
-    mocks.api.updateAlertManagerConfig.mockResolvedValue(Promise.resolve());
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, defaultConfig);
 
     const { user } = renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
 
-    const deleteButtons = await ui.deleteRouteButton.findAll();
-    expect(deleteButtons).toHaveLength(1);
+    await user.click(await ui.moreActions.find());
+    const deleteButtons = await ui.deleteRouteButton.find();
 
-    await user.click(deleteButtons[0]);
+    await user.click(deleteButtons);
 
     const confirmDeleteButton = ui.confirmDeleteButton.get(ui.confirmDeleteModal.get());
     expect(confirmDeleteButton).toBeInTheDocument();
 
     await user.click(confirmDeleteButton);
 
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith<[string, AlertManagerCortexConfig]>(
-      GRAFANA_RULES_SOURCE_NAME,
-      {
-        ...defaultConfig,
-        alertmanager_config: {
-          ...defaultConfig.alertmanager_config,
-          route: {
-            ...routeConfig,
-            routes: [],
-          },
-        },
-      }
-    );
+    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
+
+    expect(ui.row.query()).not.toBeInTheDocument();
   });
 
-  it.skip('Keeps matchers for non-grafana alertmanager sources', async () => {
-    const defaultConfig: AlertManagerCortexConfig = {
+  it('Keeps matchers for non-grafana alertmanager sources', async () => {
+    setAlertmanagerConfig(dataSources.am.uid, {
       alertmanager_config: {
         receivers: [{ name: 'default' }, { name: 'critical' }],
         route: {
           continue: false,
           receiver: 'default',
           group_by: ['alertname'],
-          routes: [simpleRoute],
+          routes: [
+            {
+              receiver: 'simple-receiver',
+              matchers: ['hello=world', 'foo!=bar'],
+            },
+          ],
           group_interval: '4m',
           group_wait: '1m',
           repeat_interval: '5h',
@@ -553,79 +346,38 @@ describe('NotificationPolicies', () => {
         templates: [],
       },
       template_files: {},
-    };
-
-    const currentConfig = { current: defaultConfig };
-    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
-      currentConfig.current = newConfig;
-      return Promise.resolve();
-    });
-
-    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
-      return Promise.resolve(currentConfig.current);
     });
 
     const { user } = renderNotificationPolicies(dataSources.am.name);
-    expect(await ui.rootReceiver.find()).toHaveTextContent('default');
-    expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
 
-    // Toggle a save to test new object_matchers
-    const rootRouteContainer = await ui.rootRouteContainer.find();
-    await user.click(ui.editButton.get(rootRouteContainer));
-    await user.click(ui.saveButton.get(rootRouteContainer));
+    const policyIndex = 0;
+    await openEditModal(policyIndex);
 
-    await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
+    // Save policy to test that format is NOT converted
+    await user.click(await ui.saveButton.find());
 
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled();
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(dataSources.am.name, {
-      alertmanager_config: {
-        receivers: [{ name: 'default' }, { name: 'critical' }],
-        route: {
-          continue: false,
-          group_by: ['alertname'],
-          group_interval: '4m',
-          group_wait: '1m',
-          matchers: [],
-          receiver: 'default',
-          repeat_interval: '5h',
-          mute_time_intervals: [],
-          routes: [
-            {
-              continue: false,
-              group_by: [],
-              matchers: ['hello=world', 'foo!=bar'],
-              receiver: 'simple-receiver',
-              routes: [],
-              mute_time_intervals: [],
-            },
-          ],
-        },
-        templates: [],
-      },
-      template_files: {},
-    });
+    const updatedConfig = getAlertmanagerConfig(dataSources.am.uid);
+    expect(updatedConfig.alertmanager_config.route?.routes?.[policyIndex].matchers).toMatchSnapshot();
   });
 
-  it.skip('Prometheus Alertmanager routes cannot be edited', async () => {
-    mocks.api.fetchStatus.mockResolvedValue({
+  it('Prometheus Alertmanager routes cannot be edited', async () => {
+    setAlertmanagerStatus(dataSources.promAlertManager.uid, {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
     renderNotificationPolicies(dataSources.promAlertManager.name);
-    const rootRouteContainer = await ui.rootRouteContainer.find();
-    expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
+
+    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
+
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(2);
-    expect(ui.editRouteButton.query()).not.toBeInTheDocument();
-    expect(ui.deleteRouteButton.query()).not.toBeInTheDocument();
-    expect(ui.saveButton.query()).not.toBeInTheDocument();
 
-    expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
-    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
+    expect(ui.moreActions.query()).not.toBeInTheDocument();
+    expect(ui.moreActionsDefaultPolicy.query()).not.toBeInTheDocument();
   });
 
   it('Prometheus Alertmanager has no CTA button if there are no specific policies', async () => {
-    mocks.api.fetchStatus.mockResolvedValue({
+    setAlertmanagerStatus(dataSources.promAlertManager.uid, {
       ...someCloudAlertManagerStatus,
       config: {
         ...someCloudAlertManagerConfig.alertmanager_config,
@@ -636,102 +388,39 @@ describe('NotificationPolicies', () => {
       },
     });
 
-    jest.spyOn(alertmanagerApi, 'useGetAlertmanagerAlertGroupsQuery').mockImplementation(() => ({
-      currentData: [],
-      refetch: jest.fn(),
-    }));
-
     renderNotificationPolicies(dataSources.promAlertManager.name);
-    const rootRouteContainer = await ui.rootRouteContainer.find();
-    await waitFor(() =>
-      expect(within(rootRouteContainer).getByTestId('matching-instances')).toHaveTextContent('0instance')
-    );
 
-    expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
-    expect(ui.newPolicyCTAButton.query()).not.toBeInTheDocument();
-    expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();
-    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
+    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
+
+    expect(ui.newChildPolicyButton.query()).not.toBeInTheDocument();
+    expect(ui.newSiblingPolicyButton.query()).not.toBeInTheDocument();
   });
 
-  it.skip('Can add a mute timing to a route', async () => {
-    const defaultConfig: AlertManagerCortexConfig = {
-      alertmanager_config: {
-        receivers: [{ name: 'default' }, { name: 'critical' }],
-        route: {
-          continue: false,
-          receiver: 'default',
-          group_by: ['alertname'],
-          routes: [simpleRoute],
-          group_interval: '4m',
-          group_wait: '1m',
-          repeat_interval: '5h',
-        },
-        templates: [],
-        mute_time_intervals: [muteInterval],
-      },
-      template_files: {},
-    };
+  it('Can add a mute timing to a route', async () => {
+    const { user } = renderNotificationPolicies();
 
-    const currentConfig = { current: defaultConfig };
-    mocks.api.updateAlertManagerConfig.mockImplementation((amSourceName, newConfig) => {
-      currentConfig.current = newConfig;
-      return Promise.resolve();
-    });
-
-    mocks.api.fetchAlertManagerConfig.mockResolvedValue(defaultConfig);
-
-    const { user } = renderNotificationPolicies(dataSources.am.name);
-    const rows = await ui.row.findAll();
-    expect(rows).toHaveLength(1);
-    await user.click(ui.editRouteButton.get(rows[0]));
+    await openEditModal(0);
 
     const muteTimingSelect = ui.muteTimingSelect.get();
-    await clickSelectOption(muteTimingSelect, 'default-mute');
-    expect(muteTimingSelect).toHaveTextContent('default-mute');
+    await clickSelectOption(muteTimingSelect, TIME_INTERVAL_NAME_HAPPY_PATH);
+    await clickSelectOption(muteTimingSelect, TIME_INTERVAL_NAME_FILE_PROVISIONED);
 
-    const savePolicyButton = ui.savePolicyButton.get();
-    expect(savePolicyButton).toBeInTheDocument();
+    await user.click(ui.saveButton.get());
 
-    await user.click(savePolicyButton);
+    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
 
-    await waitFor(() => expect(savePolicyButton).not.toBeInTheDocument());
-
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled();
-    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith(dataSources.am.name, {
-      ...defaultConfig,
-      alertmanager_config: {
-        ...defaultConfig.alertmanager_config,
-        route: {
-          ...defaultConfig.alertmanager_config.route,
-          mute_time_intervals: [],
-          matchers: [],
-          routes: [
-            {
-              ...simpleRoute,
-              mute_time_intervals: [muteInterval.name],
-              routes: [],
-              continue: false,
-              group_by: [],
-            },
-          ],
-        },
-      },
-    });
+    const policy = (await ui.row.findAll())[0];
+    expect(policy).toHaveTextContent(
+      `Muted when ${TIME_INTERVAL_NAME_HAPPY_PATH}, ${TIME_INTERVAL_NAME_FILE_PROVISIONED}`
+    );
   });
 
   it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
-    mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
+    makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
+    setAlertmanagerStatus(dataSources.mimir.uid, someCloudAlertManagerStatus);
+    renderNotificationPolicies(dataSources.mimir.name);
 
-    mocks.api.fetchAlertManagerConfig.mockRejectedValue({
-      message: 'alertmanager storage object not found',
-    });
-
-    renderNotificationPolicies();
-
-    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
-
-    expect(ui.rootReceiver.query()).toBeInTheDocument();
-    expect(ui.setDefaultReceiverCTA.query()).toBeInTheDocument();
+    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
   });
 });
 
@@ -806,19 +495,3 @@ describe('findRoutesMatchingFilters', () => {
     expect(matchingRoutes).toMatchSnapshot();
   });
 });
-
-const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  const user = userEvent.setup();
-  await user.click(byRole('combobox').get(selectElement));
-  await selectOptionInTest(selectElement, optionText);
-};
-
-const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
-  const user = userEvent.setup();
-  const input = byRole('textbox').get(selectElement);
-  const select = byRole('combobox').get(selectElement);
-  await user.clear(input);
-  await user.type(input, value);
-  await user.click(select);
-  await selectOptionInTest(selectElement, timeUnit);
-};

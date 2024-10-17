@@ -1,5 +1,37 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`NotificationPolicies Converts matchers to object_matchers for grafana alertmanager 1`] = `
+[
+  [
+    "sub1matcher1",
+    "=",
+    "sub1value1",
+  ],
+  [
+    "sub1matcher2",
+    "=",
+    "sub1value2",
+  ],
+  [
+    "sub1matcher3",
+    "=~",
+    "sub1value3",
+  ],
+  [
+    "sub1matcher4",
+    "=~",
+    "sub1value4",
+  ],
+]
+`;
+
+exports[`NotificationPolicies Keeps matchers for non-grafana alertmanager sources 1`] = `
+[
+  "hello="world"",
+  "foo!="bar"",
+]
+`;
+
 exports[`findRoutesMatchingFilters should not match non-existing 1`] = `
 {
   "filtersApplied": true,
