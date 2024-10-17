@@ -15,7 +15,7 @@ import {
 import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -27,7 +27,7 @@ import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
-  const styles = useStyles2(getSearchStyles);
+  const styles = useStyles2((theme) => getSearchStyles(theme));
 
   const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -146,7 +146,19 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   );
 };
 
+const getCommandPalettePosition = () => {
+  const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
+  const inputRightPosition = input?.getBoundingClientRect().right ?? 0;
+  const screenWidth = document.body.clientWidth;
+  const lateralSpace = screenWidth - inputRightPosition;
+  return lateralSpace;
+};
+
+// eslint-disable-next-line
 const getSearchStyles = (theme: GrafanaTheme2) => {
+  const lateralSpace = getCommandPalettePosition();
+  const isSingleTopNav = config.featureToggles.singleTopNav;
+
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -164,14 +176,23 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       },
     }),
     animator: css({
-      maxWidth: theme.breakpoints.values.md,
       width: '100%',
+      maxWidth: theme.breakpoints.values.md,
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
+      ...(isSingleTopNav && {
+        [theme.breakpoints.up('lg')]: {
+          position: 'fixed',
+          right: lateralSpace,
+          left: lateralSpace,
+          maxWidth: 'unset',
+          width: 'unset',
+        },
+      }),
     }),
     loadingBarContainer: css({
       position: 'absolute',
