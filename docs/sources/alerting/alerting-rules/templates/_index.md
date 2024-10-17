@@ -88,7 +88,7 @@ In this diagram, you can see the differences between both types of templates.
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" alt="How templating works" >}}
 
-Refer to the [Templates Introduction](ref:intro-to-templates) for a more detailed explanation of this diagram.
+Refer to [Templates Introduction](ref:intro-to-templates) for a more detailed explanation of this diagram.
 
 Both types of templates are written in the Go templating system. However, it's important to understand that variables and functions used in notification templates are different from those used in annotation and label templates:
 
