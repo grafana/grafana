@@ -1416,6 +1416,7 @@
       "folders": "folders",
       "library_elements": "library elements",
       "mute_timings": "mute timings",
+      "notification_policies": "notification policies",
       "notification_templates": "notification templates"
     },
     "migration-token": {
@@ -1502,6 +1503,7 @@
       "folder": "Folder",
       "library_element": "Library Element",
       "mute_timing": "Mute Timing",
+      "notification_policy": "Notification Policy",
       "notification_template": "Notification Template",
       "unknown": "Unknown"
     },

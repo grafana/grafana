@@ -1416,6 +1416,7 @@
       "folders": "ƒőľđęřş",
       "library_elements": "ľįþřäřy ęľęmęŉŧş",
       "mute_timings": "mūŧę ŧįmįŉģş",
+      "notification_policies": "ŉőŧįƒįčäŧįőŉ pőľįčįęş",
       "notification_templates": "ŉőŧįƒįčäŧįőŉ ŧęmpľäŧęş"
     },
     "migration-token": {
@@ -1502,6 +1503,7 @@
       "folder": "Főľđęř",
       "library_element": "Ŀįþřäřy Ēľęmęŉŧ",
       "mute_timing": "Mūŧę Ŧįmįŉģ",
+      "notification_policy": "Ńőŧįƒįčäŧįőŉ Pőľįčy",
       "notification_template": "Ńőŧįƒįčäŧįőŉ Ŧęmpľäŧę",
       "unknown": "Ůŉĸŉőŵŉ"
     },
