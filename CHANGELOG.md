@@ -1,3 +1,18 @@
+<!-- 11.0.5+security-01 START -->
+
+# 11.0.5+security-01 (2024-10-17)
+
+### Features and enhancements
+
+- **Chore:** Update swagger ui (4.3.0 to 5.17.14) [#92345](https://github.com/grafana/grafana/pull/92345), [@ryantxu](https://github.com/ryantxu)
+
+### Bug fixes
+
+- **Provisioning:** Prevent provisioning folder errors from failing startup [#92588](https://github.com/grafana/grafana/pull/92588), [@suntala](https://github.com/suntala)
+- **TutorialCard:** Fix link to tutorial not opening [#92645](https://github.com/grafana/grafana/pull/92645), [@eledobleefe](https://github.com/eledobleefe)
+- **SQL Expressions**: Fixes CVE-2024-9264
+
+<!-- 11.0.5+security-01 END -->
 <!-- 11.2.2 START -->
 
 # 11.2.2 (2024-10-01)
