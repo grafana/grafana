@@ -31,7 +31,6 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
       <div className={styles.header}>
         <div className={styles.group} data-testid="alert-group">
           <CollapseToggle
-            size="sm"
             isCollapsed={isCollapsed}
             onToggle={() => setIsCollapsed(!isCollapsed)}
             data-testid="alert-group-collapse-toggle"

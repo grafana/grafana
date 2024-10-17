@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, TestDataSourceResponse } from '@grafana/data';
+import { DataQueryResponse, DataQueryResponseData, TestDataSourceResponse } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   PanelBuilders,
@@ -10,7 +10,7 @@ import {
   SceneTimeRange,
   sceneUtils,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { DataSourceRef } from '@grafana/schema';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { PANEL_STYLES } from '../../home/Insights';
@@ -31,7 +31,7 @@ class LokiAPIDatasource extends RuntimeDataSource {
     this.timeRange = timeRange;
   }
 
-  query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
+  query(): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
     const timeRange = getTimeRange({ from: this.timeRange.state.from, to: this.timeRange.state.to });
     return getLabelsInfo(timeRange.from.unix(), timeRange.to.unix());
   }

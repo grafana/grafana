@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType } from '../../../types/rule-form';
@@ -40,7 +39,7 @@ const RuleType = (props: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   wrapper: css({
     width: '380px',
     cursor: 'pointer',

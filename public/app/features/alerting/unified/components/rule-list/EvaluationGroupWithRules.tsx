@@ -20,7 +20,7 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
 
   return (
     <EvaluationGroup name={group.name} interval={group.interval} isOpen={open} onToggle={toggleOpen}>
-      {group.rules.map((rule, index) => {
+      {group.rules.map((rule) => {
         const { rulerRule, promRule, annotations } = rule;
 
         // don't render anything if we don't have the rule definition yet
