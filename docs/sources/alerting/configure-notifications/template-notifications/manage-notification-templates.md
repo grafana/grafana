@@ -47,7 +47,7 @@ This documentation provides step-by-step instructions for selecting templates in
 
 ## Select a notification template for a contact point
 
-To add an existing notification template to your contact point, follow these steps:
+To add an existing notification template to your contact point, complete the following steps.
 
 1. Click an existing contact point or create a new one
 1. In **Optional settings**, click any field that contains templates.
