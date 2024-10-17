@@ -84,7 +84,7 @@ In Grafana Alerting, you can template alert messages in two ways.
 
 ## How templating works
 
-See the differences between both types of templates in this diagram:
+In this diagram, you can see the differences between both types of templates.
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" alt="How templating works" >}}
 
