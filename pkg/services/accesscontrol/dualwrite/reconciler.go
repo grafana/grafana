@@ -134,7 +134,6 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 			}
 		}
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
-
 	}
 
 	// in tests we can skip creating a lock
@@ -146,7 +145,6 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
 		run(ctx)
 	})
-
 }
 
 // managedPermissionsCollector collects managed permissions into provided tuple map.
