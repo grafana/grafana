@@ -36,10 +36,10 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
             key={index}
           >
             <div className={styles.linkDetails}>
-              <div className={cx(styles.url, !hasUrl && styles.notConfigured, styles.errored)}>
+              <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
                 {hasTitle ? title : 'Data link title not provided'}
               </div>
-              <div className={cx(styles.url, !hasUrl && styles.notConfigured, styles.errored)} title={url}>
+              <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
                 {hasUrl ? url : 'Data link url not provided'}
               </div>
             </div>
@@ -75,10 +75,6 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
       maxWidth: `calc(100% - 100px)`,
-    }),
-    errored: css({
-      color: theme.colors.error.text,
-      fontStyle: 'italic',
     }),
     notConfigured: css({
       fontStyle: 'italic',
