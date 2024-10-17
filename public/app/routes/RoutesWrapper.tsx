@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import * as H from 'history';
 import { ComponentType } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
@@ -14,6 +13,8 @@ import { AppNotificationList } from '../core/components/AppNotifications/AppNoti
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { useSidecar } from '../core/context/SidecarContext';
 import AppRootPage from '../features/plugins/components/AppRootPage';
+
+import { createLocationStorageHistory } from './utils';
 
 type RouterWrapperProps = {
   routes?: JSX.Element | false;
@@ -75,7 +76,9 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
 
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
-  const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
+  const memoryLocationService = new HistoryWrapper(
+    createLocationStorageHistory({ storageKey: 'grafana.sidecar.history' })
+  );
 
   return (
     // Why do we need these 2 wrappers here? We want for one app case to render very similar as if there was no split
