@@ -162,16 +162,16 @@ It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:
 
 #### Set evaluation behavior
 
-Use recording rule evaluation to determine how frequently a recording rule should be evaluated and how quickly it should change its state.
+Use recording rule evaluation to determine how frequently a recording rule should be evaluated.
 
-To do this, you need to make sure that your recording rule is in the right evaluation group and set a pending period time that works best for your use case.
+To do this, you need to make sure that your recording rule is in the right evaluation group with an interval that works best for your use case.
 
 1. Select a folder or click **+ New folder**.
 1. Select an evaluation group or click **+ New evaluation group**.
 
    If you are creating a new evaluation group, specify the interval for the group.
 
-   All rules within the same group are evaluated concurrently over the same time interval.
+   All rules within the same group are evaluated concurrently over the same time interval. Every recording rule in a group will use the same evaluation time, meaning that all queries from the same group will always be aligned with each other.
 
 1. Turn on pause recording rule evaluation, if required.
 
