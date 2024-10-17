@@ -123,7 +123,7 @@ For instance, you can template the previous example to display the specific inst
 CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
 ```
 
-Alternatively, you can use the `index` function to print query values:
+Alternatively, you can use the `index` function to print query values.
 
 ```
 CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
