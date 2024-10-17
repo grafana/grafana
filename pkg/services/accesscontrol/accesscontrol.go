@@ -31,8 +31,6 @@ type AccessControl interface {
 	// This is useful when we don't want to reuse any pre-configured resolvers
 	// for a authorization call.
 	WithoutResolvers() AccessControl
-	Check(ctx context.Context, req CheckRequest) (bool, error)
-	ListObjects(ctx context.Context, req ListObjectsRequest) ([]string, error)
 }
 
 type Service interface {

@@ -2,34 +2,30 @@ package zanzana
 
 import (
 	"context"
-	"fmt"
 
-	"google.golang.org/grpc"
-
+	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-// Client is a wrapper around [openfgav1.OpenFGAServiceClient]
-type Client interface {
+// OpenFGAClient is a wrapper around [openfgav1.OpenFGAServiceClient]
+type OpenFGAClient interface {
 	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
 	Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error)
 	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 	Write(ctx context.Context, in *openfgav1.WriteRequest) error
 }
 
-func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*client.Client, error) {
-	return client.New(
-		ctx,
-		cc,
-		client.WithTenantID(fmt.Sprintf("stack-%s", cfg.StackID)),
-		client.WithLogger(log.New("zanzana-client")),
-	)
+type ZanzanaClient interface {
+	authzlib.Client
+	List(ctx context.Context, caller claims.AuthInfo, req *ListRequest) ([]string, error)
 }
 
-func NewNoopClient() *client.NoopClient {
-	return client.NewNoop()
+type ListRequest struct {
+	// The namespace in which the request is made (e.g. "stacks-12")
+	Namespace string
+	// The requested action (e.g. "dashboards:read")
+	Action string
+	// ~Kind eg dashboards
+	Resource string
 }

@@ -7,4 +7,5 @@ import (
 var WireSet = wire.NewSet(
 	ProvideAuthZClient,
 	ProvideZanzana,
+	ProvideZanzanaClient,
 )

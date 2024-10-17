@@ -52,7 +52,9 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		dashboardStore, err := database.ProvideDashboardStore(db, cfg, features, tagService, quotaService)
 		require.NoError(t, err)
 
-		zclient, err := authz.ProvideZanzana(cfg, db, features)
+		openFGAClient, err := authz.ProvideZanzana(cfg, db, features)
+		require.NoError(t, err)
+		zclient, err := authz.ProvideZanzanaClient(openFGAClient)
 		require.NoError(t, err)
 		ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient)
 
@@ -62,6 +64,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 			accesscontrolmock.NewMockedPermissionsService(),
 			accesscontrolmock.NewMockedPermissionsService(),
 			ac,
+			zclient,
 			foldertest.NewFakeService(),
 			fStore,
 			nil,
@@ -77,7 +80,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		createDashboards(t, service, 100, "test-b")
 
 		// Sync Grafana DB with zanzana (migrate data)
-		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(zclient, db, nil)
+		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(openFGAClient, db, nil)
 		err = zanzanaSyncronizer.Sync(context.Background())
 		require.NoError(t, err)
 

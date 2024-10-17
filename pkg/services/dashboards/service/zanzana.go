@@ -3,16 +3,14 @@ package service
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/authlib/claims"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
@@ -188,28 +186,29 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashb
 					return
 				}
 
-				objectType := zanzana.TypeDashboard
+				resourceType := zanzana.TypeDashboard
+				objectType := zanzana.KindDashboards
 				if d.IsFolder {
-					objectType = zanzana.TypeFolder
+					resourceType = zanzana.TypeDashboard
+					objectType = zanzana.KindFolders
 				}
 
-				req := accesscontrol.CheckRequest{
+				req := &authzlib.CheckRequest{
 					Namespace: claims.OrgNamespaceFormatter(orgId),
-					User:      query.SignedInUser.GetUID(),
-					Relation:  "read",
-					Object:    zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
+					Action:    "dashboards:read",
+					Name:      d.UID,
 				}
 
-				if objectType != zanzana.TypeFolder {
+				if resourceType != zanzana.TypeFolder {
 					// Pass parentn folder for the correct check
 					req.Parent = d.FolderUID
-					req.ObjectType = objectType
+					req.Resource = objectType
 				}
 
-				allowed, err := dr.ac.Check(ctx, req)
+				checkRes, err := dr.zclient.Check(ctx, query.SignedInUser, req)
 				if err != nil {
 					dr.log.Error("error checking access", "error", err)
-				} else if allowed {
+				} else if checkRes.Allowed {
 					allowedResults <- d
 				}
 			}
@@ -248,7 +247,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 
 	var result []dashboards.DashboardSearchProjection
 
-	allowedFolders, err := dr.listAllowedResources(ctx, query, zanzana.TypeFolder)
+	allowedFolders, err := dr.listAllowedResources(ctx, query, zanzana.KindFolders)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +269,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	}
 
 	// Run second query to find dashboards with direct permission assignments
-	allowedDashboards, err := dr.listAllowedResources(ctx, query, zanzana.TypeDashboard)
+	allowedDashboards, err := dr.listAllowedResources(ctx, query, zanzana.KindDashboards)
 	if err != nil {
 		return nil, err
 	}
@@ -290,10 +289,9 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 }
 
 func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
-	res, err := dr.ac.ListObjects(ctx, accesscontrol.ListObjectsRequest{
-		User:     query.SignedInUser.GetUID(),
-		Type:     resourceType,
-		Relation: "read",
+	res, err := dr.zclient.List(ctx, query.SignedInUser, &zanzana.ListRequest{
+		Resource: resourceType,
+		Action:   "dashboards:read",
 	})
 	if err != nil {
 		return nil, err
