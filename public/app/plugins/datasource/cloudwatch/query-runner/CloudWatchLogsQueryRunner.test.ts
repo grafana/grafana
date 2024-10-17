@@ -9,6 +9,7 @@ import {
   MutableDataFrame,
 } from '@grafana/data';
 
+import { regionVariable } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { LogsRequestMock } from '../__mocks__/Request';
 import { validLogsQuery } from '../__mocks__/queries';
@@ -23,7 +24,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   describe('getLogRowContext', () => {
     it('replaces parameters correctly in the query', async () => {
-      const { runner, queryMock } = setupMockedLogsQueryRunner();
+      const { runner, queryMock } = setupMockedLogsQueryRunner({ variables: [regionVariable] });
       const row: LogRowModel = {
         entryFieldIndex: 0,
         rowIndex: 0,
@@ -50,14 +51,15 @@ describe('CloudWatchLogsQueryRunner', () => {
       };
       await runner.getLogRowContext(row, undefined, queryMock);
       expect(queryMock.mock.calls[0][0].targets[0].endTime).toBe(4);
-      expect(queryMock.mock.calls[0][0].targets[0].region).toBe('');
+      // sets the default region if region is empty
+      expect(queryMock.mock.calls[0][0].targets[0].region).toBe('us-west-1');
 
       await runner.getLogRowContext(row, { direction: LogRowContextQueryDirection.Forward }, queryMock, {
         ...validLogsQuery,
-        region: 'eu-east',
+        region: '$region',
       });
       expect(queryMock.mock.calls[1][0].targets[0].startTime).toBe(4);
-      expect(queryMock.mock.calls[1][0].targets[0].region).toBe('eu-east');
+      expect(queryMock.mock.calls[1][0].targets[0].region).toBe('templatedRegion');
     });
   });
 
