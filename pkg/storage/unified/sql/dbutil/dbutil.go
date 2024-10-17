@@ -10,11 +10,13 @@ import (
 	"strings"
 	"text/template"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-//nolint:unused
 const (
 	otelAttrBaseKey         = "dbutil_"
 	otelAttrTemplateNameKey = otelAttrBaseKey + "template"
@@ -22,7 +24,10 @@ const (
 )
 
 func withOtelAttrs(ctx context.Context, tmplName, dialectName string) context.Context {
-	return ctx // TODO: in next PR
+	return otel.SetAttributes(ctx,
+		attribute.String(otelAttrTemplateNameKey, tmplName),
+		attribute.String(otelAttrDialectKey, dialectName),
+	)
 }
 
 // SQLError is an error returned by the database, which includes additionally
