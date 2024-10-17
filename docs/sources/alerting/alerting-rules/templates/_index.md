@@ -193,7 +193,7 @@ You should avoid displaying query values in labels, as this may create numerous 
 
 Complete the following steps to template a label.
 
-1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
+1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an alert rule.
 1. Scroll down to the **Configure labels and notifications** section.
 1. Click **+ Add labels**
 1. Enter a **key** that identifies the label.
