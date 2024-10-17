@@ -4,8 +4,6 @@ import { Draggable } from '@hello-pangea/dnd';
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { isCompactUrl } from '../../../utils';
-import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
 
@@ -27,8 +25,6 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';
 
-  const isCompactExploreUrl = isCompactUrl(url);
-
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
       {(provided) => (
@@ -40,20 +36,12 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
             key={index}
           >
             <div className={styles.linkDetails}>
-              <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
+              <div className={cx(styles.url, !hasUrl && styles.notConfigured, styles.errored)}>
                 {hasTitle ? title : 'Data link title not provided'}
               </div>
-              <div
-                className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
-                title={url}
-              >
+              <div className={cx(styles.url, !hasUrl && styles.notConfigured, styles.errored)} title={url}>
                 {hasUrl ? url : 'Data link url not provided'}
               </div>
-              {isCompactExploreUrl && (
-                <FieldValidationMessage>
-                  Explore data link may not work in the future. Please edit.
-                </FieldValidationMessage>
-              )}
             </div>
             <div className={styles.icons}>
               <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit data link" />
