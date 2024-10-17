@@ -315,8 +315,8 @@ type otelTx struct {
 // the transaction. When looking at the traces, it will be very easy to be
 // confused and think that `nonTxQuerySpan` was part of the transaction.
 // Additionally, note that `commitSpan` is a root span, since the `Commit`
-// method doesn't recieve a context (same as `Rollback`), hence all such
-// operations would end up being scattered root span, making it hard to
+// method doesn't receive a context (same as `Rollback`), hence all such
+// operations would end up being a scattered root span, making it hard to
 // correlate.
 func (x otelTx) startSpan(optionalCtx context.Context, name string) (context.Context, trace.Span) {
 	// minimum number of options for the span
