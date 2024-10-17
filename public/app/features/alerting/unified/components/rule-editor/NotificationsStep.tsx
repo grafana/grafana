@@ -143,6 +143,7 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
     <Stack direction="column" gap={2}>
       <Stack direction="column">
         <RadioButtonGroup
+          data-testid={manualRouting ? 'routing-options-contact-point' : 'routing-options-notification-policy'}
           options={routingOptions}
           value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
           onChange={onRoutingOptionChange}
