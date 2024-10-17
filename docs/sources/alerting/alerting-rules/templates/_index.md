@@ -141,7 +141,7 @@ Complete the following steps to template an annotation.
 
 1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an alert rule.
 1. Scroll down to the **Configure notification message** section.
-1. Copy in your template in the corresponding annotation field (`summary`, `description`, `runbook_url`, `custom`)
+1. Copy in your template in the corresponding annotation field (`summary`, `description`, `runbook_url`, `custom`).
 
 ### Preview annotation templates
 
