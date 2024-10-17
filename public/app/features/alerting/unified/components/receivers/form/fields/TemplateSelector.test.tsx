@@ -2,9 +2,9 @@ import { ReactNode } from 'react';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
-import alertmanagerConfigMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -14,6 +14,8 @@ import { AccessControlAction, NotificationChannelOption } from 'app/types';
 
 import { getTemplateOptions, TemplatesPicker } from './TemplateSelector';
 import { parseTemplates } from './utils';
+
+const alertmanagerConfigMock = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),

@@ -35,9 +35,6 @@
   },
   "alert-rule-form": {
     "evaluation-behaviour": {
-      "description": {
-        "text": "Define how the alert rule is evaluated."
-      },
       "info-help": {
         "text": "Define the alert behavior when the evaluation fails or the query returns no data."
       },
@@ -53,9 +50,33 @@
     "evaluation-behaviour-group": {
       "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
     },
-    "pause": "Pause evaluation"
+    "pause": {
+      "alerting": "Turn on to pause evaluation for this alert rule.",
+      "label": "Pause evaluation",
+      "recording": "Turn on to pause evaluation for this recording rule."
+    }
   },
   "alerting": {
+    "alert-recording-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the recording rule is evaluated."
+        }
+      }
+    },
+    "alert-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the alert rule is evaluated."
+        }
+      }
+    },
+    "alertform": {
+      "labels": {
+        "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
+        "recording": "Add labels to your rule."
+      }
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
@@ -140,6 +161,20 @@
     },
     "contactPointFilter": {
       "label": "Contact point"
+    },
+    "folderAndGroup": {
+      "evaluation": {
+        "modal": {
+          "text": {
+            "alerting": "Create a new evaluation group to use for this alert rule.",
+            "recording": "Create a new evaluation group to use for this recording rule."
+          }
+        },
+        "text": {
+          "alerting": "Define how often the alert rule is evaluated.",
+          "recording": "Define how often the recording rule is evaluated."
+        }
+      }
     },
     "list-view": {
       "empty": {
@@ -1416,6 +1451,7 @@
       "folders": "folders",
       "library_elements": "library elements",
       "mute_timings": "mute timings",
+      "notification_policies": "notification policies",
       "notification_templates": "notification templates"
     },
     "migration-token": {
@@ -1471,6 +1507,17 @@
     },
     "resource-details": {
       "dismiss-button": "OK",
+      "error-messages": {
+        "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
+        "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
+        "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
+        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
+        "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
+        "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "unsupported-data-type": "Migration of this data type is not currently supported."
+      },
       "error-title": "Unable to migrate this resource:",
       "generic-title": "Resource migration details:",
       "missing-message": "No message provided.",
@@ -1502,6 +1549,7 @@
       "folder": "Folder",
       "library_element": "Library Element",
       "mute_timing": "Mute Timing",
+      "notification_policy": "Notification Policy",
       "notification_template": "Notification Template",
       "unknown": "Unknown"
     },
