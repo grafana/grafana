@@ -534,6 +534,24 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			}
 		}
 
+		// TODO: we will eventually remove this check for moving the resource to it's separate API
+		if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && !cmd.OnlyUpdateLBACRulesFromAPI {
+			s.logger.Debug("Overriding LBAC rules with stored ones",
+				"reason", "update_lbac_rules_from_datasource_api",
+				"action", "use_updateLBACRules_API",
+				"datasource_id", dataSource.ID,
+				"datasource_uid", dataSource.UID)
+
+			if dataSource.JsonData != nil {
+				previousRules := dataSource.JsonData.Get("teamHttpHeaders")
+				if previousRules == nil {
+					cmd.JsonData.Del("teamHttpHeaders")
+				} else {
+					cmd.JsonData.Set("teamHttpHeaders", previousRules)
+				}
+			}
+		}
+
 		if cmd.Name != "" && cmd.Name != dataSource.Name {
 			query := &datasources.GetDataSourceQuery{
 				Name:  cmd.Name,
