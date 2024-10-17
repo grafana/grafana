@@ -171,10 +171,6 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 ### AWS Signature Version 4 authentication
 
-{{% admonition type="note" %}}
-Available in Grafana v7.3.5 and higher.
-{{% /admonition %}}
-
 To connect the Prometheus data source to Amazon Managed Service for Prometheus using SigV4 authentication, refer to the AWS guide to [Set up Grafana open source or Grafana Enterprise for use with AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-standalone-grafana.html).
 
 If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query using Grafana running in an Amazon EKS cluster](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html).

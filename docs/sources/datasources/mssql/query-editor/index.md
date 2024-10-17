@@ -393,8 +393,6 @@ ORDER BY 1
 
 **Example region query using time and timeend columns with epoch values:**
 
-> Only available in Grafana v6.6+.
-
 ```sql
 SELECT
   time_sec as time,

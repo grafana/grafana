@@ -143,13 +143,11 @@ Every role requires a [Universally Unique Identifier](https://en.wikipedia.org/w
 
 ### Assign server administrator privileges
 
-> Available in Grafana v9.2 and later versions.
-
-If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
-This is useful if you want to grant server administrator privileges to a subset of users.  
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.
+This is useful if you want to grant server administrator privileges to a subset of users.
 Grafana also assigns the user the `Admin` role of the default organization.
 
-The setting `allow_assign_grafana_admin` under `[auth.azuread]` must be set to `true` for this to work.  
+The setting `allow_assign_grafana_admin` under `[auth.azuread]` must be set to `true` for this to work.
 If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
 
 ```json
@@ -254,8 +252,6 @@ Verify that the Grafana [root_url]({{< relref "../../../configure-grafana#root_u
 {{% /admonition %}}
 
 ### Configure refresh token
-
-> Available in Grafana v9.3 and later versions.
 
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 

@@ -300,10 +300,6 @@ Path where the socket should be created when `protocol=socket`. Make sure Grafan
 
 ### cdn_url
 
-{{% admonition type="note" %}}
-Available in Grafana v7.4 and later versions.
-{{% /admonition %}}
-
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
 
 For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
@@ -547,10 +543,6 @@ Set to false, disables checking for new versions of Grafana from Grafana's GitHu
 
 ### check_for_plugin_updates
 
-{{% admonition type="note" %}}
-Available in Grafana v8.5.0 and later versions.
-{{% /admonition %}}
-
 Set to false disables checking for new versions of installed plugins from https://grafana.com. When enabled, the check for a new plugin runs every 10 minutes. It will notify, via the UI, when a new plugin update exists. The check itself will not prompt any auto-updates of the plugin, nor will it send any sensitive information.
 
 ### google_analytics_ua_id
@@ -610,8 +602,6 @@ Set to `false` to remove all feedback links from the UI. Default is `true`.
 ## [security]
 
 ### disable_initial_admin_creation
-
-> Only available in Grafana v6.5+.
 
 Disable creation of admin user on first start of Grafana. Default is `false`.
 
@@ -775,8 +765,6 @@ Set to true to enable this Grafana instance to act as an external snapshot serve
 Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 ### min_refresh_interval
-
-> Only available in Grafana v6.7+.
 
 This feature prevents users from setting the dashboard refresh interval to a lower value than a given interval value. The default interval value is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
@@ -2219,10 +2207,6 @@ Options to configure a remote HTTP image rendering service, e.g. using https://g
 
 #### renderer_token
 
-{{% admonition type="note" %}}
-Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
-{{% /admonition %}}
-
 An auth token will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer.
 
 ### server_url
@@ -2312,10 +2296,6 @@ Enter a comma-separated list of plugin identifiers to avoid loading (including c
 
 ### max_connections
 
-{{% admonition type="note" %}}
-Available in Grafana v8.0 and later versions.
-{{% /admonition %}}
-
 The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
 Refer to [Grafana Live configuration documentation]({{< relref "../set-up-grafana-live" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
@@ -2323,10 +2303,6 @@ Refer to [Grafana Live configuration documentation]({{< relref "../set-up-grafan
 0 disables Grafana Live, -1 means unlimited connections.
 
 ### allowed_origins
-
-{{% admonition type="note" %}}
-Available in Grafana v8.0.4 and later versions.
-{{% /admonition %}}
 
 The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
 
@@ -2343,10 +2319,6 @@ allowed_origins = "https://*.example.com"
 
 ### ha_engine
 
-{{% admonition type="note" %}}
-Available in Grafana v8.1 and later versions.
-{{% /admonition %}}
-
 **Experimental**
 
 The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is "redis".
@@ -2354,10 +2326,6 @@ The high availability (HA) engine name for Grafana Live. By default, it's not se
 For more information, refer to the [Configure Grafana Live HA setup]({{< relref "../set-up-grafana-live#configure-grafana-live-ha-setup" >}}).
 
 ### ha_engine_address
-
-{{% admonition type="note" %}}
-Available in Grafana v8.1 and later versions.
-{{% /admonition %}}
 
 **Experimental**
 
@@ -2380,7 +2348,7 @@ Properties described in this section are available for all plugins, but you must
 ### tracing
 
 {{% admonition type="note" %}}
-Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+[OpenTelemetry must be configured as well](#tracingopentelemetry).
 {{% /admonition %}}
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
@@ -2543,10 +2511,6 @@ Use to disable updates for additional specific feature toggles in the feature ma
 
 ## [date_formats]
 
-{{% admonition type="note" %}}
-The date format options below are only available in Grafana v7.2+.
-{{% /admonition %}}
-
 This section controls system-wide defaults for date formats used in time ranges, graphs, and date input boxes.
 
 The format patterns use [Moment.js](https://momentjs.com/docs/#/displaying/) formatting tokens.
@@ -2584,10 +2548,6 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
 ## [expressions]
-
-{{% admonition type="note" %}}
-This feature is available in Grafana v7.4 and later versions.
-{{% /admonition %}}
 
 ### enabled
 

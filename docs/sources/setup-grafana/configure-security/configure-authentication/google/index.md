@@ -134,8 +134,6 @@ interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.i
 
 #### Configure refresh token
 
-> Available in Grafana v9.3 and later versions.
-
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
@@ -159,8 +157,6 @@ auto_login = true
 
 ### Configure team sync for Google OAuth
 
-> Available in Grafana v10.1.0 and later versions.
-
 With team sync, you can easily add users to teams by utilizing their Google groups. To set up team sync for Google OAuth, refer to the following example.
 
 1. Enable the Google Cloud Identity API on your [organization's dashboard](https://console.cloud.google.com/apis/api/cloudidentity.googleapis.com/).
@@ -182,8 +178,6 @@ To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../
 
 #### Configure allowed groups
 
-> Available in Grafana v10.2.0 and later versions.
-
 To limit access to authenticated users that are members of one or more groups, set `allowed_groups`
 to a comma or space separated list of groups.
 
@@ -192,8 +186,6 @@ Google groups are referenced by the group email key. For example, `developers@go
 > Note: Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups
 
 #### Configure role mapping
-
-> Available in Grafana v10.2.0 and later versions.
 
 Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role mapped from Google upon user login. If no mapping is set the default instance role is used.
 
