@@ -50,9 +50,9 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
       <tbody>
         {versions.map((version) => {
           const isInstalledVersion = installedVersion === version.version;
-          const versionIsIncompatible = version.grafanaDependency ?
-            !satisfies(grafanaVersion, version.grafanaDependency, { includePrerelease: true }) : false;
-
+          const versionIsIncompatible = version.grafanaDependency
+            ? !satisfies(grafanaVersion, version.grafanaDependency, { includePrerelease: true })
+            : false;
 
           return (
             <tr key={version.version}>
