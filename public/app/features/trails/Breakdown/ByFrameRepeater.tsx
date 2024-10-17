@@ -18,6 +18,7 @@ import { Trans } from 'app/core/internationalization';
 
 import { getLabelValueFromDataFrame } from '../services/levels';
 import { fuzzySearch } from '../services/search';
+import { sortSeries } from '../services/sorting';
 
 import { BreakdownSearchReset } from './BreakdownSearchScene';
 import { findSceneObjectsByType } from './utils';
@@ -33,12 +34,18 @@ type FrameIterateCallback = (frames: DataFrame[], seriesIndex: number) => void;
 
 export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
   private unfilteredChildren: SceneFlexItem[] = [];
-  private series: DataFrame[] = [];
+  private sortBy: string;
+  private sortedSeries: DataFrame[] = [];
   private getFilter: () => string;
 
-  public constructor({ getFilter, ...state }: ByFrameRepeaterState & { getFilter: () => string }) {
+  public constructor({
+    sortBy,
+    getFilter,
+    ...state
+  }: ByFrameRepeaterState & { sortBy: string; getFilter: () => string }) {
     super(state);
 
+    this.sortBy = sortBy;
     this.getFilter = getFilter;
 
     this.addActivationHandler(() => {
@@ -69,15 +76,24 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
     });
   }
 
+  public sort = (sortBy: string) => {
+    const data = sceneGraph.getData(this);
+    this.sortBy = sortBy;
+    if (data.state.data) {
+      this.performRepeat(data.state.data);
+    }
+  };
+
   private performRepeat(data: PanelData) {
     const newChildren: SceneFlexItem[] = [];
-    this.series = data.series;
+    const sortedSeries = sortSeries(data.series, this.sortBy);
 
-    for (let seriesIndex = 0; seriesIndex < this.series.length; seriesIndex++) {
-      const layoutChild = this.state.getLayoutChild(data, this.series[seriesIndex], seriesIndex);
+    for (let seriesIndex = 0; seriesIndex < sortedSeries.length; seriesIndex++) {
+      const layoutChild = this.state.getLayoutChild(data, sortedSeries[seriesIndex], seriesIndex);
       newChildren.push(layoutChild);
     }
 
+    this.sortedSeries = sortedSeries;
     this.unfilteredChildren = newChildren;
 
     if (this.getFilter()) {
@@ -114,8 +130,8 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
     if (!data) {
       return;
     }
-    for (let seriesIndex = 0; seriesIndex < this.series.length; seriesIndex++) {
-      callback(this.series, seriesIndex);
+    for (let seriesIndex = 0; seriesIndex < this.sortedSeries.length; seriesIndex++) {
+      callback(this.sortedSeries, seriesIndex);
     }
   };
 
