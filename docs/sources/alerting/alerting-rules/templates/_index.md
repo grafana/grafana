@@ -129,7 +129,7 @@ Alternatively, you can use the `index` function to print query values.
 CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
 ```
 
-The result of the annotation would now be:
+The result of the annotation would be as follows.
 
 ```
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
