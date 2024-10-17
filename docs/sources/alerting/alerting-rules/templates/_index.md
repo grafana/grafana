@@ -191,7 +191,7 @@ You should avoid displaying query values in labels, as this may create numerous 
 
 ### How to template a label
 
-To template a label:
+Complete the following steps to template a label.
 
 1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an **alert rule**.
 1. Scroll down to the **Configure labels and notifications** section.
