@@ -8,11 +8,6 @@
 
 - **SQL Expressions**: Fixes CVE-2024-9264
 
-### Plugin development fixes & changes
-
-- **AutoSizeInput:** Allow to be controlled by value [#92999](https://github.com/grafana/grafana/pull/92999), [@ivanortegaalba](https://github.com/ivanortegaalba)
-- **Bugfix:** QueryField typeahead missing background color [#92317](https://github.com/grafana/grafana/pull/92317), [@mckn](https://github.com/mckn)
-
 <!-- 11.2.1+security-01 END -->
 <!-- 11.0.6+security-01 START -->
 
