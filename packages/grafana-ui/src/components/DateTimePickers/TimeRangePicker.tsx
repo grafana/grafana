@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   dateTimeFormat,
   timeZoneFormatUserFriendly,
+  TimeOption,
   TimeRange,
   TimeZone,
   dateMath,
@@ -42,6 +43,7 @@ export interface TimeRangePickerProps {
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
+  quickRanges?: TimeOption[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
@@ -70,6 +72,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
+    quickRanges,
     hideQuickRanges,
     widthOverride,
     isOnCanvas,
@@ -120,7 +123,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
   const isFromAfterTo = value?.to?.isBefore(value.from);
   const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
 
-  const currentTimeRange = formattedRange(value, timeZone);
+  const currentTimeRange = formattedRange(value, timeZone, quickRanges);
 
   return (
     <ButtonGroup className={styles.container}>
@@ -164,7 +167,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 fiscalYearStartMonth={fiscalYearStartMonth}
                 value={value}
                 onChange={onChange}
-                quickOptions={quickOptions}
+                quickOptions={quickRanges || quickOptions}
                 history={history}
                 showHistory
                 widthOverride={widthOverride}
@@ -232,7 +235,7 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
 
 type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone'>;
 
-export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZone }) => {
+export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZone, quickRanges }) => {
   const styles = useStyles2(getLabelStyles);
 
   if (hideText) {
@@ -241,7 +244,7 @@ export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZo
 
   return (
     <span className={styles.container} aria-live="polite" aria-atomic="true">
-      <span>{formattedRange(value, timeZone)}</span>
+      <span>{formattedRange(value, timeZone, quickRanges)}</span>
       <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbreviation(value, timeZone)}</span>
     </span>
   );
@@ -249,12 +252,12 @@ export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZo
 
 TimePickerButtonLabel.displayName = 'TimePickerButtonLabel';
 
-const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
+const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]) => {
   const adjustedTimeRange = {
     to: dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,
     from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
-  return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone);
+  return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
