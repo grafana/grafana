@@ -75,8 +75,8 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	assert.ErrorIs(t, err, cloudmigration.ErrTokenNotFound)
 
 	cm := cloudmigration.CloudMigrationSession{}
-	errCreateSession := s.ValidateToken(context.Background(), cm)
-	assert.Nil(t, errCreateSession)
+	err = s.ValidateToken(context.Background(), cm)
+	assert.NoError(t, err)
 }
 
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
@@ -530,8 +530,8 @@ func TestDeleteSession(t *testing.T) {
 			AuthToken: createTokenResp.Token,
 		}
 
-		createResp, errCreateSession := s.CreateSession(ctx, cmd)
-		require.Nil(t, errCreateSession)
+		createResp, err := s.CreateSession(ctx, cmd)
+		require.NoError(t, err)
 		require.NotEmpty(t, createResp.UID)
 		require.NotEmpty(t, createResp.Slug)
 

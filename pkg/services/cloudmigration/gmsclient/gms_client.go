@@ -264,19 +264,18 @@ func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
 }
 
 // handleGMSErrors parses the error message from GMS and translates it to an appropriate error message
+// use ErrTokenValidationFailure for any errors which are not specifically handled
 func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) error {
 	var apiError GMSAPIError
 	if err := json.Unmarshal(responseBody, &apiError); err != nil {
-		return cloudmigration.ErrTokenInvalid
+		return cloudmigration.ErrTokenValidationFailure
 	}
 
 	if strings.Contains(apiError.Message, GMSErrorMessageInstanceUnreachable) {
 		return cloudmigration.ErrInstanceUnreachable
-	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceNotFound) {
-		return cloudmigration.ErrInstanceNotFound
 	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceCheckingError) {
 		return cloudmigration.ErrInstanceRequestError
 	}
 
-	return cloudmigration.ErrTokenInvalid
+	return cloudmigration.ErrTokenValidationFailure
 }

@@ -153,9 +153,9 @@ var (
 		ErrorCode: "TOKEN_REQUEST_ERROR",
 		Message:   "An error occurred while validating the token. Please check the Grafana instance logs.",
 	}
-	ErrInstanceNotFound = &CreateSessionError{
-		ErrorCode: "INSTANCE_NOT_FOUND",
-		Message:   "The cloud instance cannot be found. Please ensure the cloud instance exists and is active.",
+	ErrTokenValidationFailure = &CreateSessionError{
+		ErrorCode: "TOKEN_VALIDATION_FAILURE",
+		Message:   "Token is not valid. Please ensure the token matches the migration token on your cloud instance.",
 	}
 	ErrInstanceUnreachable = &CreateSessionError{
 		ErrorCode: "INSTANCE_UNREACHABLE",

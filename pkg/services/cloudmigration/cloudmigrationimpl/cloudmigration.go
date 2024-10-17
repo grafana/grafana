@@ -324,7 +324,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	defer span.End()
 
 	if err := s.gmsClient.ValidateKey(ctx, cm); err != nil {
-		return err
+		return fmt.Errorf("validating token: %w", err)
 	}
 
 	return nil

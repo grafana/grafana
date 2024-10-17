@@ -47,12 +47,12 @@ function getTMessage(errorCode: CreateSessionErrorDto['errorCode']): string {
     case 'TOKEN_REQUEST_ERROR':
       return t(
         'migrate-to-cloud.connect-modal.token-errors.token-request-error',
-        'An error occurred while validating the token. Please ensure the token matches the migration token on your cloud instance.'
+        'An error occurred while validating the token. Please check the Grafana instance logs.'
       );
-    case 'INSTANCE_NOT_FOUND':
+    case 'TOKEN_VALIDATION_FAILURE':
       return t(
-        'migrate-to-cloud.connect-modal.token-errors.instance-not-found',
-        'The cloud instance cannot be found. Please ensure the cloud instance exists and is active.'
+        'migrate-to-cloud.connect-modal.token-errors.token-validation-failure',
+        'Token is not valid. Please ensure the token matches the migration token on your cloud instance.'
       );
     case 'INSTANCE_UNREACHABLE':
       return t(
