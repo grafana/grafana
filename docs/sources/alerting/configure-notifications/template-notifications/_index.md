@@ -53,38 +53,39 @@ You can also create a notification template to customize the content and format 
 However, you cannot change HTML or CSS code to modify the visual appearance, or alter the structure of the data passed to notification templates.
 
 {{% admonition type="note" %}}
-Avoid adding extra information about alert instances in notification templates, as this information will only be visible in the notification message. Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana.
+Avoid adding extra information about alert instances in notification templates, as this information will only be visible in the notification message.
+
+Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
 {{% /admonition %}}
 
-Here's an example of a custom notification template that summarizes all firing and resolved alerts in the notification group:
+Here's an [example](ref:examples) that displays the summary and description annotations for each alert in the notification:
 
-```
-{{ define "alerts.message" -}}
-  {{ if .Alerts.Firing -}}
-    {{ len .Alerts.Firing }} firing alert(s)
-    {{ template "alerts.summarize" .Alerts.Firing }}
-  {{- end }}
-  {{- if .Alerts.Resolved -}}
-    {{ len .Alerts.Resolved }} resolved alert(s)
-    {{ template "alerts.summarize" .Alerts.Resolved }}
-  {{- end }}
-{{- end }}
-
-{{ define "alerts.summarize" -}}
-  {{ range . -}}
-  - {{ index .Annotations "summary" }}
-  {{ end }}
-{{ end }}
+```go
+{{ define "custom.alerts" -}}
+{{ len .Alerts }} alert(s)
+{{ range .Alerts -}}
+  {{ template "alert.summary_and_description" . -}}
+{{ end -}}
+{{ end -}}
+{{ define "alert.summary_and_description" }}
+  Summary: {{.Annotations.summary}}
+  Status: {{ .Status }}
+  Description: {{.Annotations.description}}
+{{ end -}}
 ```
 
 The notification message would look like this:
 
 ```
-1 firing alert(s)
-- The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours.
+2 alert(s)
 
-1 resolved alert(s)
-- The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
+  Summary: The database server db1 has exceeded 75% of available disk space.
+  Status: firing
+  Description: This alert fires when a database server is at risk of running out of disk space. You should take measures to increase the maximum available disk space as soon as possible to avoid possible corruption.
+
+  Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
+  Status: resolved
+  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
 ```
 
 #### Select a notification template for a contact point
