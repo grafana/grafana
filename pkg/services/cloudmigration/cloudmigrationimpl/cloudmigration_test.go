@@ -34,6 +34,7 @@ import (
 	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -773,12 +774,16 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		},
 	}
 
-	featureToggles := featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagDashboardRestore)
+	featureToggles := featuremgmt.WithFeatures(
+		featuremgmt.FlagOnPremToCloudMigrations,
+		featuremgmt.FlagOnPremToCloudMigrationsAlerts,
+		featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
+	)
 
 	kvStore := kvstore.ProvideService(sqlStore)
 
 	bus := bus.ProvideBus(tracer)
-	fakeAccessControl := actest.FakeAccessControl{}
+	fakeAccessControl := actest.FakeAccessControl{ExpectedEvaluate: true}
 	fakeAccessControlService := actest.FakeService{}
 	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
 
@@ -793,12 +798,34 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	)
 	require.NoError(t, err)
 
+	var validConfig = `{
+		"alertmanager_config": {
+			"route": {
+				"receiver": "grafana-default-email"
+			},
+			"receivers": [{
+				"name": "grafana-default-email",
+				"grafana_managed_receiver_configs": [{
+					"uid": "",
+					"name": "email receiver",
+					"type": "email",
+					"settings": {
+						"addresses": "<example@email.com>"
+					}
+				}]
+			}]
+		}
+	}`
+	require.NoError(t, ng.Api.AlertingStore.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: validConfig,
+		OrgID:                     1,
+		LastApplied:               time.Now().Unix(),
+	}))
+
 	s, err := ProvideService(
 		cfg,
 		httpclient.NewProvider(),
-		featuremgmt.WithFeatures(
-			featuremgmt.FlagOnPremToCloudMigrations,
-			featuremgmt.FlagDashboardRestore),
+		featureToggles,
 		sqlStore,
 		dsService,
 		secretskv.NewFakeSQLSecretsKVStore(t, sqlStore),
