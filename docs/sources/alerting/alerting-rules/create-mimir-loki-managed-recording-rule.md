@@ -37,12 +37,6 @@ Grafana-Managed Recording Rules offer the same Prometheus-like semantics, but al
 
 For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
 
-Recording rules are run as instant rules, which means that they run every 10s. To overwrite this configuration, update the min_interval in your custom configuration file.
-
-[min_interval](ref:configure-grafana) sets the minimum interval to enforce between rule evaluations. The default value is 10s which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as fewer evaluations are scheduled over time.
-
-This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
-
 ## Configure data source-managed recording rules
 
 Configure data source-managed recording rules.
@@ -69,7 +63,7 @@ The recording rule name must be a Prometheus metric name and contain no whitespa
 
 #### Define recording rule
 
-Select your data source and enter a query.
+Select your data source and enter a query. The queries used in data source-managed recording rules always run as instant queries.
 
 #### Add namespace and group
 
@@ -184,3 +178,12 @@ To do this, you need to make sure that your recording rule is in the right evalu
 1. Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
 1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
+
+#### Advanced Configuration
+
+[min_interval](ref:configure-grafana) sets the minimum interval to enforce between rule evaluations. The default value is 10s which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as fewer evaluations are scheduled over time.
+
+This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
+
+This setting applies to both Grafana-managed alerting and recording rules.
+
