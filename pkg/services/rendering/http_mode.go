@@ -14,6 +14,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 var netTransport = &http.Transport{
@@ -159,6 +161,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 		req.Header[k] = v
 	}
 
+	rs.tracer.Inject(ctx, req.Header, trace.SpanFromContext(ctx))
 	rs.log.Debug("calling remote rendering service", "url", u)
 
 	// make request to renderer server

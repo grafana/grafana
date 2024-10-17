@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -45,6 +46,7 @@ type RenderingService struct {
 	features                    featuremgmt.FeatureToggles
 	RemoteCacheService          *remotecache.RemoteCache
 	RendererPluginManager       PluginManager
+	tracer                      tracing.Tracer
 }
 
 type PluginManager interface {
@@ -57,7 +59,7 @@ type Plugin interface {
 	Version() string
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache, rm PluginManager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remoteCache *remotecache.RemoteCache, rm PluginManager, tracer tracing.Tracer) (*RenderingService, error) {
 	folders := []string{
 		cfg.ImagesDir,
 		cfg.CSVsDir,
@@ -141,6 +143,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, remot
 		domain:                domain,
 		sanitizeURL:           sanitizeURL,
 		pluginAvailable:       exists,
+		tracer:                tracer,
 	}
 
 	gob.Register(&RenderUser{})
@@ -307,7 +310,9 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		}
 	}
 
-	rs.log.Info("Rendering", "path", opts.Path, "userID", opts.AuthOpts.UserID)
+	traceID := tracing.TraceIDFromContext(ctx, false)
+	rs.log.Info("Rendering", "path", opts.Path, "userID", opts.AuthOpts.UserID, "traceID", traceID)
+
 	if math.IsInf(opts.DeviceScaleFactor, 0) || math.IsNaN(opts.DeviceScaleFactor) || opts.DeviceScaleFactor == 0 {
 		opts.DeviceScaleFactor = 1
 	}
