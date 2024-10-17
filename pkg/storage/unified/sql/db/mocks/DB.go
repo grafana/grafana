@@ -129,7 +129,7 @@ func (_c *DB_DriverName_Call) RunAndReturn(run func() string) *DB_DriverName_Cal
 }
 
 // ExecContext provides a mock function with given fields: ctx, query, args
-func (_m *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (_m *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (db.Result, error) {
 	var _ca []interface{}
 	_ca = append(_ca, ctx, query)
 	_ca = append(_ca, args...)
@@ -139,16 +139,16 @@ func (_m *DB) ExecContext(ctx context.Context, query string, args ...interface{}
 		panic("no return value specified for ExecContext")
 	}
 
-	var r0 sql.Result
+	var r0 db.Result
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (sql.Result, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (db.Result, error)); ok {
 		return rf(ctx, query, args...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) sql.Result); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) db.Result); ok {
 		r0 = rf(ctx, query, args...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sql.Result)
+			r0 = ret.Get(0).(db.Result)
 		}
 	}
 
@@ -188,12 +188,12 @@ func (_c *DB_ExecContext_Call) Run(run func(ctx context.Context, query string, a
 	return _c
 }
 
-func (_c *DB_ExecContext_Call) Return(_a0 sql.Result, _a1 error) *DB_ExecContext_Call {
+func (_c *DB_ExecContext_Call) Return(_a0 db.Result, _a1 error) *DB_ExecContext_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_ExecContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (sql.Result, error)) *DB_ExecContext_Call {
+func (_c *DB_ExecContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (db.Result, error)) *DB_ExecContext_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -245,7 +245,7 @@ func (_c *DB_PingContext_Call) RunAndReturn(run func(context.Context) error) *DB
 }
 
 // QueryContext provides a mock function with given fields: ctx, query, args
-func (_m *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (_m *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (db.Rows, error) {
 	var _ca []interface{}
 	_ca = append(_ca, ctx, query)
 	_ca = append(_ca, args...)
@@ -255,16 +255,16 @@ func (_m *DB) QueryContext(ctx context.Context, query string, args ...interface{
 		panic("no return value specified for QueryContext")
 	}
 
-	var r0 *sql.Rows
+	var r0 db.Rows
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (*sql.Rows, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (db.Rows, error)); ok {
 		return rf(ctx, query, args...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) *sql.Rows); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) db.Rows); ok {
 		r0 = rf(ctx, query, args...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sql.Rows)
+			r0 = ret.Get(0).(db.Rows)
 		}
 	}
 
@@ -304,18 +304,18 @@ func (_c *DB_QueryContext_Call) Run(run func(ctx context.Context, query string, 
 	return _c
 }
 
-func (_c *DB_QueryContext_Call) Return(_a0 *sql.Rows, _a1 error) *DB_QueryContext_Call {
+func (_c *DB_QueryContext_Call) Return(_a0 db.Rows, _a1 error) *DB_QueryContext_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_QueryContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (*sql.Rows, error)) *DB_QueryContext_Call {
+func (_c *DB_QueryContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (db.Rows, error)) *DB_QueryContext_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // QueryRowContext provides a mock function with given fields: ctx, query, args
-func (_m *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (_m *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) db.Row {
 	var _ca []interface{}
 	_ca = append(_ca, ctx, query)
 	_ca = append(_ca, args...)
@@ -325,12 +325,12 @@ func (_m *DB) QueryRowContext(ctx context.Context, query string, args ...interfa
 		panic("no return value specified for QueryRowContext")
 	}
 
-	var r0 *sql.Row
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) *sql.Row); ok {
+	var r0 db.Row
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) db.Row); ok {
 		r0 = rf(ctx, query, args...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sql.Row)
+			r0 = ret.Get(0).(db.Row)
 		}
 	}
 
@@ -364,12 +364,12 @@ func (_c *DB_QueryRowContext_Call) Run(run func(ctx context.Context, query strin
 	return _c
 }
 
-func (_c *DB_QueryRowContext_Call) Return(_a0 *sql.Row) *DB_QueryRowContext_Call {
+func (_c *DB_QueryRowContext_Call) Return(_a0 db.Row) *DB_QueryRowContext_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_QueryRowContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) *sql.Row) *DB_QueryRowContext_Call {
+func (_c *DB_QueryRowContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) db.Row) *DB_QueryRowContext_Call {
 	_c.Call.Return(run)
 	return _c
 }
