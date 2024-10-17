@@ -126,6 +126,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: false,
     customEndpoint: '',
     apiKey: '',
+    allInstrumentationsEnabled: false,
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,
