@@ -211,7 +211,7 @@ For example, when using indentation and line breaks to make a template more read
 {{ end }}
 ```
 
-The indentation and line breaks will also be present in the text:
+The indentation and line breaks are also present in the text:
 
 ```
     alertname = "Test"
