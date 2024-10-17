@@ -35,9 +35,6 @@
   },
   "alert-rule-form": {
     "evaluation-behaviour": {
-      "description": {
-        "text": "Define how the alert rule is evaluated."
-      },
       "info-help": {
         "text": "Define the alert behavior when the evaluation fails or the query returns no data."
       },
@@ -53,9 +50,33 @@
     "evaluation-behaviour-group": {
       "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
     },
-    "pause": "Pause evaluation"
+    "pause": {
+      "alerting": "Turn on to pause evaluation for this alert rule.",
+      "label": "Pause evaluation",
+      "recording": "Turn on to pause evaluation for this recording rule."
+    }
   },
   "alerting": {
+    "alert-recording-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the recording rule is evaluated."
+        }
+      }
+    },
+    "alert-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the alert rule is evaluated."
+        }
+      }
+    },
+    "alertform": {
+      "labels": {
+        "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
+        "recording": "Add labels to your rule."
+      }
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
@@ -140,6 +161,20 @@
     },
     "contactPointFilter": {
       "label": "Contact point"
+    },
+    "folderAndGroup": {
+      "evaluation": {
+        "modal": {
+          "text": {
+            "alerting": "Create a new evaluation group to use for this alert rule.",
+            "recording": "Create a new evaluation group to use for this recording rule."
+          }
+        },
+        "text": {
+          "alerting": "Define how often the alert rule is evaluated.",
+          "recording": "Define how often the recording rule is evaluated."
+        }
+      }
     },
     "list-view": {
       "empty": {
@@ -284,6 +319,11 @@
       "ofQuery": {
         "To": "TO"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Misconfigured",
+      "misconfigured-warning": "This template is misconfigured.",
+      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
     }
   },
   "annotations": {
@@ -328,6 +368,9 @@
       "move-modal-title": "Move",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
+    },
+    "actions": {
+      "button-to-recently-deleted": "Recently deleted"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
@@ -751,6 +794,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "Open JSON editor",
+      "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
+      "angular-deprecation-heading": "Panel options"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -823,8 +871,8 @@
       "private": "Private",
       "public": "Public",
       "query-deleted": "Query deleted",
-      "query-template-add-error": "Error attempting to add this query to the library",
-      "query-template-added": "Query template successfully added to the library",
+      "query-template-add-error": "Error attempting to save this query to the library",
+      "query-template-added": "Query successfully saved to the library",
       "query-template-edit-error": "Error attempting to edit this query",
       "query-template-edited": "Query template successfully edited",
       "save": "Save"
@@ -1085,6 +1133,12 @@
     },
     "title": "Shortcuts"
   },
+  "help-wizard": {
+    "download-snapshot": "Download snapshot",
+    "github-comment": "Copy Github comment",
+    "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
+    "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
+  },
   "inspector": {
     "query": {
       "collapse-all": "Collapse all",
@@ -1097,7 +1151,7 @@
   },
   "ldap-drawer": {
     "attributes-section": {
-      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "description": "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
       "email-label": "Email",
       "label": "Attributes",
       "member-of-label": "Member Of",
@@ -1124,11 +1178,11 @@
       "root-ca-cert-label": "Root CA certificate path",
       "root-ca-cert-placeholder": "/path/to/root_ca_cert.pem",
       "root-ca-cert-value-label": "Root CA certificate content",
+      "root-ca-cert-value-placeholder": "example: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t",
       "start-tls-description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
       "start-tls-label": "Start TLS",
-      "tls-ciphers-description": "List of comma- or space-separated ciphers",
       "tls-ciphers-label": "TLS ciphers",
-      "tls-ciphers-placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]",
+      "tls-ciphers-placeholder": "example: TLS_AES_256_GCM_SHA384",
       "use-ssl-description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
       "use-ssl-label": "Use SSL",
       "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to:"
@@ -1158,8 +1212,8 @@
         "button": "Add group mapping"
       },
       "description": "Map LDAP groups to Grafana org roles",
-      "group-search-base-dns-description": "Separate by commas or spaces",
       "group-search-base-dns-label": "Group search base DNS",
+      "group-search-base-dns-placeholder": "example: ou=groups,dc=example,dc=com",
       "group-search-filter-description": "Used to filter and identify group entries within the directory",
       "group-search-filter-label": "Group search filter",
       "group-search-filter-user-attribute-description": "Identifies users within group entries for filtering purposes",
@@ -1170,7 +1224,7 @@
     },
     "misc-section": {
       "allow-sign-up-descrition": "If not enabled, only existing Grafana users can log in using LDAP",
-      "allow-sign-up-label": "Allow sign up",
+      "allow-sign-up-label": "Allow sign-up",
       "label": "Misc",
       "port-description": "Default port is 389 without SSL or 636 with SSL",
       "port-label": "Port",
@@ -1202,20 +1256,16 @@
       "label": "Bind password"
     },
     "buttons-section": {
+      "disable-button": "Disable",
       "discard-button": "Discard",
       "save-and-enable-button": "Save and enable",
       "save-button": "Save"
     },
-    "discard-modal": {
-      "cancel-button": "Back to editing",
-      "description": "Are you sure you want to abandon the changes you&lsquo;ve made to the LDAP configuration? All changes will be lost.",
-      "discard-button": "Abandon LDAP",
-      "title": "Leave LDAP configuration?"
-    },
     "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
-      "label": "Server host *",
+      "error": "Server host is a required field",
+      "label": "Server host",
       "placeholder": "example: 127.0.0.1"
     },
     "login-form-alert": {
@@ -1224,12 +1274,15 @@
     },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
-      "label": "Search filter *",
+      "error": "Search filter is a required field",
+      "label": "Search filter",
       "placeholder": "example: cn=%s"
     },
     "search-base-dns": {
       "description": "An array of base dns to search through.",
-      "label": "Search base DNS *"
+      "error": "Search base DNS is a required field",
+      "label": "Search base DNS",
+      "placeholder": "example: dc=grafana,dc=org"
     },
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><0>documentation</0></2>.",
     "title": "Basic Settings"
@@ -1392,9 +1445,14 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "contact_points": "contact points",
       "dashboards": "dashboards",
       "datasources": "data sources",
-      "folders": "folders"
+      "folders": "folders",
+      "library_elements": "library elements",
+      "mute_timings": "mute timings",
+      "notification_policies": "notification policies",
+      "notification_templates": "notification templates"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1428,6 +1486,7 @@
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
       "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-message-generic": "Successfully migrated {{successCount}} resources to your Grafana Cloud instance.",
       "success-title": "Migration completed!",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
@@ -1448,6 +1507,17 @@
     },
     "resource-details": {
       "dismiss-button": "OK",
+      "error-messages": {
+        "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
+        "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
+        "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
+        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
+        "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
+        "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "unsupported-data-type": "Migration of this data type is not currently supported."
+      },
       "error-title": "Unable to migrate this resource:",
       "generic-title": "Resource migration details:",
       "missing-message": "No message provided.",
@@ -1466,13 +1536,21 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "dashboard-load-error": "Unable to load dashboard",
+      "error-library-element-sub": "Library Element {uid}",
+      "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
       "unknown-datasource-type": "Unknown data source"
     },
     "resource-type": {
+      "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
       "folder": "Folder",
+      "library_element": "Library Element",
+      "mute_timing": "Mute Timing",
+      "notification_policy": "Notification Policy",
+      "notification_template": "Notification Template",
       "unknown": "Unknown"
     },
     "summary": {
@@ -1574,7 +1652,7 @@
     },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
-      "title": "Apps"
+      "title": "More apps"
     },
     "authentication": {
       "title": "Authentication"
@@ -1850,6 +1928,7 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "list-label": "Navigation",
+      "open": "Open menu",
       "undock": "Undock menu"
     },
     "toolbar": {
@@ -1908,6 +1987,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "No matches found",
     "unsupported-layout": "Unsupported layout"
   },
   "playlist-edit": {
@@ -2197,7 +2277,12 @@
     }
   },
   "query-library": {
-    "delete-query-button": "Delete query"
+    "datasource-names": "Datasource name(s):",
+    "delete-query-button": "Delete query",
+    "query-template-get-error": "Error attempting to get query template from the library: {{error}}",
+    "search": "Search by data source, query content or description",
+    "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
+    "user-names": "User name(s):"
   },
   "query-operation": {
     "header": {
@@ -2366,7 +2451,6 @@
     "menu": {
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
-      "share-internally-description": "Link settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
     },
@@ -2656,6 +2740,9 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+    },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",

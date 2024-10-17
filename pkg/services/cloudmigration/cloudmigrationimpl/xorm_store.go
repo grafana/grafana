@@ -23,9 +23,10 @@ type sqlStore struct {
 }
 
 const (
-	tableName       = "cloud_migration_resource"
-	secretType      = "cloudmigration-snapshot-encryption-key"
-	GetAllSnapshots = -1
+	tableName                    = "cloud_migration_resource"
+	secretType                   = "cloudmigration-snapshot-encryption-key"
+	GetAllSnapshots              = -1
+	GetSnapshotListSortingLatest = "latest"
 )
 
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -278,7 +279,9 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 			offset := (query.Page - 1) * query.Limit
 			sess.Limit(query.Limit, offset)
 		}
-		sess.OrderBy("cloud_migration_snapshot.created DESC")
+		if query.Sort == GetSnapshotListSortingLatest {
+			sess.OrderBy("cloud_migration_snapshot.created DESC")
+		}
 		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,
 		})
@@ -309,11 +312,11 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 // If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
 func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
-		sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=? OR (snapshot_uid=? AND resource_uid=?)"
+		sql := "UPDATE cloud_migration_resource SET status=?, error_string=?, error_code=? WHERE uid=? OR (snapshot_uid=? AND resource_uid=?)"
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			for _, r := range resources {
 				// try an update first
-				result, err := sess.Exec(sql, r.Status, r.Error, r.UID, snapshotUid, r.RefID)
+				result, err := sess.Exec(sql, r.Status, r.Error, r.ErrorCode, r.UID, snapshotUid, r.RefID)
 				if err != nil {
 					return err
 				}

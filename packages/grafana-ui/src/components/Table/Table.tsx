@@ -10,7 +10,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID, getRowUniqueId } from '@grafana/data';
+import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -44,6 +44,7 @@ export const Table = memo((props: Props) => {
     data,
     height,
     onCellFilterAdded,
+    onColumnResize,
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
@@ -128,7 +129,7 @@ export const Table = memo((props: Props) => {
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer({
-    ...props,
+    onColumnResize,
     onSortByChange: (state) => {
       // Collapse all rows. This prevents a known bug that causes the size of the rows to be incorrect due to
       // using `VariableSizeList` and `useExpanded` together.
@@ -138,6 +139,7 @@ export const Table = memo((props: Props) => {
         props.onSortByChange(state);
       }
     },
+    data,
   });
 
   const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
@@ -295,7 +297,24 @@ export const Table = memo((props: Props) => {
   }
 
   // Try to determine the longet field
+  // TODO: do we wrap only one field?
+  // What if there are multiple fields with long text?
   const longestField = guessLongestField(fieldConfig, data);
+  let textWrapField = undefined;
+  if (fieldConfig !== undefined) {
+    data.fields.forEach((field) => {
+      fieldConfig.overrides.forEach((override) => {
+        const matcher = getFieldMatcher(override.matcher);
+        if (matcher(field, data, [data])) {
+          for (const property of override.properties) {
+            if (property.id === 'custom.cellOptions' && property.value.wrapText) {
+              textWrapField = field;
+            }
+          }
+        }
+      });
+    });
+  }
 
   return (
     <div
@@ -335,6 +354,7 @@ export const Table = memo((props: Props) => {
                 enableSharedCrosshair={enableSharedCrosshair}
                 initialRowIndex={initialRowIndex}
                 longestField={longestField}
+                textWrapField={textWrapField}
               />
             </div>
           ) : (

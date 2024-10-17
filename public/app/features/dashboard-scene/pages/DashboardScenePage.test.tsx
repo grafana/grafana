@@ -1,6 +1,7 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
+import { useParams } from 'react-router-dom-v5-compat';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -19,8 +20,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
-import { DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
@@ -48,6 +48,11 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({ uid: 'my-dash-uid' }),
+}));
+
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
@@ -55,12 +60,6 @@ function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps
   const defaultRouteProps = getRouteComponentProps();
   const props: Props = {
     ...defaultRouteProps,
-    match: {
-      ...defaultRouteProps.match,
-      params: {
-        uid: 'my-dash-uid',
-      },
-    },
     ...routeProps,
   };
 
@@ -163,7 +162,7 @@ describe('DashboardScenePage', () => {
   it('Can render dashboard', async () => {
     setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
     expect(await screen.findByText('Content A')).toBeInTheDocument();
@@ -175,7 +174,7 @@ describe('DashboardScenePage', () => {
   it('routeReloadCounter should trigger reload', async () => {
     const { rerender, props } = setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 
@@ -186,7 +185,7 @@ describe('DashboardScenePage', () => {
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockResolvedValue({ dashboard: updatedDashboard, meta: {} });
 
-    props.history.location.state = { routeReloadCounter: 1 };
+    props.location.state = { routeReloadCounter: 1 };
 
     rerender(props);
 
@@ -196,7 +195,7 @@ describe('DashboardScenePage', () => {
   it('Can inspect panel', async () => {
     setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     expect(screen.queryByText('Inspect: Panel B')).not.toBeInTheDocument();
 
@@ -206,7 +205,7 @@ describe('DashboardScenePage', () => {
 
     const inspectMenuItem = await screen.findAllByText('Inspect');
 
-    act(() => fireEvent.click(inspectMenuItem[0]));
+    await userEvent.click(inspectMenuItem[0]);
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
 
@@ -218,7 +217,7 @@ describe('DashboardScenePage', () => {
   it('Can view panel in fullscreen', async () => {
     setup();
 
-    await waitForDashbordToRender();
+    await waitForDashboardToRender();
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 
@@ -239,7 +238,7 @@ describe('DashboardScenePage', () => {
     it('shows and hides empty state when panels are added and removed', async () => {
       setup();
 
-      await waitForDashbordToRender();
+      await waitForDashboardToRender();
 
       expect(await screen.queryByText('Start your new dashboard by adding a visualization')).not.toBeInTheDocument();
 
@@ -267,37 +266,19 @@ describe('DashboardScenePage', () => {
     });
   });
 
-  it('is in edit mode when coming from explore to an existing dashboard', async () => {
-    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard, meta: { slug: '123' } });
-
-    setup();
-
-    await waitForDashbordToRender();
-
-    const panelAMenu = await screen.findByLabelText('Menu for panel with title Panel A');
-    expect(panelAMenu).toBeInTheDocument();
-    await userEvent.click(panelAMenu);
-    const editMenuItem = await screen.findAllByText('Edit');
-    expect(editMenuItem).toHaveLength(1);
-  });
-
   describe('home page', () => {
     it('should render the dashboard when the route is home', async () => {
+      (useParams as jest.Mock).mockReturnValue({});
       setup({
         routeProps: {
           route: {
             ...getRouteComponentProps().route,
             routeName: DashboardRoutes.Home,
           },
-          match: {
-            ...getRouteComponentProps().match,
-            path: '/',
-            params: {},
-          },
         },
       });
 
-      await waitForDashbordToRender();
+      await waitForDashboardToRender();
 
       expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
       expect(await screen.findByText('Content A')).toBeInTheDocument();
@@ -328,7 +309,7 @@ function CustomVizPanel(props: VizProps) {
   return <div>{props.options.content}</div>;
 }
 
-async function waitForDashbordToRender() {
+async function waitForDashboardToRender() {
   expect(await screen.findByText('Last 6 hours')).toBeInTheDocument();
   expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 }

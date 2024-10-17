@@ -23,6 +23,7 @@ import {
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
+import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -37,6 +38,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
@@ -247,6 +249,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
+      addPanelsOnLoadBehavior,
       new DashboardScopesFacade({
         reloadOnScopesChange: oldModel.meta.reloadOnScopesChange,
         uid: oldModel.uid,
@@ -278,6 +281,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   const titleItems: SceneObject[] = [];
 
+  if (config.featureToggles.angularDeprecationUI) {
+    titleItems.push(new AngularDeprecation());
+  }
   titleItems.push(
     new VizPanelLinks({
       rawLinks: panel.links,

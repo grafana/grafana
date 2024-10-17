@@ -5,6 +5,10 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
+import {
+  setupAlertmanagerConfigMapDefaultState,
+  setupAlertmanagerStatusMapDefaultState,
+} from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
@@ -129,7 +133,7 @@ class GrafanaReceiverConfigBuilder {
   }
 }
 
-class AlertmanagerReceiverBuilder {
+export class AlertmanagerReceiverBuilder {
   private receiver: AlertmanagerReceiver = { name: '', email_configs: [], grafana_managed_receiver_configs: [] };
 
   withName(name: string): AlertmanagerReceiverBuilder {
@@ -289,6 +293,10 @@ export function setupMswServer() {
 
   afterEach(() => {
     server.resetHandlers();
+
+    // Reset any other necessary mock entities/state
+    setupAlertmanagerConfigMapDefaultState();
+    setupAlertmanagerStatusMapDefaultState();
   });
 
   afterAll(() => {

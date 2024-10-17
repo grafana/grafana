@@ -23,7 +23,7 @@ export enum QueryTemplateKinds {
  *
  * @alpha
  */
-export const BASE_URL = `/apis/${API_VERSION}/namespaces/${config.namespace}/querytemplates/`;
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/${config.namespace}/querytemplates`;
 
 // URL is optional for these requests
 interface QueryLibraryBackendRequest extends Pick<BackendSrvRequest, 'data' | 'method'> {

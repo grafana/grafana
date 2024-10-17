@@ -84,10 +84,6 @@ You can configure Grafana to automatically delete provisioned data sources when 
 To do so, add `prune: true` to the root of your provisioning file.
 With this configuration, Grafana also removes the provisioned data sources if you remove the provisioning file entirely.
 
-{{< admonition type="note" >}}
-The `prune` parameter is available in Grafana v11.1 and higher.
-{{< /admonition >}}
-
 ### Running multiple Grafana instances
 
 If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
