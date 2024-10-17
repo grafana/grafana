@@ -168,6 +168,10 @@ export function getSituation(text: string, offset: number): Situation | null {
   // so first we check if there is an error node at the cursor position
   let maybeErrorNode = getErrorNode(tree, shiftedOffset);
   if (!maybeErrorNode) {
+    // try again with the next character
+    maybeErrorNode = getErrorNode(tree, shiftedOffset + 1);
+  }
+  if (!maybeErrorNode) {
     // try again with the previous character
     maybeErrorNode = getErrorNode(tree, shiftedOffset - 1);
   }
