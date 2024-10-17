@@ -184,6 +184,7 @@
     "eslint-plugin-react": "7.37.1",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-testing-library": "^6.2.2",
+    "eslint-plugin-unicorn": "^55.0.0",
     "eslint-scope": "^8.0.0",
     "eslint-webpack-plugin": "4.2.0",
     "expose-loader": "5.0.0",

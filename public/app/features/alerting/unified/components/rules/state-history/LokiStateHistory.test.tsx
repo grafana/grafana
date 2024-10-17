@@ -76,7 +76,6 @@ window.HTMLElement.prototype.scrollIntoView = jest.fn();
 const ui = {
   loadingIndicator: byText('Loading...'),
   timestampViewer: byRole('list', { name: 'State history by timestamp' }),
-  record: byRole('listitem'),
   noRecords: byText('No state transitions have occurred in the last 30 days'),
   timelineChart: byTestId('uplot-main-div'),
 };
