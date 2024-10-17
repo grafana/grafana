@@ -93,7 +93,7 @@ Refer to [Templates Introduction](ref:intro-to-templates) for a more detailed ex
 Both types of templates are written in the Go templating system. However, it's important to understand that variables and functions used in notification templates are different from those used in annotation and label templates.
 
 1.  **Template annotations and labels**: These templates add extra information to individual alert instances. Template variables like [`$labels`](ref:labels) and [`$values`](ref:values) represent alert query data of the individual alert instance.
-1.  **Template notifications**: Notification templates format the notification content for a group of alerts. Variables like [`.Alerts`](ref:notification-data-reference) includes all firing and resolved alerts in the notification.
+1.  **Template notifications**: Notification templates format the notification content for a group of alerts. Variables like [`.Alerts`](ref:notification-data-reference) include all firing and resolved alerts in the notification.
 
 ## Template annotations
 
