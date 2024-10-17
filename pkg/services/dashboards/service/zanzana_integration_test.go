@@ -77,7 +77,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		createDashboards(t, service, 100, "test-b")
 
 		// Sync Grafana DB with zanzana (migrate data)
-		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(zclient, db)
+		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(zclient, db, nil)
 		err = zanzanaSyncronizer.Sync(context.Background())
 		require.NoError(t, err)
 
