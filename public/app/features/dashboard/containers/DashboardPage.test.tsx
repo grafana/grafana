@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
 import { Component } from 'react';
 import { useEffectOnce } from 'react-use';
+import { Subject } from 'rxjs';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { render } from 'test/test-utils';
 
@@ -14,6 +15,12 @@ import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import {
+  createDashboardQueryRunner,
+  DashboardQueryRunnerFactoryArgs,
+  setDashboardQueryRunnerFactory,
+} from 'app/features/query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { emptyResult } from 'app/features/query/state/DashboardQueryRunner/utils';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
@@ -130,6 +137,15 @@ function setup(propOverrides?: Partial<Props>) {
     Object.assign(props, newProps);
     return rerender(<UnthemedDashboardPage {...props} />);
   };
+
+  setDashboardQueryRunnerFactory(() => ({
+    getResult: emptyResult,
+    run: () => undefined,
+    cancel: () => undefined,
+    cancellations: () => new Subject(),
+    destroy: () => undefined,
+  }));
+  createDashboardQueryRunner({} as DashboardQueryRunnerFactoryArgs);
 
   return { rerender: wrappedRerender, unmount };
 }

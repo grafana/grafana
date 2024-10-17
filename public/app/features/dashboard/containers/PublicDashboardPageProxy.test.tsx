@@ -22,6 +22,11 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('app/features/correlations/utils', () => ({
+  ...jest.requireActual('app/features/correlations/utils'),
+  getCorrelationsBySourceUIDs: jest.fn().mockReturnValue([]),
+}));
+
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
   useParams: () => ({ accessToken: 'an-access-token' }),

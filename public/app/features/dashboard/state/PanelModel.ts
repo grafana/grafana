@@ -20,11 +20,13 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
   getNextRefId,
+  VariableInterpolation,
+  safeStringifyValue,
+  builtInVariables,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
-import { safeStringifyValue } from 'app/core/utils/explore';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -63,6 +65,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   replaceVariables: true,
+  enhancedReplaceVariables: true,
   configRev: true,
   hasSavedPanelEditChange: true,
   getDisplayTitle: true,
@@ -112,6 +115,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   maxDataPoints: true,
   interval: true,
   replaceVariables: true,
+  enhancedReplaceVariables: true,
   libraryPanel: true,
   getDisplayTitle: true,
   configRev: true,
@@ -229,6 +233,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
+    this.enhancedReplaceVariables = this.enhancedReplaceVariables.bind(this);
     this.key = uuidv4();
   }
 
@@ -609,6 +614,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       replaceVariables: this.replaceVariables,
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme2,
+      enhancedReplaceVariables: this.enhancedReplaceVariables,
     };
   }
 
@@ -668,6 +674,21 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const lastRequest = this.getQueryRunner().getLastRequest();
     const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
     return getTemplateSrv().replace(value, vars, format);
+  }
+
+  // this has a close equivalent in explore/utils/links but this does the actual replacement. Consider unifying at some point.
+  enhancedReplaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
+    let variables: VariableInterpolation[] = [];
+    const lastRequest = this.getQueryRunner().getLastRequest();
+    const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
+    const replaceStr = getTemplateSrv().replace(value, vars, format, variables);
+    const builtInVariablesArr = [...builtInVariables, '__dashboard', '__name'];
+    const allFound = variables
+      // We filter out builtin variables as they should be always defined but sometimes only later, like
+      // __range_interval which is defined in prometheus at query time.
+      .filter((v) => !builtInVariablesArr.includes(v.variableName))
+      .every((variable) => variable.found);
+    return { replaceStr, variables, allFound };
   }
 
   resendLastResult() {

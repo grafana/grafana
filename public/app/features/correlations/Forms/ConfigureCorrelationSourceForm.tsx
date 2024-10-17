@@ -5,9 +5,8 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { getVariableUsageInfo } from 'app/features/explore/utils/links';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-
-import { getVariableUsageInfo } from '../../explore/utils/links';
 
 import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';

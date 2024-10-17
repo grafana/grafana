@@ -24,14 +24,16 @@ import {
   DataLinkPostProcessor,
   FieldConfigSource,
 } from '../types/fieldOverrides';
-import { InterpolateFunction, PanelData } from '../types/panel';
+import { EnhancedInterpolateFunction, InterpolateFunction, PanelData } from '../types/panel';
 import { TimeZone } from '../types/time';
 import { FieldMatcher } from '../types/transformations';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { locationUtil } from '../utils/location';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { getTransformationVars } from './correlationUtils';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -133,6 +135,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
         fieldConfigRegistry: fieldConfigRegistry,
+        enhancedReplaceVariables: options.enhancedReplaceVariables,
       };
 
       // Anything in the field config that's not set by the datasource
@@ -193,7 +196,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         field.state!.scopedVars,
         context.replaceVariables,
         options.timeZone,
-        options.dataLinkPostProcessor
+        options.dataLinkPostProcessor,
+        options.enhancedReplaceVariables
       );
 
       if (field.type === FieldType.nestedFrames) {
@@ -411,19 +415,48 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
+// Recursively get all strings from an object into a simple list with space as separator.
+function getStringsFromObject(obj: Object): string {
+  let acc = '';
+  let k: keyof typeof obj;
+
+  for (k in obj) {
+    if (typeof obj[k] === 'string') {
+      acc += ' ' + obj[k];
+    } else if (typeof obj[k] === 'object') {
+      acc += ' ' + getStringsFromObject(obj[k]);
+    }
+  }
+  return acc;
+}
+
+const isValidEnhancedFn = (enhancedReplaceVariables: Function | object | undefined) => {
+  return enhancedReplaceVariables !== undefined && typeof enhancedReplaceVariables === 'function';
+};
+
 const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {
   // For internal links at the moment only destination is Explore.
-  const { link, linkModel, dataLinkScopedVars, field, replaceVariables } = options;
+  const { link, linkModel, dataLinkScopedVars, field, replaceVariables, enhancedReplaceVariables } = options;
 
   if (link.internal) {
-    return mapInternalLinkToExplore({
-      link,
-      internalLink: link.internal,
-      scopedVars: dataLinkScopedVars,
-      field,
-      range: link.internal.range,
-      replaceVariables,
-    });
+    let showInternalLink = false;
+    if (isValidEnhancedFn(enhancedReplaceVariables)) {
+      const variableInfo = enhancedReplaceVariables!(getStringsFromObject(link), dataLinkScopedVars);
+      showInternalLink = variableInfo.allFound;
+    } else {
+      showInternalLink = true;
+    }
+
+    return showInternalLink
+      ? mapInternalLinkToExplore({
+          link,
+          internalLink: link.internal,
+          scopedVars: dataLinkScopedVars,
+          field,
+          range: link.internal.range,
+          replaceVariables,
+        })
+      : undefined;
   } else {
     return linkModel;
   }
@@ -436,22 +469,79 @@ export const getLinksSupplier =
     fieldScopedVars: ScopedVars,
     replaceVariables: InterpolateFunction,
     timeZone?: TimeZone,
-    dataLinkPostProcessor?: DataLinkPostProcessor
+    dataLinkPostProcessor?: DataLinkPostProcessor,
+    enhancedReplaceVariables?: EnhancedInterpolateFunction
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
-
     const linkModels = field.config.links.map((link: DataLink) => {
       const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
+
+      // if we have a row index, expose every field on row as a variable
+      let rowVars: ScopedVars = {};
+      if (config.valueRowIndex !== undefined) {
+        let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = getFieldDisplayValuesProxy({
+          frame,
+          rowIndex: config.valueRowIndex,
+        });
+
+        // add all fields in frame as variables
+        frame.fields.forEach((f) => {
+          if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
+            rowVars[f.name] = {
+              value: fieldDisplayValuesProxy[f.name],
+            };
+          }
+        });
+      }
+
+      // expose variables from transformations
+      let transformationScopedVars = {};
+      if (link.meta?.transformations) {
+        link.meta?.transformations.forEach((transformation) => {
+          let fieldValue;
+          if (config.valueRowIndex !== undefined) {
+            if (transformation.field) {
+              const transformField = frame?.fields.find((field) => field.name === transformation.field);
+              fieldValue = transformField?.values[config.valueRowIndex];
+            } else {
+              fieldValue = field.values[config.valueRowIndex];
+            }
+          } else if (config.calculatedValue) {
+            fieldValue = config.calculatedValue;
+          }
+
+          transformationScopedVars = {
+            ...transformationScopedVars,
+            ...getTransformationVars(transformation, fieldValue, field.name),
+          };
+        });
+      }
+
       const dataLinkScopedVars = {
         ...fieldScopedVars,
+        ...rowVars,
+        ...transformationScopedVars,
         __dataContext: dataContext,
       };
 
       const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) =>
         replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+
+      const enhancedBoundReplacedVariables = (value: string, scopedVars: ScopedVars, format: string | Function) => {
+        if (isValidEnhancedFn(enhancedReplaceVariables)) {
+          const replaceInfo = enhancedReplaceVariables!(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+          if (replaceInfo.allFound) {
+            return replaceInfo.replaceStr;
+          } else {
+            return undefined;
+          }
+        } else {
+          return replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+        }
+      };
 
       // We are not displaying reduction result
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
@@ -460,9 +550,9 @@ export const getLinksSupplier =
         dataContext.value.calculatedValue = config.calculatedValue;
       }
 
-      let linkModel: LinkModel<Field>;
+      let linkModel: LinkModel<Field> | undefined;
 
-      let href =
+      let href: string | undefined =
         link.onClick || !link.onBuildUrl
           ? link.url
           : link.onBuildUrl({
@@ -472,31 +562,35 @@ export const getLinksSupplier =
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
-        href = locationUtil.processUrl(href);
+        href = enhancedBoundReplacedVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode); // undefined
+        href = locationUtil.processUrl(href || '');
       }
 
-      if (link.onClick) {
-        linkModel = {
-          href,
-          title: replaceVariables(link.title || '', dataLinkScopedVars),
-          target: link.targetBlank ? '_blank' : undefined,
-          onClick: (evt: MouseEvent, origin: Field) => {
-            link.onClick!({
-              origin: origin ?? field,
-              e: evt,
-              replaceVariables: boundReplaceVariables,
-            });
-          },
-          origin: field,
-        };
+      if (href !== undefined) {
+        if (link.onClick) {
+          linkModel = {
+            href,
+            title: boundReplaceVariables(link.title || '', dataLinkScopedVars),
+            target: link.targetBlank ? '_blank' : undefined,
+            onClick: (evt: MouseEvent, origin: Field) => {
+              link.onClick!({
+                origin: origin ?? field,
+                e: evt,
+                replaceVariables: boundReplaceVariables,
+              });
+            },
+            origin: field,
+          };
+        } else {
+          linkModel = {
+            href,
+            title: boundReplaceVariables(link.title || '', dataLinkScopedVars),
+            target: link.targetBlank ? '_blank' : undefined,
+            origin: field,
+          };
+        }
       } else {
-        linkModel = {
-          href,
-          title: replaceVariables(link.title || '', dataLinkScopedVars),
-          target: link.targetBlank ? '_blank' : undefined,
-          origin: field,
-        };
+        linkModel = undefined;
       }
 
       return (dataLinkPostProcessor || defaultInternalLinkPostProcessor)({
@@ -507,6 +601,7 @@ export const getLinksSupplier =
         config,
         link,
         linkModel,
+        enhancedReplaceVariables,
       });
     });
 
@@ -554,7 +649,8 @@ export function useFieldOverrides(
   timeZone: string,
   theme: GrafanaTheme2,
   replace: InterpolateFunction,
-  dataLinkPostProcessor?: DataLinkPostProcessor
+  dataLinkPostProcessor?: DataLinkPostProcessor,
+  enhancedReplace?: EnhancedInterpolateFunction
 ): PanelData | undefined {
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const structureRev = useRef(0);
@@ -587,6 +683,7 @@ export function useFieldOverrides(
         theme,
         timeZone,
         dataLinkPostProcessor,
+        enhancedReplaceVariables: enhancedReplace,
       }),
     };
     if (data.annotations && data.annotations.length > 0) {
@@ -603,7 +700,17 @@ export function useFieldOverrides(
       });
     }
     return panelData;
-  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace, dataLinkPostProcessor]);
+  }, [
+    fieldConfigRegistry,
+    fieldConfig,
+    data,
+    prevSeries,
+    replace,
+    theme,
+    timeZone,
+    dataLinkPostProcessor,
+    enhancedReplace,
+  ]);
 }
 
 /**

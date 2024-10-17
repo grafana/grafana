@@ -9,7 +9,7 @@ import { ScopedVars } from './ScopedVars';
 import { DataFrame, Field, FieldConfig, ValueLinkConfig } from './dataFrame';
 import { DataLink, LinkModel } from './dataLink';
 import { OptionEditorConfig } from './options';
-import { InterpolateFunction } from './panel';
+import { EnhancedInterpolateFunction, InterpolateFunction } from './panel';
 import { TimeZone } from './time';
 import { MatcherConfig } from './transformations';
 
@@ -118,7 +118,8 @@ export type DataLinkPostProcessorOptions = {
   timeZone?: TimeZone;
   config: ValueLinkConfig;
   link: DataLink;
-  linkModel: LinkModel;
+  linkModel?: LinkModel;
+  enhancedReplaceVariables?: EnhancedInterpolateFunction;
 };
 
 export type DataLinkPostProcessor = (options: DataLinkPostProcessorOptions) => LinkModel<Field> | undefined;
@@ -131,6 +132,7 @@ export interface ApplyFieldOverrideOptions {
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
   dataLinkPostProcessor?: DataLinkPostProcessor;
+  enhancedReplaceVariables?: EnhancedInterpolateFunction;
 }
 
 export enum FieldConfigProperty {

@@ -25,7 +25,7 @@ import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
+import { getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';
@@ -89,7 +89,7 @@ export function createSpanLinkFactory({
         const hasPyroscopeProfile = span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey);
         const shouldCreatePyroscopeLink = hasConfiguredPyroscopeDS && hasPyroscopeProfile;
 
-        let links: ExploreFieldLinkModel[] = [];
+        let links: LinkModel[] = [];
         fields.forEach((field) => {
           const fieldLinksForExplore = getFieldLinksForExplore({
             field,

@@ -19,11 +19,13 @@ import {
   DataLinkPostProcessor,
   ExploreUrlState,
   urlUtil,
+  getTransformationVars,
+  VariableInterpolation,
+  builtInVariables,
 } from '@grafana/data';
-import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getTransformationVars } from 'app/features/correlations/transformations';
 import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
@@ -277,25 +279,10 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
   );
 }
 
-// See https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
-const builtInVariables = [
-  '__from',
-  '__to',
-  '__interval',
-  '__interval_ms',
-  '__org',
-  '__user',
-  '__range',
-  '__rate_interval',
-  '__timeFilter',
-  'timeFilter',
-  // These are only applicable in dashboards so should not affect this for Explore
-  // '__dashboard',
-  //'__name',
-];
-
 /**
  * Use variable map from templateSrv to determine if all variables have values
+ *
+ * Note: There is a similar function in dashboard/state/PanelModel but this does not actually do the replacement. Maybe merge at some point.
  * @param query
  * @param scopedVars
  */

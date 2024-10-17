@@ -103,7 +103,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
         return acc.concat(value);
       }),
       map((annotations) => {
-        return { annotations, alertStates: [] };
+        return { annotations, alertStates: [], correlations: [] };
       })
     );
   }

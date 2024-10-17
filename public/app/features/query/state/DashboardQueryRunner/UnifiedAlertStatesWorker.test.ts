@@ -98,7 +98,7 @@ describe('UnifiedAlertStatesWorker', () => {
       await expect(worker.work({ ...options, dashboard })).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
         const results = received[0];
-        expect(results).toEqual({ alertStates: [], annotations: [] });
+        expect(results).toEqual({ alertStates: [], annotations: [], correlations: [] });
       });
     });
   });
@@ -174,6 +174,7 @@ describe('UnifiedAlertStatesWorker', () => {
             { id: 1, state: AlertState.Pending, dashboardId: 12345, panelId: 2 },
           ],
           annotations: [],
+          correlations: [],
         });
       });
 
@@ -190,7 +191,7 @@ describe('UnifiedAlertStatesWorker', () => {
       await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
         const results = received[0];
-        expect(results).toEqual({ alertStates: [], annotations: [] });
+        expect(results).toEqual({ alertStates: [], annotations: [], correlations: [] });
       });
     });
   });
@@ -203,7 +204,7 @@ describe('UnifiedAlertStatesWorker', () => {
       await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
         const results = received[0];
-        expect(results).toEqual({ alertStates: [], annotations: [] });
+        expect(results).toEqual({ alertStates: [], annotations: [], correlations: [] });
       });
     });
   });
