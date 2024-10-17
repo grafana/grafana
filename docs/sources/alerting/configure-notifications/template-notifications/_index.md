@@ -92,7 +92,7 @@ The notification message would look like this:
 
 Notification templates are not tied to specific contact point integrations, such as email or Slack, and the same template can be shared across multiple contact points.
 
-The notification template is assigned to the contact point to determine the notification message sent to receivers.
+The notification template is assigned to the contact point to determine the notification message sent to contact point integrations.
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" caption="A flow of the alert notification process, from querying the alert rule to sending the alert notification message." >}}
 
