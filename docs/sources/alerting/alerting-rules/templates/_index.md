@@ -203,7 +203,7 @@ Complete the following steps to template a label.
 
 You can template label values when creating or editing an alert rule.
 
-To preview label values, select `Use notification policy`, and then click on `Preview routing`:
+To preview label values, select `Use notification policy`, and then click on `Preview routing`.
 
 {{< figure src="/media/docs/alerting/alert-instance-routing-preview.png" max-width="1200px" alt="Routing preview displays label values" >}}
 
