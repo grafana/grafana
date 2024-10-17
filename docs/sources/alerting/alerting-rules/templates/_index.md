@@ -186,7 +186,7 @@ low
 In this example, the value of the `severity` label is determined by the query value, and the possible options are `critical`, `high`, `medium`, or `low`. You can then use the `severity` label to change their notifications—for instance, sending `critical` alerts immediately or routing `low` alerts to a specific team for further review.
 
 {{% admonition type="note" %}}
-You should avoid displaying query values in labels, as this may create numerous unique alert instances—one for each distinct label value. Instead, use annotations to inform about query values.
+You should avoid displaying query values in labels, as this may create numerous unique alert instances—one for each distinct label value. Instead, use annotations for query values.
 {{% /admonition %}}
 
 ### How to template a label
