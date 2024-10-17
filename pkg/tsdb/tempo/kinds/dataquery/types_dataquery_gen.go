@@ -37,10 +37,13 @@ const (
 
 // Defines values for TraceqlSearchScope.
 const (
-	TraceqlSearchScopeIntrinsic TraceqlSearchScope = "intrinsic"
-	TraceqlSearchScopeResource  TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan      TraceqlSearchScope = "span"
-	TraceqlSearchScopeUnscoped  TraceqlSearchScope = "unscoped"
+	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
+	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
+	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
+	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
+	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
+	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
 )
 
 // These are the common properties available to all queries in all datasources.

@@ -153,7 +153,7 @@ describe('SearchField', () => {
     }
   });
 
-  it('should not provide intrinsic as a selectable scope', async () => {
+  it('should provide intrinsic as a selectable scope', async () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
@@ -171,7 +171,7 @@ describe('SearchField', () => {
       expect(await screen.findByText('resource')).toBeInTheDocument();
       expect(await screen.findByText('span')).toBeInTheDocument();
       expect(await screen.findByText('unscoped')).toBeInTheDocument();
-      expect(screen.queryByText('intrinsic')).not.toBeInTheDocument();
+      expect(await screen.findByText('intrinsic')).toBeInTheDocument();
       expect(await screen.findByText('$templateVariable1')).toBeInTheDocument();
       expect(await screen.findByText('$templateVariable2')).toBeInTheDocument();
     }
@@ -188,6 +188,7 @@ describe('SearchField', () => {
         },
       ]),
       getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider;
 
     const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
@@ -237,6 +238,7 @@ describe('SearchField', () => {
         },
       ]),
       getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider;
 
     const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
@@ -283,6 +285,7 @@ const renderSearchField = (
         },
       ]),
       getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
     } as unknown as TempoLanguageProvider);
 
   const datasource: TempoDatasource = {

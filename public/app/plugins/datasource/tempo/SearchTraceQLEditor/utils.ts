@@ -44,7 +44,13 @@ export const scopeHelper = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
     return '';
   }
   return (
-    (f.scope === TraceqlSearchScope.Resource || f.scope === TraceqlSearchScope.Span ? f.scope?.toLowerCase() : '') + '.'
+    (f.scope === TraceqlSearchScope.Event ||
+    f.scope === TraceqlSearchScope.Instrumentation ||
+    f.scope === TraceqlSearchScope.Link ||
+    f.scope === TraceqlSearchScope.Resource ||
+    f.scope === TraceqlSearchScope.Span
+      ? f.scope?.toLowerCase()
+      : '') + '.'
   );
 };
 
@@ -77,7 +83,7 @@ const adHocValueHelper = (f: AdHocVariableFilter, lp: TempoLanguageProvider) => 
 };
 
 export const getTagWithoutScope = (tag: string) => {
-  return tag.replace(/^(event|link|resource|span)\./, '');
+  return tag.replace(/^(event|instrumentation|link|resource|span)\./, '');
 };
 
 export const filterScopedTag = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
@@ -96,12 +102,8 @@ export const filterTitle = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
   return startCase(filterScopedTag(f, lp));
 };
 
-export const getFilteredTags = (
-  tags: string[],
-  languageProvider: TempoLanguageProvider,
-  staticTags: Array<string | undefined>
-) => {
-  return [...languageProvider.getIntrinsics(), ...tags].filter((t) => !staticTags.includes(t));
+export const getFilteredTags = (tags: string[], staticTags: Array<string | undefined>) => {
+  return [...tags].filter((t) => !staticTags.includes(t));
 };
 
 export const getUnscopedTags = (scopes: Scope[]) => {
