@@ -114,7 +114,10 @@ const SearchField = ({
   }, [filter.value]);
 
   const scopeOptions = Object.values(TraceqlSearchScope)
-    .filter((s) => s !== TraceqlSearchScope.Intrinsic)
+    .filter((s) => {
+      // only add scope if it has tags
+      return datasource.languageProvider.getTags(s).length > 0;
+    })
     .map((t) => ({ label: t, value: t }));
 
   // If all values have type string or int/float use a focused list of operators instead of all operators
@@ -177,7 +180,7 @@ const SearchField = ({
             inputId={`${filter.id}-scope`}
             options={addVariablesToOptions ? withTemplateVariableOptions(scopeOptions) : scopeOptions}
             value={filter.scope}
-            onChange={(v) => updateFilter({ ...filter, scope: v?.value })}
+            onChange={(v) => updateFilter({ ...filter, scope: v?.value, tag: undefined, value: [] })}
             placeholder="Select scope"
             aria-label={`select ${filter.id} scope`}
           />
@@ -197,6 +200,7 @@ const SearchField = ({
             onCloseMenu={() => setTagQuery('')}
             onChange={(v) => updateFilter({ ...filter, tag: v?.value, value: [] })}
             value={filter.tag}
+            key={filter.tag}
             placeholder="Select tag"
             isClearable
             aria-label={`select ${filter.id} tag`}

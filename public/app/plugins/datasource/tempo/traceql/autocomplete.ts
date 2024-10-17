@@ -528,7 +528,7 @@ function fixSuggestion(
     const match = model
       .getValue()
       .substring(0, offset)
-      .match(/(span\.|resource\.|\.)?([\w./-]*)$/);
+      .match(/(event\.|instrumentation\.|link\.|resource\.|span\.|\.)?([\w./-]*)$/);
 
     if (match) {
       const scope = match[1];
