@@ -1,10 +1,7 @@
-// To change feature flags, edit:
-//  pkg/services/featuremgmt/registry.go
-// Then run tests in:
-//  pkg/services/featuremgmt/toggles_gen_test.go
-// twice to generate and validate the feature flag files
+// To change feature toggles, edit this file and run `make gen-feature-toggles`
 //
-// Alternatively, use `make gen-feature-toggles`
+// Alternatively, run the tests in `pkg/services/featuremgmt/toggles_gen_test.go` twice
+// to generate and validate the feature flag files
 
 package featuremgmt
 
