@@ -185,7 +185,7 @@ describe('DashboardScenePage', () => {
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockResolvedValue({ dashboard: updatedDashboard, meta: {} });
 
-    props.history.location.state = { routeReloadCounter: 1 };
+    props.location.state = { routeReloadCounter: 1 };
 
     rerender(props);
 
