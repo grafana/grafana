@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	authzlib "github.com/grafana/authlib/authz"
@@ -10,6 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+)
+
+var (
+	ErrTranslationNotImplemented = errors.New("action translation is not implemented for resource")
 )
 
 var _ zanzana.ZanzanaClient = (*ZanzanaClient)(nil)
@@ -29,10 +34,22 @@ func NewZanzanaClient(openfgaClient zanzana.OpenFGAClient) (*ZanzanaClient, erro
 }
 
 func (c *ZanzanaClient) Check(ctx context.Context, caller claims.AuthInfo, req *authzlib.CheckRequest) (authzlib.CheckResponse, error) {
+	ns, err := claims.ParseNamespace(req.Namespace)
+	if err != nil {
+		return authzlib.CheckResponse{}, err
+	}
+
+	tupleKey, ok := zanzana.TranslateToTuple(caller.GetUID(), req.Action, req.Resource, req.Name, ns.OrgID)
+	if !ok {
+		// unsupported translation
+		c.logger.Debug("unsupported translation", "action", req.Action, "kind", req.Resource)
+		return authzlib.CheckResponse{}, ErrTranslationNotImplemented
+	}
+
 	key := &openfgav1.CheckRequestTupleKey{
-		User:     req.User,
-		Relation: req.Relation,
-		Object:   req.Object,
+		User:     tupleKey.User,
+		Relation: tupleKey.Relation,
+		Object:   tupleKey.Object,
 	}
 
 	in := &openfgav1.CheckRequest{
@@ -40,25 +57,20 @@ func (c *ZanzanaClient) Check(ctx context.Context, caller claims.AuthInfo, req *
 	}
 
 	// Check direct access to resource first
-	res, err := a.zclient.Check(ctx, in)
+	res, err := c.openfgaClient.Check(ctx, in)
 	if err != nil {
-		return false, err
+		return authzlib.CheckResponse{}, err
 	}
 
 	// no need to check folder access
 	if res.Allowed || req.Parent == "" {
-		return res.Allowed, nil
+		return authzlib.CheckResponse{Allowed: res.Allowed}, nil
 	}
 
 	// Check access through the parent folder
-	ns, err := claims.ParseNamespace(req.Namespace)
-	if err != nil {
-		return false, err
-	}
-
 	folderKey := &openfgav1.CheckRequestTupleKey{
-		User:     req.User,
-		Relation: zanzana.TranslateToFolderRelation(req.Relation, req.ObjectType),
+		User:     caller.GetUID(),
+		Relation: zanzana.TranslateToFolderRelation(tupleKey.Relation, req.Resource),
 		Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
 	}
 
@@ -66,21 +78,21 @@ func (c *ZanzanaClient) Check(ctx context.Context, caller claims.AuthInfo, req *
 		TupleKey: folderKey,
 	}
 
-	folderRes, err := a.zclient.Check(ctx, folderReq)
+	folderRes, err := c.openfgaClient.Check(ctx, folderReq)
 	if err != nil {
-		return false, err
+		return authzlib.CheckResponse{}, err
 	}
 
-	return folderRes.Allowed, nil
+	return authzlib.CheckResponse{Allowed: folderRes.Allowed}, nil
 }
 
 func (c *ZanzanaClient) List(ctx context.Context, caller claims.AuthInfo, req *zanzana.ListRequest) ([]string, error) {
 	in := &openfgav1.ListObjectsRequest{
-		Type:     req.Type,
-		User:     req.User,
-		Relation: req.Relation,
+		Type:     req.Resource,
+		User:     caller.GetUID(),
+		Relation: req.Action,
 	}
-	res, err := a.zclient.ListObjects(ctx, in)
+	res, err := c.openfgaClient.ListObjects(ctx, in)
 	if err != nil {
 		return nil, err
 	}

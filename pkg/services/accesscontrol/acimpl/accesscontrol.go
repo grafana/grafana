@@ -20,8 +20,7 @@ import (
 )
 
 var (
-	errAccessNotImplemented = errors.New("access control not implemented for resource")
-	tracer                  = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
+	tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
 )
 
 var _ accesscontrol.AccessControl = new(AccessControl)
@@ -121,18 +120,11 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
 		kind, _, identifier := accesscontrol.SplitScope(scope)
-		tupleKey, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
-		if !ok {
-			// unsupported translation
-			return false, errAccessNotImplemented
-		}
-
-		a.log.Debug("evaluating zanzana", "user", tupleKey.User, "relation", tupleKey.Relation, "object", tupleKey.Object)
 		checkRes, err := a.zclient.Check(ctx, user, &authzlib.CheckRequest{
 			Namespace: claims.OrgNamespaceFormatter(user.GetOrgID()),
-			// User:     tupleKey.User,
-			Action: tupleKey.Relation,
-			Name:   tupleKey.Object,
+			Action:    action,
+			Resource:  kind,
+			Name:      identifier,
 		})
 
 		if err != nil {
@@ -180,7 +172,7 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 		first, second = second, first
 	}
 
-	if !errors.Is(second.err, errAccessNotImplemented) {
+	if !errors.Is(second.err, zclient.ErrTranslationNotImplemented) {
 		if second.err != nil {
 			a.log.Error("zanzana evaluation failed", "error", second.err)
 		} else if first.decision != second.decision {
