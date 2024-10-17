@@ -169,7 +169,7 @@ Template labels when the labels returned by your queries are insufficient. For i
 - A new label based on a query value can group a subset of alerts differently, changing how notifications are sent.
 - A new label based on a query value can be used in a notification policy to alter the notification contact point.
 
-Here’s an example of templating a `severity` label based on the query value:
+Here’s an example of templating a `severity` label based on the query value.
 
 ```
 {{ if (gt $values.A.Value 90.0) -}}
