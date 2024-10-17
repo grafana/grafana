@@ -50,6 +50,38 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
+<<<<<<< Updated upstream
+=======
+  language-dot:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/
+    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/
+  language-range:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#range
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#range
+  reference-notification-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
+  language-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#variables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#variables
+  language-if:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#if
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#if
+  language-index:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/language/#functions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/#functions
+>>>>>>> Stashed changes
 ---
 
 # Notification template examples
@@ -96,7 +128,95 @@ The name of the alert is {{ index .Labels "alertname" }}
 {{ end }}
 ```
 
+<<<<<<< Updated upstream
 Alternatively, you can use the `.` notation to print the value of the key.
+=======
+- [`{{ if }}`](ref:language-if): Introduces conditional logic to set the severity label dynamically.
+
+### With
+
+With is similar to if statements, however unlike if statements, `with` updates dot to refer to the value of the with:
+
+```
+{{ with .Alerts }}
+There are {{ len . }} alert(s)
+{{ else }}
+There are no alerts
+{{ end }}
+```
+
+- [`{{ with }}`](ref:language-with): a control structure that updates the [dot](ref:language-dot) cursor to refer to the value passed to with. If the value is empty or false, it falls back to the `else` block.
+
+### Variables
+
+Variables are used to store values within a template. Variables are defined using `{{ $variable := value }}` and can be reused throughout the template.
+
+```
+{{ range .Alerts }}
+{{ $alert := . }}
+{{ range .Labels.SortedPairs }}
+{{ .Name }} = {{ .Value }}
+There are {{ len $alert.Labels }}
+{{ end }}
+{{ end }}
+```
+
+- [`Variables`](ref:language-variables) must be created within the template.
+- You can use `$variable` inside a range or `with` and it will refer to the value of dot at the time the variable was defined, not the current value of dot.
+
+### Iterate over alerts
+
+To print just the labels of each alert, rather than all information about the alert, you can use a `range` to iterate the alerts, which are initialized with data. See [Notification Data](ref:reference-notification-data).
+
+```
+{{ range .Alerts }}
+{{ .Labels }}
+{{ end }}
+```
+
+- [`{{ range }}`](ref:language-range): Introduces looping through alerts to display multiple instances.
+- [Notification Data](ref:reference-notification-data): set of fields the [dot](ref:language-dot) cursor is initialized with.
+
+### Iterate over annotations and labels
+
+This template iterates over each alert and its associated labels and annotations. It formats the output to display the name and value of each label and annotation.
+
+```
+{{ range .Alerts }}
+{{ range .Labels.SortedPairs }}
+The name of the label is {{ .Name }}, and the value is {{ .Value }}
+{{ end }}
+{{ range .Annotations.SortedPairs }}
+The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
+{{ end }}
+{{ end }}
+```
+
+- `Outer Range`: `{{ range .Alerts }}` iterates over each alert in the list.
+- `.Labels`: The inner range `{{ range .Labels.SortedPairs }}` accesses each label, printing its name and value.
+- `.Annotations`: A similar inner range for annotations prints their names and values.
+
+### Range with index
+
+You can get the index of each alert within a range by defining index and value variables at the start of the range:
+
+```
+{{ $num_alerts := len .Alerts }}
+{{ range $index, $alert := .Alerts }}
+This is alert {{ $index }} out of {{ $num_alerts }}
+{{ end }}
+```
+
+## Common use cases
+
+Below are some examples that address common use cases and some of the different approaches you can take with templating. If you are unfamiliar with the templating language, check the [language page](ref:template-language).
+
+> Note that some notification template examples make reference to [annotations](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations). The alert rule provides the annotation, while the notification template formats and sends it. Both must be configured for the notification to work. See the note in the [Create notification templates](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/#create-notification-templates) page.
+
+### Listing multiple alert instances in a single notification
+
+When multiple alerts are fired, a notification template can summarize affected instances, making it easier to track issues like high CPU usage across systems. For example, use this template to list all instances with high CPU usage when multiple alerts fire at once:
+>>>>>>> Stashed changes
 
 ```go
 {{ define "custom_message" -}}
