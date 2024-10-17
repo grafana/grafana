@@ -41,6 +41,7 @@ import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
+import { LogsIntegrationContextProvider } from './RelatedLogs/LogsIntegrationContext';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
@@ -68,7 +69,7 @@ export interface DataTrailState extends SceneObjectState {
   settings: DataTrailSettings;
   createdAt: number;
 
-  // just for for the starting data source
+  // just for the starting data source
   initialDS?: string;
   initialFilters?: AdHocVariableFilter[];
 
@@ -382,7 +383,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
   /**
    *  This function is used to update state and otel variables.
-   * 
+   *
    *  1. Set the otelResources adhoc tagKey and tagValues filter functions
       2. Get the otel join query for state and variable
       3. Update state with the following
@@ -396,14 +397,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
    * This function is called on start and when variables change.
    * On start will provide the deploymentEnvironments and hasOtelResources parameters.
    * In the variable change case, we will not provide these parameters. It is assumed that the
-   * data source has been checked for otel resources and standardization and the otel variables are enabled at this point.    
-   * @param datasourceUid 
-   * @param timeRange 
-   * @param otelDepEnvVariable 
-   * @param otelResourcesVariable 
-   * @param otelJoinQueryVariable 
-   * @param deploymentEnvironments 
-   * @param hasOtelResources 
+   * data source has been checked for otel resources and standardization and the otel variables are enabled at this point.
+   * @param datasourceUid
+   * @param timeRange
+   * @param otelDepEnvVariable
+   * @param otelResourcesVariable
+   * @param otelJoinQueryVariable
+   * @param deploymentEnvironments
+   * @param hasOtelResources
    */
   async updateOtelData(
     datasourceUid: string,
@@ -597,19 +598,21 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }, [model]);
 
     return (
-      <div className={styles.container}>
-        {showHeaderForFirstTimeUsers && <MetricsHeader />}
-        <history.Component model={history} />
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            <settings.Component model={settings} />
-          </div>
-        )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-      </div>
+      <LogsIntegrationContextProvider>
+        <div className={styles.container}>
+          {showHeaderForFirstTimeUsers && <MetricsHeader />}
+          <history.Component model={history} />
+          {controls && (
+            <div className={styles.controls}>
+              {controls.map((control) => (
+                <control.Component key={control.state.key} model={control} />
+              ))}
+              <settings.Component model={settings} />
+            </div>
+          )}
+          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        </div>
+      </LogsIntegrationContextProvider>
     );
   };
 }
