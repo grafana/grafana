@@ -1283,13 +1283,14 @@ def retry_command(command, attempts = 60, delay = 30):
     ]
 
 def verify_linux_DEB_packages_step(depends_on = []):
-    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1"
+    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${version} >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
         "environment": {},
         "commands": [
+            'version=$(echo ${TAG} | sed "s/+security-/-/g")',
             'echo "Step 1: Updating package lists..."',
             "apt-get update >/dev/null 2>&1",
             'echo "Step 2: Installing prerequisites..."',
@@ -1303,10 +1304,10 @@ def verify_linux_DEB_packages_step(depends_on = []):
             # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
         ] + retry_command(install_command) + [
             'echo "Step 6: Verifying Grafana installation..."',
-            'if dpkg -s grafana | grep -q "Version: $(echo ${TAG} | sed "s/+security-/-/g"); then',
-            '    echo "Successfully verified Grafana version ${TAG}"',
+            'if dpkg -s grafana | grep -q "Version: $version"); then',
+            '    echo "Successfully verified Grafana version $version"',
             "else",
-            '    echo "Failed to verify Grafana version ${TAG}"',
+            '    echo "Failed to verify Grafana version $version"',
             "    exit 1",
             "fi",
             'echo "Verification complete."',
@@ -1327,7 +1328,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
         "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
     )
 
-    install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
+    install_command = "dnf install -y --nogpgcheck grafana-${version} >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-RPM-packages",
