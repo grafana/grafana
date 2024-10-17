@@ -14,10 +14,10 @@ type SandboxEnabledCheck = (params: SandboxEligibilityCheckParams) => Promise<bo
  * We allow core extensions to register their own
  * sandbox enabled checks.
  */
-const sandboxEnabledChecks: SandboxEnabledCheck[] = [isPluginFrontendSandboxEnabled];
+let sandboxEnabledCheck: SandboxEnabledCheck = isPluginFrontendSandboxEnabled;
 
-export function addSandboxEnabledCheck(checker: SandboxEnabledCheck) {
-  sandboxEnabledChecks.push(checker);
+export function setSandboxEnabledCheck(checker: SandboxEnabledCheck) {
+  sandboxEnabledCheck = checker;
 }
 
 export async function shouldLoadPluginInFrontendSandbox({
@@ -29,12 +29,7 @@ export async function shouldLoadPluginInFrontendSandbox({
     return false;
   }
 
-  for (const checker of sandboxEnabledChecks) {
-    if (await checker({ isAngular, pluginId })) {
-      return true;
-    }
-  }
-  return false;
+  return sandboxEnabledCheck({ isAngular, pluginId });
 }
 
 /**
@@ -78,6 +73,6 @@ async function isPluginFrontendSandboxElegible({
 /**
  * Check if the plugin is enabled for the sandbox via configuration.
  */
-async function isPluginFrontendSandboxEnabled({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
+export async function isPluginFrontendSandboxEnabled({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
   return Boolean(config.enableFrontendSandboxForPlugins?.includes(pluginId));
 }
