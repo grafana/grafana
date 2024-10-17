@@ -4,7 +4,14 @@ import { Provider } from 'react-redux';
 import { Switch, RouteComponentProps } from 'react-router-dom';
 import { CompatRoute, Navigate } from 'react-router-dom-v5-compat';
 
-import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
+import {
+  SidecarContext_EXPERIMENTAL,
+  config,
+  locationService,
+  navigationLogger,
+  reportInteraction,
+  sidecarServiceSingleton_EXPERIMENTAL,
+} from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -12,10 +19,8 @@ import { store } from 'app/store/store';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { GrafanaContext } from './core/context/GrafanaContext';
-import { SidecarContext } from './core/context/SidecarContext';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
-import { sidecarService } from './core/services/SidecarService';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
@@ -110,7 +115,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
                 <GlobalStyles />
-                <SidecarContext.Provider value={sidecarService}>
+                <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
                   <ExtensionRegistriesProvider registries={app.pluginExtensionsRegistries}>
                     <div className="grafana-app">
                       {config.featureToggles.appSidecar ? (
@@ -122,7 +127,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                       <PortalContainer />
                     </div>
                   </ExtensionRegistriesProvider>
-                </SidecarContext.Provider>
+                </SidecarContext_EXPERIMENTAL.Provider>
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>

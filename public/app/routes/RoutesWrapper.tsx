@@ -5,14 +5,19 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { HistoryWrapper, locationService, LocationServiceProvider, useChromeHeaderHeight } from '@grafana/runtime';
+import {
+  HistoryWrapper,
+  locationService,
+  LocationServiceProvider,
+  useChromeHeaderHeight,
+  useSidecar_EXPERIMENTAL,
+} from '@grafana/runtime';
 import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } from '@grafana/ui';
 
 import { AngularRoot } from '../angular/AngularRoot';
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
-import { useSidecar } from '../core/context/SidecarContext';
 import AppRootPage from '../features/plugins/components/AppRootPage';
 
 type RouterWrapperProps = {
@@ -54,7 +59,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
  * @constructor
  */
 export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
-  const { activePluginId, closeApp } = useSidecar();
+  const { activePluginId, closeApp } = useSidecar_EXPERIMENTAL();
 
   let { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',

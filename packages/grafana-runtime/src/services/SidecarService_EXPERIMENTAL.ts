@@ -1,13 +1,15 @@
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, EMPTY } from 'rxjs';
 
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService } from '../index';
 
-export class SidecarService {
+export class SidecarService_EXPERIMENTAL {
   // The ID of the app plugin that is currently opened in the sidecar view
   private _activePluginId: BehaviorSubject<string | undefined>;
+  private _initialContext: BehaviorSubject<unknown | undefined>;
 
   constructor() {
     this._activePluginId = new BehaviorSubject<string | undefined>(undefined);
+    this._initialContext = new BehaviorSubject<unknown | undefined>(undefined);
   }
 
   private assertFeatureEnabled() {
@@ -20,24 +22,35 @@ export class SidecarService {
   }
 
   get activePluginId() {
+    if (!this.assertFeatureEnabled()) {
+      return EMPTY;
+    }
     return this._activePluginId.asObservable();
   }
 
-  openApp(pluginId: string) {
+  get initialContext() {
     if (!this.assertFeatureEnabled()) {
-      return false;
+      return EMPTY;
+    }
+    return this._initialContext.asObservable();
+  }
+
+  openApp(pluginId: string, context?: unknown) {
+    if (!this.assertFeatureEnabled()) {
+      return;
     }
 
-    return this._activePluginId.next(pluginId);
+    this._activePluginId.next(pluginId);
+    this._initialContext.next(context);
   }
 
   closeApp(pluginId: string) {
     if (!this.assertFeatureEnabled()) {
-      return false;
+      return;
     }
-
     if (this._activePluginId.getValue() === pluginId) {
-      return this._activePluginId.next(undefined);
+      this._activePluginId.next(undefined);
+      this._initialContext.next(undefined);
     }
   }
 
@@ -54,7 +67,7 @@ export class SidecarService {
   }
 }
 
-export const sidecarService = new SidecarService();
+export const sidecarServiceSingleton_EXPERIMENTAL = new SidecarService_EXPERIMENTAL();
 
 // The app plugin that is "open" in the main Grafana view
 function getMainAppPluginId() {
