@@ -78,7 +78,7 @@
     "@cypress/webpack-preprocessor": "6.0.2",
     "@emotion/eslint-plugin": "11.12.0",
     "@eslint/compat": "^1.2.0",
-    "@grafana/eslint-config": "7.0.0",
+    "@grafana/eslint-config": "8.0.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/plugin-e2e": "^1.8.3",
     "@grafana/tsconfig": "^2.0.0",
@@ -91,6 +91,7 @@
     "@react-types/shared": "3.25.0",
     "@rtk-query/codegen-openapi": "^1.2.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
+    "@stylistic/eslint-plugin-ts": "^2.9.0",
     "@swc/core": "1.4.2",
     "@swc/helpers": "0.5.13",
     "@testing-library/dom": "10.4.0",
@@ -428,8 +429,7 @@
     "history@^4.9.0": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch",
     "redux": "^5.0.0",
     "@storybook/blocks@npm:8.1.6": "patch:@storybook/blocks@npm%3A8.1.6#~/.yarn/patches/@storybook-blocks-npm-8.1.6-892f57a6d7.patch",
-    "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
-    "@grafana/eslint-config": "portal:/Users/jackwestbrook/dev/grafana/eslint-config-grafana"
+    "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch"
   },
   "workspaces": {
     "packages": [
