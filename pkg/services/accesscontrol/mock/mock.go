@@ -90,6 +90,10 @@ func (m *Mock) GetRoleByName(ctx context.Context, orgID int64, roleName string) 
 	return nil, nil
 }
 
+func (m *Mock) Run(ctx context.Context) error {
+	return nil
+}
+
 func (m *Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
 	return make(map[string]interface{})
 }
