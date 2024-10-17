@@ -1,7 +1,9 @@
 // @ts-check
 const emotionPlugin = require('@emotion/eslint-plugin');
+const { fixupPluginRules } = require('@eslint/compat');
 const importPlugin = require('eslint-plugin-import');
 const jestPlugin = require('eslint-plugin-jest');
+const jestDomPlugin = require('eslint-plugin-jest-dom');
 const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
@@ -59,7 +61,6 @@ module.exports = [
       import: importPlugin,
       'jsx-a11y': jsxA11yPlugin,
       'no-barrel-files': barrelPlugin,
-      'testing-library': testingLibraryPlugin,
       '@grafana': grafanaPlugin,
     },
 
@@ -230,12 +231,7 @@ module.exports = [
   },
   {
     name: 'grafana/alerting-overrides',
-    ...testingLibraryPlugin.configs['flat/react'],
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
-    plugins: {
-      'testing-library': testingLibraryPlugin,
-      'jest-dom': require('eslint-plugin-jest-dom'),
-    },
     rules: {
       'dot-notation': 'error',
       'prefer-const': 'error',
@@ -244,12 +240,17 @@ module.exports = [
   },
   {
     name: 'grafana/alerting-test-overrides',
-    ...testingLibraryPlugin.configs['flat/react'],
+    plugins: {
+      'testing-library': fixupPluginRules({ rules: testingLibraryPlugin.rules }),
+      'jest-dom': jestDomPlugin,
+    },
     files: [
       'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
       'public/app/features/alerting/**/?(*.)+(spec|test).[jt]s?(x)',
     ],
     rules: {
+      ...testingLibraryPlugin.configs['flat/react'].rules,
+      ...jestDomPlugin.configs['flat/recommended'].rules,
       'testing-library/prefer-user-event': 'error',
       'jest/expect-expect': ['error', { assertFunctionNames: ['expect*', 'reducerTester'] }],
     },
