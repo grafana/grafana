@@ -3433,9 +3433,9 @@ steps:
         $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Create the grafana manifests
-        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+        $$debug docker manifest create grafana/grafana:${IMAGE_TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
+        $$debug docker manifest create grafana/grafana:${IMAGE_TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Push the grafana manifests
         $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}
@@ -3565,9 +3565,9 @@ steps:
         $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Create the grafana manifests
-        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+        $$debug docker manifest create grafana/grafana:${IMAGE_TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
+        $$debug docker manifest create grafana/grafana:${IMAGE_TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Push the grafana manifests
         $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}
@@ -5987,6 +5987,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: dc30a3a00ee542fb289da36ef6db4274684db4533c472f7f903468919d1046ac
+hmac: 4e5071553f0e9b1cc568f7b9bd63c6fc59a1f98166434a867df36415251cca4a
 
 ...
