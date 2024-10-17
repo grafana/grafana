@@ -219,8 +219,8 @@ func getAttributeVal(attr *commonv11.AnyValue) any {
 
 func getSpanTags(span *tracev11.Span) []*KeyValue {
 	tags := make([]*KeyValue, len(span.Attributes))
-	for _, attr := range span.Attributes {
-		tags = append(tags, &KeyValue{Key: attr.Key, Value: getAttributeVal(attr.Value)})
+	for i, attr := range span.Attributes {
+		tags[i] = &KeyValue{Key: attr.Key, Value: getAttributeVal(attr.Value)}
 	}
 	return tags
 }
