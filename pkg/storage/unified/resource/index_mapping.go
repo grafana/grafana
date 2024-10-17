@@ -1,8 +1,6 @@
 package resource
 
 import (
-	"time"
-
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -15,9 +13,9 @@ type IndexedResource struct {
 	Kind      string
 	Name      string
 	Title     string
-	CreatedAt time.Time
+	CreatedAt string
 	CreatedBy string
-	UpdatedAt time.Time
+	UpdatedAt string
 	UpdatedBy string
 	FolderId  string
 	Spec      any
@@ -34,24 +32,33 @@ func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
 		return nil, err
 	}
 
-	meta, err := utils.MetaAccessor(k8sObj)
+	meta, err := utils.MetaAccessor(&k8sObj)
 	if err != nil {
 		return nil, err
 	}
 
 	ir.Name = meta.GetName()
-	ir.Title = meta.FindTitle("defaultTitle")
+	ir.Title = meta.FindTitle("")
 	ir.Namespace = meta.GetNamespace()
 	ir.Group = meta.GetGroupVersionKind().Group
 	ir.Kind = meta.GetGroupVersionKind().Kind
-	ir.CreatedAt = meta.GetCreationTimestamp().Time
+	ir.CreatedAt = meta.GetCreationTimestamp().Time.Format("2006-01-02T15:04:05Z")
 	ir.CreatedBy = meta.GetCreatedBy()
 	updatedAt, err := meta.GetUpdatedTimestamp()
 	if err != nil {
 		return nil, err
 	}
-	ir.UpdatedAt = *updatedAt
+	if updatedAt != nil {
+		ir.UpdatedAt = updatedAt.Format("2006-01-02T15:04:05Z")
+	} else {
+		ir.UpdatedAt = ir.CreatedAt
+	}
 	ir.UpdatedBy = meta.GetUpdatedBy()
+	spec, err := meta.GetSpec()
+	if err != nil {
+		return nil, err
+	}
+	ir.Spec = spec
 
 	return ir, nil
 }
@@ -60,7 +67,7 @@ func createIndexMappings() *mapping.IndexMappingImpl {
 	// Create the index mapping
 	indexMapping := bleve.NewIndexMapping()
 	// Create an individual index mapping for each kind
-	indexMapping.TypeField = "kind"
+	indexMapping.TypeField = "Kind"
 
 	// for all kinds, create their index mappings
 	for k, _ := range getSpecObjectMappings() {
@@ -74,16 +81,16 @@ func createIndexMappings() *mapping.IndexMappingImpl {
 func createIndexMappingForKind(resourceKind string) *mapping.DocumentMapping {
 	// create mappings for top level fields
 	baseFields := map[string]*mapping.FieldMapping{
-		"group":     bleve.NewTextFieldMapping(),
-		"namespace": bleve.NewTextFieldMapping(),
-		"kind":      bleve.NewTextFieldMapping(),
-		"name":      bleve.NewTextFieldMapping(),
-		"title":     bleve.NewTextFieldMapping(),
-		"createdAt": bleve.NewDateTimeFieldMapping(),
-		"createdBy": bleve.NewTextFieldMapping(),
-		"updatedAt": bleve.NewDateTimeFieldMapping(),
-		"updatedBy": bleve.NewTextFieldMapping(),
-		"folderId":  bleve.NewTextFieldMapping(),
+		"Group":     bleve.NewTextFieldMapping(),
+		"Namespace": bleve.NewTextFieldMapping(),
+		"Kind":      bleve.NewTextFieldMapping(),
+		"Name":      bleve.NewTextFieldMapping(),
+		"Title":     bleve.NewTextFieldMapping(),
+		"CreatedAt": bleve.NewDateTimeFieldMapping(),
+		"CreatedBy": bleve.NewTextFieldMapping(),
+		"UpdatedAt": bleve.NewDateTimeFieldMapping(),
+		"UpdatedBy": bleve.NewTextFieldMapping(),
+		"FolderId":  bleve.NewTextFieldMapping(),
 	}
 
 	// Spec is different for all resources, so we need to generate the spec mapping based on the kind
@@ -93,7 +100,7 @@ func createIndexMappingForKind(resourceKind string) *mapping.DocumentMapping {
 	objectMapping.Dynamic = false // only map fields that we have explicitly defined
 
 	// map spec
-	objectMapping.AddSubDocumentMapping("spec", specMapping)
+	objectMapping.AddSubDocumentMapping("Spec", specMapping)
 
 	// map top level fields
 	for k, v := range baseFields {
@@ -157,6 +164,8 @@ func createSpecObjectMapping(kind string) *mapping.DocumentMapping {
 			specMapping.AddFieldMappingsAt(fieldName, bleve.NewNumericFieldMapping())
 		case "bool":
 			specMapping.AddFieldMappingsAt(fieldName, bleve.NewBooleanFieldMapping())
+		case "time":
+			specMapping.AddFieldMappingsAt(fieldName, bleve.NewDateTimeFieldMapping())
 		default:
 			// TODO support indexing arrays and nested fields
 			// We are only indexing top level string,int, and bool fields within spec for now. Arrays or nested fields are not yet supported.

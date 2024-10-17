@@ -113,12 +113,12 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	if err != nil {
 		return err
 	}
-	var jsonDoc interface{}
-	err = json.Unmarshal(data.Value.Value, &jsonDoc)
+	// Transform the raw resource into a more generic indexable resource
+	indexableResource, err := NewIndexedResource(data.Value.Value)
 	if err != nil {
 		return err
 	}
-	err = shard.index.Index(res.Metadata.Uid, jsonDoc)
+	err = shard.index.Index(res.Metadata.Uid, indexableResource)
 	if err != nil {
 		return err
 	}
@@ -151,6 +151,9 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	}
 	i.log.Info("got index for tenant", "tenant", tenant, "docCount", docCount)
 
+	fields, _ := shard.index.Fields()
+	i.log.Debug("indexed fields", "fields", fields)
+
 	// use 10 as a default limit for now
 	if limit <= 0 {
 		limit = 10
@@ -175,21 +178,21 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	for resKey, hit := range hits {
 		// add common fields to search results
 		ir := IndexedResource{}
-		ir.Kind = hit.Fields["kind"].(string)
-		ir.Name = hit.Fields["name"].(string)
-		ir.Namespace = hit.Fields["namespace"].(string)
-		ir.Group = hit.Fields["group"].(string)
-		//ir.CreatedAt = hit.Fields["createdAt"].(time.Time)
-		ir.CreatedBy = hit.Fields["createdBy"].(string)
-		//ir.UpdatedAt = hit.Fields["updatedAt"].(time.Time)
-		ir.UpdatedBy = hit.Fields["updatedBy"].(string)
-		ir.Title = hit.Fields["title"].(string)
+		ir.Kind = hit.Fields["Kind"].(string)
+		ir.Name = hit.Fields["Name"].(string)
+		ir.Namespace = hit.Fields["Namespace"].(string)
+		ir.Group = hit.Fields["Group"].(string)
+		ir.CreatedAt = hit.Fields["CreatedAt"].(string)
+		ir.CreatedBy = hit.Fields["CreatedBy"].(string)
+		ir.UpdatedAt = hit.Fields["UpdatedAt"].(string)
+		ir.UpdatedBy = hit.Fields["UpdatedBy"].(string)
+		ir.Title = hit.Fields["Title"].(string)
 
-		// add all spec fields to search results
+		// add indexed spec fields to search results
 		specResult := map[string]interface{}{}
 		for k, v := range hit.Fields {
-			if strings.HasPrefix(k, "spec.") {
-				specKey := strings.TrimPrefix(k, "spec.")
+			if strings.HasPrefix(k, "Spec.") {
+				specKey := strings.TrimPrefix(k, "Spec.")
 				specResult[specKey] = v
 			}
 			ir.Spec = specResult
