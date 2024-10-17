@@ -244,6 +244,40 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.False(t, dashboard.Updated.IsZero())
 	})
 
+	t.Run("Should be able to create dashboard with provided UID", func(t *testing.T) {
+		setup()
+		cmd := dashboards.SaveDashboardCommand{
+			OrgID: 1,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "delete me",
+				"uid":   "provided",
+			}),
+			UserID: 100,
+		}
+		d, err := dashboardStore.SaveDashboard(context.Background(), cmd)
+		require.NoError(t, err)
+		assert.Equal(t, d.UID, "provided")
+		assert.Equal(t, d.Title, "delete me")
+
+	})
+
+	t.Run("Should not be able to create dashboard with reserved UID of a soft deleted dashboard", func(t *testing.T) {
+		setup()
+		d := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
+		dashboardStore.SoftDeleteDashboard(context.Background(), 1, d.UID)
+
+		_, err := dashboardStore.ValidateDashboardBeforeSave(context.Background(), &dashboards.Dashboard{
+			OrgID: 1,
+			Title: "another title",
+			UID:   d.UID,
+			Data: simplejson.NewFromAny(map[string]interface{}{
+				"title": "delete me",
+				"uid":   d.UID,
+			}),
+		}, true)
+		require.Error(t, err, dashboards.ErrSoftDeletedDashboardWithSameUIDExists)
+	})
+
 	t.Run("Should be able to update dashboard by id and remove folderId", func(t *testing.T) {
 		setup()
 		cmd := dashboards.SaveDashboardCommand{
