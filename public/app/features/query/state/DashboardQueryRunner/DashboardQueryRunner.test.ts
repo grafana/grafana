@@ -28,6 +28,11 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
+jest.mock('app/features/correlations/utils', () => ({
+  ...jest.requireActual('app/features/correlations/utils'),
+  getCorrelationsBySourceUIDs: jest.fn().mockResolvedValue([]),
+}));
+
 const nameSpaces = [
   mockPromRuleNamespace({
     groups: [
@@ -260,7 +265,11 @@ describe('DashboardQueryRunnerImpl', () => {
         expect: (results) => {
           // should have one alert state, one snapshot, one legacy and one next gen result
           // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
-          const expected = { alertState: undefined, annotations: [getExpectedForAllResult().annotations[2]] };
+          const expected = {
+            alertState: undefined,
+            annotations: [getExpectedForAllResult().annotations[2]],
+            correlations: [],
+          };
           expect(results).toEqual(expected);
           expect(annotationQueryMock).toHaveBeenCalledTimes(1);
           expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
@@ -285,7 +294,7 @@ describe('DashboardQueryRunnerImpl', () => {
           // should have one alert state, one snapshot, one legacy and one next gen result
           // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
           const { annotations } = getExpectedForAllResult();
-          const expected = { alertState: undefined, annotations };
+          const expected = { alertState: undefined, annotations, correlations: [] };
           expect(results).toEqual(expected);
           expect(annotationQueryMock).toHaveBeenCalledTimes(1);
           expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
@@ -311,7 +320,7 @@ describe('DashboardQueryRunnerImpl', () => {
             // should have one alert state, one snapshot, one legacy and one next gen result
             // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
             const { alertState, annotations } = getExpectedForAllResult();
-            const expected = { alertState, annotations: [annotations[2]] };
+            const expected = { alertState, annotations: [annotations[2]], correlations: [] };
             expect(results).toEqual(expected);
             expect(annotationQueryMock).toHaveBeenCalledTimes(1);
             expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
@@ -339,7 +348,7 @@ describe('DashboardQueryRunnerImpl', () => {
           // should have one alert state, one snapshot, one legacy and one next gen result
           // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
           const { alertState, annotations } = getExpectedForAllResult();
-          const expected = { alertState, annotations };
+          const expected = { alertState, annotations, correlations: [] };
           expect(results).toEqual(expected);
           expect(annotationQueryMock).toHaveBeenCalledTimes(2);
           expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(2);
@@ -368,7 +377,7 @@ describe('DashboardQueryRunnerImpl', () => {
           // should have one alert state, one snapshot, one legacy and one next gen result
           // having both snapshot and legacy/next gen is a imaginary example for testing purposes and doesn't exist for real
           const { alertState, annotations } = getExpectedForAllResult();
-          expect(results).toEqual({ alertState, annotations: [annotations[0], annotations[2]] });
+          expect(results).toEqual({ alertState, annotations: [annotations[0], annotations[2]], correlations: [] });
           expect(annotationQueryMock).toHaveBeenCalledTimes(1);
           expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         },
