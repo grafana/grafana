@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { config, locationService } from '@grafana/runtime';
 
 interface Options {
-  locationStorageKey?: string;
+  localStorageKey?: string;
 }
 
 export class SidecarService {
@@ -12,7 +12,7 @@ export class SidecarService {
   private localStorageKey: string | undefined;
 
   constructor(options: Options) {
-    this.localStorageKey = options.locationStorageKey;
+    this.localStorageKey = options.localStorageKey;
     let initialId = undefined;
     if (this.localStorageKey) {
       initialId = localStorage.getItem(this.localStorageKey) || undefined;
@@ -71,7 +71,7 @@ export class SidecarService {
   }
 }
 
-export const sidecarService = new SidecarService({ locationStorageKey: 'grafana.sidecar.activePluginId' });
+export const sidecarService = new SidecarService({ localStorageKey: 'grafana.sidecar.activePluginId' });
 
 // The app plugin that is "open" in the main Grafana view
 function getMainAppPluginId() {
