@@ -1516,6 +1516,13 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "serverAdminElevatedOrgPrivileges",
+			Description:  "Enables treating server admins as org admins for all orgs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
 	}
 )
 

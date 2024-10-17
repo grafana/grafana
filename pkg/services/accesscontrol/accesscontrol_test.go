@@ -10,6 +10,8 @@ import (
 
 	// this import is needed for github.com/grafana/grafana/pkg/web hack_wrap to work
 	_ "github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestReduce(t *testing.T) {
@@ -125,6 +127,71 @@ func TestReduce(t *testing.T) {
 				require.True(t, ok)
 				require.ElementsMatch(t, scopes, want)
 			}
+		})
+	}
+}
+
+func TestGetOrgRoles(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		user               *user.SignedInUser
+		elevateServerAdmin bool
+		result             []string
+	}{
+		{
+			desc: "basic role only",
+			user: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleViewer,
+			},
+			elevateServerAdmin: false,
+			result:             []string{string(org.RoleViewer)},
+		},
+		{
+			desc: "server admin non-elevated",
+			user: &user.SignedInUser{
+				OrgID:          1,
+				OrgRole:        org.RoleViewer,
+				IsGrafanaAdmin: true,
+			},
+			elevateServerAdmin: false,
+			result:             []string{RoleGrafanaAdmin, string(org.RoleViewer)},
+		},
+		{
+			desc: "server admin global org",
+			user: &user.SignedInUser{
+				OrgID:          GlobalOrgID,
+				IsGrafanaAdmin: true,
+			},
+			elevateServerAdmin: false,
+			result:             []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
+		},
+		{
+			desc: "server admin elevated non-member",
+			user: &user.SignedInUser{
+				OrgID:          2,
+				OrgRole:        org.RoleNone,
+				IsGrafanaAdmin: true,
+			},
+			elevateServerAdmin: true,
+			result:             []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
+		},
+		{
+			desc: "server admin elevated member",
+			user: &user.SignedInUser{
+				OrgID:          2,
+				OrgRole:        org.RoleViewer,
+				IsGrafanaAdmin: true,
+			},
+			elevateServerAdmin: true,
+			result:             []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.desc, func(t *testing.T) {
+			orgRoles := GetOrgRoles(tt.user, tt.elevateServerAdmin)
+			assert.ElementsMatch(t, tt.result, orgRoles)
 		})
 	}
 }

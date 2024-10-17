@@ -80,7 +80,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
 	quotaService := quotaimpl.ProvideService(s, cfg)
-	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, tracer, quotaService, supportbundlestest.NewFakeBundleService())
+	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, tracer, quotaService, supportbundlestest.NewFakeBundleService(), features)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
