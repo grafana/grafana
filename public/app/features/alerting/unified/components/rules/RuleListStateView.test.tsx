@@ -52,8 +52,8 @@ describe('RuleListStateView', () => {
   it('renders differing prom rule states correctly and does not crash with missing state', () => {
     render(<RuleListStateView namespaces={namespaces} />);
 
-    expect(screen.getByText(/firing \(1\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/pending \(1\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/normal \(1\)/i)).toBeInTheDocument();
+    expect(screen.getByRole('treeitem', { name: 'Firing 1' })).toBeInTheDocument();
+    expect(screen.getByRole('treeitem', { name: 'Pending 1' })).toBeInTheDocument();
+    expect(screen.getByRole('treeitem', { name: 'Normal 1' })).toBeInTheDocument();
   });
 });
