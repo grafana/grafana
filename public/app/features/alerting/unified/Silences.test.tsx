@@ -120,8 +120,6 @@ beforeEach(() => {
   ]);
 });
 
-afterEach(() => jest.resetAllMocks());
-
 describe('Silences', () => {
   it(
     'loads and shows silences',

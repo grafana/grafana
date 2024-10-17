@@ -16,7 +16,8 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
+import { Button, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -331,7 +332,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const styles = getStyles();
 
     return (
-      <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
+      <ScrollContainer minHeight="100%" ref={this.setScrollRef}>
         <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
           {dsSettings && (
@@ -346,7 +347,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             </>
           )}
         </div>
-      </CustomScrollbar>
+      </ScrollContainer>
     );
   }
 }

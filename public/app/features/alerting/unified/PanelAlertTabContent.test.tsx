@@ -181,7 +181,6 @@ const server = setupMswServer();
 
 describe('PanelAlertTabContent', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,

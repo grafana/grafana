@@ -8,7 +8,7 @@ import { IconButton } from '../../components/IconButton/IconButton';
 import { TabsBar, Tab, TabContent } from '../../components/Tabs';
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 export interface TabConfig {
   label: string;
@@ -50,9 +50,9 @@ export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose, t
         ))}
         <IconButton className={styles.close} onClick={onClose} name="times" tooltip={closeIconTooltip ?? 'Close'} />
       </TabsBar>
-      <CustomScrollbar autoHeightMin={autoHeight} autoHeightMax={autoHeight}>
+      <ScrollContainer height={autoHeight}>
         <TabContent className={styles.tabContent}>{tabs.find((t) => t.value === activeTab)?.content}</TabContent>
-      </CustomScrollbar>
+      </ScrollContainer>
     </div>
   );
 }

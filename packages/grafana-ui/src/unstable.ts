@@ -11,3 +11,4 @@
 
 export * from './utils/skeleton';
 export * from './components/Combobox/Combobox';
+export * from './components/ScrollContainer/ScrollContainer';
