@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	"github.com/dlmiddlecote/sqlstats"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"xorm.io/xorm"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -34,7 +34,10 @@ var errGrafanaDBInstrumentedNotSupported = errors.New("the Resource API is " +
 	grafanaDBInstrumentQueriesKey + "` is enabled in [database], and that" +
 	" setup is currently unsupported. Please, consider disabling that flag")
 
-func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracing.Tracer) (db.DBProvider, error) {
+func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (db.DBProvider, error) {
+	if tracer == nil {
+		tracer = noop.NewTracerProvider().Tracer("test-tracer")
+	}
 	p, err := newResourceDBProvider(grafanaDB, cfg, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("provide Resource DB: %w", err)
