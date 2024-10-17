@@ -63,6 +63,13 @@
       ]
     },
     {
+      "groupName": "scenes",
+      "matchPackageNames": [
+        "@grafana/scenes",
+        "@grafana/scenes-react",
+      ]
+    },
+    {
       "groupName": "visx",
       "matchPackagePrefixes": [
         "@visx/"
