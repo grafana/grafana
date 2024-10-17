@@ -137,7 +137,7 @@ CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 
 ### How to template an annotation
 
-To template an annotation:
+Complete the following steps to template an annotation.
 
 1. Navigate to **Alerts & IRM** -> **Alert rules** -> create or edit an alert rule.
 1. Scroll down to the **Configure notification message** section.
