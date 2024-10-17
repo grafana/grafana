@@ -22,6 +22,10 @@ Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing
 
 Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](/docs/mimir/latest/).
 
-### Grafana Oncall
+### Grafana OnCall
 
 Grafana OnCall is an open source incident response management tool built to help teams improve their collaboration and resolve incidents faster. For more information about Grafana OnCall, refer to [Grafana OnCall documentation](/docs/oncall/latest/).
+
+### Explore Apps
+
+Our new suite of apps provides queryless point-and-click experiences for working with Mimir, Loki, Tempo and Pyroscope data. Diagnose issues and understand your systems faster than ever regardless of your level of expertise. For more information, check out [Explore Apps simplified exploration documentation](/docs/grafana/latest/explore/simplified-exploration/).
