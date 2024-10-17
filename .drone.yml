@@ -3858,7 +3858,8 @@ steps:
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
+  - 'if dpkg -s grafana | grep -q "Version: $(echo ${TAG} | sed "s/+security-/-/g");
+    then'
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
   - '    echo "Failed to verify Grafana version ${TAG}"'
@@ -3889,7 +3890,8 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - dnf list available grafana-${TAG}
+  - version=$(echo ${TAG} | sed "s/+security-/^/g")
+  - dnf list available grafana-${{version}}
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
@@ -3910,13 +3912,13 @@ steps:
   - '    rpm --import https://rpm.grafana.com/gpg.key'
   - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
-  - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    echo "Grafana package version ${{version}} not found in repository."'
   - '    dnf repolist'
   - '    dnf list available grafana*'
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "${TAG}"; then
+  - if rpm -q grafana | grep -q "${{verison}}"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
   - '    echo "Failed to verify Grafana version ${TAG}"'
@@ -4035,7 +4037,8 @@ steps:
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
+  - 'if dpkg -s grafana | grep -q "Version: $(echo ${TAG} | sed "s/+security-/-/g");
+    then'
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
   - '    echo "Failed to verify Grafana version ${TAG}"'
@@ -4067,7 +4070,8 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - dnf list available grafana-${TAG}
+  - version=$(echo ${TAG} | sed "s/+security-/^/g")
+  - dnf list available grafana-${{version}}
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
@@ -4088,13 +4092,13 @@ steps:
   - '    rpm --import https://rpm.grafana.com/gpg.key'
   - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
-  - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    echo "Grafana package version ${{version}} not found in repository."'
   - '    dnf repolist'
   - '    dnf list available grafana*'
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "${TAG}"; then
+  - if rpm -q grafana | grep -q "${{verison}}"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
   - '    echo "Failed to verify Grafana version ${TAG}"'
@@ -5987,6 +5991,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 67577ba921b47a9925e52ec4b575b1a3e10b25297ffe93b788b99a8591d164b0
+hmac: 4f37532e2215ddac9aadbc05e4a6bd8d5f15563acf449f6b8652323c5526d31c
 
 ...
