@@ -69,12 +69,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		}
 	}
 
-	var opts []grpc.ServerOption
-
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
 	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/auth/auth.go#L30.
-	opts = append(opts, []grpc.ServerOption{
+	opts := []grpc.ServerOption{
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
@@ -86,7 +84,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),
-	}...)
+	}
 
 	if s.cfg.GRPCServerTLSConfig != nil {
 		opts = append(opts, grpc.Creds(credentials.NewTLS(cfg.GRPCServerTLSConfig)))
