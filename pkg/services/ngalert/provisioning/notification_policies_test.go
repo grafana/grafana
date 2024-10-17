@@ -84,8 +84,8 @@ func TestUpdatePolicyTree(t *testing.T) {
 				"not-existing",
 			},
 		}
-		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrValidation)
+		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		require.ErrorIs(t, err, ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if root route has no receiver", func(t *testing.T) {
@@ -97,8 +97,8 @@ func TestUpdatePolicyTree(t *testing.T) {
 		newRoute := definitions.Route{
 			Receiver: "",
 		}
-		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrValidation)
+		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		require.ErrorIs(t, err, ErrRouteInvalidFormat)
 	})
 
 	t.Run("ErrValidation if referenced receiver does not exist", func(t *testing.T) {
@@ -113,8 +113,8 @@ func TestUpdatePolicyTree(t *testing.T) {
 		newRoute := definitions.Route{
 			Receiver: "unknown",
 		}
-		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-		require.ErrorIs(t, err, ErrValidation)
+		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		require.ErrorIs(t, err, ErrRouteInvalidFormat)
 
 		t.Run("including sub-routes", func(t *testing.T) {
 			newRoute := definitions.Route{
@@ -123,8 +123,8 @@ func TestUpdatePolicyTree(t *testing.T) {
 					{Receiver: "unknown"},
 				},
 			}
-			err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
-			require.ErrorIs(t, err, ErrValidation)
+			_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+			require.ErrorIs(t, err, ErrRouteInvalidFormat)
 		})
 	})
 
@@ -137,7 +137,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		newRoute := definitions.Route{
 			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
 		}
-		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, "wrong-version")
+		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, "wrong-version")
 		require.ErrorIs(t, err, ErrVersionConflict)
 	})
 
@@ -161,7 +161,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return expectedErr
 		}
 
-		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
 		require.ErrorIs(t, err, expectedErr)
 
 		assert.Len(t, prov.Calls, 1)
@@ -180,8 +180,10 @@ func TestUpdatePolicyTree(t *testing.T) {
 		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
 		expectedRev.Config.AlertmanagerConfig.Route = &route
 
-		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, defaultVersion)
+		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, defaultVersion)
 		require.NoError(t, err)
+		assert.Equal(t, newRoute, result)
+		assert.Equal(t, calculateRouteFingerprint(newRoute), version)
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
@@ -210,8 +212,10 @@ func TestUpdatePolicyTree(t *testing.T) {
 		expectedRev.Config.AlertmanagerConfig.Route = &newRoute
 		expectedRev.ConcurrencyToken = rev.ConcurrencyToken
 
-		err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, "")
+		result, version, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceAPI, "")
 		require.NoError(t, err)
+		assert.Equal(t, newRoute, result)
+		assert.Equal(t, calculateRouteFingerprint(newRoute), version)
 
 		assert.Len(t, store.Calls, 2)
 		assert.Equal(t, "Save", store.Calls[1].Method)
