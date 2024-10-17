@@ -164,7 +164,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
               />
             </Authorize>
           )}
-          <Authorize actions={[AlertmanagerAction.CreateContactPoint]}>
+          <Authorize actions={[AlertmanagerAction.CreateNotificationTemplate]}>
             <ActionIcon
               to={makeAMLink(
                 `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,

@@ -188,7 +188,8 @@ export const ContactPointsPageContents = () => {
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
-  const [_, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+  const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+  const [, showContactPointsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
@@ -198,12 +199,14 @@ export const ContactPointsPageContents = () => {
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager!} />
       <Stack direction="column">
         <TabsBar>
-          <Tab
-            label="Contact Points"
-            active={showingContactPoints}
-            counter={contactPoints.length}
-            onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
-          />
+          {showContactPointsTab && (
+            <Tab
+              label="Contact Points"
+              active={showingContactPoints}
+              counter={contactPoints.length}
+              onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
+            />
+          )}
           {showTemplatesTab && (
             <Tab
               label="Notification Templates"
