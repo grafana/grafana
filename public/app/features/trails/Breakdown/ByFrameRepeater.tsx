@@ -21,7 +21,6 @@ import { fuzzySearch } from '../services/search';
 import { sortSeries } from '../services/sorting';
 
 import { BreakdownSearchReset } from './BreakdownSearchScene';
-import { getLabelValue } from './SortByScene';
 import { findSceneObjectsByType } from './utils';
 
 interface ByFrameRepeaterState extends SceneObjectState {

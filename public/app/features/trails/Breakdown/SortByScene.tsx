@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 
-import { BusEventBase, DataFrame, GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
+import { BusEventBase, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { IconButton, Select } from '@grafana/ui';
 import { Field, useStyles2 } from '@grafana/ui/';
 
 import { Trans } from '../../../core/internationalization';
-import { getLabelValueFromDataFrame } from '../services/levels';
 import { getSortByPreference, setSortByPreference } from '../services/store';
 
 export interface SortBySceneState extends SceneObjectState {
@@ -32,13 +31,8 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
       options: [
         {
           value: 'outliers',
-          label: 'Detected outliers',
-          description: 'Order by the amount of detected outliers in the data',
-        },
-        {
-          value: ReducerID.stdDev,
-          label: 'Widest spread',
-          description: 'Sort graphs by deviation from the average value',
+          label: 'Outlying Values',
+          description: 'Prioritizes values that show distinct behavior from others within the same label',
         },
         {
           value: 'alphabetical',
@@ -86,7 +80,7 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
               name={'info-circle'}
               size="sm"
               variant={'secondary'}
-              tooltip="Sorts by a calculation based on time series values. Defaults to standard deviation."
+              tooltip="Sorts values using standard or smart time series calculations."
             />
           </div>
         }
@@ -112,8 +106,4 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
     }),
   };
-}
-
-export function getLabelValue(frame: DataFrame) {
-  return getLabelValueFromDataFrame(frame) ?? 'No labels';
 }
