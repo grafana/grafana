@@ -21,7 +21,7 @@ import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { QueriesDrawerContextProvider, useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
+import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { QUERY_LIBRARY_LOCAL_STORAGE_KEYS } from './QueryLibrary/QueryLibrary';
 import { queryLibraryTrackAddFromQueryRow } from './QueryLibrary/QueryLibraryAnalyticsEvents';
 import { QueryTemplateForm } from './QueryLibrary/QueryTemplateForm';
@@ -37,11 +37,7 @@ const MIN_PANE_WIDTH = 200;
 const QUERY_LIBRARY_ACTION_KEY = 'queryLibraryAction';
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
-  return (
-    <QueriesDrawerContextProvider>
-      <ExplorePageContent {...props} />
-    </QueriesDrawerContextProvider>
-  );
+  return <ExplorePageContent {...props} />;
 }
 
 function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {

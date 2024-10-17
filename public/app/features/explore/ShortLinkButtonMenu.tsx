@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { IconName } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { ToolbarButton, Dropdown, Menu, Stack, ToolbarButtonRow, MenuGroup } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { useSelector } from 'app/types';
@@ -39,6 +39,7 @@ export function ShortLinkButtonMenu() {
   const panes = useSelector(selectPanes);
   const [isOpen, setIsOpen] = useState(false);
   const [lastSelected, setLastSelected] = useState(defaultMode);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   const onCopyLink = (shorten: boolean, absTime: boolean, url?: string) => {
     if (shorten) {
       createAndCopyShortLink(url || global.location.href);
@@ -136,14 +137,16 @@ export function ShortLinkButtonMenu() {
         <ToolbarButton
           tooltip={lastSelected.label}
           icon={lastSelected.icon}
-          iconOnly={true}
+          iconOnly={!isSingleTopNav}
           narrow={true}
           onClick={() => {
             const url = lastSelected.getUrl();
             onCopyLink(lastSelected.shorten, lastSelected.absTime, url);
           }}
           aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened URL')}
-        />
+        >
+          {isSingleTopNav && <Trans i18nKey="explore.toolbar.copy-shortened-link-label">Share</Trans>}
+        </ToolbarButton>
         <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
           <ToolbarButton
             narrow={true}

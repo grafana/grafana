@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
@@ -26,6 +27,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
+import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { QueriesDrawerDropdown } from './QueriesDrawer/QueriesDrawerDropdown';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
@@ -90,6 +92,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
   const isSingleTopNav = config.featureToggles.singleTopNav;
+  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
@@ -202,16 +205,32 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
-  const navBarActions = [<ShortLinkButtonMenu key="share" />, <div style={{ flex: 1 }} key="spacer0" />];
+  const navBarActions = [<ShortLinkButtonMenu key="share" />];
+
+  if (isSingleTopNav) {
+    if (queryLibraryAvailable) {
+      navBarActions.unshift(<QueriesDrawerDropdown key="queryLibrary" variant="full" />);
+    } else {
+      navBarActions.unshift(
+        <ToolbarButton
+          variant={drawerOpened ? 'active' : 'canvas'}
+          aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
+          onClick={() => setDrawerOpened(!drawerOpened)}
+          data-testid={Components.QueryTab.queryHistoryButton}
+          icon="history"
+        >
+          <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
+        </ToolbarButton>
+      );
+    }
+  } else {
+    navBarActions.push(<div style={{ flex: 1 }} key="spacer0" />);
+  }
 
   return (
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      {!isSingleTopNav && (
-        <div>
-          <AppChromeUpdate actions={navBarActions} />
-        </div>
-      )}
+      <AppChromeUpdate actions={navBarActions} />
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
@@ -236,12 +255,11 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
-          isSingleTopNav && <ShortLinkButtonMenu key="share" />,
         ].filter(Boolean)}
         forceShowLeftItems
       >
         {[
-          <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
+          !isSingleTopNav && <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
           !splitted ? (
             <ToolbarButton
               variant="canvas"
