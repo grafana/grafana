@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
+//nolint:unused
 const (
 	otelAttrBaseKey         = "dbutil_"
 	otelAttrTemplateNameKey = otelAttrBaseKey + "template_name"

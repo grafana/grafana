@@ -129,7 +129,7 @@ func (_c *DB_DriverName_Call) RunAndReturn(run func() string) *DB_DriverName_Cal
 }
 
 // ExecContext provides a mock function with given fields: ctx, query, args
-func (_m *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (db.Result, error) {
+func (_m *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	var _ca []interface{}
 	_ca = append(_ca, ctx, query)
 	_ca = append(_ca, args...)
@@ -139,16 +139,16 @@ func (_m *DB) ExecContext(ctx context.Context, query string, args ...interface{}
 		panic("no return value specified for ExecContext")
 	}
 
-	var r0 db.Result
+	var r0 sql.Result
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (db.Result, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (sql.Result, error)); ok {
 		return rf(ctx, query, args...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) db.Result); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) sql.Result); ok {
 		r0 = rf(ctx, query, args...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(db.Result)
+			r0 = ret.Get(0).(sql.Result)
 		}
 	}
 
@@ -188,12 +188,12 @@ func (_c *DB_ExecContext_Call) Run(run func(ctx context.Context, query string, a
 	return _c
 }
 
-func (_c *DB_ExecContext_Call) Return(_a0 db.Result, _a1 error) *DB_ExecContext_Call {
+func (_c *DB_ExecContext_Call) Return(_a0 sql.Result, _a1 error) *DB_ExecContext_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *DB_ExecContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (db.Result, error)) *DB_ExecContext_Call {
+func (_c *DB_ExecContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (sql.Result, error)) *DB_ExecContext_Call {
 	_c.Call.Return(run)
 	return _c
 }

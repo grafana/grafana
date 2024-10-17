@@ -10,7 +10,7 @@ import (
 //go:generate mockery --with-expecter --name Tx
 //go:generate mockery --with-expecter --name Row
 //go:generate mockery --with-expecter --name Rows
-//go:generate mockery --with-expecter --name Result
+//go:generate mockery --with-expecter --exported --name result
 
 const (
 	DriverPostgres = "postgres"
@@ -83,8 +83,13 @@ type Rows interface {
 }
 
 // Result is the standard sql.Result interface, for convenience.
-type Result interface {
-	sql.Result
+type Result = sql.Result
+
+// result is needed for mockery, since it doesn't support type aliases.
+//
+//nolint:unused
+type result interface {
+	Result
 }
 
 // WithTxFunc is an adapter to be able to provide the DB.WithTx method as an
