@@ -185,5 +185,5 @@ To do this, you need to make sure that your recording rule is in the right evalu
 
 This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
-This setting applies to both Grafana-managed alerting and recording rules.
+This setting applies to both Grafana-managed alert and recording rules.
 
