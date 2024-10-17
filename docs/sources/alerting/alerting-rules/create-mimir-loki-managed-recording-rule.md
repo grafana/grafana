@@ -33,7 +33,7 @@ refs:
 
 Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
 
-Grafana-Managed Recording Rules offer the same Prometheus-like semantics, but allow you to query any Grafana datasource supported by alerting. In addition to the above, you can use this to import and map data from other datasources into Prometheus.
+Grafana-managed recording rules offer the same Prometheus-like semantics, but allow you to query any Grafana data source supported by alerting. In addition to the above, you can use this to import and map data from other data sources into Prometheus.
 
 For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
 
