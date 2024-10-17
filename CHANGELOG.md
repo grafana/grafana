@@ -10,6 +10,7 @@
 
 - **Provisioning:** Prevent provisioning folder errors from failing startup [#92588](https://github.com/grafana/grafana/pull/92588), [@suntala](https://github.com/suntala)
 - **TutorialCard:** Fix link to tutorial not opening [#92645](https://github.com/grafana/grafana/pull/92645), [@eledobleefe](https://github.com/eledobleefe)
+- **SQL Expressions**: Fixes CVE-2024-9264
 
 <!-- 11.0.5+security-01 END -->
 <!-- 11.0.6 START -->
