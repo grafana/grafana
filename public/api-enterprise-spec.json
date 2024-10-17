@@ -1029,7 +1029,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupAttrs"
+              "$ref": "#/definitions/GroupAttributes"
             }
           },
           {
@@ -1070,7 +1070,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/GroupAttrs"
+              "$ref": "#/definitions/GroupAttributes"
             }
           },
           {
@@ -1115,7 +1115,7 @@
         ],
         "responses": {
           "204": {
-            "$ref": "#/responses/apiResponse"
+            "$ref": "#/responses/okResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -1289,7 +1289,7 @@
         ],
         "responses": {
           "204": {
-            "$ref": "#/responses/apiResponse"
+            "$ref": "#/responses/okResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -5152,7 +5152,7 @@
         "mappings": {}
       }
     },
-    "GroupAttrs": {
+    "GroupAttributes": {
       "type": "object",
       "properties": {
         "roles": {

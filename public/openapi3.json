@@ -6373,7 +6373,7 @@
         },
         "type": "object"
       },
-      "GroupAttrs": {
+      "GroupAttributes": {
         "properties": {
           "roles": {
             "items": {
@@ -19134,7 +19134,7 @@
         ],
         "responses": {
           "204": {
-            "$ref": "#/components/responses/apiResponse"
+            "$ref": "#/components/responses/okResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
@@ -19171,7 +19171,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GroupAttrs"
+                "$ref": "#/components/schemas/GroupAttributes"
               }
             }
           },
@@ -19217,7 +19217,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GroupAttrs"
+                "$ref": "#/components/schemas/GroupAttributes"
               }
             }
           },
@@ -19369,7 +19369,7 @@
         ],
         "responses": {
           "204": {
-            "$ref": "#/components/responses/apiResponse"
+            "$ref": "#/components/responses/okResponse"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
