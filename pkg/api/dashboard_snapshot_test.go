@@ -40,7 +40,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 
 			hs.DashboardService = svc
 
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 		})
 	}

@@ -427,7 +427,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			})
 
-			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 			srv := NewRuleService(ac)
 			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)

@@ -24,7 +24,7 @@ func (i item) AuthID() string {
 }
 
 func TestList(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 
 	t.Run("should allow all items if no access client is passed", func(t *testing.T) {
 		ctx := newContext("stacks-1", newIdent())

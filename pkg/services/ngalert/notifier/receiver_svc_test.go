@@ -968,7 +968,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 				}
 				return false
 			}
-			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()), true)
+			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient()), true)
 			for _, recv := range allReceivers() {
 				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
 				if isVisibleInProvisioning(recv.UID) {
@@ -1477,7 +1477,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverS
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	return NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()), false),
+		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient()), false),
 		legacy_storage.NewAlertmanagerConfigStore(store),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},

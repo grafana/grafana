@@ -68,7 +68,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 	cfg.Raw = iniFile
 
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 	sqlStore := db.InitTestDB(t)
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
@@ -180,7 +180,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 	sqlStore := db.InitTestDB(t)
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(

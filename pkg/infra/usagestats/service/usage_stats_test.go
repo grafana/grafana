@@ -248,7 +248,7 @@ func createService(t *testing.T, sqlStore db.DB, withDB bool) *UsageStats {
 		kvstore.ProvideService(sqlStore),
 		routing.NewRouteRegister(),
 		tracing.InitializeTracerForTest(),
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient()),
 		supportbundlestest.NewFakeBundleService(),
 	)
 

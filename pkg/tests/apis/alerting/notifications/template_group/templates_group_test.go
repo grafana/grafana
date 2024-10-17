@@ -356,7 +356,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	adminClient := adminK8sClient.NotificationsV0alpha1().TemplateGroups("default")
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopZanzanaClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
@@ -580,7 +580,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	template2, err = adminClient.Create(ctx, template2, v1.CreateOptions{})
 	require.NoError(t, err)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopZanzanaClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.NotificationTemplate{

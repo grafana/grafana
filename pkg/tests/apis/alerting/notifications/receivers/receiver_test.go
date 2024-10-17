@@ -871,7 +871,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopZanzanaClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
@@ -1128,7 +1128,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopZanzanaClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
@@ -1448,7 +1448,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zclient.NewNoopZanzanaClient())
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{

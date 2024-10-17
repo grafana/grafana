@@ -21,6 +21,6 @@ func New(db db.DB, cfg *setting.Cfg, bus bus.Bus) *correlations.CorrelationsServ
 		},
 	}
 
-	correlationsSvc, _ := correlations.ProvideService(db, routing.NewRouteRegister(), ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()), bus, quotatest.New(false, nil), cfg)
+	correlationsSvc, _ := correlations.ProvideService(db, routing.NewRouteRegister(), ds, acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient()), bus, quotatest.New(false, nil), cfg)
 	return correlationsSvc
 }

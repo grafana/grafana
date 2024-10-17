@@ -227,7 +227,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		ac := acimpl.ProvideAccessControl(features, zclient.NewNoopOpenFGAClient())
+		ac := acimpl.ProvideAccessControl(features, zclient.NewNoopZanzanaClient())
 		folderPermissions, err := ftestutil.ProvideFolderPermissions(features, cfg, sql)
 		require.NoError(t, err)
 		fStore := folderimpl.ProvideStore(sql)

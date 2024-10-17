@@ -75,7 +75,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.OpenFGAClient, db db.DB, permRegistry permreg.PermissionRegistry,
+	openFGAClient zanzana.OpenFGAClient, db db.DB, permRegistry permreg.PermissionRegistry,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -85,7 +85,7 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		sync:           migrator.NewZanzanaSynchroniser(zclient, db),
+		sync:           migrator.NewZanzanaSynchroniser(openFGAClient, db),
 		permRegistry:   permRegistry,
 	}
 

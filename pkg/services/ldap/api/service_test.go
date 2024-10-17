@@ -70,7 +70,7 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 
 	a := ProvideService(cfg,
 		router,
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient()),
 		usertest.NewUserServiceFake(),
 		&authinfotest.FakeService{},
 		ldap.ProvideGroupsService(),

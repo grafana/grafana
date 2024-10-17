@@ -3,14 +3,12 @@ package acimpl
 import (
 	"context"
 	"errors"
-	"strconv"
 	"time"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
-
-	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,7 +26,7 @@ var (
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
-func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.OpenFGAClient) *AccessControl {
+func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.ZanzanaClient) *AccessControl {
 	logger := log.New("accesscontrol")
 
 	var m *acMetrics
@@ -46,14 +44,14 @@ func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.O
 }
 
 func ProvideAccessControlTest() *AccessControl {
-	return ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+	return ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 }
 
 type AccessControl struct {
 	features  featuremgmt.FeatureToggles
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
-	zclient   zanzana.OpenFGAClient
+	zclient   zanzana.ZanzanaClient
 	metrics   *acMetrics
 }
 
@@ -130,18 +128,18 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 		}
 
 		a.log.Debug("evaluating zanzana", "user", tupleKey.User, "relation", tupleKey.Relation, "object", tupleKey.Object)
-		allowed, err := a.Check(ctx, accesscontrol.CheckRequest{
-			// Namespace: claims.OrgNamespaceFormatter(user.GetOrgID()),
-			User:     tupleKey.User,
-			Relation: tupleKey.Relation,
-			Object:   tupleKey.Object,
+		checkRes, err := a.zclient.Check(ctx, user, &authzlib.CheckRequest{
+			Namespace: claims.OrgNamespaceFormatter(user.GetOrgID()),
+			// User:     tupleKey.User,
+			Action: tupleKey.Relation,
+			Name:   tupleKey.Object,
 		})
 
 		if err != nil {
 			return false, err
 		}
 
-		return allowed, nil
+		return checkRes.Allowed, nil
 	})
 }
 
@@ -212,7 +210,6 @@ func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return &AccessControl{
 		features:  a.features,
 		log:       a.log,
-		zclient:   a.zclient,
 		metrics:   a.metrics,
 		resolvers: accesscontrol.NewResolvers(a.log),
 	}
@@ -223,63 +220,4 @@ func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg
 	defer span.End()
 
 	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
-}
-
-func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckRequest) (bool, error) {
-	key := &openfgav1.CheckRequestTupleKey{
-		User:     req.User,
-		Relation: req.Relation,
-		Object:   req.Object,
-	}
-
-	in := &openfgav1.CheckRequest{
-		TupleKey: key,
-	}
-
-	// Check direct access to resource first
-	res, err := a.zclient.Check(ctx, in)
-	if err != nil {
-		return false, err
-	}
-
-	// no need to check folder access
-	if res.Allowed || req.Parent == "" {
-		return res.Allowed, nil
-	}
-
-	// Check access through the parent folder
-	ns, err := claims.ParseNamespace(req.Namespace)
-	if err != nil {
-		return false, err
-	}
-
-	folderKey := &openfgav1.CheckRequestTupleKey{
-		User:     req.User,
-		Relation: zanzana.TranslateToFolderRelation(req.Relation, req.ObjectType),
-		Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
-	}
-
-	folderReq := &openfgav1.CheckRequest{
-		TupleKey: folderKey,
-	}
-
-	folderRes, err := a.zclient.Check(ctx, folderReq)
-	if err != nil {
-		return false, err
-	}
-
-	return folderRes.Allowed, nil
-}
-
-func (a *AccessControl) ListObjects(ctx context.Context, req accesscontrol.ListObjectsRequest) ([]string, error) {
-	in := &openfgav1.ListObjectsRequest{
-		Type:     req.Type,
-		User:     req.User,
-		Relation: req.Relation,
-	}
-	res, err := a.zclient.ListObjects(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	return res.Objects, err
 }

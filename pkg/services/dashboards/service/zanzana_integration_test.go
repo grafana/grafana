@@ -56,7 +56,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		require.NoError(t, err)
 		zclient, err := authz.ProvideZanzanaClient(openFGAClient)
 		require.NoError(t, err)
-		ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), openFGAClient)
+		ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient)
 
 		service, err := ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,

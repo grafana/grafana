@@ -16,7 +16,7 @@ import (
 )
 
 func TestLegacyAccessClient_HasAccess(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 
 	t.Run("should reject when when no configuration for resource exist", func(t *testing.T) {
 		a := accesscontrol.NewLegacyAccessClient(ac)

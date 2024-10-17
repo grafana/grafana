@@ -25,7 +25,7 @@ import (
 )
 
 func TestAuthorizeInOrgMiddleware(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 
 	// Define test cases
 	testCases := []struct {

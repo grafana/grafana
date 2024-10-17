@@ -26,7 +26,7 @@ type middlewareTestCase struct {
 }
 
 func TestMiddleware(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 
 	tests := []middlewareTestCase{
 		{
@@ -82,7 +82,7 @@ func TestMiddleware_forceLogin(t *testing.T) {
 		{url: "/endpoint"},
 	}
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 
 	for _, tc := range tests {
 		t.Run(tc.url, func(t *testing.T) {

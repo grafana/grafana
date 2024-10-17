@@ -116,7 +116,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient()),
 		accesscontrolService: actest.FakeService{},
 	}
 
@@ -333,7 +333,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient()),
 		accesscontrolService: actest.FakeService{},
 	}
 
@@ -366,7 +366,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 			},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopOpenFGAClient()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient()),
 		accesscontrolService: actest.FakeService{},
 		Live:                 newTestLive(t, nil),
 	}
