@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/url"
 	"testing"
 
@@ -32,8 +33,14 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		return cli
 	}
 
+	const instanceID = "i-12345678"
+	filterMap := map[string][]string{
+		"tag:Environment": {"production"},
+	}
+	filterJson, err := json.Marshal(filterMap)
+	require.NoError(t, err)
+
 	t.Run("Get instance ID", func(t *testing.T) {
-		const instanceID = "i-12345678"
 		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
@@ -56,12 +63,6 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 
-		filterMap := map[string][]string{
-			"tag:Environment": {"production"},
-		}
-		filterJson, err := json.Marshal(filterMap)
-		require.NoError(t, err)
-
 		executor := newExecutor(im, log.NewNullLogger())
 		resp, err := executor.handleGetEc2InstanceAttribute(
 			context.Background(),
@@ -79,6 +80,45 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			{Text: instanceID, Value: instanceID, Label: instanceID},
 		}
 		assert.Equal(t, expResponse, resp)
+	})
+
+	t.Run("Returns error if attribute is nil", func(t *testing.T) {
+		cli = oldEC2Client{
+			reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId: aws.String(instanceID),
+							ImageId:    nil,
+							Tags: []*ec2.Tag{
+								{
+									Key:   aws.String("Environment"),
+									Value: aws.String("production"),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
+		})
+
+		executor := newExecutor(im, log.NewNullLogger())
+		_, err = executor.handleGetEc2InstanceAttribute(
+			context.Background(),
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":        []string{"us-east-1"},
+				"attributeName": []string{"ImageId"},
+				"filters":       []string{string(filterJson)},
+			},
+		)
+		require.Error(t, err)
+		assert.Equal(t, err, errors.New("invalid attribute path"))
 	})
 }
 
