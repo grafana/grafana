@@ -83,7 +83,7 @@ refs:
 
 # Labels and annotations template examples
 
-Templating allows you to add dynamic data from queries to alert labels and annotations.  Dynamic data enhances alert context, making it easier for responders to quickly assess and address the issue.
+Templating allows you to add dynamic data from queries to alert labels and annotations. Dynamic data enhances alert context, making it easier for responders to quickly assess and address the issue.
 
 This page provides common examples for templating labels and annotations. For more information on templating, refer to:
 
