@@ -54,7 +54,12 @@ describe('Panel sandbox', () => {
       });
 
       cy.get('[data-testid="panel-editor-custom-editor-input"]').should('not.be.disabled');
-      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true });
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').should('have.value', '');
+      // wait because sometimes cypress is faster than react and the value doesn't change
+      cy.wait(1000);
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true, delay: 500 });
+      cy.wait(100); // small delay to prevent false positives from too fast tests
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').should('have.value', 'x');
       cy.get('[data-sandbox-test="panel-editor"]').should('exist');
     });
   });
@@ -105,6 +110,8 @@ describe('Panel sandbox', () => {
       });
 
       cy.get('[data-testid="panel-editor-custom-editor-input"]').should('not.be.disabled');
+      // wait because sometimes cypress is faster than react and the value doesn't change
+      cy.wait(1000);
       cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true });
       cy.wait(100); // small delay to prevent false positives from too fast tests
       cy.get('[data-sandbox-test="panel-editor"]').should('not.exist');
