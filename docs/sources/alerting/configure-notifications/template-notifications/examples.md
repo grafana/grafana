@@ -86,7 +86,7 @@ There are no common labels
 {{ end }}
 ```
 
-To iterate over the alerts in the notification and print a specific label, use `range` and `index`:
+To iterate on the alerts in the notification and print a specific label, use `range` and `index`:
 
 ```go
 {{ define "custom_message" -}}
