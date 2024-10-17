@@ -4,7 +4,6 @@ import { memo, ChangeEvent } from 'react';
 import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/index';
-import { isCompactUrl } from '../../utils/dataLinks';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
@@ -50,11 +49,7 @@ export const DataLinkEditor = memo(({ index, value, onChange, suggestions, isLas
         <Input value={value.title} onChange={onTitleChange} placeholder="Show details" />
       </Field>
 
-      <Field
-        label="URL"
-        invalid={isCompactUrl(value.url)}
-        error="Data link is an Explore URL in a deprecated format. Please visit the URL to be redirected, and edit this data link to use that URL."
-      >
+      <Field label="URL">
         <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
       </Field>
 
