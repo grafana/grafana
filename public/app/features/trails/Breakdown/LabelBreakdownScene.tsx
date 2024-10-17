@@ -34,7 +34,6 @@ import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { getSortByPreference } from '../services/store';
 import { ALL_VARIABLE_VALUE } from '../services/variables';
-import { ALL_VARIABLE_VALUE } from '../services/variables';
 import { MDP_METRIC_PREVIEW, trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
@@ -43,7 +42,6 @@ import { BreakdownSearchReset, BreakdownSearchScene } from './BreakdownSearchSce
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { SortByScene, SortCriteriaChanged } from './SortByScene';
-import { breakdownPanelOptions } from './panelConfigs';
 import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
@@ -253,8 +251,8 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       <div className={styles.container}>
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
           <div className={styles.controls}>
-            {!loading && labels.length && (
-              <Field label="By label">
+            {!loading && Boolean(labels.length) && (
+              <Field label={useOtelExperience ? 'By metric attribute' : 'By label'}>
                 <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
               </Field>
             )}
