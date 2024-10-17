@@ -18,21 +18,21 @@
 - **SQL Expressions**: Fixes CVE-2024-9264
 
 <!-- 11.2.1+security-01 END -->
+<!-- 11.1.6+security-01 START -->
+
+# 11.1.6+security-01 (2024-10-17)
+
+### Bug fixes
+
+- **SQL Expressions**: Fixes CVE-2024-9264
+
+<!-- 11.1.6+security-01 END -->
 <!-- 11.0.6+security-01 START -->
 
 # 11.0.6+security-01 (2024-10-17)
 
-### Features and enhancements
-
-- **Chore:** Bump Go to 1.22.7 [#93358](https://github.com/grafana/grafana/pull/93358), [@hairyhenderson](https://github.com/hairyhenderson)
-- **Chore:** Bump Go to 1.22.7 (Enterprise)
-
 ### Bug fixes
 
-- **AzureMonitor:** Deduplicate resource picker rows [#93703](https://github.com/grafana/grafana/pull/93703), [@aangelisc](https://github.com/aangelisc)
-- **AzureMonitor:** Improve resource picker efficiency [#93438](https://github.com/grafana/grafana/pull/93438), [@aangelisc](https://github.com/aangelisc)
-- **Correlations:** Limit access to correlations page to users who can access Explore [#93674](https://github.com/grafana/grafana/pull/93674), [@ifrost](https://github.com/ifrost)
-- **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93486](https://github.com/grafana/grafana/pull/93486), [@wbrowne](https://github.com/wbrowne)
 - **SQL Expressions**: Fixes CVE-2024-9264
 
 <!-- 11.0.6+security-01 END -->
@@ -40,14 +40,8 @@
 
 # 11.0.5+security-01 (2024-10-17)
 
-### Features and enhancements
-
-- **Chore:** Update swagger ui (4.3.0 to 5.17.14) [#92345](https://github.com/grafana/grafana/pull/92345), [@ryantxu](https://github.com/ryantxu)
-
 ### Bug fixes
 
-- **Provisioning:** Prevent provisioning folder errors from failing startup [#92588](https://github.com/grafana/grafana/pull/92588), [@suntala](https://github.com/suntala)
-- **TutorialCard:** Fix link to tutorial not opening [#92645](https://github.com/grafana/grafana/pull/92645), [@eledobleefe](https://github.com/eledobleefe)
 - **SQL Expressions**: Fixes CVE-2024-9264
 
 <!-- 11.0.5+security-01 END -->
