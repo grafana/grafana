@@ -86,11 +86,19 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *fo
 		// #TODO add created by field if necessary
 		// CreatedBy: meta.GetCreatedBy(),
 		// UpdatedBy: meta.GetCreatedBy(),
-		URL:          getURL(meta, title),
-		Created:      createdTime,
-		Updated:      createdTime,
-		OrgID:        orgID,
-		Fullpath:     meta.GetFullPath(),
+		URL:     getURL(meta, title),
+		Created: createdTime,
+		Updated: createdTime,
+		OrgID:   orgID,
+
+		// This will need to be restructured so the full path is looked up when saving
+		// it can't be saved in the resource metadata because then everything must cascade
+		// nolint:staticcheck
+		Fullpath: meta.GetFullPath(),
+
+		// This will need to be restructured so the full path is looked up when saving
+		// it can't be saved in the resource metadata because then everything must cascade
+		// nolint:staticcheck
 		FullpathUIDs: meta.GetFullPathUIDs(),
 	}
 	return f
@@ -187,9 +195,11 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		meta.SetFolder(v.ParentUID)
 	}
 	if v.Fullpath != "" {
+		// nolint:staticcheck
 		meta.SetFullPath(v.Fullpath)
 	}
 	if v.FullpathUIDs != "" {
+		// nolint:staticcheck
 		meta.SetFullPathUIDs(v.FullpathUIDs)
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
