@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/jeremywohl/flatten"
-	"github.com/scottlepp/go-duck/duck"
 )
 
 const (
@@ -20,11 +19,10 @@ const (
 var logger = log.New("sql_expr")
 
 // TablesList returns a list of tables for the sql statement
-func TablesList(rawSQL string) ([]string, error) {
-	duckDB := duck.NewInMemoryDB()
+func TablesList(rawSQL string, engine Engine) ([]string, error) {
 	rawSQL = strings.Replace(rawSQL, "'", "''", -1)
 	cmd := fmt.Sprintf("SELECT json_serialize_sql('%s')", rawSQL)
-	ret, err := duckDB.RunCommands([]string{cmd})
+	ret, err := engine.RunCommands([]string{cmd})
 	if err != nil {
 		logger.Error("error serializing sql", "error", err.Error(), "sql", rawSQL, "cmd", cmd)
 		return nil, fmt.Errorf("error serializing sql: %s", err.Error())

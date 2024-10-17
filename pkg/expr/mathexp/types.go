@@ -31,6 +31,10 @@ func (vals Values) AsDataFrames(refID string) []*data.Frame {
 	return frames
 }
 
+func (vals Values) Length() int {
+	return len(vals)
+}
+
 // Value is the interface that holds different types such as a Scalar, Series, or Number.
 // all Value implementations should be a *data.Frame
 type Value interface {
