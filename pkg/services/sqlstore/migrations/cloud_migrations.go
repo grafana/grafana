@@ -170,4 +170,10 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Type:     DB_Text,
 		Nullable: true,
 	}))
+
+	mg.AddMigration("add cloud_migration_resource.error_code column", NewAddColumnMigration(migrationResourceTable, &Column{
+		Name:     "error_code",
+		Type:     DB_Text,
+		Nullable: true,
+	}))
 }
