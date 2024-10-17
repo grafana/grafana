@@ -25,6 +25,7 @@ import { getBookmarkKey, getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
 import { VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
+import { DataTrailsBookmarks } from './DataTrailBookmarks';
 
 export interface DataTrailsHomeState extends SceneObjectState {
   recentExplorations?: RecentExplorationScene[]; // declare the type of the state (of type RecentExplorationScene[])
@@ -53,6 +54,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         createdAt: resolvedTrail.state.createdAt,
         $timeRange: resolvedTrail.state.$timeRange,
         filters: [],
+        bookmarksToggle: false,
       };
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, resolvedTrail); // sceneGraph is a bunch of utility methods that lets you get things from graph of scene objects that something belongs to
       // resolvedTrail is what we want to show in the box,
@@ -179,7 +181,8 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             );
           })}
         </div>
-        <div className={styles.horizontalLine} />
+        <DataTrailsBookmarks model={model} onDelete={onDelete} />
+        {/* <div className={styles.horizontalLine} />
         <div className={css(styles.gap20, styles.bookmarkHeader)}>
           <div className={styles.header}>Or view bookmarks</div>
           <svg xmlns="http://www.w3.org/2000/svg" width="25" height="24" viewBox="0 0 25 24" fill="none">
@@ -197,7 +200,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               />
             );
           })}
-        </div>
+        </div> */}
         {/* </Stack> */}
       </div>
     );
