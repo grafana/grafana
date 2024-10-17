@@ -814,4 +814,8 @@ const (
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
+
+	// FlagAzureMonitorDisableLogLimit
+	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
+	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
 )
