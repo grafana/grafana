@@ -3829,7 +3829,7 @@ platform:
 services: []
 steps:
 - commands:
-  - version=$(echo ${TAG} | sed "s/+security-/-/g")
+  - export version=$(echo ${TAG} | sed -e "s/+security-/-/g")
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -3845,7 +3845,7 @@ steps:
   - 'echo "Step 5: Installing Grafana..."'
   - for i in $(seq 1 60); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
-    install -yq grafana=${version} >/dev/null 2>&1; then'
+    install -yq grafana=$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -3890,12 +3890,12 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - version=$(echo ${TAG} | sed "s/+security-/^/g")
+  - export version=$(echo ${TAG} | sed -e "s/+security-/^/g")
   - dnf list available grafana-$version
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
-  - '    if dnf install -y --nogpgcheck grafana-${version} >/dev/null 2>&1; then'
+  - '    if dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -3919,9 +3919,9 @@ steps:
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
   - if rpm -q grafana | grep -q "$verison"; then
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -4008,7 +4008,7 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - commands:
-  - version=$(echo ${TAG} | sed "s/+security-/-/g")
+  - export version=$(echo ${TAG} | sed -e "s/+security-/-/g")
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -4024,7 +4024,7 @@ steps:
   - 'echo "Step 5: Installing Grafana..."'
   - for i in $(seq 1 60); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
-    install -yq grafana=${version} >/dev/null 2>&1; then'
+    install -yq grafana=$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -4070,12 +4070,12 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - version=$(echo ${TAG} | sed "s/+security-/^/g")
+  - export version=$(echo ${TAG} | sed -e "s/+security-/^/g")
   - dnf list available grafana-$version
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
-  - '    if dnf install -y --nogpgcheck grafana-${version} >/dev/null 2>&1; then'
+  - '    if dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -4099,9 +4099,9 @@ steps:
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
   - if rpm -q grafana | grep -q "$verison"; then
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -5991,6 +5991,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0b2f7b3610a2a2ece30880a013caf54a62ad9d95ae809731c68fad55ff248f70
+hmac: 375631d0869759cacd1cb0f6dc62555e06732de08724ac1a7a0ff73d0bf5ed2f
 
 ...

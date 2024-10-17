@@ -1283,14 +1283,14 @@ def retry_command(command, attempts = 60, delay = 30):
     ]
 
 def verify_linux_DEB_packages_step(depends_on = []):
-    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${version} >/dev/null 2>&1"
+    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=$version >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
         "environment": {},
         "commands": [
-            'version=$(echo ${TAG} | sed "s/+security-/-/g")',
+            'export version=$(echo ${TAG} | sed -e "s/+security-/-/g")',
             'echo "Step 1: Updating package lists..."',
             "apt-get update >/dev/null 2>&1",
             'echo "Step 2: Installing prerequisites..."',
@@ -1328,7 +1328,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
         "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
     )
 
-    install_command = "dnf install -y --nogpgcheck grafana-${version} >/dev/null 2>&1"
+    install_command = "dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-RPM-packages",
@@ -1344,7 +1344,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 4: Configuring Grafana repository..."',
             "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
-            'version=$(echo ${TAG} | sed "s/+security-/^/g")',
+            'export version=$(echo ${TAG} | sed -e "s/+security-/^/g")',
             "dnf list available grafana-$version",
             "if [ $? -eq 0 ]; then",
             '    echo "Grafana package found in repository. Installing from repo..."',
@@ -1360,9 +1360,9 @@ def verify_linux_RPM_packages_step(depends_on = []):
             "fi",
             'echo "Step 6: Verifying Grafana installation..."',
             'if rpm -q grafana | grep -q "$verison"; then',
-            '    echo "Successfully verified Grafana version ${TAG}"',
+            '    echo "Successfully verified Grafana version $version"',
             "else",
-            '    echo "Failed to verify Grafana version ${TAG}"',
+            '    echo "Failed to verify Grafana version $version"',
             "    exit 1",
             "fi",
             'echo "Verification complete."',
