@@ -284,6 +284,11 @@
       "ofQuery": {
         "To": ""
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "",
+      "misconfigured-warning": "",
+      "misconfigured-warning-details": ""
     }
   },
   "annotations": {
@@ -1405,10 +1410,13 @@
       "title": ""
     },
     "migrated-counts": {
+      "contact_points": "",
       "dashboards": "",
       "datasources": "",
       "folders": "",
-      "library_elements": ""
+      "library_elements": "",
+      "mute_timings": "",
+      "notification_templates": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1488,10 +1496,13 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "contact_point": "",
       "dashboard": "Tableau de bord",
       "datasource": "Source de données",
       "folder": "",
       "library_element": "",
+      "mute_timing": "",
+      "notification_template": "",
       "unknown": "Inconnu"
     },
     "summary": {
