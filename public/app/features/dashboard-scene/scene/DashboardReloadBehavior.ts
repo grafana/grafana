@@ -9,11 +9,6 @@ import { ReloadDashboardEvent } from 'app/types/events';
 export interface DashboardReloadBehaviorState extends SceneObjectState {
   reloadOnParamsChange?: boolean;
   uid?: string;
-  cachedParams?: {
-    absoluteFrom: string;
-    absoluteTo: string;
-    params: BackendSrvRequest['params'];
-  };
 }
 
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
@@ -75,18 +70,6 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
         }),
         params
       );
-
-      const cachedParams = {
-        absoluteFrom: timeRange.state.value.from.toISOString(),
-        absoluteTo: timeRange.state.value.to.toISOString(),
-        params,
-      };
-
-      if (isEqual(cachedParams, this.state.cachedParams)) {
-        return;
-      }
-
-      this.setState({ cachedParams });
 
       appEvents.publish(new ReloadDashboardEvent(params));
     }

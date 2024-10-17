@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { locationUtil } from '@grafana/data';
 import { BackendSrvRequest, config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
@@ -195,14 +197,24 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public async reloadDashboard(queryParams?: LoadDashboardOptions['queryParams'] | undefined) {
+    if (!this.state.options) {
+      return;
+    }
+
+    const options = {
+      ...this.state.options,
+      queryParams,
+    };
+
+    if (isEqual(options, this.state.options)) {
+      return;
+    }
+
     try {
       this.setState({ isLoading: true });
 
-      const rsp = await this.fetchDashboard({
-        ...this.state.options!,
-        queryParams,
-      });
-      const fromCache = this.getSceneFromCache(this.state.options!.uid);
+      const rsp = await this.fetchDashboard(options);
+      const fromCache = this.getSceneFromCache(options.uid);
 
       if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
         this.setState({ isLoading: false });
@@ -216,9 +228,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
       const scene = transformSaveModelToScene(rsp);
 
-      this.setSceneCache(this.state.options!.uid, scene);
+      this.setSceneCache(options.uid, scene);
 
-      this.setState({ dashboard: scene, isLoading: false });
+      this.setState({ dashboard: scene, isLoading: false, options });
     } catch (err) {
       const msg = getMessageFromError(err);
       this.setState({ isLoading: false, loadError: msg });
