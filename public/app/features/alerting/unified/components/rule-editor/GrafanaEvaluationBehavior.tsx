@@ -5,7 +5,7 @@ import { Controller, RegisterOptions, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { isGrafanaAlertingRuleByType } from 'app/features/alerting/unified/utils/rules';
+import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType } from 'app/features/alerting/unified/utils/rules';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo } from '../../Analytics';
@@ -231,15 +231,21 @@ function NeedHelpInfoForConfigureNoDataError() {
   );
 }
 
-function getDescription() {
+function getDescription(isGrafanaRecordingRule: boolean) {
   const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
 
   return (
     <Stack direction="row" gap={0.5} alignItems="center">
       <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="alert-rule-form.evaluation-behaviour.description.text">
-          Define how the alert rule is evaluated.
-        </Trans>
+        {isGrafanaRecordingRule ? (
+          <Trans i18nKey="alerting.alert-recording-rule-form.evaluation-behaviour.description.text">
+            Define how the recording rule is evaluated.
+          </Trans>
+        ) : (
+          <Trans i18nKey="alerting.alert-rule-form.evaluation-behaviour.description.text">
+            Define how the alert rule is evaluated.
+          </Trans>
+        )}
       </Text>
       <NeedHelpInfo
         contentText={
@@ -291,10 +297,15 @@ export function GrafanaEvaluationBehavior({
   const type = watch('type');
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
+
+  const pauseContentText = isGrafanaRecordingRule
+    ? t('alert-rule-form.pause.recording', 'Turn on to pause evaluation for this recording rule.')
+    : t('alert-rule-form.pause.alerting', 'Turn on to pause evaluation for this alert rule.');
 
   return (
     // TODO remove "and alert condition" for recording rules
-    <RuleEditorSection stepNo={3} title="Set evaluation behavior" description={getDescription()}>
+    <RuleEditorSection stepNo={3} title="Set evaluation behavior" description={getDescription(isGrafanaRecordingRule)}>
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
         <FolderGroupAndEvaluationInterval
           setEvaluateEvery={setEvaluateEvery}
@@ -317,8 +328,8 @@ export function GrafanaEvaluationBehavior({
                     value={Boolean(isPaused)}
                   />
                   <label htmlFor="pause-alert" className={styles.switchLabel}>
-                    <Trans i18nKey="alert-rule-form.pause">Pause evaluation</Trans>
-                    <Tooltip placement="top" content="Turn on to pause evaluation for this alert rule." theme={'info'}>
+                    <Trans i18nKey="alert-rule-form.pause.label">Pause evaluation</Trans>
+                    <Tooltip placement="top" content={pauseContentText} theme={'info'}>
                       <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
                     </Tooltip>
                   </label>

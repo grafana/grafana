@@ -114,7 +114,7 @@ For more information, refer to [Metrics and labels](https://prometheus.io/docs/c
 
 #### Define recording rule
 
-Define a query to get the data you want to measure and set the condition.
+Define a query to get the data you want to measure and set the recording rule output.
 
 1. Select a data source.
 1. From the **Options** dropdown, specify a time range.
@@ -141,9 +141,9 @@ It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:
 
 3. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your recording rule should stop meeting the condition.
 
-   You can only add one recovery threshold in a query and it must be the recording rule condition.
+   You can only add one recovery threshold in a query and it must be the recording rule output.
 
-4. Click **Set as recording rule condition** on the query or expression you want to set as your rule condition.
+4. Click **Set as recording rule output** on the query or expression you want to set as your rule output.
 
 #### Set evaluation behavior
 
