@@ -3575,6 +3575,7 @@ __metadata:
     fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
+    logfmt: "npm:^1.3.2"
     marked: "npm:12.0.2"
     marked-mangle: "npm:1.1.9"
     moment: "npm:2.30.1"
