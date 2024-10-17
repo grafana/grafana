@@ -16,9 +16,9 @@ import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerti
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaRecordingRuleByType, isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
@@ -100,7 +100,7 @@ export function FolderAndGroup({
   const styles = useStyles2(getStyles);
 
   const [folder, group, type] = watch(['folder', 'group', 'type']);
-  const isGrafanaRecordingRule = type === RuleFormType.grafanaRecording;
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
 
   const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
 
@@ -142,7 +142,7 @@ export function FolderAndGroup({
 
   const evaluationDesc = isGrafanaRecordingRule
     ? t('alerting.folderAndGroup.evaluation.text.recording', 'Define how often the recording rule is evaluated.')
-    : t('alerting.folderAndGroup.evaluation.text.alerting', 'Define how often the alert rule is evaluated');
+    : t('alerting.folderAndGroup.evaluation.text.alerting', 'Define how often the alert rule is evaluated.');
 
   return (
     <div className={styles.container}>
@@ -364,7 +364,7 @@ function EvaluationGroupCreationModal({
   const evaluateEveryId = 'eval-every-input';
   const evaluationGroupNameId = 'new-eval-group-name';
   const [groupName, folderName, type] = watch(['group', 'folder.title', 'type']);
-  const isGrafanaRecordingRule = type === RuleFormType.grafanaRecording;
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
 
   const groupRules =
     (groupfoldersForGrafana && groupfoldersForGrafana[folderName]?.find((g) => g.name === groupName)?.rules) ?? [];

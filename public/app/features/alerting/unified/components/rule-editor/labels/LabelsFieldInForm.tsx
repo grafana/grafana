@@ -3,7 +3,8 @@ import { useFormContext } from 'react-hook-form';
 import { Button, Stack, Text } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { RuleFormValues } from '../../../types/rule-form';
+import { isGrafanaRecordingRuleByType } from '../../../utils/rules';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 import { LabelsInRule } from './LabelsField';
@@ -16,12 +17,13 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   const labels = watch('labels');
   const type = watch('type');
 
-  const isGrafanaRecordingRule = type === RuleFormType.grafanaRecording;
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
+
   const text = isGrafanaRecordingRule
-    ? t('alerting.alertform.labels.recording', ' Add labels to your rule.')
+    ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
     : t(
         'alerting.alertform.labels.alerting',
-        ' Add labels to your rule for searching, silencing, or routing to a notification policy.'
+        'Add labels to your rule for searching, silencing, or routing to a notification policy.'
       );
 
   const hasLabels = Object.keys(labels).length > 0 && labels.some((label) => label.key || label.value);

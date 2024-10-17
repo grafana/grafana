@@ -5,13 +5,13 @@ import { Controller, RegisterOptions, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { isGrafanaAlertingRuleByType } from 'app/features/alerting/unified/utils/rules';
+import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType } from 'app/features/alerting/unified/utils/rules';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -238,11 +238,11 @@ function getDescription(isGrafanaRecordingRule: boolean) {
     <Stack direction="row" gap={0.5} alignItems="center">
       <Text variant="bodySmall" color="secondary">
         {isGrafanaRecordingRule ? (
-          <Trans i18nKey="alert-recording-rule-form.evaluation-behaviour.description.text">
+          <Trans i18nKey="alerting.alert-recording-rule-form.evaluation-behaviour.description.text">
             Define how the recording rule is evaluated.
           </Trans>
         ) : (
-          <Trans i18nKey="alert-rule-form.evaluation-behaviour.description.text">
+          <Trans i18nKey="alerting.alert-rule-form.evaluation-behaviour.description.text">
             Define how the alert rule is evaluated.
           </Trans>
         )}
@@ -297,7 +297,8 @@ export function GrafanaEvaluationBehavior({
   const type = watch('type');
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
-  const isGrafanaRecordingRule = type === RuleFormType.grafanaRecording;
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
+
   const pauseContentText = isGrafanaRecordingRule
     ? t('alert-rule-form.pause.recording', 'Turn on to pause evaluation for this recording rule.')
     : t('alert-rule-form.pause.alerting', 'Turn on to pause evaluation for this alert rule.');
