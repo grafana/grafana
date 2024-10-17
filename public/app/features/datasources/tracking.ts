@@ -86,3 +86,11 @@ export const trackDsConfigClicked = (item: string) => {
 export const trackDsConfigUpdated = (props: { item: string; error?: unknown }) => {
   reportInteraction('connections_datasources_ds_configured', props);
 };
+
+export const trackDsSearched = (props: { query: string }) => {
+  reportInteraction('grafana_ds_datasources_list_searched', props);
+};
+
+export const trackAddNewDsClicked = (props: { path: string }) => {
+  reportInteraction('grafana_ds_add_new_clicked', props);
+};
