@@ -2,8 +2,10 @@ package authz
 
 import (
 	"context"
+	"fmt"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -51,14 +53,19 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 
 	action := req.GetAction()
 	subject := req.GetSubject()
-	stackID := req.GetStackId() // TODO can we consider the stackID as the orgID?
+	namespace := req.GetNamespace() // TODO can we consider the stackID as the orgID?
+
+	info, err := claims.ParseNamespace(namespace)
+	if err != nil || info.OrgID == 0 {
+		return nil, fmt.Errorf("invalid namespace: %s", namespace)
+	}
 
 	ctxLogger := s.logger.FromContext(ctx)
-	ctxLogger.Debug("Read", "action", action, "subject", subject, "stackID", stackID)
+	ctxLogger.Debug("Read", "action", action, "subject", subject, "namespace", namespace)
 
 	permissions, err := s.acSvc.SearchUserPermissions(
 		ctx,
-		stackID,
+		info.OrgID,
 		accesscontrol.SearchOptions{Action: action, TypedID: subject},
 	)
 	if err != nil {
@@ -68,7 +75,7 @@ func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*aut
 
 	data := make([]*authzv1.ReadResponse_Data, 0, len(permissions))
 	for _, perm := range permissions {
-		data = append(data, &authzv1.ReadResponse_Data{Object: perm.Scope})
+		data = append(data, &authzv1.ReadResponse_Data{Scope: perm.Scope})
 	}
 	return &authzv1.ReadResponse{
 		Data:  data,

@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/grafana/authlib/claims v0.0.0-20240903121118-16441568af1e
+	github.com/grafana/authlib/claims v0.0.0-20240926100702-4aee62663da0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701135906-559738ce6ae1
 	github.com/prometheus/client_golang v1.20.4
 	github.com/stretchr/testify v1.9.0
