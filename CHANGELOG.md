@@ -18,6 +18,15 @@
 - **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93487](https://github.com/grafana/grafana/pull/93487), [@wbrowne](https://github.com/wbrowne)
 
 <!-- 11.1.7 END -->
+<!-- 11.1.6+security-01 START -->
+
+# 11.1.6+security-01 (2024-10-17)
+
+### Bug fixes
+
+- **SQL Expressions**: Fixes CVE-2024-9264
+
+<!-- 11.1.6+security-01 END -->
 <!-- 11.1.6 START -->
 
 # 11.1.6 (2024-09-26)
