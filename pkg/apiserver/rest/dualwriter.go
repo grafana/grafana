@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -96,11 +95,17 @@ const (
 	// reading and writing to Storage on a best effort basis for the sake of collecting metrics.
 	Mode1
 	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
+	// The objects written to storage will include any labels and annotations.
+	// When reading values, the results will be from Storage when they exist, otherwise from legacy storage
 	Mode2
 	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
+	// NOTE: Requesting mode3 will only happen when after a background sync job succeeds
 	Mode3
 	// Mode4 represents writing and reading from Storage.
+	// NOTE: Requesting mode4 will only happen when after a background sync job succeeds
 	Mode4
+	// Mode5 uses storage regardless of the background sync state
+	Mode5
 )
 
 // TODO: make this function private as there should only be one public way of setting the dual writing mode
@@ -111,12 +116,12 @@ func NewDualWriter(
 	storage Storage,
 	reg prometheus.Registerer,
 	resource string,
-) DualWriter {
+) Storage {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
 	switch mode {
-	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
-	// writing to legacy storage without Unified Storage enabled.
+	case Mode0:
+		return legacy
 	case Mode1:
 		// read and write only from legacy storage
 		return newDualWriterMode1(legacy, storage, metrics, resource)
@@ -126,9 +131,8 @@ func NewDualWriter(
 	case Mode3:
 		// write to both, read from storage only
 		return newDualWriterMode3(legacy, storage, metrics, resource)
-	case Mode4:
-		// read and write only from storage
-		return newDualWriterMode4(legacy, storage, metrics, resource)
+	case Mode4, Mode5:
+		return storage
 	default:
 		return newDualWriterMode1(legacy, storage, metrics, resource)
 	}
@@ -143,6 +147,9 @@ type updateWrapper struct {
 // May return nil, or a preconditions object containing nil fields,
 // if no preconditions can be determined from the updated object.
 func (u *updateWrapper) Preconditions() *metav1.Preconditions {
+	if u.upstream == nil {
+		return nil
+	}
 	return u.upstream.Preconditions()
 }
 
@@ -197,7 +204,7 @@ func SetDualWritingMode(
 
 	if !valid && ok {
 		// Only log if "ok" because initially all instances will have mode unset for playlists.
-		klog.Info("invalid dual writing mode for playlists mode:", m)
+		klog.Infof("invalid dual writing mode for %s mode: %v", entity, m)
 	}
 
 	if !valid || !ok {
@@ -267,20 +274,18 @@ func Compare(storageObj, legacyObj runtime.Object) bool {
 	if storageObj == nil || legacyObj == nil {
 		return storageObj == nil && legacyObj == nil
 	}
-	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
 }
 
-func removeMeta(obj runtime.Object) []byte {
+func extractSpec(obj runtime.Object) []byte {
 	cpy := obj.DeepCopyObject()
 	unstObj, err := defaultConverter.ToUnstructured(cpy)
 	if err != nil {
 		return nil
 	}
-	// we don't want to compare meta fields
-	delete(unstObj, "metadata")
-	delete(unstObj, "objectMeta")
 
-	jsonObj, err := json.Marshal(unstObj)
+	// we just want to compare the spec field
+	jsonObj, err := json.Marshal(unstObj["spec"])
 	if err != nil {
 		return nil
 	}
@@ -297,55 +302,4 @@ func getName(o runtime.Object) string {
 		return ""
 	}
 	return accessor.GetName()
-}
-
-const dataSyncerInterval = 60 * time.Minute
-
-// StartPeriodicDataSyncer starts a background job that will execute the DataSyncer every 60 minutes
-func StartPeriodicDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
-	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) {
-	klog.Info("Starting periodic data syncer for mode mode: ", mode)
-
-	// run in background
-	go func() {
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		timeWindow := 600 // 600 seconds (10 minutes)
-		jitterSeconds := r.Int63n(int64(timeWindow))
-		klog.Info("data syncer is going to start at: ", time.Now().Add(time.Second*time.Duration(jitterSeconds)))
-		time.Sleep(time.Second * time.Duration(jitterSeconds))
-
-		// run it immediately
-		syncOK, err := runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
-		klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
-
-		ticker := time.NewTicker(dataSyncerInterval)
-		for {
-			select {
-			case <-ticker.C:
-				syncOK, err = runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
-				klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-}
-
-// runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
-// The sync implementation depends on the DualWriter mode
-func runDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
-	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) (bool, error) {
-	// ensure that execution takes no longer than necessary
-	const timeout = dataSyncerInterval - time.Minute
-	ctx, cancelFn := context.WithTimeout(ctx, timeout)
-	defer cancelFn()
-
-	// implementation depends on the current DualWriter mode
-	switch mode {
-	case Mode2:
-		return mode2DataSyncer(ctx, legacy, storage, kind, reg, serverLockService, requestInfo)
-	default:
-		klog.Info("data syncer not implemented for mode mode:", mode)
-		return false, nil
-	}
 }

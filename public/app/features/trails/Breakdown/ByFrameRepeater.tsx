@@ -16,6 +16,7 @@ import {
 import { Alert, Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { getLabelValueFromDataFrame } from '../services/levels';
 import { fuzzySearch } from '../services/search';
 import { sortSeries } from '../services/sorting';
 
@@ -199,3 +200,7 @@ const styles = {
     marginLeft: '1.5rem',
   }),
 };
+
+function getLabelValue(frame: DataFrame) {
+  return getLabelValueFromDataFrame(frame) ?? 'No labels';
+}

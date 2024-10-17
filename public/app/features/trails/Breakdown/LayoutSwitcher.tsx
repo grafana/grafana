@@ -11,7 +11,8 @@ import {
 import { RadioButtonGroup } from '@grafana/ui';
 
 import { reportExploreMetrics } from '../interactions';
-import { MakeOptional, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
+import { getVewByPreference, setVewByPreference } from '../services/store';
+import { MakeOptional } from '../shared';
 
 import { BreakdownLayoutChangeCallback, BreakdownLayoutType, isBreakdownLayoutType } from './types';
 
@@ -26,7 +27,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['breakdownLayout'] });
 
   public constructor(state: MakeOptional<LayoutSwitcherState, 'activeBreakdownLayout'>) {
-    const storedBreakdownLayout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
+    const storedBreakdownLayout = getVewByPreference();
     super({
       activeBreakdownLayout: isBreakdownLayoutType(storedBreakdownLayout) ? storedBreakdownLayout : 'grid',
       ...state,
@@ -64,7 +65,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
     }
 
     reportExploreMetrics('breakdown_layout_changed', { layout: active });
-    localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, active);
+    setVewByPreference(active);
     this.setState({ activeBreakdownLayout: active });
     this.state.onBreakdownLayoutChange(active);
   };

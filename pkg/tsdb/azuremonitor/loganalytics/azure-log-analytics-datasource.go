@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
@@ -243,11 +243,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 		azureLogAnalyticsQuery, err = buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, fromAlert)
 		if err != nil {
 			errorMessage := fmt.Errorf("failed to build azure log analytics query: %w", err)
-			var sourceError errorsource.Error
-			if errors.As(err, &sourceError) {
-				return nil, errorsource.SourceError(sourceError.Source(), errorMessage, false)
-			}
-			return nil, errorMessage
+			return nil, utils.ApplySourceFromError(errorMessage, err)
 		}
 	}
 
@@ -262,11 +258,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 		azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
 		if err != nil {
 			errorMessage := fmt.Errorf("failed to build azure application insights query: %w", err)
-			var sourceError errorsource.Error
-			if errors.As(err, &sourceError) {
-				return nil, errorsource.SourceError(sourceError.Source(), errorMessage, false)
-			}
-			return nil, errorMessage
+			return nil, utils.ApplySourceFromError(errorMessage, err)
 		}
 		azureLogAnalyticsQuery = azureAppInsightsQuery
 	}
@@ -401,7 +393,7 @@ func addDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl stri
 }
 
 func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl string, frame *data.Frame, dsInfo types.DatasourceInfo) error {
-	tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
+	tracesUrl, err := getTracesQueryUrl(azurePortalBaseUrl)
 	if err != nil {
 		return err
 	}
@@ -560,20 +552,12 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string, timeRa
 	return portalUrl, nil
 }
 
-func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error) {
+func getTracesQueryUrl(azurePortalUrl string) (string, error) {
 	portalUrl := azurePortalUrl
 	portalUrl += "/#view/AppInsightsExtension/DetailsV2Blade/ComponentId~/"
-	resource := struct {
-		ResourceId string `json:"ResourceId"`
-	}{
-		resources[0],
-	}
-	resourceMarshalled, err := json.Marshal(resource)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal application insights resource: %s", err)
-	}
 
-	portalUrl += url.PathEscape(string(resourceMarshalled))
+	resource := "%7B%22ResourceId%22:%22${__data.fields.resource:percentencode}%22%7D"
+	portalUrl += resource
 	portalUrl += "/DataModel~/"
 
 	// We're making use of data link variables to select the necessary fields in the frontend
@@ -612,11 +596,11 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, err
+			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
 		}
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, err
+			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
 		}
 
 		defer func() {

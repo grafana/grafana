@@ -2,7 +2,7 @@ import panelSandboxDashboard from '../dashboards/PanelSandboxDashboard.json';
 import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'c46b2460-16b7-42a5-82d1-b07fbf431950';
-
+// Skipping due to race conditions with same old arch test e2e/panels-suite/frontend-sandbox-panel.spec.ts
 describe('Panel sandbox', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
@@ -54,7 +54,12 @@ describe('Panel sandbox', () => {
       });
 
       cy.get('[data-testid="panel-editor-custom-editor-input"]').should('not.be.disabled');
-      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true });
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').should('have.value', '');
+      // wait because sometimes cypress is faster than react and the value doesn't change
+      cy.wait(1000);
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true, delay: 500 });
+      cy.wait(100); // small delay to prevent false positives from too fast tests
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').should('have.value', 'x');
       cy.get('[data-sandbox-test="panel-editor"]').should('exist');
     });
   });
@@ -105,6 +110,8 @@ describe('Panel sandbox', () => {
       });
 
       cy.get('[data-testid="panel-editor-custom-editor-input"]').should('not.be.disabled');
+      // wait because sometimes cypress is faster than react and the value doesn't change
+      cy.wait(1000);
       cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x', { force: true });
       cy.wait(100); // small delay to prevent false positives from too fast tests
       cy.get('[data-sandbox-test="panel-editor"]').should('not.exist');

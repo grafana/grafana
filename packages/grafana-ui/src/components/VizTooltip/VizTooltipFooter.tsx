@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
-import { Button, ButtonProps, DataLinkButton, Stack } from '..';
+import { Button, DataLinkButton, Stack } from '..';
 import { useStyles2 } from '../../themes';
 import { ActionButton } from '../Actions/ActionButton';
 
@@ -14,15 +14,11 @@ interface VizTooltipFooterProps {
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-const renderDataLinks = (dataLinks: LinkModel[]) => {
-  const buttonProps: ButtonProps = {
-    variant: 'secondary',
-  };
-
+const renderDataLinks = (dataLinks: LinkModel[], styles: ReturnType<typeof getStyles>) => {
   return (
-    <Stack direction="column" justifyContent="flex-start">
+    <Stack direction="column" justifyContent="flex-start" gap={0.5}>
       {dataLinks.map((link, i) => (
-        <DataLinkButton key={i} link={link} buttonProps={buttonProps} />
+        <DataLinkButton link={link} key={i} buttonProps={{ className: styles.dataLinkButton, fill: 'text' }} />
       ))}
     </Stack>
   );
@@ -43,7 +39,7 @@ export const VizTooltipFooter = ({ dataLinks, actions, annotate }: VizTooltipFoo
 
   return (
     <div className={styles.wrapper}>
-      {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks)}</div>}
+      {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks(dataLinks, styles)}</div>}
       {actions && actions.length > 0 && <div className={styles.dataLinks}>{renderActions(actions)}</div>}
       {annotate != null && (
         <div className={styles.addAnnotations}>
@@ -70,5 +66,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   addAnnotations: css({
     borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
+  }),
+  dataLinkButton: css({
+    cursor: 'pointer',
+    '&:hover': {
+      textDecoration: 'underline',
+      background: 'none',
+    },
   }),
 });

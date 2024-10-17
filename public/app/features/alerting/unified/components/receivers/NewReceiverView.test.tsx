@@ -3,14 +3,14 @@ import { Route } from 'react-router';
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
-import { makeGrafanaAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
+import { makeAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { testWithFeatureToggles } from '../../test/test-utils';
 
 import NewReceiverView from './NewReceiverView';
 
@@ -36,9 +36,7 @@ beforeEach(() => {
 });
 
 describe('alerting API server enabled', () => {
-  beforeEach(() => {
-    config.featureToggles.alertingApiServer = true;
-  });
+  testWithFeatureToggles(['alertingApiServer']);
 
   it('can create a receiver', async () => {
     const { user } = renderForm();
@@ -59,9 +57,6 @@ describe('alerting API server enabled', () => {
 });
 
 describe('alerting API server disabled', () => {
-  beforeEach(() => {
-    config.featureToggles.alertingApiServer = false;
-  });
   it('should be able to test and save a receiver', async () => {
     const capture = captureRequests();
 
@@ -102,14 +97,18 @@ describe('alerting API server disabled', () => {
     );
 
     const testBody = await testRequest?.json();
-    const saveBody = await saveRequest?.json();
+    const fullSaveBody = await saveRequest?.json();
+
+    // Only snapshot and check the receivers, as we don't want other tests to break this
+    // just because we added something new to the mock config
+    const saveBody = fullSaveBody.alertmanager_config.receivers;
 
     expect([testBody]).toMatchSnapshot();
     expect([saveBody]).toMatchSnapshot();
   });
 
   it('does not redirect when creating contact point and API errors', async () => {
-    makeGrafanaAlertmanagerConfigUpdateFail();
+    makeAlertmanagerConfigUpdateFail();
     const { user } = renderForm();
 
     await user.type(await ui.inputs.name.find(), 'receiver that should fail');

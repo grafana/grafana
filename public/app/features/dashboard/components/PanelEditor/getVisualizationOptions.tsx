@@ -135,7 +135,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         description: fieldOption.description,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
-          const onChange = (v: any) => {
+          const onChange = (v: unknown) => {
             onFieldConfigsChange(
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)
             );

@@ -71,6 +71,7 @@ The following list contains role-based access control actions.
 | `annotations:write`                   | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                      | Update annotations.                                                                                                                                                                                                       |
 | `apikeys:read`                        | <ul><li>`apikeys:*`</li><li>`apikeys:id:*`</li></ul>                                                                | Read API keys.                                                                                                                                                                                                            |
 | `apikeys:delete`                      | <ul><li>`apikeys:*`</li><li>`apikeys:id:*`</li></ul>                                                                | Delete API keys.                                                                                                                                                                                                          |
+| `banners:write`              | None                                                                                                                | Create [announcement banners](/docs/grafana-cloud/whats-new/2024-09-10-announcement-banner/).                                                                                                                                                                              |
 | `dashboards:create`                   | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Create dashboards in one or more folders and their subfolders.                                                                                                                                                            |
 | `dashboards:delete`                   | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>             | Delete one or more dashboards.                                                                                                                                                                                            |
 | `dashboards.insights:read`            | None                                                                                                                | Read dashboard insights data and see presence indicators.                                                                                                                                                                 |
@@ -78,7 +79,7 @@ The following list contains role-based access control actions.
 | `dashboards.permissions:write`        | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>             | Update permissions for one or more dashboards.                                                                                                                                                                            |
 | `dashboards:read`                     | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>             | Read one or more dashboards.                                                                                                                                                                                              |
 | `dashboards:write`                    | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>             | Update one or more dashboards.                                                                                                                                                                                            |
-| `dashboards.public:write`             | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li></ul>                                                         | Write public dashboard configuration.                                                                                                                                                                                     |
+| `dashboards.public:write`             | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li></ul>                                                         | Write shared dashboard configuration.                                                                                                                                                                                     |
 | `datasources.caching:read`            | <ul><li>`datasources:*`</li><li>`datasources:uid:*`</li></ul>                                                       | Read data source query caching settings.                                                                                                                                                                                  |
 | `datasources.caching:write`           | <ul><li>`datasources:*`</li><li>`datasources:uid:*`</li></ul>                                                       | Update data source query caching settings.                                                                                                                                                                                |
 | `datasources:create`                  | None                                                                                                                | Create data sources.                                                                                                                                                                                                      |
@@ -181,38 +182,6 @@ The following list contains role-based access control actions.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-### Grafana OnCall action definitions (beta)
-
-The following list contains role-based access control actions used by Grafana OnCall application plugin.
-
-| Action                                           | Applicable scopes | Description                                       |
-| ------------------------------------------------ | ----------------- | ------------------------------------------------- |
-| `grafana-oncall-app.alert-groups:read`           | None              | Read OnCall alert groups.                         |
-| `grafana-oncall-app.alert-groups:write`          | None              | Create, edit and delete OnCall alert groups.      |
-| `grafana-oncall-app.integrations:read`           | None              | Read OnCall integrations.                         |
-| `grafana-oncall-app.integrations:write`          | None              | Create, edit and delete OnCall integrations.      |
-| `grafana-oncall-app.integrations:test`           | None              | Test OnCall integrations.                         |
-| `grafana-oncall-app.escalation-chains:read`      | None              | Read OnCall escalation chains.                    |
-| `grafana-oncall-app.escalation-chains:write`     | None              | Create, edit and delete OnCall escalation chains. |
-| `grafana-oncall-app.schedules:read`              | None              | Read OnCall schedules.                            |
-| `grafana-oncall-app.schedules:write`             | None              | Create, edit and delete OnCall schedules.         |
-| `grafana-oncall-app.schedules:export`            | None              | Export OnCall schedules.                          |
-| `grafana-oncall-app.chatops:read`                | None              | Read OnCall ChatOps.                              |
-| `grafana-oncall-app.chatops:write`               | None              | Edit OnCall ChatOps.                              |
-| `grafana-oncall-app.chatops:update-settings`     | None              | Edit OnCall ChatOps settings.                     |
-| `grafana-oncall-app.maintenance:read`            | None              | Read OnCall maintenance.                          |
-| `grafana-oncall-app.maintenance:write`           | None              | Edit OnCall maintenance.                          |
-| `grafana-oncall-app.api-keys:read`               | None              | Read OnCall API keys.                             |
-| `grafana-oncall-app.api-keys:write`              | None              | Create, edit and delete OnCall API keys.          |
-| `grafana-oncall-app.notifications:read`          | None              | Receive OnCall notifications.                     |
-| `grafana-oncall-app.notification-settings:read`  | None              | Read OnCall notification settings.                |
-| `grafana-oncall-app.notification-settings:write` | None              | Edit OnCall notification settings.                |
-| `grafana-oncall-app.user-settings:read`          | None              | Read user's own OnCall user settings.             |
-| `grafana-oncall-app.user-settings:write`         | None              | Edit user's own OnCall user settings.             |
-| `grafana-oncall-app.user-settings:admin`         | None              | Read and edit all users' OnCall user settings.    |
-| `grafana-oncall-app.other-settings:read`         | None              | Read OnCall settings.                             |
-| `grafana-oncall-app.other-settings:write`        | None              | Edit OnCall settings.                             |
-
 ### Grafana Adaptive Metrics action definitions
 
 The following list contains role-based access control actions used by Grafana Adaptive Metrics.
@@ -229,6 +198,26 @@ The following list contains role-based access control actions used by Grafana Ad
 | `grafana‑adaptive‑metrics‑app.rules:delete`          | None              | Delete aggregation rules.                             |
 | `grafana‑adaptive‑metrics‑app.exemptions:read`       | None              | Read recommendation exemptions.                       |
 | `grafana‑adaptive‑metrics‑app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
+
+### Grafana Alerting Notification action definitions
+
+To enable these permissions, enable the `alertingApiServer` feature toggle.
+
+| Action                                       | Applicable scopes                  | Description                                                                                                     |
+| -------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*` | Read contact points. None                                                                                       |
+| `alert.notifications.receivers.secrets:read` | `receivers:*`<br>`receivers:uid:*` | Export contact points with decrypted secrets.None                                                               |
+| `alert.notifications.receivers:create`       | None                               | Create a new contact points. The creator is automatically granted full access to the created contact point.None |
+| `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*` | Update existing contact points.None                                                                             |
+| `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*` | Update and delete existing contact points.None                                                                  |
+| `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*` | Read permissions for contact points.None                                                                        |
+| `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*` | Manage permissions for contact points.None                                                                      |
+| `alert.notifications.time-intervals:read`    | None                               | Read mute time intervals.None                                                                                   |
+| `alert.notifications.time-intervals:write`   | None                               | Create new or update existing mute time intervals.None                                                          |
+| `alert.notifications.time-intervals:delete`  | None                               | Delete existing time intervals.None                                                                             |
+| `alert.notifications.templates:read`         | None                               | Read templates.                                                                                                 |
+| `alert.notifications.templates:write`        | None                               | Create new or update existing templates.None                                                                    |
+| `alert.notifications.templates:delete`       | None                               | Delete existing templates.None                                                                                  |
 
 ## Scope definitions
 

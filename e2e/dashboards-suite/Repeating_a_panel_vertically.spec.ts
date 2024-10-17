@@ -38,9 +38,15 @@ describe('Repeating a panel vertically', () => {
     });
 
     // Change to only show panels 1 + 3
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('vertical').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('vertical')
+      .parent()
+      .within(() => {
+        cy.get('input').click();
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
+
     // blur the dropdown
     cy.get('body').click();
 

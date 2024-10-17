@@ -7,6 +7,9 @@ const (
 	// QueryTypeList will list the files in a folder
 	queryTypeSearch = "search"
 
+	// queryTypeSearchNext will perform a search query using the next generation search service
+	queryTypeSearchNext = "searchNext"
+
 	// QueryTypeList will list the files in a folder
 	queryTypeList = "list"
 

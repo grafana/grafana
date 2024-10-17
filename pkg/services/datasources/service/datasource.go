@@ -255,7 +255,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	}
 
 	var dataSource *datasources.DataSource
-	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -293,12 +293,18 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			if cmd.UserID != 0 {
 				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
 			}
-			_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
-			return err
+			if _, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
+				return err
+			}
 		}
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dataSource, nil
 }
 
 // This will valid validate the instance settings return a version that is safe to be saved
@@ -367,6 +373,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		rsp, err := s.pluginClient.ValidateAdmission(ctx, req)
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
+				if settings.APIVersion == "v0alpha1" {
+					// For v0alpha1 we don't require plugins to implement ValidateAdmission
+					return settings, nil
+				}
 				return nil, errutil.Internal("plugin.unimplemented").
 					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
 			}
@@ -388,6 +398,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			if settings.APIVersion == "v0alpha1" {
+				// For v0alpha1 we don't require plugins to implement MutateAdmission
+				return settings, nil
+			}
 			return nil, errutil.Internal("plugin.unimplemented").
 				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
 		}
@@ -517,6 +531,24 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			err := cmd.JsonData.FromDB(settings.JSONData)
 			if err != nil {
 				return err
+			}
+		}
+
+		// TODO: we will eventually remove this check for moving the resource to it's separate API
+		if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && !cmd.OnlyUpdateLBACRulesFromAPI {
+			s.logger.Debug("Overriding LBAC rules with stored ones",
+				"reason", "update_lbac_rules_from_datasource_api",
+				"action", "use_updateLBACRules_API",
+				"datasource_id", dataSource.ID,
+				"datasource_uid", dataSource.UID)
+
+			if dataSource.JsonData != nil {
+				previousRules := dataSource.JsonData.Get("teamHttpHeaders")
+				if previousRules == nil {
+					cmd.JsonData.Del("teamHttpHeaders")
+				} else {
+					cmd.JsonData.Set("teamHttpHeaders", previousRules)
+				}
 			}
 		}
 

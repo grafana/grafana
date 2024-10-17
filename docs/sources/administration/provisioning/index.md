@@ -84,10 +84,6 @@ You can configure Grafana to automatically delete provisioned data sources when 
 To do so, add `prune: true` to the root of your provisioning file.
 With this configuration, Grafana also removes the provisioned data sources if you remove the provisioning file entirely.
 
-{{< admonition type="note" >}}
-The `prune` parameter is available in Grafana v11.1 and higher.
-{{< /admonition >}}
-
 ### Running multiple Grafana instances
 
 If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
@@ -506,15 +502,26 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `MQTT`
 
+| Name          | Secure setting |
+| ------------- | -------------- |
+| brokerUrl     |                |
+| clientId      |                |
+| topic         |                |
+| messageFormat |                |
+| username      |                |
+| password      | yes            |
+| retain        |                |
+| qos           |                |
+| tlsConfig     |                |
+
+##### TLS config
+
 | Name               | Secure setting |
 | ------------------ | -------------- |
-| brokerUrl          |                |
-| clientId           |                |
-| topic              |                |
-| messageFormat      |
-| username           |                |
-| password           | yes            |
 | insecureSkipVerify |                |
+| clientCertificate  | yes            |
+| clientKey          | yes            |
+| caCertificate      | yes            |
 
 #### Alert notification `pagerduty`
 

@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -27,9 +27,16 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
+	// WithoutResolvers copies AccessControl without any configured resolvers.
+	// This is useful when we don't want to reuse any pre-configured resolvers
+	// for a authorization call.
+	WithoutResolvers() AccessControl
+	Check(ctx context.Context, req CheckRequest) (bool, error)
+	ListObjects(ctx context.Context, req ListObjectsRequest) ([]string, error)
 }
 
 type Service interface {
+	registry.BackgroundService
 	registry.ProvidesUsageStats
 	// GetRoleByName returns a role by name
 	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)
@@ -146,6 +153,12 @@ type DatasourcePermissionsService interface {
 
 type ServiceAccountPermissionsService interface {
 	PermissionsService
+}
+
+type ReceiverPermissionsService interface {
+	PermissionsService
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
+	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
 }
 
 type PermissionsService interface {

@@ -1,7 +1,7 @@
 import { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
-import { config, usePluginLinkExtensions } from '@grafana/runtime';
+import { config, usePluginLinks } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -26,7 +26,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
-  const { extensions } = usePluginLinkExtensions({
+  const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     context: context,
     limitPerPlugin: 3,
@@ -36,7 +36,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
 
   // If we only have the explore core extension point registered we show the old way of
   // adding a query to a dashboard.
-  if (extensions.length <= 1) {
+  if (links.length <= 1) {
     const canAddPanelToDashboard =
       contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
       contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
@@ -52,7 +52,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
     );
   }
 
-  const menu = <ToolbarExtensionPointMenu extensions={extensions} onSelect={setSelectedExtension} />;
+  const menu = <ToolbarExtensionPointMenu extensions={links} onSelect={setSelectedExtension} />;
 
   return (
     <>

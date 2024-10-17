@@ -42,7 +42,7 @@ class LegacyDashboardAPI implements DashboardAPI {
   }
 
   getDashboardDTO(uid: string): Promise<DashboardDTO> {
-    const scopes = getSelectedScopesNames();
+    const scopes = config.featureToggles.passScopeToDashboardApi ? getSelectedScopesNames() : [];
     const queryParams = scopes.length > 0 ? { scopes } : undefined;
 
     return getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, queryParams);

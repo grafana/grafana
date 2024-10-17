@@ -137,8 +137,8 @@ message CreateRequest {
   // If name is not set, a unique name will be generated
   // The resourceVersion should not be set
   ResourceKey key = 1;
-  
-  // The resource JSON.  
+
+  // The resource JSON.
   bytes value = 2;
 }
 
@@ -157,7 +157,7 @@ message UpdateRequest {
   // The current resource version
   int64 resource_version = 2;
 
-  // The resource JSON.  
+  // The resource JSON.
   bytes value = 3;
 }
 
@@ -218,7 +218,6 @@ message Requirement {
   repeated string values = 3; // typically one value, but depends on the operator
 }
 
-
 message ListOptions {
   // Group+Namespace+Resource (not name)
   ResourceKey key = 1;
@@ -245,7 +244,7 @@ message ListRequest {
 
   // The resource version
   int64 resource_version = 2;
-  
+
   // List options
   ResourceVersionMatch version_match = 3;
 
@@ -302,8 +301,8 @@ message WatchEvent {
     ADDED = 1;
     MODIFIED = 2;
     DELETED = 3;
-    BOOKMARK = 4;  
-    ERROR = 5;  
+    BOOKMARK = 4;
+    ERROR = 5;
   }
 
   message Resource {
@@ -322,6 +321,23 @@ message WatchEvent {
 
   // Previous resource version (for update+delete)
   Resource previous = 4;
+}
+
+message SearchRequest {
+  // query string for chosen implementation (currently just bleve)
+  string query = 1;
+  // default to bleve
+  string queryType = 2;
+  string tenant = 3;
+  // resource kind (playlists, dashboards, etc)
+  string kind = 4;
+  // pagination support
+  int64 limit = 5;
+  int64 offset = 6;
+}
+
+message SearchResponse {
+  repeated ResourceWrapper items = 1;
 }
 
 message HistoryRequest {
@@ -415,10 +431,86 @@ message HealthCheckResponse {
   ServingStatus status = 1;
 }
 
+//----------------------------
+// Blob Support
+//----------------------------
+
+message PutBlobRequest {
+  enum Method {
+    // Use the inline raw []byte
+    GRPC = 0;
+
+    // Get a signed URL and PUT the value 
+    HTTP = 1;
+  }
+
+  // The resource that will use this blob
+  // NOTE: the name may not yet exist, but group+resource are required
+  ResourceKey resource = 1;
+
+  // How to upload
+  Method method = 2;
+
+  // Content type header
+  string content_type = 3;
+
+  // Raw value to write
+  // Not valid when method == HTTP
+  bytes value = 4;
+}
+
+message PutBlobResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // The blob uid.  This must be saved into the resource to support access
+  string uid = 2;
+
+  // The URL where this value can be PUT
+  string url = 3;
+
+  // Size of the uploaded blob
+  int64 size = 4;
+
+  // Content hash used for an etag
+  string hash = 5;
+
+  // Validated mimetype (from content_type)
+  string mime_type = 6;
+
+  // Validated charset (from content_type)
+  string charset = 7;
+}
+
+message GetBlobRequest {
+  ResourceKey resource = 1;
+
+  // The new resource version
+  int64 resource_version = 2;
+
+  // Do not return a pre-signed URL (when possible)
+  bool must_proxy_bytes = 3;
+}
+
+message GetBlobResponse {
+  // Error details
+  ErrorResult error = 1;
+
+  // (optional) When possible, the system will return a presigned URL
+  // that can be used to actually read the full blob+metadata
+  // When this is set, neither info nor value will be set
+  string url = 2;
+
+  // Content type 
+  string content_type = 3;
+
+  // The raw object value
+  bytes value = 4;
+}
 
 // This provides the CRUD+List+Watch support needed for a k8s apiserver
 // The semantics and behaviors of this service are constrained by kubernetes
-// This does not understand the resource schemas, only deals with json bytes 
+// This does not understand the resource schemas, only deals with json bytes
 // Clients should not use this interface directly; it is for use in API Servers
 service ResourceStore {
   rpc Read(ReadRequest) returns (ReadResponse);
@@ -427,12 +519,12 @@ service ResourceStore {
   rpc Delete(DeleteRequest) returns (DeleteResponse);
 
   // The results *may* include values that should not be returned to the user
-  // This will perform best-effort filtering to increase performace. 
+  // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc List(ListRequest) returns (ListResponse);
 
   // The results *may* include values that should not be returned to the user
-  // This will perform best-effort filtering to increase performace. 
+  // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
 }
@@ -440,13 +532,25 @@ service ResourceStore {
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
-  // TODO: rpc Search(...) ... eventually a typed response
+   rpc Search(SearchRequest) returns (SearchResponse);
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);
 
   // Used for efficient provisioning
   rpc Origin(OriginRequest) returns (OriginResponse);
+}
+
+service BlobStore {
+  // Upload a blob that will be saved in a resource
+  rpc PutBlob(PutBlobRequest) returns (PutBlobResponse);
+
+  // Get blob contents.  When possible, this will return a signed URL
+  // For large payloads, signed URLs are required to avoid protobuf message size limits
+  rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
+
+  // NOTE: there is no direct access to delete blobs 
+  // >> cleanup will be managed via garbage collection or direct access to the underlying storage
 }
 
 // Clients can use this service directly

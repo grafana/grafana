@@ -6,6 +6,7 @@ import {
   assertConfigureIsValid,
   assertLinkPathIsValid,
   assertStringProps,
+  isExtensionPointIdValid,
   isGrafanaCoreExtensionPoint,
   isReactComponent,
 } from './validators';
@@ -182,6 +183,52 @@ describe('Plugin Extension Validators', () => {
 
     it('should return FALSE if we pass a string that is not listed under the PluginExtensionPoints enum', () => {
       expect(isGrafanaCoreExtensionPoint('grafana/dashboard/alertingrule/action')).toBe(false);
+    });
+  });
+
+  describe('isExtensionPointIdValid()', () => {
+    test.each([
+      // We (for now allow core Grafana extension points to run without a version)
+      ['grafana/extension-point', ''],
+      ['grafana/extension-point', 'grafana'],
+      ['myorg-extensions-app/extension-point', 'myorg-extensions-app'],
+      ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/myorg-basic-app/start', 'myorg-basic-app'],
+      ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
+      ['plugins/grafana-app-observability-app/service/action', 'grafana-app-observability-app'],
+      ['plugins/grafana-k8s-app/cluster/action', 'grafana-k8s-app'],
+      ['plugins/grafana-oncall-app/alert-group/action', 'grafana-oncall-app'],
+      ['plugins/grafana-oncall-app/alert-group/action/v1', 'grafana-oncall-app'],
+      ['plugins/grafana-oncall-app/alert-group/action/v1.0.0', 'grafana-oncall-app'],
+    ])('should return TRUE if the extension point id is valid ("%s", "%s")', (extensionPointId, pluginId) => {
+      expect(
+        isExtensionPointIdValid({
+          extensionPointId,
+          pluginId,
+        })
+      ).toBe(true);
+    });
+
+    test.each([
+      [
+        // Plugin id mismatch
+        'myorg-extensions-app/extension-point/v1',
+        'myorgs-other-app',
+      ],
+      [
+        // Missing plugin id prefix
+        'extension-point/v1',
+        'myorgs-extensions-app',
+      ],
+    ])('should return FALSE if the extension point id is invalid ("%s", "%s")', (extensionPointId, pluginId) => {
+      expect(
+        isExtensionPointIdValid({
+          extensionPointId,
+          pluginId,
+        })
+      ).toBe(false);
     });
   });
 });

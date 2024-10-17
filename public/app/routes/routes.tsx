@@ -1,12 +1,10 @@
-import { Redirect, RouteComponentProps } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
-import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
@@ -25,6 +23,7 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
+const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
@@ -109,23 +108,19 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: DATASOURCES_ROUTES.List,
-      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSources} />,
+      component: () => <Navigate replace to={CONNECTIONS_ROUTES.DataSources} />,
     },
     {
       path: DATASOURCES_ROUTES.Edit,
-      component: (props: RouteComponentProps<{ uid: string }>) => (
-        <Redirect to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', props.match.params.uid)} />
-      ),
+      component: DataSourceEditRoute,
     },
     {
       path: DATASOURCES_ROUTES.Dashboards,
-      component: (props: RouteComponentProps<{ uid: string }>) => (
-        <Redirect to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', props.match.params.uid)} />
-      ),
+      component: DataSourceDashboardRoute,
     },
     {
       path: DATASOURCES_ROUTES.New,
-      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSourcesNew} />,
+      component: () => <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesNew} />,
     },
     {
       path: '/datasources/correlations',
@@ -205,6 +200,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="cfg/plugins" />,
     },
     {
+      path: '/admin/extensions',
+      navId: 'extensions',
+      component: isDevEnv
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
+          )
+        : () => <Navigate replace to="/admin" />,
+    },
+    {
       path: '/admin/access',
       component: () => <NavLandingPage navId="cfg/access" />,
     },
@@ -221,7 +225,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/users',
       // Org users page has been combined with admin users
-      component: () => <Redirect to={'/admin/users'} />,
+      component: () => <Navigate replace to={'/admin/users'} />,
     },
     {
       path: '/org/users/invite',
@@ -275,7 +279,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
     },
     {
-      path: '/org/teams/edit/:id/:page?',
+      path: '/org/teams/edit/:uid/:page?',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
@@ -294,7 +298,7 @@ export function getAppRoutes(): RouteDescriptor[] {
               () =>
                 import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/AuthProvidersListPage')
             )
-          : () => <Redirect to="/admin" />,
+          : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/authentication/ldap',
@@ -311,7 +315,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? SafeDynamicImport(
             () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
           )
-        : () => <Redirect to="/admin" />,
+        : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/settings',
@@ -337,7 +341,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users/edit/:id',
-      component: UserAdminPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
+      ),
     },
     {
       path: '/admin/orgs',
@@ -357,10 +363,10 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? SafeDynamicImport(
             () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
           )
-        : () => <Redirect to="/admin" />,
+        : () => <Navigate replace to="/admin" />,
     },
     {
-      path: '/admin/storage/:path*',
+      path: '/admin/storage/:path/*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
@@ -382,7 +388,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     // LOGIN / SIGNUP
     {
       path: '/login',
-      component: LoginPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LoginPage" */ 'app/core/components/Login/LoginPage')
+      ),
       pageClass: 'login-page',
       chromeless: true,
     },
@@ -396,7 +404,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/verify',
       component: !config.verifyEmailEnabled
-        ? () => <Redirect to="/signup" />
+        ? () => <Navigate replace to="/signup" />
         : SafeDynamicImport(
             () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
           ),
@@ -406,7 +414,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/signup',
       component: config.disableUserSignUp
-        ? () => <Redirect to="/login" />
+        ? () => <Navigate replace to="/login" />
         : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
       pageClass: 'login-page',
       chromeless: true,
@@ -436,9 +444,9 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
-    config.featureToggles.dashboardRestoreUI && {
+    config.featureToggles.dashboardRestore && {
       path: '/dashboard/recently-deleted',
-      roles: () => ['Admin'],
+      roles: () => ['Admin', 'ServerAdmin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
@@ -508,9 +516,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.exploreMetrics && {
-      path: '/explore/metrics',
+      path: '/explore/metrics/*',
       chromeless: false,
-      exact: false,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
@@ -553,4 +560,14 @@ export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
   ];
+}
+
+function DataSourceDashboardRoute() {
+  const { uid = '' } = useParams();
+  return <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', uid)} />;
+}
+
+function DataSourceEditRoute() {
+  const { uid = '' } = useParams();
+  return <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', uid)} />;
 }

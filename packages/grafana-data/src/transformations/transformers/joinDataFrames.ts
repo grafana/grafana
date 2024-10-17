@@ -546,7 +546,7 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
 
 // Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: any[], samples = 50) {
+export function isLikelyAscendingVector(data: unknown[], samples = 50) {
   const len = data.length;
 
   // empty or single value
@@ -576,7 +576,7 @@ export function isLikelyAscendingVector(data: any[], samples = 50) {
   for (let prevVal = data[firstIdx], i = firstIdx + stride; i <= lastIdx; i += stride) {
     const v = data[i];
 
-    if (v != null) {
+    if (v != null && prevVal != null) {
       if (v <= prevVal) {
         return false;
       }

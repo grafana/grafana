@@ -90,6 +90,10 @@ func (m *Mock) GetRoleByName(ctx context.Context, orgID int64, roleName string) 
 	return nil, nil
 }
 
+func (m *Mock) Run(ctx context.Context) error {
+	return nil
+}
+
 func (m *Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
 	return make(map[string]interface{})
 }
@@ -264,4 +268,17 @@ func (m *Mock) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol
 		return m.SyncUserRolesFunc(ctx, orgID, cmd)
 	}
 	return nil
+}
+
+func (m *Mock) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
+	return false, nil
+}
+
+func (m *Mock) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
+	return nil, nil
+}
+
+// WithoutResolvers implements fullAccessControl.
+func (m *Mock) WithoutResolvers() accesscontrol.AccessControl {
+	return m
 }
