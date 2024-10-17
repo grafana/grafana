@@ -533,6 +533,14 @@
   },
   {
     "type": "label",
+    "name": "area/provisioning/datasources",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/76"
+    }
+  },
+  {
+    "type": "label",
     "name": "area/scenes",
     "action": "addToProject",
     "addToProject": {
