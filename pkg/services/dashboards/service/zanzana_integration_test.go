@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -80,7 +80,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		createDashboards(t, service, 100, "test-b")
 
 		// Sync Grafana DB with zanzana (migrate data)
-		zanzanaSyncronizer := migrator.NewZanzanaSynchroniser(openFGAClient, db)
+		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(openFGAClient, db, nil)
 		err = zanzanaSyncronizer.Sync(context.Background())
 		require.NoError(t, err)
 

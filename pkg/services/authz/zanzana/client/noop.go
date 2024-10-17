@@ -38,6 +38,10 @@ func (nc NoopOpenFGAClient) ListObjects(ctx context.Context, in *openfgav1.ListO
 	return nil, nil
 }
 
+func (nc NoopOpenFGAClient) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	return nil, nil
+}
+
 func (nc NoopOpenFGAClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
 	return nil
 }

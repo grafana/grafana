@@ -117,6 +117,14 @@ func (c *OpenFGAClient) ListObjects(ctx context.Context, in *openfgav1.ListObjec
 	return c.client.ListObjects(ctx, in)
 }
 
+func (c *OpenFGAClient) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
+	defer span.End()
+
+	in.StoreId = c.storeID
+	return c.client.Read(ctx, in)
+}
+
 func (c *OpenFGAClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID

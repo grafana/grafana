@@ -35,6 +35,7 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.MuteTimingType,
 	cloudmigration.NotificationTemplateType,
 	cloudmigration.ContactPointType,
+	cloudmigration.NotificationPolicyType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
@@ -79,6 +80,13 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	contactPoints, err := s.getContactPoints(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get alert contact points", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Notification Policies
+	notificationPolicies, err := s.getNotificationPolicies(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert notification policies", "err", err)
 		return nil, err
 	}
 
@@ -135,7 +143,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	for _, muteTiming := range muteTimings {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.MuteTimingType,
-			RefID: muteTiming.Name,
+			RefID: muteTiming.UID,
 			Name:  muteTiming.Name,
 			Data:  muteTiming,
 		})
@@ -144,7 +152,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	for _, notificationTemplate := range notificationTemplates {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.NotificationTemplateType,
-			RefID: notificationTemplate.Name,
+			RefID: notificationTemplate.UID,
 			Name:  notificationTemplate.Name,
 			Data:  notificationTemplate,
 		})
@@ -158,6 +166,14 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			Data:  contactPoint,
 		})
 	}
+
+	// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
+	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+		Type:  cloudmigration.NotificationPolicyType,
+		RefID: notificationPolicies.Name, // no UID available
+		Name:  notificationPolicies.Name,
+		Data:  notificationPolicies.Routes,
+	})
 
 	// Obtain the names of parent elements for Dashboard and Folders data types
 	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements)
