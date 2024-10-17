@@ -1,29 +1,48 @@
 import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
+import { satisfies } from 'semver';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { getLatestCompatibleVersion } from '../helpers';
 import { Version } from '../types';
 
+import { VersionInstallButton } from './VersionInstallButton';
+
 interface Props {
+  pluginId: string;
   versions?: Version[];
   installedVersion?: string;
 }
 
-export const VersionList = ({ versions = [], installedVersion }: Props) => {
+export const VersionList = ({ pluginId, versions = [], installedVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
+
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  const grafanaVersion = config.buildInfo.version;
+
+  useEffect(() => {
+    setIsInstalling(false);
+  }, [installedVersion]);
 
   if (versions.length === 0) {
     return <p>No version history was found.</p>;
   }
+
+  const onInstallClick = () => {
+    setIsInstalling(true);
+  };
 
   return (
     <table className={styles.table}>
       <thead>
         <tr>
           <th>Version</th>
+          <th></th>
           <th>Last updated</th>
           <th>Grafana Dependency</th>
         </tr>
@@ -31,6 +50,10 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
       <tbody>
         {versions.map((version) => {
           const isInstalledVersion = installedVersion === version.version;
+          const versionIsIncompatible = version.grafanaDependency
+            ? !satisfies(grafanaVersion, version.grafanaDependency, { includePrerelease: true })
+            : false;
+
           return (
             <tr key={version.version}>
               {/* Version number */}
@@ -41,6 +64,17 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
               ) : (
                 <td>{version.version}</td>
               )}
+
+              {/* Install button */}
+              <td>
+                <VersionInstallButton
+                  pluginId={pluginId}
+                  version={version}
+                  installedVersion={installedVersion}
+                  onClick={onInstallClick}
+                  disabled={isInstalledVersion || isInstalling || versionIsIncompatible}
+                />
+              </td>
 
               {/* Last updated */}
               <td className={isInstalledVersion ? styles.currentVersion : ''}>
@@ -74,4 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   currentVersion: css`
     font-weight: ${theme.typography.fontWeightBold};
   `,
+  spinner: css({
+    marginLeft: theme.spacing(1),
+  }),
 });
