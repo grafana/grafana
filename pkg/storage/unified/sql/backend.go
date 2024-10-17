@@ -357,7 +357,7 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 }
 
 type listIter struct {
-	rows   *sql.Rows
+	rows   db.Rows
 	offset int64
 	listRV int64
 

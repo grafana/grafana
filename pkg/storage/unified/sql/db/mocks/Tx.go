@@ -5,6 +5,7 @@ package mocks
 import (
 	context "context"
 
+	db "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	mock "github.com/stretchr/testify/mock"
 
 	sql "database/sql"
@@ -139,7 +140,7 @@ func (_c *Tx_ExecContext_Call) RunAndReturn(run func(context.Context, string, ..
 }
 
 // QueryContext provides a mock function with given fields: ctx, query, args
-func (_m *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (_m *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (db.Rows, error) {
 	var _ca []interface{}
 	_ca = append(_ca, ctx, query)
 	_ca = append(_ca, args...)
@@ -149,16 +150,16 @@ func (_m *Tx) QueryContext(ctx context.Context, query string, args ...interface{
 		panic("no return value specified for QueryContext")
 	}
 
-	var r0 *sql.Rows
+	var r0 db.Rows
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (*sql.Rows, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) (db.Rows, error)); ok {
 		return rf(ctx, query, args...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) *sql.Rows); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) db.Rows); ok {
 		r0 = rf(ctx, query, args...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sql.Rows)
+			r0 = ret.Get(0).(db.Rows)
 		}
 	}
 
@@ -198,18 +199,18 @@ func (_c *Tx_QueryContext_Call) Run(run func(ctx context.Context, query string, 
 	return _c
 }
 
-func (_c *Tx_QueryContext_Call) Return(_a0 *sql.Rows, _a1 error) *Tx_QueryContext_Call {
+func (_c *Tx_QueryContext_Call) Return(_a0 db.Rows, _a1 error) *Tx_QueryContext_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Tx_QueryContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (*sql.Rows, error)) *Tx_QueryContext_Call {
+func (_c *Tx_QueryContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (db.Rows, error)) *Tx_QueryContext_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // QueryRowContext provides a mock function with given fields: ctx, query, args
-func (_m *Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (_m *Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) db.Row {
 	var _ca []interface{}
 	_ca = append(_ca, ctx, query)
 	_ca = append(_ca, args...)
@@ -219,12 +220,12 @@ func (_m *Tx) QueryRowContext(ctx context.Context, query string, args ...interfa
 		panic("no return value specified for QueryRowContext")
 	}
 
-	var r0 *sql.Row
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) *sql.Row); ok {
+	var r0 db.Row
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...interface{}) db.Row); ok {
 		r0 = rf(ctx, query, args...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sql.Row)
+			r0 = ret.Get(0).(db.Row)
 		}
 	}
 
@@ -258,12 +259,12 @@ func (_c *Tx_QueryRowContext_Call) Run(run func(ctx context.Context, query strin
 	return _c
 }
 
-func (_c *Tx_QueryRowContext_Call) Return(_a0 *sql.Row) *Tx_QueryRowContext_Call {
+func (_c *Tx_QueryRowContext_Call) Return(_a0 db.Row) *Tx_QueryRowContext_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Tx_QueryRowContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) *sql.Row) *Tx_QueryRowContext_Call {
+func (_c *Tx_QueryRowContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) db.Row) *Tx_QueryRowContext_Call {
 	_c.Call.Return(run)
 	return _c
 }

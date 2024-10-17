@@ -60,6 +60,7 @@ type resourceDBProvider struct {
 	cfg             *setting.Cfg
 	log             log.Logger
 	migrateFunc     func(context.Context, *xorm.Engine, *setting.Cfg) error
+	tracer          trace.Tracer
 	registerMetrics bool
 	logQueries      bool
 }
@@ -77,6 +78,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 		log:         log.New("entity-db"),
 		logQueries:  getter.Bool("log_queries"),
 		migrateFunc: migrations.MigrateResourceStore,
+		tracer:      tracer,
 	}
 
 	dbType := getter.String("type")
@@ -145,5 +147,7 @@ func (p *resourceDBProvider) init(ctx context.Context) (db.DB, error) {
 		}
 	}
 
-	return NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName()), nil
+	d := NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName())
+
+	return d, nil
 }
