@@ -71,7 +71,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 		if gmsErr := c.handleGMSErrors(body); gmsErr != nil {
 			return gmsErr
 		}
-		return fmt.Errorf("token validation failure: %w", cloudmigration.ErrTokenRequestError)
+		return fmt.Errorf("token validation failure: %w", cloudmigration.ErrTokenValidationFailure)
 	}
 
 	return nil

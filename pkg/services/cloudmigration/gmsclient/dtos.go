@@ -70,6 +70,5 @@ type GMSAPIError struct {
 // Error messages returned from GMS
 var (
 	GMSErrorMessageInstanceUnreachable   = "instance is unreachable"
-	GMSErrorMessageInstanceNotFound      = "instance not found"
 	GMSErrorMessageInstanceCheckingError = "checking if instance is reachable"
 )
