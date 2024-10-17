@@ -30,6 +30,10 @@ export class CompletionDataProvider {
     return `{${allLabelTexts.join(',')}}`;
   }
 
+  setTimeRange(timeRange: TimeRange) {
+    this.timeRange = timeRange;
+  }
+
   getHistory() {
     return chain(this.historyRef.current)
       .orderBy('ts', 'desc')
@@ -82,7 +86,9 @@ export class CompletionDataProvider {
         // Make room in the cache for the fresh result by deleting the "first" index
         const keys = this.queryToLabelKeysCache.keys();
         const firstKey = keys.next().value;
-        this.queryToLabelKeysCache.delete(firstKey);
+        if (firstKey) {
+          this.queryToLabelKeysCache.delete(firstKey);
+        }
       }
       // Fetch a fresh result from the backend
       const labelKeys = await this.languageProvider.getParserAndLabelKeys(logQuery, { timeRange: this.timeRange });
