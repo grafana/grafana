@@ -33,6 +33,9 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 		if cmd.RuleUID != "" {
 			addToQuery(` AND rule_uid = ?`, cmd.RuleUID)
 		}
+		if cmd.RuleGroup != "" {
+			return errors.New("filtering by RuleGroup is not supported")
+		}
 
 		if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNoNormalState) {
 			s.WriteString(fmt.Sprintf(" AND NOT (current_state = '%s' AND current_reason = '')", models.InstanceStateNormal))
