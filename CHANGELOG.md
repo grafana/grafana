@@ -2,7 +2,7 @@
 
 # 11.2.2+security-01 (2024-10-17)
 
-### Features and enhancements
+### Bug fixes
 
 - **SQL Expressions**: Fixes CVE-2024-9264
 
