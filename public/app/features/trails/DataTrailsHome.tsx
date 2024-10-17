@@ -247,7 +247,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: '1px',
       background: 'rgba(204, 204, 220, 0.12)',
       margin: '0 auto', // Center the line horizontally
-      marginTop: '32px',
+      marginTop: '56px', // should be 32 but doing 24 + 32 right now to account for no show more button for recent metrics explorations
     }),
     gap20: css({
       marginTop: theme.spacing(6), // ask catherine what the number should be
