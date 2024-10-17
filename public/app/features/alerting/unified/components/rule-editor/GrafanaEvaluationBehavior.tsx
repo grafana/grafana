@@ -11,7 +11,7 @@ import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/u
 import { LogMessages, logInfo } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
@@ -231,15 +231,21 @@ function NeedHelpInfoForConfigureNoDataError() {
   );
 }
 
-function getDescription() {
+function getDescription(isGrafanaRecordingRule: boolean) {
   const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
 
   return (
     <Stack direction="row" gap={0.5} alignItems="center">
       <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="alert-rule-form.evaluation-behaviour.description.text">
-          Define how the alert rule is evaluated.
-        </Trans>
+        {isGrafanaRecordingRule ? (
+          <Trans i18nKey="alert-recording-rule-form.evaluation-behaviour.description.text">
+            Define how the recording rule is evaluated.
+          </Trans>
+        ) : (
+          <Trans i18nKey="alert-rule-form.evaluation-behaviour.description.text">
+            Define how the alert rule is evaluated.
+          </Trans>
+        )}
       </Text>
       <NeedHelpInfo
         contentText={
@@ -291,10 +297,11 @@ export function GrafanaEvaluationBehavior({
   const type = watch('type');
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
+  const isGrafanaRecordingRule = type === RuleFormType.grafanaRecording;
 
   return (
     // TODO remove "and alert condition" for recording rules
-    <RuleEditorSection stepNo={3} title="Set evaluation behavior" description={getDescription()}>
+    <RuleEditorSection stepNo={3} title="Set evaluation behavior" description={getDescription(isGrafanaRecordingRule)}>
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
         <FolderGroupAndEvaluationInterval
           setEvaluateEvery={setEvaluateEvery}
@@ -318,7 +325,11 @@ export function GrafanaEvaluationBehavior({
                   />
                   <label htmlFor="pause-alert" className={styles.switchLabel}>
                     <Trans i18nKey="alert-rule-form.pause">Pause evaluation</Trans>
-                    <Tooltip placement="top" content="Turn on to pause evaluation for this alert rule." theme={'info'}>
+                    <Tooltip
+                      placement="top"
+                      content={`Turn on to pause evaluation for this ${isGrafanaRecordingRule ? 'recording' : 'alert'} rule.`}
+                      theme={'info'}
+                    >
                       <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
                     </Tooltip>
                   </label>
