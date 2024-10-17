@@ -6,6 +6,7 @@ import {
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
+  ReducerID,
   RelativeTimeRange,
 } from '@grafana/data';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
@@ -19,6 +20,8 @@ import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource
 import { getDefaultQueries } from '../../../utils/rule-form';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
+
+import { SIMPLE_CONDITION_QUERY_ID, SIMPLE_CONDITION_REDUCER_ID } from './SimpleCondition';
 
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
@@ -60,7 +63,8 @@ export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: 
 export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
 export const resetToSimpleCondition = createAction('resetToSimpleCondition');
-
+export const removeFirstReducer = createAction('removeFirstReducer');
+export const addReducerAtFirstPosition = createAction('addReducerAtFirstPosition');
 export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
   'setRecordingRulesQueries'
 );
@@ -224,6 +228,59 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     .addCase(rewireExpressions, (state, { payload }) => {
       state.queries = queriesWithUpdatedReferences(state.queries, payload.oldRefId, payload.newRefId);
+    })
+    .addCase(removeFirstReducer, (state) => {
+      const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
+      const dataQueries = state.queries.filter((query) => !isExpressionQuery(query.model));
+
+      if (dataQueries.length !== 1 || expressionQueries.length !== 2) {
+        return;
+      }
+      const removedReducerQueries = state.queries.filter(
+        (query, index) =>
+          !isExpressionQuery(query.model) ||
+          (isExpressionQuery(query.model) && !(query.model.type === ExpressionQueryType.reduce && index === 1))
+      );
+      state.queries = removedReducerQueries.map((query, index) => {
+        if (index === 1 && removedReducerQueries.length === 2) {
+          // we update the only expression (threshold) to point to the query as in this case we removed the reducer
+          return {
+            ...query,
+            model: {
+              ...query.model,
+              expression: SIMPLE_CONDITION_QUERY_ID,
+            },
+          };
+        } else {
+          return query;
+        }
+      });
+    })
+    .addCase(addReducerAtFirstPosition, (state) => {
+      const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
+      const dataQueries = state.queries.filter((query) => !isExpressionQuery(query.model));
+      // we only add the reducer if we have one data query and one expression query. For other cases we don't do anything,
+      // and let the user add the reducer manually.
+      if (dataQueries.length !== 1 || expressionQueries.length !== 1) {
+        return;
+      }
+      // add reducer expression at first position of expressions (just after query)
+      state.queries = [
+        dataQueries[0], // the data query
+        {
+          datasourceUid: ExpressionDatasourceUID,
+          model: expressionDatasource.newQuery({
+            type: ExpressionQueryType.reduce,
+            reducer: ReducerID.last,
+            conditions: [{ ...defaultCondition, query: { params: [] } }],
+            expression: SIMPLE_CONDITION_QUERY_ID,
+            refId: SIMPLE_CONDITION_REDUCER_ID,
+          }),
+          refId: SIMPLE_CONDITION_REDUCER_ID,
+          queryType: 'expression',
+        },
+        expressionQueries[0], // the threshold expression
+      ];
     })
     .addCase(updateExpressionType, (state, action) => {
       state.queries = state.queries.map((query) => {
