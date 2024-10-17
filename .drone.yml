@@ -390,15 +390,16 @@ steps:
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+    -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
@@ -1045,9 +1046,9 @@ steps:
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-postgres
@@ -1067,9 +1068,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-5.7
@@ -1088,9 +1089,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-8.0
@@ -1106,8 +1107,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
-    -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run IntegrationRedis -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -1122,8 +1123,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
-    -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run IntegrationMemcached -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -1778,15 +1779,16 @@ steps:
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+    -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
@@ -2560,9 +2562,9 @@ steps:
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-postgres
@@ -2582,9 +2584,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-5.7
@@ -2603,9 +2605,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-8.0
@@ -2621,8 +2623,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
-    -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run IntegrationRedis -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -2637,8 +2639,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
-    -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run IntegrationMemcached -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -2992,15 +2994,16 @@ steps:
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+    -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
@@ -3192,9 +3195,9 @@ steps:
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-postgres
@@ -3214,9 +3217,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-5.7
@@ -3235,9 +3238,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-8.0
@@ -3253,8 +3256,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
-    -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run IntegrationRedis -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -3269,8 +3272,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
-    -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run IntegrationMemcached -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -4692,15 +4695,16 @@ steps:
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m
+    -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: golang:1.23.1-alpine
@@ -5238,9 +5242,9 @@ steps:
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-postgres
@@ -5260,9 +5264,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-5.7
@@ -5281,9 +5285,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func
+    TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-8.0
@@ -5299,8 +5303,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic
-    -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run IntegrationRedis -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-redis
@@ -5315,8 +5319,8 @@ steps:
 - commands:
   - apk add --update build-base
   - go clean -testcache
-  - go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic
-    -timeout=2m
+  - go list -f '{{.Dir}}/...' -m  | xargs go test -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn"
+    -run IntegrationMemcached -covermode=atomic -timeout=2m
   depends_on:
   - wire-install
   - wait-for-memcached
@@ -5987,6 +5991,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: dc30a3a00ee542fb289da36ef6db4274684db4533c472f7f903468919d1046ac
+hmac: d4738375edede85e2345d8088402405600c2c089d45d0e74a3a780dffe38cb93
 
 ...
