@@ -3,11 +3,12 @@ import { useId } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
-import { CreateSessionApiArg, CreateSessionErrorDto } from '../../../api';
+import { CreateSessionApiArg } from '../../../api';
 
 interface Props {
   isOpen: boolean;
@@ -21,53 +22,58 @@ interface FormData {
   token: string;
 }
 
-type CreateSessionError = {
-  data: CreateSessionErrorDto;
-};
+function maybeCreateSessionAPIError(err: unknown) {
+  if (!isFetchError<unknown>(err) || typeof err.data !== 'object' || !err.data) {
+    return null;
+  }
 
-function isCreateSessionError(error: unknown): error is CreateSessionError {
-  return (
-    error !== null &&
-    typeof error === 'object' &&
-    'data' in error &&
-    error.data !== null &&
-    typeof error.data === 'object' &&
-    'errorCode' in error.data &&
-    'message' in error.data
-  );
+  const data = err?.data;
+  const message = 'message' in data && typeof data.message === 'string' ? data.message : null;
+  const messageId = 'messageId' in data && typeof data.messageId === 'string' ? data.messageId : null;
+
+  if (!message || !messageId) {
+    return null;
+  }
+
+  return { message, messageId };
 }
 
-function getTMessage(errorCode: CreateSessionErrorDto['errorCode']): string {
-  switch (errorCode) {
-    case 'TOKEN_INVALID':
+function getTMessage(messageId: string): string {
+  switch (messageId) {
+    case 'cloudmigrations.createMigration.tokenInvalid':
       return t(
         'migrate-to-cloud.connect-modal.token-errors.token-invalid',
         'Token is not valid. Generate a new token on your cloud instance and try again.'
       );
-    case 'TOKEN_REQUEST_ERROR':
+    case 'cloudmigrations.createMigration.tokenRequestError':
       return t(
         'migrate-to-cloud.connect-modal.token-errors.token-request-error',
         'An error occurred while validating the token. Please check the Grafana instance logs.'
       );
-    case 'TOKEN_VALIDATION_FAILURE':
+    case 'cloudmigrations.createMigration.tokenValidationFailure':
       return t(
         'migrate-to-cloud.connect-modal.token-errors.token-validation-failure',
         'Token is not valid. Please ensure the token matches the migration token on your cloud instance.'
       );
-    case 'INSTANCE_UNREACHABLE':
+    case 'cloudmigrations.createMigration.instanceUnreachable':
       return t(
         'migrate-to-cloud.connect-modal.token-errors.instance-unreachable',
         'The cloud instance cannot be reached. Make sure the instance is running and try again.'
       );
-    case 'INSTANCE_REQUEST_ERROR':
+    case 'cloudmigrations.createMigration.instanceRequestError':
       return t(
         'migrate-to-cloud.connect-modal.token-errors.instance-request-error',
         "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status."
       );
-    case 'SESSION_CREATION_FAILURE':
+    case 'cloudmigrations.createMigration.sessionCreationFailure':
       return t(
         'migrate-to-cloud.connect-modal.token-errors.session-creation-failure',
         'There was an error creating the migration. Please try again.'
+      );
+    case 'cloudmigrations.createMigration.migrationDisabled':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.migration-disabled',
+        'Cloud migrations are disabled on this instance.'
       );
     default:
       return t(
@@ -158,7 +164,7 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
                 title={t('migrate-to-cloud.connect-modal.token-error-title', 'Error saving token')}
               >
                 <Text element="p">
-                  {(isCreateSessionError(error) && getTMessage(error?.data?.errorCode)) ||
+                  {getTMessage(maybeCreateSessionAPIError(error)?.messageId || '') ||
                     'There was an error saving the token. See the Grafana server logs for more details.'}
                 </Text>
               </AlertWithTraceID>

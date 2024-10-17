@@ -49,7 +49,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	req, err := http.NewRequestWithContext(ctx, "POST", path, bytes.NewReader(nil))
 	if err != nil {
 		c.log.Error("error creating http request for token validation", "err", err.Error())
-		return fmt.Errorf("create http request error: %w", cloudmigration.ErrTokenRequestError)
+		return cloudmigration.ErrTokenRequestError.Errorf("create http request error")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
@@ -57,12 +57,12 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request for token validation", "err", err.Error())
-		return fmt.Errorf("send http request error: %w", cloudmigration.ErrTokenRequestError)
+		return cloudmigration.ErrTokenRequestError.Errorf("send http request error")
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			c.log.Error("error closing the request body", "err", err.Error())
-			err = errors.Join(err, fmt.Errorf("closing response body: %w", cloudmigration.ErrTokenRequestError))
+			err = errors.Join(err, cloudmigration.ErrTokenRequestError.Errorf("closing response body"))
 		}
 	}()
 
@@ -71,7 +71,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 		if gmsErr := c.handleGMSErrors(body); gmsErr != nil {
 			return gmsErr
 		}
-		return fmt.Errorf("token validation failure: %w", cloudmigration.ErrTokenValidationFailure)
+		return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
 	}
 
 	return nil
@@ -268,14 +268,14 @@ func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
 func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) error {
 	var apiError GMSAPIError
 	if err := json.Unmarshal(responseBody, &apiError); err != nil {
-		return cloudmigration.ErrTokenValidationFailure
+		return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
 	}
 
 	if strings.Contains(apiError.Message, GMSErrorMessageInstanceUnreachable) {
-		return cloudmigration.ErrInstanceUnreachable
+		return cloudmigration.ErrInstanceUnreachable.Errorf("instance unreachable")
 	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceCheckingError) {
-		return cloudmigration.ErrInstanceRequestError
+		return cloudmigration.ErrInstanceRequestError.Errorf("instance checking error")
 	}
 
-	return cloudmigration.ErrTokenValidationFailure
+	return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
 }

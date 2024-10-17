@@ -1370,6 +1370,7 @@
       "token-errors": {
         "instance-request-error": "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status.",
         "instance-unreachable": "The cloud instance cannot be reached. Make sure the instance is running and try again.",
+        "migration-disabled": "Cloud migrations are disabled on this instance.",
         "session-creation-failure": "There was an error creating the migration. Please try again.",
         "token-invalid": "Token is not valid. Generate a new token on your cloud instance and try again.",
         "token-not-saved": "There was an error saving the token. See the Grafana server logs for more details.",
