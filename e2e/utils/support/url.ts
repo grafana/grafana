@@ -1,5 +1,3 @@
-import { e2e } from '../index';
-
 const getBaseUrl = () => Cypress.env('BASE_URL') || Cypress.config().baseUrl || 'http://localhost:3000';
 
 export const fromBaseUrl = (url = '') => new URL(url, getBaseUrl()).href;

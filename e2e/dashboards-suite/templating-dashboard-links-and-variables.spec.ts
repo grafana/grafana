@@ -27,27 +27,21 @@ describe('Templating', () => {
           expect(links).to.have.length.greaterThan(13);
 
           for (let index = 0; index < links.length; index++) {
-            expect(Cypress.$(links[index]).attr('href')).contains(variableValue);
+            expect(Cypress.$(links[index]).attr('href')).contains(`var-custom=${variableValue}`);
           }
         });
     };
 
     e2e.components.DashboardLinks.dropDown().should('be.visible').click().wait('@tagsTemplatingSearch');
 
-    verifyLinks('var-custom=$__all');
+    // verify all links, should have All value
+    verifyLinks('All');
 
-    cy.get('body').click();
-
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('$__all')
-      .should('be.visible')
-      .within(() => {
-        cy.get('input').click();
-      });
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('p2').should('be.visible').click();
 
-    cy.get('body').click();
-
+    e2e.components.NavToolbar.container().click();
     e2e.components.DashboardLinks.dropDown()
       .scrollIntoView()
       .should('be.visible')

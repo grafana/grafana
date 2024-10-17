@@ -2,7 +2,6 @@ import panelSandboxDashboard from '../dashboards/PanelSandboxDashboard.json';
 import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'c46b2460-16b7-42a5-82d1-b07fbf431950';
-// Skipping due to race conditions with same old arch test e2e/panels-suite/frontend-sandbox-panel.spec.ts
 describe('Panel sandbox', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);

@@ -3907,11 +3907,6 @@ __metadata:
     "@playwright/test": ^1.41.2
   checksum: 10/bb13d8e9fd6dc5ebb7deb7f3e57ac31c13a6f163337c2eb744a5671a38944ea7c81298bd9c1a65b8d53e1392429a16347134ae215fbda3babc9c4d563312a0bf
   languageName: node
-  linkType: hard
-
-"@grafana/prometheus@workspace:*, @grafana/prometheus@workspace:packages/grafana-prometheus":
-  version: 0.0.0-use.local
-  resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
     "@emotion/css": "npm:11.13.4"
     "@emotion/eslint-plugin": "npm:11.12.0"

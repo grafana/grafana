@@ -85,17 +85,15 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       e2e.components.Panels.Panel.headerItems('Edit').click();
     } else {
       try {
-        //Enter edit mode
-        e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
-        e2e.components.PageToolbar.itemButton('Add button').should('be.visible').click();
-        e2e.components.NavToolbar.editDashboard.addVisualizationButton().should('be.visible').click();
+        e2e.components.PageToolbar.itemButton('Add button').should('be.visible');
+        e2e.components.PageToolbar.itemButton('Add button').click();
       } catch (e) {
         // Depending on the screen size, the "Add" button might be hidden
         e2e.components.PageToolbar.item('Show more items').click();
         e2e.components.PageToolbar.item('Add button').last().click();
       }
-      // e2e.pages.AddDashboard.itemButton('Add new visualization menu item').should('be.visible');
-      // e2e.pages.AddDashboard.itemButton('Add new visualization menu item').click();
+      e2e.pages.AddDashboard.itemButton('Add new visualization menu item').should('be.visible');
+      e2e.pages.AddDashboard.itemButton('Add new visualization menu item').click();
     }
 
     if (timeRange) {

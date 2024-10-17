@@ -16,49 +16,39 @@ describe('Variables - Load options from Url', () => {
 
     cy.wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        cy.get('input').click();
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
-
-    e2e.components.Select.option().parent().should('have.length', 10);
-
-    e2e.components.Select.toggleAllOptions().should('have.text', 'Selected (1)');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
 
-    cy.get('body').click(0, 0);
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA').should('be.visible').click();
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        cy.get('input').click();
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
-
-    e2e.components.Select.option().parent().should('have.length', 10);
-
-    e2e.components.Select.toggleAllOptions().should('have.text', 'Selected (1)');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AA').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AB').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AC').should('be.visible');
 
-    cy.get('body').click(0, 0);
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('$__all')
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        cy.get('input').click();
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
-
-    e2e.components.Select.option().parent().should('have.length', 10);
-
-    e2e.components.Select.toggleAllOptions().should('have.text', 'Selected (1)');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAA').should('be.visible');
@@ -75,49 +65,39 @@ describe('Variables - Load options from Url', () => {
 
     cy.wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').should('be.visible').click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        cy.get('input').click();
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
-
-    e2e.components.Select.option().parent().should('have.length', 10);
-
-    e2e.components.Select.toggleAllOptions().should('have.text', 'Selected (1)');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
 
-    cy.get('body').click(0, 0);
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB').should('be.visible').click();
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB')
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        cy.get('input').click();
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
-
-    e2e.components.Select.option().parent().should('have.length', 10);
-
-    e2e.components.Select.toggleAllOptions().should('have.text', 'Selected (1)');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
-    cy.get('body').click(0, 0);
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB').should('be.visible').click();
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB')
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        cy.get('input').click();
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
-
-    e2e.components.Select.option().parent().should('have.length', 10);
-
-    e2e.components.Select.toggleAllOptions().should('have.text', 'Selected (1)');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
@@ -145,25 +125,24 @@ describe('Variables - Load options from Url', () => {
 
     cy.wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('X')
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('X').should('be.visible').click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        cy.get('input').click();
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
-
-    e2e.components.Select.option().parent().should('have.length', 10);
-
-    e2e.components.Select.toggleAllOptions().should('have.text', 'Selected (1)');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
 
-    cy.get('body').click();
-
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('$__all')
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA').should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
-      .should('have.length', 2);
+      .within(() => {
+        e2e.components.Variables.variableOption().should('have.length', 65);
+      });
   });
 });
