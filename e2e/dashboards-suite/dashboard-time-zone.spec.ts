@@ -81,8 +81,7 @@ describe('Dashboard time zone support', () => {
     }
   });
 
-  // TODO: remove skip once https://github.com/grafana/grafana/issues/86420 is done
-  it.skip('Tests relative timezone support and overrides', () => {
+  it('Tests relative timezone support and overrides', () => {
     // Open dashboard
     e2e.flows.openDashboard({
       uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
@@ -124,6 +123,7 @@ describe('Dashboard time zone support', () => {
       .within(() => {
         cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
+
     // Test UTC timezone
     e2e.flows.setTimeRange({
       from: 'now-6h',

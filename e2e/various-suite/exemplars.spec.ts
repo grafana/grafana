@@ -17,8 +17,8 @@ const addDataSource = () => {
     },
   });
 };
-// Skipping due to race conditions with same old arch test e2e/various-suite/exemplars.spec.ts
-describe.skip('Exemplars', () => {
+
+describe('Exemplars', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
@@ -69,7 +69,7 @@ describe.skip('Exemplars', () => {
 
     cy.get(`[data-testid="time-series-zoom-to-data"]`).click();
 
-    e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mousemove', { force: true });
+    e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mousemove');
     cy.contains('Query with gdev-tempo').click();
     e2e.components.TraceViewer.spanBar().should('have.length', 11);
   });
