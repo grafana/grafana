@@ -77,7 +77,7 @@ refs:
 
 You can use templates to customize alert and notification messages, including dynamic data from alert rule queries.
 
-Grafana Alerting offers two ways for templating alert messages:
+In Grafana Alerting, you can template alert messages in two ways.
 
 1. **Template annotations and labels**: In the alert rule definition, you can template annotations and labels to add extra information from query data, enriching individual alerts with meaningful details from query results.
 1. **Template notifications**: You can template notifications to control the content and appearance of their notifications.
