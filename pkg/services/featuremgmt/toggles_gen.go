@@ -495,6 +495,10 @@ const (
 	// Enables dashboard rendering using scenes for all roles
 	FlagDashboardScene = "dashboardScene"
 
+	// FlagDashboardNewLayouts
+	// Enables experimental new dashboard layouts
+	FlagDashboardNewLayouts = "dashboardNewLayouts"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
