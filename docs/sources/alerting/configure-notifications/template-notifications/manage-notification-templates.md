@@ -85,7 +85,7 @@ To create a notification template in Grafana, complete the following steps.
 
    If `{{ define }}` is not included in the content, `{{ define "<NOTIFICATION_TEMPLATE_NAME>" }}` and `{{ end }}` is automatically added to the start and end.
 
-To create a notification template that contains more than one template:
+To create a notification template that contains more than one template, complete the following steps.
 
 1. Click **+ Add notification template**.
 
