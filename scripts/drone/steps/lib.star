@@ -1358,7 +1358,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             "    exit 1",
             "fi",
             'echo "Step 6: Verifying Grafana installation..."',
-            'if rpm -q grafana | grep -q "${{verison}}"; then',
+            'if rpm -q grafana | grep -q "$verison"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
             "else",
             '    echo "Failed to verify Grafana version ${TAG}"',

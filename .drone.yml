@@ -3918,7 +3918,7 @@ steps:
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "${{verison}}"; then
+  - if rpm -q grafana | grep -q "$verison"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
   - '    echo "Failed to verify Grafana version ${TAG}"'
@@ -4098,7 +4098,7 @@ steps:
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "${{verison}}"; then
+  - if rpm -q grafana | grep -q "$verison"; then
   - '    echo "Successfully verified Grafana version ${TAG}"'
   - else
   - '    echo "Failed to verify Grafana version ${TAG}"'
@@ -5991,6 +5991,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 97aa8e504745721a3a9b0d2d62c80da56469953745aba486b2270e15ef700434
+hmac: d1cfdeb7de0bc7bd9069ff2f52760735c52fb94e2d553e87a90361e5cc26a535
 
 ...
