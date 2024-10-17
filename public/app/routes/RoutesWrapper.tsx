@@ -54,7 +54,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
  * @constructor
  */
 export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
-  const { activePluginId, closeApp } = useSidecar();
+  const { activePluginId, closeApp, initialContext } = useSidecar();
 
   let { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
@@ -106,7 +106,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
                         onClick={() => closeApp(activePluginId)}
                       />
                     </div>
-                    <AppRootPage pluginId={activePluginId} />
+                    <AppRootPage pluginId={activePluginId} initialContext={initialContext} />
                   </div>
                 </CompatRouter>
               </LocationServiceProvider>

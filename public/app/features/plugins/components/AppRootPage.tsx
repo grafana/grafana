@@ -43,6 +43,7 @@ interface Props {
   // The root navModelItem for the plugin (root = lives directly under 'home'). In case app does not need a nva model,
   // for example it's in some way embedded or shown in a sideview this can be undefined.
   pluginNavSection?: NavModelItem;
+  initialContext?: unknown;
 }
 
 interface State {
@@ -55,7 +56,7 @@ interface State {
 
 const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
 
-export function AppRootPage({ pluginId, pluginNavSection }: Props) {
+export function AppRootPage({ pluginId, pluginNavSection, initialContext }: Props) {
   const { pluginId: pluginIdParam = '' } = useParams();
   pluginId = pluginId || pluginIdParam;
   const addedLinksRegistry = useAddedLinksRegistry();
@@ -99,7 +100,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   }
 
   const pluginRoot = plugin.root && (
-    <PluginContextProvider meta={plugin.meta}>
+    <PluginContextProvider meta={plugin.meta} initialContext={initialContext}>
       <ExtensionRegistriesProvider
         registries={{
           addedLinksRegistry: addedLinksRegistry.readOnly(),

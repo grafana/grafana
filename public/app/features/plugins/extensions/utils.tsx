@@ -388,7 +388,7 @@ export function getLinkExtensionOnClick(
         context,
         openModal: createOpenModalFunction(pluginId),
         isAppOpened: () => isAppOpened(pluginId),
-        openAppInSideview: () => openAppInSideview(pluginId),
+        openAppInSideview: (context?: unknown) => openAppInSideview(pluginId, context),
         closeAppInSideview: () => closeAppInSideview(pluginId),
       };
 
@@ -426,7 +426,7 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
   );
 }
 
-export const openAppInSideview = (pluginId: string) => sidecarService.openApp(pluginId);
+export const openAppInSideview = (pluginId: string, context?: unknown) => sidecarService.openApp(pluginId, context);
 
 export const closeAppInSideview = (pluginId: string) => sidecarService.closeApp(pluginId);
 
