@@ -102,7 +102,7 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 	if buf.Len() > 1000 {
 		// !!! Currently just write the whole thing
 		// in reality we may only want to write the spec....
-		rsp, err := s.store.PutBlob(ctx, &resource.PutBlobRequest{
+		_, err := s.store.PutBlob(ctx, &resource.PutBlobRequest{
 			ContentType: "application/json",
 			Value:       buf.Bytes(),
 			Resource: &resource.ResourceKey{
