@@ -37,7 +37,7 @@ refs:
 
 # Manage notification templates
 
-In contact points, you can select notification templates to decide the notification messages sent to their receivers.
+In contact points, you can select notification templates to customize the notification messages sent.
 
 By default, Grafana provides a template for the notification title (`default.title`) and a template for the notification message (`default.message`). Both default templates display common alert details.
 
