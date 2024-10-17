@@ -139,6 +139,7 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	// in tests we can skip creating a lock
 	if r.lock == nil {
 		run(ctx)
+		return
 	}
 
 	// We ignore the error for now
