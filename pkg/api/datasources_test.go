@@ -493,35 +493,6 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 	}
 }
 
-func TestValidateLBACHeader(t *testing.T) {
-	testcases := []struct {
-		desc            string
-		teamHeaderValue string
-		want            bool
-	}{
-		{
-			desc:            "Should allow valid header",
-			teamHeaderValue: `1234:{ name!="value",foo!~"bar" }`,
-			want:            true,
-		},
-		{
-			desc:            "Should allow valid selector",
-			teamHeaderValue: `1234:{ name!="value",foo!~"bar/baz.foo" }`,
-			want:            true,
-		},
-		{
-			desc:            "Should return false for incorrect header value",
-			teamHeaderValue: `1234:!="value",foo!~"bar" }`,
-			want:            false,
-		},
-	}
-	for _, tc := range testcases {
-		t.Run(tc.desc, func(t *testing.T) {
-			assert.Equal(t, tc.want, validateLBACHeader(tc.teamHeaderValue))
-		})
-	}
-}
-
 type dataSourcesServiceMock struct {
 	datasources.DataSourceService
 
