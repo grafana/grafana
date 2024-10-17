@@ -280,6 +280,11 @@
       "ofQuery": {
         "To": ""
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "",
+      "misconfigured-warning": "",
+      "misconfigured-warning-details": ""
     }
   },
   "annotations": {
@@ -1395,10 +1400,13 @@
       "title": ""
     },
     "migrated-counts": {
+      "contact_points": "",
       "dashboards": "",
       "datasources": "",
       "folders": "",
-      "library_elements": ""
+      "library_elements": "",
+      "mute_timings": "",
+      "notification_templates": ""
     },
     "migration-token": {
       "delete-button": "",
@@ -1432,6 +1440,7 @@
       "snapshot-error-status-body": "",
       "snapshot-error-status-title": "",
       "success-message": "",
+      "success-message-generic": "",
       "success-title": "",
       "upload-snapshot-error-title": ""
     },
@@ -1477,10 +1486,13 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "contact_point": "",
       "dashboard": "仪表板",
       "datasource": "数据源",
       "folder": "",
       "library_element": "",
+      "mute_timing": "",
+      "notification_template": "",
       "unknown": "未知"
     },
     "summary": {

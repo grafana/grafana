@@ -11,6 +11,8 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
@@ -30,12 +32,7 @@ type APIGroupBuilder interface {
 	//
 	// The caller should share the apiGroupInfo passed into this function across builder versions of the same group.
 	// UpdateAPIGroupInfo builds the group+version behavior updating the passed in apiGroupInfo in place
-	UpdateAPIGroupInfo(
-		apiGroupInfo *genericapiserver.APIGroupInfo,
-		scheme *runtime.Scheme,
-		optsGetter generic.RESTOptionsGetter,
-		dualWriteBuilder grafanarest.DualWriteBuilder,
-	) error
+	UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts APIGroupOptions) error
 
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
@@ -47,6 +44,13 @@ type APIGroupBuilder interface {
 	// Standard namespace checking will happen before this is called, specifically
 	// the namespace must matches an org|stack that the user belongs to
 	GetAuthorizer() authorizer.Authorizer
+}
+
+type APIGroupOptions struct {
+	Scheme           *runtime.Scheme
+	OptsGetter       generic.RESTOptionsGetter
+	DualWriteBuilder grafanarest.DualWriteBuilder
+	MetricsRegister  prometheus.Registerer
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
