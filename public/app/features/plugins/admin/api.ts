@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -180,9 +182,19 @@ export async function updatePluginSettings(id: string, data: Partial<PluginMeta>
   return response?.data;
 }
 
+export async function getPluginMeta(id: string): Promise<PluginMeta> {
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<PluginMeta>({
+      url: `/api/plugins/${id}/settings`,
+    })
+  );
+  return response.data;
+}
+
 export const api = {
   getRemotePlugins,
   getInstalledPlugins: getLocalPlugins,
   installPlugin,
   uninstallPlugin,
+  getPluginMeta,
 };

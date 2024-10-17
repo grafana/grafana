@@ -545,6 +545,7 @@ export type { FeatureToggles } from './types/featureToggles.gen';
 export {
   PluginExtensionTypes,
   PluginExtensionPoints,
+  type QueryToAppPluginContext,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
