@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
+import { satisfies } from 'semver';
 
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { getLatestCompatibleVersion } from '../helpers';
@@ -21,6 +23,8 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
 
   const [isInstalling, setIsInstalling] = useState(false);
 
+  const grafanaVersion = config.buildInfo.version;
+
   useEffect(() => {
     setIsInstalling(false);
   }, [installedVersion]);
@@ -38,14 +42,18 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
       <thead>
         <tr>
           <th>Version</th>
+          <th></th>
           <th>Last updated</th>
           <th>Grafana Dependency</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
         {versions.map((version) => {
           const isInstalledVersion = installedVersion === version.version;
+          const versionIsIncompatible = version.grafanaDependency ?
+            !satisfies(grafanaVersion, version.grafanaDependency, { includePrerelease: true }) : false;
+
+
           return (
             <tr key={version.version}>
               {/* Version number */}
@@ -57,13 +65,6 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
                 <td>{version.version}</td>
               )}
 
-              {/* Last updated */}
-              <td className={isInstalledVersion ? styles.currentVersion : ''}>
-                {dateTimeFormatTimeAgo(version.createdAt)}
-              </td>
-              {/* Dependency */}
-              <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
-
               {/* Install button */}
               <td>
                 <VersionInstallButton
@@ -71,9 +72,16 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
                   version={version}
                   installedVersion={installedVersion}
                   onClick={onInstallClick}
-                  disabled={isInstalledVersion || isInstalling}
+                  disabled={isInstalledVersion || isInstalling || versionIsIncompatible}
                 />
               </td>
+
+              {/* Last updated */}
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>
+                {dateTimeFormatTimeAgo(version.createdAt)}
+              </td>
+              {/* Dependency */}
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
             </tr>
           );
         })}
