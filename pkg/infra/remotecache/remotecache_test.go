@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -21,13 +22,16 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) CacheStorage {
+type noopAuthenticator struct{}
+
+func (n noopAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
+	return ctx, nil
+}
+
+func createTestClient(t *testing.T, cfg *setting.Cfg, sqlstore db.DB, grpcServer grpcserver.Provider) *RemoteCache {
 	t.Helper()
 
-	cfg := &setting.Cfg{
-		RemoteCacheOptions: opts,
-	}
-	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService())
+	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService(), grpcServer, nil)
 	require.Nil(t, err, "Failed to init client for test")
 
 	return dc
@@ -40,13 +44,8 @@ func TestCachedBasedOnConfig(t *testing.T) {
 	})
 	require.Nil(t, err, "Failed to load config")
 
-	client := createTestClient(t, cfg.RemoteCacheOptions, db)
+	client := createTestClient(t, cfg, db, nil)
 	runTestsForClient(t, client)
-}
-
-func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil, nil)
-	assert.Equal(t, err, ErrInvalidCacheType)
 }
 
 func runTestsForClient(t *testing.T, client CacheStorage) {
@@ -58,15 +57,14 @@ func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	dataToCache := []byte("some bytes")
 
 	err := client.Set(context.Background(), "key1", dataToCache, 0)
-	assert.Equal(t, err, nil, "expected nil. got: ", err)
+	assert.NoError(t, err)
 
 	data, err := client.Get(context.Background(), "key1")
-	assert.Equal(t, err, nil)
-
-	assert.Equal(t, string(data), "some bytes")
+	assert.NoError(t, err)
+	assert.Equal(t, "some bytes", string(data))
 
 	err = client.Delete(context.Background(), "key1")
-	assert.Equal(t, err, nil)
+	assert.NoError(t, err)
 
 	_, err = client.Get(context.Background(), "key1")
 	// redis client returns redis.Nil error when key does not exist.
@@ -77,7 +75,7 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	dataToCache := []byte("some bytes")
 
 	err := client.Set(context.Background(), "key1", dataToCache, time.Second)
-	assert.Equal(t, err, nil)
+	assert.NoError(t, err)
 
 	// not sure how this can be avoided when testing redis/memcached :/
 	<-time.After(time.Second + time.Millisecond)
@@ -94,11 +92,9 @@ func TestCollectUsageStats(t *testing.T) {
 		"stats.remote_cache.encrypt_enabled.count": 1,
 	}
 	cfg := setting.NewCfg()
-	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: redisCacheType, Encryption: true}
+	cfg.RemoteCache = &setting.RemoteCacheSettings{Name: redisCacheType, Encryption: true}
 
-	remoteCache := &RemoteCache{
-		Cfg: cfg,
-	}
+	remoteCache := &RemoteCache{cfg: cfg}
 
 	stats, err := remoteCache.getUsageStats(context.Background())
 	require.NoError(t, err)

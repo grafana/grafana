@@ -186,7 +186,10 @@ func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) 
 	}
 
 	// store current cacheKey for the user
-	return c.cache.Set(ctx, userKey, []byte(id.ClientParams.CacheAuthProxyKey), duration)
+	if err := c.cache.Set(ctx, userKey, []byte(id.ClientParams.CacheAuthProxyKey), duration); err != nil {
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", internalId)
+	}
+	return nil
 }
 
 func (c *Proxy) isAllowedIP(r *authn.Request) bool {
