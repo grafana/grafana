@@ -3,7 +3,7 @@ import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { getDefaultRelativeTimeRange, GrafanaTheme2, ReducerID } from '@grafana/data';
+import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -21,7 +21,6 @@ import {
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { t, Trans } from 'app/core/internationalization';
-import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,
@@ -60,7 +59,6 @@ import {
   SIMPLE_CONDITION_QUERY_ID,
   SIMPLE_CONDITION_REDUCER_ID,
   SIMPLE_CONDITION_THRESHOLD_ID,
-  SimpleCondition,
   SimpleConditionEditor,
 } from './SimpleCondition';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
@@ -82,6 +80,7 @@ import {
   updateExpressionTimeRange,
   updateExpressionType,
 } from './reducer';
+import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
 
 export function areQueriesTransformableToSimpleCondition(
@@ -168,25 +167,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
   const isRecordingRuleType = isCloudRecordingRuleByType(type);
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
-  const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
-
-  const isAdvancedMode =
-    Boolean(editorSettings?.simplifiedQueryEditor) === false ||
-    !isGrafanaAlertingType ||
-    (isNewFromQueryParams && !queryParamsAreTransformable);
-
   const [showResetModeModal, setShowResetModal] = useState(false);
 
-  const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
-    isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
-      ? getSimpleConditionFromExpressions(expressionQueries)
-      : {
-          whenField: ReducerID.last,
-          evaluator: {
-            params: [0],
-            type: EvalFunction.IsAbove,
-          },
-        }
+  const { isAdvancedMode, simpleCondition, setSimpleCondition } = useAdvancedMode(
+    editorSettings,
+    isGrafanaAlertingType,
+    isNewFromQueryParams,
+    dataQueries,
+    expressionQueries
   );
 
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
@@ -194,7 +182,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     if (!isAdvancedMode && isGrafanaAlertingType) {
       setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
     }
-  }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType]);
+  }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType, setSimpleCondition]);
 
   const dispatchReduxAction = useDispatch();
   useEffect(() => {
