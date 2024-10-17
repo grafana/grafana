@@ -16,7 +16,9 @@ export type RecordingRule = {
 
 export type FoundLokiDataSource = Pick<DataSourceSettings, 'name' | 'uid'>;
 export type ExtractedRecordingRule = RecordingRule & { datasource: FoundLokiDataSource };
-export type ExtractedRecordingRules = ExtractedRecordingRule[][];
+export type ExtractedRecordingRules = {
+  [dataSourceID: string]: ExtractedRecordingRule[];
+};
 
 export async function fetchLokiDataSources(): Promise<DataSourceSettings[]> {
   const dataSourcesReq: BackendSrvRequest = { url: 'api/datasources' };
@@ -66,12 +68,29 @@ export function extractRecordingRules(
   return extractedRules;
 }
 
+function extractLokiQueryFromRecordingRule(rule: ExtractedRecordingRule): string {
+  // Remove Unicode escapes and unneeded quotes
+  let cleanedRule = rule.query.replace(/\\u[\dA-Fa-f]{4}/g, (match) => {
+    return String.fromCharCode(parseInt(match.replace('\\u', ''), 16));
+  });
+  cleanedRule = cleanedRule
+    .replace(/\\"/g, '"') // Replace escaped quotes
+    .replace(/^"|"$/g, ''); // Remove starting and ending quotes
+
+  // Extract the Loki query
+  const queryRegex = /{[^}]+}.*?(?=\[|$)/;
+  const match = cleanedRule.match(queryRegex);
+  const extractedQuery = match ? match[0].trim() : '';
+
+  return extractedQuery;
+}
+
 export function getLogsUidOfMetric(
   metricName: string,
   extractedRecordingRules: ExtractedRecordingRules
 ): FoundLokiDataSource[] {
   const foundLokiDataSources: FoundLokiDataSource[] = [];
-  extractedRecordingRules.forEach((recRules) => {
+  Object.values(extractedRecordingRules).forEach((recRules) => {
     recRules
       .filter((rr) => rr.name === metricName)
       .forEach((rr) => {
@@ -82,19 +101,36 @@ export function getLogsUidOfMetric(
   return foundLokiDataSources;
 }
 
+export function getLogsQueryForMetric(
+  metricName: string,
+  dataSourceId: string,
+  extractedRecordingRules: ExtractedRecordingRules
+): string {
+  if (!dataSourceId || !extractedRecordingRules[dataSourceId]) {
+    return '';
+  }
+
+  const targetRule = extractedRecordingRules[dataSourceId].find((rule) => rule.name === metricName);
+  if (!targetRule) {
+    return '';
+  }
+  const lokiQuery = extractLokiQueryFromRecordingRule(targetRule);
+  return lokiQuery;
+}
+
 export function fetchLogsForMetric(): string[] {
   return [];
 }
 
 export async function fetchAndExtractLokiRecordingRules() {
   const lokiDataSources = await fetchLokiDataSources();
-  const extractedRecordingRules: ExtractedRecordingRules = [];
+  const extractedRecordingRules: ExtractedRecordingRules = {};
   for (const lokids of lokiDataSources) {
     const url = buildRecordingRuleURL(lokids);
     try {
       const ruleGroups: RecordingRuleGroup[] = await fetchLokiRecordingRules(url);
       const extractedRules = extractRecordingRules(ruleGroups, lokids);
-      extractedRecordingRules.push(extractedRules);
+      extractedRecordingRules[lokids.uid] = extractedRules;
     } catch (err) {
       console.error(err);
     }
