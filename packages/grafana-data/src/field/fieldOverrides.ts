@@ -104,7 +104,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   return options.data.map((originalFrame, index) => {
     // Need to define this new frame here as it's passed to the getLinkSupplier function inside the fields loop
     const newFrame: DataFrame = { ...originalFrame };
-
     // Copy fields
     newFrame.fields = newFrame.fields.map((field) => {
       return {
@@ -166,6 +165,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const { range, newGlobalRange } = calculateRange(config, field, globalRange, options.data!);
       globalRange = newGlobalRange;
 
+      // Clear any cached displayName as it can change during field overrides process
+      field.state!.displayName = null;
       field.state!.seriesIndex = seriesIndex;
       field.state!.range = range;
       field.type = type;
@@ -561,12 +562,8 @@ export const getLinksSupplier =
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        const replacedStr = enhancedBoundReplacedVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
-        if (replacedStr === undefined) {
-          href = undefined;
-        } else {
-          href = locationUtil.processUrl(replacedStr);
-        }
+        href = enhancedBoundReplacedVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode); // undefined
+        href = locationUtil.processUrl(href || '');
       }
 
       if (href !== undefined) {

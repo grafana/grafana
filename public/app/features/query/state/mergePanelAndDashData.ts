@@ -28,7 +28,7 @@ export function mergePanelAndDashData(
 
       // handle annotations
       if (dataSupport.annotations) {
-        if (Boolean(dashData.annotations?.length)) {
+        if (Boolean(dashData.annotations?.length) || Boolean(dashData.alertState)) {
           if (!mergedData.annotations) {
             mergedData = { ...mergedData, annotations: [] };
           }

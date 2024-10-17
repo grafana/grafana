@@ -682,10 +682,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const lastRequest = this.getQueryRunner().getLastRequest();
     const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
     const replaceStr = getTemplateSrv().replace(value, vars, format, variables);
+    const builtInVariablesArr = [...builtInVariables, '__dashboard', '__name'];
     const allFound = variables
       // We filter out builtin variables as they should be always defined but sometimes only later, like
       // __range_interval which is defined in prometheus at query time.
-      .filter((v) => !builtInVariables.includes(v.variableName))
+      .filter((v) => !builtInVariablesArr.includes(v.variableName))
       .every((variable) => variable.found);
     return { replaceStr, variables, allFound };
   }
