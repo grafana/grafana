@@ -327,6 +327,10 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 		existing = existingByUid
 	}
 
+	if !existing.Deleted.IsZero() {
+		return false, dashboards.ErrSoftDeletedDashboardWithSameUIDExists
+	}
+
 	if (existing.IsFolder && !dash.IsFolder) ||
 		(!existing.IsFolder && dash.IsFolder) {
 		return isParentFolderChanged, dashboards.ErrDashboardTypeMismatch
