@@ -928,6 +928,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "false", // disabled by default
 		},
 		{
 			Name:         "panelFilterVariable",
