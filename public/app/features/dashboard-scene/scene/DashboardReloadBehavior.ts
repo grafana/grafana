@@ -9,15 +9,16 @@ import { ReloadDashboardEvent } from 'app/types/events';
 export interface DashboardReloadBehaviorState extends SceneObjectState {
   reloadOnParamsChange?: boolean;
   uid?: string;
+  version?: number;
 }
 
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   private _scopesFacade: ScopesFacade | null = null;
 
-  constructor({ reloadOnParamsChange, uid }: DashboardReloadBehaviorState) {
-    const shouldReload = reloadOnParamsChange && uid;
+  constructor(state: DashboardReloadBehaviorState) {
+    const shouldReload = state.reloadOnParamsChange && state.uid;
 
-    super({});
+    super(state);
 
     this.reloadDashboard = this.reloadDashboard.bind(this);
 
@@ -59,6 +60,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
       const timeRange = sceneGraph.getTimeRange(this);
 
       let params: BackendSrvRequest['params'] = {
+        version: this.state.version,
         scopes: this._scopesFacade?.value.map((scope) => scope.metadata.name),
         ...timeRange.urlSync?.getUrlState(),
       };

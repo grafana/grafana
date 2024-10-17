@@ -260,6 +260,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         reloadOnParamsChange:
           config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
         uid: oldModel.uid,
+        version: oldModel.version,
       }),
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
