@@ -117,7 +117,7 @@ However, if you want to display dynamic query values in annotations, you need to
 - Customizing runbook links depending on query or label values.
 - Including contact information based on alert labels.
 
-For instance, you can template the previous example to display the specific instance and CPU value that triggered the alert:
+For instance, you can template the previous example to display the specific instance and CPU value that triggered the alert.
 
 ```
 CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
