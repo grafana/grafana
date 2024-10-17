@@ -1410,6 +1410,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "contact_points": "",
       "dashboards": "",
       "datasources": "",
       "folders": "",
@@ -1495,6 +1496,7 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "contact_point": "",
       "dashboard": "Painel de controle",
       "datasource": "Fonte de dados",
       "folder": "",
