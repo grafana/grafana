@@ -209,6 +209,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertingQueryAndExpressionsStepMode`         | Enables step mode for alerting queries and expressions                                                                                                                                                                                                                            |
 | `rolePickerDrawer`                            | Enables the new role picker drawer design                                                                                                                                                                                                                                         |
 | `pluginsSriChecks`                            | Enables SRI checks for plugin assets                                                                                                                                                                                                                                              |
+| `unifiedStorageBigObjectsSupport`             | Enables to save big objects in blob storage                                                                                                                                                                                                                                       |
 
 ## Development feature toggles
 

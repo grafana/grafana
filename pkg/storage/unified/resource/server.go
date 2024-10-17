@@ -10,21 +10,22 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
+	BlobStoreServer
 	DiagnosticsServer
 }
 
@@ -76,12 +77,40 @@ type StorageBackend interface {
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 }
 
+// This interface is not exposed to end users directly
+// Access to this interface is already gated by access control
+type BlobSupport interface {
+	// Indicates if storage layer supports signed urls
+	SupportsSignedURLs() bool
+
+	// Get the raw blob bytes and metadata -- limited to protobuf message size
+	// For larger payloads, we should use presigned URLs to upload from the client
+	PutResourceBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error)
+
+	// Get blob contents.  When possible, this will return a signed URL
+	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	GetResourceBlob(ctx context.Context, resource *ResourceKey, info *utils.BlobInfo, mustProxy bool) (*GetBlobResponse, error)
+
+	// TODO? List+Delete?  This is for admin access
+}
+
+type BlobConfig struct {
+	// The CDK configuration URL
+	URL string
+
+	// Directly implemented blob support
+	Backend BlobSupport
+}
+
 type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer
 
 	// Real storage backend
 	Backend StorageBackend
+
+	// The blob configuration
+	Blob BlobConfig
 
 	// Requests based on a search index
 	Index ResourceIndexServer
@@ -98,6 +127,9 @@ type ResourceServerOptions struct {
 
 	// Get the current time in unix millis
 	Now func() int64
+
+	// Registerer to register prometheus Metrics for the Resource server
+	Reg prometheus.Registerer
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -118,6 +150,24 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}
 	}
 
+	// Initialize the blob storage
+	blobstore := opts.Blob.Backend
+	if blobstore == nil && opts.Blob.URL != "" {
+		ctx := context.Background()
+		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
+		if err != nil {
+			return nil, err
+		}
+
+		blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
+			Tracer: opts.Tracer,
+			Bucket: NewInstrumentedBucket(bucket, opts.Reg, opts.Tracer),
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
 		&identity.StaticRequester{
@@ -131,6 +181,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		log:         slog.Default().With("logger", "resource-server"),
 		backend:     opts.Backend,
 		index:       opts.Index,
+		blob:        blobstore,
 		diagnostics: opts.Diagnostics,
 		access:      opts.WriteAccess,
 		lifecycle:   opts.Lifecycle,
@@ -146,6 +197,7 @@ type server struct {
 	tracer       trace.Tracer
 	log          *slog.Logger
 	backend      StorageBackend
+	blob         BlobSupport
 	index        ResourceIndexServer
 	diagnostics  DiagnosticsServer
 	access       WriteAccessHooks
@@ -716,4 +768,78 @@ func (s *server) IsHealthy(ctx context.Context, req *HealthCheckRequest) (*Healt
 		return nil, err
 	}
 	return s.diagnostics.IsHealthy(ctx, req)
+}
+
+// GetBlob implements BlobStore.
+func (s *server) PutBlob(ctx context.Context, req *PutBlobRequest) (*PutBlobResponse, error) {
+	if s.blob == nil {
+		return &PutBlobResponse{Error: &ErrorResult{
+			Message: "blob store not configured",
+			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+
+	rsp, err := s.blob.PutResourceBlob(ctx, req)
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+	}
+	return rsp, nil
+}
+
+func (s *server) getPartialObject(ctx context.Context, key *ResourceKey, rv int64) (utils.GrafanaMetaAccessor, *ErrorResult) {
+	rsp := s.backend.ReadResource(ctx, &ReadRequest{
+		Key:             key,
+		ResourceVersion: rv,
+	})
+	if rsp.Error != nil {
+		return nil, rsp.Error
+	}
+
+	partial := &metav1.PartialObjectMetadata{}
+	err := json.Unmarshal(rsp.Value, partial)
+	if err != nil {
+		return nil, AsErrorResult(err)
+	}
+	obj, err := utils.MetaAccessor(partial)
+	if err != nil {
+		return nil, AsErrorResult(err)
+	}
+	return obj, nil
+}
+
+// GetBlob implements BlobStore.
+func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResponse, error) {
+	if s.blob == nil {
+		return &GetBlobResponse{Error: &ErrorResult{
+			Message: "blob store not configured",
+			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+
+	// The linked blob is stored in the resource metadata attributes
+	obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
+	if status != nil {
+		return &GetBlobResponse{Error: status}, nil
+	}
+
+	info := obj.GetBlob()
+	if info == nil || info.UID == "" {
+		return &GetBlobResponse{Error: &ErrorResult{
+			Message: "Resource does not have a linked blob",
+			Code:    404,
+		}}, nil
+	}
+
+	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+	}
+	return rsp, nil
 }

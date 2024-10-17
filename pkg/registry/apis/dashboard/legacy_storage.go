@@ -1,6 +1,9 @@
 package dashboard
 
 import (
+	"context"
+
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -9,6 +12,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -18,13 +22,15 @@ type dashboardStorage struct {
 	access         legacy.DashboardAccess
 	tableConverter rest.TableConvertor
 
-	server resource.ResourceServer
+	server   resource.ResourceServer
+	features featuremgmt.FeatureToggles
 }
 
-func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (grafanarest.LegacyStorage, error) {
+func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter, reg prometheus.Registerer) (grafanarest.LegacyStorage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: s.access,
 		Index:   s.access,
+		Reg:     reg,
 		// WriteAccess: resource.WriteAccessHooks{
 		// 	Folder: func(ctx context.Context, user identity.Requester, uid string) bool {
 		// 		// ???
@@ -42,8 +48,15 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 		return nil, err
 	}
 	client := resource.NewLocalResourceClient(server)
+	// This is needed as the apistore doesn't allow any core grafana dependencies. We extract the needed features
+	// to a map, to check them in the apistore itself.
+	features := make(map[string]any)
+	if s.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+		features[featuremgmt.FlagUnifiedStorageBigObjectsSupport] = struct{}{}
+	}
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client,
 		defaultOpts.StorageConfig.Config,
+		features,
 	)
 
 	return grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)

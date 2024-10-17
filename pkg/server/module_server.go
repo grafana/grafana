@@ -131,7 +131,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, nil)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

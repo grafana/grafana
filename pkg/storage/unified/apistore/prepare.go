@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Called on create
@@ -45,9 +46,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(user.GetUID())
 
 	var buf bytes.Buffer
-	err = s.codec.Encode(newObject, &buf)
-	if err != nil {
+	if err = s.codec.Encode(newObject, &buf); err != nil {
 		return nil, err
+	}
+
+	if s.largeObjectSupport {
+		return s.handleLargeResources(ctx, obj, buf)
 	}
 	return buf.Bytes(), nil
 }
@@ -85,9 +89,32 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 	var buf bytes.Buffer
-	err = s.codec.Encode(updateObject, &buf)
-	if err != nil {
+	if err = s.codec.Encode(updateObject, &buf); err != nil {
 		return nil, err
+	}
+	if s.largeObjectSupport {
+		return s.handleLargeResources(ctx, obj, buf)
+	}
+	return buf.Bytes(), nil
+}
+
+func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {
+	if buf.Len() > 1000 {
+		// !!! Currently just write the whole thing
+		// in reality we may only want to write the spec....
+		_, err := s.store.PutBlob(ctx, &resource.PutBlobRequest{
+			ContentType: "application/json",
+			Value:       buf.Bytes(),
+			Resource: &resource.ResourceKey{
+				Group:     s.gr.Group,
+				Resource:  s.gr.Resource,
+				Namespace: obj.GetNamespace(),
+				Name:      obj.GetName(),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return buf.Bytes(), nil
 }
