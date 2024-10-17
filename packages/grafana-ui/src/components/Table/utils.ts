@@ -1,25 +1,25 @@
 import { Property } from 'csstype';
 import { clone, sampleSize } from 'lodash';
 import memoize from 'micro-memoize';
-import { Row, HeaderGroup } from 'react-table';
+import { HeaderGroup, Row } from 'react-table';
 import tinycolor from 'tinycolor2';
 
 import {
   DataFrame,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
   Field,
+  fieldReducers,
   FieldType,
   formattedValueToString,
-  getFieldDisplayName,
-  SelectableValue,
-  fieldReducers,
   getDisplayProcessor,
-  reduceField,
+  getFieldDisplayName,
   GrafanaTheme2,
   isDataFrame,
   isDataFrameWithValue,
   isTimeSeriesFrame,
-  DisplayValueAlignmentFactors,
-  DisplayValue,
+  reduceField,
+  SelectableValue,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -30,6 +30,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../utils';
 
+import { ActionsCell } from './ActionsCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell } from './DataLinksCell';
 import { DefaultCell } from './DefaultCell';
@@ -41,13 +42,13 @@ import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
 import { TableStyles } from './styles';
 import {
+  CellColors,
   CellComponent,
-  TableCellOptions,
-  TableFieldOptions,
   FooterItem,
   GrafanaTableColumn,
+  TableCellOptions,
+  TableFieldOptions,
   TableFooterCalc,
-  CellColors,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -191,6 +192,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return JSONViewCell;
     case TableCellDisplayMode.DataLinks:
       return DataLinksCell;
+    case TableCellDisplayMode.Actions:
+      return ActionsCell;
   }
 
   if (field.type === FieldType.geo) {
