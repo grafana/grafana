@@ -1344,7 +1344,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 4: Configuring Grafana repository..."',
             "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
-            'export version=$(echo ${TAG} | sed -e "s/+security-/^/g")',
+            'export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")',
             "dnf list available grafana-$version",
             "if [ $? -eq 0 ]; then",
             '    echo "Grafana package found in repository. Installing from repo..."',
