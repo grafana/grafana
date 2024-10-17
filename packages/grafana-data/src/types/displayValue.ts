@@ -1,6 +1,6 @@
 import { FormattedValue } from '../valueFormats/valueFormats';
 
-export type DisplayProcessor = (value: unknown, decimals?: DecimalCount) => DisplayValue;
+export type DisplayProcessor = (value: unknown, decimals?: DecimalCount, isXAxis?: boolean) => DisplayValue;
 
 export interface DisplayValue extends FormattedValue {
   /**
