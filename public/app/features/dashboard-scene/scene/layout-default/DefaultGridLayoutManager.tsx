@@ -1,3 +1,4 @@
+/* eslint @grafana/no-untranslated-strings: "error" */
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -11,6 +12,7 @@ import {
 } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { Trans } from 'app/core/internationalization';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import {
@@ -401,7 +403,7 @@ function DefaultGridLayoutEditor({ layoutManager }: LayoutEditorProps<DefaultGri
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
         }}
       >
-        Panel
+        <Trans i18nKey="dashboard.add-menu.visualization">Visualization</Trans>
       </Button>
 
       <Button
@@ -412,7 +414,7 @@ function DefaultGridLayoutEditor({ layoutManager }: LayoutEditorProps<DefaultGri
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
         }}
       >
-        Row
+        <Trans i18nKey="dashboard.add-menu.row">Row</Trans>
       </Button>
     </>
   );

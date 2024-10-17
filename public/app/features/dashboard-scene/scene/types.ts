@@ -1,5 +1,5 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
-import { SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 /**

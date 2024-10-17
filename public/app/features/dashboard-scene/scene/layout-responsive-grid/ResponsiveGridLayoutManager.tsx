@@ -1,6 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Button, Field, Select } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -173,7 +174,7 @@ function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGrid
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
         }}
       >
-        Panel
+        <Trans i18nKey="dashboard.add-menu.visualization">Visualization</Trans>
       </Button>
     </>
   );
