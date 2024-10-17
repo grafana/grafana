@@ -254,3 +254,13 @@ const (
 	SnapshotStateError       SnapshotState = "ERROR"
 	SnapshotStateUnknown     SnapshotState = "UNKNOWN"
 )
+
+var (
+	ErrTokenInvalid           = errutil.Internal("cloudmigrations.createMigration.tokenInvalid", errutil.WithPublicMessage("Token is not valid. Generate a new token on your cloud instance and try again."))
+	ErrTokenRequestError      = errutil.Internal("cloudmigrations.createMigration.tokenRequestError", errutil.WithPublicMessage("An error occurred while validating the token. Please check the Grafana instance logs."))
+	ErrTokenValidationFailure = errutil.Internal("cloudmigrations.createMigration.tokenValidationFailure", errutil.WithPublicMessage("Token is not valid. Please ensure the token matches the migration token on your cloud instance."))
+	ErrInstanceUnreachable    = errutil.Internal("cloudmigrations.createMigration.instanceUnreachable", errutil.WithPublicMessage("The cloud instance cannot be reached. Make sure the instance is running and try again."))
+	ErrInstanceRequestError   = errutil.Internal("cloudmigrations.createMigration.instanceRequestError", errutil.WithPublicMessage("An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status."))
+	ErrSessionCreationFailure = errutil.Internal("cloudmigrations.createMigration.sessionCreationFailure", errutil.WithPublicMessage("There was an error creating the migration. Please try again."))
+	ErrMigrationDisabled      = errutil.Internal("cloudmigrations.createMigration.migrationDisabled", errutil.WithPublicMessage("Cloud migrations are disabled on this instance."))
+)
