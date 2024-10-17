@@ -17,14 +17,11 @@ import (
 //nolint:unused
 const (
 	otelAttrBaseKey         = "dbutil_"
-	otelAttrTemplateNameKey = otelAttrBaseKey + "template_name"
-	otelAttrQueryKey        = otelAttrBaseKey + "query"
+	otelAttrTemplateNameKey = otelAttrBaseKey + "template"
 	otelAttrDialectKey      = otelAttrBaseKey + "dialect"
-	otelAttrNumArgsKey      = otelAttrBaseKey + "num_args"
-	otelAttrDestColNamesKey = otelAttrBaseKey + "dest_col_names"
 )
 
-func withOtelAttrs(ctx context.Context, tmpl *template.Template, req sqltemplate.SQLTemplate, query string, argsLen int) context.Context {
+func withOtelAttrs(ctx context.Context, tmplName, dialectName string) context.Context {
 	return ctx // TODO: in next PR
 }
 
@@ -106,7 +103,7 @@ func Exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 	query := sqltemplate.FormatSQL(rawQuery)
 
 	args := req.GetArgs()
-	ctx = withOtelAttrs(ctx, tmpl, req, query, len(args))
+	ctx = withOtelAttrs(ctx, tmpl.Name(), req.DialectName())
 	res, err := x.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, SQLError{
@@ -137,7 +134,7 @@ func QueryRows(ctx context.Context, x db.ContextExecer, tmpl *template.Template,
 	query := sqltemplate.FormatSQL(rawQuery)
 
 	args := req.GetArgs()
-	ctx = withOtelAttrs(ctx, tmpl, req, query, len(args))
+	ctx = withOtelAttrs(ctx, tmpl.Name(), req.DialectName())
 	rows, err := x.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, SQLError{
