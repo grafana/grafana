@@ -106,8 +106,10 @@ export function getFieldOverrideCategories(
     });
 
     const onMatcherConfigChange = (options: unknown) => {
-      override.matcher.options = options;
-      onOverrideChange(idx, override);
+      onOverrideChange(idx, {
+        ...override,
+        matcher: { ...override.matcher, options },
+      });
     };
 
     const onDynamicConfigValueAdd = (override: ConfigOverrideRule, value: SelectableValue<string>) => {

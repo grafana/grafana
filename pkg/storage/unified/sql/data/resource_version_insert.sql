@@ -8,6 +8,6 @@ INSERT INTO {{ .Ident "resource_version" }}
     VALUES (
         {{ .Arg .Group }},
         {{ .Arg .Resource }},
-        1
+        {{ .CurrentEpoch }}
     )
 ;
