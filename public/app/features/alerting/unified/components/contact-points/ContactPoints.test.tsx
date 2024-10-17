@@ -126,6 +126,13 @@ describe('contact points', () => {
       });
     });
 
+    describe('templates tab', () => {
+      it('shows a warning when a template is misconfigured', async () => {
+        renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=templates'] });
+        expect((await screen.findAllByText(/^misconfigured$/i))[0]).toBeInTheDocument();
+      });
+    });
+
     it('should show / hide loading states, have all actions enabled', async () => {
       renderWithProvider(<ContactPointsPageContents />);
 

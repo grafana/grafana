@@ -22,7 +22,6 @@ canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 vizActions,experimental,@grafana/dataviz-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
-topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
@@ -97,6 +96,7 @@ transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
+kubernetesDashboardsAPI,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
 grafanaAPIServerTestingWithExperimentalAPIs,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -192,7 +192,7 @@ exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,t
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
 homeSetupGuide,experimental,@grafana/growth-and-onboarding,false,false,true
-appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
+appPlatformGrpcClientAuth,experimental,@grafana/identity-access-team,false,false,false
 appSidecar,experimental,@grafana/explore-squad,false,false,false
 groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false
 alertingQueryAndExpressionsStepMode,experimental,@grafana/alerting-squad,false,false,true
@@ -201,3 +201,4 @@ useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,fals
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
+unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
