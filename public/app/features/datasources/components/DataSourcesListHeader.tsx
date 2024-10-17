@@ -5,6 +5,7 @@ import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { StoreState, useSelector, useDispatch } from 'app/types';
 
 import { getDataSourcesSearchQuery, getDataSourcesSort, setDataSourcesSearchQuery, setIsSortAscending } from '../state';
+import { trackDsSearched } from '../tracking';
 
 const ascendingSortValue = 'alpha-asc';
 const descendingSortValue = 'alpha-desc';
@@ -19,7 +20,15 @@ const sortOptions = [
 
 export function DataSourcesListHeader() {
   const dispatch = useDispatch();
-  const setSearchQuery = useCallback((q: string) => dispatch(setDataSourcesSearchQuery(q)), [dispatch]);
+  const setSearchQuery = useCallback(
+    (q: string) => {
+      dispatch(setDataSourcesSearchQuery(q));
+      if (q) {
+        trackDsSearched({ query: q });
+      }
+    },
+    [dispatch]
+  );
   const searchQuery = useSelector(({ dataSources }: StoreState) => getDataSourcesSearchQuery(dataSources));
 
   const setSort = useCallback(

@@ -26,6 +26,7 @@ import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 const INTERACTION_ITEM = {
+  SEARCH: 'search',
   OPEN_DROPDOWN: 'open_dspicker',
   SELECT_DS: 'select_ds',
   ADD_FILE: 'add_file',
@@ -192,14 +193,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     const sub = keyboardEvents.subscribe({
       next: (keyEvent) => {
         switch (keyEvent?.code) {
-          case 'ArrowDown':
-            openDropdown();
-            keyEvent.preventDefault();
-            break;
-          case 'ArrowUp':
-            openDropdown();
-            keyEvent.preventDefault();
-            break;
           case 'Escape':
             onClose();
             keyEvent.preventDefault();
@@ -233,8 +226,13 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           onKeyDown={onKeyDownInput}
           value={filterTerm}
           onChange={(e) => {
-            openDropdown();
             setFilterTerm(e.currentTarget.value);
+            if (e.currentTarget.value) {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.SEARCH,
+                query: e.currentTarget.value,
+              });
+            }
           }}
           ref={handleReference}
           disabled={disabled}
