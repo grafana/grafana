@@ -66,7 +66,7 @@ The **Shared with me** section displays folders and dashboards that are directly
 
 If you have permission to view all folders, you won't see a **Shared with me**.
 
-## Create a dashboard folder
+## Create dashboard folders
 
 Folders help you organize and group dashboards, which is useful when you have many dashboards or multiple teams using the same Grafana instance.
 
@@ -112,6 +112,33 @@ You can assign permissions to a folder. Dashboards in the folder inherit any per
 Changes are saved automatically.
 
 For more information about dashboard permissions, refer to [Dashboard permissions](ref:dashboard-permissions).
+
+## Dashboard and folder deletion
+
+When you delete folders, the action is immediate and can't be reversed.
+
+Deleted dashboards, however, can be [restored](#restore-dashboards) if needed.
+
+## Restore dashboards
+
+When you delete dashboards, they're stored for another 30 days, so that you can restore them if needed. You can find a list of dashboards that are able to be restored by navigating to **Dashboards > Recently deleted**.
+
+To restore one or more dashboards, follow these steps:
+
+1. In the main menu, click **Dashboards > Recently deleted**.
+2. Select the dashboards you want to restore.
+3. Click **Restore** and select a folder to which the dashboards will be moved:
+
+   - If you select one dashboard and the folder it came from still exists, that folder is preselected.
+   - If you select multiple dashboards that came from the _same_ folder, that folder is preselected.
+   - If you select multiple dashboards and they came from different folders, you need to choose one target folder for all the dashboards.
+   - If the original folder doesn't exist anymore, you need to choose a new target folder.
+
+4. Click **Restore**.
+
+{{% admonition type="note" %}}
+Only users who have admin rights can access the **Restore dashboards** page.
+{{% /admonition %}}
 
 ## Set up generative AI features for dashboards
 
