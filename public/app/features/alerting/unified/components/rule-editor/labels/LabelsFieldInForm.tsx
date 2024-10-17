@@ -4,7 +4,7 @@ import { Button, Stack, Text } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { RuleFormValues } from '../../../types/rule-form';
-import { isGrafanaRecordingRuleByType } from '../../../utils/rules';
+import { isRecordingRuleByType } from '../../../utils/rules';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 import { LabelsInRule } from './LabelsField';
@@ -17,9 +17,9 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   const labels = watch('labels');
   const type = watch('type');
 
-  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
+  const isRecordingRule = type ? isRecordingRuleByType(type) : false;
 
-  const text = isGrafanaRecordingRule
+  const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
     : t(
         'alerting.alertform.labels.alerting',
