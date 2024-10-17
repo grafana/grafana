@@ -71,14 +71,14 @@ func TestContextAttributes(t *testing.T) {
 	})
 }
 
-func TestOTelDB_WithTx(t *testing.T) {
+func TestOTelTransactions(t *testing.T) {
 	t.Parallel()
 	const (
 		rootSpanName     = "root of the operation"
 		internalSpanName = "sub-operation"
 	)
 	ctx := context.Context(testutil.NewDefaultTestContext(t))
-	d := newTestInstrumentedDBWithVersionSQL(ctx, t, dbVersionDefaultSQL)
+	d := newTestInstrumentedDB(ctx, t)
 	mTx := dbmocks.NewTx(t)
 	txOpts := &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
