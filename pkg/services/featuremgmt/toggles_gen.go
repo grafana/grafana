@@ -728,7 +728,7 @@ const (
 	FlagZanzana = "zanzana"
 
 	// FlagReloadDashboardsOnParamsChange
-	// Enables reload of dashboards on scopes, time range and filters changes
+	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
 
 	// FlagAlertingApiServer

@@ -2354,7 +2354,7 @@
         "creationTimestamp": "2024-10-14T10:53:41Z"
       },
       "spec": {
-        "description": "Enables reload of dashboards on scopes, time range and filters changes",
+        "description": "Enables reload of dashboards on scopes, time range and variables changes",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
