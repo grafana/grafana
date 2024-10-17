@@ -1304,7 +1304,7 @@ def verify_linux_DEB_packages_step(depends_on = []):
             # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
         ] + retry_command(install_command) + [
             'echo "Step 6: Verifying Grafana installation..."',
-            'if dpkg -s grafana | grep -q "Version: $version"); then',
+            'if dpkg -s grafana | grep -q "Version: $version"; then',
             '    echo "Successfully verified Grafana version $version"',
             "else",
             '    echo "Failed to verify Grafana version $version"',

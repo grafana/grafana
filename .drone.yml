@@ -3859,7 +3859,7 @@ steps:
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: $version"); then'
+  - 'if dpkg -s grafana | grep -q "Version: $version"; then'
   - '    echo "Successfully verified Grafana version $version"'
   - else
   - '    echo "Failed to verify Grafana version $version"'
@@ -4038,7 +4038,7 @@ steps:
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: $version"); then'
+  - 'if dpkg -s grafana | grep -q "Version: $version"; then'
   - '    echo "Successfully verified Grafana version $version"'
   - else
   - '    echo "Failed to verify Grafana version $version"'
@@ -5991,6 +5991,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 375631d0869759cacd1cb0f6dc62555e06732de08724ac1a7a0ff73d0bf5ed2f
+hmac: 28513f8b8ea87cc013d34339c73f8e20236ef2db82c9708778dd3d1e71349767
 
 ...
