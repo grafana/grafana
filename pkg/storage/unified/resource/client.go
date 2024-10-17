@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -87,12 +88,13 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 }
 
-func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
+func NewGRPCResourceClient(conn *grpc.ClientConn, tracer tracing.Tracer) (ResourceClient, error) {
 	// scenario: remote on-prem
 	clientInt, err := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
 		authnlib.WithDisableAccessTokenOption(),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithTracerOption(tracer),
 	)
 	if err != nil {
 		return nil, err
@@ -106,7 +108,7 @@ func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
 	}, nil
 }
 
-func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceClient, error) {
+func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, tracer tracing.Tracer) (ResourceClient, error) {
 	// scenario: remote cloud
 	clientConfig, err := grpcutils.ReadGrpcClientConfig(cfg)
 	if err != nil {
@@ -116,6 +118,7 @@ func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceCl
 
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithTracerOption(tracer),
 	}
 
 	if cfg.Env == setting.Dev {

@@ -83,7 +83,7 @@ func ProvideUnifiedStorageClient(
 		}
 
 		// Create a client instance
-		client, err := newResourceClient(conn, cfg, features)
+		client, err := newResourceClient(conn, cfg, features, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func ProvideUnifiedStorageClient(
 	}
 }
 
-func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
+func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
 	}
@@ -110,7 +110,7 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 	}
 
 	if clientConfig.Mode == grpcutils.ModeCloud {
-		return resource.NewCloudResourceClient(conn, cfg)
+		return resource.NewCloudResourceClient(conn, cfg, tracer)
 	}
-	return resource.NewGRPCResourceClient(conn)
+	return resource.NewGRPCResourceClient(conn, tracer)
 }

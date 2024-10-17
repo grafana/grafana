@@ -9,7 +9,9 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
@@ -17,7 +19,7 @@ import (
 
 var once sync.Once
 
-func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error) {
+func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
 	authCfg, err := ReadGrpcServerConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -41,6 +43,7 @@ func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error)
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{
 		authnlib.WithIDTokenAuthOption(true),
 		authnlib.WithKeyRetrieverOption(keyRetriever),
+		authnlib.WithTracerAuthOption(tracer),
 	}
 	if authCfg.Mode == ModeOnPrem {
 		grpcOpts = append(grpcOpts,
@@ -68,15 +71,16 @@ type AuthenticatorWithFallback struct {
 	authenticator       *authnlib.GrpcAuthenticator
 	legacyAuthenticator *grpc.Authenticator
 	metrics             *metrics
+	tracer              tracing.Tracer
 }
 
-func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer) (interceptors.Authenticator, error) {
+func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer tracing.Tracer) (interceptors.Authenticator, error) {
 	authCfg, err := ReadGrpcServerConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	authenticator, err := NewGrpcAuthenticator(cfg)
+	authenticator, err := NewGrpcAuthenticator(cfg, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -91,16 +95,21 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 		authenticator:       authenticator,
 		legacyAuthenticator: legacyAuthenticator,
 		metrics:             newMetrics(reg),
+		tracer:              tracer,
 	}, nil
 }
 
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
+	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
+	span.SetAttributes(attribute.Bool("fallback_used", false))
+	defer span.End()
 	// Try to authenticate with the new authenticator first
 	newCtx, err := f.authenticator.Authenticate(ctx)
 	if err != nil {
 		// In case of error, fallback to the legacy authenticator
 		newCtx, err = f.legacyAuthenticator.Authenticate(ctx)
 		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
+		span.SetAttributes(attribute.Bool("fallback_used", true))
 	}
 	return newCtx, err
 }
