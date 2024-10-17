@@ -3891,7 +3891,7 @@ steps:
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
   - version=$(echo ${TAG} | sed "s/+security-/^/g")
-  - dnf list available grafana-${{version}}
+  - dnf list available grafana-$version
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
@@ -3912,7 +3912,7 @@ steps:
   - '    rpm --import https://rpm.grafana.com/gpg.key'
   - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
-  - '    echo "Grafana package version ${{version}} not found in repository."'
+  - '    echo "Grafana package version $version not found in repository."'
   - '    dnf repolist'
   - '    dnf list available grafana*'
   - '    exit 1'
@@ -4071,7 +4071,7 @@ steps:
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
   - version=$(echo ${TAG} | sed "s/+security-/^/g")
-  - dnf list available grafana-${{version}}
+  - dnf list available grafana-$version
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
@@ -4092,7 +4092,7 @@ steps:
   - '    rpm --import https://rpm.grafana.com/gpg.key'
   - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
-  - '    echo "Grafana package version ${{version}} not found in repository."'
+  - '    echo "Grafana package version $version not found in repository."'
   - '    dnf repolist'
   - '    dnf list available grafana*'
   - '    exit 1'
@@ -5991,6 +5991,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4f37532e2215ddac9aadbc05e4a6bd8d5f15563acf449f6b8652323c5526d31c
+hmac: 97aa8e504745721a3a9b0d2d62c80da56469953745aba486b2270e15ef700434
 
 ...

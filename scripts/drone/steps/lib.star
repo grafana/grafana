@@ -1344,7 +1344,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
             'version=$(echo ${TAG} | sed "s/+security-/^/g")',
-            "dnf list available grafana-${{version}}",
+            "dnf list available grafana-$version",
             "if [ $? -eq 0 ]; then",
             '    echo "Grafana package found in repository. Installing from repo..."',
         ] + retry_command(install_command) + [
@@ -1352,7 +1352,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             "    rpm --import https://rpm.grafana.com/gpg.key",
             "    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana",
             "else",
-            '    echo "Grafana package version ${{version}} not found in repository."',
+            '    echo "Grafana package version $version not found in repository."',
             "    dnf repolist",
             "    dnf list available grafana*",
             "    exit 1",
