@@ -1,12 +1,16 @@
 package tempo
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 
+	"github.com/andybalholm/brotli"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -70,7 +74,8 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		}
 	}()
 
-	body, err := io.ReadAll(resp.Body)
+	encoding := resp.Header.Get("Content-Encoding")
+	body, err := decode(encoding, resp.Body)
 	if err != nil {
 		ctxLogger.Error("Failed to read response body", "error", err, "function", logEntrypoint())
 		return &backend.DataResponse{}, err
@@ -127,4 +132,40 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *Datasource, traceID
 
 	req.Header.Set("Accept", "application/protobuf")
 	return req, nil
+}
+
+func decode(encoding string, original io.ReadCloser) ([]byte, error) {
+	var reader io.Reader
+	var err error
+	switch encoding {
+	case "gzip":
+		reader, err = gzip.NewReader(original)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				slog.Warn("Failed to close reader body", "err", err)
+			}
+		}()
+	case "deflate":
+		reader = flate.NewReader(original)
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				slog.Warn("Failed to close reader body", "err", err)
+			}
+		}()
+	case "br":
+		reader = brotli.NewReader(original)
+	case "":
+		reader = original
+	default:
+		return nil, fmt.Errorf("unexpected encoding type %v", err)
+	}
+
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 }
