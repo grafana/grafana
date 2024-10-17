@@ -115,7 +115,6 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("WROTE: %+v\n", rsp)
 	}
 	return buf.Bytes(), nil
 }
