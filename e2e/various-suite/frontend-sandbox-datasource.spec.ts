@@ -7,7 +7,7 @@ let DATASOURCE_CONNECTION_ID = '';
 const DATASOURCE_TYPED_NAME = 'SandboxDatasourceInstance';
 
 // Skipping due to flakiness/race conditions with same old arch test  e2e/various-suite/frontend-sandbox-datasource.spec.ts
-describe.skip('Datasource sandbox', () => {
+describe('Datasource sandbox', () => {
   before(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
 
