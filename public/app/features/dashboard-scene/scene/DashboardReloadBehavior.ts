@@ -9,9 +9,14 @@ import { ReloadDashboardEvent } from 'app/types/events';
 export interface DashboardReloadBehaviorState extends SceneObjectState {
   reloadOnParamsChange?: boolean;
   uid?: string;
+  cachedParams?: {
+    absoluteFrom: string;
+    absoluteTo: string;
+    params: BackendSrvRequest['params'];
+  };
 }
 
-export class DashboardReloadBehavior extends SceneObjectBase {
+export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   private _scopesFacade: ScopesFacade | null = null;
 
   constructor({ reloadOnParamsChange, uid }: DashboardReloadBehaviorState) {
@@ -56,9 +61,11 @@ export class DashboardReloadBehavior extends SceneObjectBase {
 
   private reloadDashboard() {
     if (!this.isEditing() && !this.isWaitingForVariables()) {
+      const timeRange = sceneGraph.getTimeRange(this);
+
       let params: BackendSrvRequest['params'] = {
         scopes: this._scopesFacade?.value.map((scope) => scope.metadata.name),
-        ...sceneGraph.getTimeRange(this).urlSync?.getUrlState(),
+        ...timeRange.urlSync?.getUrlState(),
       };
 
       params = sceneGraph.getVariables(this).state.variables.reduce<BackendSrvRequest['params']>(
@@ -68,6 +75,18 @@ export class DashboardReloadBehavior extends SceneObjectBase {
         }),
         params
       );
+
+      const cachedParams = {
+        absoluteFrom: timeRange.state.value.from.toISOString(),
+        absoluteTo: timeRange.state.value.to.toISOString(),
+        params,
+      };
+
+      if (isEqual(cachedParams, this.state.cachedParams)) {
+        return;
+      }
+
+      this.setState({ cachedParams });
 
       appEvents.publish(new ReloadDashboardEvent(params));
     }
