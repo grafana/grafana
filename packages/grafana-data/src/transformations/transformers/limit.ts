@@ -34,10 +34,7 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
             limit = options.limitField;
           }
         }
-        // Prevent negative limit
-        if (limit < 0) {
-          limit = 0;
-        }
+
         return data.map((frame) => {
           if (frame.length > limit) {
             return {
@@ -45,10 +42,11 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
               fields: frame.fields.map((f) => {
                 return {
                   ...f,
-                  values: f.values.slice(0, limit),
+                  values:
+                    limit >= 0 ? f.values.slice(0, limit) : f.values.slice(f.values.length + limit, f.values.length),
                 };
               }),
-              length: limit,
+              length: Math.abs(limit),
             };
           }
 
