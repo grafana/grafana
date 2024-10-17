@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -97,7 +98,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	// UnifiedStorageOverGRPC
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
-		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore, env.Cfg.Logger)
+		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
+			env.Cfg.Logger, prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
