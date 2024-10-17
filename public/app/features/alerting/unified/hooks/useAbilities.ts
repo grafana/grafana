@@ -239,9 +239,21 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     // So the only check we make is if the alertmanager is Grafana flavored
     [AlertmanagerAction.ExportContactPoint]: [isGrafanaFlavoredAlertmanager, isGrafanaFlavoredAlertmanager],
     // -- notification templates --
-    [AlertmanagerAction.CreateNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
-    [AlertmanagerAction.ViewNotificationTemplate]: toAbility(AlwaysSupported, notificationsPermissions.read),
-    [AlertmanagerAction.UpdateNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
+    [AlertmanagerAction.CreateNotificationTemplate]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.create,
+      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesWrite : null
+    ),
+    [AlertmanagerAction.ViewNotificationTemplate]: toAbility(
+      AlwaysSupported,
+      notificationsPermissions.read,
+      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesRead : null
+    ),
+    [AlertmanagerAction.UpdateNotificationTemplate]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.update,
+      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesWrite : null
+    ),
     [AlertmanagerAction.DeleteNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
     // -- notification policies --
     [AlertmanagerAction.CreateNotificationPolicy]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
