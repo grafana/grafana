@@ -152,7 +152,7 @@ It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:
 
    b. Click **Preview** to verify that the expression is successful.
 
-1. Click **Set as recording rule output** on the query or expression you want to set as your rule output.
+3. Click **Set as recording rule output** on the query or expression you want to set as your rule output.
 
 #### Set evaluation behavior
 
@@ -186,4 +186,3 @@ To do this, you need to make sure that your recording rule is in the right evalu
 This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
 This setting applies to both Grafana-managed alert and recording rules.
-
