@@ -3681,17 +3681,6 @@
         }
       }
     },
-    "CreateSessionErrorDTO": {
-      "type": "object",
-      "properties": {
-        "errorCode": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "CreateSnapshotResponseDTO": {
       "type": "object",
       "properties": {
@@ -8820,12 +8809,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/ServiceAccountDTO"
-      }
-    },
-    "createSessionErrorResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/CreateSessionErrorDTO"
       }
     },
     "createSnapshotResponse": {

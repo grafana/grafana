@@ -424,16 +424,6 @@
         },
         "description": "(empty)"
       },
-      "createSessionErrorResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/CreateSessionErrorDTO"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "createSnapshotResponse": {
         "content": {
           "application/json": {
@@ -4352,17 +4342,6 @@
               "Admin"
             ],
             "example": "Admin",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "CreateSessionErrorDTO": {
-        "properties": {
-          "errorCode": {
-            "type": "string"
-          },
-          "message": {
             "type": "string"
           }
         },
