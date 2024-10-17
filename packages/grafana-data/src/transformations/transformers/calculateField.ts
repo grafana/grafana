@@ -200,9 +200,12 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                     for (let i = 0; i < arr.length; i++) {
                       arr[i] = operator.operation(left[i], right[i]);
                     }
+                    const name = options.alias?.length
+                      ? options.alias
+                      : `${field.name} ${options.binary?.operator ?? ''} ${options.binary?.right.matcher?.options ?? options.binary?.right.fixed}`;
                     const newField = {
                       ...field,
-                      name: `${field.name} ${options.binary?.operator ?? ''} ${options.binary?.right.matcher?.options ?? options.binary?.right.fixed}`,
+                      name,
                       values: arr,
                     };
                     newFields.push(newField);

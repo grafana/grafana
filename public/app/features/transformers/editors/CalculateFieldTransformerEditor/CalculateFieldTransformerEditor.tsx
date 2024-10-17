@@ -14,7 +14,6 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
-  FieldMatcherID,
 } from '@grafana/data';
 import {
   CalculateFieldMode,
@@ -172,10 +171,6 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
   };
 
   const mode = options.mode ?? CalculateFieldMode.BinaryOperation;
-  // For binary operation with type matching, disable alias input
-  const disableAlias =
-    mode === CalculateFieldMode.BinaryOperation && options.binary?.left.matcher?.id === FieldMatcherID.byType;
-
   return (
     <>
       <InlineField labelWidth={LABEL_WIDTH} label="Mode">
@@ -217,7 +212,7 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
       {mode === CalculateFieldMode.Index && (
         <IndexOptionsEditor options={options} onChange={props.onChange}></IndexOptionsEditor>
       )}
-      <InlineField labelWidth={LABEL_WIDTH} label="Alias" disabled={disableAlias}>
+      <InlineField labelWidth={LABEL_WIDTH} label="Alias">
         <Input
           className="width-18"
           value={options.alias ?? ''}
