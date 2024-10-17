@@ -9,8 +9,6 @@ import {
 } from '@grafana/scenes';
 import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
 
-import { getDashboardSceneFor } from '../utils/utils';
-
 import { getPanelLinks } from './PanelMenuBehavior';
 
 interface VizPanelLinksState extends SceneObjectState {
@@ -33,8 +31,7 @@ export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
 
 function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
   const { menu, rawLinks } = model.useState();
-  const dashboard = getDashboardSceneFor(model);
-  sceneGraph.getTimeRange(dashboard).useState();
+  sceneGraph.getTimeRange(model).useState();
 
   if (!(model.parent instanceof VizPanel)) {
     throw new Error('VizPanelLinks must be a child of VizPanel');
