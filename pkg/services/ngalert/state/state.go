@@ -51,7 +51,7 @@ type State struct {
 
 	// Annotations contains the annotations from the alert rule. If an annotation is templated
 	// then the template is first evaluated to derive the final annotation.
-	Annotations map[string]string
+	Annotations *SyncLabels
 
 	// Labels contain the labels from the query and any custom labels from the alert rule.
 	// If a label is templated then the template is first evaluated to derive the final label.
@@ -149,7 +149,7 @@ func (a *State) AddErrorInformation(err error, rule *models.AlertRule, addDataso
 		return
 	}
 
-	a.Annotations["Error"] = err.Error()
+	a.Annotations.Set("Error", err.Error())
 
 	// If the evaluation failed because a query returned an error then add the Ref ID and
 	// Datasource UID as labels or annotations
@@ -162,8 +162,8 @@ func (a *State) AddErrorInformation(err error, rule *models.AlertRule, addDataso
 					a.Labels["ref_id"] = next.RefID
 					a.Labels["datasource_uid"] = next.DatasourceUID
 				} else {
-					a.Annotations["ref_id"] = next.RefID
-					a.Annotations["datasource_uid"] = next.DatasourceUID
+					a.Annotations.Set("ref_id", next.RefID)
+					a.Annotations.Set("datasource_uid", next.DatasourceUID)
 				}
 				break
 			}
@@ -171,8 +171,8 @@ func (a *State) AddErrorInformation(err error, rule *models.AlertRule, addDataso
 	} else {
 		// Remove the ref_id and datasource_uid from the annotations if they are present.
 		// It can happen if the alert state hasn't changed, but the error is different now.
-		delete(a.Annotations, "ref_id")
-		delete(a.Annotations, "datasource_uid")
+		a.Annotations.Delete("ref_id")
+		a.Annotations.Delete("datasource_uid")
 	}
 }
 
@@ -432,7 +432,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	default:
 		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
-		state.Annotations["Error"] = err.Error()
+		state.Annotations.Set("Error", err.Error())
 	}
 }
 
@@ -497,7 +497,7 @@ func (a *State) Equals(b *State) bool {
 		a.StartsAt == b.StartsAt &&
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime &&
-		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
+		a.Annotations.GetAll().String() == b.Annotations.GetAll().String()
 }
 
 func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {

@@ -89,7 +89,7 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 			},
 			LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 			EvaluationDuration: evaluationDuration,
-			Annotations:        map[string]string{"annotation": "test"},
+			Annotations:        state.NewSyncLabels(map[string]string{"annotation": "test"}),
 		}
 
 		if len(callbacks) != 0 {

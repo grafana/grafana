@@ -102,7 +102,7 @@ func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatuses
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
-			Annotations: apimodels.LabelsFromMap(alertState.Annotations),
+			Annotations: apimodels.LabelsFromMap(alertState.Annotations.GetAll()),
 
 			// TODO: or should we make this two fields? Using one field lets the
 			// frontend use the same logic for parsing text on annotations and this.
@@ -491,7 +491,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 			}
 			alert := apimodels.Alert{
 				Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
-				Annotations: apimodels.LabelsFromMap(alertState.Annotations),
+				Annotations: apimodels.LabelsFromMap(alertState.Annotations.GetAll()),
 
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.

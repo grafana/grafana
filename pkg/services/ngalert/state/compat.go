@@ -35,7 +35,11 @@ const (
 func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.PostableAlert {
 	alertState := transition.State
 	nL := alertState.Labels.Copy()
-	nA := data.Labels(alertState.Annotations).Copy()
+
+	nA := data.Labels{}
+	if alertState.Annotations != nil {
+		nA = alertState.Annotations.GetAll()
+	}
 
 	// encode the values as JSON where it will be expanded later
 	if len(alertState.Values) > 0 {

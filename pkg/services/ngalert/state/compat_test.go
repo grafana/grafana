@@ -94,43 +94,45 @@ func Test_StateToPostableAlert(t *testing.T) {
 
 			t.Run("should copy annotations", func(t *testing.T) {
 				alertState := randomTransition(eval.Normal, tc.state)
-				alertState.Annotations = randomMapOfStrings()
+				alertState.Annotations = NewSyncLabels(randomMapOfStrings())
 				result := StateToPostableAlert(alertState, appURL)
-				require.Equal(t, models.LabelSet(alertState.Annotations), result.Annotations)
+				require.Equal(t, models.LabelSet(alertState.Annotations.GetAll()), result.Annotations)
 
 				t.Run("add __value_string__ if it has results", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
-					alertState.Annotations = randomMapOfStrings()
+					alertState.Annotations = NewSyncLabels(randomMapOfStrings())
 					expectedValueString := util.GenerateShortUID()
 					alertState.LastEvaluationString = expectedValueString
 
 					result := StateToPostableAlert(alertState, appURL)
 
-					expected := make(models.LabelSet, len(alertState.Annotations)+1)
-					for k, v := range alertState.Annotations {
+					expected := make(models.LabelSet, alertState.State.Annotations.Len()+1)
+					alertState.Annotations.Range(func(k, v string) bool {
 						expected[k] = v
-					}
+						return true
+					})
 					expected["__value_string__"] = expectedValueString
 
 					require.Equal(t, expected, result.Annotations)
 
 					// even overwrites
-					alertState.Annotations["__value_string__"] = util.GenerateShortUID()
+					alertState.Annotations.Set("__value_string__", util.GenerateShortUID())
 					result = StateToPostableAlert(alertState, appURL)
 					require.Equal(t, expected, result.Annotations)
 				})
 
 				t.Run("add __alertImageToken__ if there is an image token", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
-					alertState.Annotations = randomMapOfStrings()
+					alertState.Annotations = NewSyncLabels(randomMapOfStrings())
 					alertState.Image = &ngModels.Image{Token: "test_token"}
 
 					result := StateToPostableAlert(alertState, appURL)
 
-					expected := make(models.LabelSet, len(alertState.Annotations)+1)
-					for k, v := range alertState.Annotations {
+					expected := make(models.LabelSet, alertState.State.Annotations.Len()+1)
+					alertState.Annotations.Range(func(k, v string) bool {
 						expected[k] = v
-					}
+						return true
+					})
 					expected["__alertImageToken__"] = alertState.Image.Token
 
 					require.Equal(t, expected, result.Annotations)
@@ -138,15 +140,16 @@ func Test_StateToPostableAlert(t *testing.T) {
 
 				t.Run("don't add __alertImageToken__ if there's no image token", func(t *testing.T) {
 					alertState := randomTransition(eval.Normal, tc.state)
-					alertState.Annotations = randomMapOfStrings()
+					alertState.Annotations = NewSyncLabels(randomMapOfStrings())
 					alertState.Image = &ngModels.Image{}
 
 					result := StateToPostableAlert(alertState, appURL)
 
-					expected := make(models.LabelSet, len(alertState.Annotations)+1)
-					for k, v := range alertState.Annotations {
+					expected := make(models.LabelSet, alertState.State.Annotations.Len()+1)
+					alertState.Annotations.Range(func(k, v string) bool {
 						expected[k] = v
-					}
+						return true
+					})
 
 					require.Equal(t, expected, result.Annotations)
 				})
@@ -343,7 +346,7 @@ func randomTransition(from, to eval.State) StateTransition {
 			LastEvaluationTime: randomTimeInPast(),
 			EvaluationDuration: randomDuration(),
 			LastSentAt:         util.Pointer(randomTimeInPast()),
-			Annotations:        make(map[string]string),
+			Annotations:        NewSyncLabels(make(map[string]string)),
 			Labels:             make(map[string]string),
 			Values:             make(map[string]float64),
 		},
