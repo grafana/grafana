@@ -93,7 +93,7 @@ To create a notification template that contains more than one template:
 
 1. Write each template in the Content field, including `{{ define "name-of-template" }}` and `{{ end }}` at the start and end of each template.
 
-4. Save your changes.
+1. Save your changes.
 
 For more details on how to write notification templates, refer to the [template reference](ref:notification-template-reference) and [examples](ref:notification-template-examples).
 
