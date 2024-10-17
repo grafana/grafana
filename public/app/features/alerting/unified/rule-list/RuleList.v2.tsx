@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { PropsWithChildren, ReactNode, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -17,19 +17,16 @@ import {
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
+import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { groupRulesByFileName } from '../api/prometheus';
-import { prometheusApi } from '../api/prometheusApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
 import { useRulesFilter } from '../hooks/useFilteredRules';
-import { RulesFilter as RulesFilterState } from '../search/rulesSearchParser';
-import { getAllRulesSources, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
+import { getAllRulesSources, isGrafanaRulesSource } from '../utils/datasource';
 import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
@@ -40,9 +37,9 @@ import { ListSection } from './components/ListSection';
 import { DataSourceIcon } from './components/Namespace';
 import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { LoadingIndicator } from './components/RuleGroup';
+import { usePaginatedPrometheusRuleNamespaces } from './hooks/usePaginatedPrometheusRuleNamespaces';
 
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
-const { useLazyGroupsQuery } = prometheusApi;
 
 const RuleList = withErrorBoundary(
   () => {
@@ -122,8 +119,8 @@ function PaginatedDataSourceLoader({
     page: ruleNamespaces,
     nextPage,
     previousPage,
-    hasNextPage,
-    currentPage,
+    canMoveForward,
+    canMoveBackward,
     isLoading,
   } = usePaginatedPrometheusRuleNamespaces(ruleSourceName, 10, filterState);
 
@@ -184,10 +181,10 @@ function PaginatedDataSourceLoader({
         ))}
         {!isLoading && (
           <LazyPagination
-            hasNextPage={hasNextPage}
-            currentPage={currentPage}
             nextPage={nextPage}
             previousPage={previousPage}
+            canMoveForward={canMoveForward}
+            canMoveBackward={canMoveBackward}
           />
         )}
       </Stack>
@@ -195,96 +192,14 @@ function PaginatedDataSourceLoader({
   );
 }
 
-function usePaginatedPrometheusRuleNamespaces(ruleSourceName: string, pageSize: number, filterState: RulesFilterState) {
-  const [fetchGroups, { isLoading }] = useLazyGroupsQuery();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [groups, setGroups] = useState<PromRuleGroupDTO[]>([]);
-  const [hasNextPage, setHasNextPage] = useState(true);
-
-  const getGroups = async function* () {
-    const ruleSourceUid = getDatasourceAPIUid(ruleSourceName);
-
-    const response = await fetchGroups({
-      ruleSource: { uid: ruleSourceUid },
-      maxGroups: 5,
-    });
-
-    if (response.data?.data) {
-      yield* response.data.data.groups;
-    }
-
-    let lastToken: string | undefined = undefined;
-    if (response.data?.data?.nextToken) {
-      lastToken = response.data.data.nextToken;
-    }
-
-    while (lastToken) {
-      const response = await fetchGroups({
-        ruleSource: { uid: ruleSourceUid },
-        nextToken: lastToken,
-        maxGroups: 5,
-      });
-
-      if (response.data?.data) {
-        yield* response.data.data.groups;
-      }
-
-      lastToken = response.data?.data?.nextToken;
-    }
-  };
-
-  const groupsGenerator = useRef<AsyncGenerator<PromRuleGroupDTO, void, unknown>>(getGroups());
-
-  const fetchMoreGroups = useCallback(async (groupsCount: number) => {
-    const newGroups: PromRuleGroupDTO[] = [];
-    for (let i = 0; i < groupsCount; i++) {
-      const group = await groupsGenerator.current.next();
-      if (group.done) {
-        setHasNextPage(false);
-        break;
-      }
-      newGroups.push(group.value);
-    }
-
-    setGroups((groups) => [...groups, ...newGroups]);
-  }, []);
-
-  const nextPage = useCallback(async () => {
-    if (hasNextPage) {
-      setCurrentPage((page) => page + 1);
-    }
-  }, [hasNextPage]);
-
-  const previousPage = useCallback(async () => {
-    if (currentPage !== 1) {
-      setCurrentPage((page) => page - 1);
-    }
-  }, [currentPage]);
-
-  useEffect(() => {
-    // We fetch 2 pages to load the page in the background rather than waiting for the user to click next
-    if (groups.length - pageSize < pageSize * currentPage) {
-      fetchMoreGroups(pageSize * 2);
-    }
-  }, [fetchMoreGroups, groups.length, pageSize, currentPage]);
-
-  const pageNamespaces = useMemo(() => {
-    const pageGroups = groups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-    // groupRulesByFileName mutates the array and RTKQ query freezes the response data
-    return groupRulesByFileName(structuredClone(pageGroups), ruleSourceName);
-  }, [groups, ruleSourceName, currentPage, pageSize]);
-
-  return { isLoading, page: pageNamespaces, nextPage, previousPage, hasNextPage, currentPage };
-}
-
 interface LazyPaginationProps {
-  hasNextPage: boolean;
-  currentPage: number;
+  canMoveForward: boolean;
+  canMoveBackward: boolean;
   nextPage: () => void;
   previousPage: () => void;
 }
 
-function LazyPagination({ hasNextPage, currentPage, nextPage, previousPage }: LazyPaginationProps) {
+function LazyPagination({ canMoveForward, canMoveBackward, nextPage, previousPage }: LazyPaginationProps) {
   return (
     <Stack direction="row" gap={1}>
       <Button
@@ -292,11 +207,11 @@ function LazyPagination({ hasNextPage, currentPage, nextPage, previousPage }: La
         size="sm"
         variant="secondary"
         onClick={previousPage}
-        disabled={currentPage === 1}
+        disabled={!canMoveBackward}
       >
         <Icon name="angle-left" />
       </Button>
-      <Button aria-label={`next page`} size="sm" variant="secondary" onClick={nextPage} disabled={!hasNextPage}>
+      <Button aria-label={`next page`} size="sm" variant="secondary" onClick={nextPage} disabled={!canMoveForward}>
         <Icon name="angle-right" />
       </Button>
     </Stack>
