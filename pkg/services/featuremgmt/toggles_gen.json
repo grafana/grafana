@@ -3082,6 +3082,31 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageBigObjectSupport",
+        "resourceVersion": "1728561321640",
+        "creationTimestamp": "2024-10-10T11:55:21Z",
+        "deletionTimestamp": "2024-10-15T12:09:18Z"
+      },
+      "spec": {
+        "description": "Enables to save big objects in blob storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageBigObjectsSupport",
+        "resourceVersion": "1728994158474",
+        "creationTimestamp": "2024-10-15T12:09:18Z"
+      },
+      "spec": {
+        "description": "Enables to save big objects in blob storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageSearch",
         "resourceVersion": "1726771421439",
         "creationTimestamp": "2024-09-19T18:43:41Z"
