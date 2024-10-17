@@ -258,15 +258,15 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, d.UID, "provided")
 		assert.Equal(t, d.Title, "delete me")
-
 	})
 
 	t.Run("Should not be able to create dashboard with reserved UID of a soft deleted dashboard", func(t *testing.T) {
 		setup()
 		d := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, "", false, "delete this")
-		dashboardStore.SoftDeleteDashboard(context.Background(), 1, d.UID)
+		err := dashboardStore.SoftDeleteDashboard(context.Background(), 1, d.UID)
+		require.NoError(t, err)
 
-		_, err := dashboardStore.ValidateDashboardBeforeSave(context.Background(), &dashboards.Dashboard{
+		_, err = dashboardStore.ValidateDashboardBeforeSave(context.Background(), &dashboards.Dashboard{
 			OrgID: 1,
 			Title: "another title",
 			UID:   d.UID,
