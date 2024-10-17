@@ -131,7 +131,9 @@ func (x *otelDB) init(ctx context.Context) {
 		// should be nearly a nop. We could instead create a new context with
 		// timeout from context.Background(), but we opt to derive one from the
 		// provided context just in case any value in it would be meaningful to
-		// the downstream implementation in `x.DB`.
+		// the downstream implementation in `x.DB`. This is also to future-proof
+		// this implementation for the case that we might have use another
+		// decorator wrapping the actual implementation.
 		const timeout = 5 * time.Second
 		ctx = context.WithoutCancel(ctx)
 		ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -166,7 +168,7 @@ func (x *otelDB) startSpan(ctx context.Context, name string) (context.Context, t
 	return ctx, span
 }
 
-func (x *otelDB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+func (x *otelDB) ExecContext(ctx context.Context, query string, args ...any) (db.Result, error) {
 	ctx, span := x.startSpan(ctx, dbTraceExecContext)
 	defer span.End()
 	res, err := x.DB.ExecContext(ctx, query, args...)
@@ -174,7 +176,7 @@ func (x *otelDB) ExecContext(ctx context.Context, query string, args ...any) (sq
 	return res, err
 }
 
-func (x *otelDB) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+func (x *otelDB) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
 	ctx, span := x.startSpan(ctx, dbTraceQueryContext)
 	defer span.End()
 	rows, err := x.DB.QueryContext(ctx, query, args...)
@@ -182,7 +184,7 @@ func (x *otelDB) QueryContext(ctx context.Context, query string, args ...any) (*
 	return rows, err
 }
 
-func (x *otelDB) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+func (x *otelDB) QueryRowContext(ctx context.Context, query string, args ...any) db.Row {
 	ctx, span := x.startSpan(ctx, dbTraceQueryRowContext)
 	defer span.End()
 	row := x.DB.QueryRowContext(ctx, query, args...)
@@ -255,45 +257,47 @@ type otelTx struct {
 // `optionalCtx` is not nil. It will be nil in the cases of the `Commit` and
 // `Rollback` methods, since they do not have a context.Context either. The
 // returned span will be a child span of the transaction span started at the
-// beginning of the transaction. If `optionalCtx`, then the returned span will
-// also be linked to the span found in that context if it differs from the one
-// used to create the transaction.
+// beginning of the transaction. If `optionalCtx` is not nil, then the returned
+// span will also be linked to the span found in that context (if it differs from
+// the one used to create the transaction).
 //
 // Example operation with additional spans with current implementation:
 //
 //	parentSpan
 //	   |
-//	   +------------------+-----------------------------+
-//	   |                  |                             :
-//	   |                  v                             :
-//	   |               exampleSubSpan                   :
-//	   |                  |                             :
-//	   |                  +-------------+               :
-//	   |                  :             |               :
-//	   v                  :             v               :
-//	transactionSpan    (spanLink)    nonTxQuerySpan  (spanLink)
-//	   |                  :                             :
+//	   +------------------+
+//	   |                  |
+//	   |                  v
+//	   |               exampleSubSpan
+//	   |                  |
+//	   |                  +-------------+
+//	   |                  :             |
+//	   v                  :             v
+//	transactionSpan    (spanLink)    nonTxQuerySpan
+//	   |                  :
 //	   +------------------+-----------------------------+
 //	   |                  |                             |
 //	   v                  v                             v
 //	beginTxSpan        execSpan                      commitSpan
 //
 // Note that understanding what is being executed in the same transaction is
-// very clear because you just need to follow the solid lines, which denote a
-// parent-child relationship. We also know that the `execSpan` was originated in
-// `exampleSubSpan` because of the spanLink, but there is no chance that we get
-// confused and think that `nonTxQuerySpan` was part of the transaction (it is
-// not related in any manner). What we do here is to take make any transactional
-// db operation a child of the transaction span, which aligns with the OTEL
-// concept of a span being 'a unit of work'. In this sense, a transaction is our
-// unit of work. This allows us to clearly visualize important database
-// semantics within the OTEL framework. In OTEL, span links exist to associate
-// one span with one or more spans, implying a causal relationship. In our case,
-// we can see that while `execSpan` and `commitSpan` are part of the unit of
-// work called "database transaction", they actually have a different cause: the
-// `exampleSubSpan` for `execSpan` and `parentSpan` for `commitSpan`.
+// very clear because you just need to follow the vertical solid lines, which
+// denote a parent-child relationship. We also know that the `execSpan` was
+// originated in `exampleSubSpan` because of the spanLink (with a vertical
+// dotted line), but there is no chance that we get confused and think that
+// `nonTxQuerySpan` was part of the transaction (it is not related in any
+// manner). What we do here is to make any transactional db operation a child of
+// the transaction span, which aligns with the OTEL concept of a span being 'a
+// unit of work'. In this sense, a transaction is our unit of work, which also
+// aligns semantically with the database concept of transaction. This allows us
+// to clearly visualize important database semantics within the OTEL framework.
+// In OTEL, span links exist to associate one span with one or more spans,
+// implying a causal relationship. In our case, we can see that while `execSpan`
+// is part of the unit of work called "database transaction", it actually has a
+// different cause: the `exampleSubSpan` for `execSpan`.
 //
-// For comparison, consider the following naïve alternative:
+// For comparison, consider the following naïve alternative just passing the
+// context around:
 //
 //	parentSpan
 //	   |
@@ -340,7 +344,7 @@ func (x otelTx) startSpan(optionalCtx context.Context, name string) (context.Con
 	return optionalCtx, span
 }
 
-func (x otelTx) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+func (x otelTx) ExecContext(ctx context.Context, query string, args ...any) (db.Result, error) {
 	ctx, span := x.startSpan(ctx, txTraceExecContext)
 	defer span.End()
 	res, err := x.tx.ExecContext(ctx, query, args...)
@@ -349,7 +353,7 @@ func (x otelTx) ExecContext(ctx context.Context, query string, args ...any) (sql
 	return res, err
 }
 
-func (x otelTx) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+func (x otelTx) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
 	ctx, span := x.startSpan(ctx, txTraceQueryContext)
 	defer span.End()
 	rows, err := x.tx.QueryContext(ctx, query, args...)
@@ -358,7 +362,7 @@ func (x otelTx) QueryContext(ctx context.Context, query string, args ...any) (*s
 	return rows, err
 }
 
-func (x otelTx) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+func (x otelTx) QueryRowContext(ctx context.Context, query string, args ...any) db.Row {
 	ctx, span := x.startSpan(ctx, txTraceQueryRowContext)
 	defer span.End()
 	row := x.tx.QueryRowContext(ctx, query, args...)
