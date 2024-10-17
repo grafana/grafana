@@ -7,10 +7,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import {
-  setAlertmanagerConfig,
-  setGrafanaAlertmanagerConfig,
-} from 'app/features/alerting/unified/mocks/server/configure';
+import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { MOCK_DATASOURCE_EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import {
@@ -206,8 +203,12 @@ describe('Mute timings', () => {
     // FIXME: scope down
     grantUserPermissions(Object.values(AccessControlAction));
 
-    setGrafanaAlertmanagerConfig(defaultConfig);
-    setAlertmanagerConfig(defaultConfig);
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, defaultConfig);
+
+    // TODO: Add this at a higher level to ensure that no tests depend on others running first
+    // Without this, the selected alertmanager in a previous test can affect the next, meaning tests
+    // pass/fail depending on the order they are run/if they are focused
+    window.localStorage.clear();
   });
 
   it('creates a new mute timing, with mute_time_intervals in config', async () => {
@@ -238,9 +239,9 @@ describe('Mute timings', () => {
 
   it('creates a new mute timing, with time_intervals in config', async () => {
     const capture = captureRequests();
-    setAlertmanagerConfig(defaultConfigWithNewTimeIntervalsField);
+    setAlertmanagerConfig(dataSources.am.uid, defaultConfigWithNewTimeIntervalsField);
     renderMuteTimings(<NewMuteTimingPage />, {
-      search: `?alertmanager=${alertmanagerName}`,
+      search: `?alertmanager=${dataSources.am.name}`,
     });
 
     await fillOutForm({
@@ -262,9 +263,9 @@ describe('Mute timings', () => {
   });
 
   it('creates a new mute timing, with time_intervals and mute_time_intervals in config', async () => {
-    setGrafanaAlertmanagerConfig(defaultConfigWithBothTimeIntervalsField);
+    setAlertmanagerConfig(dataSources.am.uid, defaultConfigWithBothTimeIntervalsField);
     renderMuteTimings(<NewMuteTimingPage />, {
-      search: `?alertmanager=${alertmanagerName}`,
+      search: `?alertmanager=${dataSources.am.name}`,
     });
 
     expect(ui.nameField.get()).toBeInTheDocument();
