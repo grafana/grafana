@@ -65,7 +65,6 @@ export const Components = {
         connectionSettings: 'Data source connection URL', // aria-label in grafana experimental
         manageAlerts: 'prometheus-alerts-manager', // id for switch component
         scrapeInterval: 'data-testid scrape interval',
-        queryTimeout: 'data-testid query timeout',
         defaultEditor: 'data-testid default editor',
         disableMetricLookup: 'disable-metric-lookup', // id for switch component
         prometheusType: 'data-testid prometheus type',
