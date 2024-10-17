@@ -2987,6 +2987,7 @@
         "name": "topnav",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-06-20T14:25:43Z",
+        "deletionTimestamp": "2024-10-15T15:00:51Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }

@@ -99,10 +99,6 @@ const (
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
-	// FlagTopnav
-	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
-	FlagTopnav = "topnav"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"

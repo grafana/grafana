@@ -176,6 +176,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
 	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigration.IsTarget
+	featureToggles := hs.Features.GetEnabled(c.Req.Context())
+	// this is needed for backwards compatibility with external plugins
+	// we should remove this once we can be sure that no external plugins rely on this
+	featureToggles["topnav"] = true
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
@@ -260,7 +264,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			EnabledFeatures: hs.License.EnabledFeatures(),
 		},
 
-		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		FeatureToggles:                   featureToggles,
 		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
 		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
