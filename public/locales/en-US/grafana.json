@@ -33,18 +33,8 @@
       }
     }
   },
-  "alert-recording-rule-form": {
-    "evaluation-behaviour": {
-      "description": {
-        "text": "Define how the recording rule is evaluated."
-      }
-    }
-  },
   "alert-rule-form": {
     "evaluation-behaviour": {
-      "description": {
-        "text": "Define how the alert rule is evaluated."
-      },
       "info-help": {
         "text": "Define the alert behavior when the evaluation fails or the query returns no data."
       },
@@ -67,10 +57,24 @@
     }
   },
   "alerting": {
+    "alert-recording-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the recording rule is evaluated."
+        }
+      }
+    },
+    "alert-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the alert rule is evaluated."
+        }
+      }
+    },
     "alertform": {
       "labels": {
-        "alerting": " Add labels to your rule for searching, silencing, or routing to a notification policy.",
-        "recording": " Add labels to your rule."
+        "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
+        "recording": "Add labels to your rule."
       }
     },
     "annotations": {
@@ -167,7 +171,7 @@
           }
         },
         "text": {
-          "alerting": "Define how often the alert rule is evaluated",
+          "alerting": "Define how often the alert rule is evaluated.",
           "recording": "Define how often the recording rule is evaluated."
         }
       }
