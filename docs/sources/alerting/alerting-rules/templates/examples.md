@@ -97,7 +97,7 @@ This page provides common examples for templating labels and annotations. For mo
 
 A common use case for annotations is to display the specific query value or threshold that triggered the alert.
 
-For example, you can display the query value from the [`$values`](ref:reference-values) variable to inform about the CPU value that triggered the alert:
+For example, you can display the query value from the [`$values`](ref:reference-values) variable to inform about the CPU value that triggered the alert.
 
 ```
 CPU usage has exceeded 80% ({{ $values.A.value }}) for the last 5 minutes.
