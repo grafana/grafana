@@ -508,3 +508,5 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
+
+replace github.com/mattn/go-sqlite3 => ./pkg/util/sqlite
