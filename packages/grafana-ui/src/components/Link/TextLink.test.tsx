@@ -60,7 +60,6 @@ describe('TextLink', () => {
       </MemoryRouter>
     );
     await userEvent.click(screen.getByRole('link'));
-    screen.getByRole('link');
     expect(onClick).toHaveBeenCalled();
   });
 });
