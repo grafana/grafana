@@ -20,6 +20,10 @@ var dsTypeToLotexRoutes = map[string]promEndpoints{
 		rules:  "/api/v1/rules",
 		alerts: "/api/v1/alerts",
 	},
+	"grafana-amazonprometheus-datasource": {
+		rules:  "/api/v1/rules",
+		alerts: "/api/v1/alerts",
+	},
 	"loki": {
 		rules:  "/prometheus/api/v1/rules",
 		alerts: "/prometheus/api/v1/alerts",
