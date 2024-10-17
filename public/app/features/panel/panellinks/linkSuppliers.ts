@@ -104,6 +104,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
                 refId: dataFrame.refId,
                 fields: getFieldDisplayValuesProxy({
                   frame: dataFrame,
+                  frames: value.frames,
                   rowIndex: value.rowIndex!,
                 }),
               },
