@@ -12,7 +12,7 @@ import {
   useKBar,
   ActionImpl,
 } from 'kbar';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -27,10 +27,7 @@ import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
-  const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
-  const [rightPosition, setRightPosition] = useState<number | null>(null);
-
-  const styles = useStyles2((theme) => getSearchStyles(theme, rightPosition));
+  const styles = useStyles2((theme) => getSearchStyles(theme));
 
   const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -52,20 +49,7 @@ export function CommandPalette() {
   // Report interaction when opened
   useEffect(() => {
     showing && reportInteraction('command_palette_opened');
-    setRightPosition(input?.getBoundingClientRect().right ?? null);
-  }, [input, showing]);
-
-  // Get the right position of the input element to align the command palette
-  useLayoutEffect(() => {
-    const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
-    const handleResize = () => {
-      setRightPosition(input?.getBoundingClientRect().right ?? null);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+  }, [showing]);
 
   return actions.length > 0 ? (
     <KBarPortal>
@@ -162,14 +146,17 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   );
 };
 
-const getCommandPalettePosition = (inputRightPosition: number) => {
+const getCommandPalettePosition = () => {
+  const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
+  const inputRightPosition = input?.getBoundingClientRect().right ?? 0;
   const screenWidth = document.body.clientWidth;
   const lateralSpace = screenWidth - inputRightPosition;
   return lateralSpace;
 };
+
 // eslint-disable-next-line
-const getSearchStyles = (theme: GrafanaTheme2, rightPosition?: any) => {
-  const lateralSpace = getCommandPalettePosition(rightPosition);
+const getSearchStyles = (theme: GrafanaTheme2) => {
+  const lateralSpace = getCommandPalettePosition();
   const isSingleTopNav = config.featureToggles.singleTopNav;
 
   return {
