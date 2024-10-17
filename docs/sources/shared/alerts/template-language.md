@@ -6,7 +6,7 @@ title: 'Template language'
 
 You can use `if` statements in templates. For example, you can print `Variable empty` when a variable is empty:
 
-```
+```go
 {{ if $element }}
 Element value: {{$element}}
 {{ else }}
@@ -18,7 +18,7 @@ Element is empty
 
 `with` is similar to `if` statements, but unlike `if`, it updates dot(`.`) to refer to the value of the expression in `with`:
 
-```
+```go
 {{ with $array }}
 There are {{ len . }} item(s)
 {{ else }}
@@ -30,7 +30,7 @@ There are no alerts
 
 `range` iterates over an array or map, and dot (`.`) is set to the current element of the array:
 
-```
+```go
 {{ range $array }}
 {{ .itemPropertyName }}
 {{ end }}
@@ -38,18 +38,17 @@ There are no alerts
 
 Optionally, you can handle empty objects using `else`:
 
-```
+```go
 {{ range $array }}
   {{ .itemPropertyName }}
 {{ else }}
   Empty array
 {{ end }}
-
 ```
 
 You can also get the index of each item within a range by defining index and value variables at the start of the range:
 
-```
+```go
 {{ $num_items := len $array }}
 {{ range $index, $item := $array }}
 This is item {{ $index }} out of {{ $num_items }}
@@ -97,7 +96,7 @@ Boolean comparison operators are also available in `text/template`:
 
 Variables in `text/template` must be created within the template. For example, you can create a variable with the current value of dot (`.`) and assign a string or another object to the variable like this:
 
-```
+```go
 {{ $variable := . }}
 {{ $variable := "This is a test" }}
 {{ $variable }}
@@ -115,7 +114,7 @@ You can create reusable templates that can be executed from other templates or w
 
 Define templates using `define` and the name of the template in double quotes:
 
-```
+```go
 {{ define "print_labels" }}
 {{ end }}
 ```
@@ -126,7 +125,7 @@ You should not define templates with the same name as other templates, including
 
 You can execute defined templates using `template`, the name of the template in double quotes, and the cursor that should be passed to the template:
 
-```
+```go
 {{ template "print_labels" . }}
 ```
 
@@ -134,31 +133,31 @@ Within a template dot refers to the value that is passed to the template.
 
 For example, if a template is passed a list of firing alerts then dot refers to that list of firing alerts:
 
-```
+```go
 {{ template "print_alerts" .Alerts }}
 ```
 
 If the template is passed the sorted labels for an alert then dot refers to the list of sorted labels:
 
-```
+```go
 {{ template "print_labels" .SortedLabels }}
 ```
 
 This is useful when writing reusable templates. For example, to print all alerts you might write the following:
 
-```
+```go
 {{ template "print_alerts" .Alerts }}
 ```
 
 Then to print just the firing alerts you could write this:
 
-```
+```go
 {{ template "print_alerts" .Alerts.Firing }}
 ```
 
 This works because both `.Alerts` and `.Alerts.Firing` is a list of alerts.
 
-```
+```go
 {{ define "print_alerts" }}
 {{ range . }}
 {{ template "print_labels" .SortedLabels }}
@@ -174,13 +173,13 @@ You cannot create independent, reusable templates for labels and annotations as 
 
 You can add comments with `{{/*` and `*/}}`:
 
-```
+```go
 {{/* This is a comment */}}
 ```
 
 To avoid adding line breaks, use:
 
-```
+```go
 {{- /* This is a comment with no leading or trailing line breaks */ -}}
 ```
 
@@ -188,7 +187,7 @@ To avoid adding line breaks, use:
 
 You can use indentation, both tabs and spaces, and line breaks, to make templates more readable:
 
-```
+```go
 {{ range .Alerts }}
   {{ range .Labels.SortedPairs }}
     {{ .Name }} = {{ .Value }}
@@ -204,7 +203,7 @@ In text/template use `{{-` and `-}}` to remove leading and trailing spaces and l
 
 For example, when using indentation and line breaks to make a template more readable:
 
-```
+```go
 {{ range .Alerts }}
   {{ range .Labels.SortedPairs }}
     {{ .Name }} = {{ .Value }}
@@ -222,7 +221,7 @@ The indentation and line breaks will also be present in the text:
 
 You can remove the indentation and line breaks from the text changing `}}` to `-}}` at the start of each range:
 
-```
+```go
 {{ range .Alerts -}}
   {{ range .Labels.SortedPairs -}}
     {{ .Name }} = {{ .Value }}

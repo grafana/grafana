@@ -190,7 +190,7 @@ For additional functions to display or format data, refer to:
 
 Here’s an example of creating a `severity` label based on a query value:
 
-```
+```go
 {{ if (gt $values.A.Value 90.0) -}}
 critical
 {{ else if (gt $values.A.Value 80.0) -}}
@@ -219,7 +219,7 @@ You should avoid displaying query values in labels, as this may create many aler
 
 You can use labels to differentiate alerts coming from various environments (e.g., production, staging, dev). For example, you may want to add a label that sets the environment based on the instance’s label. Here’s how you can template it:
 
-```
+```go
 {{ if eq $labels.instance "prod-server-1" }}production
 {{ else if eq $labels.instance "staging-server-1" }}staging
 {{ else }}development
@@ -234,7 +234,7 @@ This would print:
 
 To make this template more flexible, you can use a regular expression that matches the instance name with the instance name prefix using the [`match()`](ref:reference-match) function:
 
-```
+```go
 {{ if match "^prod-server-.*" $labels.instance }}production
 {{ else if match "^staging-server-.*" $labels.instance}}staging
 {{ else }}development
@@ -253,7 +253,7 @@ Instead, the `$values` variable contains the reduced values of all time series f
 
 To print all labels of all firing time series use the following template (make sure to replace `B` in the regular expression with the Ref ID of the classic condition if it's different):
 
-```
+```go
 {{ range $k, $v := $values -}}
 {{ if (match "B[0-9]+" $k) -}}
 {{ $k }}: {{ $v.Labels }}{{ end }}
@@ -282,7 +282,7 @@ If you need to print unique labels you should consider changing your alert rules
 
 To print all values from a classic condition take the previous example and replace `$v.Labels` with `$v.Value`:
 
-```
+```go
 {{ range $k, $v := $values -}}
 {{ if (match "B[0-9]+" $k) -}}
 {{ $k }}: {{ $v.Value }}{{ end }}

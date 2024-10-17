@@ -53,7 +53,7 @@ This documentation provides an overview of the functions and operators of the Go
 
 To print the value of something, use `{{` and `}}`. You can print the value of a [variable](#variables), a field of a variable, the result of a function, or the value of dot.
 
-```
+```go
 {{ $values }}
 {{ $values.A.Value }}
 {{ humanize 1000.0 }}
@@ -66,7 +66,7 @@ In `text/template`, there is a special cursor called dot, written as `.`. You ca
 
 At the start of notification templates, dot (`.`) refers to [Notification Data](ref:reference-notificationdata).
 
-```
+```go
 {{ .Alerts }}
 ```
 

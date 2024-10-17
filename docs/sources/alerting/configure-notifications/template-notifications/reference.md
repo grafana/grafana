@@ -67,7 +67,7 @@ It's important to remember that [a single notification can group multiple alerts
 
 Here's an example that prints all available notification data from dot (`.`):
 
-```
+```go
 {{ define "custom_template" }}
   {{ .Receiver }}
   {{ .Status }}
@@ -102,7 +102,7 @@ Here's an example that prints all available notification data from dot (`.`):
 
 This example iterates over the list of firing and resolved alerts (`.Alerts`) in the notification and prints the data for each alert:
 
-```
+```go
 {{ define "custom_template" }}
 {{ range .Alerts }}
   {{ .Status }}
@@ -127,7 +127,7 @@ This example iterates over the list of firing and resolved alerts (`.Alerts`) in
 
 Similarly to accessing variable properties, you can use `.` to retrieve the value of a value. For example:
 
-```
+```go
 {{ define "custom_template" }}
   {{ .CommonLabels.grafana_folder }}
 {{ end }}
@@ -146,7 +146,7 @@ Additionally, KV provides methods to sort the pairs, remove keys, and iterate ov
 
 Here's an example of using these methods:
 
-```
+```go
 {{ define "custom_template" }}
   {{ .CommonLabels.SortedPairs }}
   {{ .CommonLabels.Names }}
@@ -179,7 +179,7 @@ In addition, the following functions are also available for templating notificat
 
 Here's an example of using these functions:
 
-```
+```go
 {{ define "custom_template" }}
   {{ title "hello, world!" }}
   {{ toUpper "Hello, world!" }}
@@ -198,7 +198,7 @@ Here's an example of using these functions:
 You can format a time in a number of different formats using the `date` function.
 For example, to print the time that an alert fired in the format `15:04:05 MST`:
 
-```
+```go
 {{ define "custom_template" }}
   {{ with (index .Alerts 0) }}
     {{ .StartsAt | date "15:04:05 MST" }}
@@ -208,7 +208,7 @@ For example, to print the time that an alert fired in the format `15:04:05 MST`:
 
 You can also use the `tz` function to change the timezone from UTC to a local time. For example:
 
-```
+```go
 {{ .StartsAt | tz "Europe/Paris" | date "15:04:05 MST" }}
 ```
 

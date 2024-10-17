@@ -122,7 +122,7 @@ You can also template labels based on query results. This is helpful if the labe
 
 Here’s an example of templating a `severity` label based on the query value:
 
-```
+```go
 {{ if (gt $values.A.Value 90.0) -}}
 critical
 {{ else if (gt $values.A.Value 80.0) -}}
@@ -150,7 +150,7 @@ Notification templates differ from templating annotations and labels in the foll
 
 Here is an example of a notification template that summarizes all firing and resolved alerts in a notification group:
 
-```
+```go
 {{ define "alerts.message" -}}
   {{ if .Alerts.Firing -}}
     {{ len .Alerts.Firing }} firing alert(s)
