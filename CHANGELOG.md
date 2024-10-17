@@ -1,3 +1,21 @@
+<!-- 11.1.6+security-01 START -->
+
+# 11.1.6+security-01 (2024-10-17)
+
+### Features and enhancements
+
+- **Chore:** Update swagger ui (4.3.0 to 5.17.14) [#92341](https://github.com/grafana/grafana/pull/92341), [@ryantxu](https://github.com/ryantxu)
+
+### Bug fixes
+
+- **Templating:** Fix searching non-latin template variables [#92892](https://github.com/grafana/grafana/pull/92892), [@leeoniya](https://github.com/leeoniya)
+- **TutorialCard:** Fix link to tutorial not opening [#92646](https://github.com/grafana/grafana/pull/92646), [@eledobleefe](https://github.com/eledobleefe)
+
+### Plugin development fixes & changes
+
+- **Bugfix:** QueryField typeahead missing background color [#92316](https://github.com/grafana/grafana/pull/92316), [@mckn](https://github.com/mckn)
+
+<!-- 11.1.6+security-01 END -->
 <!-- 11.1.7 START -->
 
 # 11.1.7 (2024-10-01)
