@@ -165,7 +165,7 @@ To do this, you need to make sure that your recording rule is in the right evalu
 
    If you are creating a new evaluation group, specify the interval for the group.
 
-   All rules within the same group are evaluated concurrently over the same time interval. Every recording rule in a group will use the same evaluation time, meaning that all queries from the same group will always be aligned with each other.
+   All rules within the same group are evaluated concurrently over the same time interval. Every recording rule in a group uses the same evaluation time, meaning that all queries from the same group are always aligned with each other.
 
 1. Turn on pause recording rule evaluation, if required.
 
