@@ -4,6 +4,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Button, CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
@@ -25,6 +26,13 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const handleSearchChange = (value: string) => {
+    if (value) {
+      reportInteraction('dashboards_panel_plugin_picker_clicked', { item: 'search', query: value });
+    }
+    setSearchQuery(value);
+  };
+
   const isWidgetEnabled = false;
   const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
@@ -40,6 +48,14 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
     []
   );
   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
+  const handleListModeChange = (value: VisualizationSelectPaneTab) => {
+    reportInteraction('dashboards_panel_plugin_picker_clicked', {
+      item: 'change_tab',
+      tab: VisualizationSelectPaneTab[value],
+    });
+    setListMode(value);
+  };
+
   useEffect(() => {
     if (listMode && !supportedListModes.has(listMode)) {
       setListMode(defaultTab);
@@ -57,7 +73,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
         <FilterInput
           className={styles.filter}
           value={searchQuery}
-          onChange={setSearchQuery}
+          onChange={handleSearchChange}
           autoFocus={true}
           placeholder="Search for..."
         />
@@ -71,7 +87,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
         />
       </div>
       <Field className={styles.customFieldMargin}>
-        <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
+        <RadioButtonGroup options={radioOptions} value={listMode} onChange={handleListModeChange} fullWidth />
       </Field>
       <CustomScrollbar>
         {listMode === VisualizationSelectPaneTab.Visualizations && (
