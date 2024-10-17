@@ -181,25 +181,21 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             );
           })}
         </div>
-        <div className={styles.verticalLine} />
-        <div>
-          {getTrailStore().bookmarks.length > 0 && (
-            <div className={styles.trailList}>
-              <Text variant="h4" textAlignment="center">Or view bookmarks</Text>
-              <div className={styles.trailList}>
-                {getTrailStore().bookmarks.map((bookmark, index) => {
-                  return (
-                    <DataTrailCard
-                      key={getBookmarkKey(bookmark)}
-                      bookmark={bookmark}
-                      onSelect={() => model.onSelectBookmark(index)}
-                      onDelete={() => onDelete(index)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
+        <div className={styles.horizontalLine} />
+        <div className={styles.gap20}>
+          <Text variant="h4" textAlignment="center">Or view bookmarks</Text>
+        </div>
+        <div className={styles.trailList}>
+          {getTrailStore().bookmarks.map((bookmark, index) => {
+            return (
+              <DataTrailCard
+                key={getBookmarkKey(bookmark)}
+                bookmark={bookmark}
+                onSelect={() => model.onSelectBookmark(index)}
+                onDelete={() => onDelete(index)}
+              />
+            );
+          })}
         </div>
         {/* </Stack> */}
       </div>
@@ -246,8 +242,12 @@ function getStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.secondary, // Ensure the background color takes up the whole space
       borderRadius: '4px',
     }),
-    verticalLine: css({
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
+    horizontalLine: css({
+      width: '400px',
+      height: '1px',
+      background: 'rgba(204, 204, 220, 0.12)',
+      margin: '0 auto', // Center the line horizontally
+      marginTop: '32px',
     }),
     gap20: css({
       marginTop: theme.spacing(6), // ask catherine what the number should be
