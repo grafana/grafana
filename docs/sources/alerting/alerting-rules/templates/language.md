@@ -42,7 +42,7 @@ Notification templates and alert rule templates, such as annotations and labels,
 
 Both types of templates can use the same keywords, functions, and comparison operators of the Go template language, such as `range`, `if`, `and`, `index`, `eq`, and more.
 
-However, it's important to note that because notifications and alert rules operate in distinct context, some additional variables and functions are only available for either notification or alert rule templates. Refer to:
+However, it's important to note that because notifications and alert rules operate in distinct contexts, some additional variables and functions are only available for either notification or alert rule templates. Refer to:
 
 - [Annotation and label template reference](ref:alert-rule-template-reference)
 - [Notification template reference](ref:notification-template-reference)
