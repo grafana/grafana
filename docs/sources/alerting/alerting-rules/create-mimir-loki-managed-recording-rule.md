@@ -91,7 +91,7 @@ Configure Grafana-managed recording rules.
 
 {{< admonition type="note" >}}
 In Grafana OSS and Enterprise, you can create Grafana-managed recording rules if you enable the `grafanaManagedRecordingRules` feature flag.
-For Grafana Cloud, this feature is enabled by default and available for use.
+For Grafana Cloud, it is enabled by default.
 
 For more information on enabling feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles).
 {{< /admonition >}}
