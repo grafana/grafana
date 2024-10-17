@@ -299,12 +299,12 @@ type otelTx struct {
 // For comparison, consider the following naïve alternative just passing the
 // context around:
 //
-//	parentSpan
+//	parentSpan                                       commitSpan
 //	   |
-//	   +------------------+-----------------------------+
-//	   |                  |                             |
-//	   v                  v                             v
-//	beginTxSpan      exampleSubSpan                  commitSpan
+//	   +------------------+
+//	   |                  |
+//	   v                  v
+//	beginTxSpan      exampleSubSpan
 //	                      |
 //	                      +-------------+
 //	                      |             |
@@ -314,6 +314,10 @@ type otelTx struct {
 // In this case, it is not straightforward to know what operations are part of
 // the transaction. When looking at the traces, it will be very easy to be
 // confused and think that `nonTxQuerySpan` was part of the transaction.
+// Additionally, note that `commitSpan` is a root span, since the `Commit`
+// method doesn't recieve a context (same as `Rollback`), hence all such
+// operations would end up being scattered root span, making it hard to
+// correlate.
 func (x otelTx) startSpan(optionalCtx context.Context, name string) (context.Context, trace.Span) {
 	// minimum number of options for the span
 	startOpts := make([]trace.SpanStartOption, 0, 2)
