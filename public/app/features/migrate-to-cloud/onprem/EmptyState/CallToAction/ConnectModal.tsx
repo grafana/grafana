@@ -3,12 +3,12 @@ import { useId } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
 import { CreateSessionApiArg } from '../../../api';
+import { maybeAPIError } from '../../../api/errors';
 
 interface Props {
   isOpen: boolean;
@@ -20,22 +20,6 @@ interface Props {
 
 interface FormData {
   token: string;
-}
-
-function maybeCreateSessionAPIError(err: unknown) {
-  if (!isFetchError<unknown>(err) || typeof err.data !== 'object' || !err.data) {
-    return null;
-  }
-
-  const data = err?.data;
-  const message = 'message' in data && typeof data.message === 'string' ? data.message : null;
-  const messageId = 'messageId' in data && typeof data.messageId === 'string' ? data.messageId : null;
-
-  if (!message || !messageId) {
-    return null;
-  }
-
-  return { message, messageId };
 }
 
 function getTMessage(messageId: string): string {
@@ -164,7 +148,7 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
                 title={t('migrate-to-cloud.connect-modal.token-error-title', 'Error saving token')}
               >
                 <Text element="p">
-                  {getTMessage(maybeCreateSessionAPIError(error)?.messageId || '') ||
+                  {getTMessage(maybeAPIError(error)?.messageId || '') ||
                     'There was an error saving the token. See the Grafana server logs for more details.'}
                 </Text>
               </AlertWithTraceID>
