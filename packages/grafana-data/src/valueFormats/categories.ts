@@ -149,6 +149,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Guaraní (₲)', id: 'currencyPYG', fn: currency('₲') },
       { name: 'Uruguay Peso (UYU)', id: 'currencyUYU', fn: currency('UYU') },
       { name: 'Israeli New Shekels (₪)', id: 'currencyILS', fn: currency('₪') },
+      { name: 'Generic (No prefix)', id: 'currency', fn: currency('') },
     ],
   },
   {
