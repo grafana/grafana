@@ -103,7 +103,7 @@ For example, you can display the query value from the [`$values`](ref:reference-
 CPU usage has exceeded 80% ({{ $values.A.value }}) for the last 5 minutes.
 ```
 
-Alternatively, you can use the [`index()`](ref:language-index) function to retrieve the query value as follows:
+Alternatively, you can use the [`index()`](ref:language-index) function to retrieve the query value as follows.
 
 ```
 CPU usage has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
