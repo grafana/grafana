@@ -298,6 +298,9 @@ export function GrafanaEvaluationBehavior({
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = type === RuleFormType.grafanaRecording;
+  const pauseContentText = isGrafanaRecordingRule
+    ? t('alert-rule-form.pause.recording', 'Turn on to pause evaluation for this recording rule.')
+    : t('alert-rule-form.pause.alerting', 'Turn on to pause evaluation for this alert rule.');
 
   return (
     // TODO remove "and alert condition" for recording rules
@@ -324,12 +327,8 @@ export function GrafanaEvaluationBehavior({
                     value={Boolean(isPaused)}
                   />
                   <label htmlFor="pause-alert" className={styles.switchLabel}>
-                    <Trans i18nKey="alert-rule-form.pause">Pause evaluation</Trans>
-                    <Tooltip
-                      placement="top"
-                      content={`Turn on to pause evaluation for this ${isGrafanaRecordingRule ? 'recording' : 'alert'} rule.`}
-                      theme={'info'}
-                    >
+                    <Trans i18nKey="alert-rule-form.pause.label">Pause evaluation</Trans>
+                    <Tooltip placement="top" content={pauseContentText} theme={'info'}>
                       <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
                     </Tooltip>
                   </label>

@@ -33,6 +33,13 @@
       }
     }
   },
+  "alert-recording-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Đęƒįŉę ĥőŵ ŧĥę řęčőřđįŉģ řūľę įş ęväľūäŧęđ."
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -53,9 +60,19 @@
     "evaluation-behaviour-group": {
       "text": "Åľľ řūľęş įŉ ŧĥę şęľęčŧęđ ģřőūp äřę ęväľūäŧęđ ęvęřy {{evaluateEvery}}."
     },
-    "pause": "Päūşę ęväľūäŧįőŉ"
+    "pause": {
+      "alerting": "Ŧūřŉ őŉ ŧő päūşę ęväľūäŧįőŉ ƒőř ŧĥįş äľęřŧ řūľę.",
+      "label": "Päūşę ęväľūäŧįőŉ",
+      "recording": "Ŧūřŉ őŉ ŧő päūşę ęväľūäŧįőŉ ƒőř ŧĥįş řęčőřđįŉģ řūľę."
+    }
   },
   "alerting": {
+    "alertform": {
+      "labels": {
+        "alerting": " Åđđ ľäþęľş ŧő yőūř řūľę ƒőř şęäřčĥįŉģ, şįľęŉčįŉģ, őř řőūŧįŉģ ŧő ä ŉőŧįƒįčäŧįőŉ pőľįčy.",
+        "recording": " Åđđ ľäþęľş ŧő yőūř řūľę."
+      }
+    },
     "annotations": {
       "description": "Åđđ mőřę čőŉŧęχŧ ŧő yőūř äľęřŧ ŉőŧįƒįčäŧįőŉş.",
       "title": "Cőŉƒįģūřę ŉőŧįƒįčäŧįőŉ męşşäģę"
@@ -140,6 +157,20 @@
     },
     "contactPointFilter": {
       "label": "Cőŉŧäčŧ pőįŉŧ"
+    },
+    "folderAndGroup": {
+      "evaluation": {
+        "modal": {
+          "text": {
+            "alerting": "Cřęäŧę ä ŉęŵ ęväľūäŧįőŉ ģřőūp ŧő ūşę ƒőř ŧĥįş äľęřŧ řūľę.",
+            "recording": "Cřęäŧę ä ŉęŵ ęväľūäŧįőŉ ģřőūp ŧő ūşę ƒőř ŧĥįş řęčőřđįŉģ řūľę."
+          }
+        },
+        "text": {
+          "alerting": "Đęƒįŉę ĥőŵ őƒŧęŉ ŧĥę äľęřŧ řūľę įş ęväľūäŧęđ",
+          "recording": "Đęƒįŉę ĥőŵ őƒŧęŉ ŧĥę řęčőřđįŉģ řūľę įş ęväľūäŧęđ."
+        }
+      }
     },
     "list-view": {
       "empty": {

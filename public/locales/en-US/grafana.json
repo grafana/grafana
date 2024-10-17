@@ -33,6 +33,13 @@
       }
     }
   },
+  "alert-recording-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Define how the recording rule is evaluated."
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -53,9 +60,19 @@
     "evaluation-behaviour-group": {
       "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
     },
-    "pause": "Pause evaluation"
+    "pause": {
+      "alerting": "Turn on to pause evaluation for this alert rule.",
+      "label": "Pause evaluation",
+      "recording": "Turn on to pause evaluation for this recording rule."
+    }
   },
   "alerting": {
+    "alertform": {
+      "labels": {
+        "alerting": " Add labels to your rule for searching, silencing, or routing to a notification policy.",
+        "recording": " Add labels to your rule."
+      }
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
@@ -140,6 +157,20 @@
     },
     "contactPointFilter": {
       "label": "Contact point"
+    },
+    "folderAndGroup": {
+      "evaluation": {
+        "modal": {
+          "text": {
+            "alerting": "Create a new evaluation group to use for this alert rule.",
+            "recording": "Create a new evaluation group to use for this recording rule."
+          }
+        },
+        "text": {
+          "alerting": "Define how often the alert rule is evaluated",
+          "recording": "Define how often the recording rule is evaluated."
+        }
+      }
     },
     "list-view": {
       "empty": {
