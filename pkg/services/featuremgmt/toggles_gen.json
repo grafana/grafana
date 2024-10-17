@@ -2968,6 +2968,18 @@
     },
     {
       "metadata": {
+        "name": "timeRangeProvider",
+        "resourceVersion": "1728565214224",
+        "creationTimestamp": "2024-10-10T13:00:14Z"
+      },
+      "spec": {
+        "description": "Enables time pickers sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
         "name": "tlsMemcached",
         "resourceVersion": "1722608472573",
         "creationTimestamp": "2024-05-09T19:12:08Z",

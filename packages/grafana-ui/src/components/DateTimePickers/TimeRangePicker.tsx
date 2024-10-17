@@ -25,6 +25,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
+import { useTimeSync } from './utils/useTimeSync';
 
 /** @public */
 export interface TimeRangePickerProps {
@@ -32,8 +33,19 @@ export interface TimeRangePickerProps {
   value: TimeRange;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
+
+  /**
+   * If you handle sync state between pickers yourself use this prop to pass the sync button component.
+   * Otherwise, a default one will show automatically if sync is possible.
+   */
   timeSyncButton?: JSX.Element;
+
+  // Use to manually set the synced styles for the time range picker if you need to control the sync state yourself.
   isSynced?: boolean;
+
+  // Use to manually set the initial sync state for the time range picker. It will use the current value to sync.
+  initialIsSynced?: boolean;
+
   onChange: (timeRange: TimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
   onChangeFiscalYearStartMonth?: (month: number) => void;
@@ -65,8 +77,6 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onError,
     timeZone,
     fiscalYearStartMonth,
-    timeSyncButton,
-    isSynced,
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
@@ -75,10 +85,19 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     isOnCanvas,
     onToolbarTimePickerClick,
     weekStart,
+    initialIsSynced,
   } = props;
 
+  const { onChangeWithSync, isSynced, timeSyncButton } = useTimeSync({
+    initialIsSynced,
+    value,
+    onChangeProp: props.onChange,
+    isSyncedProp: props.isSynced,
+    timeSyncButtonProp: props.timeSyncButton,
+  });
+
   const onChange = (timeRange: TimeRange) => {
-    props.onChange(timeRange);
+    onChangeWithSync(timeRange);
     setOpen(false);
   };
 
