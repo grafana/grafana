@@ -231,6 +231,10 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 			}
 		}
 	}
+
+	if rule.Type() == models.RuleTypeRecording {
+		models.ClearRecordingRuleIgnoredFields(&rule)
+	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		ids, err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
 			rule,
@@ -613,6 +617,11 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
+
+	if rule.Type() == models.RuleTypeRecording {
+		models.ClearRecordingRuleIgnoredFields(&rule)
+	}
+
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []models.UpdateRule{
 			{

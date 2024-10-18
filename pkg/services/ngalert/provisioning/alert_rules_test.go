@@ -620,6 +620,21 @@ func TestAlertRuleService(t *testing.T) {
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
 	})
+
+	t.Run("should clear recording rule fields correctly", func(t *testing.T) {
+		rule := dummyRule("test#3", orgID)
+		rule.Record = &models.Record{
+			Metric: "test",
+			From:   "A",
+		}
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Empty(t, rule.NoDataState)
+		require.Empty(t, rule.For)
+		require.Empty(t, rule.Condition)
+		require.Empty(t, rule.ExecErrState)
+		require.Nil(t, rule.NotificationSettings)
+	})
 }
 
 func TestCreateAlertRule(t *testing.T) {
