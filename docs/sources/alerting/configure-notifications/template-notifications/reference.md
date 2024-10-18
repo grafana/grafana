@@ -51,17 +51,17 @@ This documentation lists the data available for use in notification templates.
 
 In notification templates, dot (`.`) is initialized with the following data:
 
-| Name                | Type              | Description                                                                                          |
-| ------------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
-| `Receiver`          | string            | The name of the contact point sending the notification                                               |
-| `Status`            | string            | The status is `firing` if at least one alert is firing, otherwise `resolved`                         |
-| `Alerts`            | [][Alert](#alert) | List of all firing and resolved alerts in this notification                                          |
-| `Alerts.Firing`     | [][Alert](#alert) | List of all firing alerts in this notification                                                       |
-| `Alerts.Resolved`   | [][Alert](#alert) | List of all resolved alerts in this notification                                                     |
-| `GroupLabels`       | [KV](#kv)         | The labels that group these alerts in this notification based on the `Group by` option               |
-| `CommonLabels`      | [KV](#kv)         | The labels common to all alerts in this notification                                                 |
-| `CommonAnnotations` | [KV](#kv)         | The annotations common to all alerts in this notification                                            |
-| `ExternalURL`       | string            | A link to Grafana, or the Alertmanager that sent this notification if using an external Alertmanager |
+| Name                | Type              | Description                                                                                           |
+| ------------------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `Receiver`          | string            | The name of the contact point sending the notification                                                |
+| `Status`            | string            | The status is `firing` if at least one alert is firing, otherwise `resolved`.                         |
+| `Alerts`            | [][Alert](#alert) | List of all firing and resolved alerts in this notification.                                          |
+| `Alerts.Firing`     | [][Alert](#alert) | List of all firing alerts in this notification.                                                       |
+| `Alerts.Resolved`   | [][Alert](#alert) | List of all resolved alerts in this notification.                                                     |
+| `GroupLabels`       | [KV](#kv)         | The labels that group these alerts in this notification based on the `Group by` option.               |
+| `CommonLabels`      | [KV](#kv)         | The labels common to all alerts in this notification.                                                 |
+| `CommonAnnotations` | [KV](#kv)         | The annotations common to all alerts in this notification.                                            |
+| `ExternalURL`       | string            | A link to Grafana, or the Alertmanager that sent this notification if using an external Alertmanager. |
 
 It's important to remember that [a single notification can group multiple alerts](ref:alert-grouping) to reduce the number of alerts you receive. `Alerts` is an array that includes all the alerts in the notification.
 
@@ -85,19 +85,24 @@ Here's an example that prints all available notification data from dot (`.`):
 
 `Alert` contains data for an individual alert:
 
+| Name           | Type      | Description                                                                                                                                    |
+| -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Status`       | string    | Firing or resolved.                                                                                                                            |
+| `Labels`       | [KV](#kv) | The labels for this alert.                                                                                                                     |
+| `Annotations`  | [KV](#kv) | The annotations for this alert.                                                                                                                |
+| `StartsAt`     | time      | The time the alert fired                                                                                                                       |
+| `EndsAt`       | time      | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received. |
+| `GeneratorURL` | string    | A link to Grafana, or the source of the alert if using an external alert generator.                                                            |
+| `Fingerprint`  | string    | A unique string that identifies the alert.                                                                                                     |
+
+Grafana-managed alerts include these additional properties:
+
 | Name           | Type      | Description                                                                          |
 | -------------- | --------- | ------------------------------------------------------------------------------------ |
-| `Status`       | string    | Firing or resolved                                                                   |
-| `Labels`       | [KV](#kv) | The labels for this alert                                                            |
-| `Annotations`  | [KV](#kv) | The annotations for this alert                                                       |
-| `Values`       | [KV](#kv) | The values of all expressions, including Classic Conditions                          |
-| `StartsAt`     | time      | The time the alert fired                                                             |
-| `EndsAt`       | time      |                                                                                      |
-| `GeneratorURL` | string    | A link to Grafana, or the source of the alert if using an external alert generator   |
-| `SilenceURL`   | string    | A link to silence the alert                                                          |
-| `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation          |
-| `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation                           |
-| `Fingerprint`  | string    | A unique string that identifies the alert                                            |
+| `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation.         |
+| `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation.                          |
+| `SilenceURL`   | string    | A link to silence the alert.                                                         |
+| `Values`       | [KV](#kv) | The values of all expressions, including Classic Conditions.                         |
 | `ValueString`  | string    | A string that contains the labels and value of each reduced expression in the alert. |
 
 This example iterates over the list of firing and resolved alerts (`.Alerts`) in the notification and prints the data for each alert:
@@ -108,14 +113,16 @@ This example iterates over the list of firing and resolved alerts (`.Alerts`) in
   {{ .Status }}
   {{ .Labels }}
   {{ .Annotations }}
-  {{ .Values }}
   {{ .StartsAt }}
   {{ .EndsAt }}
   {{ .GeneratorURL }}
-  {{ .SilenceURL }}
+  {{ .Fingerprint }}
+
+  {{/* Only available for Grafana-managed alerts */}}
   {{ .DashboardURL }}
   {{ .PanelURL }}
-  {{ .Fingerprint }}
+  {{ .SilenceURL }}
+  {{ .Values }}
   {{ .ValueString }}
 {{ end }}
 {{ end }}

@@ -280,7 +280,7 @@ Alert annotations: 2
 
 ## Print URLs for runbook and alert data in Grafana
 
-The following example displays additional [alert data](ref:reference-alert), such as the runbook link, `DashboardURL` and `SilenceURL`, for each alert in the notification.
+Note that the following example works only for Grafana-managed alerts. It displays some [alert data](ref:reference-alert) such as `DashboardURL`, `PanelURL`, and `SilenceURL`, which are exclusive to Grafana-managed alerts.
 
 ```go
 {{ define "custom.alert_additional_details" -}}
