@@ -188,15 +188,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
-			// can afford the breaking change, or we've detemined no one else is relying on it
-			Name:        "topnav",
-			Description: "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
-			Stage:       FeatureStageDeprecated,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
@@ -742,6 +733,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "kubernetesDashboardsAPI",
+			Description:     "Use the kubernetes API in the backend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:        "kubernetesFolders",
@@ -1457,8 +1455,8 @@ var (
 			Owner:        growthAndOnboarding,
 		},
 		{
-			Name:              "appPlatformAccessTokens",
-			Description:       "Enables the use of access tokens for the App Platform",
+			Name:              "appPlatformGrpcClientAuth",
+			Description:       "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
@@ -1517,6 +1515,12 @@ var (
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:        "unifiedStorageBigObjectsSupport",
+			Description: "Enables to save big objects in blob storage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 	}
 )

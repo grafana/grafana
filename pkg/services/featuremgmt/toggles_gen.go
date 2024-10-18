@@ -99,10 +99,6 @@ const (
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
-	// FlagTopnav
-	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
-	FlagTopnav = "topnav"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -398,6 +394,10 @@ const (
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
+
+	// FlagKubernetesDashboardsAPI
+	// Use the kubernetes API in the backend for dashboards
+	FlagKubernetesDashboardsAPI = "kubernetesDashboardsAPI"
 
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
@@ -779,9 +779,9 @@ const (
 	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
 	FlagHomeSetupGuide = "homeSetupGuide"
 
-	// FlagAppPlatformAccessTokens
-	// Enables the use of access tokens for the App Platform
-	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
+	// FlagAppPlatformGrpcClientAuth
+	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
+	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
 	// FlagAppSidecar
 	// Enable the app sidecar feature that allows rendering 2 apps at the same time
@@ -814,4 +814,8 @@ const (
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
+
+	// FlagUnifiedStorageBigObjectsSupport
+	// Enables to save big objects in blob storage
+	FlagUnifiedStorageBigObjectsSupport = "unifiedStorageBigObjectsSupport"
 )

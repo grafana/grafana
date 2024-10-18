@@ -7,12 +7,7 @@ import type { Monaco, monacoTypes } from '@grafana/ui';
 import TempoLanguageProvider from '../language_provider';
 
 import { getSituation, Situation } from './situation';
-import { intrinsics, scopes } from './traceql';
-
-interface Props {
-  languageProvider: TempoLanguageProvider;
-  setAlertText: (text?: string) => void;
-}
+import { scopes } from './traceql';
 
 type MinimalCompletionItem = {
   label: string;
@@ -20,6 +15,17 @@ type MinimalCompletionItem = {
   detail?: string;
   documentation?: string | IMarkdownString;
 };
+
+export type CompletionItemType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE' | 'FUNCTION';
+type CompletionItem = MinimalCompletionItem & {
+  type: CompletionItemType;
+  insertTextRules?: monacoTypes.languages.CompletionItemInsertTextRule; // we used it to position the cursor
+};
+
+interface Props {
+  languageProvider: TempoLanguageProvider;
+  setAlertText: (text?: string) => void;
+}
 
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
@@ -322,7 +328,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @param situation
    * @private
    */
-  private async getCompletions(situation: Situation, setAlertText: (text?: string) => void): Promise<Completion[]> {
+  private async getCompletions(situation: Situation, setAlertText: (text?: string) => void): Promise<CompletionItem[]> {
     switch (situation.type) {
       // This should only happen for cases that we do not support yet
       case 'UNKNOWN': {
@@ -339,42 +345,26 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.getTagsCompletions();
       }
       case 'SPANSET_IN_THE_MIDDLE':
-        return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
       case 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE':
-        return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions([...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps]);
       case 'SPANSET_IN_NAME':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
         return this.getTagsCompletions(undefined, situation.scope);
       case 'SPANSET_EXPRESSION_OPERATORS':
-        return [
+        return this.getOperatorsCompletions([
           ...CompletionProvider.comparisonOps,
           ...CompletionProvider.logicalOps,
           ...CompletionProvider.arithmeticOps,
-        ].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        ]);
       case 'SPANFIELD_COMBINING_OPERATORS':
-        return [
+        return this.getOperatorsCompletions([
           ...CompletionProvider.logicalOps,
           ...CompletionProvider.arithmeticOps,
           ...CompletionProvider.comparisonOps,
-        ].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        ]);
       case 'SPANSET_COMBINING_OPERATORS':
-        return CompletionProvider.spansetOps.map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions(CompletionProvider.spansetOps);
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
         const functions = CompletionProvider.functions.map((key) => ({
           ...key,
@@ -386,10 +376,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           .concat(this.getTagsCompletions('.'));
         return [...functions, ...tags];
       case 'SPANSET_COMPARISON_OPERATORS':
-        return CompletionProvider.comparisonOps.map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions(CompletionProvider.comparisonOps);
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
@@ -403,8 +390,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           }
         }
 
-        const items: Completion[] = [];
-
         const getInsertionText = (val: SelectableValue<string>): string => {
           if (situation.betweenQuotes) {
             return val.label!;
@@ -412,6 +397,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           return val.type === 'string' ? `"${val.label}"` : val.label!;
         };
 
+        const items: CompletionItem[] = [];
         tagValues?.forEach((val) => {
           if (val?.label) {
             items.push({
@@ -439,7 +425,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
   }
 
-  private getTagsCompletions(prepend?: string, scope?: string): Completion[] {
+  private getTagsCompletions(prepend?: string, scope?: string): CompletionItem[] {
     const tags = this.languageProvider.getTraceqlAutocompleteTags(scope);
     return tags
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
@@ -450,8 +436,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       }));
   }
 
-  private getIntrinsicsCompletions(prepend?: string, append?: string): Completion[] {
-    return intrinsics.map((key) => ({
+  private getIntrinsicsCompletions(prepend?: string, append?: string): CompletionItem[] {
+    return this.languageProvider.getIntrinsics().map((key) => ({
       label: key,
       insertText: (prepend || '') + key + (append || ''),
       type: 'KEYWORD',
@@ -459,12 +445,19 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }));
   }
 
-  private getScopesCompletions(prepend?: string, append?: string): Completion[] {
+  private getScopesCompletions(prepend?: string, append?: string): CompletionItem[] {
     return scopes.map((key) => ({
       label: key,
       insertText: (prepend || '') + key + (append || ''),
       type: 'SCOPE',
       insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+    }));
+  }
+
+  private getOperatorsCompletions(ops: MinimalCompletionItem[]): CompletionItem[] {
+    return ops.map((key) => ({
+      ...key,
+      type: 'OPERATOR',
     }));
   }
 }
@@ -474,7 +467,10 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
  * @param type
  * @param monaco
  */
-function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): monacoTypes.languages.CompletionItemKind {
+function getMonacoCompletionItemKind(
+  type: CompletionItemType,
+  monaco: Monaco
+): monacoTypes.languages.CompletionItemKind {
   switch (type) {
     case 'TAG_NAME':
       return monaco.languages.CompletionItemKind.Enum;
@@ -489,24 +485,9 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
     case 'FUNCTION':
       return monaco.languages.CompletionItemKind.Function;
     default:
-      throw new Error(`Unexpected CompletionType: ${type}`);
+      throw new Error(`Unexpected CompletionItemType: ${type}`);
   }
 }
-
-export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE' | 'FUNCTION';
-type Completion = {
-  type: CompletionType;
-  label: string;
-  insertText: string;
-  insertTextRules?: monacoTypes.languages.CompletionItemInsertTextRule; // we used it to position the cursor
-  documentation?: string | IMarkdownString;
-  detail?: string;
-};
-
-export type Tag = {
-  name: string;
-  value: string;
-};
 
 function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel, position: monacoTypes.Position) {
   const word = model.getWordAtPosition(position);
@@ -539,7 +520,7 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
  */
 function fixSuggestion(
   suggestion: monacoTypes.languages.CompletionItem,
-  itemType: CompletionType,
+  itemType: CompletionItemType,
   model: monacoTypes.editor.ITextModel,
   offset: number
 ) {

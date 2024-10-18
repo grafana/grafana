@@ -674,6 +674,12 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+		// #TODO is some kind of intermediate conversion required as is the case with user id where
+		// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
+		// part of the parsing?
+		f.CreatedByUID = user.GetUID()
+		f.UpdatedByUID = user.GetUID()
+
 		if f.ParentUID == "" {
 			return f, nil
 		}
