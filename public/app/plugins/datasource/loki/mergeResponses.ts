@@ -6,31 +6,29 @@ import {
   DataQueryResponseData,
   Field,
   FieldType,
+  LoadingState,
   QueryResultMetaStat,
   shallowCompare,
 } from '@grafana/data';
+import { LOADING_FRAME_NAME } from './querySplitting';
 
-export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
-  if (!currentResult) {
-    return cloneQueryResponse(newResult);
+export function combineResponses(currentResponse: DataQueryResponse | null, newResponse: DataQueryResponse) {
+  if (!currentResponse) {
+    return cloneQueryResponse(newResponse);
   }
 
-  newResult.data.forEach((newFrame) => {
-    const currentFrame = currentResult.data.find((frame) => shouldCombine(frame, newFrame));
+  newResponse.data.forEach((newFrame) => {
+    const currentFrame = currentResponse.data.find((frame) => shouldCombine(frame, newFrame));
     if (!currentFrame) {
-      currentResult.data.push(cloneDataFrame(newFrame));
+      currentResponse.data.push(cloneDataFrame(newFrame));
       return;
     }
     mergeFrames(currentFrame, newFrame);
   });
 
-  const mergedErrors = [...(currentResult.errors ?? []), ...(newResult.errors ?? [])];
-
-  // we make sure to have `.errors` as undefined, instead of empty-array
-  // when no errors.
-
+  const mergedErrors = [...(currentResponse.errors ?? []), ...(newResponse.errors ?? [])];
   if (mergedErrors.length > 0) {
-    currentResult.errors = mergedErrors;
+    currentResponse.errors = mergedErrors;
   }
 
   // the `.error` attribute is obsolete now,
@@ -38,17 +36,57 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   // some grafana parts do not behave well.
   // we just choose the old error, if it exists,
   // otherwise the new error, if it exists.
-  const mergedError = currentResult.error ?? newResult.error;
+  const mergedError = currentResponse.error ?? newResponse.error;
   if (mergedError != null) {
-    currentResult.error = mergedError;
+    currentResponse.error = mergedError;
   }
 
-  const mergedTraceIds = [...(currentResult.traceIds ?? []), ...(newResult.traceIds ?? [])];
+  const mergedTraceIds = [...(currentResponse.traceIds ?? []), ...(newResponse.traceIds ?? [])];
   if (mergedTraceIds.length > 0) {
-    currentResult.traceIds = mergedTraceIds;
+    currentResponse.traceIds = mergedTraceIds;
   }
 
-  return currentResult;
+  return currentResponse;
+}
+
+/**
+ * Given an existing DataQueryResponse, replace any data frame present in newResponse with those in newResponse
+ */
+export function replaceResponses(currentResponse: DataQueryResponse | null, newResponse: DataQueryResponse) {
+  if (!currentResponse) {
+    return cloneQueryResponse(newResponse);
+  }
+
+  newResponse.data.forEach((newFrame) => {
+    const currentFrameIndex = currentResponse.data.findIndex((frame) => shouldCombine(frame, newFrame));
+    if (currentFrameIndex < 0) {
+      currentResponse.data.push(cloneDataFrame(newFrame));
+      return;
+    }
+    currentResponse.data[currentFrameIndex] = newFrame;
+  });
+
+  // Clean up loading frame when newResponse contains the final response
+  if (newResponse.state === LoadingState.Done) {
+    currentResponse.data = currentResponse.data.filter((frame) => frame.name !== LOADING_FRAME_NAME);
+  }
+
+  const mergedErrors = [...(currentResponse.errors ?? []), ...(newResponse.errors ?? [])];
+  if (mergedErrors.length > 0) {
+    currentResponse.errors = mergedErrors;
+  }
+
+  const mergedError = currentResponse.error ?? newResponse.error;
+  if (mergedError != null) {
+    currentResponse.error = mergedError;
+  }
+
+  const mergedTraceIds = [...(currentResponse.traceIds ?? []), ...(newResponse.traceIds ?? [])];
+  if (mergedTraceIds.length > 0) {
+    currentResponse.traceIds = mergedTraceIds;
+  }
+
+  return currentResponse;
 }
 
 /**
