@@ -189,26 +189,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           </>
         )}
         <DataTrailsBookmarks model={model} onDelete={onDelete} />
-        {/* <div className={styles.horizontalLine} />
-        <div className={css(styles.gap20, styles.bookmarkHeader)}>
-          <div className={styles.header}>Or view bookmarks</div>
-          <svg xmlns="http://www.w3.org/2000/svg" width="25" height="24" viewBox="0 0 25 24" fill="none">
-            <path d="M17.4999 9.17019C17.3126 8.98394 17.0591 8.87939 16.7949 8.87939C16.5308 8.87939 16.2773 8.98394 16.0899 9.17019L12.4999 12.7102L8.95995 9.17019C8.77259 8.98394 8.51913 8.87939 8.25495 8.87939C7.99076 8.87939 7.73731 8.98394 7.54995 9.17019C7.45622 9.26315 7.38183 9.37375 7.33106 9.49561C7.28029 9.61747 7.25415 9.74818 7.25415 9.88019C7.25415 10.0122 7.28029 10.1429 7.33106 10.2648C7.38183 10.3866 7.45622 10.4972 7.54995 10.5902L11.7899 14.8302C11.8829 14.9239 11.9935 14.9983 12.1154 15.0491C12.2372 15.0998 12.3679 15.126 12.4999 15.126C12.632 15.126 12.7627 15.0998 12.8845 15.0491C13.0064 14.9983 13.117 14.9239 13.2099 14.8302L17.4999 10.5902C17.5937 10.4972 17.6681 10.3866 17.7188 10.2648C17.7696 10.1429 17.7957 10.0122 17.7957 9.88019C17.7957 9.74818 17.7696 9.61747 17.7188 9.49561C17.6681 9.37375 17.5937 9.26315 17.4999 9.17019Z" fill="#CCCCDC" fillOpacity="0.65" />
-          </svg>
-        </div>
-        <div className={styles.trailList}>
-          {getTrailStore().bookmarks.map((bookmark, index) => {
-            return (
-              <DataTrailCard
-                key={getBookmarkKey(bookmark)}
-                bookmark={bookmark}
-                onSelect={() => model.onSelectBookmark(index)}
-                onDelete={() => onDelete(index)}
-              />
-            );
-          })}
-        </div> */}
-        {/* </Stack> */}
       </div>
     );
   };
