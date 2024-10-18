@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -48,9 +50,40 @@ func TestSimpleServer(t *testing.T) {
 	server, err := NewResourceServer(ResourceServerOptions{
 		Backend: store,
 	})
+
 	require.NoError(t, err)
 
+	opts := &ListOptions{
+		Key: &ResourceKey{
+			Group:    "playlist.grafana.app",
+			Resource: "playlists",
+		},
+	}
+	wr := &WatchRequest{
+		Options: opts,
+	}
+
+	var wg sync.WaitGroup
+
+	rws := &testWatchServer{
+		context: ctx,
+		wg:      &wg,
+		limit:   3,
+	}
+
+	go func() {
+		for rws.done == false {
+			err = server.Watch(wr, rws)
+			require.NoError(t, err)
+		}
+	}()
+
+	// Wait for the watch to get wired above
+	time.Sleep(time.Duration(1) * time.Second)
+
 	t.Run("playlist happy CRUD paths", func(t *testing.T) {
+		wg.Add(3) // 3 events expected - create, update, delete
+
 		raw := []byte(`{
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
@@ -77,7 +110,7 @@ func TestSimpleServer(t *testing.T) {
 
 		key := &ResourceKey{
 			Group:     "playlist.grafana.app",
-			Resource:  "rrrr", // can be anything :(
+			Resource:  "playlists", // can be anything :(
 			Namespace: "default",
 			Name:      "fdgsv37qslr0ga",
 		}
@@ -163,6 +196,8 @@ func TestSimpleServer(t *testing.T) {
 		}})
 		require.NoError(t, err)
 		require.Len(t, all.Items, 0) // empty
+
+		wg.Wait()
 	})
 
 	t.Run("playlist update optimistic concurrency check", func(t *testing.T) {
@@ -192,7 +227,7 @@ func TestSimpleServer(t *testing.T) {
 
 		key := &ResourceKey{
 			Group:     "playlist.grafana.app",
-			Resource:  "rrrr", // can be anything :(
+			Resource:  "playlists", // can be anything :(
 			Namespace: "default",
 			Name:      "fdgsv37qslr0ga",
 		}
@@ -217,4 +252,37 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
 	})
+}
+
+type testWatchServer struct {
+	grpc.ServerStream
+	context context.Context
+	wg      *sync.WaitGroup
+	done    bool
+	counter int
+	limit   int
+}
+
+func (f *testWatchServer) Send(we *WatchEvent) error {
+	f.counter++
+	f.wg.Done()
+	if f.counter == f.limit {
+		f.done = true
+	}
+	return nil
+}
+
+func (f *testWatchServer) RecvMsg(m interface{}) error {
+	return nil
+}
+
+func (f *testWatchServer) SendMsg(m interface{}) error {
+	return nil
+}
+
+func (f *testWatchServer) Context() context.Context {
+	if f.context == nil {
+		f.context = context.Background()
+	}
+	return f.context
 }
