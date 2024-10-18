@@ -15,6 +15,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
@@ -280,6 +281,8 @@ export const Table = memo((props: Props) => {
     if (itemsRangeEnd > data.length) {
       itemsRangeEnd = data.length;
     }
+    const numRows = rows.length;
+    const displayedEnd = itemsRangeEnd < rows.length ? itemsRangeEnd : rows.length;
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
         <Pagination
@@ -290,7 +293,9 @@ export const Table = memo((props: Props) => {
         />
         {isSmall ? null : (
           <div className={tableStyles.paginationSummary}>
-            {itemsRangeStart} - {itemsRangeEnd < rows.length ? itemsRangeEnd : rows.length} of {rows.length} rows
+            <Trans i18nKey="grafana-ui.table.pagination-summary">
+              {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
+            </Trans>
           </div>
         )}
       </div>

@@ -73,7 +73,12 @@ export const PageToolbar = memo(
     const titleEl = (
       <>
         <span className={styles.truncateText}>{title}</span>
-        {section && <span className={styles.pre}> / {section}</span>}
+        {section && (
+          <span className={styles.pre}>
+            {' / '}
+            {section}
+          </span>
+        )}
       </>
     );
 
@@ -109,7 +114,7 @@ export const PageToolbar = memo(
                 </Link>
                 {titleHref && (
                   <span className={cx(styles.titleText, styles.titleDivider)} aria-hidden>
-                    /
+                    {'/'}
                   </span>
                 )}
               </>

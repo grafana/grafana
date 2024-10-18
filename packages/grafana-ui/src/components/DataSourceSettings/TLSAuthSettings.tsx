@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { KeyValue } from '@grafana/data';
 
+import { Trans } from '../../utils/i18n';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -58,7 +59,9 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
           })
         )}
       >
-        <h6>TLS/SSL Auth Details</h6>
+        <h6>
+          <Trans i18nKey="grafana-ui.data-source-settings.tls-heading">TLS/SSL Auth Details</Trans>
+        </h6>
         <Tooltip
           placement="right-end"
           content="TLS/SSL Certs are encrypted and stored in the Grafana database."

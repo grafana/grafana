@@ -21,6 +21,7 @@ import {
 import { Components } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';
 import { Icon } from '../../Icon/Icon';
@@ -364,10 +365,10 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
         </div>
         <Stack>
           <Button type="button" onClick={handleApply}>
-            Apply
+            <Trans i18nKey="grafana-ui.date-time-picker.apply">Apply</Trans>
           </Button>
           <Button variant="secondary" type="button" onClick={onClose}>
-            Cancel
+            <Trans i18nKey="grafana-ui.date-time-picker.cancel">Cancel</Trans>
           </Button>
         </Stack>
       </div>
