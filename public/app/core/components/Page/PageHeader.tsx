@@ -8,7 +8,6 @@ import { PageInfo } from '../PageInfo/PageInfo';
 
 import { EditableTitle } from './EditableTitle';
 import { PageInfoItem } from './types';
-import ReactDOMServer from "react-dom/server";
 
 export interface Props {
   navItem: NavModelItem;
@@ -32,10 +31,6 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
     </div>
   );
 
-  const a = ReactDOMServer.renderToString(subTitle)
-  console.log(a);
-  const b = ReactDOMServer.renderToString(sub)
-  console.log(b)
   return (
     <div className={styles.pageHeader}>
       <div className={styles.topRow}>
