@@ -108,12 +108,12 @@ require (
 	github.com/sosodev/duration v1.2.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.11 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.0.0-20240518090000-14441aefdf88 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.2.0-alpha // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.4.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.31.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0 // indirect
-	go.opentelemetry.io/otel/log v0.2.0-alpha // indirect
-	go.opentelemetry.io/otel/sdk/log v0.2.0-alpha // indirect
+	go.opentelemetry.io/otel/log v0.4.0 // indirect
+	go.opentelemetry.io/otel/sdk/log v0.4.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
 	gotest.tools/v3 v3.5.1 // indirect
