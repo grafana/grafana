@@ -65,6 +65,5 @@ func TestToModel(t *testing.T) {
 		require.Empty(t, rule.Condition)
 		require.Empty(t, rule.ExecErrState)
 		require.Nil(t, rule.NotificationSettings)
-
 	})
 }
