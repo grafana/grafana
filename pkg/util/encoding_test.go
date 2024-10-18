@@ -217,3 +217,13 @@ func TestGetRandomDigits(t *testing.T) {
 	// 99.99% probability for 9 degrees of freedom
 	assert.Less(t, chiSquared, 33.7199, "Chi squared value must be less than the 99.99% critical bound")
 }
+
+func TestEscapeStringForRegex(t *testing.T) {
+	escaped := EscapeStringForRegex(`a+b*c?d`)
+	assert.Equal(t, escaped, `a\+b\*c\?d`)
+}
+
+func TestUnEscapeStringForRegex(t *testing.T) {
+	escaped := UnEscapeStringFromRegex(`a\+b\*c\?d`)
+	assert.Equal(t, escaped, `a+b*c?d`)
+}
