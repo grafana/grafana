@@ -19,7 +19,7 @@ export function DataTrailsBookmarks({ model, onDelete }: any) {
       {getTrailStore().bookmarks.length > 0 && (
         <>
           <div className={styles.horizontalLine} />
-          <div className={css(styles.gap20, styles.bookmarkHeader)}>
+          <div className={css(styles.gap20, styles.bookmarkHeader, styles.bottomGap24)}>
             <div className={styles.header}>Or view bookmarks</div>
             <IconButton
               name="angle-down"
@@ -61,6 +61,9 @@ function getStyles(theme: GrafanaTheme2) {
     gap20: css({
       marginTop: theme.spacing(3),
       // marginBottom: '20px',
+    }),
+    bottomGap24: css({
+      marginBottom: theme.spacing(3),
     }),
     bookmarkHeader: css({
       display: 'flex',
