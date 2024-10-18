@@ -203,9 +203,9 @@ const getRolePickerInputStyles = (
 };
 
 const getTooltipStyles = (theme: GrafanaTheme2) => ({
-  tooltip: css`
-    p {
-      margin-bottom: ${theme.spacing(0.5)};
-    }
-  `,
+  tooltip: css({
+    p: {
+      marginBottom: theme.spacing(0.5),
+    },
+  }),
 });
