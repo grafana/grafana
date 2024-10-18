@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { ComponentType } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { HistoryWrapper, locationService, LocationServiceProvider, useChromeHeaderHeight } from '@grafana/runtime';
@@ -25,24 +24,22 @@ export function RouterWrapper(props: RouterWrapperProps) {
   return (
     <Router>
       <LocationServiceProvider service={locationService}>
-        <CompatRouter>
-          <ModalsContextProvider>
-            <AppChrome>
-              <AngularRoot />
-              <AppNotificationList />
-              <Stack gap={0} grow={1} direction="column">
-                {props.pageBanners.map((Banner, index) => (
-                  <Banner key={index.toString()} />
-                ))}
-                {props.routes}
-              </Stack>
-              {props.bodyRenderHooks.map((Hook, index) => (
-                <Hook key={index.toString()} />
+        <ModalsContextProvider>
+          <AppChrome>
+            <AngularRoot />
+            <AppNotificationList />
+            <Stack gap={0} grow={1} direction="column">
+              {props.pageBanners.map((Banner, index) => (
+                <Banner key={index.toString()} />
               ))}
-            </AppChrome>
-            <ModalRoot />
-          </ModalsContextProvider>
-        </CompatRouter>
+              {props.routes}
+            </Stack>
+            {props.bodyRenderHooks.map((Hook, index) => (
+              <Hook key={index.toString()} />
+            ))}
+          </AppChrome>
+          <ModalRoot />
+        </ModalsContextProvider>
       </LocationServiceProvider>
     </Router>
   );
@@ -97,21 +94,19 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
           <div {...secondaryProps}>
             <Router>
               <LocationServiceProvider service={memoryLocationService}>
-                <CompatRouter>
-                  <GlobalStyles />
-                  <div className={styles.secondAppWrapper}>
-                    <div className={styles.secondAppToolbar}>
-                      <IconButton
-                        size={'lg'}
-                        style={{ margin: '8px' }}
-                        name={'times'}
-                        aria-label={'close'}
-                        onClick={() => closeApp(activePluginId)}
-                      />
-                    </div>
-                    <AppRootPage pluginId={activePluginId} />
+                <GlobalStyles />
+                <div className={styles.secondAppWrapper}>
+                  <div className={styles.secondAppToolbar}>
+                    <IconButton
+                      size={'lg'}
+                      style={{ margin: '8px' }}
+                      name={'times'}
+                      aria-label={'close'}
+                      onClick={() => closeApp(activePluginId)}
+                    />
                   </div>
-                </CompatRouter>
+                  <AppRootPage pluginId={activePluginId} />
+                </div>
               </LocationServiceProvider>
             </Router>
           </div>

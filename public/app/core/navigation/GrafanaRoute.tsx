@@ -64,6 +64,7 @@ export function GrafanaRoute(props: Props) {
 
 export function GrafanaRouteWrapper({ route }: Pick<Props, 'route'>) {
   const location = useLocation();
+  console.log('loc', location);
   const roles = route.roles ? route.roles() : [];
   if (roles?.length) {
     if (!roles.some((r: string) => contextSrv.hasRole(r))) {

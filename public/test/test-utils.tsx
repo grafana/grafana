@@ -6,7 +6,6 @@ import { Fragment, PropsWithChildren } from 'react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
@@ -64,8 +63,6 @@ const getWrapper = ({
     ? ({ children }: PropsWithChildren) => <Router history={history}>{children}</Router>
     : ({ children }: PropsWithChildren) => <Fragment>{children}</Fragment>;
 
-  const PotentialCompatRouter = renderWithRouter ? CompatRouter : Fragment;
-
   const context = {
     ...getGrafanaContextMock(),
     ...grafanaContext,
@@ -81,9 +78,7 @@ const getWrapper = ({
         <GrafanaContext.Provider value={context}>
           <PotentialRouter>
             <LocationServiceProvider service={locationService}>
-              <PotentialCompatRouter>
-                <ModalsContextProvider>{children}</ModalsContextProvider>
-              </PotentialCompatRouter>
+              <ModalsContextProvider>{children}</ModalsContextProvider>
             </LocationServiceProvider>
           </PotentialRouter>
         </GrafanaContext.Provider>
