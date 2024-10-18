@@ -74,6 +74,8 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 		if err == nil && q.Settings != nil {
 			switch q.Settings.Mode {
+			case ReduceModeStrict:
+				mapper = nil
 			case ReduceModeDrop:
 				mapper = mathexp.DropNonNumber{}
 			case ReduceModeReplace:

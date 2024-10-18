@@ -17,6 +17,10 @@ export function prettyTypeName(type: ResourceTableItem['type']) {
       return t('migrate-to-cloud.resource-type.mute_timing', 'Mute Timing');
     case 'NOTIFICATION_TEMPLATE':
       return t('migrate-to-cloud.resource-type.notification_template', 'Notification Template');
+    case 'CONTACT_POINT':
+      return t('migrate-to-cloud.resource-type.contact_point', 'Contact Point');
+    case 'NOTIFICATION_POLICY':
+      return t('migrate-to-cloud.resource-type.notification_policy', 'Notification Policy');
     default:
       return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
   }

@@ -39,8 +39,8 @@ export const ActionListItem = ({ action, onEdit, onRemove, index, itemKey }: Act
               </div>
             </div>
             <div className={styles.icons}>
-              <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit action title" />
-              <IconButton name="times" onClick={onRemove} className={styles.icon} tooltip="Remove action title" />
+              <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit action" />
+              <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove action" />
               <div className={styles.dragIcon} {...provided.dragHandleProps}>
                 <Icon name="draggabledots" size="lg" />
               </div>
