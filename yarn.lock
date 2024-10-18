@@ -2955,9 +2955,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.26.24":
-  version: 0.26.24
-  resolution: "@floating-ui/react@npm:0.26.24"
+"@floating-ui/react@npm:0.26.25":
+  version: 0.26.25
+  resolution: "@floating-ui/react@npm:0.26.25"
   dependencies:
     "@floating-ui/react-dom": "npm:^2.1.2"
     "@floating-ui/utils": "npm:^0.2.8"
@@ -2965,7 +2965,7 @@ __metadata:
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 10/903ffbee2c6726d117086e2a83f43d6ad339970758ce7979fd16cc7cf8dc0f5b869bd72c2c8ee1bcd6c63b190bb0960effd4d403e63685fb5aeed6b185041b08
+  checksum: 10/727bcc622db5126c72ad9949c04c9c7fdfbe2336bc6d3e4d05673381e14c39bf96724eb9be5f9b0c6be93388ffa71f81c88fa940874ae5d73224401abb7e2d42
   languageName: node
   linkType: hard
 
@@ -3111,7 +3111,6 @@ __metadata:
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     fast-deep-equal: "npm:^3.1.3"
     i18next: "npm:^23.0.0"
     immer: "npm:10.1.1"
@@ -3152,7 +3151,6 @@ __metadata:
     "@types/lodash": "npm:4.17.10"
     "@types/node": "npm:20.16.11"
     "@types/react": "npm:18.3.3"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     rxjs: "npm:7.8.1"
@@ -3185,7 +3183,6 @@ __metadata:
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     css-loader: "npm:7.1.2"
     fast-deep-equal: "npm:^3.1.3"
     jest: "npm:29.7.0"
@@ -3227,7 +3224,6 @@ __metadata:
     "@types/node": "npm:20.16.11"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/uuid": "npm:9.0.8"
     d3-random: "npm:^3.0.1"
     lodash: "npm:4.17.21"
@@ -3308,7 +3304,6 @@ __metadata:
     "@types/lodash": "npm:4.17.10"
     "@types/node": "npm:20.16.11"
     "@types/react": "npm:18.3.3"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     rxjs: "npm:7.8.1"
@@ -3340,7 +3335,6 @@ __metadata:
     "@types/lodash": "npm:4.17.10"
     "@types/node": "npm:20.16.11"
     "@types/react": "npm:18.3.3"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     rxjs: "npm:7.8.1"
@@ -3409,7 +3403,6 @@ __metadata:
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-test-renderer": "npm:18.3.0"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     debounce-promise: "npm:3.1.2"
     fast-deep-equal: "npm:^3.1.3"
     i18next: "npm:^23.0.0"
@@ -3442,7 +3435,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:2.1.2"
     "@grafana/lezer-logql": "npm:0.2.6"
-    "@grafana/lezer-traceql": "npm:0.0.19"
+    "@grafana/lezer-traceql": "npm:0.0.20"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:11.4.0-pre"
@@ -3822,12 +3815,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.19":
-  version: 0.0.19
-  resolution: "@grafana/lezer-traceql@npm:0.0.19"
+"@grafana/lezer-traceql@npm:0.0.20":
+  version: 0.0.20
+  resolution: "@grafana/lezer-traceql@npm:0.0.20"
   peerDependencies:
     "@lezer/lr": ^1.3.0
-  checksum: 10/e4ca2512c215ad94f6bf926d87b044e2c83ed7196cfbe770a5e75b62a97273925e4187ddec8bd57470fc6ed645185b6298f3bddf7591da5af2671158aa7aefc7
+  checksum: 10/53c05149ad7390ffe5f729df74fe09f8caa2f820a5eb922283083a630aaed443d9643ccf37172eb0c4b9600841dfccc0bd200064ad6bcdda3f6b88bb27bd11a5
   languageName: node
   linkType: hard
 
@@ -3860,7 +3853,6 @@ __metadata:
     "@types/node": "npm:20.16.11"
     "@types/react": "npm:18.3.3"
     "@types/systemjs": "npm:6.15.1"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     jest: "npm:^29.6.4"
     react: "npm:18.2.0"
     react-select: "npm:5.8.1"
@@ -3915,7 +3907,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.4"
     "@emotion/eslint-plugin": "npm:11.12.0"
-    "@floating-ui/react": "npm:0.26.24"
+    "@floating-ui/react": "npm:0.26.25"
     "@grafana/data": "npm:11.4.0-pre"
     "@grafana/e2e-selectors": "npm:11.4.0-pre"
     "@grafana/experimental": "npm:2.1.2"
@@ -3953,7 +3945,6 @@ __metadata:
     "@types/react-highlight-words": "npm:0.20.0"
     "@types/react-window": "npm:1.8.8"
     "@types/semver": "npm:7.5.8"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/uuid": "npm:9.0.8"
     "@typescript-eslint/eslint-plugin": "npm:6.21.0"
     "@typescript-eslint/parser": "npm:6.21.0"
@@ -4180,7 +4171,6 @@ __metadata:
     "@types/react-dom": "npm:18.2.25"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/systemjs": "npm:6.15.1"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/uuid": "npm:9.0.8"
     immutable: "npm:4.3.7"
     jest: "npm:^29.6.4"
@@ -4218,7 +4208,7 @@ __metadata:
     "@emotion/react": "npm:11.13.3"
     "@emotion/serialize": "npm:1.3.2"
     "@faker-js/faker": "npm:^9.0.0"
-    "@floating-ui/react": "npm:0.26.24"
+    "@floating-ui/react": "npm:0.26.25"
     "@grafana/data": "npm:11.4.0-pre"
     "@grafana/e2e-selectors": "npm:11.4.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
@@ -4228,9 +4218,9 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@monaco-editor/react": "npm:4.6.0"
     "@popperjs/core": "npm:2.11.8"
-    "@react-aria/dialog": "npm:3.5.18"
-    "@react-aria/focus": "npm:3.18.3"
-    "@react-aria/overlays": "npm:3.23.3"
+    "@react-aria/dialog": "npm:3.5.19"
+    "@react-aria/focus": "npm:3.18.4"
+    "@react-aria/overlays": "npm:3.23.4"
     "@react-aria/utils": "npm:3.25.3"
     "@rollup/plugin-node-resolve": "npm:15.3.0"
     "@storybook/addon-a11y": "npm:^8.1.6"
@@ -4276,7 +4266,6 @@ __metadata:
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:9.0.8"
     ansicolor: "npm:1.1.100"
@@ -6796,12 +6785,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/dialog@npm:3.5.18":
-  version: 3.5.18
-  resolution: "@react-aria/dialog@npm:3.5.18"
+"@react-aria/dialog@npm:3.5.19":
+  version: 3.5.19
+  resolution: "@react-aria/dialog@npm:3.5.19"
   dependencies:
-    "@react-aria/focus": "npm:^3.18.3"
-    "@react-aria/overlays": "npm:^3.23.3"
+    "@react-aria/focus": "npm:^3.18.4"
+    "@react-aria/overlays": "npm:^3.23.4"
     "@react-aria/utils": "npm:^3.25.3"
     "@react-types/dialog": "npm:^3.5.13"
     "@react-types/shared": "npm:^3.25.0"
@@ -6809,22 +6798,22 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/dbd40d14baeea7dae56956985234e29ada74a93899177c737c3312ec788b22a6d65179b7132cdbd6609e973d410f749071c68ceb6620d3cf6f60a03ddf648983
+  checksum: 10/44eba70f927cbdb003da37021ee6dde363abfa3c179437d83e19c72931c0fab12db20dbd603578d372df534ddce119e22b6908935544ce7a696523aa71b72e2e
   languageName: node
   linkType: hard
 
-"@react-aria/focus@npm:3.18.3, @react-aria/focus@npm:^3.18.3":
-  version: 3.18.3
-  resolution: "@react-aria/focus@npm:3.18.3"
+"@react-aria/focus@npm:3.18.4, @react-aria/focus@npm:^3.18.4":
+  version: 3.18.4
+  resolution: "@react-aria/focus@npm:3.18.4"
   dependencies:
-    "@react-aria/interactions": "npm:^3.22.3"
+    "@react-aria/interactions": "npm:^3.22.4"
     "@react-aria/utils": "npm:^3.25.3"
     "@react-types/shared": "npm:^3.25.0"
     "@swc/helpers": "npm:^0.5.0"
     clsx: "npm:^2.0.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/b11632e638de2f40ec12a4a8c818059b9bf7e90b288a93b46985350c887ae7ecdf037391537f86fbacb2a186dec7e7c41a8f2ff767fd232a8cac3189f03735b2
+  checksum: 10/912cd8a98cbe978240991bec8077c7956ca03ee78cb10152c7a1131a53fb622a5c9b87a4047909f032a7550c37ed9ec50488437a17c761c5c852b721cbaa0bd2
   languageName: node
   linkType: hard
 
@@ -6846,9 +6835,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/interactions@npm:^3.22.3":
-  version: 3.22.3
-  resolution: "@react-aria/interactions@npm:3.22.3"
+"@react-aria/interactions@npm:^3.22.4":
+  version: 3.22.4
+  resolution: "@react-aria/interactions@npm:3.22.4"
   dependencies:
     "@react-aria/ssr": "npm:^3.9.6"
     "@react-aria/utils": "npm:^3.25.3"
@@ -6856,20 +6845,20 @@ __metadata:
     "@swc/helpers": "npm:^0.5.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/bc1e8381bda81c106d64bb6eebe06c244bcd6905d1be95fdc26bad1c5d83c48d1ec5159fb1cb8ea9ee7ebafc76595702e2d174f3c8394b766779c0d34bfa6de7
+  checksum: 10/095d084bd642b47a5cc2a846fa50e0953682ddcad694cc78df344b1f235e292945746692f84d27f465f7ff0117b485c3f5b69f050be196df0c3e7343d3239551
   languageName: node
   linkType: hard
 
-"@react-aria/overlays@npm:3.23.3, @react-aria/overlays@npm:^3.23.3":
-  version: 3.23.3
-  resolution: "@react-aria/overlays@npm:3.23.3"
+"@react-aria/overlays@npm:3.23.4, @react-aria/overlays@npm:^3.23.4":
+  version: 3.23.4
+  resolution: "@react-aria/overlays@npm:3.23.4"
   dependencies:
-    "@react-aria/focus": "npm:^3.18.3"
+    "@react-aria/focus": "npm:^3.18.4"
     "@react-aria/i18n": "npm:^3.12.3"
-    "@react-aria/interactions": "npm:^3.22.3"
+    "@react-aria/interactions": "npm:^3.22.4"
     "@react-aria/ssr": "npm:^3.9.6"
     "@react-aria/utils": "npm:^3.25.3"
-    "@react-aria/visually-hidden": "npm:^3.8.16"
+    "@react-aria/visually-hidden": "npm:^3.8.17"
     "@react-stately/overlays": "npm:^3.6.11"
     "@react-types/button": "npm:^3.10.0"
     "@react-types/overlays": "npm:^3.8.10"
@@ -6878,7 +6867,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/c70af63d4ae828963b9fa780330cabf49e5a70f8981ae65d173e32934fa190fc8df1283de65d6a8b71b6340050718df19c2e7353b406114962d85ee5deb811ee
+  checksum: 10/6f641a1f7c1976758dd062c4345d2e8882575e2b645a4e4693f051699bae48c48979db3539e77c387aee64600d7a555b94687cd01449094cf875ce80ec6aa2ed
   languageName: node
   linkType: hard
 
@@ -6908,17 +6897,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/visually-hidden@npm:^3.8.16":
-  version: 3.8.16
-  resolution: "@react-aria/visually-hidden@npm:3.8.16"
+"@react-aria/visually-hidden@npm:^3.8.17":
+  version: 3.8.17
+  resolution: "@react-aria/visually-hidden@npm:3.8.17"
   dependencies:
-    "@react-aria/interactions": "npm:^3.22.3"
+    "@react-aria/interactions": "npm:^3.22.4"
     "@react-aria/utils": "npm:^3.25.3"
     "@react-types/shared": "npm:^3.25.0"
     "@swc/helpers": "npm:^0.5.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/263b4d0e78ae2932165cad3d91f8111527d04feae06c42078cbaaa8f8a8bc13f46321cf1c3203e3e7418ca319b2f02b8ff24764e8c4af714a6200450fa955277
+  checksum: 10/d9cdc97d80e750f4582cc3f2bcc0bde12b6c70fbd408ca9ebba2ef654ab27b0181cdd072a8b30ae36f14d9ec16a79c2d38d7cbe834c96fad693daebc7be41616
   languageName: node
   linkType: hard
 
@@ -9337,7 +9326,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/jest-dom@npm:6.5.0, @testing-library/jest-dom@npm:^6.1.2":
+"@testing-library/jest-dom@npm:6.5.0":
   version: 6.5.0
   resolution: "@testing-library/jest-dom@npm:6.5.0"
   dependencies:
@@ -9349,6 +9338,21 @@ __metadata:
     lodash: "npm:^4.17.21"
     redent: "npm:^3.0.0"
   checksum: 10/3d2080888af5fd7306f57448beb5a23f55d965e265b5e53394fffc112dfb0678d616a5274ff0200c46c7618f293520f86fc8562eecd8bdbc0dbb3294d63ec431
+  languageName: node
+  linkType: hard
+
+"@testing-library/jest-dom@npm:^6.1.2":
+  version: 6.6.1
+  resolution: "@testing-library/jest-dom@npm:6.6.1"
+  dependencies:
+    "@adobe/css-tools": "npm:^4.4.0"
+    aria-query: "npm:^5.0.0"
+    chalk: "npm:^3.0.0"
+    css.escape: "npm:^1.5.1"
+    dom-accessibility-api: "npm:^0.6.3"
+    lodash: "npm:^4.17.21"
+    redent: "npm:^3.0.0"
+  checksum: 10/006357d7547cc50624564a1b0e9986d0f0252365a6e5ac1c7c989032159c47226adfbd9a9ac17eef236738e9597541d344176176b5c3ed0e06e8f4b33387e135
   languageName: node
   linkType: hard
 
@@ -10232,7 +10236,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:*, @types/jest@npm:29.5.13, @types/jest@npm:^29.5.4":
+"@types/jest@npm:29.5.13, @types/jest@npm:^29.5.4":
   version: 29.5.13
   resolution: "@types/jest@npm:29.5.13"
   dependencies:
@@ -10864,15 +10868,6 @@ __metadata:
   version: 6.15.1
   resolution: "@types/systemjs@npm:6.15.1"
   checksum: 10/4c29f4951299b67a287b8b21219416c4d8eee277582ae045f6a97eaaa9d27ad59789f6b608c5519adf0e42eee23f139c4027cc157f37807a16b4601b353f5442
-  languageName: node
-  linkType: hard
-
-"@types/testing-library__jest-dom@npm:5.14.9":
-  version: 5.14.9
-  resolution: "@types/testing-library__jest-dom@npm:5.14.9"
-  dependencies:
-    "@types/jest": "npm:*"
-  checksum: 10/e257de95a4a9385cc09ae4ca3396d23ad4b5cfb8e021a1ca3454c424c34636075f6fe151b2f881f79bf9d497aa04fbfae62449b135f293e8d2d614fa899898a8
   languageName: node
   linkType: hard
 
@@ -19031,7 +19026,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.13.3"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.26.24"
+    "@floating-ui/react": "npm:0.26.25"
     "@formatjs/intl-durationformat": "npm:^0.3.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.5.0"
@@ -19077,9 +19072,9 @@ __metadata:
     "@playwright/test": "npm:1.48.0"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
-    "@react-aria/dialog": "npm:3.5.18"
-    "@react-aria/focus": "npm:3.18.3"
-    "@react-aria/overlays": "npm:3.23.3"
+    "@react-aria/dialog": "npm:3.5.19"
+    "@react-aria/focus": "npm:3.18.4"
+    "@react-aria/overlays": "npm:3.23.4"
     "@react-aria/utils": "npm:3.25.3"
     "@react-awesome-query-builder/ui": "npm:6.6.3"
     "@react-types/button": "npm:3.10.0"
@@ -19147,7 +19142,6 @@ __metadata:
     "@types/slate-react": "npm:0.22.9"
     "@types/swagger-ui-react": "npm:4.18.3"
     "@types/systemjs": "npm:6.15.1"
-    "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:9.0.8"
     "@types/webpack-assets-manifest": "npm:^5"
