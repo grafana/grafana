@@ -3,6 +3,7 @@ package query
 import (
 	"encoding/json"
 
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -37,10 +37,15 @@ type QueryAPIBuilder struct {
 	userFacingDefaultError string
 	features               featuremgmt.FeatureToggles
 
-	tracer     tracing.Tracer
-	metrics    *queryMetrics
-	parser     *queryParser
-	client     DataSourceClientSupplier
+	tracer  tracing.Tracer
+	metrics *queryMetrics
+	parser  *queryParser
+	client  DataSourceClientSupplier
+
+	// the following two for making a late headers supplied client
+	pluginClient plugins.Client
+	pCtxProvider *plugincontext.Provider
+
 	registry   query.DataSourceApiServerRegistry
 	converter  *expr.ResultConverter
 	queryTypes *query.QueryTypeDefinitionList
@@ -87,6 +92,49 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	}, nil
 }
 
+func NewLateHeadersSuppliedQueryAPIBuilder(features featuremgmt.FeatureToggles,
+	pluginClient plugins.Client,
+	pCtxProvider *plugincontext.Provider,
+	registry query.DataSourceApiServerRegistry,
+	legacy service.LegacyDataSourceLookup,
+	registerer prometheus.Registerer,
+	tracer tracing.Tracer,
+) (*QueryAPIBuilder, error) {
+	reader := expr.NewExpressionQueryReader(features)
+
+	// Include well typed query definitions
+	var queryTypes *query.QueryTypeDefinitionList
+	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
+		// Read the expression query definitions
+		raw, err := expr.QueryTypeDefinitionListJSON()
+		if err != nil {
+			return nil, err
+		}
+		queryTypes = &query.QueryTypeDefinitionList{}
+		err = json.Unmarshal(raw, queryTypes)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &QueryAPIBuilder{
+		concurrentQueryLimit: 4,
+		log:                  log.New("query_apiserver"),
+		pluginClient:         pluginClient,
+		pCtxProvider:         pCtxProvider,
+		registry:             registry,
+		parser:               newQueryParser(reader, legacy, tracer),
+		metrics:              newQueryMetrics(registerer),
+		tracer:               tracer,
+		features:             features,
+		queryTypes:           queryTypes,
+		converter: &expr.ResultConverter{
+			Features: features,
+			Tracer:   tracer,
+		},
+	}, nil
+}
+
 func RegisterAPIService(features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dataSourcesService datasources.DataSourceService,
@@ -97,22 +145,23 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacy service.LegacyDataSourceLookup,
+
 ) (*QueryAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
 		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
 	}
 
-	builder, err := NewQueryAPIBuilder(
+	apiBuilder, err := NewLateHeadersSuppliedQueryAPIBuilder(
 		features,
-		&CommonDataSourceClientSupplier{
-			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider),
-		},
+		pluginClient,
+		pCtxProvider,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
 		legacy, registerer, tracer,
 	)
-	apiregistration.RegisterAPI(builder)
-	return builder, err
+
+	apiregistration.RegisterAPI(apiBuilder)
+	return apiBuilder, err
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {

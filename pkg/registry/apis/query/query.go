@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -207,7 +208,12 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	client, err := b.client.GetDataSourceClient(
+	// A hack, by late binding and not using the interface, it breaks unit-tests
+	queryClient := CommonDataSourceClientSupplier{
+		client.NewQueryClientForPluginClient(b.pluginClient, b.pCtxProvider, req.Headers),
+	}
+
+	cli, err := queryClient.GetDataSourceClient(
 		ctx,
 		v0alpha1.DataSourceRef{
 			Type: req.PluginId,
@@ -219,7 +225,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return nil, err
 	}
 
-	code, rsp, err := client.QueryData(ctx, *req.Request)
+	code, rsp, err := cli.QueryData(ctx, *req.Request)
 	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
