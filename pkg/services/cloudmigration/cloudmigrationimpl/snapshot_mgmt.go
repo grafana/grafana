@@ -167,13 +167,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
-	// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
-	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-		Type:  cloudmigration.NotificationPolicyType,
-		RefID: notificationPolicies.Name, // no UID available
-		Name:  notificationPolicies.Name,
-		Data:  notificationPolicies.Routes,
-	})
+	if s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) && len(notificationPolicies.Name) > 0 {
+		// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.NotificationPolicyType,
+			RefID: notificationPolicies.Name, // no UID available
+			Name:  notificationPolicies.Name,
+			Data:  notificationPolicies.Routes,
+		})
+	}
 
 	// Obtain the names of parent elements for Dashboard and Folders data types
 	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements)
