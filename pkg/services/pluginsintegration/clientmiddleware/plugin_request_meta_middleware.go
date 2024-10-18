@@ -81,7 +81,7 @@ func (m *PluginRequestMetaMiddleware) MutateAdmission(ctx context.Context, req *
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *PluginRequestMetaMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (m *PluginRequestMetaMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	ctx = m.withDefaultPluginRequestMeta(ctx)
-	return m.next.ConvertObject(ctx, req)
+	return m.next.ConvertObjects(ctx, req)
 }

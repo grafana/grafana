@@ -156,7 +156,7 @@ func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionR
 	return client.MutateAdmission(ctx, req)
 }
 
-func (d *Decorator) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (d *Decorator) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -166,7 +166,7 @@ func (d *Decorator) ConvertObject(ctx context.Context, req *backend.ConversionRe
 	ctx = backend.WithUser(ctx, req.PluginContext.User)
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
-	return client.ConvertObject(ctx, req)
+	return client.ConvertObjects(ctx, req)
 }
 
 func clientFromMiddlewares(middlewares []plugins.ClientMiddleware, finalClient plugins.Client) plugins.Client {
