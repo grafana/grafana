@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconName, Text, useStyles2 } from '@grafana/ui';

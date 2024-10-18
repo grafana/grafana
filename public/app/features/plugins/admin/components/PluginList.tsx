@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom';
 
 import { config } from '@grafana/runtime';
 import { EmptyState, Grid } from '@grafana/ui';

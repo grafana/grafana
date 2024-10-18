@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { memo, useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';

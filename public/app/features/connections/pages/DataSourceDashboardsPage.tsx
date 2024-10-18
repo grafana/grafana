@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import { Page } from 'app/core/components/Page/Page';
 import { DataSourceDashboards } from 'app/features/datasources/components/DataSourceDashboards';

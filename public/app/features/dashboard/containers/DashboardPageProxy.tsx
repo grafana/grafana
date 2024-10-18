@@ -1,4 +1,4 @@
-import { useLocation, useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';

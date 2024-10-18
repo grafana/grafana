@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import { getTimeZone, NavModelItem } from '@grafana/data';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';

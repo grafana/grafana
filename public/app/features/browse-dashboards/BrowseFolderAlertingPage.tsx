@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import { Page } from 'app/core/components/Page/Page';
 import { buildNavModel, getAlertingTabID } from 'app/features/folders/state/navModel';

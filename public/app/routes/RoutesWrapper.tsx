@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { ComponentType } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { CompatRouter } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { HistoryWrapper, locationService, LocationServiceProvider, useChromeHeaderHeight } from '@grafana/runtime';

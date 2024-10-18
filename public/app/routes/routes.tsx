@@ -1,4 +1,4 @@
-import { Navigate, useParams } from 'react-router-dom-v5-compat';
+import { Navigate, useParams } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';

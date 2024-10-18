@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';

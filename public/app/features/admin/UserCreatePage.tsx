@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';

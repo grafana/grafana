@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { useLocation, useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
