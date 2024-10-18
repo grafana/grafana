@@ -37,7 +37,7 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
@@ -57,11 +57,9 @@ import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryRe
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import {
   getSimpleConditionFromExpressions,
-  SIMPLE_CONDITION_QUERY_ID,
-  SIMPLE_CONDITION_REDUCER_ID,
-  SIMPLE_CONDITION_THRESHOLD_ID,
   SimpleCondition,
   SimpleConditionEditor,
+  SimpleConditionIdentifier,
 } from './SimpleCondition';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
@@ -69,10 +67,12 @@ import {
   addExpressions,
   addNewDataQuery,
   addNewExpression,
+  addReducerAtFirstPosition,
   duplicateQuery,
   queriesAndExpressionsReducer,
   removeExpression,
   removeExpressions,
+  removeFirstReducer,
   resetToSimpleCondition,
   rewireExpressions,
   setDataQueries,
@@ -91,19 +91,21 @@ export function areQueriesTransformableToSimpleCondition(
   if (dataQueries.length !== 1) {
     return false;
   }
+  const reducerRemovedOk =
+    'instant' in dataQueries[0].model && dataQueries[0].model.instant && expressionQueries.length === 1;
 
-  if (expressionQueries.length !== 2) {
+  if (expressionQueries.length !== 2 && !reducerRemovedOk) {
     return false;
   }
 
   const query = dataQueries[0];
 
-  if (query.refId !== SIMPLE_CONDITION_QUERY_ID) {
+  if (query.refId !== SimpleConditionIdentifier.queryId) {
     return false;
   }
 
   const reduceExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SimpleConditionIdentifier.reducerId
   );
   const reduceExpression = expressionQueries.at(reduceExpressionIndex);
   const reduceOk =
@@ -113,13 +115,14 @@ export function areQueriesTransformableToSimpleCondition(
       reduceExpression.model.settings?.mode === undefined);
 
   const thresholdExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.refId === SimpleConditionIdentifier.thresholdId
   );
   const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
   const conditions = thresholdExpression?.model.conditions ?? [];
-  const thresholdOk =
-    thresholdExpression && thresholdExpressionIndex === 1 && conditions[0]?.unloadEvaluator === undefined;
-  return Boolean(reduceOk) && Boolean(thresholdOk);
+  const thresholdIndexOk = reducerRemovedOk ? thresholdExpressionIndex === 0 : thresholdExpressionIndex === 1;
+  const thresholdOk = thresholdExpression && thresholdIndexOk && conditions[0]?.unloadEvaluator === undefined;
+  return (Boolean(reduceOk) || Boolean(reducerRemovedOk)) && Boolean(thresholdOk);
 }
 
 interface Props {
@@ -177,6 +180,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const [showResetModeModal, setShowResetModal] = useState(false);
 
+  const removeReducer = useCallback(() => {
+    dispatch(removeFirstReducer());
+  }, [dispatch]);
+
+  const addReducer = useCallback(() => {
+    dispatch(addReducerAtFirstPosition());
+  }, [dispatch]);
+
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
     isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
       ? getSimpleConditionFromExpressions(expressionQueries)
@@ -212,8 +223,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
       // we need to be sure the condition is set once we switch to simple mode
       if (!isAdvancedMode) {
-        setValue('condition', SIMPLE_CONDITION_THRESHOLD_ID);
-        runQueries(getValues('queries'), SIMPLE_CONDITION_THRESHOLD_ID);
+        setValue('condition', SimpleConditionIdentifier.thresholdId);
+        runQueries(getValues('queries'), SimpleConditionIdentifier.thresholdId);
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
       }
@@ -297,6 +308,44 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
+      // we only remove or add the reducer expression when creating a new alert.
+      // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+      if (!editingExistingRule) {
+        // In case we are in the state of having 1 query and 2 expressions,
+        // then,we want to remove the reducer expression if query is instant to simplify the process of creating a non complex alert
+        const firstQueryIsPromOrLoki =
+          updatedQueries[0].model.datasource?.type === DataSourceType.Prometheus ||
+          updatedQueries[0].model.datasource?.type === DataSourceType.Loki;
+        const shouldRemoveReducer =
+          updatedQueries.length === 1 &&
+          'instant' in updatedQueries[0].model &&
+          (updatedQueries[0].model.instant === true ||
+            (firstQueryIsPromOrLoki && updatedQueries[0].model.instant === undefined)) &&
+          expressionQueries.length === 2;
+        const onlyOnExpressionNotReducer =
+          expressionQueries.length === 1 &&
+          'type' in expressionQueries[0].model &&
+          expressionQueries[0].model.type !== ExpressionQueryType.reduce;
+        const shouldAddReducer =
+          updatedQueries.length === 1 &&
+          'instant' in updatedQueries[0].model &&
+          (updatedQueries[0].model.instant === false ||
+            (firstQueryIsPromOrLoki && updatedQueries[0].model.instant === undefined)) &&
+          onlyOnExpressionNotReducer;
+
+        // when changing the data source we need to reset the condition before checking if we should remove the reducer
+        // this is important when switching from prometheus or loki to another data source
+        if (updatedQueries.length === 1 && updatedQueries[0].datasourceUid !== previousQueries[0].datasourceUid) {
+          dispatch(resetToSimpleCondition());
+        }
+        if (shouldRemoveReducer) {
+          removeReducer();
+        }
+        if (shouldAddReducer) {
+          addReducer();
+        }
+      }
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
 
@@ -306,7 +355,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue]
+    [queries, updateExpressionAndDatasource, getValues, setValue, removeReducer, editingExistingRule, addReducer]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
