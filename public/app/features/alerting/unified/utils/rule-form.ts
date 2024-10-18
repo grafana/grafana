@@ -500,12 +500,13 @@ export function recordingRulerRuleToRuleForm(
 export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
 
-  const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
   if (!dataSource) {
+    const expressions = isRecordingRule ? getDefaultExpressionsForRecording('A') : getDefaultExpressions('A', 'B');
     return [...expressions];
   }
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
+  const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
   return [
     {
       refId: 'A',
