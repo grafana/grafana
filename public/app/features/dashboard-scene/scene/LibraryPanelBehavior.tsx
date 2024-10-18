@@ -9,6 +9,7 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
 import { DashboardGridItem } from './DashboardGridItem';
+import { PanelTimeRange } from './PanelTimeRange';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -57,6 +58,14 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       description: libPanelModel.description,
       $data: createPanelDataProvider(libPanelModel),
     };
+
+    if (libPanelModel.timeFrom || libPanelModel.timeShift) {
+      vizPanelState.$timeRange = new PanelTimeRange({
+        timeFrom: libPanelModel.timeFrom,
+        timeShift: libPanelModel.timeShift,
+        hideTimeOverride: libPanelModel.hideTimeOverride,
+      });
+    }
 
     vizPanel.setState(vizPanelState);
     vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
