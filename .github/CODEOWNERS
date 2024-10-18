@@ -385,7 +385,7 @@
 /.nxignore @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
-/.eslintignore @grafana/frontend-ops
+/eslint.config.js @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
@@ -395,7 +395,6 @@
 /yarn.lock @grafana/frontend-ops
 /lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
-/.eslintrc @grafana/frontend-ops
 /.vim @zoltanbedi
 /jest.config.js @grafana/frontend-ops
 /latest.json @grafana/frontend-ops
