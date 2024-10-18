@@ -3,39 +3,44 @@ package remotecache
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache/common"
+	"github.com/grafana/grafana/pkg/infra/remotecache/ring"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
 	// ErrCacheItemNotFound is returned if cache does not exist
-	ErrCacheItemNotFound = errors.New("cache item not found")
-
-	// ErrInvalidCacheType is returned if the type is invalid
-	ErrInvalidCacheType = errors.New("invalid remote cache name")
+	ErrCacheItemNotFound = common.ErrCacheItemNotFound
 
 	defaultMaxCacheExpiration = time.Hour * 24
 )
 
-const (
-	ServiceName = "RemoteCache"
-)
-
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
-	secretsService secrets.Service) (*RemoteCache, error) {
-	client, err := createClient(cfg.RemoteCacheOptions, sqlStore, secretsService)
+func ProvideService(
+	cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
+	secretsService secrets.Service, grpcProvider grpcserver.Provider, reg prometheus.Registerer,
+) (*RemoteCache, error) {
+	logger := log.New("remote-cache")
+	client, err := createClient(cfg, sqlStore, logger, secretsService, grpcProvider, reg)
 	if err != nil {
 		return nil, err
 	}
+
 	s := &RemoteCache{
-		SQLStore: sqlStore,
-		Cfg:      cfg,
-		client:   client,
+		cfg:     cfg,
+		client:  client,
+		logger:  logger,
+		metrics: newMetrics(reg),
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
@@ -45,9 +50,9 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Serv
 
 func (ds *RemoteCache) getUsageStats(ctx context.Context) (map[string]any, error) {
 	stats := map[string]any{}
-	stats["stats.remote_cache."+ds.Cfg.RemoteCacheOptions.Name+".count"] = 1
+	stats["stats.remote_cache."+ds.cfg.RemoteCache.Name+".count"] = 1
 	encryptVal := 0
-	if ds.Cfg.RemoteCacheOptions.Encryption {
+	if ds.cfg.RemoteCache.Encryption {
 		encryptVal = 1
 	}
 
@@ -73,14 +78,26 @@ type CacheStorage interface {
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
-	client   CacheStorage
-	SQLStore db.DB
-	Cfg      *setting.Cfg
+	client  CacheStorage
+	cfg     *setting.Cfg
+	logger  log.Logger
+	metrics *metrics
 }
 
 // Get returns the cached value as an byte array
 func (ds *RemoteCache) Get(ctx context.Context, key string) ([]byte, error) {
-	return ds.client.Get(ctx, key)
+	value, err := ds.client.Get(ctx, key)
+	if err != nil {
+		if errors.Is(err, ErrCacheItemNotFound) {
+			ds.metrics.cacheUsage.WithLabelValues(cacheMiss).Inc()
+		} else {
+			ds.metrics.cacheUsage.WithLabelValues(cacheError).Inc()
+		}
+		return nil, err
+	}
+
+	ds.metrics.cacheUsage.WithLabelValues(cacheHit).Inc()
+	return value, nil
 }
 
 // Set stored the byte array in the cache
@@ -109,25 +126,51 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB, secretsService secrets.Service) (cache CacheStorage, err error) {
-	switch opts.Name {
-	case redisCacheType:
-		cache, err = newRedisStorage(opts)
-	case memcachedCacheType:
-		cache = newMemcachedStorage(opts)
-	case databaseCacheType:
-		cache = newDatabaseCache(sqlstore)
-	default:
-		return nil, ErrInvalidCacheType
-	}
-	if err != nil {
-		return cache, err
-	}
-	if opts.Prefix != "" {
-		cache = &prefixCacheStorage{cache: cache, prefix: opts.Prefix}
+// ServeHTTP is used to expose debug endpoints for remote cache
+func (ds *RemoteCache) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if ds.cfg.Env != setting.Dev {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
-	if opts.Encryption {
+	handler, ok := ds.client.(http.Handler)
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+func createClient(
+	cfg *setting.Cfg, sqlstore db.DB, logger log.Logger,
+	secretsService secrets.Service, grpcProvider grpcserver.Provider, reg prometheus.Registerer,
+) (cache CacheStorage, err error) {
+	switch cfg.RemoteCache.Name {
+	case redisCacheType:
+		cache, err = newRedisStorage(cfg.RemoteCache)
+	case memcachedCacheType:
+		cache = newMemcachedStorage(cfg.RemoteCache)
+	case ring.CacheType:
+		if !grpcProvider.IsDisabled() {
+			cache, err = ring.NewCache(cfg, reg, grpcProvider)
+		} else {
+			logger.Warn("grpcServer feature toggle needs to be enabled when using ring cache, falling back to database")
+			cache = newDatabaseCache(sqlstore)
+		}
+	default:
+		cache = newDatabaseCache(sqlstore)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.RemoteCache.Prefix != "" {
+		cache = &prefixCacheStorage{cache: cache, prefix: cfg.RemoteCache.Prefix}
+	}
+
+	if cfg.RemoteCache.Encryption {
 		cache = &encryptedCacheStorage{cache: cache, secretsService: secretsService}
 	}
 	return cache, nil

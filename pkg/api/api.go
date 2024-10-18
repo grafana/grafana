@@ -120,6 +120,8 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
 	}
 
+	r.Any("/remote_cache/*", hs.RemoteCacheService.ServeHTTP)
+
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/live", reqGrafanaAdmin, hs.Index)

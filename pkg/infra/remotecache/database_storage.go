@@ -10,8 +10,6 @@ import (
 
 var getTime = time.Now
 
-const databaseCacheType = "database"
-
 type databaseCache struct {
 	SQLStore db.DB
 	log      log.Logger
