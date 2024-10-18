@@ -2,6 +2,8 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 
 	"github.com/grafana/authlib/claims"
 
@@ -76,12 +78,13 @@ type ReceiverPermissionsService struct {
 // SetDefaultPermissions sets the default permissions for a newly created receiver.
 func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string) {
 	r.log.Debug("Setting default permissions for receiver", "receiver_uid", uid)
+	resourceId := uidToResourceID(uid)
 	permissions := defaultPermissions()
 	clearCache := false
 	if user != nil && user.IsIdentityType(claims.TypeUser) {
 		userID, err := user.GetInternalID()
 		if err != nil {
-			r.log.Error("Could not make user admin", "receiver_uid", uid, "id", user.GetID(), "error", err)
+			r.log.Error("Could not make user admin", "receiver_uid", uid, "resource_id", resourceId, "id", user.GetID(), "error", err)
 		} else {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: string(alertingac.ReceiverPermissionAdmin),
@@ -90,8 +93,8 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 		}
 	}
 
-	if _, err := r.SetPermissions(ctx, orgID, uid, permissions...); err != nil {
-		r.log.Error("Could not set default permissions", "receiver_uid", uid, "error", err)
+	if _, err := r.SetPermissions(ctx, orgID, resourceId, permissions...); err != nil {
+		r.log.Error("Could not set default permissions", "receiver_uid", uid, "resource_id", resourceId, "id", "error", err)
 	}
 
 	if clearCache {
@@ -120,13 +123,15 @@ func copyPermissionUser(orgID int64) identity.Requester {
 // name.
 func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error) {
 	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
-	currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldUID)
+	oldResourceId := uidToResourceID(oldUID)
+	newResourceId := uidToResourceID(newUID)
+	currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldResourceId)
 	if err != nil {
 		return 0, err
 	}
 
 	setPermissionCommands := r.toSetResourcePermissionCommands(currentPermissions)
-	if _, err := r.SetPermissions(ctx, orgID, newUID, setPermissionCommands...); err != nil {
+	if _, err := r.SetPermissions(ctx, orgID, newResourceId, setPermissionCommands...); err != nil {
 		return 0, err
 	}
 
@@ -144,6 +149,17 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 	}
 
 	return countCustomPermissions(setPermissionCommands), nil
+}
+
+func (r ReceiverPermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, uid string) error {
+	return r.Service.DeleteResourcePermissions(ctx, orgID, uidToResourceID(uid))
+}
+
+// uidToResourceID converts a receiver uid to a resource id. This is necessary as resource ids are limited to 40 characters.
+func uidToResourceID(uid string) string {
+	h := sha1.New()
+	h.Write([]byte(uid))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // toSetResourcePermissionCommands converts a list of resource permissions to a list of set resource permission commands.
