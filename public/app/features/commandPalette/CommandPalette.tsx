@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -27,7 +28,7 @@ import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
-  const styles = useStyles2((theme) => getSearchStyles(theme));
+  const styles = useStyles2(getSearchStyles);
 
   const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -147,14 +148,13 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
 };
 
 const getCommandPalettePosition = () => {
-  const input = document.querySelector('[data-testid="data-testid Command palette trigger"]');
+  const input = document.querySelector(`[data-testid=${selectors.components.NavToolbar.commandPaletteTrigger}]`);
   const inputRightPosition = input?.getBoundingClientRect().right ?? 0;
   const screenWidth = document.body.clientWidth;
   const lateralSpace = screenWidth - inputRightPosition;
   return lateralSpace;
 };
 
-// eslint-disable-next-line
 const getSearchStyles = (theme: GrafanaTheme2) => {
   const lateralSpace = getCommandPalettePosition();
   const isSingleTopNav = config.featureToggles.singleTopNav;
