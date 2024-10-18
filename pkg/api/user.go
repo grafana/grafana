@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -18,6 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+const (
+	ErrOnlyAvailableForUsers = errutil.ValidationFailed("user.onlyAvailableForUsers", errutil.WithPublicMessage("Endpoint only available for users"))
 )
 
 // swagger:route GET /user signed_in_user getSignedInUser
@@ -352,6 +357,11 @@ func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Respo
 func (hs *HTTPServer) GetSignedInUserOrgList(c *contextmodel.ReqContext) response.Response {
 	userID, errResponse := getUserID(c)
 	if errResponse != nil {
+		if errors.Is(errResponse.Err(), errutil.ValidationFailed("user.onlyAvailableForUsers")) {
+			// suppress the error message for this special case
+			hs.log.Error("Failed to get user org list", "error", errResponse.Err())
+			return response.Error(http.StatusForbidden, "", nil)
+		}
 		return errResponse
 	}
 
@@ -505,7 +515,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 	}
 
 	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
-		c.JsonApiErr(http.StatusForbidden, "Endpoint only available for users", nil)
+		c.JsonApiErr(http.StatusForbidden, ErrOnlyAvailableForUsers, nil)
 		return
 	}
 
@@ -630,7 +640,7 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 
 func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
 	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
-		return 0, response.Error(http.StatusForbidden, "Endpoint only available for users", nil)
+		return 0, response.Error(http.StatusForbidden, ErrOnlyAvailableForUsers, nil)
 	}
 
 	userID, err := c.SignedInUser.GetInternalID()
