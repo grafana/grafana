@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -32,6 +33,7 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 		if cmd.RuleUID != "" {
 			addToQuery(` AND rule_uid = ?`, cmd.RuleUID)
 		}
+
 		if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNoNormalState) {
 			s.WriteString(fmt.Sprintf(" AND NOT (current_state = '%s' AND current_reason = '')", models.InstanceStateNormal))
 		}
@@ -206,7 +208,13 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 	return err
 }
 
-func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+// SaveAlertInstancesForRule is not implemented for instance database store.
+func (st DBstore) SaveAlertInstancesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, instances []models.AlertInstance) error {
+	st.Logger.Error("SaveAlertInstancesForRule is not implemented for instance database store.")
+	return errors.New("method SaveAlertInstancesForRule is not implemented for instance database store")
+}
+
+func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
 		return err

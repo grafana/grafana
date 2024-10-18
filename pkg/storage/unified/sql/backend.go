@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
@@ -164,7 +166,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -222,7 +224,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -282,7 +284,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -357,7 +359,7 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 }
 
 type listIter struct {
-	rows   *sql.Rows
+	rows   db.Rows
 	offset int64
 	listRV int64
 
@@ -593,12 +595,12 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 
 // fetchLatestRV returns the current maximum RV in the resource table
 func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
-		SQLTemplate:     sqltemplate.New(d),
-		Group:           group,
-		Resource:        resource,
-		ReadOnly:        true,
-		resourceVersion: new(resourceVersion),
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+		SQLTemplate: sqltemplate.New(d),
+		Group:       group,
+		Resource:    resource,
+		ReadOnly:    true,
+		Response:    new(resourceVersionResponse),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil
@@ -611,7 +613,6 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
-
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -658,53 +659,66 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 	return nextRV, nil
 }
 
-// resourceVersionAtomicInc atomically increases the version of a kind within a
-// transaction.
+// resourceVersionAtomicInc atomically increases the version of a kind within a transaction.
 // TODO: Ideally we should attempt to update the RV in the resource and resource_history tables
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
-func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
-	// TODO: refactor this code to run in a multi-statement transaction in order to minimize the number of round trips.
-	// 1 Lock the row for update
-	rv, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
-		SQLTemplate:     sqltemplate.New(d),
-		Group:           key.Group,
-		Resource:        key.Resource,
-		resourceVersion: new(resourceVersion),
+func (b *backend) resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, key *resource.ResourceKey) (newVersion int64, err error) {
+	ctx, span := b.tracer.Start(ctx, "resourceVersionAtomicInc", trace.WithAttributes(
+		semconv.K8SNamespaceName(key.Namespace),
+		// TODO: the following attributes could use some standardization.
+		attribute.String("k8s.resource.group", key.Group),
+		attribute.String("k8s.resource.type", key.Resource),
+	))
+	defer span.End()
+
+	// 1. Lock to row and prevent concurrent updates until the transaction is committed.
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Group:       key.Group,
+		Resource:    key.Resource,
+
+		Response: new(resourceVersionResponse), ReadOnly: false, // This locks the row for update
 	})
 
 	if errors.Is(err, sql.ErrNoRows) {
-		// if there wasn't a row associated with the given resource, we create one with
-		// version 2 to match the etcd behavior.
-		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
-			SQLTemplate:     sqltemplate.New(d),
-			Group:           key.Group,
-			Resource:        key.Resource,
-			resourceVersion: &resourceVersion{1},
+		// if there wasn't a row associated with the given resource, then we create it.
+		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionUpsertRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Group:       key.Group,
+			Resource:    key.Resource,
 		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}
-		return 2, nil
+		res, err = dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Response:    new(resourceVersionResponse),
+			ReadOnly:    true, // This locks the row for update
+		})
+		if err != nil {
+			return 0, fmt.Errorf("fetching RV after read")
+		}
+		return res.ResourceVersion, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("lock the resource version: %w", err)
 	}
 
-	if err != nil {
-		return 0, fmt.Errorf("get current resource version: %w", err)
-	}
-	nextRV := rv.ResourceVersion + 1
+	// 2. Update the RV
+	// Most times, the RV is the current microsecond timestamp generated on the sql server (to avoid clock skew).
+	// In rare occasion, the server clock might go back in time. In those cases, we simply increment the
+	// previous RV until the clock catches up.
+	nextRV := max(res.CurrentEpoch, res.ResourceVersion+1)
 
-	// 2. Increment the resource version
-	_, err = dbutil.Exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
-		SQLTemplate: sqltemplate.New(d),
-		Group:       key.Group,
-		Resource:    key.Resource,
-		resourceVersion: &resourceVersion{
-			ResourceVersion: nextRV,
-		},
+	_, err = dbutil.Exec(ctx, x, sqlResourceVersionUpdate, sqlResourceVersionUpsertRequest{
+		SQLTemplate:     sqltemplate.New(b.dialect),
+		Group:           key.Group,
+		Resource:        key.Resource,
+		ResourceVersion: nextRV,
 	})
 	if err != nil {
 		return 0, fmt.Errorf("increase resource version: %w", err)
 	}
-
-	// 3. Return the incremented value
 	return nextRV, nil
 }
