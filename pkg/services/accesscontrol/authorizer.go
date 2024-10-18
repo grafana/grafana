@@ -83,9 +83,6 @@ type LegacyAccessClient struct {
 	opts map[string]ResourceAuthorizerOptions
 }
 
-var ()
-
-// HasAccess implements claims.AccessClient.
 func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
 	ident, ok := id.(identity.Requester)
 	if !ok {
@@ -143,7 +140,6 @@ func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req 
 	return authz.CheckResponse{Allowed: allowed}, nil
 }
 
-// Compile implements claims.AccessClient.
 func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
 	ident, ok := id.(identity.Requester)
 	if !ok {
