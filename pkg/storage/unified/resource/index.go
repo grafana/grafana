@@ -6,7 +6,6 @@ import (
 	"fmt"
 	golog "log"
 	"os"
-	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/google/uuid"
@@ -176,28 +175,7 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 
 	results := make([]IndexedResource, len(hits))
 	for resKey, hit := range hits {
-		// add common fields to search results
-		ir := IndexedResource{}
-		ir.Kind = hit.Fields["Kind"].(string)
-		ir.Name = hit.Fields["Name"].(string)
-		ir.Namespace = hit.Fields["Namespace"].(string)
-		ir.Group = hit.Fields["Group"].(string)
-		ir.CreatedAt = hit.Fields["CreatedAt"].(string)
-		ir.CreatedBy = hit.Fields["CreatedBy"].(string)
-		ir.UpdatedAt = hit.Fields["UpdatedAt"].(string)
-		ir.UpdatedBy = hit.Fields["UpdatedBy"].(string)
-		ir.Title = hit.Fields["Title"].(string)
-
-		// add indexed spec fields to search results
-		specResult := map[string]interface{}{}
-		for k, v := range hit.Fields {
-			if strings.HasPrefix(k, "Spec.") {
-				specKey := strings.TrimPrefix(k, "Spec.")
-				specResult[specKey] = v
-			}
-			ir.Spec = specResult
-		}
-
+		ir := IndexedResource{}.FromSearchHit(hit)
 		results[resKey] = ir
 	}
 

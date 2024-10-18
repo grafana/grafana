@@ -1,8 +1,11 @@
 package resource
 
 import (
+	"strings"
+
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/mapping"
+	"github.com/blevesearch/bleve/v2/search"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -19,6 +22,30 @@ type IndexedResource struct {
 	UpdatedBy string
 	FolderId  string
 	Spec      any
+}
+
+func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResource {
+	ir.Kind = hit.Fields["Kind"].(string)
+	ir.Name = hit.Fields["Name"].(string)
+	ir.Namespace = hit.Fields["Namespace"].(string)
+	ir.Group = hit.Fields["Group"].(string)
+	ir.CreatedAt = hit.Fields["CreatedAt"].(string)
+	ir.CreatedBy = hit.Fields["CreatedBy"].(string)
+	ir.UpdatedAt = hit.Fields["UpdatedAt"].(string)
+	ir.UpdatedBy = hit.Fields["UpdatedBy"].(string)
+	ir.Title = hit.Fields["Title"].(string)
+
+	// add indexed spec fields to search results
+	specResult := map[string]interface{}{}
+	for k, v := range hit.Fields {
+		if strings.HasPrefix(k, "Spec.") {
+			specKey := strings.TrimPrefix(k, "Spec.")
+			specResult[specKey] = v
+		}
+		ir.Spec = specResult
+	}
+
+	return ir
 }
 
 // NewIndexedResource creates a new IndexedResource from a raw resource.
