@@ -1,7 +1,9 @@
 import { createRef, PureComponent } from 'react';
 
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 import { AccessControlAction, UserSession } from 'app/types';
 
@@ -60,7 +62,10 @@ class BaseUserSessions extends PureComponent<Props, State> {
                   <th>Last seen</th>
                   <th>Logged on</th>
                   <th>IP address</th>
-                  <th colSpan={2}>Browser and OS</th>
+                  <th>Browser and OS</th>
+                  <th colSpan={2}>
+                    <Trans i18nKey="user-session.auth-module-column">Identity Provider</Trans>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -71,6 +76,9 @@ class BaseUserSessions extends PureComponent<Props, State> {
                       <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
+                      <td>
+                        {session.authModule && <TagBadge label={session.authModule} removeIcon={false} count={0} />}
+                      </td>
                       <td>
                         {canLogout && (
                           <ConfirmButton

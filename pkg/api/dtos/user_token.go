@@ -11,6 +11,7 @@ type UserToken struct {
 	OperatingSystemVersion string    `json:"osVersion"`
 	Browser                string    `json:"browser"`
 	BrowserVersion         string    `json:"browserVersion"`
+	AuthModule             string    `json:"authModule"`
 	CreatedAt              time.Time `json:"createdAt"`
 	SeenAt                 time.Time `json:"seenAt"`
 }
