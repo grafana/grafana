@@ -148,7 +148,7 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
 };
 
 const getCommandPalettePosition = () => {
-  const input = document.querySelector(`[data-testid=${selectors.components.NavToolbar.commandPaletteTrigger}]`);
+  const input = document.querySelector(`[data-testid="${selectors.components.NavToolbar.commandPaletteTrigger}"]`);
   const inputRightPosition = input?.getBoundingClientRect().right ?? 0;
   const screenWidth = document.body.clientWidth;
   const lateralSpace = screenWidth - inputRightPosition;
