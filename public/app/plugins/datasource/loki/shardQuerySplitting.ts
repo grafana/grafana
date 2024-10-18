@@ -13,7 +13,7 @@ import {
 
 import { LokiDatasource } from './datasource';
 import { combineResponses } from './mergeResponses';
-import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
+import { adjustTargetsFromResponseState } from './querySplitting';
 import {
   addShardingPlaceholderSelector,
   getSelectorForShardValues,
@@ -174,12 +174,7 @@ function splitQueriesByStreamShard(
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
-    const queryRunner =
-      shardsToQuery.length > 0
-        ? runSplitQuery.bind(null, datasource, subRequest)
-        : datasource.runQuery.bind(datasource, subRequest);
-
-    subquerySubscription = queryRunner().subscribe({
+    subquerySubscription = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
           if (retry(partialResponse)) {
