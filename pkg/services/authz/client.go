@@ -23,7 +23,7 @@ import (
 const authzServiceAudience = "authzService"
 
 type Client interface {
-	authzlib.Client
+	authzlib.AccessChecker
 }
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
@@ -40,7 +40,7 @@ func ProvideAuthZClient(
 		return nil, err
 	}
 
-	var client authzlib.Client
+	var client Client
 
 	// Register the server
 	server, err := newLegacyServer(acSvc, features, grpcServer, tracer, authCfg)
@@ -86,7 +86,7 @@ func ProvideStandaloneAuthZClient(
 	return newGrpcLegacyClient(authCfg.remoteAddress)
 }
 
-func newInProcLegacyClient(server *legacyServer) (authzlib.Client, error) {
+func newInProcLegacyClient(server *legacyServer) (authzlib.AccessChecker, error) {
 	noAuth := func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
@@ -101,14 +101,14 @@ func newInProcLegacyClient(server *legacyServer) (authzlib.Client, error) {
 		server,
 	)
 
-	return authzlib.NewLegacyClient(
+	return authzlib.NewClient(
 		&authzlib.ClientConfig{},
-		authzlib.WithGrpcConnectionLCOption(channel),
-		authzlib.WithDisableAccessTokenLCOption(),
+		authzlib.WithGrpcConnectionClientOption(channel),
+		authzlib.WithDisableAccessTokenClientOption(),
 	)
 }
 
-func newGrpcLegacyClient(address string) (authzlib.Client, error) {
+func newGrpcLegacyClient(address string) (authzlib.AccessChecker, error) {
 	// This client interceptor is a noop, as we don't send an access token
 	grpcClientConfig := authnlib.GrpcClientConfig{}
 	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig,
@@ -119,15 +119,15 @@ func newGrpcLegacyClient(address string) (authzlib.Client, error) {
 	}
 
 	cfg := authzlib.ClientConfig{RemoteAddress: address}
-	client, err := authzlib.NewLegacyClient(&cfg,
+	client, err := authzlib.NewClient(&cfg,
 		// TODO(drclau): make this configurable (e.g. allow to use insecure connections)
-		authzlib.WithGrpcDialOptionsLCOption(
+		authzlib.WithGrpcDialOptionsClientOption(
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
 		// TODO(drclau): remove this once we have access token support on-prem
-		authzlib.WithDisableAccessTokenLCOption(),
+		authzlib.WithDisableAccessTokenClientOption(),
 	)
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func newGrpcLegacyClient(address string) (authzlib.Client, error) {
 	return client, nil
 }
 
-func newCloudLegacyClient(authCfg *Cfg) (authzlib.Client, error) {
+func newCloudLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
 	grpcClientConfig := authnlib.GrpcClientConfig{
 		TokenClientConfig: &authnlib.TokenExchangeConfig{
 			Token:            authCfg.token,
@@ -154,9 +154,9 @@ func newCloudLegacyClient(authCfg *Cfg) (authzlib.Client, error) {
 	}
 
 	clientCfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
-	client, err := authzlib.NewLegacyClient(&clientCfg,
+	client, err := authzlib.NewClient(&clientCfg,
 		// TODO(drclau): make this configurable (e.g. allow to use insecure connections)
-		authzlib.WithGrpcDialOptionsLCOption(
+		authzlib.WithGrpcDialOptionsClientOption(
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
