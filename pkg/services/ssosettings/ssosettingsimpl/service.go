@@ -261,7 +261,7 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 			samlSettings["auth.saml"] = append(samlSettings["auth.saml"], k)
 		}
 		if err := s.settingsProvider.Update(setting.SettingsBag{}, samlSettings); err != nil {
-			return err
+			return nil
 		}
 	}
 
