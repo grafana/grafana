@@ -987,21 +987,6 @@ steps:
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build artifacts -a targz:grafana:enterprise:linux/amd64 -a targz:grafana:enterprise:linux/arm64
-    -a targz:grafana:enterprise:linux/arm/v7 --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
-  depends_on:
-  - yarn-install
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-  image: grafana/grafana-build:main
-  name: rgm-package
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
   - yarn e2e:plugin:build
   depends_on:
   - yarn-install
@@ -1016,7 +1001,7 @@ steps:
   - cp -r devenv scripts tools grafana && cd grafana && ./scripts/grafana-server/start-server
     e2e/extensions/enterprise/license.jwt
   depends_on:
-  - rgm-package
+  - yarn-install
   detach: true
   environment:
     GF_APP_MODE: development
@@ -6137,6 +6122,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 045b97dd1d57a83cbecda9dbd366b638cc47debc340f30f68db5fcf9cd6f431b
+hmac: 9f767aa1c6b75a3debee1207415453aa75b8db956da1844d9680467cbb459fea
 
 ...

@@ -755,8 +755,12 @@ def codespell_step():
         ],
     }
 
-def grafana_server_step(license_path="", image_rendering_setup=False):
+def grafana_server_step(license_path="", image_rendering_setup=False, depends_on="rgm-package"):
     """Runs the grafana-server binary as a service.
+    Args:
+        license_path: path to a license file to run Grafana Enterprise
+        image_rendering_setup: set to True to configure a remote image renderer
+        depends_on: dependency step
 
     Returns:
       Drone step.
@@ -781,9 +785,7 @@ def grafana_server_step(license_path="", image_rendering_setup=False):
         "name": "grafana-server",
         "image": images["alpine"],
         "detach": True,
-        "depends_on": [
-            "rgm-package",
-        ],
+        "depends_on": [depends_on],
         "environment": environment,
         "commands": [
             "apk add --update tar bash",

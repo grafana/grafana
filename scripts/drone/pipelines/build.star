@@ -205,9 +205,8 @@ def build_e2e_enterprise(trigger):
 
     build_steps = [
         build_frontend_package_step(),
-        rgm_artifacts_step(artifacts = ["targz:grafana:enterprise:linux/amd64", "targz:grafana:enterprise:linux/arm64", "targz:grafana:enterprise:linux/arm/v7"], file = "packages.txt"),
         build_test_plugins_step(),
-        grafana_server_step("e2e/extensions/enterprise/license.jwt",True),
+        grafana_server_step("e2e/extensions/enterprise/license.jwt",True,"yarn-install"),
         grafana_image_renderer_step(),
         e2e_tests_step("enterprise-smtp"),
     ]
