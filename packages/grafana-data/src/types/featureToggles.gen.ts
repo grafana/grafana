@@ -41,7 +41,6 @@ export interface FeatureToggles {
   vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  topnav?: boolean;
   grpcServer?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
@@ -221,4 +220,5 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   pluginsSriChecks?: boolean;
+  unifiedStorageBigObjectsSupport?: boolean;
 }

@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import history from 'history';
 import { useEffect, useState } from 'react';
-import { Prompt } from 'react-router-dom';
 import { Navigate } from 'react-router-dom-v5-compat';
 
 import { Button, Modal } from '@grafana/ui';
+
+import { Prompt } from './Prompt';
 
 export interface Props {
   confirmRedirect?: boolean;
