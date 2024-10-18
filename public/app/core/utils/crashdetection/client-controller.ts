@@ -30,6 +30,7 @@ export default function initCrashDetection<CustomProperties extends object = {}>
    */
   function initialize() {
     info.id = options.id;
+    info.tabFirstActive = Date.now();
   }
 
   /**
