@@ -17,7 +17,7 @@ labels:
     - oss
 menuTitle: Template variables
 title: InfluxDB template variables
-weight: 300
+weight: 600
 refs:
   add-template-variables-chained-variables:
     - pattern: /docs/grafana/

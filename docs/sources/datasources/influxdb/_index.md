@@ -52,7 +52,11 @@ Once you've added the InfluxDB data source, you can [configure it](#configure-th
 instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when
 they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
-## Configure the data source
+The following documents will help you get tarted working with InfluxDB andd Grafana:
+
+- [Configure the InfluxDB data source]()
+
+<!-- ## Configure the data source
 
 To configure basic settings for the data source, complete the following steps:
 
@@ -257,4 +261,4 @@ Grafana lists these variables in dropdown select boxes at the top of the dashboa
 in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}). -->

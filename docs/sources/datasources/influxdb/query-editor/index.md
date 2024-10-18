@@ -9,7 +9,7 @@ labels:
     - enterprise
     - oss
 title: Query Editor
-weight: 200
+weight: 400
 refs:
   explore:
     - pattern: /docs/grafana/
