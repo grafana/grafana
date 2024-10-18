@@ -137,7 +137,9 @@ export class SidecarService_EXPERIMENTAL {
   }
 }
 
-export const sidecarServiceSingleton_EXPERIMENTAL = new SidecarService_EXPERIMENTAL();
+export const sidecarServiceSingleton_EXPERIMENTAL = new SidecarService_EXPERIMENTAL({
+  localStorageKey: 'grafana.sidecar.activePluginId',
+});
 
 // The app plugin that is "open" in the main Grafana view
 function getMainAppPluginId() {
