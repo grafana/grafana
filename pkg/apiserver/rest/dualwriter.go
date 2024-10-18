@@ -274,20 +274,18 @@ func Compare(storageObj, legacyObj runtime.Object) bool {
 	if storageObj == nil || legacyObj == nil {
 		return storageObj == nil && legacyObj == nil
 	}
-	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
 }
 
-func removeMeta(obj runtime.Object) []byte {
+func extractSpec(obj runtime.Object) []byte {
 	cpy := obj.DeepCopyObject()
 	unstObj, err := defaultConverter.ToUnstructured(cpy)
 	if err != nil {
 		return nil
 	}
-	// we don't want to compare meta fields
-	delete(unstObj, "metadata")
-	delete(unstObj, "objectMeta")
 
-	jsonObj, err := json.Marshal(unstObj)
+	// we just want to compare the spec field
+	jsonObj, err := json.Marshal(unstObj["spec"])
 	if err != nil {
 		return nil
 	}

@@ -73,7 +73,8 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			SyncOrgRoles:    !s.cfg.JWTAuth.SkipOrgRoleSync,
 			AllowSignUp:     s.cfg.JWTAuth.AutoSignUp,
 			SyncTeams:       s.cfg.JWTAuth.GroupsAttributePath != "",
-		}}
+		},
+	}
 
 	if key := s.cfg.JWTAuth.UsernameClaim; key != "" {
 		id.Login, _ = claims[key].(string)
@@ -117,7 +118,6 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 		return role, &grafanaAdmin, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
