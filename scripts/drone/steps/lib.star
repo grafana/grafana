@@ -755,7 +755,7 @@ def codespell_step():
         ],
     }
 
-def grafana_server_step():
+def grafana_server_step(license_path="", image_rendering_setup=False):
     """Runs the grafana-server binary as a service.
 
     Returns:
@@ -766,6 +766,16 @@ def grafana_server_step():
         "GF_SERVER_ROUTER_LOGGING": "1",
         "GF_APP_MODE": "development",
     }
+
+    if image_rendering_setup:
+        environment.update(
+            {
+                "GF_SMTP_ENABLED": "true",
+                "GF_SMTP_HOST": "end-to-end-tests-enterprise-smtp:7777",
+                "GF_RENDERING_SERVER_URL": "http://grafana-image-renderer:8081/render",
+                "GF_RENDERING_CALLBACK_URL": "http://grafana-server:3001/",
+            },
+        )
 
     return {
         "name": "grafana-server",
@@ -779,8 +789,22 @@ def grafana_server_step():
             "apk add --update tar bash",
             "mkdir grafana",
             "tar --strip-components=1 -xvf ./dist/*amd64.tar.gz -C grafana",
-            "cp -r devenv scripts tools grafana && cd grafana && ./scripts/grafana-server/start-server",
+            "cp -r devenv scripts tools grafana && cd grafana && " +
+            "./scripts/grafana-server/start-server {}".format(license_path),
         ],
+    }
+
+def grafana_image_renderer_step():
+    """Runs the grafana-image-renderer HTTP server as a service.
+
+    Returns:
+      Drone step.
+    """
+
+    return {
+        "name": "grafana-image-renderer",
+        "image": images["grafana_image_renderer"],
+        "detach": True,
     }
 
 def e2e_tests_step(suite, port = 3001, tries = None):
