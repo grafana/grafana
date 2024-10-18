@@ -94,6 +94,14 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			), trace.WithSpanKind(trace.SpanKindServer))
 			defer span.End()
 
+			// inject local root span context into the response via server-timing header
+			// we're doing it this early so that we can capture the root span context
+			// which is not available later-on.
+			serverTimingValue := tracing.ServerTimingForSpan(span)
+			if serverTimingValue != "" {
+				w.Header().Set("server-timing", fmt.Sprintf("traceparent;desc=\"%s\"", serverTimingValue))
+			}
+
 			req = req.WithContext(ctx)
 
 			// Ensure the response writer's status can be captured.
