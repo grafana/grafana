@@ -35,6 +35,23 @@ export class SidecarService_EXPERIMENTAL {
     return this._initialContext.asObservable();
   }
 
+  // Get the current value of the subject, this is needed if we want the value immediately. For example if used in
+  // hook in react with useObservable first render would return undefined even if the behaviourSubject has some
+  // value which will be emitted in the next tick and thus next rerender.
+  get initialContextCurrent() {
+    if (!this.assertFeatureEnabled()) {
+      return undefined;
+    }
+    return this._initialContext.getValue();
+  }
+
+  get activePluginIdCurrent() {
+    if (!this.assertFeatureEnabled()) {
+      return undefined;
+    }
+    return this._activePluginId.getValue();
+  }
+
   openApp(pluginId: string, context?: unknown) {
     if (!this.assertFeatureEnabled()) {
       return;
