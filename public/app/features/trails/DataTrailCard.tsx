@@ -69,9 +69,7 @@ export function DataTrailCard(props: Props) {
           {filters.map((f) => (
             <span key={f.key}>
               <div className={styles.secondaryFont}>{f.key}: </div>
-              <div className={styles.primaryFont}>
-                {truncateValue(f.key, f.value, 44)}
-              </div>
+              <div className={styles.primaryFont}>{truncateValue(f.key, f.value, 44)}</div>
             </span>
           ))}
         </Card.Meta>
@@ -79,17 +77,19 @@ export function DataTrailCard(props: Props) {
           <div className={styles.secondaryFont}>Datasource: </div>
           <div className={styles.primaryFont}>{dsValue && getDataSourceName(dsValue)}</div>
         </div>
-        {onDelete && (
-          <Card.SecondaryActions>
-            <IconButton
-              key="delete"
-              name="trash-alt"
-              className={styles.secondary}
-              tooltip="Remove bookmark"
-              onClick={onDelete}
-            />
-          </Card.SecondaryActions>
-        )}
+        <div className={styles.deleteButton}>
+          {onDelete && (
+            <Card.SecondaryActions>
+              <IconButton
+                key="delete"
+                name="trash-alt"
+                className={styles.secondary}
+                tooltip="Remove bookmark"
+                onClick={onDelete}
+              />
+            </Card.SecondaryActions>
+          )}
+        </div>
       </Card>
       <div className={styles.date}>
         <div className={styles.secondaryFont}>Date created: </div>
@@ -129,6 +129,7 @@ export function getStyles(theme: GrafanaTheme2) {
       textOverflow: 'ellipsis',
     }),
     card: css({
+      position: 'relative',
       width: '318px',
       padding: `12px ${theme.spacing(2)} ${theme.spacing(1)} ${theme.spacing(2)}`,
       height: '152px',
@@ -188,6 +189,11 @@ export function getStyles(theme: GrafanaTheme2) {
       letterSpacing: '0.018px',
       // whiteSpace: 'pre',
       // wordWrap: 'break-word',
+    }),
+    deleteButton: css({
+      position: 'absolute', // Position the delete button absolutely
+      bottom: theme.spacing(1), // Position it at the bottom
+      right: theme.spacing(1), // Position it at the right
     }),
   };
 }
