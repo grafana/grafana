@@ -43,6 +43,7 @@ import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
+import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -174,11 +175,13 @@ export function setupExplore(options?: SetupOptions): {
     <Provider store={storeState}>
       <GrafanaContext.Provider value={contextMock}>
         <Router history={history}>
-          <Route
-            path="/explore"
-            exact
-            render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
-          />
+          <QueriesDrawerContextProvider>
+            <Route
+              path="/explore"
+              exact
+              render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+            />
+          </QueriesDrawerContextProvider>
         </Router>
       </GrafanaContext.Provider>
     </Provider>
