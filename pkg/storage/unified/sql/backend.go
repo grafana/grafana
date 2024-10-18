@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
@@ -664,9 +665,10 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 // throughput of the system. This is a good candidate for a future optimization.
 func (b *backend) resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, key *resource.ResourceKey) (newVersion int64, err error) {
 	ctx, span := b.tracer.Start(ctx, "resourceVersionAtomicInc", trace.WithAttributes(
-		attribute.String("namespace", key.Namespace),
-		attribute.String("group", key.Group),
-		attribute.String("resource", key.Resource),
+		semconv.K8SNamespaceName(key.Namespace),
+		// TODO: the following attributes could use some standardization.
+		attribute.String("k8s.resource.group", key.Group),
+		attribute.String("k8s.resource.type", key.Resource),
 	))
 	defer span.End()
 
