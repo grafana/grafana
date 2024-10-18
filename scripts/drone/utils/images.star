@@ -36,4 +36,5 @@ images = {
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
     "rocky": "rockylinux:9",
+    "grafana_image_renderer": "grafana/grafana-image-renderer:latest",
 }

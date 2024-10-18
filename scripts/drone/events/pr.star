@@ -10,6 +10,7 @@ load(
 load(
     "scripts/drone/pipelines/build.star",
     "build_e2e",
+    "build_e2e_enterprise",
 )
 load(
     "scripts/drone/pipelines/docs.star",
@@ -139,6 +140,7 @@ def pr_pipelines():
             ver_mode,
         ),
         build_e2e(trigger, ver_mode),
+        build_e2e_enterprise(trigger),
         integration_tests(
             get_pr_trigger(
                 include_paths = [
