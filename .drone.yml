@@ -539,7 +539,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -995,7 +995,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1957,7 +1957,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2510,7 +2510,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2715,7 +2715,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -3142,7 +3142,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3387,7 +3387,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3433,9 +3433,9 @@ steps:
         $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Create the grafana manifests
-        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+        $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
+        $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Push the grafana manifests
         $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}
@@ -3519,7 +3519,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3565,9 +3565,9 @@ steps:
         $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Create the grafana manifests
-        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+        $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
+        $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Push the grafana manifests
         $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}
@@ -3829,6 +3829,7 @@ platform:
 services: []
 steps:
 - commands:
+  - export version=$(echo ${TAG} | sed -e "s/+security-/-/g")
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -3844,7 +3845,7 @@ steps:
   - 'echo "Step 5: Installing Grafana..."'
   - for i in $(seq 1 60); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
-    install -yq grafana=${TAG} >/dev/null 2>&1; then'
+    install -yq grafana=$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -3858,10 +3859,10 @@ steps:
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - 'if dpkg -s grafana | grep -q "Version: $version"; then'
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -3889,11 +3890,12 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - dnf list available grafana-${TAG}
+  - export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")
+  - dnf list available grafana-$version
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
-  - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
+  - '    if dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -3910,16 +3912,16 @@ steps:
   - '    rpm --import https://rpm.grafana.com/gpg.key'
   - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
-  - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    echo "Grafana package version $version not found in repository."'
   - '    dnf repolist'
   - '    dnf list available grafana*'
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "${TAG}"; then
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - if rpm -q grafana | grep -q "$verison"; then
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -4006,6 +4008,7 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - commands:
+  - export version=$(echo ${TAG} | sed -e "s/+security-/-/g")
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -4021,7 +4024,7 @@ steps:
   - 'echo "Step 5: Installing Grafana..."'
   - for i in $(seq 1 60); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
-    install -yq grafana=${TAG} >/dev/null 2>&1; then'
+    install -yq grafana=$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -4035,10 +4038,10 @@ steps:
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - 'if dpkg -s grafana | grep -q "Version: $version"; then'
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -4067,11 +4070,12 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - dnf list available grafana-${TAG}
+  - export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")
+  - dnf list available grafana-$version
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
-  - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
+  - '    if dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -4088,16 +4092,16 @@ steps:
   - '    rpm --import https://rpm.grafana.com/gpg.key'
   - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
-  - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    echo "Grafana package version $version not found in repository."'
   - '    dnf repolist'
   - '    dnf list available grafana*'
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "${TAG}"; then
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - if rpm -q grafana | grep -q "$verison"; then
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -4395,7 +4399,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -5195,7 +5199,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5987,6 +5991,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: dc30a3a00ee542fb289da36ef6db4274684db4533c472f7f903468919d1046ac
+hmac: 41df5b1fdbd1b3c9aa915919ae5be16d2a188cbaf6b243c14fd66f94db0db8d8
 
 ...

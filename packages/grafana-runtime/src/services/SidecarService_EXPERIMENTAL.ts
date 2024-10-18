@@ -2,6 +2,10 @@ import { BehaviorSubject, EMPTY } from 'rxjs';
 
 import { config, locationService } from '../index';
 
+interface Options {
+  localStorageKey?: string;
+}
+
 /**
  * This is a service that handles state and operation of a sidecar feature (sideview to render a second app in grafana).
  * At this moment this is highly experimental and if used should be understand to break easily with newer versions.
@@ -15,9 +19,15 @@ import { config, locationService } from '../index';
 export class SidecarService_EXPERIMENTAL {
   private _activePluginId: BehaviorSubject<string | undefined>;
   private _initialContext: BehaviorSubject<unknown | undefined>;
+  private localStorageKey: string | undefined;
 
-  constructor() {
-    this._activePluginId = new BehaviorSubject<string | undefined>(undefined);
+  constructor(options: Options) {
+    this.localStorageKey = options.localStorageKey;
+    let initialId = undefined;
+    if (this.localStorageKey) {
+      initialId = localStorage.getItem(this.localStorageKey) || undefined;
+    }
+    this._activePluginId = new BehaviorSubject<string | undefined>(initialId);
     this._initialContext = new BehaviorSubject<unknown | undefined>(undefined);
   }
 
@@ -85,6 +95,9 @@ export class SidecarService_EXPERIMENTAL {
     if (!this.assertFeatureEnabled()) {
       return;
     }
+    if (this.localStorageKey) {
+      localStorage.setItem(this.localStorageKey, pluginId);
+    }
 
     this._activePluginId.next(pluginId);
     this._initialContext.next(context);
@@ -98,6 +111,9 @@ export class SidecarService_EXPERIMENTAL {
       return;
     }
     if (this._activePluginId.getValue() === pluginId) {
+      if (this.localStorageKey) {
+        localStorage.removeItem(this.localStorageKey);
+      }
       this._activePluginId.next(undefined);
       this._initialContext.next(undefined);
     }
