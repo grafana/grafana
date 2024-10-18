@@ -6,7 +6,6 @@ const DATASOURCE_ID = 'sandbox-test-datasource';
 let DATASOURCE_CONNECTION_ID = '';
 const DATASOURCE_TYPED_NAME = 'SandboxDatasourceInstance';
 
-// Skipping due to flakiness/race conditions with same old arch test  e2e/various-suite/frontend-sandbox-datasource.spec.ts
 describe('Datasource sandbox', () => {
   before(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
@@ -86,7 +85,6 @@ describe('Datasource sandbox', () => {
         e2e.pages.Explore.visit();
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
-
         // make sure the datasource was correctly selected and rendered
         e2e.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME).should('be.visible');
 
@@ -98,6 +96,7 @@ describe('Datasource sandbox', () => {
         e2e.pages.Explore.visit();
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+
         // make sure the datasource was correctly selected and rendered
         e2e.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME).should('be.visible');
 
@@ -130,6 +129,7 @@ describe('Datasource sandbox', () => {
         e2e.pages.Explore.visit();
         e2e.components.DataSourcePicker.container().should('be.visible').click();
         cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
+
         // make sure the datasource was correctly selected and rendered
         e2e.components.Breadcrumbs.breadcrumb(DATASOURCE_TYPED_NAME).should('be.visible');
 
