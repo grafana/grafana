@@ -56,7 +56,7 @@ describe('SnapshotWorker', () => {
       const dashboard = { annotations: { list: [{}] } } as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
-      await expect(worker.work(options)).toEmitValues([{ alertStates: [], annotations: [] }]);
+      await expect(worker.work(options)).toEmitValues([{ alertStates: [], annotations: [], correlations: [] }]);
     });
   });
 
