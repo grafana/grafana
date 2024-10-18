@@ -275,6 +275,8 @@ func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) error {
 		return cloudmigration.ErrInstanceUnreachable.Errorf("instance unreachable")
 	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceCheckingError) {
 		return cloudmigration.ErrInstanceRequestError.Errorf("instance checking error")
+	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceFetching) {
+		return cloudmigration.ErrInstanceRequestError.Errorf("fetching instance")
 	}
 
 	return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")

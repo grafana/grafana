@@ -71,4 +71,5 @@ type GMSAPIError struct {
 var (
 	GMSErrorMessageInstanceUnreachable   = "instance is unreachable"
 	GMSErrorMessageInstanceCheckingError = "checking if instance is reachable"
+	GMSErrorMessageInstanceFetching      = "fetching instance by stack id"
 )

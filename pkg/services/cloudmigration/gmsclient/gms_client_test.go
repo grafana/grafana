@@ -93,6 +93,10 @@ func Test_handleGMSErrors(t *testing.T) {
 			expectedError: cloudmigration.ErrInstanceRequestError,
 		},
 		{
+			gmsResBody:    []byte(`{"message":"fetching instance by stack id 1234"}`),
+			expectedError: cloudmigration.ErrInstanceRequestError,
+		},
+		{
 			gmsResBody:    []byte(`{"status":"error","error":"authentication error: invalid token"}`),
 			expectedError: cloudmigration.ErrTokenValidationFailure,
 		},
