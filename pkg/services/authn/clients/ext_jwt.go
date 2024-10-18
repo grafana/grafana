@@ -128,13 +128,6 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
-	// For use in service layer, allow higher privilege
-	allowedKubernetesNamespace := accessTokenClaims.Rest.Namespace
-	if len(s.cfg.StackID) > 0 {
-		// For single-tenant cloud use, choose the lower of the two (id token will always have the specific namespace)
-		allowedKubernetesNamespace = idTokenClaims.Rest.Namespace
-	}
-
 	return &authn.Identity{
 		ID:                         id,
 		Type:                       t,
@@ -143,7 +136,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		IDTokenClaims:              &idTokenClaims,
 		AuthenticatedBy:            login.ExtendedJWTModule,
 		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: allowedKubernetesNamespace,
+		AllowedKubernetesNamespace: idTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
