@@ -225,15 +225,16 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 }
 
 // Using a team HTTP header whose name matches the name specified for auth proxy header should fail
-func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
+func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 	tenantID := "1234"
 	testcases := []struct {
-		desc string
-		data datasources.TeamHTTPHeaders
-		want int
+		desc    string
+		data    datasources.TeamHTTPHeaders
+		want    int
+		wantErr string
 	}{
 		{
-			desc: "We should only allow for headers being X-Prom-Label-Policy",
+			desc: "Should only allow for updating teamHttpHeaders from lbac rules API instead of datasources API",
 			data: datasources.TeamHTTPHeaders{
 				Headers: datasources.TeamHeaders{
 					tenantID: []datasources.TeamHTTPHeader{
@@ -243,44 +244,8 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 						},
 					},
 				}},
-			want: 400,
-		},
-		{
-			desc: "Allowed header but no team id",
-			data: datasources.TeamHTTPHeaders{
-				Headers: datasources.TeamHeaders{"": []datasources.TeamHTTPHeader{
-					{
-						Header: "X-Prom-Label-Policy",
-						Value:  "foo=bar",
-					},
-				},
-				}},
-			want: 400,
-		},
-		{
-			desc: "Allowed team id and header name with invalid header values ",
-			data: datasources.TeamHTTPHeaders{
-				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
-					{
-						Header: "X-Prom-Label-Policy",
-						Value:  "Bad value",
-					},
-				},
-				}},
-			want: 400,
-		},
-		// Complete valid case, with team id, header name and header value
-		{
-			desc: "Allowed header and header values ",
-			data: datasources.TeamHTTPHeaders{
-				Headers: datasources.TeamHeaders{tenantID: []datasources.TeamHTTPHeader{
-					{
-						Header: "X-Prom-Label-Policy",
-						Value:  `1234:{ name!="value",foo!~"bar" }`,
-					},
-				},
-				}},
-			want: 200,
+			want:    http.StatusForbidden,
+			wantErr: "Cannot create datasource with team HTTP headers, need to use updateDatasourceLBACRules API",
 		},
 	}
 	for _, tc := range testcases {
@@ -317,8 +282,15 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 			}))
 
 			sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-
 			assert.Equal(t, tc.want, sc.resp.Code)
+
+			// Parse the JSON response
+			var response map[string]string
+			err := json.Unmarshal(sc.resp.Body.Bytes(), &response)
+			assert.NoError(t, err, "Failed to parse JSON response")
+
+			// Check the error message in the JSON response
+			assert.Equal(t, tc.wantErr, response["message"])
 		})
 	}
 }
@@ -489,35 +461,6 @@ func TestAPI_datasources_AccessControl(t *testing.T) {
 				assert.Equal(t, tt.expectedCode, res.StatusCode)
 				require.NoError(t, res.Body.Close())
 			}
-		})
-	}
-}
-
-func TestValidateLBACHeader(t *testing.T) {
-	testcases := []struct {
-		desc            string
-		teamHeaderValue string
-		want            bool
-	}{
-		{
-			desc:            "Should allow valid header",
-			teamHeaderValue: `1234:{ name!="value",foo!~"bar" }`,
-			want:            true,
-		},
-		{
-			desc:            "Should allow valid selector",
-			teamHeaderValue: `1234:{ name!="value",foo!~"bar/baz.foo" }`,
-			want:            true,
-		},
-		{
-			desc:            "Should return false for incorrect header value",
-			teamHeaderValue: `1234:!="value",foo!~"bar" }`,
-			want:            false,
-		},
-	}
-	for _, tc := range testcases {
-		t.Run(tc.desc, func(t *testing.T) {
-			assert.Equal(t, tc.want, validateLBACHeader(tc.teamHeaderValue))
 		})
 	}
 }
