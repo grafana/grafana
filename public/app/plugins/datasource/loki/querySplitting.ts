@@ -118,6 +118,10 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
       if (errorResponse?.errors && errorResponse.errors[0].message?.includes('maximum of series')) {
         console.log(`Maximum series reached, skipping retry`);
         return false;
+      } else if (errorResponse?.errors && errorResponse.errors[0].message?.includes('parse error')) {
+        console.warn(`Parse error, skipping retry`);
+        shouldStop = true;
+        return false;
       }
 
       const key = `${requestN}-${requestGroup}`;
