@@ -96,6 +96,9 @@ type ReduceSettings struct {
 type ReduceMode string
 
 const (
+	// Default mode
+	ReduceModeStrict = ""
+
 	// Drop non-numbers
 	ReduceModeDrop ReduceMode = "dropNN"
 

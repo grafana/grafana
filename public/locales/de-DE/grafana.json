@@ -35,9 +35,6 @@
   },
   "alert-rule-form": {
     "evaluation-behaviour": {
-      "description": {
-        "text": ""
-      },
       "info-help": {
         "text": ""
       },
@@ -53,9 +50,33 @@
     "evaluation-behaviour-group": {
       "text": ""
     },
-    "pause": ""
+    "pause": {
+      "alerting": "",
+      "label": "",
+      "recording": ""
+    }
   },
   "alerting": {
+    "alert-recording-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": ""
+        }
+      }
+    },
+    "alert-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": ""
+        }
+      }
+    },
+    "alertform": {
+      "labels": {
+        "alerting": "",
+        "recording": ""
+      }
+    },
     "annotations": {
       "description": "",
       "title": ""
@@ -140,6 +161,20 @@
     },
     "contactPointFilter": {
       "label": ""
+    },
+    "folderAndGroup": {
+      "evaluation": {
+        "modal": {
+          "text": {
+            "alerting": "",
+            "recording": ""
+          }
+        },
+        "text": {
+          "alerting": "",
+          "recording": ""
+        }
+      }
     },
     "list-view": {
       "empty": {
@@ -1416,6 +1451,7 @@
       "folders": "",
       "library_elements": "",
       "mute_timings": "",
+      "notification_policies": "",
       "notification_templates": ""
     },
     "migration-token": {
@@ -1471,6 +1507,17 @@
     },
     "resource-details": {
       "dismiss-button": "",
+      "error-messages": {
+        "dashboard-already-managed": "",
+        "datasource-name-conflict": "",
+        "generic-error": "",
+        "internal-service-error": "",
+        "library-element-name-conflict": "",
+        "only-core-data-sources": "",
+        "resource-conflict": "",
+        "unexpected-error": "",
+        "unsupported-data-type": ""
+      },
       "error-title": "",
       "generic-title": "",
       "missing-message": "",
@@ -1502,6 +1549,7 @@
       "folder": "Ordner",
       "library_element": "",
       "mute_timing": "",
+      "notification_policy": "",
       "notification_template": "",
       "unknown": "Unbekannt"
     },

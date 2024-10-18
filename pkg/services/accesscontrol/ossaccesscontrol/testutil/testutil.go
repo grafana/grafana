@@ -31,7 +31,7 @@ func ProvideFolderPermissions(
 	actionSets := resourcepermissions.NewActionSetService(features)
 	acSvc := acimpl.ProvideOSSService(
 		cfg, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sqlStore, permreg.ProvidePermissionRegistry(),
+		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sqlStore, permreg.ProvidePermissionRegistry(), nil,
 	)
 
 	license := licensingtest.NewFakeLicensing()
