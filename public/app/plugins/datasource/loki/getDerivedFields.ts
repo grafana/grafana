@@ -95,6 +95,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
           datasourceUid: derivedFieldConfig.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },
+        targetBlank: derivedFieldConfig.targetBlank,
       });
     } else if (derivedFieldConfig.url) {
       acc.push({
@@ -102,6 +103,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         title: derivedFieldConfig.urlDisplayLabel || '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         url: derivedFieldConfig.url,
+        targetBlank: derivedFieldConfig.targetBlank,
       });
     }
     return acc;
