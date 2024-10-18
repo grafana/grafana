@@ -1390,9 +1390,10 @@ var (
 		{
 			Name:         "cloudwatchMetricInsightsCrossAccount",
 			Description:  "Enables cross account observability for Cloudwatch Metric Insights query builder",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        awsDatasourcesSquad,
 			FrontendOnly: true,
+			Expression:   "true",
 		},
 		{
 			Name:        "prometheusAzureOverrideAudience",
