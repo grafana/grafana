@@ -147,7 +147,6 @@
     "@types/slate-react": "0.22.9",
     "@types/swagger-ui-react": "4.18.3",
     "@types/systemjs": "6.15.1",
-    "@types/testing-library__jest-dom": "5.14.9",
     "@types/tinycolor2": "1.4.6",
     "@types/uuid": "9.0.8",
     "@types/webpack-assets-manifest": "^5",
