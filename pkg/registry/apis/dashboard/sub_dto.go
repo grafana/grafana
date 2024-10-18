@@ -6,6 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
+
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -18,9 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 // The DTO returns everything the UI needs in a single request
@@ -138,7 +139,19 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	// Check for blob info
 	blobInfo := obj.GetBlob()
 	if blobInfo != nil {
-		fmt.Printf("TODO, load full blob from storage %+v\n", blobInfo)
+		rv, _ := obj.GetResourceVersionInt64()
+		rsp, err := r.unified.GetBlob(ctx, &resource.GetBlobRequest{
+			Resource: &resource.ResourceKey{
+				Namespace: obj.GetNamespace(),
+				Name:      obj.GetName(),
+			},
+			MustProxyBytes:  true,
+			ResourceVersion: rv,
+		})
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("TODO, load full blob from storage %+v // bytes(%d)\n", blobInfo, len(rsp.Value))
 	}
 
 	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))

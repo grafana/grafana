@@ -1,8 +1,6 @@
 package dashboard
 
 import (
-	"context"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -48,16 +46,8 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 		return nil, err
 	}
 	client := resource.NewLocalResourceClient(server)
-	// This is needed as the apistore doesn't allow any core grafana dependencies. We extract the needed features
-	// to a map, to check them in the apistore itself.
-	features := make(map[string]any)
-	if s.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-		features[featuremgmt.FlagUnifiedStorageBigObjectsSupport] = struct{}{}
-	}
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client,
 		defaultOpts.StorageConfig.Config,
-		features,
 	)
-
 	return grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 }

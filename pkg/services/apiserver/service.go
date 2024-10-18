@@ -6,6 +6,17 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/prometheus/client_golang/prometheus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
+
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
@@ -36,16 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/endpoints/responsewriter"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	clientrest "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 )
 
 var (
@@ -281,6 +282,8 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 
+	var optsregister apistore.StorageOptionsRegister
+
 	if o.StorageOptions.StorageType == grafanaapiserveroptions.StorageTypeEtcd {
 		if err := o.RecommendedOptions.Etcd.Validate(); len(err) > 0 {
 			return err[0]
@@ -289,14 +292,11 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		// This is needed as the apistore doesn't allow any core grafana dependencies.
-		features := make(map[string]any)
-		if s.features.IsEnabled(context.Background(), featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-			features[featuremgmt.FlagUnifiedStorageBigObjectsSupport] = struct{}{}
-		}
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		optsregister = getter.RegisterOptions
+
 		// Use unified storage client
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(
-			s.unified, o.RecommendedOptions.Etcd.StorageConfig, features)
+		serverConfig.Config.RESTOptionsGetter = getter
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -323,7 +323,9 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService, s.features,
+		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.serverLockService,
+		optsregister,
 	)
 	if err != nil {
 		return err
