@@ -21,7 +21,7 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 		CustomEndpoint:                      raw.Key("custom_endpoint").MustString("/log-grafana-javascript-agent"),
 		EndpointRPS:                         raw.Key("log_endpoint_requests_per_second_limit").MustInt(3),
 		EndpointBurst:                       raw.Key("log_endpoint_burst_limit").MustInt(15),
-		AllInstrumentationsEnabeld:          raw.Key("instrumentations_all_enabled").MustBool(true),
+		AllInstrumentationsEnabeld:          raw.Key("instrumentations_all_enabled").MustBool(false),
 		ErrorInstrumentalizationEnabled:     raw.Key("instrumentations_errors_enabled").MustBool(true),
 		ConsoleInstrumentalizationEnabled:   raw.Key("instrumentations_console_enabled").MustBool(true),
 		WebVitalsInstrumentalizationEnabled: raw.Key("instrumentations_webvitals_enabled").MustBool(true),
