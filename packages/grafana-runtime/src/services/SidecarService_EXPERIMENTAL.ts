@@ -2,8 +2,17 @@ import { BehaviorSubject, EMPTY } from 'rxjs';
 
 import { config, locationService } from '../index';
 
+/**
+ * This is a service that handles state and operation of a sidecar feature (sideview to render a second app in grafana).
+ * At this moment this is highly experimental and if used should be understand to break easily with newer versions.
+ * None of this functionality works without a feature toggle `appSidecar` being enabled.
+ *
+ * Right now this being in a single service is more of a practical tradeoff for easier isolation in the future these
+ * APIs may be integrated into other services or features like app extensions, plugin system etc.
+ *
+ * @experimental
+ */
 export class SidecarService_EXPERIMENTAL {
-  // The ID of the app plugin that is currently opened in the sidecar view
   private _activePluginId: BehaviorSubject<string | undefined>;
   private _initialContext: BehaviorSubject<unknown | undefined>;
 
@@ -21,6 +30,13 @@ export class SidecarService_EXPERIMENTAL {
     return true;
   }
 
+  /**
+   * Get current app id of the app in sidecar. This is most probably provisional. In the future
+   * this should be driven by URL addressing so that routing for the apps don't change. Useful just internally
+   * to decide which app to render.
+   *
+   * @experimental
+   */
   get activePluginId() {
     if (!this.assertFeatureEnabled()) {
       return EMPTY;
@@ -28,6 +44,12 @@ export class SidecarService_EXPERIMENTAL {
     return this._activePluginId.asObservable();
   }
 
+  /**
+   * Get initial context which is whatever data was passed when calling the 'openApp' function. This is meant as
+   * a way for the app to initialize it's state based on some context that is passed to it from the primary app.
+   *
+   * @experimental
+   */
   get initialContext() {
     if (!this.assertFeatureEnabled()) {
       return EMPTY;
@@ -45,6 +67,9 @@ export class SidecarService_EXPERIMENTAL {
     return this._initialContext.getValue();
   }
 
+  /**
+   * @experimental
+   */
   get activePluginIdCurrent() {
     if (!this.assertFeatureEnabled()) {
       return undefined;
@@ -52,6 +77,10 @@ export class SidecarService_EXPERIMENTAL {
     return this._activePluginId.getValue();
   }
 
+  /**
+   * Opens an app in a sidecar. You can also pass some context object that will be then available to the app.
+   * @experimental
+   */
   openApp(pluginId: string, context?: unknown) {
     if (!this.assertFeatureEnabled()) {
       return;
@@ -61,6 +90,9 @@ export class SidecarService_EXPERIMENTAL {
     this._initialContext.next(context);
   }
 
+  /**
+   * @experimental
+   */
   closeApp(pluginId: string) {
     if (!this.assertFeatureEnabled()) {
       return;
@@ -71,6 +103,11 @@ export class SidecarService_EXPERIMENTAL {
     }
   }
 
+  /**
+   * This is mainly useful inside an app extensions which are executed outside of the main app context but can work
+   * differently depending whether their app is currently rendered or not.
+   * @experimental
+   */
   isAppOpened(pluginId: string) {
     if (!this.assertFeatureEnabled()) {
       return false;
