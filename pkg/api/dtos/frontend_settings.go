@@ -151,6 +151,13 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
+type DependencyInfo struct {
+	PluginID      string `json:"pluginId"`
+	PluginName    string `json:"pluginName"`
+	PluginType    string `json:"pluginType"`
+	PluginVersion string `json:"pluginVersion"`
+}
+
 type FrontendSettingsDTO struct {
 	DefaultDatasource  string                           `json:"defaultDatasource"`
 	Datasources        map[string]plugins.DataSourceDTO `json:"datasources"`
@@ -236,6 +243,7 @@ type FrontendSettingsDTO struct {
 	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
 	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
 	ReportingStaticContext           map[string]string              `json:"reportingStaticContext"`
+	PluginDependencies               map[string][]DependencyInfo    `json:"pluginDependants"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
