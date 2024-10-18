@@ -28,16 +28,13 @@ export function startReportingCrashes() {
 
     updateInfo: (info) => {
       info.url = window.location.href;
-      info.config = {
-        buildInfo: config.buildInfo,
-        featureToggles: config.featureToggles,
-      };
-      info.user = contextSrv.user;
-      info.memory = {
-        usedJSHeapSize: performance?.memory?.usedJSHeapSize,
-        totalJSHeapSize: performance?.memory?.totalJSHeapSize,
-        jsHeapSizeLimit: performance?.memory?.jsHeapSizeLimit,
-      };
+      info.version = config.buildInfo.version;
+      info.userEmail = contextSrv.user.email;
+      info.userLogin = contextSrv.user.login;
+      info.userName = contextSrv.user.name;
+      info.memoryUsedJSHeapSize = performance?.memory?.usedJSHeapSize;
+      info.memoryTotalJSHeapSize = performance?.memory?.totalJSHeapSize;
+      info.memoryJsHeapSizeLimit = performance?.memory?.jsHeapSizeLimit;
     },
   });
 }
