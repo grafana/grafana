@@ -381,6 +381,7 @@ export const Components = {
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
+    commandPaletteTrigger: 'data-testid Command palette trigger',
     shareDashboard: 'data-testid Share dashboard',
     markAsFavorite: 'data-testid Mark as favorite',
     editDashboard: {
