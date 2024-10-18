@@ -208,7 +208,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	// A hack, by late binding and not using the interface, it breaks unit-tests
+	// A hack, by late binding and not using what's supplied in the constructor, it breaks unit-tests
 	queryClient := CommonDataSourceClientSupplier{
 		client.NewQueryClientForPluginClient(b.pluginClient, b.pCtxProvider, req.Headers),
 	}

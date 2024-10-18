@@ -40,7 +40,7 @@ type QueryAPIBuilder struct {
 	tracer  tracing.Tracer
 	metrics *queryMetrics
 	parser  *queryParser
-	client  DataSourceClientSupplier
+	client  DataSourceClientSupplier // only used when not late binding headers
 
 	// the following two for making a late headers supplied client
 	pluginClient plugins.Client
