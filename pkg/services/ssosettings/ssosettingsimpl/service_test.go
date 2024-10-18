@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/setting/authtest"
+	"github.com/grafana/grafana/pkg/setting/settingtest"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -1526,7 +1526,7 @@ func TestService_Delete(t *testing.T) {
 		t.Parallel()
 		env := setupTestEnv(t, true, true, true, false)
 
-		mockProvider := &authtest.MockProvider{}
+		mockProvider := &settingtest.MockProvider{}
 		mockProvider.On("Current", mock.Anything).Return(setting.SettingsBag{
 			"auth.saml": map[string]string{
 				"name": "mockedName",
