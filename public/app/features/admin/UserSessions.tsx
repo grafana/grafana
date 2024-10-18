@@ -77,7 +77,7 @@ class BaseUserSessions extends PureComponent<Props, State> {
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
-                        <TagBadge label={session.authModule || ''} removeIcon={false} count={0} />
+                        {session.authModule && <TagBadge label={session.authModule} removeIcon={false} count={0} />}
                       </td>
                       <td>
                         {canLogout && (
