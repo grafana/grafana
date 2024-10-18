@@ -11,6 +11,7 @@ import (
 
 func TestDB_BeginTx(t *testing.T) {
 	t.Parallel()
+	registerTestSQLDrivers()
 	ctx := testutil.NewDefaultTestContext(t)
 
 	sqlDB, err := sql.Open(driverWithIsolationLevelName, "")

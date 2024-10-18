@@ -729,10 +729,9 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 
 Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
 
-### disable_frontend_sandbox_for_plugins
+### enable_frontend_sandbox_for_plugins
 
-Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
-option for plugins that are known to have problems running inside the frontend sandbox.
+Comma-separated list of plugins ids that will be loaded inside the frontend sandbox.
 
 ## [snapshots]
 
@@ -1499,6 +1498,10 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 ### log_endpoint_burst_limit
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
+
+### instrumentations_all_enabled
+
+Enables all Faro default instrumentation by using `getWebInstrumentations`. Overrides other instrumentation flags.
 
 ### instrumentations_errors_enabled
 
