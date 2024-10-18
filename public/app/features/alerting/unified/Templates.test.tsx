@@ -83,7 +83,13 @@ describe('Templates routes', () => {
   });
 
   it('should pass name validation when editing existing template', async () => {
-    const { user } = setup([navUrl.edit('custom-email')]);
+    const { user } = render(
+      <>
+        <AppNotificationList />
+        <Templates />
+      </>,
+      { historyOptions: { initialEntries: [navUrl.edit('custom-email')] } }
+    );
 
     const titleElement = await ui.form.title.find();
     await waitFor(() => {
@@ -100,7 +106,7 @@ describe('Templates routes', () => {
   });
 
   it('should display error message when creating new template with duplicate name', async () => {
-    const { user } = setup([navUrl.new]);
+    const { user } = render(<Templates />, { historyOptions: { initialEntries: [navUrl.new] } });
 
     const titleElement = await ui.form.title.find();
     await user.type(titleElement, 'custom-email');
