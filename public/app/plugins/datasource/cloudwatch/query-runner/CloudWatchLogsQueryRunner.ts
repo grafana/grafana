@@ -180,7 +180,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       refId: query?.refId || 'A', // dummy
       limit,
       startFromHead: direction !== LogRowContextQueryDirection.Backward,
-      region: query?.region || '',
+      region: this.templateSrv.replace(this.getActualRegion(query?.region)),
       logGroupName: parseLogGroupName(logField!.values[row.rowIndex]),
       logStreamName: logStreamField!.values[row.rowIndex],
     };
@@ -252,7 +252,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       this.logQueries[param.refId] = {
         id: param.queryId,
         region: param.region,
-        statsQuery: (param.statsGroups?.length ?? 0) > 0 ?? false,
+        statsQuery: (param.statsGroups?.length ?? 0) > 0,
       };
     });
 
