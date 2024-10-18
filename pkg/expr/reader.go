@@ -42,6 +42,8 @@ func NewExpressionQueryReader(features featuremgmt.FeatureToggles) *ExpressionQu
 	}
 }
 
+var InvalidReduceModeError = fmt.Errorf("unsupported reduce mode")
+
 // nolint:gocyclo
 func (h *ExpressionQueryReader) ReadQuery(
 	// Properties that have been parsed off the same node
@@ -84,7 +86,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 				}
 				mapper = mathexp.ReplaceNonNumberWithValue{Value: *q.Settings.ReplaceWithValue}
 			default:
-				err = fmt.Errorf("unsupported reduce mode")
+				err = InvalidReduceModeError
 			}
 		}
 		if err == nil {
