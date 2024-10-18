@@ -231,10 +231,12 @@ func Test_getOrCreate(t *testing.T) {
 
 		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
-			assert.Equal(t, expected, state.Annotations["rule-"+key])
+			value, _ := state.Annotations.Get("rule-" + key)
+			assert.Equal(t, expected, value)
 		}
 		for key, expected := range result.Instance {
-			assert.Equal(t, expected, state.Annotations["rule-"+key])
+			value, _ := state.Annotations.Get("rule-" + key)
+			assert.Equal(t, expected, value)
 		}
 	})
 
