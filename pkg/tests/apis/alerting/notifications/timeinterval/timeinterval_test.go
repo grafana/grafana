@@ -778,3 +778,54 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 		})
 	})
 }
+
+func TestIntegrationTimeIntervalValidation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	testCases := []struct {
+		name     string
+		interval v0alpha1.TimeIntervalSpec
+	}{
+		{
+			name: "missing name",
+			interval: v0alpha1.TimeIntervalSpec{
+				Name:          "",
+				TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(1),
+			},
+		},
+		{
+			name: "invalid interval",
+			interval: v0alpha1.TimeIntervalSpec{
+				Name: "test",
+				TimeIntervals: []v0alpha1.Interval{
+					{
+						DaysOfMonth: []string{"1-31"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			i := &v0alpha1.TimeInterval{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: tc.interval,
+			}
+			_, err = adminClient.Create(ctx, i, v1.CreateOptions{})
+			require.Error(t, err)
+			require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %s", err)
+		})
+	}
+}
