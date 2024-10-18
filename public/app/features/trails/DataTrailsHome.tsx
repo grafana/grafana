@@ -166,21 +166,25 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             </div>
           </Stack>
         </div>
-        <div className={styles.gap20}>
-          <div className={styles.header}>Or view a recent exploration</div>
-        </div>
-        <div className={styles.trailList}>
-          {getTrailStore().recent.map((trail, index) => {
-            const resolvedTrail = trail.resolve();
-            return (
-              <DataTrailCard
-                key={(resolvedTrail.state.key || '') + index}
-                trail={resolvedTrail}
-                onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
-              />
-            );
-          })}
-        </div>
+        {getTrailStore().recent.length > 0 && (
+          <>
+            <div className={styles.gap20}>
+              <div className={styles.header}>Or view a recent exploration</div>
+            </div>
+            <div className={styles.trailList}>
+              {getTrailStore().recent.map((trail, index) => {
+                const resolvedTrail = trail.resolve();
+                return (
+                  <DataTrailCard
+                    key={(resolvedTrail.state.key || '') + index}
+                    trail={resolvedTrail}
+                    onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
         <DataTrailsBookmarks model={model} onDelete={onDelete} />
         {/* <div className={styles.horizontalLine} />
         <div className={css(styles.gap20, styles.bookmarkHeader)}>
@@ -240,7 +244,7 @@ function getStyles(theme: GrafanaTheme2) {
       fontSize: '18px',
       fontStyle: 'normal',
       fontWeight: '400',
-      lineHeight: '22px', /* 122.222% */
+      lineHeight: '22px' /* 122.222% */,
       letterSpacing: '0.045px',
     }),
     trailList: css({
