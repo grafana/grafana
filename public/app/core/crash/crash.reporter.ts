@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';

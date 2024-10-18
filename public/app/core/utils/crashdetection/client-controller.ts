@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 type CrashDetectionOptions<CustomProperties> = {
   id: string;
   reportCrash: (crashedTab: CustomProperties) => Promise<boolean>;

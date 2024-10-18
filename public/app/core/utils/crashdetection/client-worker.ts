@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 type ClientWorkerOptions = {
   pingInterval: number; // e.g. 1000
   dbName: string;

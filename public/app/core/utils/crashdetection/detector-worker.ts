@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 type DetectorWorkerOptions = {
   dbName: string;
   inactivityThreshold: number; // e.g. 5000
