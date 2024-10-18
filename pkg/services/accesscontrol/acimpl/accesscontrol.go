@@ -3,31 +3,29 @@ package acimpl
 import (
 	"context"
 	"errors"
-	"strconv"
 	"time"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	authzlib "github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
-
-	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
-	errAccessNotImplemented = errors.New("access control not implemented for resource")
-	tracer                  = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
+	tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
 )
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
-func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.Client) *AccessControl {
+func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.ZanzanaClient) *AccessControl {
 	logger := log.New("accesscontrol")
 
 	var m *acMetrics
@@ -45,14 +43,14 @@ func ProvideAccessControl(features featuremgmt.FeatureToggles, zclient zanzana.C
 }
 
 func ProvideAccessControlTest() *AccessControl {
-	return ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	return ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 }
 
 type AccessControl struct {
 	features  featuremgmt.FeatureToggles
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
-	zclient   zanzana.Client
+	zclient   zanzana.ZanzanaClient
 	metrics   *acMetrics
 }
 
@@ -122,25 +120,18 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
 		kind, _, identifier := accesscontrol.SplitScope(scope)
-		tupleKey, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
-		if !ok {
-			// unsupported translation
-			return false, errAccessNotImplemented
-		}
-
-		a.log.Debug("evaluating zanzana", "user", tupleKey.User, "relation", tupleKey.Relation, "object", tupleKey.Object)
-		allowed, err := a.Check(ctx, accesscontrol.CheckRequest{
-			// Namespace: claims.OrgNamespaceFormatter(user.GetOrgID()),
-			User:     tupleKey.User,
-			Relation: tupleKey.Relation,
-			Object:   tupleKey.Object,
+		checkRes, err := a.zclient.Check(ctx, user, &authzlib.CheckRequest{
+			Namespace: claims.OrgNamespaceFormatter(user.GetOrgID()),
+			Action:    action,
+			Resource:  kind,
+			Name:      identifier,
 		})
 
 		if err != nil {
 			return false, err
 		}
 
-		return allowed, nil
+		return checkRes.Allowed, nil
 	})
 }
 
@@ -181,7 +172,7 @@ func (a *AccessControl) evaluateCompare(ctx context.Context, user identity.Reque
 		first, second = second, first
 	}
 
-	if !errors.Is(second.err, errAccessNotImplemented) {
+	if !errors.Is(second.err, zclient.ErrTranslationNotImplemented) {
 		if second.err != nil {
 			a.log.Error("zanzana evaluation failed", "error", second.err)
 		} else if first.decision != second.decision {
@@ -211,7 +202,6 @@ func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return &AccessControl{
 		features:  a.features,
 		log:       a.log,
-		zclient:   a.zclient,
 		metrics:   a.metrics,
 		resolvers: accesscontrol.NewResolvers(a.log),
 	}
@@ -222,63 +212,4 @@ func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg
 	defer span.End()
 
 	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
-}
-
-func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckRequest) (bool, error) {
-	key := &openfgav1.CheckRequestTupleKey{
-		User:     req.User,
-		Relation: req.Relation,
-		Object:   req.Object,
-	}
-
-	in := &openfgav1.CheckRequest{
-		TupleKey: key,
-	}
-
-	// Check direct access to resource first
-	res, err := a.zclient.Check(ctx, in)
-	if err != nil {
-		return false, err
-	}
-
-	// no need to check folder access
-	if res.Allowed || req.Parent == "" {
-		return res.Allowed, nil
-	}
-
-	// Check access through the parent folder
-	ns, err := claims.ParseNamespace(req.Namespace)
-	if err != nil {
-		return false, err
-	}
-
-	folderKey := &openfgav1.CheckRequestTupleKey{
-		User:     req.User,
-		Relation: zanzana.TranslateToFolderRelation(req.Relation, req.ObjectType),
-		Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, req.Parent, "", strconv.FormatInt(ns.OrgID, 10)),
-	}
-
-	folderReq := &openfgav1.CheckRequest{
-		TupleKey: folderKey,
-	}
-
-	folderRes, err := a.zclient.Check(ctx, folderReq)
-	if err != nil {
-		return false, err
-	}
-
-	return folderRes.Allowed, nil
-}
-
-func (a *AccessControl) ListObjects(ctx context.Context, req accesscontrol.ListObjectsRequest) ([]string, error) {
-	in := &openfgav1.ListObjectsRequest{
-		Type:     req.Type,
-		User:     req.User,
-		Relation: req.Relation,
-	}
-	res, err := a.zclient.ListObjects(ctx, in)
-	if err != nil {
-		return nil, err
-	}
-	return res.Objects, err
 }

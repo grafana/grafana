@@ -54,7 +54,7 @@ var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.E
 func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
-	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.OpenFGAClient, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService,
 ) (*Service, error) {
 	service := ProvideOSSService(
@@ -89,7 +89,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
+	openFGAClient zanzana.OpenFGAClient, db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -99,7 +99,7 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		reconciler:     dualwrite.NewZanzanaReconciler(zclient, db, lock),
+		reconciler:     dualwrite.NewZanzanaReconciler(openFGAClient, db, lock),
 		permRegistry:   permRegistry,
 	}
 

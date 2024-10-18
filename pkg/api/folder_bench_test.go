@@ -27,7 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -456,12 +457,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService(features)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(), nil,
+		features, tracing.InitializeTracerForTest(), zclient.NewNoopOpenFGAClient(), sc.db, permreg.ProvidePermissionRegistry(), nil,
 	)
 	fStore := folderimpl.ProvideStore(sc.db)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
@@ -477,7 +478,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
+		features, folderPermissions, dashboardPermissions, ac, client.NewNoopZanzanaClient(),
 		folderServiceWithFlagOn, fStore, nil,
 	)
 	require.NoError(b, err)
@@ -496,7 +497,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		DashboardService: dashboardSvc,
 	}
 
-	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 
 	m.Get("/api/folders", hs.GetFolders)

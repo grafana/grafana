@@ -7,15 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestLegacyAccessClient_HasAccess(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient.NewNoopZanzanaClient())
 
 	t.Run("should reject when when no configuration for resource exist", func(t *testing.T) {
 		a := accesscontrol.NewLegacyAccessClient(ac)

@@ -102,3 +102,9 @@ var basicRolesTranslations = map[string]string{
 	RoleViewer:       "basic_viewer",
 	RoleNone:         "basic_none",
 }
+
+var kindToTypeTranslations = map[string]string{
+	KindDashboards: TypeDashboard,
+	KindFolders:    TypeFolder,
+	KindOrg:        TypeOrg,
+}

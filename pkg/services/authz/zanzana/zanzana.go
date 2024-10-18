@@ -120,6 +120,10 @@ func TranslateFixedRole(role string) string {
 }
 
 // Translate "read" for the dashboard into "dashboard_read" for folder
-func TranslateToFolderRelation(relation, objectType string) string {
-	return fmt.Sprintf("%s_%s", objectType, relation)
+func TranslateToFolderRelation(relation, kind string) string {
+	resourceType, ok := kindToTypeTranslations[kind]
+	if !ok {
+		resourceType = kind
+	}
+	return fmt.Sprintf("%s_%s", resourceType, relation)
 }
