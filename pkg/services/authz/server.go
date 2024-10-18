@@ -72,7 +72,7 @@ type legacyServer struct {
 	cfg    *Cfg
 }
 
-func (l *legacyServer) Check(context.Context, *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+func (s *legacyServer) Check(context.Context, *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	// FIXME: implement for legacy access control
 	return nil, errors.New("unimplemented")
 }
