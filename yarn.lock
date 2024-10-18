@@ -4218,9 +4218,9 @@ __metadata:
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@monaco-editor/react": "npm:4.6.0"
     "@popperjs/core": "npm:2.11.8"
-    "@react-aria/dialog": "npm:3.5.18"
-    "@react-aria/focus": "npm:3.18.3"
-    "@react-aria/overlays": "npm:3.23.3"
+    "@react-aria/dialog": "npm:3.5.19"
+    "@react-aria/focus": "npm:3.18.4"
+    "@react-aria/overlays": "npm:3.23.4"
     "@react-aria/utils": "npm:3.25.3"
     "@rollup/plugin-node-resolve": "npm:15.3.0"
     "@storybook/addon-a11y": "npm:^8.1.6"
@@ -6785,12 +6785,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/dialog@npm:3.5.18":
-  version: 3.5.18
-  resolution: "@react-aria/dialog@npm:3.5.18"
+"@react-aria/dialog@npm:3.5.19":
+  version: 3.5.19
+  resolution: "@react-aria/dialog@npm:3.5.19"
   dependencies:
-    "@react-aria/focus": "npm:^3.18.3"
-    "@react-aria/overlays": "npm:^3.23.3"
+    "@react-aria/focus": "npm:^3.18.4"
+    "@react-aria/overlays": "npm:^3.23.4"
     "@react-aria/utils": "npm:^3.25.3"
     "@react-types/dialog": "npm:^3.5.13"
     "@react-types/shared": "npm:^3.25.0"
@@ -6798,22 +6798,22 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/dbd40d14baeea7dae56956985234e29ada74a93899177c737c3312ec788b22a6d65179b7132cdbd6609e973d410f749071c68ceb6620d3cf6f60a03ddf648983
+  checksum: 10/44eba70f927cbdb003da37021ee6dde363abfa3c179437d83e19c72931c0fab12db20dbd603578d372df534ddce119e22b6908935544ce7a696523aa71b72e2e
   languageName: node
   linkType: hard
 
-"@react-aria/focus@npm:3.18.3, @react-aria/focus@npm:^3.18.3":
-  version: 3.18.3
-  resolution: "@react-aria/focus@npm:3.18.3"
+"@react-aria/focus@npm:3.18.4, @react-aria/focus@npm:^3.18.4":
+  version: 3.18.4
+  resolution: "@react-aria/focus@npm:3.18.4"
   dependencies:
-    "@react-aria/interactions": "npm:^3.22.3"
+    "@react-aria/interactions": "npm:^3.22.4"
     "@react-aria/utils": "npm:^3.25.3"
     "@react-types/shared": "npm:^3.25.0"
     "@swc/helpers": "npm:^0.5.0"
     clsx: "npm:^2.0.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/b11632e638de2f40ec12a4a8c818059b9bf7e90b288a93b46985350c887ae7ecdf037391537f86fbacb2a186dec7e7c41a8f2ff767fd232a8cac3189f03735b2
+  checksum: 10/912cd8a98cbe978240991bec8077c7956ca03ee78cb10152c7a1131a53fb622a5c9b87a4047909f032a7550c37ed9ec50488437a17c761c5c852b721cbaa0bd2
   languageName: node
   linkType: hard
 
@@ -6835,9 +6835,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/interactions@npm:^3.22.3":
-  version: 3.22.3
-  resolution: "@react-aria/interactions@npm:3.22.3"
+"@react-aria/interactions@npm:^3.22.4":
+  version: 3.22.4
+  resolution: "@react-aria/interactions@npm:3.22.4"
   dependencies:
     "@react-aria/ssr": "npm:^3.9.6"
     "@react-aria/utils": "npm:^3.25.3"
@@ -6845,20 +6845,20 @@ __metadata:
     "@swc/helpers": "npm:^0.5.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/bc1e8381bda81c106d64bb6eebe06c244bcd6905d1be95fdc26bad1c5d83c48d1ec5159fb1cb8ea9ee7ebafc76595702e2d174f3c8394b766779c0d34bfa6de7
+  checksum: 10/095d084bd642b47a5cc2a846fa50e0953682ddcad694cc78df344b1f235e292945746692f84d27f465f7ff0117b485c3f5b69f050be196df0c3e7343d3239551
   languageName: node
   linkType: hard
 
-"@react-aria/overlays@npm:3.23.3, @react-aria/overlays@npm:^3.23.3":
-  version: 3.23.3
-  resolution: "@react-aria/overlays@npm:3.23.3"
+"@react-aria/overlays@npm:3.23.4, @react-aria/overlays@npm:^3.23.4":
+  version: 3.23.4
+  resolution: "@react-aria/overlays@npm:3.23.4"
   dependencies:
-    "@react-aria/focus": "npm:^3.18.3"
+    "@react-aria/focus": "npm:^3.18.4"
     "@react-aria/i18n": "npm:^3.12.3"
-    "@react-aria/interactions": "npm:^3.22.3"
+    "@react-aria/interactions": "npm:^3.22.4"
     "@react-aria/ssr": "npm:^3.9.6"
     "@react-aria/utils": "npm:^3.25.3"
-    "@react-aria/visually-hidden": "npm:^3.8.16"
+    "@react-aria/visually-hidden": "npm:^3.8.17"
     "@react-stately/overlays": "npm:^3.6.11"
     "@react-types/button": "npm:^3.10.0"
     "@react-types/overlays": "npm:^3.8.10"
@@ -6867,7 +6867,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/c70af63d4ae828963b9fa780330cabf49e5a70f8981ae65d173e32934fa190fc8df1283de65d6a8b71b6340050718df19c2e7353b406114962d85ee5deb811ee
+  checksum: 10/6f641a1f7c1976758dd062c4345d2e8882575e2b645a4e4693f051699bae48c48979db3539e77c387aee64600d7a555b94687cd01449094cf875ce80ec6aa2ed
   languageName: node
   linkType: hard
 
@@ -6897,17 +6897,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/visually-hidden@npm:^3.8.16":
-  version: 3.8.16
-  resolution: "@react-aria/visually-hidden@npm:3.8.16"
+"@react-aria/visually-hidden@npm:^3.8.17":
+  version: 3.8.17
+  resolution: "@react-aria/visually-hidden@npm:3.8.17"
   dependencies:
-    "@react-aria/interactions": "npm:^3.22.3"
+    "@react-aria/interactions": "npm:^3.22.4"
     "@react-aria/utils": "npm:^3.25.3"
     "@react-types/shared": "npm:^3.25.0"
     "@swc/helpers": "npm:^0.5.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/263b4d0e78ae2932165cad3d91f8111527d04feae06c42078cbaaa8f8a8bc13f46321cf1c3203e3e7418ca319b2f02b8ff24764e8c4af714a6200450fa955277
+  checksum: 10/d9cdc97d80e750f4582cc3f2bcc0bde12b6c70fbd408ca9ebba2ef654ab27b0181cdd072a8b30ae36f14d9ec16a79c2d38d7cbe834c96fad693daebc7be41616
   languageName: node
   linkType: hard
 
@@ -19072,9 +19072,9 @@ __metadata:
     "@playwright/test": "npm:1.48.0"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
-    "@react-aria/dialog": "npm:3.5.18"
-    "@react-aria/focus": "npm:3.18.3"
-    "@react-aria/overlays": "npm:3.23.3"
+    "@react-aria/dialog": "npm:3.5.19"
+    "@react-aria/focus": "npm:3.18.4"
+    "@react-aria/overlays": "npm:3.23.4"
     "@react-aria/utils": "npm:3.25.3"
     "@react-awesome-query-builder/ui": "npm:6.6.3"
     "@react-types/button": "npm:3.10.0"
