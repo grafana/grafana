@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -217,15 +216,13 @@ func expectUnsuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend, err
 func TestResourceVersionAtomicInc(t *testing.T) {
 	t.Parallel()
 
-	dialect := sqltemplate.MySQL
-
 	t.Run("happy path - insert new row", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
 
 		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
 
-		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
 		require.NoError(t, err)
 		require.Equal(t, int64(23456), v)
 	})
@@ -238,7 +235,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 		b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
 		b.ExecWithResult("update resource_version", 0, 1)
 
-		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
 		require.NoError(t, err)
 		require.Equal(t, int64(23456), v)
 	})
@@ -248,7 +245,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 		b.QueryWithErr("select resource_version for update", errTest)
 
-		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "lock the resource version")
@@ -262,7 +259,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 		b.QueryWithResult("select resource_version", 0, Rows{})
 		b.ExecWithErr("insert resource_version", errTest)
 
-		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "insert into resource_version")
@@ -275,7 +272,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 		b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
 		b.ExecWithErr("update resource_version", errTest)
 
-		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
+		v, err := b.resourceVersionAtomicInc(ctx, b.DB, resKey)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "increase resource version")

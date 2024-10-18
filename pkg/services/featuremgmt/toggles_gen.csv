@@ -22,7 +22,6 @@ canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 vizActions,experimental,@grafana/dataviz-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
-topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
@@ -202,3 +201,4 @@ useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,fals
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
+unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
