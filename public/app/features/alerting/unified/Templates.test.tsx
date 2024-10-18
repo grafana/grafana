@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
-import { render, screen, within } from 'test/test-utils';
-import { byRole } from 'testing-library-selector';
+import { render, screen, waitFor, within } from 'test/test-utils';
+import { byLabelText, byRole } from 'testing-library-selector';
 
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -40,6 +40,10 @@ jest.mock('@grafana/ui', () => ({
 
 const ui = {
   templateForm: byRole('form', { name: 'Template form' }),
+  form: {
+    title: byLabelText(/Template name/),
+    saveButton: byRole('button', { name: 'Save' }),
+  },
 };
 
 const navUrl = {
@@ -76,6 +80,34 @@ describe('Templates routes', () => {
 
     expect(form).toBeInTheDocument();
     expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('');
+  });
+
+  it('should pass name validation when editing existing template', async () => {
+    const { user } = setup([navUrl.edit('custom-email')]);
+
+    const titleElement = await ui.form.title.find();
+    await waitFor(() => {
+      expect(titleElement).toHaveValue('custom-email');
+    });
+
+    await user.click(ui.form.saveButton.get());
+
+    // No error message should be displayed for a unique name
+    expect(screen.queryByText('Another template with this name already exists')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Template saved')).toBeInTheDocument();
+    });
+  });
+
+  it('should display error message when creating new template with duplicate name', async () => {
+    const { user } = setup([navUrl.new]);
+
+    const titleElement = await ui.form.title.find();
+    await user.type(titleElement, 'custom-email');
+
+    await user.click(ui.form.saveButton.get());
+
+    expect(screen.getByText('Another template with this name already exists')).toBeInTheDocument();
   });
 });
 
