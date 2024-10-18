@@ -1018,6 +1018,7 @@
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
       "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-label": "Share",
       "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
