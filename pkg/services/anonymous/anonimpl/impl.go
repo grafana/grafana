@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/api"
+	"github.com/grafana/grafana/pkg/services/anonymous/validator"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,23 +28,26 @@ const deviceIDHeader = "X-Grafana-Device-Id"
 const keepFor = time.Hour * 24 * 61
 
 type AnonDeviceService struct {
-	log        log.Logger
-	localCache *localcache.CacheService
-	anonStore  anonstore.AnonStore
-	serverLock *serverlock.ServerLockService
-	cfg        *setting.Cfg
+	log            log.Logger
+	localCache     *localcache.CacheService
+	anonStore      anonstore.AnonStore
+	serverLock     *serverlock.ServerLockService
+	cfg            *setting.Cfg
+	limitValidator validator.AnonUserLimitValidator
 }
 
 func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
 	sqlStore db.DB, cfg *setting.Cfg, orgService org.Service,
 	serverLockService *serverlock.ServerLockService, accesscontrol accesscontrol.AccessControl, routeRegister routing.RouteRegister,
+	validator validator.AnonUserLimitValidator,
 ) *AnonDeviceService {
 	a := &AnonDeviceService{
-		log:        log.New("anonymous-session-service"),
-		localCache: localcache.New(29*time.Minute, 15*time.Minute),
-		anonStore:  anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
-		serverLock: serverLockService,
-		cfg:        cfg,
+		log:            log.New("anonymous-session-service"),
+		localCache:     localcache.New(29*time.Minute, 15*time.Minute),
+		anonStore:      anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
+		serverLock:     serverLockService,
+		cfg:            cfg,
+		limitValidator: validator,
 	}
 
 	usageStats.RegisterMetricsFunc(a.usageStatFn)
@@ -79,7 +83,12 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, er
 	}, nil
 }
 
-func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, httpReq *http.Request, device *anonstore.Device) error {
+func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, device *anonstore.Device) error {
+	err := a.limitValidator.Validate(ctx)
+	if err != nil {
+		return err
+	}
+
 	key := device.CacheKey()
 
 	if _, ok := a.localCache.Get(key); ok {
@@ -99,8 +108,7 @@ func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, httpReq *http.Reque
 	return nil
 }
 
-func (a *AnonDeviceService) untagDevice(ctx context.Context,
-	identity *authn.Identity, r *authn.Request, err error) {
+func (a *AnonDeviceService) untagDevice(ctx context.Context, _ *authn.Identity, r *authn.Request, err error) {
 	if err != nil {
 		return
 	}
