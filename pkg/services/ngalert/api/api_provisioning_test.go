@@ -341,18 +341,17 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("PUT returns 400 if folder does not exist", func(t *testing.T) {
 				testEnv := createTestEnv(t, testConfig)
 				sut := createProvisioningSrvSutFromEnv(t, &testEnv)
-				orgID := int64(1)
+				orgID := int64(2)
 
-				// create a folder since we need an existing rule to update
+				rule := createTestAlertRule("rule", orgID)
 				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-					UID:          "folder-uid",
+					UID:          rule.FolderUID,
 					Title:        "Folder Title",
 					OrgID:        orgID,
 					SignedInUser: &user.SignedInUser{OrgID: orgID},
 				})
 				require.NoError(t, err)
 
-				rule := createTestAlertRule("rule", orgID)
 				insertRuleInOrg(t, sut, rule, orgID)
 				rule.FolderUID = "does-not-exist"
 
