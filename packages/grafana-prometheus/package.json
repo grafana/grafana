@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.4",
-    "@floating-ui/react": "0.26.24",
+    "@floating-ui/react": "0.26.25",
     "@grafana/data": "11.4.0-pre",
     "@grafana/experimental": "2.1.2",
     "@grafana/faro-web-sdk": "1.10.2",
@@ -100,7 +100,6 @@
     "@types/react-highlight-words": "0.20.0",
     "@types/react-window": "1.8.8",
     "@types/semver": "7.5.8",
-    "@types/testing-library__jest-dom": "5.14.9",
     "@types/uuid": "9.0.8",
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",
