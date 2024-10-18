@@ -373,10 +373,7 @@ const Header: FC<HeaderProps> = ({
 interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
   frame: DataFrame;
   index: number;
-  // eslint-disable-next-line react/no-unused-prop-types
   isRecordingRule?: boolean;
-  //I need to disable this lint rule,
-  //because was failing => FrameProps is also used in TimeseriesRow component, but this prop is not used there
 }
 
 const OpeningBracket = () => <span>{'{'}</span>;
@@ -436,8 +433,8 @@ function FrameRow({ frame, index, isAlertCondition, isRecordingRule }: FrameProp
     </div>
   );
 }
-
-const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => {
+interface TimeseriesRowProps extends Omit<FrameProps, 'isRecordingRule'> {}
+const TimeseriesRow: FC<TimeseriesRowProps & { index: number }> = ({ frame, index }) => {
   const styles = useStyles2(getStyles);
 
   const valueField = frame.fields[1]; // field 0 is "time", field 1 is "value"
