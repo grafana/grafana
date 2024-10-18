@@ -237,30 +237,33 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                           label="Template"
                           actions={
                             <>
-                              <Dropdown
-                                overlay={
-                                  <Menu>
-                                    {GlobalTemplateDataExamples.map((item, index) => (
+                              {/* examples dropdown – only available for Grafana Alertmanager */}
+                              {isGrafanaAlertManager && (
+                                <Dropdown
+                                  overlay={
+                                    <Menu>
+                                      {GlobalTemplateDataExamples.map((item, index) => (
+                                        <Menu.Item
+                                          key={index}
+                                          label={item.description}
+                                          onClick={() => appendExample(item.example)}
+                                        />
+                                      ))}
+                                      <Menu.Divider />
                                       <Menu.Item
-                                        key={index}
-                                        label={item.description}
-                                        onClick={() => appendExample(item.example)}
+                                        label={'Examples documentation'}
+                                        url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
+                                        target="_blank"
+                                        icon="external-link-alt"
                                       />
-                                    ))}
-                                    <Menu.Divider />
-                                    <Menu.Item
-                                      label={'Examples documentation'}
-                                      url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
-                                      target="_blank"
-                                      icon="external-link-alt"
-                                    />
-                                  </Menu>
-                                }
-                              >
-                                <Button variant="secondary" size="sm" icon="angle-down">
-                                  Add example
-                                </Button>
-                              </Dropdown>
+                                    </Menu>
+                                  }
+                                >
+                                  <Button variant="secondary" size="sm" icon="angle-down">
+                                    Add example
+                                  </Button>
+                                </Dropdown>
+                              )}
                               <Button
                                 icon="question-circle"
                                 size="sm"
