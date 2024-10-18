@@ -21,6 +21,8 @@ export function startReportingCrashes() {
     },
 
     reportCrash: async (tab) => {
+      tab.tabLastActive = String(tab.tabLastActive);
+      tab.workerLastActive = String(tab.workerLastActive);
       logger.logInfo('browser crash detected', tab);
       console.log('browser crash detected', tab);
       return true;
