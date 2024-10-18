@@ -90,7 +90,7 @@ var (
 	RouteResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		"routingtrees", "routingtree", "RoutingTree",
 		func() runtime.Object { return &RoutingTree{} },
-		func() runtime.Object { return &RoutingTree{} },
+		func() runtime.Object { return &RoutingTreeList{} },
 		utils.TableColumns{
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
