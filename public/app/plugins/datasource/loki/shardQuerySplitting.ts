@@ -151,7 +151,7 @@ function splitQueriesByStreamShard(
           runNextRequest(subscriber, group, groups);
           retryTimer = null;
         },
-        1000 * Math.pow(2, retries)
+        1500 * Math.pow(2, retries)
       ); // Exponential backoff
 
       retrying = true;
@@ -170,7 +170,10 @@ function splitQueriesByStreamShard(
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
-    const queryRunner = shardsToQuery.length > 0 ? runSplitQuery.bind(null, datasource, subRequest, { skipPartialUpdates: true }) : datasource.runQuery.bind(datasource, subRequest);
+    const queryRunner =
+      shardsToQuery.length > 0
+        ? runSplitQuery.bind(null, datasource, subRequest)
+        : datasource.runQuery.bind(datasource, subRequest);
 
     subquerySubscription = queryRunner().subscribe({
       next: (partialResponse: DataQueryResponse) => {
@@ -229,7 +232,6 @@ interface ShardedQueryGroup {
   shards?: number[];
   groupSize?: number;
   cycle?: number;
-  prevExecutionTime?: number;
 }
 
 async function groupTargetsByQueryType(
@@ -238,7 +240,10 @@ async function groupTargetsByQueryType(
   request: DataQueryRequest<LokiQuery>
 ) {
   const [logQueries, metricQueries] = partition(targets, (query) => isLogsQuery(query.expr));
-  const [lineFilterLogQueries, restLogQueries] = partition(logQueries, (query) => isQueryWithLineFilter(query.expr) || isQueryWithLabelFilter(query.expr));
+  const [lineFilterLogQueries, restLogQueries] = partition(
+    logQueries,
+    (query) => isQueryWithLineFilter(query.expr) || isQueryWithLabelFilter(query.expr)
+  );
 
   const groups: ShardedQueryGroup[] = [];
 
@@ -302,45 +307,28 @@ function updateGroupSizeFromResponse(response: DataQueryResponse, group: Sharded
   const metaExecutionTime: QueryResultMetaStat | undefined = response.data[0].meta?.stats?.find(
     (stat: QueryResultMetaStat) => stat.displayName === 'Summary: exec time'
   );
-  if (!metaExecutionTime) {
-    return currentSize;
-  }
 
-  debug(`${metaExecutionTime.value}`);
+  if (metaExecutionTime) {
+    const executionTime = Math.round(metaExecutionTime.value);
+    debug(`${metaExecutionTime.value}`);
+    // Positive scenarios
+    if (executionTime <= 1) {
+      return Math.floor(currentSize * 1.5);
+    } else if (executionTime < 6) {
+      return Math.ceil(currentSize * 1.1);
+    }
 
-  const prevExecutionTime = group.prevExecutionTime;
-  group.prevExecutionTime = metaExecutionTime.value;
-
-  // Adjustment based on the previous execution time
-  if (prevExecutionTime) {
-    const rateOfChange = (metaExecutionTime.value - prevExecutionTime) / prevExecutionTime;
-
-    if (rateOfChange <= -0.5) {
-      return Math.ceil(currentSize * 2);
-    } else if (rateOfChange < 0) {
-      return Math.ceil(currentSize * 1.5);
-    } else if (currentSize === 1) {
+    // Negative scenarios
+    if (currentSize === 1) {
       return currentSize;
-    } else if (rateOfChange < 0.5) {
-      return Math.ceil(currentSize * (1 - rateOfChange));
+    } else if (executionTime < 20) {
+      return Math.ceil(currentSize * 0.9);
     } else {
-      return Math.ceil(currentSize / 2);
+      return Math.floor(currentSize / 2);
     }
   }
 
-  // Adjustment from the first non-empty response
-  // Positive scenarios
-  if (metaExecutionTime.value < 1) {
-    return Math.ceil(currentSize * 1.5);
-  } else if (metaExecutionTime.value < 6) {
-    return currentSize;
-  }
-
-  // Negative scenarios
-  if (metaExecutionTime.value < 20) {
-    return Math.round(currentSize / 1.5);
-  }
-  return Math.round(currentSize / 2);
+  return currentSize;
 }
 
 function groupShardRequests(shards: number[], start: number, groupSize: number) {
