@@ -1,9 +1,13 @@
 package resourcepermissions
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -14,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/resourcepermissions")
@@ -47,6 +50,9 @@ func (a *api) registerEndpoints() {
 	teamUIDResolverResource := func() web.Handler { return func(c *contextmodel.ReqContext) {} }() // no-op
 	if a.service.options.Resource == "teams" {
 		teamUIDResolverResource = team.MiddlewareTeamUIDResolver(a.service.teamService, ":resourceID")
+	}
+	if a.service.options.Resource == "receivers" {
+		teamUIDResolverResource = MiddlewareReceiverUIDResolver(":resourceID")
 	}
 
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
@@ -429,4 +435,19 @@ func permissionSetResponse(cmd setPermissionCommand) response.Response {
 		message = "Permission removed"
 	}
 	return response.Success(message)
+}
+
+func MiddlewareReceiverUIDResolver(paramName string) web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		gotParams := web.Params(c.Req)
+		uid := gotParams[paramName]
+		gotParams[paramName] = uidToResourceID(uid)
+		web.SetURLParams(c.Req, gotParams)
+	}
+}
+
+func uidToResourceID(uid string) string {
+	h := sha1.New()
+	h.Write([]byte(uid))
+	return hex.EncodeToString(h.Sum(nil))
 }
