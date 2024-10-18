@@ -1084,7 +1084,7 @@
       "one-click-link": "One-click link"
     },
     "data-links-list-item": {
-      "field-validation": "Explore data link may not work in the future. Please edit."
+      "compact-explore-disclaimer": "Explore data link may not work in the future. Please edit."
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",

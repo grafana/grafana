@@ -52,7 +52,7 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
               </div>
               {isCompactExploreUrl && (
                 <FieldValidationMessage>
-                  <Trans i18nKey="grafana-ui.data-links-list-item.field-validation">
+                  <Trans i18nKey="grafana-ui.data-links-list-item.compact-explore-disclaimer">
                     Explore data link may not work in the future. Please edit.
                   </Trans>
                 </FieldValidationMessage>
