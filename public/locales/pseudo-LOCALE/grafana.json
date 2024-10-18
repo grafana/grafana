@@ -2817,9 +2817,13 @@
       "apply": "Åppľy ŧįmę řäŉģę",
       "aria-role": "Ŧįmę řäŉģę şęľęčŧįőŉ",
       "default-title": "Ŧįmę řäŉģęş",
+      "example": "Ēχämpľę: ŧő şęľęčŧ ä ŧįmę řäŉģę ƒřőm 10 mįŉūŧęş äģő ŧő ŉőŵ",
+      "example-details": "Fřőm: ŉőŵ-10m Ŧő: ŉőŵ",
       "example-title": "Ēχämpľę ŧįmę řäŉģęş",
       "from-to": "{{timeOptionFrom}} ŧő {{timeOptionTo}}",
-      "specify": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>"
+      "more-info": "Főř mőřę įŉƒőřmäŧįőŉ şęę <2>đőčş <1></1></2>.",
+      "specify": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>",
+      "supported-formats": "Ŝūppőřŧęđ ƒőřmäŧş: <1>ŉőŵ-[đįģįŧ]ş/m/ĥ/đ/ŵ</1>"
     },
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",

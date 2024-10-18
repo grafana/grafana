@@ -2817,9 +2817,13 @@
       "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
+      "example": "Example: to select a time range from 10 minutes ago to now",
+      "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
-      "specify": "Specify time range <1></1>"
+      "more-info": "For more information see <2>docs <1></1></2>.",
+      "specify": "Specify time range <1></1>",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
     },
     "zone": {
       "select-aria-label": "Time zone picker",

@@ -1,4 +1,4 @@
-/* eslint-disablee @grafana/no-untranslated-strings */
+/* eslint-disable @grafana/no-untranslated-strings */
 /** @jsxImportSource @emotion/react */
 /** @jsxRuntime classic */
 import { css, cx } from '@emotion/css';
