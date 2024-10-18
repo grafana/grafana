@@ -110,7 +110,7 @@ describe('getFieldFromData', () => {
     expect(result2?.name).toEqual('yMax');
 
     const result3 = getFieldFromData(dataFrame, 'count', true);
-    expect(result3?.name).toEqual('value');
+    expect(result3?.name).toBeUndefined();
   });
 });
 
