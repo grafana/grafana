@@ -69,7 +69,7 @@ const TagsInput = ({
 
   const getTags = (f: TraceqlFilter) => {
     const tags = datasource.languageProvider.getTags(f.scope);
-    return getFilteredTags(tags, datasource.languageProvider, staticTags);
+    return getFilteredTags(tags, staticTags);
   };
 
   const validInput = (f: TraceqlFilter) => {
