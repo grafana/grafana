@@ -29,26 +29,26 @@ const deviceIDHeader = "X-Grafana-Device-Id"
 const keepFor = time.Hour * 24 * 61
 
 type AnonDeviceService struct {
-	log        log.Logger
-	localCache *localcache.CacheService
-	anonStore  anonstore.AnonStore
-	serverLock *serverlock.ServerLockService
-	cfg        *setting.Cfg
-	validator  validator.Service
+	log            log.Logger
+	localCache     *localcache.CacheService
+	anonStore      anonstore.AnonStore
+	serverLock     *serverlock.ServerLockService
+	cfg            *setting.Cfg
+	limitValidator validator.AnonLimitValidator
 }
 
 func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
 	sqlStore db.DB, cfg *setting.Cfg, orgService org.Service,
 	serverLockService *serverlock.ServerLockService, accesscontrol accesscontrol.AccessControl, routeRegister routing.RouteRegister,
-	validator validator.Service,
+	validator validator.AnonLimitValidator,
 ) *AnonDeviceService {
 	a := &AnonDeviceService{
-		log:        log.New("anonymous-session-service"),
-		localCache: localcache.New(29*time.Minute, 15*time.Minute),
-		anonStore:  anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
-		serverLock: serverLockService,
-		cfg:        cfg,
-		validator:  validator,
+		log:            log.New("anonymous-session-service"),
+		localCache:     localcache.New(29*time.Minute, 15*time.Minute),
+		anonStore:      anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
+		serverLock:     serverLockService,
+		cfg:            cfg,
+		limitValidator: validator,
 	}
 
 	usageStats.RegisterMetricsFunc(a.usageStatFn)
@@ -85,7 +85,7 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, er
 }
 
 func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, device *anonstore.Device) error {
-	err := a.validator.Validate(ctx)
+	err := a.limitValidator.Validate(ctx)
 	if err != nil {
 		return err
 	}

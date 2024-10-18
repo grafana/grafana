@@ -4,19 +4,20 @@ import (
 	"context"
 )
 
-type Service interface {
+type AnonLimitValidator interface {
 	Validate(ctx context.Context) error
 }
 
-type AnonDeviceValidator struct {
+// AnonLimitValidatorImpl is used to validate the limit of Anonymous user
+type AnonLimitValidatorImpl struct {
 }
 
-var _ Service = (*AnonDeviceValidator)(nil)
+var _ AnonLimitValidator = (*AnonLimitValidatorImpl)(nil)
 
-func ProvideAnonDeviceValidator() *AnonDeviceValidator {
-	return &AnonDeviceValidator{}
+func ProvideAnonLimitValidator() *AnonLimitValidatorImpl {
+	return &AnonLimitValidatorImpl{}
 }
 
-func (a AnonDeviceValidator) Validate(_ context.Context) error {
+func (a AnonLimitValidatorImpl) Validate(_ context.Context) error {
 	return nil
 }

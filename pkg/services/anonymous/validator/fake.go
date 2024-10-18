@@ -2,11 +2,11 @@ package validator
 
 import "context"
 
-type FakeAnonDeviceValidator struct {
+type FakeAnonLimitValidator struct {
 }
 
-var _ Service = (*FakeAnonDeviceValidator)(nil)
+var _ AnonLimitValidator = (*FakeAnonLimitValidator)(nil)
 
-func (f FakeAnonDeviceValidator) Validate(_ context.Context) error {
+func (f FakeAnonLimitValidator) Validate(_ context.Context) error {
 	return nil
 }
