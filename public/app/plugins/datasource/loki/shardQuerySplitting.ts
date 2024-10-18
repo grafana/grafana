@@ -6,21 +6,18 @@ import {
   DataQueryRequest,
   LoadingState,
   DataQueryResponse,
-  DataFrame,
-  Field,
   QueryResultMetaStat,
 } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
-import { combineResponses } from './mergeResponses';
-import { adjustTargetsFromResponseState } from './querySplitting';
+import { combineResponses, replaceResponses } from './mergeResponses';
+import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
 import {
   addShardingPlaceholderSelector,
   getSelectorForShardValues,
   interpolateShardingSelector,
-  isLogsQuery,
 } from './queryUtils';
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryDirection } from './types';
 
 /**
  * Query splitting by stream shards.
@@ -174,7 +171,9 @@ function splitQueriesByStreamShard(
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
-    subquerySubscription = datasource.runQuery(subRequest).subscribe({
+    const queryRunner =
+      shardsToQuery.length > 0 ? datasource.runQuery.bind(datasource) : runSplitQuery.bind(null, datasource);
+    subquerySubscription = queryRunner(subRequest).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
           if (retry(partialResponse)) {
@@ -187,13 +186,22 @@ function splitQueriesByStreamShard(
             debug(`New group size ${nextGroupSize}`);
           }
         }
-        mergedResponse = combineResponses(mergedResponse, partialResponse);
+        mergedResponse =
+          shardsToQuery.length > 0
+            ? combineResponses(mergedResponse, partialResponse)
+            : replaceResponses(mergedResponse, partialResponse);
+
+        // When we delegate query running to runSplitQuery(), we will receive partial updates here, and complete
+        // will be called when all the sub-requests were completed, so we need to show partial progress here.
+        if (shardsToQuery.length === 0) {
+          subscriber.next(mergedResponse);
+        }
       },
       complete: () => {
         if (retrying) {
           return;
         }
-        subscriber.next(ensureMaxLines(mergedResponse, subRequest.targets));
+        subscriber.next(mergedResponse);
         nextRequest();
       },
       error: (error: unknown) => {
@@ -238,34 +246,38 @@ async function groupTargetsByQueryType(
   datasource: LokiDatasource,
   request: DataQueryRequest<LokiQuery>
 ) {
-  const [logQueries, metricQueries] = partition(targets, (query) => isLogsQuery(query.expr));
+  const [shardedQueries, otherQueries] = partition(targets, (query) => query.direction === LokiQueryDirection.Scan);
   const groups: ShardedQueryGroup[] = [];
 
-  for (const queries of [logQueries, metricQueries]) {
-    const selectorPartition = groupBy(queries, (query) => getSelectorForShardValues(query.expr));
-    for (const selector in selectorPartition) {
-      try {
-        const values = await datasource.languageProvider.fetchLabelValues('__stream_shard__', {
-          timeRange: request.range,
-          streamSelector: selector,
-        });
-        const shards = values.map((value) => parseInt(value, 10));
-        if (shards) {
-          shards.sort((a, b) => b - a);
-          debug(`Querying ${selector} with shards ${shards.join(', ')}`);
-        }
-        groups.push({
-          targets: selectorPartition[selector],
-          shards: shards.length ? shards : undefined,
-          groupSize: shards.length ? getInitialGroupSize(shards) : undefined,
-          cycle: 0,
-        });
-      } catch (error) {
-        console.error(error, { msg: 'failed to fetch label values for __stream_shard__' });
-        groups.push({
-          targets: selectorPartition[selector],
-        });
+  if (otherQueries.length) {
+    groups.push({
+      targets: otherQueries,
+    });
+  }
+
+  const selectorPartition = groupBy(shardedQueries, (query) => getSelectorForShardValues(query.expr));
+  for (const selector in selectorPartition) {
+    try {
+      const values = await datasource.languageProvider.fetchLabelValues('__stream_shard__', {
+        timeRange: request.range,
+        streamSelector: selector,
+      });
+      const shards = values.map((value) => parseInt(value, 10));
+      if (shards) {
+        shards.sort((a, b) => b - a);
+        debug(`Querying ${selector} with shards ${shards.join(', ')}`);
       }
+      groups.push({
+        targets: selectorPartition[selector],
+        shards: shards.length ? shards : undefined,
+        groupSize: shards.length ? getInitialGroupSize(shards) : undefined,
+        cycle: 0,
+      });
+    } catch (error) {
+      console.error(error, { msg: 'failed to fetch label values for __stream_shard__' });
+      groups.push({
+        targets: selectorPartition[selector],
+      });
     }
   }
 
@@ -337,20 +349,4 @@ function debug(message: string) {
     return;
   }
   console.log(message);
-}
-
-function ensureMaxLines(response: DataQueryResponse, targets: LokiQuery[]) {
-  const logQueries = targets.filter((target) => isLogsQuery(target.expr));
-  for (const query of logQueries) {
-    const frame = response.data.find((frame: DataFrame) => frame.refId === query.refId);
-    if (!frame) {
-      continue;
-    }
-    frame.fields.forEach((field: Field) => {
-      field.values.splice(query.maxLines || 1000);
-    });
-    frame.length = frame.fields[0]?.values.length ?? 0;
-  }
-
-  return response;
 }
