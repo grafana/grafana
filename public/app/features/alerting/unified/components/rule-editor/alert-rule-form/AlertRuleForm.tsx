@@ -53,6 +53,7 @@ import {
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
+import { isGrafanaRecordingRuleByType } from '../../../utils/rules';
 import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
@@ -102,12 +103,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (queryParams.has('defaults')) {
       return formValuesFromQueryParams(queryParams.get('defaults') ?? '', ruleType);
     }
+    const defaultRuleType = ruleType || RuleFormType.grafana;
 
     return {
       ...getDefaultFormValues(),
       condition: 'C',
-      queries: getDefaultQueries(),
-      type: ruleType || RuleFormType.grafana,
+      queries: getDefaultQueries(isGrafanaRecordingRuleByType(defaultRuleType)),
+      type: defaultRuleType,
       evaluateEvery: evaluateEvery,
     };
   }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
