@@ -19,7 +19,7 @@ export const LoadingIndicator = ({ adjective = 'newer' }: Props) => {
   );
 };
 
-const loadingIndicatorStyles = css`
-  display: flex;
-  justify-content: center;
-`;
+const loadingIndicatorStyles = css({
+  display: 'flex',
+  justifyContent: 'center',
+});

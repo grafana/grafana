@@ -73,18 +73,18 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight, isWidg
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      label: container;
-      position: relative;
-      min-width: 180px;
-      flex-grow: 1;
-    `,
-    clear: css`
-      label: clear;
-      font-size: ${theme.spacing(1.5)};
-      position: absolute;
-      top: -${theme.spacing(4.5)};
-      right: 0;
-    `,
+    container: css({
+      label: 'container',
+      position: 'relative',
+      minWidth: '180px',
+      flexGrow: 1,
+    }),
+    clear: css({
+      label: 'clear',
+      fontSize: theme.spacing(1.5),
+      position: 'absolute',
+      top: theme.spacing(-4.5),
+      right: 0,
+    }),
   };
 }

@@ -89,10 +89,10 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
 }
 
 const getTooltipStyles = (theme: GrafanaTheme2) => ({
-  lockMessageClass: css`
-    display: flex;
-    justify-content: flex-end;
-    font-style: italic;
-    margin-right: ${theme.spacing(0.6)};
-  `,
+  lockMessageClass: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+    fontStyle: 'italic',
+    marginRight: theme.spacing(0.6),
+  }),
 });

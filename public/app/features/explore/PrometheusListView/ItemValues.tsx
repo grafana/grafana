@@ -7,39 +7,39 @@ import { rawListItemColumnWidth, rawListPaddingToHoldSpaceForCopyIcon, RawListVa
 import { RawPrometheusListItemEmptyValue } from './utils/getRawPrometheusListItemsFromDataFrame';
 
 const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number) => ({
-  rowWrapper: css`
-    position: relative;
-    min-width: ${rawListItemColumnWidth};
-    padding-right: 5px;
-  `,
-  rowValue: css`
-    white-space: nowrap;
-    overflow-x: auto;
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-    display: block;
-    padding-right: 10px;
+  rowWrapper: css({
+    position: 'relative',
+    minWidth: rawListItemColumnWidth,
+    paddingRight: '5px',
+  }),
+  rowValue: css({
+    whiteSpace: 'nowrap',
+    overflowX: 'auto',
+    MsOverflowStyle: 'none' /* IE and Edge */,
+    scrollbarWidth: 'none' /* Firefox */,
+    display: 'block',
+    paddingRight: '10px',
 
-    &::-webkit-scrollbar {
-      display: none; /* Chrome, Safari and Opera */
-    }
+    '&::-webkit-scrollbar': {
+      display: 'none' /* Chrome, Safari and Opera */,
+    },
 
-    &:before {
-      pointer-events: none;
-      content: '';
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      left: 0;
-      top: 0;
-      background: linear-gradient(to right, transparent calc(100% - 25px), ${theme.colors.background.primary});
-    }
-  `,
-  rowValuesWrap: css`
-    padding-left: ${rawListPaddingToHoldSpaceForCopyIcon};
-    width: calc(${totalNumberOfValues} * ${rawListItemColumnWidth});
-    display: flex;
-  `,
+    '&:before': {
+      pointerEvents: 'none',
+      content: "''",
+      width: '100%',
+      height: '100%',
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      background: `linear-gradient(to right, transparent calc(100% - 25px), ${theme.colors.background.primary})`,
+    },
+  }),
+  rowValuesWrap: css({
+    paddingLeft: rawListPaddingToHoldSpaceForCopyIcon,
+    width: `calc(${totalNumberOfValues} * ${rawListItemColumnWidth})`,
+    display: 'flex',
+  }),
 });
 
 export const ItemValues = ({

@@ -27,14 +27,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: cx(
       prefix,
       multiValueContainer,
-      css`
-        position: relative;
-        padding: ${theme.spacing(0.5, 1, 0.5, 1)};
+      css({
+        position: 'relative',
+        padding: theme.spacing(0.5, 1, 0.5, 1),
 
-        svg {
-          margin-right: ${theme.spacing(0.5)};
-        }
-      `
+        svg: {
+          marginRight: theme.spacing(0.5),
+        },
+      })
     ),
   };
 };

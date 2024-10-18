@@ -46,24 +46,24 @@ export const URLPickerTab = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  iconContainer: css`
-    display: flex;
-    flex-direction: column;
-    width: 80%;
-    align-items: center;
-    align-self: center;
-  `,
-  iconPreview: css`
-    width: 238px;
-    height: 198px;
-    border: 1px solid ${theme.colors.border.medium};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `,
-  img: css`
-    width: 147px;
-    height: 147px;
-    fill: ${theme.colors.text.primary};
-  `,
+  iconContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    width: '80%',
+    alignItems: 'center',
+    alignSelf: 'center',
+  }),
+  iconPreview: css({
+    width: '238px',
+    height: '198px',
+    border: `1px solid ${theme.colors.border.medium}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+  img: css({
+    width: '147px',
+    height: '147px',
+    fill: theme.colors.text.primary,
+  }),
 });

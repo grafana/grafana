@@ -244,9 +244,9 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     const { value } = this.state;
     const labelClass = cx(
       'width-16',
-      css`
-        font-weight: 500;
-      `
+      css({
+        fontWeight: 500,
+      })
     );
 
     if (locked) {
@@ -296,15 +296,15 @@ interface LockedRowProps {
 }
 
 export const LockedRow = ({ label, value, lockMessage }: LockedRowProps) => {
-  const lockMessageClass = css`
-    font-style: italic;
-    margin-right: 0.6rem;
-  `;
+  const lockMessageClass = css({
+    fontStyle: 'italic',
+    marginRight: '0.6rem',
+  });
   const labelClass = cx(
     'width-16',
-    css`
-      font-weight: 500;
-    `
+    css({
+      fontWeight: 500,
+    })
   );
 
   return (

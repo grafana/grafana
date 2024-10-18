@@ -64,9 +64,9 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
     });
   };
 
-  const buttonWidth = css`
-    width: 75px;
-  `;
+  const buttonWidth = css({
+    width: '75px',
+  });
 
   const isRange =
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
@@ -140,23 +140,23 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const buttonStyle = css`
-    color: ${theme.colors.primary.text};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `;
+  const buttonStyle = css({
+    color: theme.colors.primary.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+  });
   return {
     buttonSelectText: buttonStyle,
     button: cx(
-      css`
-        display: flex;
-        align-items: center;
-        border-radius: ${theme.shape.radius.default};
-        font-weight: ${theme.typography.fontWeightMedium};
-        border: 1px solid ${theme.colors.border.weak};
-        white-space: nowrap;
-        padding: 0 ${theme.spacing(1)};
-        background-color: ${theme.colors.background.canvas};
-      `,
+      css({
+        display: 'flex',
+        alignItems: 'center',
+        borderRadius: theme.shape.radius.default,
+        fontWeight: theme.typography.fontWeightMedium,
+        border: `1px solid ${theme.colors.border.weak}`,
+        whiteSpace: 'nowrap',
+        padding: `0 ${theme.spacing(1)}`,
+        backgroundColor: theme.colors.background.canvas,
+      }),
       buttonStyle
     ),
   };

@@ -50,60 +50,60 @@ interface State {
 
 const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   return {
-    wordBreakAll: css`
-      label: wordBreakAll;
-      word-break: break-all;
-    `,
-    copyButton: css`
-      & > button {
-        color: ${theme.colors.text.secondary};
-        padding: 0;
-        justify-content: center;
-        border-radius: ${theme.shape.radius.circle};
-        height: ${theme.spacing(theme.components.height.sm)};
-        width: ${theme.spacing(theme.components.height.sm)};
-        svg {
-          margin: 0;
-        }
+    wordBreakAll: css({
+      label: 'wordBreakAll',
+      wordBreak: 'break-all',
+    }),
+    copyButton: css({
+      '& > button': {
+        color: theme.colors.text.secondary,
+        padding: 0,
+        justifyContent: 'center',
+        borderRadius: theme.shape.radius.circle,
+        height: theme.spacing(theme.components.height.sm),
+        width: theme.spacing(theme.components.height.sm),
+        svg: {
+          margin: 0,
+        },
 
-        span > div {
-          top: -5px;
-          & button {
-            color: ${theme.colors.success.main};
-          }
-        }
-      }
-    `,
-    adjoiningLinkButton: css`
-      margin-left: ${theme.spacing(1)};
-    `,
-    wrapLine: css`
-      label: wrapLine;
-      white-space: pre-wrap;
-    `,
-    logDetailsStats: css`
-      padding: 0 ${theme.spacing(1)};
-    `,
-    logDetailsValue: css`
-      display: flex;
-      align-items: center;
-      line-height: 22px;
+        'span > div': {
+          top: '-5px',
+          '& button': {
+            color: theme.colors.success.main,
+          },
+        },
+      },
+    }),
+    adjoiningLinkButton: css({
+      marginLeft: theme.spacing(1),
+    }),
+    wrapLine: css({
+      label: 'wrapLine',
+      whiteSpace: 'pre-wrap',
+    }),
+    logDetailsStats: css({
+      padding: `0 ${theme.spacing(1)}`,
+    }),
+    logDetailsValue: css({
+      display: 'flex',
+      alignItems: 'center',
+      lineHeight: '22px',
 
-      .log-details-value-copy {
-        visibility: hidden;
-      }
-      &:hover {
-        .log-details-value-copy {
-          visibility: visible;
-        }
-      }
-    `,
-    buttonRow: css`
-      display: flex;
-      flex-direction: row;
-      gap: ${theme.spacing(0.5)};
-      margin-left: ${theme.spacing(0.5)};
-    `,
+      '.log-details-value-copy': {
+        visibility: 'hidden',
+      },
+      '&:hover': {
+        '.log-details-value-copy': {
+          visibility: 'visible',
+        },
+      },
+    }),
+    buttonRow: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(0.5),
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 });
 

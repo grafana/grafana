@@ -115,15 +115,15 @@ function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?
 
 function getEmptyStateStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    `,
-    message: css`
-      margin-bottom: ${theme.spacing(3)};
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }),
+    message: css({
+      marginBottom: theme.spacing(3),
+    }),
   };
 }
 
@@ -138,16 +138,16 @@ function getDataSourceVariableIDs() {
 
 function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      ${selectedItemCssSelector} {
-        background-color: ${theme.colors.background.secondary};
-      }
-    `,
-    emptyState: css`
-      height: 100%;
-      flex: 1;
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      [`${selectedItemCssSelector}`]: {
+        backgroundColor: theme.colors.background.secondary,
+      },
+    }),
+    emptyState: css({
+      height: '100%',
+      flex: 1,
+    }),
   };
 }

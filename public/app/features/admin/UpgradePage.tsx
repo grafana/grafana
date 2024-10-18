@@ -54,19 +54,19 @@ export const UpgradeInfo = ({ editionNotice }: UpgradeInfoProps) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    column: css`
-      display: grid;
-      grid-template-columns: 100%;
-      column-gap: 20px;
-      row-gap: 40px;
+    column: css({
+      display: 'grid',
+      gridTemplateColumns: '100%',
+      columnGap: '20px',
+      rowGap: '40px',
 
-      @media (min-width: 1050px) {
-        grid-template-columns: 50% 50%;
-      }
-    `,
-    title: css`
-      margin: ${theme.spacing(4)} 0;
-    `,
+      '@media (min-width: 1050px)': {
+        gridTemplateColumns: '50% 50%',
+      },
+    }),
+    title: css({
+      margin: theme.spacing(4, 0),
+    }),
   };
 };
 
@@ -183,15 +183,15 @@ interface ListProps {
 }
 
 const List = ({ children, nested }: React.PropsWithChildren<ListProps>) => {
-  const listStyle = css`
-    display: flex;
-    flex-direction: column;
-    padding-top: 8px;
+  const listStyle = css({
+    display: 'flex',
+    flexDirection: 'column',
+    paddingTop: '8px',
 
-    > div {
-      margin-bottom: ${nested ? 0 : 8}px;
-    }
-  `;
+    '> div': {
+      marginBottom: `${nested ? 0 : 8}px`,
+    },
+  });
 
   return <div className={listStyle}>{children}</div>;
 };
@@ -203,20 +203,20 @@ interface ItemProps {
 
 const Item = ({ children, title, image }: React.PropsWithChildren<ItemProps>) => {
   const imageUrl = image ? image : 'public/img/licensing/checkmark.svg';
-  const itemStyle = css`
-    display: flex;
+  const itemStyle = css({
+    display: 'flex',
 
-    > img {
-      display: block;
-      height: 22px;
-      flex-grow: 0;
-      padding-right: 12px;
-    }
-  `;
-  const titleStyle = css`
-    font-weight: 500;
-    line-height: 1.7;
-  `;
+    '> img': {
+      display: 'block',
+      height: '22px',
+      flexGrow: 0,
+      paddingRight: '12px',
+    },
+  });
+  const titleStyle = css({
+    fontWeight: 500,
+    lineHeight: 1.7,
+  });
 
   return (
     <div className={itemStyle}>
