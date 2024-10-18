@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import config from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -18,6 +19,11 @@ const mockVariable = mockDataSource({
   name: '${dsVariable}',
   type: 'datasource',
 });
+
+setPluginLinksHook(() => ({
+  links: [],
+  isLoading: false,
+}));
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
