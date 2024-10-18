@@ -169,6 +169,11 @@ export class QueryRows extends PureComponent<Props> {
                       error = errorFromPreviewData(data);
                     }
 
+                    if (error) {
+                      // TODO: use error correctly
+                      console.error(error);
+                    }
+
                     if (!dsSettings) {
                       return (
                         <DatasourceNotFound
@@ -194,7 +199,6 @@ export class QueryRows extends PureComponent<Props> {
                         key={query.refId}
                         dsSettings={dsSettings}
                         data={data}
-                        error={error}
                         query={query}
                         onChangeQuery={this.onChangeQuery}
                         onRemoveQuery={this.onRemoveQuery}
