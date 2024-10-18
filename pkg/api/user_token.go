@@ -224,6 +224,12 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *contextmodel.ReqContext, user
 			seenAt = createdAt
 		}
 
+		// Retrieve AuthModule from external session
+		authModule := ""
+		if externalSession, err := hs.AuthTokenService.GetExternalSession(c.Req.Context(), token.ExternalSessionId); err == nil {
+			authModule = externalSession.AuthModule
+		}
+
 		result = append(result, &dtos.UserToken{
 			Id:                     token.Id,
 			IsActive:               isActive,
@@ -233,6 +239,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *contextmodel.ReqContext, user
 			OperatingSystemVersion: osVersion,
 			Browser:                client.UserAgent.Family,
 			BrowserVersion:         browserVersion,
+			AuthModule:             authModule,
 			CreatedAt:              createdAt,
 			SeenAt:                 seenAt,
 		})
