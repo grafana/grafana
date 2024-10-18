@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -389,6 +390,17 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 
 	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
+	}
+
+	// It's forbidden to update the rules from the datasource api.
+	// team HTTP headers update have to be done through `updateDatasourceLBACRules`
+	if hs.Features != nil && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagTeamHttpHeaders) {
+		if cmd.JsonData != nil {
+			teamHttpHeaders := cmd.JsonData.Get("teamHttpHeaders")
+			if teamHttpHeaders.Interface() != nil {
+				return response.Error(http.StatusForbidden, "Cannot create datasource with team HTTP headers, need to use updateDatasourceLBACRules API", nil)
+			}
+		}
 	}
 
 	dataSource, err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd)
