@@ -426,7 +426,9 @@
     "history@^4.9.0": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch",
     "redux": "^5.0.0",
     "@storybook/blocks@npm:8.1.6": "patch:@storybook/blocks@npm%3A8.1.6#~/.yarn/patches/@storybook-blocks-npm-8.1.6-892f57a6d7.patch",
-    "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch"
+    "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
+    "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
+    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*"
   },
   "workspaces": {
     "packages": [
