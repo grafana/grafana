@@ -7,36 +7,32 @@ import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { areQueriesTransformableToSimpleCondition } from '../QueryAndExpressionsStep';
-import {
-  SIMPLE_CONDITION_QUERY_ID,
-  SIMPLE_CONDITION_REDUCER_ID,
-  SIMPLE_CONDITION_THRESHOLD_ID,
-} from '../SimpleCondition';
+import { SimpleConditionIdentifier } from '../SimpleCondition';
 
 const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_QUERY_ID,
+  refId: SimpleConditionIdentifier.queryId,
   datasourceUid: 'abc123',
   queryType: '',
-  model: { refId: SIMPLE_CONDITION_QUERY_ID },
+  model: { refId: SimpleConditionIdentifier.queryId },
 };
 
 const reduceExpression: AlertQuery<ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_REDUCER_ID,
+  refId: SimpleConditionIdentifier.reducerId,
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.reduce,
-    refId: SIMPLE_CONDITION_REDUCER_ID,
+    refId: SimpleConditionIdentifier.reducerId,
     settings: { mode: ReducerMode.Strict },
   },
 };
 const thresholdExpression: AlertQuery<ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_THRESHOLD_ID,
+  refId: SimpleConditionIdentifier.thresholdId,
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.threshold,
-    refId: SIMPLE_CONDITION_THRESHOLD_ID,
+    refId: SimpleConditionIdentifier.thresholdId,
   },
 };
 
@@ -55,7 +51,7 @@ describe('areQueriesTransformableToSimpleCondition', () => {
     expect(result).toBe(false);
   });
 
-  it('should return false if the dataQuery refId does not match SIMPLE_CONDITION_QUERY_ID', () => {
+  it('should return false if the dataQuery refId does not match SimpleConditionIdentifier.queryId', () => {
     const dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [
       { refId: 'notSimpleCondition', datasourceUid: 'abc123', queryType: '', model: { refId: 'notSimpleCondition' } },
     ];

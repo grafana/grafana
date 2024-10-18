@@ -21,7 +21,7 @@ import { getDefaultQueries } from '../../../utils/rule-form';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
-import { SIMPLE_CONDITION_QUERY_ID, SIMPLE_CONDITION_REDUCER_ID } from './SimpleCondition';
+import { SimpleConditionIdentifier } from './SimpleCondition';
 
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
@@ -248,7 +248,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
             ...query,
             model: {
               ...query.model,
-              expression: SIMPLE_CONDITION_QUERY_ID,
+              expression: SimpleConditionIdentifier.queryId,
             },
           };
         } else {
@@ -273,10 +273,10 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
             type: ExpressionQueryType.reduce,
             reducer: ReducerID.last,
             conditions: [{ ...defaultCondition, query: { params: [] } }],
-            expression: SIMPLE_CONDITION_QUERY_ID,
-            refId: SIMPLE_CONDITION_REDUCER_ID,
+            expression: SimpleConditionIdentifier.queryId,
+            refId: SimpleConditionIdentifier.reducerId,
           }),
-          refId: SIMPLE_CONDITION_REDUCER_ID,
+          refId: SimpleConditionIdentifier.reducerId,
           queryType: 'expression',
         },
         expressionQueries[0], // the threshold expression

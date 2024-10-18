@@ -236,7 +236,7 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
 }
 
 function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
-  const defaultToInstant = settings.type === DataSourceType.Loki || settings.type === DataSourceType.Loki;
+  const defaultToInstant = settings.type === DataSourceType.Loki || settings.type === DataSourceType.Prometheus;
   const isInstant = 'instant' in item.model && item.model.instant !== undefined ? item.model.instant : defaultToInstant;
   return {
     refId: item.refId,

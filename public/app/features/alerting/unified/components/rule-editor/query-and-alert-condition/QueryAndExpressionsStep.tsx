@@ -57,11 +57,9 @@ import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryRe
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import {
   getSimpleConditionFromExpressions,
-  SIMPLE_CONDITION_QUERY_ID,
-  SIMPLE_CONDITION_REDUCER_ID,
-  SIMPLE_CONDITION_THRESHOLD_ID,
   SimpleCondition,
   SimpleConditionEditor,
+  SimpleConditionIdentifier,
 } from './SimpleCondition';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
@@ -102,12 +100,12 @@ export function areQueriesTransformableToSimpleCondition(
 
   const query = dataQueries[0];
 
-  if (query.refId !== SIMPLE_CONDITION_QUERY_ID) {
+  if (query.refId !== SimpleConditionIdentifier.queryId) {
     return false;
   }
 
   const reduceExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SimpleConditionIdentifier.reducerId
   );
   const reduceExpression = expressionQueries.at(reduceExpressionIndex);
   const reduceOk =
@@ -117,7 +115,8 @@ export function areQueriesTransformableToSimpleCondition(
       reduceExpression.model.settings?.mode === undefined);
 
   const thresholdExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.refId === SimpleConditionIdentifier.thresholdId
   );
   const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
   const conditions = thresholdExpression?.model.conditions ?? [];
@@ -224,8 +223,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
       // we need to be sure the condition is set once we switch to simple mode
       if (!isAdvancedMode) {
-        setValue('condition', SIMPLE_CONDITION_THRESHOLD_ID);
-        runQueries(getValues('queries'), SIMPLE_CONDITION_THRESHOLD_ID);
+        setValue('condition', SimpleConditionIdentifier.thresholdId);
+        runQueries(getValues('queries'), SimpleConditionIdentifier.thresholdId);
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
       }
