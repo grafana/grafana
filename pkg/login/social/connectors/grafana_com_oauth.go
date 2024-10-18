@@ -151,7 +151,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	if !s.info.SkipOrgRoleSync {
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(&MappingConfiguration{strictRoleMapping: false}, nil, identity.RoleType(data.Role))
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, &MappingConfiguration{strictRoleMapping: false}, nil, identity.RoleType(data.Role))
 	}
 
 	if !s.isOrganizationMember(data.Orgs) {
