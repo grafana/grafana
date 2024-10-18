@@ -22,6 +22,10 @@ function skipFiles(f: string): boolean {
     // avoid copying package.json
     return false;
   }
+  if (f.includes('/project.json')) {
+    // avoid copying project.json
+    return false;
+  }
   return true;
 }
 
