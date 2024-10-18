@@ -67,7 +67,7 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 			return nil, nil
 		},
 		GetExternalSessionProvider: func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error) {
-			return nil, errors.New("Settings Provider table not found")
+			return nil, errors.New("settings Provider table not found")
 		},
 	}
 }
