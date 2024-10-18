@@ -29,7 +29,7 @@ func TestMigrations(t *testing.T) {
 	const query = `select count(*) as count from migration_log`
 	result := struct{ Count int }{}
 
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
@@ -85,7 +85,7 @@ func TestIntegrationMigrationLock(t *testing.T) {
 
 	t.Cleanup(testDB.Cleanup)
 
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
@@ -142,7 +142,7 @@ func TestIntegrationMigrationLock(t *testing.T) {
 	})
 
 	t.Run("obtaining same lock from another session should fail", func(t *testing.T) {
-		x2, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+		x2, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr, nil)
 		require.NoError(t, err)
 		sess2 := x2.NewSession()
 
@@ -165,7 +165,7 @@ func TestIntegrationMigrationLock(t *testing.T) {
 		err := dialect.Lock(cfg)
 		require.NoError(t, err)
 
-		x, err := xorm.NewEngine(testDB.DriverName, replaceDBName(t, testDB.ConnStr, dbType))
+		x, err := xorm.NewEngine(testDB.DriverName, replaceDBName(t, testDB.ConnStr, dbType), nil)
 		require.NoError(t, err)
 
 		d := NewDialect(x.DriverName())
@@ -196,7 +196,7 @@ func TestMigratorLocking(t *testing.T) {
 
 	t.Cleanup(testDB.Cleanup)
 
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
@@ -243,7 +243,7 @@ func TestDatabaseLocking(t *testing.T) {
 
 	t.Cleanup(testDB.Cleanup)
 
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr, nil)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
