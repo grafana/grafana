@@ -23,6 +23,7 @@ import (
 type pluginClient struct {
 	pluginClient plugins.Client
 	pCtxProvider *plugincontext.Provider
+	headers      map[string]string
 }
 
 type pluginRegistry struct {
@@ -40,10 +41,11 @@ var _ data.QueryDataClient = (*pluginClient)(nil)
 var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
 
 // NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
-func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider) data.QueryDataClient {
+func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider, headers map[string]string) data.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,
 		pCtxProvider: ctx,
+		headers:      headers,
 	}
 }
 
@@ -74,6 +76,7 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 
 	qdr := &backend.QueryDataRequest{
 		Queries: queries,
+		Headers: d.headers,
 	}
 	qdr.PluginContext, err = d.pCtxProvider.PluginContextForDataSource(ctx, settings)
 	if err != nil {

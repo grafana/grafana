@@ -16,6 +16,6 @@ type CommonDataSourceClientSupplier struct {
 	Client data.QueryDataClient
 }
 
-func (s *CommonDataSourceClientSupplier) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, _ map[string]string) (data.QueryDataClient, error) {
+func (s *CommonDataSourceClientSupplier) GetDataSourceClient(_ context.Context, _ data.DataSourceRef, headers map[string]string) (data.QueryDataClient, error) {
 	return s.Client, nil
 }
