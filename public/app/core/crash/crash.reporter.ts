@@ -32,9 +32,9 @@ export function startReportingCrashes() {
       info.userEmail = contextSrv.user.email;
       info.userLogin = contextSrv.user.login;
       info.userName = contextSrv.user.name;
-      info.memoryUsedJSHeapSize = performance?.memory?.usedJSHeapSize;
-      info.memoryTotalJSHeapSize = performance?.memory?.totalJSHeapSize;
-      info.memoryJsHeapSizeLimit = performance?.memory?.jsHeapSizeLimit;
+      info.memoryUsedJSHeapSize = String(performance?.memory?.usedJSHeapSize);
+      info.memoryTotalJSHeapSize = String(performance?.memory?.totalJSHeapSize);
+      info.memoryJsHeapSizeLimit = String(performance?.memory?.jsHeapSizeLimit);
     },
   });
 }
