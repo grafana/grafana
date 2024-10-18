@@ -66,14 +66,14 @@ function getStyles(theme: GrafanaTheme2) {
       justifyItems: 'center',
     }),
     gap20: css({
-      marginTop: theme.spacing(6), // ask catherine what the number should be
-      marginBottom: '20px',
+      marginTop: theme.spacing(3),
+      // marginBottom: '20px',
     }),
     bookmarkHeader: css({
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      // gap: theme.spacing(2),
     }),
     header: css({
       color: 'var(--text-primary, rgba(204, 204, 220, 0.7))',
@@ -91,7 +91,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: '1px',
       background: 'rgba(204, 204, 220, 0.12)',
       margin: '0 auto', // Center the line horizontally
-      marginTop: '56px', // should be 32 but doing 24 + 32 right now to account for no show more button for recent metrics explorations
+      marginTop: '32px',
     }),
   };
 }

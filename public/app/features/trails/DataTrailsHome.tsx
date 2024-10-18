@@ -168,10 +168,10 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         </div>
         {getTrailStore().recent.length > 0 && (
           <>
-            <div className={styles.gap20}>
+            <div className={styles.recentExplorationHeader}>
               <div className={styles.header}>Or view a recent exploration</div>
             </div>
-            <div className={styles.trailList}>
+            <div className={css(styles.trailList, styles.bottomGap24)}>
               {getTrailStore().recent.map((trail, index) => {
                 const resolvedTrail = trail.resolve();
                 return (
@@ -183,6 +183,9 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
                 );
               })}
             </div>
+            <Button variant="secondary" size="sm">
+              Show more
+            </Button>
           </>
         )}
         <DataTrailsBookmarks model={model} onDelete={onDelete} />
@@ -261,16 +264,12 @@ function getStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.secondary, // Ensure the background color takes up the whole space
       borderRadius: '4px',
     }),
-    horizontalLine: css({
-      width: '400px',
-      height: '1px',
-      background: 'rgba(204, 204, 220, 0.12)',
-      margin: '0 auto', // Center the line horizontally
-      marginTop: '56px', // should be 32 but doing 24 + 32 right now to account for no show more button for recent metrics explorations
-    }),
-    gap20: css({
+    recentExplorationHeader: css({
       marginTop: theme.spacing(6), // ask catherine what the number should be
       marginBottom: '20px',
+    }),
+    bottomGap24: css({
+      marginBottom: theme.spacing(3),
     }),
     gap24: css({
       marginTop: theme.spacing(2), // Adds a 24px gap since there is already a 8px gap from the button
