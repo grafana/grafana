@@ -6,48 +6,48 @@ import { useStyles2, Modal, Icon, Button } from '@grafana/ui';
 import { type CardGridItem } from '../CardGrid';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 500px;
-  `,
-  modalContent: css`
-    overflow: visible;
-    color: ${theme.colors.text.secondary};
+  modal: css({
+    width: '500px',
+  }),
+  modalContent: css({
+    overflow: 'visible',
+    color: theme.colors.text.secondary,
 
-    a {
-      color: ${theme.colors.text.link};
-    }
-  `,
-  description: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  bottomSection: css`
-    display: flex;
-    border-top: 1px solid ${theme.colors.border.weak};
-    padding-top: ${theme.spacing(3)};
-    margin-top: ${theme.spacing(3)};
-  `,
-  actionsSection: css`
-    display: flex;
-    justify-content: end;
-    margin-top: ${theme.spacing(3)};
-  `,
-  warningIcon: css`
-    color: ${theme.colors.warning.main};
-    padding-right: ${theme.spacing()};
-    margin-top: ${theme.spacing(0.25)};
-  `,
-  header: css`
-    display: flex;
-    align-items: center;
-  `,
-  headerTitle: css`
-    margin: 0;
-  `,
-  headerLogo: css`
-    margin-right: ${theme.spacing(2)};
-    width: 32px;
-    height: 32px;
-  `,
+    a: {
+      color: theme.colors.text.link,
+    },
+  }),
+  description: css({
+    marginBottom: theme.spacing(2),
+  }),
+  bottomSection: css({
+    display: 'flex',
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    paddingTop: theme.spacing(3),
+    marginTop: theme.spacing(3),
+  }),
+  actionsSection: css({
+    display: 'flex',
+    justifyContent: 'end',
+    marginTop: theme.spacing(3),
+  }),
+  warningIcon: css({
+    color: theme.colors.warning.main,
+    paddingRight: theme.spacing(),
+    marginTop: theme.spacing(0.25),
+  }),
+  header: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  headerTitle: css({
+    margin: 0,
+  }),
+  headerLogo: css({
+    marginRight: theme.spacing(2),
+    width: '32px',
+    height: '32px',
+  }),
 });
 
 export type NoAccessModalProps = {

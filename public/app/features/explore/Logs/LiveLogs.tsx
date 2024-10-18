@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { PureComponent } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
@@ -13,46 +13,51 @@ import { sortLogRows } from '../../logs/utils';
 import { ElapsedTime } from '../ElapsedTime';
 import { filterLogRowsByIndex } from '../state/utils';
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  logsRowsLive: css`
-    label: logs-rows-live;
-    font-family: ${theme.typography.fontFamilyMonospace};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    display: flex;
-    flex-flow: column nowrap;
-    height: 60vh;
-    overflow-y: scroll;
-    :first-child {
-      margin-top: auto !important;
-    }
-  `,
-  logsRowFade: css`
-    label: logs-row-fresh;
-    color: ${theme.colors.text};
-    background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
-    animation: fade 1s ease-out 1s 1 normal forwards;
-    @keyframes fade {
-      from {
-        background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
-      }
-      to {
-        background-color: transparent;
-      }
-    }
-  `,
-  logsRowsIndicator: css`
-    font-size: ${theme.typography.h6.fontSize};
-    padding-top: ${theme.spacing(1)};
-    display: flex;
-    align-items: center;
-  `,
-  button: css`
-    margin-right: ${theme.spacing(1)};
-  `,
-  fullWidth: css`
-    width: 100%;
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const fade = keyframes({
+    from: {
+      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+    },
+    to: {
+      backgroundColor: 'transparent',
+    },
+  });
+
+  return {
+    logsRowsLive: css({
+      label: 'logs-rows-live',
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      display: 'flex',
+      flexFlow: 'column nowrap',
+      height: '60vh',
+      overflowY: 'scroll',
+      ':first-child': {
+        marginTop: 'auto !important',
+      },
+    }),
+    logsRowFade: css({
+      label: 'logs-row-fresh',
+      color: theme.colors.text.primary,
+      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${fade} 1s ease-out 1s 1 normal forwards`,
+      },
+    }),
+    logsRowsIndicator: css({
+      fontSize: theme.typography.h6.fontSize,
+      paddingTop: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    button: css({
+      marginRight: theme.spacing(1),
+    }),
+    fullWidth: css({
+      width: '100%',
+    }),
+  };
+};
 
 export interface Props extends Themeable2 {
   logRows?: LogRowModel[];

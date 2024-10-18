@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
+import { SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { AsyncSelect, Button, Modal, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, Button, Modal } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardSearchItem } from '../../../search/types';
@@ -17,7 +16,6 @@ export interface OpenLibraryPanelModalProps {
 }
 
 export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPanelModalProps): JSX.Element {
-  const styles = useStyles2(getStyles);
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(0);
   const [option, setOption] = useState<SelectableValue<DashboardSearchItem> | undefined>(undefined);
@@ -45,7 +43,7 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
       onClickBackdrop={onDismiss}
       isOpen
     >
-      <div className={styles.container}>
+      <div>
         {connected === 0 ? (
           <span>
             <Trans i18nKey={'library-panels.modal.panel-not-linked'}>
@@ -96,10 +94,4 @@ async function loadOptionsAsync(uid: string, searchString: string, setLoading: (
   setLoading(false);
 
   return options;
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    container: css``,
-  };
 }

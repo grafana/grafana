@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, useState, useEffect } from 'react';
 
-import { StandardEditorProps, SelectableValue } from '@grafana/data';
+import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
@@ -86,15 +86,15 @@ export const GazetteerPathEditor = ({
   );
 };
 
-const getStyles = () => ({
-  keys: css`
-    margin-top: 4px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
+const getStyles = (theme: GrafanaTheme2) => ({
+  keys: css({
+    marginTop: theme.spacing(0.5),
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
 
-    > span {
-      margin-left: 4px;
-    }
-  `,
+    '> span': {
+      marginLeft: theme.spacing(0.5),
+    },
+  }),
 });

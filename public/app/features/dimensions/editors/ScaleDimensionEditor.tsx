@@ -131,7 +131,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  range: css`
-    padding-top: 8px;
-  `,
+  range: css({
+    paddingTop: theme.spacing(1),
+  }),
 });

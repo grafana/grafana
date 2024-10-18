@@ -192,11 +192,11 @@ export class QueryInspector extends PureComponent<Props, State> {
     }
 
     const styles = {
-      refId: css`
-        font-weight: ${config.theme.typography.weight.semibold};
-        color: ${config.theme.colors.textBlue};
-        margin-right: 8px;
-      `,
+      refId: css({
+        fontWeight: config.theme.typography.weight.semibold,
+        color: config.theme.colors.textBlue,
+        marginRight: '8px',
+      }),
     };
 
     return (
