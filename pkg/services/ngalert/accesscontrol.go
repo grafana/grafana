@@ -236,6 +236,9 @@ var (
 			Group:       AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, templatesReaderRole.Role.Permissions, timeIntervalsReaderRole.Role.Permissions, routesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
+					Action: accesscontrol.ActionAlertingNotificationsRead, // TODO remove when we decide tò limit access to raw config API
+				},
+				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalRead,
 					Scope:  datasources.ScopeAll,
 				},
@@ -250,6 +253,9 @@ var (
 			Description: "Add, update, and delete contact points and notification policies in Grafana and external providers",
 			Group:       AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, receiversWriterRole.Role.Permissions, templatesWriterRole.Role.Permissions, timeIntervalsWriterRole.Role.Permissions, routesWriterRole.Role.Permissions, []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingNotificationsWrite, // TODO remove when we decide tò limit access to raw config API
+				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
 					Scope:  datasources.ScopeAll,
