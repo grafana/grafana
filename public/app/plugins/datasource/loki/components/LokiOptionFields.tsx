@@ -36,6 +36,11 @@ export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
     label: 'Forward',
     description: 'Search in forward direction.',
   },
+  {
+    value: LokiQueryDirection.Scan,
+    label: 'Scan',
+    description: 'Search in every direction and stop at the requested log line limit.',
+  },
 ];
 
 if (config.featureToggles.lokiExperimentalStreaming) {
