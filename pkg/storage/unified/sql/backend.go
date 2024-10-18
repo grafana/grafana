@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
@@ -164,7 +166,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -222,7 +224,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -282,7 +284,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -661,10 +663,18 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 // TODO: Ideally we should attempt to update the RV in the resource and resource_history tables
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
-func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
+func (b *backend) resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, key *resource.ResourceKey) (newVersion int64, err error) {
+	ctx, span := b.tracer.Start(ctx, "resourceVersionAtomicInc", trace.WithAttributes(
+		semconv.K8SNamespaceName(key.Namespace),
+		// TODO: the following attributes could use some standardization.
+		attribute.String("k8s.resource.group", key.Group),
+		attribute.String("k8s.resource.type", key.Resource),
+	))
+	defer span.End()
+
 	// 1. Lock to row and prevent concurrent updates until the transaction is committed.
 	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
-		SQLTemplate: sqltemplate.New(d),
+		SQLTemplate: sqltemplate.New(b.dialect),
 		Group:       key.Group,
 		Resource:    key.Resource,
 
@@ -674,14 +684,14 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 	if errors.Is(err, sql.ErrNoRows) {
 		// if there wasn't a row associated with the given resource, then we create it.
 		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionUpsertRequest{
-			SQLTemplate: sqltemplate.New(d),
+			SQLTemplate: sqltemplate.New(b.dialect),
 			Group:       key.Group,
 			Resource:    key.Resource,
 		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}
 		res, err = dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
-			SQLTemplate: sqltemplate.New(d),
+			SQLTemplate: sqltemplate.New(b.dialect),
 			Group:       key.Group,
 			Resource:    key.Resource,
 			Response:    new(resourceVersionResponse),
@@ -702,7 +712,7 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 	nextRV := max(res.CurrentEpoch, res.ResourceVersion+1)
 
 	_, err = dbutil.Exec(ctx, x, sqlResourceVersionUpdate, sqlResourceVersionUpsertRequest{
-		SQLTemplate:     sqltemplate.New(d),
+		SQLTemplate:     sqltemplate.New(b.dialect),
 		Group:           key.Group,
 		Resource:        key.Resource,
 		ResourceVersion: nextRV,
