@@ -130,9 +130,6 @@ func TestService_AddDataSource(t *testing.T) {
 						ObjectBytes: req.ObjectBytes,
 					}, nil
 				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
 			}
 			cmd := &datasources.AddDataSourceCommand{
 				OrgID:      1,
@@ -180,9 +177,6 @@ func TestService_AddDataSource(t *testing.T) {
 				MutateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 					return nil, fmt.Errorf("not implemented")
 				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
 			}
 			cmd := &datasources.AddDataSourceCommand{
 				OrgID:      1,
@@ -222,9 +216,6 @@ func TestService_AddDataSource(t *testing.T) {
 						Allowed:     true,
 						ObjectBytes: pb,
 					}, err
-				},
-				ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-					return nil, fmt.Errorf("not implemented")
 				},
 			}
 			cmd := &datasources.AddDataSourceCommand{
@@ -510,9 +501,6 @@ func TestService_UpdateDataSource(t *testing.T) {
 					Allowed:     true,
 					ObjectBytes: req.ObjectBytes,
 				}, nil
-			},
-			ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-				return nil, fmt.Errorf("not implemented")
 			},
 		}
 		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -1504,9 +1492,6 @@ func initDSService(t *testing.T) *Service {
 				Allowed:     true,
 				ObjectBytes: req.ObjectBytes,
 			}, nil
-		},
-		ConvertObjectFunc: func(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-			return nil, fmt.Errorf("not implemented")
 		},
 	}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 	require.NoError(t, err)
