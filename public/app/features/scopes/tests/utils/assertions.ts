@@ -1,4 +1,4 @@
-import { getMock, locationReloadSpy } from './mocks';
+import { dashboardReloadSpy } from './mocks';
 import {
   getDashboard,
   getDashboardsContainer,
@@ -77,13 +77,8 @@ export const expectDashboardNotInDocument = (uid: string) => expectNotInDocument
 export const expectDashboardLength = (uid: string, length: number) =>
   expect(queryAllDashboard(uid)).toHaveLength(length);
 
-export const expectNotDashboardReload = () => expect(locationReloadSpy).not.toHaveBeenCalled();
-export const expectDashboardReload = () => expect(locationReloadSpy).toHaveBeenCalled();
-
-export const expectOldDashboardDTO = (scopes?: string[]) =>
-  expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', scopes ? { scopes } : undefined);
-export const expectNewDashboardDTO = () =>
-  expect(getMock).toHaveBeenCalledWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto');
+export const expectNotDashboardReload = () => expect(dashboardReloadSpy).not.toHaveBeenCalled();
+export const expectDashboardReload = () => expect(dashboardReloadSpy).toHaveBeenCalled();
 
 export const expectSelectedScopePath = (name: string, path: string[] | undefined) =>
   expect(getSelectedScope(name)?.path).toEqual(path);
