@@ -13,14 +13,12 @@ import {
 
 import { LokiDatasource } from './datasource';
 import { combineResponses } from './mergeResponses';
-import { runSplitQuery } from './querySplitting';
+import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
 import {
   addShardingPlaceholderSelector,
   getSelectorForShardValues,
   interpolateShardingSelector,
   isLogsQuery,
-  isQueryWithLabelFilter,
-  isQueryWithLineFilter,
 } from './queryUtils';
 import { LokiQuery } from './types';
 
@@ -159,9 +157,15 @@ function splitQueriesByStreamShard(
       return true;
     };
 
+    const targets = adjustTargetsFromResponseState(groups[group].targets, mergedResponse);
+    if (!targets.length) {
+      nextRequest();
+      return;
+    }
+
     const shardsToQuery =
       shards && cycle !== undefined && groupSize ? groupShardRequests(shards, cycle, groupSize) : [];
-    const subRequest = { ...request, targets: interpolateShardingSelector(groups[group].targets, shardsToQuery) };
+    const subRequest = { ...request, targets: interpolateShardingSelector(targets, shardsToQuery) };
     // Request may not have a request id
     if (request.requestId) {
       subRequest.requestId =
@@ -240,20 +244,9 @@ async function groupTargetsByQueryType(
   request: DataQueryRequest<LokiQuery>
 ) {
   const [logQueries, metricQueries] = partition(targets, (query) => isLogsQuery(query.expr));
-  const [lineFilterLogQueries, restLogQueries] = partition(
-    logQueries,
-    (query) => isQueryWithLineFilter(query.expr) || isQueryWithLabelFilter(query.expr)
-  );
-
   const groups: ShardedQueryGroup[] = [];
 
-  if (restLogQueries.length) {
-    groups.push({
-      targets: restLogQueries,
-    });
-  }
-
-  for (const queries of [lineFilterLogQueries, metricQueries]) {
+  for (const queries of [logQueries, metricQueries]) {
     const selectorPartition = groupBy(queries, (query) => getSelectorForShardValues(query.expr));
     for (const selector in selectorPartition) {
       try {
