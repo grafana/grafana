@@ -34,4 +34,36 @@ func TestToModel(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, tm.Rules, 1)
 	})
+	t.Run("should clear recording rule ignored fields correctly", func(t *testing.T) {
+		ruleGroup := definitions.AlertRuleGroup{
+			Title:     "123",
+			FolderUID: "123",
+			Interval:  10,
+			Rules: []definitions.ProvisionedAlertRule{
+				{
+					UID:          "1",
+					Condition:    "A",
+					ExecErrState: definitions.ErrorErrState,
+					NoDataState:  definitions.NoData,
+					For:          10,
+					NotificationSettings: &definitions.AlertRuleNotificationSettings{
+						Receiver: "receiver",
+					},
+					Record: &definitions.Record{
+						Metric: "metric",
+						From:   "A",
+					},
+				},
+			},
+		}
+		tm, err := AlertRuleGroupFromApiAlertRuleGroup(ruleGroup)
+		require.NoError(t, err)
+		require.Len(t, tm.Rules, 1)
+		rule := tm.Rules[0]
+		require.Empty(t, rule.NoDataState)
+		require.Empty(t, rule.For)
+		require.Empty(t, rule.Condition)
+		require.Empty(t, rule.ExecErrState)
+		require.Nil(t, rule.NotificationSettings)
+	})
 }
