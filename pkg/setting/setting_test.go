@@ -681,3 +681,30 @@ func TestDynamicSection(t *testing.T) {
 		assert.Equal(t, value, ds.section.Key(key).String())
 	})
 }
+
+func TestFeatureTogglesEnvVars(t *testing.T) {
+	t.Run("should read feature toggles from ini", func(t *testing.T) {
+		cfg := NewCfg()
+		const feature = "someFeature"
+
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "testdata/feature_toggles.ini"})
+		require.NoError(t, err)
+
+		require.True(t, cfg.IsFeatureToggleEnabled(feature))
+	})
+
+	t.Run("should override feature toggles from env vars", func(t *testing.T) {
+		cfg := NewCfg()
+		const someFeature = "someFeature"
+		const otherFeature = "otherFeature"
+
+		require.NoError(t, os.Setenv("GF_FEATURE_TOGGLES_"+someFeature, "false"))
+		require.NoError(t, os.Setenv("GF_FEATURE_TOGGLES_"+otherFeature, "true"))
+
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "testdata/feature_toggles.ini"})
+		require.NoError(t, err)
+
+		require.False(t, cfg.IsFeatureToggleEnabled(someFeature))
+		require.True(t, cfg.IsFeatureToggleEnabled(otherFeature))
+	})
+}
