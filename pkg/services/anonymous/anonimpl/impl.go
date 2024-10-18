@@ -34,13 +34,13 @@ type AnonDeviceService struct {
 	anonStore      anonstore.AnonStore
 	serverLock     *serverlock.ServerLockService
 	cfg            *setting.Cfg
-	limitValidator validator.AnonLimitValidator
+	limitValidator validator.AnonUserLimitValidator
 }
 
 func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
 	sqlStore db.DB, cfg *setting.Cfg, orgService org.Service,
 	serverLockService *serverlock.ServerLockService, accesscontrol accesscontrol.AccessControl, routeRegister routing.RouteRegister,
-	validator validator.AnonLimitValidator,
+	validator validator.AnonUserLimitValidator,
 ) *AnonDeviceService {
 	a := &AnonDeviceService{
 		log:            log.New("anonymous-session-service"),

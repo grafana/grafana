@@ -124,7 +124,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := db.InitTestDB(t)
 			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-				&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonLimitValidator{})
+				&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 			for _, req := range tc.req {
 				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
@@ -162,7 +162,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	}
 	store := db.InitTestDB(t)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
-		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonLimitValidator{})
+		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	req := &http.Request{
 		Header: http.Header{
@@ -260,7 +260,7 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.AnonymousEnabled = true
-	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonLimitValidator{})
+	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	for _, tc := range testCases {
 		err := store.Reset()
@@ -301,7 +301,7 @@ func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
 		nil,
 		actest.FakeAccessControl{},
 		&routing.RouteRegisterImpl{},
-		validator.FakeAnonLimitValidator{},
+		validator.FakeAnonUserLimitValidator{},
 	)
 
 	// Define test cases
