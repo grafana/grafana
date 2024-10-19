@@ -6876,7 +6876,13 @@
         "emailLogoUrl": {
           "type": "string"
         },
+        "embeddedImageTheme": {
+          "type": "string"
+        },
         "reportLogoUrl": {
+          "type": "string"
+        },
+        "reportPdfTheme": {
           "type": "string"
         }
       }
