@@ -547,9 +547,17 @@ interface SelectLabelActionState extends SceneObjectState {
 
 export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
   public onClick = () => {
-    // check that it is resource or label and update the rudderstack event
     const label = this.state.labelName;
-    reportExploreMetrics('label_selected', { label, cause: 'breakdown_panel' });
+
+    // check that it is resource or label and update the rudderstack event
+    const trail = getTrailFor(this);
+    const resourceAttributes = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail)?.getValue();
+    let otel_resource_attribute = false;
+    if (typeof resourceAttributes === 'string') {
+      otel_resource_attribute = resourceAttributes?.split(',').includes(label);
+    }
+
+    reportExploreMetrics('label_selected', { label, cause: 'breakdown_panel', otel_resource_attribute });
     getBreakdownSceneFor(this).onChange(label);
   };
 
