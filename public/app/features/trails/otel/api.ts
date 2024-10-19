@@ -20,6 +20,8 @@ export const TARGET_INFO_FILTER = { key: '__name__', value: 'target_info', opera
  * Parse the results to get label filters.
  * @param dataSourceUid
  * @param timeRange
+ * @param excludedFilters
+ * @param matchFilters
  * @returns OtelResourcesType[], labels for the query result requesting matching job and instance on target_info metric
  */
 export async function getOtelResources(
