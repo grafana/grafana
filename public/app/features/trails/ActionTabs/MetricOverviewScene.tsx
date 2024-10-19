@@ -89,7 +89,6 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     if (useOtelExperience) {
       // when the group left variable is changed we should get all the resource attributes + labels
       const resourceAttributes = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail)?.getValue();
-      console.log('resourceAttributes', resourceAttributes);
       if (typeof resourceAttributes === 'string') {
         const attributeArray: VariableValueOption[] = resourceAttributes
           .split(',')
@@ -148,7 +147,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>
                 {useOtelExperience ? (
-                  <Trans i18nKey="trails.metric-overview.metric-attributes">Metric attributes</Trans>
+                  <Trans i18nKey="trails.metric-overview.metric-attributes">Attributes</Trans>
                 ) : (
                   <Trans i18nKey="trails.metric-overview.labels">Labels</Trans>
                 )}
