@@ -207,7 +207,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						// return the uid of clonflicting alert_rule
+						// return the uid of conflicting alert_rule
 						// see: https://github.com/grafana/grafana/issues/89755
 						var fetched_uid string
 						ok, uid_fetch_err := sess.Table("alert_rule").Cols("uid").Where("org_id = ? AND title = ? AND namespace_uid = ?", rules[i].OrgID, rules[i].Title, rules[i].NamespaceUID).Get(&fetched_uid)
