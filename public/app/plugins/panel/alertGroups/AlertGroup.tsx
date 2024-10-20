@@ -42,14 +42,14 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
               start: new Date(alert.startsAt),
               end: Date.now(),
             });
-            
-            // LOGZ.IO CHANGE :: DEV-46517 - fix "see source button"
-            if (alert.generatorURL) {
-              const url = new URL(alert.generatorURL);
-              alert.generatorURL = url.hash.replace(/^#/, '/grafana-app');
-            }
-            // LOGZ.IO CHANGE :: DEV-46517 - fix "see source button" end
 
+            // LOGZ.IO CHANGE :: DEV-46517 - fix "see source button"
+            const generatorURL = alert.generatorURL ? (() => {
+              const url = new URL(alert.generatorURL);
+              return url.hash.replace(/^#.dashboard.metrics/, '/grafana-app');
+            })() : null;
+            // LOGZ.IO CHANGE :: DEV-46517 - fix "see source button" end
+            
             return (
               <div data-testid={'alert-group-alert'} className={styles.alert} key={`${alert.fingerprint}-${index}`}>
                 <div>
@@ -82,9 +82,9 @@ export const AlertGroup = ({ alertManagerSourceName, group, expandAll }: Props) 
                       Silence
                     </LinkButton>
                   )}
-                  { /* LOGZ.IO CHANGE :: DEV-46517 - add link target to _top */ }
-                  {alert.generatorURL && (
-                    <LinkButton target="_top" className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
+                  { /* LOGZ.IO CHANGE :: DEV-46517 - patch the link url to work inside iframe */ }
+                  {generatorURL && (
+                    <LinkButton className={styles.button} href={generatorURL} icon={'chart-line'} size={'sm'}>
                       See source
                     </LinkButton>
                   )}

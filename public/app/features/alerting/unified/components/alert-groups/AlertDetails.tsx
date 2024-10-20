@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, {useMemo} from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
@@ -27,6 +27,15 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
   const isSeeSourceButtonEnabled = isGrafanaSource
     ? contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)
     : true;
+  // LOGZ.IO CHANGE :: DEV-46517 - fix "see source button"
+  const generatorURL = useMemo(() => {
+    if (alert.generatorURL) {
+      const url = new URL(alert.generatorURL);
+      return url.hash.replace(/^#.dashboard.metrics/, '/grafana-app');
+    }
+    return '';
+  }, [alert.generatorURL]);
+  // LOGZ.IO CHANGE :: DEV-46517 - fix "see source button" end
 
   return (
     <>
@@ -58,8 +67,8 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
             </LinkButton>
           </Authorize>
         )}
-        {isSeeSourceButtonEnabled && alert.generatorURL && (
-          <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
+        {isSeeSourceButtonEnabled && generatorURL && ( /* LOGZ.IO CHANGE :: DEV-46517 - fix "see source button" */
+          <LinkButton className={styles.button} href={generatorURL} icon={'chart-line'} size={'sm'}>
             See source
           </LinkButton>
         )}
