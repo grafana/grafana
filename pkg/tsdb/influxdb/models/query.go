@@ -58,7 +58,7 @@ func (query *Query) renderTags() []string {
 			str += " "
 		}
 
-		// If the operator is missing we fall back to sensible defaults
+		// If the operator is missing, we fall back to sensible defaults
 		if tag.Operator == "" {
 			if regexpOperatorPattern.MatchString(tag.Value) {
 				tag.Operator = "=~"
@@ -67,10 +67,10 @@ func (query *Query) renderTags() []string {
 			}
 		}
 
+		// Handle proper type detection for integer/float vs string
 		isOperatorTypeHandler := func(tag *Tag) (string, string) {
-			// Attempt to identify the type of the supplied value
 			var lowerValue = strings.ToLower(tag.Value)
-			var r = regexp.MustCompile(`^(-?)[0-9\.]+$`)
+			var numericRegex = regexp.MustCompile(`^(-?\d+)(\.\d+)?$`) // Updated to include integer and float check
 			var textValue string
 			var operator string
 
@@ -85,37 +85,42 @@ func (query *Query) renderTags() []string {
 				operator = "="
 			}
 
-			// Always quote tag values
+			// Detect and handle specific types
 			if strings.HasSuffix(tag.Key, "::tag") {
+				// Always quote tag values if it's a tag
 				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 				return textValue, operator
 			}
 
-			// Try and discern the type of fields
+			// Handle different types of values
 			if lowerValue == "true" || lowerValue == "false" {
-				// boolean, don't quote, but make lowercase
+				// Boolean values (no quotes, lowercase)
 				textValue = lowerValue
-			} else if r.MatchString(tag.Value) {
-				// Integer or float, don't quote
+			} else if numericRegex.MatchString(tag.Value) {
+				// Integer or float (no quotes)
 				textValue = tag.Value
 			} else {
-				// String (or unknown) - quote
+				// String or unknown type (quote the value)
 				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 			}
 
 			return removeRegexWrappers(textValue, `'`), operator
 		}
 
-		// quote value unless regex or number
+		// Apply proper handling of types
 		var textValue string
 		switch tag.Operator {
 		case "=~", "!~", "":
+			// Regex-like operators
 			textValue = tag.Value
 		case "<", ">", ">=", "<=":
+			// Numeric comparisons (don't wrap in quotes)
 			textValue = removeRegexWrappers(tag.Value, `'`)
 		case "Is", "Is Not":
+			// Handle Is and Is Not with type detection
 			textValue, tag.Operator = isOperatorTypeHandler(tag)
 		default:
+			// Fallback to default behavior, quoting the value
 			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
 		}
 
