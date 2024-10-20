@@ -172,6 +172,7 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 // InsertAlertRules is a handler for creating/updating alert rules.
 // Returns the UID and ID of rules that were created in the same order as the input rules.
 func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
+	logger := st.Logger.New()
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		newRules := make([]alertRule, 0, len(rules))
@@ -206,6 +207,16 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
+						// return the uid of clonflicting alert_rule
+						// see: https://github.com/grafana/grafana/issues/89755
+						var fetched_uid string
+						ok, uid_fetch_err := sess.Table("alert_rule").Cols("uid").Where("org_id = ? AND title = ? AND namespace_uid = ?", rules[i].OrgID, rules[i].Title, rules[i].NamespaceUID).Get(&fetched_uid)
+						if uid_fetch_err != nil {
+							logger.Error("Error fetching uid from alert_rule table", "reason", uid_fetch_err.Error())
+						}
+						if ok {
+							rules[i].UID = fetched_uid
+						}
 						return ruleConstraintViolationToErr(rules[i], err)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
