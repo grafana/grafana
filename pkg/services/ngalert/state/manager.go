@@ -123,7 +123,7 @@ func (st *Manager) Run(ctx context.Context) error {
 	return nil
 }
 
-func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
+func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceReader InstanceReader) {
 	if st.instanceStore == nil {
 		st.log.Info("Skip warming the state because instance store is not configured")
 		return
@@ -131,7 +131,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	startTime := time.Now()
 	st.log.Info("Warming state cache for startup")
 
-	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
+	orgIds, err := instanceReader.FetchOrgIds(ctx)
 	if err != nil {
 		st.log.Error("Unable to fetch orgIds", "error", err)
 	}
@@ -175,7 +175,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
 		}
-		alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
+		alertInstances, err := instanceReader.ListAlertInstances(ctx, &cmd)
 		if err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
