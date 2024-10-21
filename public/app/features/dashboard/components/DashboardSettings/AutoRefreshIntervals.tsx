@@ -74,6 +74,7 @@ export const AutoRefreshIntervals = ({
         value={intervalsString}
         onChange={onIntervalsChange}
         onBlur={onIntervalsBlur}
+        spellCheck={false}
       />
     </Field>
   );
