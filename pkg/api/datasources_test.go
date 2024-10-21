@@ -223,76 +223,58 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 
 	assert.Equal(t, 400, sc.resp.Code)
 }
-
-// Using a team HTTP header whose name matches the name specified for auth proxy header should fail
 func TestAddDataSourceTeamHTTPHeaders(t *testing.T) {
 	tenantID := "1234"
-	testcases := []struct {
-		desc    string
-		data    datasources.TeamHTTPHeaders
-		want    int
-		wantErr string
-	}{
-		{
-			desc: "Should only allow for updating teamHttpHeaders from lbac rules API instead of datasources API",
-			data: datasources.TeamHTTPHeaders{
-				Headers: datasources.TeamHeaders{
-					tenantID: []datasources.TeamHTTPHeader{
-						{
-							Header: "Authorization",
-							Value:  "foo!=bar",
-						},
-					},
-				}},
-			want:    http.StatusForbidden,
-			wantErr: "Cannot create datasource with team HTTP headers, need to use updateDatasourceLBACRules API",
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{
+			expectedDatasource: &datasources.DataSource{},
+		},
+		Cfg:                  setting.NewCfg(),
+		Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
+		accesscontrolService: actest.FakeService{},
+		AccessControl: actest.FakeAccessControl{
+			ExpectedEvaluate: true,
+			ExpectedErr:      nil,
 		},
 	}
-	for _, tc := range testcases {
-		t.Run(tc.desc, func(t *testing.T) {
-			hs := &HTTPServer{
-				DataSourcesService: &dataSourcesServiceMock{
-					expectedDatasource: &datasources.DataSource{},
+	sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
+	hs.Cfg.AuthProxy.Enabled = true
+
+	jsonData := simplejson.New()
+	jsonData.Set("teamHttpHeaders", datasources.TeamHTTPHeaders{
+		Headers: datasources.TeamHeaders{
+			tenantID: []datasources.TeamHTTPHeader{
+				{
+					Header: "Authorization",
+					Value:  "foo!=bar",
 				},
-				Cfg:                  setting.NewCfg(),
-				Features:             featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders),
-				accesscontrolService: actest.FakeService{},
-				AccessControl: actest.FakeAccessControl{
-					ExpectedEvaluate: true,
-					ExpectedErr:      nil,
-				},
-			}
-			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
-			hs.Cfg.AuthProxy.Enabled = true
-
-			jsonData := simplejson.New()
-			jsonData.Set("teamHttpHeaders", tc.data)
-			sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-				c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-					Name:     "Test",
-					URL:      "localhost:5432",
-					Access:   "direct",
-					Type:     "test",
-					JsonData: jsonData,
-				})
-				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{
-					{Action: datasources.ActionPermissionsWrite, Scope: datasources.ScopeAll},
-				})
-				return hs.AddDataSource(c)
-			}))
-
-			sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-			assert.Equal(t, tc.want, sc.resp.Code)
-
-			// Parse the JSON response
-			var response map[string]string
-			err := json.Unmarshal(sc.resp.Body.Bytes(), &response)
-			assert.NoError(t, err, "Failed to parse JSON response")
-
-			// Check the error message in the JSON response
-			assert.Equal(t, tc.wantErr, response["message"])
+			},
+		},
+	})
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+			Name:     "Test",
+			URL:      "localhost:5432",
+			Access:   "direct",
+			Type:     "test",
+			JsonData: jsonData,
 		})
-	}
+		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{
+			{Action: datasources.ActionPermissionsWrite, Scope: datasources.ScopeAll},
+		})
+		return hs.AddDataSource(c)
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+	assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+
+	// Parse the JSON response
+	var response map[string]string
+	err := json.Unmarshal(sc.resp.Body.Bytes(), &response)
+	assert.NoError(t, err, "Failed to parse JSON response")
+
+	// Check the error message in the JSON response
+	assert.Equal(t, "Cannot create datasource with team HTTP headers, need to use updateDatasourceLBACRules API", response["message"])
 }
 
 // Updating data sources with URLs not specifying protocol should work.
