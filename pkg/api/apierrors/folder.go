@@ -4,6 +4,9 @@ import (
 	"errors"
 	"net/http"
 
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
@@ -41,4 +44,25 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, "Folder API error", err)
+}
+
+func ToFolderStatusError(err error) k8sErrors.StatusError {
+	resp := ToFolderErrorResponse(err)
+
+	normResp, ok := resp.(*response.NormalResponse)
+	if !ok {
+		return k8sErrors.StatusError{
+			ErrStatus: metav1.Status{
+				Message: "Folder API error",
+				Code:    http.StatusInternalServerError,
+			},
+		}
+	}
+
+	return k8sErrors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: normResp.ErrMessage(),
+			Code:    int32(normResp.Status()),
+		},
+	}
 }

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -275,20 +274,18 @@ func Compare(storageObj, legacyObj runtime.Object) bool {
 	if storageObj == nil || legacyObj == nil {
 		return storageObj == nil && legacyObj == nil
 	}
-	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
 }
 
-func removeMeta(obj runtime.Object) []byte {
+func extractSpec(obj runtime.Object) []byte {
 	cpy := obj.DeepCopyObject()
 	unstObj, err := defaultConverter.ToUnstructured(cpy)
 	if err != nil {
 		return nil
 	}
-	// we don't want to compare meta fields
-	delete(unstObj, "metadata")
-	delete(unstObj, "objectMeta")
 
-	jsonObj, err := json.Marshal(unstObj)
+	// we just want to compare the spec field
+	jsonObj, err := json.Marshal(unstObj["spec"])
 	if err != nil {
 		return nil
 	}
@@ -305,55 +302,4 @@ func getName(o runtime.Object) string {
 		return ""
 	}
 	return accessor.GetName()
-}
-
-const dataSyncerInterval = 60 * time.Minute
-
-// StartPeriodicDataSyncer starts a background job that will execute the DataSyncer every 60 minutes
-func StartPeriodicDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
-	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) {
-	klog.Info("Starting periodic data syncer for mode mode: ", mode)
-
-	// run in background
-	go func() {
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		timeWindow := 600 // 600 seconds (10 minutes)
-		jitterSeconds := r.Int63n(int64(timeWindow))
-		klog.Info("data syncer is going to start at: ", time.Now().Add(time.Second*time.Duration(jitterSeconds)))
-		time.Sleep(time.Second * time.Duration(jitterSeconds))
-
-		// run it immediately
-		syncOK, err := runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
-		klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
-
-		ticker := time.NewTicker(dataSyncerInterval)
-		for {
-			select {
-			case <-ticker.C:
-				syncOK, err = runDataSyncer(ctx, mode, legacy, storage, kind, reg, serverLockService, requestInfo)
-				klog.Info("data syncer finished, syncOK: ", syncOK, ", error: ", err)
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-}
-
-// runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
-// The sync implementation depends on the DualWriter mode
-func runDataSyncer(ctx context.Context, mode DualWriterMode, legacy LegacyStorage, storage Storage,
-	kind string, reg prometheus.Registerer, serverLockService ServerLockService, requestInfo *request.RequestInfo) (bool, error) {
-	// ensure that execution takes no longer than necessary
-	const timeout = dataSyncerInterval - time.Minute
-	ctx, cancelFn := context.WithTimeout(ctx, timeout)
-	defer cancelFn()
-
-	// implementation depends on the current DualWriter mode
-	switch mode {
-	case Mode2:
-		return mode2DataSyncer(ctx, legacy, storage, kind, reg, serverLockService, requestInfo)
-	default:
-		klog.Info("data syncer not implemented for mode mode:", mode)
-		return false, nil
-	}
 }

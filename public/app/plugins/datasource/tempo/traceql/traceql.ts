@@ -28,7 +28,7 @@ export const keywordOperators = ['=', '!='];
 export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
-export const intrinsics = [
+export const intrinsicsV1 = [
   'duration',
   'kind',
   'name',
@@ -38,6 +38,24 @@ export const intrinsics = [
   'statusMessage',
   'traceDuration',
 ];
+export const intrinsics = intrinsicsV1.concat([
+  'event:name',
+  'event:timeSinceStart',
+  'instrumentation:name',
+  'instrumentation:version',
+  'link:spanID',
+  'link:traceID',
+  'span:duration',
+  'span:id',
+  'span:kind',
+  'span:name',
+  'span:status',
+  'span:statusMessage',
+  'trace:duration',
+  'trace:id',
+  'trace:rootName',
+  'trace:rootService',
+]);
 export const scopes: string[] = ['resource', 'span'];
 
 const aggregatorFunctions = ['avg', 'count', 'max', 'min', 'sum'];

@@ -327,10 +327,6 @@ const Header: FC<HeaderProps> = ({
               autoFocus
               defaultValue={refId}
               minWidth={5}
-              onChange={(event) => {
-                onUpdateRefId(event.currentTarget.value);
-                setEditMode(false);
-              }}
               onFocus={(event) => event.target.select()}
               onBlur={(event) => {
                 onUpdateRefId(event.currentTarget.value);
@@ -361,7 +357,8 @@ interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
 
 const OpeningBracket = () => <span>{'{'}</span>;
 const ClosingBracket = () => <span>{'}'}</span>;
-const Quote = () => <span>{'&quot;'}</span>;
+// eslint-disable-next-line @grafana/no-untranslated-strings
+const Quote = () => <span>&quot;</span>;
 const Equals = () => <span>{'='}</span>;
 
 const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {

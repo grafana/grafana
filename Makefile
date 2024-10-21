@@ -174,12 +174,16 @@ gen-jsonnet:
 	go generate ./devenv/jsonnet
 
 .PHONY: update-workspace
-update-workspace:
+update-workspace: gen-go
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
 build-go: gen-go update-workspace ## Build all Go binaries.
+	@echo "build go files with updated workspace"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
+build-go-fast: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -412,6 +416,7 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
+	buf generate pkg/services/authz/zanzana/proto/v1 --template pkg/services/authz/zanzana/proto/v1/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
