@@ -4,10 +4,15 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { RolePickerSelect } from './RolePickerSelect';
 
 describe('RolePickerSelect', () => {
-  const Wrapper = (props) => {
+  interface WrapperProps {
+    children: React.ReactNode;
+  }
+
+  const Wrapper = (props: WrapperProps) => {
     const formMethods = useForm({});
     return <FormProvider {...formMethods}>{props.children}</FormProvider>;
   };
+
   it('should render', async () => {
     const props = {};
     render(

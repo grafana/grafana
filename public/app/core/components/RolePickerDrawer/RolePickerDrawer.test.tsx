@@ -8,15 +8,19 @@ const props = {
 };
 
 describe('RolePickerDrawer', () => {
-  const Wrapper = (props) => {
+  interface WrapperProps {
+    children: React.ReactNode;
+  }
+
+  const Wrapper = (props: WrapperProps) => {
     const formMethods = useForm({
       defaultValues: {
         name: 'service-account-name',
       },
     });
-
     return <FormProvider {...formMethods}>{props.children}</FormProvider>;
   };
+
   it('should render', async () => {
     render(
       <Wrapper>
