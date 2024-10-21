@@ -1,15 +1,20 @@
 import { DashboardCursorSync, DashboardLink } from '../../../index.gen';
 
-import { Kind } from './common';
-import { AnnotationKind, GridLayoutKind, PanelKind, QueryVariableKind, TextVariableKind } from './kinds';
-import { TimeSettingsSpec } from './specs';
+import { Kind, Referenceable } from './common';
+import {
+  AnnotationQueryKind,
+  GridLayoutKind,
+  PanelKind,
+  QueryVariableKind,
+  TextVariableKind,
+  TimeSettingsSpec,
+} from './kinds';
 
+// This kind will not be necessary in the future, the k8s envelope will be provided through ScopedResourceClient
+// See public/app/features/apiserver/client.ts
 export type DashboardV2 = Kind<'Dashboard', DashboardSpec>;
 
-type Referenceable<T> = Record<string, T>;
-
 interface DashboardSpec {
-  uid: string;
   id?: number;
 
   // dashboard settings
@@ -26,13 +31,13 @@ interface DashboardSpec {
   timeSettings: TimeSettingsSpec;
   variables: Array<QueryVariableKind | TextVariableKind /* | ... */>;
   elements: Referenceable<PanelKind /** | ... more element types in the future? */>;
-  annotations: AnnotationKind[];
+  annotations: AnnotationQueryKind[];
   layout: GridLayoutKind;
 
-  // annotations: AnnotationKind[];
-  // version: will rely on k8s resource versioning, via metadata.resorceVersion?
+  // version: will rely on k8s resource versioning, via metadata.resorceVersion
+
   // revision?: number; // for plugins only
-  // gnetId?: string;
+  // gnetId?: string; // ??? Wat is this used for?
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -40,7 +45,6 @@ const handTestingSchema: DashboardV2 = {
   kind: 'Dashboard',
   spec: {
     id: 1,
-    uid: 'default',
     title: 'Default Dashboard',
     description: 'This is a default dashboard',
     cursorSync: 0,
@@ -74,10 +78,17 @@ const handTestingSchema: DashboardV2 = {
             spec: {
               queries: [
                 {
-                  kind: 'PrometheusQuery',
+                  kind: 'PanelQuery',
                   spec: {
+                    query: {
+                      kind: 'prometheus',
+                      spec: {
+                        query: 'up',
+                      },
+                    },
+                    datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+                    hidden: false,
                     refId: 'A',
-                    datasource: { uid: 'skdjkasjdkj', type: 'prometheus' },
                   },
                 },
               ],
@@ -92,11 +103,14 @@ const handTestingSchema: DashboardV2 = {
                   },
                 },
               ],
-              queryOptions: {},
+              queryOptions: {
+                maxDataPoints: 100,
+                cacheTimeout: '1m',
+              },
             },
           },
           vizConfig: {
-            kind: 'timeseries', // TimeseriesConfig | BarChartConfig eventually?
+            kind: 'timeseries',
             spec: {
               pluginVersion: '11.0.0',
               options: {},
@@ -127,6 +141,53 @@ const handTestingSchema: DashboardV2 = {
       },
     },
     variables: [],
-    annotations: [],
+    annotations: [
+      {
+        kind: 'AnnotationQuery',
+        spec: {
+          datasource: { type: 'datasource', uid: 'grafana' },
+          query: {
+            kind: 'grafana',
+            spec: {
+              queryType: 'timeRegions',
+              matchAny: false,
+              timeRegion: {
+                from: '12:27',
+                fromDayOfWeek: 2,
+                timezone: 'browser',
+                to: '11:30',
+                toDayOfWeek: 2,
+              },
+            },
+          },
+          enable: true,
+          filter: {
+            ids: [],
+          },
+          hide: false,
+          iconColor: 'blue',
+          name: 'Grafana annotations',
+        },
+      },
+      {
+        kind: 'AnnotationQuery',
+        spec: {
+          datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+          query: {
+            kind: 'prometheus',
+            spec: {
+              query: 'up',
+            },
+          },
+          enable: true,
+          filter: {
+            ids: [],
+          },
+          hide: false,
+          iconColor: 'red',
+          name: 'Prometheus annotations',
+        },
+      },
+    ],
   },
 };
