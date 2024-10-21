@@ -1,32 +1,36 @@
 import { render, screen } from '@testing-library/react';
-
-import { OrgRole } from '@grafana/data';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { RolePickerDrawer } from './RolePickerDrawer';
 
 const props = {
   onClose: () => {},
-  user: {
-    login: 'admin',
-    email: '',
-    avatarUrl: '',
-    lastSeenAt: '',
-    lastSeenAtAge: '',
-    name: 'administrator',
-    orgId: 1,
-    role: OrgRole.Admin,
-    roles: [],
-    userId: 1,
-    isDisabled: false,
-  },
 };
 
 describe('RolePickerDrawer', () => {
-  it('should render', async () => {
-    render(<RolePickerDrawer {...props} />);
+  const Wrapper = (props) => {
+    const formMethods = useForm({
+      defaultValues: {
+        name: 'service-account-name',
+      },
+    });
 
+    return <FormProvider {...formMethods}>{props.children}</FormProvider>;
+  };
+  it('should render', async () => {
+    render(
+      <Wrapper>
+        <RolePickerDrawer {...props} />
+      </Wrapper>
+    );
+
+    expect(screen.getByRole('heading', { name: 'service-account-name' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'administrator' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'documentation' })).toBeInTheDocument();
+
+    expect(screen.getByRole('radio', { name: 'None' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Viewer' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Editor' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Admin' })).toBeInTheDocument();
   });
 });
