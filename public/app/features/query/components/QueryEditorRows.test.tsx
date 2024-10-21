@@ -1,5 +1,6 @@
 import { fireEvent, queryByLabelText, render, screen } from '@testing-library/react';
 
+import { setPluginLinksHook } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -67,6 +68,11 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
     }),
   };
 });
+
+setPluginLinksHook(() => ({
+  links: [],
+  isLoading: false,
+}));
 
 describe('QueryEditorRows', () => {
   it('Should render queries', async () => {

@@ -4,6 +4,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
 
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
@@ -29,6 +30,11 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 setupMswServer();
 mimirDataSource();
+
+setPluginLinksHook(() => ({
+  links: [],
+  isLoading: false,
+}));
 
 describe('RuleEditor cloud', () => {
   beforeEach(() => {
