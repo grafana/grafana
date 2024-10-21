@@ -61,7 +61,7 @@ const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => 
   return <>{entry}</>;
 };
 
-const restructureLog = (
+export const restructureLog = (
   line: string,
   prettifyLogMessage: boolean,
   wrapLogMessage: boolean,
