@@ -439,8 +439,9 @@ func permissionSetResponse(cmd setPermissionCommand) response.Response {
 func MiddlewareReceiverUIDResolver(paramName string) web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		gotParams := web.Params(c.Req)
-		uid := gotParams[paramName]
-		gotParams[paramName] = alertingac.ScopeReceiversProvider.GetResourceIDFromUID(uid)
-		web.SetURLParams(c.Req, gotParams)
+		if uid, ok := gotParams[paramName]; ok {
+			gotParams[paramName] = alertingac.ScopeReceiversProvider.GetResourceIDFromUID(uid)
+			web.SetURLParams(c.Req, gotParams)
+		}
 	}
 }
