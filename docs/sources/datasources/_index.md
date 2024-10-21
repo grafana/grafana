@@ -139,6 +139,7 @@ A data source that uses the result set from another panel in the same dashboard.
 These built-in core data sources are also included in the Grafana documentation:
 
 {{< column-list >}}
+
 - [Alertmanager]({{< relref "./alertmanager" >}})
 - [AWS CloudWatch]({{< relref "./aws-cloudwatch" >}})
 - [Azure Monitor]({{< relref "./azure-monitor" >}})
@@ -157,6 +158,7 @@ These built-in core data sources are also included in the Grafana documentation:
 - [Tempo]({{< relref "./tempo" >}})
 - [Testdata]({{< relref "./testdata" >}})
 - [Zipkin]({{< relref "./zipkin" >}})
+
 {{< /column-list >}}
 
 ## Add additional data source plugins
