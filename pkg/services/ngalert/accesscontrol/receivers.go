@@ -182,7 +182,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "read",
 			authorizeSome: readRedactedReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return readRedactedReceiverEval(receiver.GetUID())
+				return readRedactedReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
 			},
 			authorizeAll: readRedactedAllReceiversEval,
 		},
@@ -194,7 +194,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "read",
 			authorizeSome: readDecryptedReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return readDecryptedReceiverEval(receiver.GetUID())
+				return readDecryptedReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
 			},
 			authorizeAll: readDecryptedAllReceiversEval,
 		},
@@ -218,7 +218,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "update",
 			authorizeSome: updateReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return updateReceiverEval(receiver.GetUID())
+				return updateReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
 			},
 			authorizeAll: updateAllReceiversEval,
 		},
@@ -230,7 +230,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "delete",
 			authorizeSome: deleteReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return deleteReceiverEval(receiver.GetUID())
+				return deleteReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
 			},
 			authorizeAll: deleteAllReceiversEval,
 		},
@@ -242,7 +242,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "admin", // Essentially read+write receiver resource permissions.
 			authorizeSome: permissionsReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return permissionsReceiverEval(receiver.GetUID())
+				return permissionsReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
 			},
 			authorizeAll: permissionsAllReceiversEval,
 		},
