@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -291,6 +292,9 @@ func extendAccessControl[T models.Identified](base *actionAccess[T], operator fu
 
 // ReceiverUidToResourceId converts a receiver uid to a resource id. This is necessary as resource ids are limited to 40 characters.
 func ReceiverUidToResourceId(uid string) string {
+	if len(uid) <= util.MaxUIDLength {
+		return uid
+	}
 	h := sha1.New()
 	h.Write([]byte(uid))
 	return hex.EncodeToString(h.Sum(nil))
