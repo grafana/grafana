@@ -1,11 +1,22 @@
-@torkelo is the main/default maintainer, some parts of the codebase have other maintainers:
+Maintainers and Codebase Ownership
+Strapi’s codebase is actively maintained by a dedicated team. While @torkelo is the primary maintainer, other key areas have specific owners to ensure smooth development and management.
 
-- Backend:
-  - @bergquist
-- Plugins:
-  - @ryantxu
-- UX/UI:
-  - @davkal
-- Docs:
-  - @chri2547
-  - @brendamuir
+Codebase Breakdown and Maintainers:
+Backend:
+Maintainer: @bergquist
+
+Manages backend architecture, APIs, and server-side logic.
+Plugins:
+Maintainer: @ryantxu
+
+Handles plugin development and maintenance, adding new features and integrations.
+UX/UI:
+Maintainer: @davkal
+
+Oversees design, usability, and user experience improvements.
+Documentation:
+Maintainers:
+
+@chri2547
+@brendamuir
+Responsible for keeping the docs accurate, updated, and easy to understand.
