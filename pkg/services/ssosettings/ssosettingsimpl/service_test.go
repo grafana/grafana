@@ -1535,7 +1535,7 @@ func TestService_Delete(t *testing.T) {
 		mockProvider.On(
 			"Update",
 			setting.SettingsBag{},
-			setting.SettingsRemovals{"auth.saml": []string{"", "name"}}).Return(nil).Once()
+			setting.SettingsRemovals{"auth.saml": []string{"name"}}).Return(nil).Once()
 		env.service.settingsProvider = mockProvider
 
 		provider := social.SAMLProviderName
@@ -1543,7 +1543,6 @@ func TestService_Delete(t *testing.T) {
 
 		var wg sync.WaitGroup
 		wg.Add(1)
-		defer wg.Wait()
 		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
 			wg.Done()
 			return settings.Provider == provider && settings.ID == ""
@@ -1552,6 +1551,7 @@ func TestService_Delete(t *testing.T) {
 
 		err := env.service.Delete(context.Background(), provider)
 		require.NoError(t, err)
+		wg.Wait()
 	})
 }
 
