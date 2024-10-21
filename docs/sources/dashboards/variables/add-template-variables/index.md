@@ -211,7 +211,7 @@ _Text box_ variables display a free text input field with an optional default va
 For more information about cardinality, refer to [What are cardinality spikes and why do they matter?](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/)
 
 1. [Enter general options](#enter-general-options).
-1. (Optional) Under the **Text options** section, in the **Default value** field, enter the default value for the variable.
+1. (Optional) Under the **Text options** section of the page, in the **Default value** field, enter the default value for the variable.
 
    If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
 
@@ -227,8 +227,10 @@ Constant variables are _not_ flexible. Each constant variable only holds one val
 Constant variables are useful when you have complex values that you need to include in queries but don't want to retype in every query. For example, if you had a server path called `i-0b6a61efe2ab843gg`, then you could replace it with a variable called `$path_gg`.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](ref:raw-format).
-1. In **Preview of values**, Grafana displays the current variable value. Review it to ensure it matches what you expect.
+1. Under the **Constant options** section of the page, in the **Value** field, enter the variable value.
+
+   You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](ref:raw-format).
+
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
