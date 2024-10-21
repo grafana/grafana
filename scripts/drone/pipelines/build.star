@@ -11,7 +11,9 @@ load(
     "e2e_tests_artifacts",
     "e2e_tests_step",
     "enterprise_downstream_step",
+    "enterprise_setup_step",
     "frontend_metrics_step",
+    "grafana_image_renderer_step",
     "grafana_server_step",
     "identify_runner_step",
     "playwright_e2e_report_post_link",
@@ -174,6 +176,44 @@ def build_e2e(trigger, ver_mode):
 
     return pipeline(
         name = "{}-build-e2e{}".format(ver_mode, publish_suffix),
+        environment = environment,
+        services = [],
+        steps = init_steps + build_steps,
+        trigger = trigger,
+    )
+
+def build_e2e_enterprise(trigger):
+    """Perform e2e Enterprise building and testing.
+
+    Args:
+          trigger: controls which events can trigger the pipeline execution.
+
+    Returns:
+      Drone pipeline.
+    """
+
+    environment = {"EDITION": "enterprise"}
+    init_steps = [
+        identify_runner_step(),
+        download_grabpl_step(),
+        compile_build_cmd(),
+        verify_gen_cue_step(),
+        verify_gen_jsonnet_step(),
+        wire_install_step(),
+        yarn_install_step(),
+    ]
+
+    build_steps = [
+        build_frontend_package_step(),
+        rgm_artifacts_step(artifacts = ["targz:grafana:enterprise:linux/amd64", "targz:grafana:enterprise:linux/arm64", "targz:grafana:enterprise:linux/arm/v7"], file = "packages.txt"),
+        build_test_plugins_step(),
+        grafana_server_step("e2e/extensions/enterprise/license.jwt",True),
+        grafana_image_renderer_step(),
+        e2e_tests_step("enterprise-smtp"),
+    ]
+
+    return pipeline(
+        name = "pr-build-e2e-enterprise",
         environment = environment,
         services = [],
         steps = init_steps + build_steps,
