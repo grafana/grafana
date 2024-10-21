@@ -76,9 +76,11 @@ export const MegaMenu = memo(
       }
 
       // refocus on undock/menu open button when changing state
-      setTimeout(() => {
-        document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
-      });
+      if (!config.featureToggles.singleTopNav) {
+        setTimeout(() => {
+          document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
+        });
+      }
     };
 
     const isPinned = useCallback(
