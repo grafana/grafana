@@ -1,8 +1,6 @@
 package resourcepermissions
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
@@ -441,13 +440,7 @@ func MiddlewareReceiverUIDResolver(paramName string) web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		gotParams := web.Params(c.Req)
 		uid := gotParams[paramName]
-		gotParams[paramName] = uidToResourceID(uid)
+		gotParams[paramName] = alertingac.ReceiverUidToResourceId(uid)
 		web.SetURLParams(c.Req, gotParams)
 	}
-}
-
-func uidToResourceID(uid string) string {
-	h := sha1.New()
-	h.Write([]byte(uid))
-	return hex.EncodeToString(h.Sum(nil))
 }

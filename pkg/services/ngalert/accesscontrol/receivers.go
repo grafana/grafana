@@ -2,6 +2,8 @@ package accesscontrol
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -285,6 +287,13 @@ func extendAccessControl[T models.Identified](base *actionAccess[T], operator fu
 	base.authorizeOne = func(resource models.Identified) ac.Evaluator {
 		return operator(extension.authorizeOne(resource), baseOne(resource))
 	}
+}
+
+// ReceiverUidToResourceId converts a receiver uid to a resource id. This is necessary as resource ids are limited to 40 characters.
+func ReceiverUidToResourceId(uid string) string {
+	h := sha1.New()
+	h.Write([]byte(uid))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // HasList checks if user has access to list redacted receivers. Returns false if user does not have access.
