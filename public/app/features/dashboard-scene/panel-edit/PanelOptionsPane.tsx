@@ -11,7 +11,7 @@ import {
   PluginType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import {
   DeepPartial,
   SceneComponentProps,
@@ -33,6 +33,7 @@ import { isUsingAngularPanelPlugin } from '../scene/angular/AngularDeprecation';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
+import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
 
 export interface PanelOptionsPaneState extends SceneObjectState {
   isVizPickerOpen?: boolean;
@@ -50,6 +51,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   private _cachedPluginOptions: Record<string, PluginOptionsCache | undefined> = {};
 
   onToggleVizPicker = () => {
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.TOGGLE_DROPDOWN,
+      open: !this.state.isVizPickerOpen,
+    });
     this.setState({ isVizPickerOpen: !this.state.isVizPickerOpen });
   };
 
@@ -57,6 +62,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const panel = this.state.panelRef.resolve();
     const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
     const pluginId = options.pluginId;
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.SELECT_PANEL_PLUGIN,
+      plugin_id: pluginId,
+    });
 
     // clear custom options
     let newFieldConfig: FieldConfigSource = {
