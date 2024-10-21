@@ -8,6 +8,7 @@ import { Trans, t } from 'app/core/internationalization';
 import { AlertWithTraceID } from 'app/features/migrate-to-cloud/shared/AlertWithTraceID';
 
 import { CreateSessionApiArg } from '../../../api';
+import { maybeAPIError } from '../../../api/errors';
 
 interface Props {
   isOpen: boolean;
@@ -19,6 +20,51 @@ interface Props {
 
 interface FormData {
   token: string;
+}
+
+function getTMessage(messageId: string): string {
+  switch (messageId) {
+    case 'cloudmigrations.createMigration.tokenInvalid':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.token-invalid',
+        'Token is not valid. Generate a new token on your cloud instance and try again.'
+      );
+    case 'cloudmigrations.createMigration.tokenRequestError':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.token-request-error',
+        'An error occurred while validating the token. Please check the Grafana instance logs.'
+      );
+    case 'cloudmigrations.createMigration.tokenValidationFailure':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.token-validation-failure',
+        'Token is not valid. Please ensure the token matches the migration token on your cloud instance.'
+      );
+    case 'cloudmigrations.createMigration.instanceUnreachable':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.instance-unreachable',
+        'The cloud instance cannot be reached. Make sure the instance is running and try again.'
+      );
+    case 'cloudmigrations.createMigration.instanceRequestError':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.instance-request-error',
+        "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status."
+      );
+    case 'cloudmigrations.createMigration.sessionCreationFailure':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.session-creation-failure',
+        'There was an error creating the migration. Please try again.'
+      );
+    case 'cloudmigrations.createMigration.migrationDisabled':
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.migration-disabled',
+        'Cloud migrations are disabled on this instance.'
+      );
+    default:
+      return t(
+        'migrate-to-cloud.connect-modal.token-errors.token-not-saved',
+        'There was an error saving the token. See the Grafana server logs for more details.'
+      );
+  }
 }
 
 export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }: Props) => {
@@ -101,9 +147,10 @@ export const ConnectModal = ({ isOpen, isLoading, error, hideModal, onConfirm }:
                 severity="error"
                 title={t('migrate-to-cloud.connect-modal.token-error-title', 'Error saving token')}
               >
-                <Trans i18nKey="migrate-to-cloud.connect-modal.token-error-description">
-                  There was an error saving the token. See the Grafana server logs for more details.
-                </Trans>
+                <Text element="p">
+                  {getTMessage(maybeAPIError(error)?.messageId || '') ||
+                    'There was an error saving the token. See the Grafana server logs for more details.'}
+                </Text>
               </AlertWithTraceID>
             ) : undefined}
 
