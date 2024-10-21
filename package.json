@@ -189,7 +189,7 @@
     "fork-ts-checker-webpack-plugin": "9.0.2",
     "glob": "11.0.0",
     "html-loader": "5.1.0",
-    "html-webpack-plugin": "5.6.0",
+    "html-webpack-plugin": "5.6.2",
     "http-server": "14.1.1",
     "i18next-parser": "9.0.2",
     "ini": "^4.1.3",
