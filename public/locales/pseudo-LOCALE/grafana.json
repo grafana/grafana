@@ -2455,6 +2455,16 @@
     },
     "dismissable-button": "Cľőşę"
   },
+  "role-picker": {
+    "title": {
+      "description": "Åşşįģŉ řőľęş ŧő ūşęřş ŧő ęŉşūřę ģřäŉūľäř čőŉŧřőľ ővęř äččęşş ŧő Ğřäƒäŉä&ľşqūő;ş ƒęäŧūřęş äŉđ řęşőūřčęş. Fįŉđ őūŧ mőřę įŉ őūř <2>đőčūmęŉŧäŧįőŉ</2>."
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "ßäşįč Ŗőľęş"
+    }
+  },
   "save-dashboards": {
     "name-exists": {
       "message-info": "Å đäşĥþőäřđ ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę şęľęčŧęđ ƒőľđęř äľřęäđy ęχįşŧş, įŉčľūđįŉģ řęčęŉŧľy đęľęŧęđ đäşĥþőäřđş.",
@@ -2532,6 +2542,21 @@
   "select": {
     "select-menu": {
       "selected-count": "Ŝęľęčŧęđ "
+    }
+  },
+  "service-account-create-page": {
+    "create": {
+      "button": "Cřęäŧę"
+    },
+    "name": {
+      "label": "Đįşpľäy ŉämę",
+      "required-error": "Đįşpľäy ŉämę įş řęqūįřęđ"
+    },
+    "page-nav": {
+      "label": "Cřęäŧę şęřvįčę äččőūŉŧ"
+    },
+    "role": {
+      "label": "Ŗőľę"
     }
   },
   "service-accounts": {
