@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { shouldUsePrometheusRulesPrimary } from 'app/features/alerting/unified/featureToggles';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -14,6 +15,10 @@ interface Props {
 }
 
 type GroupedRules = Record<PromAlertingRuleState, CombinedRule[]>;
+
+// If we're using the Prometheus rules as primary, we leave state sections collapsed by default
+// so we defer API calls until the user expands the section
+const defaultSectionsToBeCollapsed = shouldUsePrometheusRulesPrimary();
 
 export const RuleListStateView = ({ namespaces }: Props) => {
   const filters = getFiltersFromUrlParams(useQueryParams()[0]);
@@ -45,17 +50,22 @@ export const RuleListStateView = ({ namespaces }: Props) => {
   return (
     <>
       {(!filters.alertState || filters.alertState === PromAlertingRuleState.Firing) && (
-        <RuleListStateSection state={PromAlertingRuleState.Firing} rules={groupedRules[PromAlertingRuleState.Firing]} />
+        <RuleListStateSection
+          defaultCollapsed={defaultSectionsToBeCollapsed}
+          state={PromAlertingRuleState.Firing}
+          rules={groupedRules[PromAlertingRuleState.Firing]}
+        />
       )}
       {(!filters.alertState || filters.alertState === PromAlertingRuleState.Pending) && (
         <RuleListStateSection
+          defaultCollapsed={defaultSectionsToBeCollapsed}
           state={PromAlertingRuleState.Pending}
           rules={groupedRules[PromAlertingRuleState.Pending]}
         />
       )}
       {(!filters.alertState || filters.alertState === PromAlertingRuleState.Inactive) && (
         <RuleListStateSection
-          defaultCollapsed={filters.alertState !== PromAlertingRuleState.Inactive}
+          defaultCollapsed={defaultSectionsToBeCollapsed || filters.alertState !== PromAlertingRuleState.Inactive}
           state={PromAlertingRuleState.Inactive}
           rules={groupedRules[PromAlertingRuleState.Inactive]}
         />
