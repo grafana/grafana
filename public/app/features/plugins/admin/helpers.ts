@@ -1,7 +1,7 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
-import { config, featureEnabled } from '@grafana/runtime';
+import { config, DependantInfo, featureEnabled } from '@grafana/runtime';
 import configCore, { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -153,6 +153,11 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     angularDetected,
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
+    details: {
+      pluginDependencies: plugin.json?.dependencies?.plugins || [],
+      dependantPlugins: dependantPlugins(id),
+      links: plugin.json?.info.links || [],
+    },
   };
 }
 
@@ -203,6 +208,11 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
+    details: {
+      pluginDependencies: plugin.dependencies?.plugins || [],
+      dependantPlugins: dependantPlugins(id),
+      links: plugin.info.links || [],
+    },
   };
 }
 
@@ -266,6 +276,11 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
+    details: {
+      pluginDependencies: local?.dependencies?.plugins || remote?.json?.dependencies?.plugins || [],
+      dependantPlugins: dependantPlugins(id),
+      links: local?.info.links || remote?.json?.info.links || [],
+    },
   };
 }
 
@@ -386,6 +401,22 @@ export function isManagedPlugin(id: string) {
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
   return pluginCatalogManagedPlugins?.includes(id);
+}
+
+export function dependantPlugins(id: string): DependantInfo[] {
+  const { pluginDependants } = config;
+  if (!pluginDependants) {
+    return [];
+  }
+
+  const dependants: DependantInfo[] = [];
+  if (pluginDependants[id]) {
+    for (let dependant of pluginDependants[id]) {
+      dependants.push(dependant);
+    }
+  }
+
+  return dependants;
 }
 
 export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
