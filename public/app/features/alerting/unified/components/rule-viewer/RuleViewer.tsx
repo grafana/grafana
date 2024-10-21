@@ -154,12 +154,13 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const hasLabels = !isEmpty(labels);
 
   const interval = group.interval;
+  const styles = useStyles2(getStyles);
 
   if (runbookUrl) {
     /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
     const truncatedUrl = truncate(runbookUrl, { length: 42 });
     const valueToAdd = isValidRunbookURL(runbookUrl) ? (
-      <TextLink variant="bodySmall" href={runbookUrl} external>
+      <TextLink variant="bodySmall" className={styles.url} href={runbookUrl} external>
         {truncatedUrl}
       </TextLink>
     ) : (
@@ -412,6 +413,9 @@ const getStyles = () => ({
     alignItems: 'center',
     gap: 8,
     minWidth: 0,
+  }),
+  url: css({
+    wordBreak: 'break-all',
   }),
 });
 
