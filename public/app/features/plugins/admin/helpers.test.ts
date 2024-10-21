@@ -211,6 +211,8 @@ describe('Plugins/Helpers', () => {
         popularity: 0.2111,
         publishedAt: '2016-04-06T20:23:41.000Z',
         signature: 'valid',
+        signatureOrg: 'Alexander Zobnin',
+        signatureType: 'community',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
         isFullyInstalled: false,
