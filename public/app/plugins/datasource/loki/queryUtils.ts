@@ -1,7 +1,6 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryRequest } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -365,8 +364,7 @@ export const interpolateShardingSelector = (queries: LokiQuery[], shards: number
 export const getSelectorForShardValues = (query: string) => {
   const selector = getNodesFromQuery(query, [Selector]);
   if (selector.length > 0) {
-    return query
-      .substring(selector[0].from, selector[0].to);
+    return query.substring(selector[0].from, selector[0].to);
   }
   return '';
 };
