@@ -2,7 +2,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
 import { Drawer, Field, RadioButtonGroup, TextLink } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { OrgRole } from 'app/types';
 
 const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map((key) => {
@@ -32,7 +32,7 @@ export const RolePickerDrawer = ({ onClose }: Props) => {
   const { control, getValues, setValue } = methods;
   return (
     <Drawer title={getValues('name')} subtitle={drawerSubtitle} onClose={onClose}>
-      <Field label="Basic Roles">
+      <Field label={t('role-picker-drawer.basic-roles.label', 'Basic Roles')}>
         <Controller
           name="role"
           control={control}

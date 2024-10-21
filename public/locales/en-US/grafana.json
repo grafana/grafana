@@ -2460,6 +2460,11 @@
       "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
     }
   },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "Basic Roles"
+    }
+  },
   "save-dashboards": {
     "name-exists": {
       "message-info": "A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.",

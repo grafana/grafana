@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Badge } from '@grafana/ui';
@@ -18,6 +19,15 @@ export const RolePickerBadges = ({ disabled, user }: Props) => {
   const { badge, badgeDisabled } = useStyles2(getStyles);
   const badgeStyle = disabled ? badgeDisabled : badge;
 
+  const methods = useForm({
+    defaultValues: {
+      name: user.name,
+      role: user.role,
+      roles: user.roles,
+    },
+  });
+  const { watch } = methods;
+
   const drawerControl = () => {
     if (!disabled) {
       setIsDrawerOpen(true);
@@ -27,10 +37,14 @@ export const RolePickerBadges = ({ disabled, user }: Props) => {
   return (
     <>
       <div className={badgeStyle} onClick={drawerControl}>
-        <Badge color="blue" text={user.role} />
+        <Badge color="blue" text={watch('role')} />
         {user.roles && user.roles.length > 0 && <Badge color="blue" text={'+' + user.roles.length} />}
       </div>
-      {isDrawerOpen && <RolePickerDrawer onClose={() => setIsDrawerOpen(false)} />}
+      {isDrawerOpen && (
+        <FormProvider {...methods}>
+          <RolePickerDrawer onClose={() => setIsDrawerOpen(false)} />
+        </FormProvider>
+      )}
     </>
   );
 };
