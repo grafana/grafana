@@ -1,5 +1,5 @@
 import 'core-js/stable/structured-clone';
-import { Route } from 'react-router';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
@@ -9,23 +9,22 @@ import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { testWithFeatureToggles } from '../../test/test-utils';
 
 import NewReceiverView from './NewReceiverView';
 
 setupMswServer();
 
+const Index = () => {
+  return <div>redirected</div>;
+};
+
 const renderForm = () =>
   render(
-    <AlertmanagerProvider accessType="notification" alertmanagerSourceName="grafana">
-      <Route path="/alerting/notifications/new" exact>
-        <NewReceiverView />
-      </Route>
-      <Route path="/alerting/notifications" exact>
-        redirected
-      </Route>
-    </AlertmanagerProvider>,
+    <Routes>
+      <Route path="/alerting/notifications" element={<Index />} />
+      <Route path="/alerting/notifications/new" element={<NewReceiverView />} />
+    </Routes>,
     {
       historyOptions: { initialEntries: ['/alerting/notifications/new'] },
     }
