@@ -757,14 +757,23 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 	if !ok {
 		return // error is already sent
 	}
-	uid := web.Params(c.Req)[":uid"]
+
 	cmd := folder.UpdateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	obj := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
-	obj.SetName(uid)
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.UID = web.Params(c.Req)[":uid"]
+	cmd.SignedInUser = c.SignedInUser
+	// #TODO add version?
+
+	obj, err := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
 	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
