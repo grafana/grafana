@@ -288,7 +288,7 @@ To filter dashboard data, follow these steps:
 1. On the dashboard, click in the filter field.
 1. Select a label, operator, and value.
 
-    To add multiple values for one label, choose one of the multi-select operators, **One of** (`=|`) or **Not one of** (`!=|`).
+   To add multiple values for one label, choose one of the multi-select operators, **One of** (`=|`) or **Not one of** (`!=|`).
 
 1. Repeat this process as needed until you have all the filters you need.
 
