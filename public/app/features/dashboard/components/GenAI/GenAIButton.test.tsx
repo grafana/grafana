@@ -1,10 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router-dom';
 import { Observable } from 'rxjs';
+import { render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
 
 import { GenAIButton, GenAIButtonProps } from './GenAIButton';
 import { StreamStatus, useOpenAIStream } from './hooks';
@@ -33,11 +32,7 @@ describe('GenAIButton', () => {
   const eventTrackingSrc = EventTrackingSrc.unknown;
 
   function setup(props: GenAIButtonProps = { onGenerate, messages: [], eventTrackingSrc }) {
-    return render(
-      <Router history={locationService.getHistory()}>
-        <GenAIButton text="Auto-generate" {...props} />
-      </Router>
-    );
+    return render(<GenAIButton text="Auto-generate" {...props} />);
   }
 
   describe('when LLM plugin is not configured', () => {

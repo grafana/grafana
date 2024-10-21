@@ -24,6 +24,6 @@ const getStyles = (theme: GrafanaTheme2) =>
   css({
     position: 'absolute',
     margin: '0px',
-    right: theme.spacing(1),
-    top: theme.spacing(1.25),
+    right: 5,
+    top: 6,
   });

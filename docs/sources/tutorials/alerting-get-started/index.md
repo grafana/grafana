@@ -49,31 +49,43 @@ Before you dive in, remember that you can [explore advanced topics like alert in
 {{< /docs/ignore >}}
 
 <!-- INTERACTIVE page intro.md END -->
-
 <!-- INTERACTIVE page step1.md START -->
+<!-- INTERACTIVE ignore START -->
+
+{{< docs/ignore >}}
+
+## Set up the Grafana stack
+
+{{< /docs/ignore >}}
 
 ## Before you begin
 
-### Grafana Cloud users
+There are different ways you can follow along with this tutorial.
 
-As a Grafana Cloud user, you don't have to install anything.
+### Grafana Cloud
 
-<!-- INTERACTIVE ignore START -->
+As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
 
 Continue to [Create a contact point](#create-a-contact-point).
 
-<!-- INTERACTIVE ignore END -->
+### Interactive learning environment
 
-### Grafana OSS users
+Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
 
-In order to run a Grafana stack locally, ensure you have the following applications installed.
+It's a fully configured environment with all the dependencies already installed.
+
+### Grafana OSS
+
+If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-#### Set up the Grafana Stack (OSS users)
+#### Set up the Grafana stack (OSS users)
 
-To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
+<!-- INTERACTIVE ignore END -->
+
+To demonstrate the observation of data using the Grafana stack, download and run the following files.
 
 1. Clone the [tutorial environment repository](https://www.github.com/grafana/tutorial-environment).
 
@@ -134,19 +146,6 @@ To demonstrate the observation of data using the Grafana stack, download the fil
    If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
 
    {{< /docs/ignore >}}
-
-   <!-- INTERACTIVE ignore START -->
-
-   {{< admonition type="tip" >}}
-   Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
-
-   It's a fully configured environment with all the dependencies already installed.
-
-   ![Interactive](/media/docs/grafana/full-stack-ile.png)
-
-   Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
-   {{< /admonition >}}
-   <!-- INTERACTIVE ignore END -->
 
 <!-- INTERACTIVE page step1.md END -->
 <!-- INTERACTIVE page step2.md START -->
@@ -223,10 +222,11 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
 ### Set evaluation behavior
 
-An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines when an alert rule fires, and it’s based on two settings:
+The [alert rule evaluation](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines the conditions under which an alert rule triggers, based on the following settings:
 
-- **Evaluation group**: how frequently the alert rule is evaluated.
-- **Evaluation interval**: how long the condition must be met to start firing. This allows your data time to stabilize before triggering an alert, helping to reduce the frequency of unnecessary notifications.
+- **Evaluation group**: every alert rule is assigned to an evaluation group. You can assign the alert rule to an existing evaluation group or create a new one.
+- **Evaluation interval**: determines how frequently the alert rule is checked. For instance, the evaluation may occur every 10s, 30s, 1m, 10m, etc.
+- **Pending period**: how long the condition must be met to trigger the alert rule.
 
 To set up the evaluation:
 

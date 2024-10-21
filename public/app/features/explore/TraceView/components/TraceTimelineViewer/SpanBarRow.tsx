@@ -52,233 +52,236 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
   const backgroundColor = showSpanFilterMatchesOnly ? '' : autoColor(theme, '#fffce4');
 
   return {
-    nameWrapper: css`
-      label: nameWrapper;
-      line-height: 27px;
-      overflow: hidden;
-      display: flex;
-    `,
-    nameWrapperMatchingFilter: css`
-      label: nameWrapperMatchingFilter;
-      background-color: ${backgroundColor};
-    `,
-    nameColumn: css`
-      label: nameColumn;
-      position: relative;
-      white-space: nowrap;
-      z-index: 1;
-      &:hover {
-        z-index: 1;
-      }
-    `,
-    endpointName: css`
-      label: endpointName;
-      color: ${autoColor(theme, '#484848')};
-      font-size: 0.9em;
-    `,
-    view: css`
-      label: view;
-      position: relative;
-    `,
-    viewExpanded: css`
-      label: viewExpanded;
-      background: ${autoColor(theme, '#f8f8f8')};
-      outline: 1px solid ${autoColor(theme, '#ddd')};
-    `,
-    viewExpandedAndMatchingFilter: css`
-      label: viewExpandedAndMatchingFilter;
-      background: ${autoColor(theme, '#fff3d7')};
-      outline: 1px solid ${autoColor(theme, '#ddd')};
-    `,
-    row: css`
-      label: row;
-      font-size: 0.9em;
-      &:hover .${spanBarClassName} {
-        opacity: 1;
-      }
-      &:hover .${spanBarLabelClassName} {
-        color: ${autoColor(theme, '#000')};
-      }
-      &:hover .${nameWrapperClassName} {
-        background: #f8f8f8;
-        background: linear-gradient(
+    nameWrapper: css({
+      label: 'nameWrapper',
+      lineHeight: '27px',
+      overflow: 'hidden',
+      display: 'flex',
+    }),
+    nameWrapperMatchingFilter: css({
+      label: 'nameWrapperMatchingFilter',
+      backgroundColor: backgroundColor,
+    }),
+    nameColumn: css({
+      label: 'nameColumn',
+      position: 'relative',
+      whiteSpace: 'nowrap',
+      zIndex: 1,
+      '&:hover': {
+        zIndex: 1,
+      },
+    }),
+    endpointName: css({
+      label: 'endpointName',
+      color: autoColor(theme, '#484848'),
+      fontSize: '0.9em',
+    }),
+    view: css({
+      label: 'view',
+      position: 'relative',
+    }),
+    viewExpanded: css({
+      label: 'viewExpanded',
+      background: autoColor(theme, '#f8f8f8'),
+      outline: `1px solid ${autoColor(theme, '#ddd')}`,
+    }),
+    viewExpandedAndMatchingFilter: css({
+      label: 'viewExpandedAndMatchingFilter',
+      background: autoColor(theme, '#fff3d7'),
+      outline: `1px solid ${autoColor(theme, '#ddd')}`,
+    }),
+    row: css({
+      label: 'row',
+      fontSize: '0.9em',
+      [`&:hover .${spanBarClassName}`]: {
+        opacity: 1,
+      },
+      [`&:hover .${spanBarLabelClassName}`]: {
+        color: autoColor(theme, '#000'),
+      },
+      [`&:hover .${nameWrapperClassName}`]: {
+        background: `linear-gradient(
           90deg,
           ${autoColor(theme, '#fafafa')},
           ${autoColor(theme, '#f8f8f8')} 75%,
           ${autoColor(theme, '#eee')}
-        );
-      }
-      &:hover .${viewClassName} {
-        background-color: ${autoColor(theme, '#f5f5f5')};
-        outline: 1px solid ${autoColor(theme, '#ddd')};
-      }
-    `,
-    rowClippingLeft: css`
-      label: rowClippingLeft;
-      & .${nameColumnClassName}::before {
-        content: ' ';
-        height: 100%;
-        position: absolute;
-        width: 6px;
-        background-image: linear-gradient(
+        )`,
+      },
+      [`&:hover .${viewClassName}`]: {
+        backgroundColor: autoColor(theme, '#f5f5f5'),
+        outline: `1px solid ${autoColor(theme, '#ddd')}`,
+      },
+    }),
+    rowClippingLeft: css({
+      label: 'rowClippingLeft',
+      [`& .${nameColumnClassName}::before`]: {
+        content: '" "',
+        height: '100%',
+        position: 'absolute',
+        width: '6px',
+        backgroundImage: `linear-gradient(
           to right,
           ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')},
           ${autoColor(theme, 'rgba(32, 32, 32, 0)')}
-        );
-        left: 100%;
-        z-index: -1;
-      }
-    `,
-    rowClippingRight: css`
-      label: rowClippingRight;
-      & .${viewClassName}::before {
-        content: ' ';
-        height: 100%;
-        position: absolute;
-        width: 6px;
-        background-image: linear-gradient(
+        )`,
+        left: '100%',
+        zIndex: -1,
+      },
+    }),
+    rowClippingRight: css({
+      label: 'rowClippingRight',
+      [`& .${viewClassName}::before`]: {
+        content: '" "',
+        height: '100%',
+        position: 'absolute',
+        width: '6px',
+        backgroundImage: `linear-gradient(
           to left,
           ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')},
           ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')}
-        );
-        right: 0%;
-        z-index: 1;
-      }
-    `,
-    rowExpanded: css`
-      label: rowExpanded;
-      & .${spanBarClassName} {
-        opacity: 1;
-      }
-      & .${spanBarLabelClassName} {
-        color: ${autoColor(theme, '#000')};
-      }
-      & .${nameWrapperClassName}, &:hover .${nameWrapperClassName} {
-        background: ${autoColor(theme, '#f0f0f0')};
-        box-shadow: 0 1px 0 ${autoColor(theme, '#ddd')};
-      }
-      & .${nameWrapperMatchingFilterClassName} {
-        background: ${autoColor(theme, '#fff3d7')};
-      }
-      &:hover .${viewClassName} {
-        background: ${autoColor(theme, '#eee')};
-      }
-    `,
-    rowMatchingFilter: css`
-      label: rowMatchingFilter;
+        )`,
+        right: '0%',
+        zIndex: 1,
+      },
+    }),
+    rowExpanded: css({
+      label: 'rowExpanded',
+      [`& .${spanBarClassName}`]: {
+        opacity: 1,
+      },
+      [`& .${spanBarLabelClassName}`]: {
+        color: autoColor(theme, '#000'),
+      },
+      [`& .${nameWrapperClassName}, &:hover .${nameWrapperClassName}`]: {
+        background: autoColor(theme, '#f0f0f0'),
+        boxShadow: `0 1px 0 ${autoColor(theme, '#ddd')}`,
+      },
+      [`& .${nameWrapperMatchingFilterClassName}`]: {
+        background: autoColor(theme, '#fff3d7'),
+      },
+      [`&:hover .${viewClassName}`]: {
+        background: autoColor(theme, '#eee'),
+      },
+    }),
+    rowMatchingFilter: css({
+      label: 'rowMatchingFilter',
       // background-color: ${autoColor(theme, '#fffbde')};
-      &:hover .${nameWrapperClassName} {
-        background: linear-gradient(
+      [`&:hover .${nameWrapperClassName}`]: {
+        background: `linear-gradient(
           90deg,
           ${autoColor(theme, '#fffbde')},
           ${autoColor(theme, '#fffbde')} 75%,
           ${autoColor(theme, '#f7f1c6')}
-        );
-      }
-      &:hover .${viewClassName} {
-        background-color: ${autoColor(theme, '#f7f1c6')};
-        outline: 1px solid ${autoColor(theme, '#ddd')};
-      }
-    `,
-    rowFocused: css`
-      label: rowFocused;
-      background-color: ${autoColor(theme, '#cbe7ff')};
-      animation: ${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0);
-      & .${nameWrapperClassName}, .${viewClassName}, .${nameWrapperMatchingFilterClassName} {
-        background-color: ${autoColor(theme, '#cbe7ff')};
-        animation: ${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0);
-      }
-      & .${spanBarClassName} {
-        opacity: 1;
-      }
-      & .${spanBarLabelClassName} {
-        color: ${autoColor(theme, '#000')};
-      }
-      &:hover .${nameWrapperClassName}, :hover .${viewClassName} {
-        background: ${autoColor(theme, '#d5ebff')};
-        box-shadow: 0 1px 0 ${autoColor(theme, '#ddd')};
-      }
-    `,
+        )`,
+      },
+      [`&:hover .${viewClassName}`]: {
+        backgroundColor: autoColor(theme, '#f7f1c6'),
+        outline: `1px solid ${autoColor(theme, '#ddd')}`,
+      },
+    }),
+    rowFocused: css({
+      label: 'rowFocused',
+      backgroundColor: autoColor(theme, '#cbe7ff'),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
+      },
+      [`& .${nameWrapperClassName}, .${viewClassName}, .${nameWrapperMatchingFilterClassName}`]: {
+        backgroundColor: autoColor(theme, '#cbe7ff'),
+        animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
+      },
+      [`& .${spanBarClassName}`]: {
+        opacity: 1,
+      },
+      [`& .${spanBarLabelClassName}`]: {
+        color: autoColor(theme, '#000'),
+      },
+      ['&:hover .${nameWrapperClassName}, :hover .${viewClassName}']: {
+        background: autoColor(theme, '#d5ebff'),
+        boxShadow: `0 1px 0 ${autoColor(theme, '#ddd')}`,
+      },
+    }),
 
-    rowExpandedAndMatchingFilter: css`
-      label: rowExpandedAndMatchingFilter;
-      &:hover .${viewClassName} {
-        background: ${autoColor(theme, '#ffeccf')};
-      }
-    `,
+    rowExpandedAndMatchingFilter: css({
+      label: 'rowExpandedAndMatchingFilter',
+      [`&:hover .${viewClassName}`]: {
+        background: autoColor(theme, '#ffeccf'),
+      },
+    }),
 
-    name: css`
-      label: name;
-      color: ${autoColor(theme, '#000')};
-      cursor: pointer;
-      flex: 1 1 auto;
-      outline: none;
-      overflow-y: hidden;
-      overflow-x: auto;
-      padding-left: 4px;
-      padding-right: 0.25em;
-      position: relative;
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-      &::-webkit-scrollbar {
-        display: none;
-      }
-      &:focus {
-        text-decoration: none;
-      }
-      &:hover > span {
-        color: ${autoColor(theme, '#000')};
-      }
-      text-align: left;
-      background: transparent;
-      border: none;
-      border-bottom-width: 1px;
-      border-bottom-style: solid;
-    `,
-    nameDetailExpanded: css`
-      label: nameDetailExpanded;
-      &::before {
-        bottom: 0;
-      }
-    `,
-    svcName: css`
-      label: svcName;
-      font-size: 0.9em;
-      font-weight: bold;
-      margin-right: 0.25rem;
-    `,
-    svcNameChildrenCollapsed: css`
-      label: svcNameChildrenCollapsed;
-      font-weight: bold;
-      font-style: italic;
-    `,
-    errorIcon: css`
-      label: errorIcon;
-      border-radius: 6.5px;
-      color: ${autoColor(theme, '#fff')};
-      font-size: 0.85em;
-      margin-right: 0.25rem;
-      padding: 1px;
-    `,
-    rpcColorMarker: css`
-      label: rpcColorMarker;
-      border-radius: 6.5px;
-      display: inline-block;
-      font-size: 0.85em;
-      height: 1em;
-      margin-right: 0.25rem;
-      padding: 1px;
-      width: 1em;
-      vertical-align: middle;
-    `,
-    labelRight: css`
-      label: labelRight;
-      left: 100%;
-    `,
-    labelLeft: css`
-      label: labelLeft;
-      right: 100%;
-    `,
+    name: css({
+      label: 'name',
+      color: autoColor(theme, '#000'),
+      cursor: 'pointer',
+      flex: '1 1 auto',
+      outline: 'none',
+      overflowY: 'hidden',
+      overflowX: 'auto',
+      paddingLeft: '4px',
+      paddingRight: '0.25em',
+      position: 'relative',
+      '-ms-overflow-style': 'none',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+      '&:focus': {
+        textDecoration: 'none',
+      },
+      '&:hover > span': {
+        color: autoColor(theme, '#000'),
+      },
+      textAlign: 'left',
+      background: 'transparent',
+      border: 'none',
+      borderBottomWidth: '1px',
+      borderBottomStyle: 'solid',
+    }),
+    nameDetailExpanded: css({
+      label: 'nameDetailExpanded',
+      '&::before': {
+        bottom: 0,
+      },
+    }),
+    svcName: css({
+      label: 'svcName',
+      fontSize: '0.9em',
+      fontWeight: 'bold',
+      marginRight: '0.25rem',
+    }),
+    svcNameChildrenCollapsed: css({
+      label: 'svcNameChildrenCollapsed',
+      fontWeight: 'bold',
+      fontStyle: 'italic',
+    }),
+    errorIcon: css({
+      label: 'errorIcon',
+      // eslint-disable-next-line @grafana/no-border-radius-literal
+      borderRadius: '6.5px',
+      color: autoColor(theme, '#fff'),
+      fontSize: '0.85em',
+      marginRight: '0.25rem',
+      padding: '1px',
+    }),
+    rpcColorMarker: css({
+      label: 'rpcColorMarker',
+      // eslint-disable-next-line @grafana/no-border-radius-literal
+      borderRadius: '6.5px',
+      display: 'inline-block',
+      fontSize: '0.85em',
+      height: '1em',
+      marginRight: '0.25rem',
+      padding: '1px',
+      width: '1em',
+      verticalAlign: 'middle',
+    }),
+    labelRight: css({
+      label: 'labelRight',
+      left: '100%',
+    }),
+    labelLeft: css({
+      label: 'labelLeft',
+      right: '100%',
+    }),
   };
 });
 

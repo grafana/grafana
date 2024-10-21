@@ -21,9 +21,8 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
-import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { Field } from '@grafana/ui/';
+import { DataQuery, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
@@ -33,14 +32,13 @@ import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { ALL_VARIABLE_VALUE } from '../services/variables';
-import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
+import { MDP_METRIC_PREVIEW, trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { BreakdownSearchReset, BreakdownSearchScene } from './BreakdownSearchScene';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
-import { breakdownPanelOptions } from './panelConfigs';
 import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
@@ -230,7 +228,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       <div className={styles.container}>
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
           <div className={styles.controls}>
-            {!loading && labels.length && (
+            {!loading && Boolean(labels.length) && (
               <Field label={useOtelExperience ? 'By metric attribute' : 'By label'}>
                 <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
               </Field>
@@ -301,15 +299,17 @@ export function buildAllLayout(
     const unit = queryDef.unit;
 
     const vizPanel = PanelBuilders.timeseries()
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
+      .setOption('legend', { showLegend: false })
       .setTitle(option.label!)
       .setData(
         new SceneQueryRunner({
-          maxDataPoints: 250,
+          maxDataPoints: MDP_METRIC_PREVIEW,
           datasource: trailDS,
           queries: [
             {
-              refId: 'A',
-              expr: expr,
+              refId: `A-${option.label}`,
+              expr,
               legendFormat: `{{${option.label}}}`,
             },
           ],
@@ -319,10 +319,6 @@ export function buildAllLayout(
       .setUnit(unit)
       .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
-
-    vizPanel.addActivationHandler(() => {
-      vizPanel.onOptionsChange(breakdownPanelOptions);
-    });
 
     children.push(
       new SceneCSSGridItem({
@@ -383,10 +379,6 @@ function buildNormalLayout(
       isHidden,
     });
 
-    vizPanel.addActivationHandler(() => {
-      vizPanel.onOptionsChange(breakdownPanelOptions);
-    });
-
     return item;
   }
 
@@ -395,7 +387,7 @@ function buildNormalLayout(
   return new LayoutSwitcher({
     $data: new SceneQueryRunner({
       datasource: trailDS,
-      maxDataPoints: 300,
+      maxDataPoints: MDP_METRIC_PREVIEW,
       queries: queryDef.queries,
     }),
     breakdownLayoutOptions: [
@@ -410,7 +402,11 @@ function buildNormalLayout(
         children: [
           new SceneFlexItem({
             minHeight: 300,
-            body: PanelBuilders.timeseries().setTitle('$metric').build(),
+            body: PanelBuilders.timeseries()
+              .setOption('tooltip', { mode: TooltipDisplayMode.Multi, sort: SortOrder.Descending })
+              .setOption('legend', { showLegend: false })
+              .setTitle('$metric')
+              .build(),
           }),
         ],
       }),

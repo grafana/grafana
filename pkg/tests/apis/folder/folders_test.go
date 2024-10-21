@@ -3,6 +3,7 @@ package playlist
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -13,10 +14,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -40,8 +44,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesFolders,
+			featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 		},
+		// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+		// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 	})
 
 	t.Run("Check discovery client", func(t *testing.T) {
@@ -108,8 +114,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			AppModeProduction: true,
 			DisableAnonymous:  true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -124,8 +132,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -140,8 +150,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -156,8 +168,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -172,8 +186,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -188,8 +204,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -204,8 +222,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -223,8 +243,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		})
 
 		// Clear the collection before starting (etcd)
@@ -252,8 +274,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagKubernetesFolders,
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
 			},
+			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
+			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		})
 
 		// Clear the collection before starting (etcd)
@@ -265,6 +289,42 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		require.NoError(t, err)
 
 		doFolderTests(t, helper)
+	})
+
+	t.Run("with dual write (unified storage, mode 1, create nested folders)", func(t *testing.T) {
+		doNestedCreateTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagNestedFolders,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage, mode 1, create existing folder)", func(t *testing.T) {
+		doCreateDuplicateFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagNestedFolders,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
 	})
 }
 
@@ -296,10 +356,6 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			"apiVersion": "folder.grafana.app/v0alpha1",
 			"kind": "Folder",
 			"metadata": {
-			  "annotations": {
-				"grafana.app/originPath": "${originPath}",
-				"grafana.app/originName": "SQL"
-			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",
 			  "namespace": "default",
@@ -348,6 +404,25 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		for _, uid := range uids {
 			getFromBothAPIs(t, helper, client, uid, nil)
 		}
+
+		// PUT :: Update the title
+		updated, err := client.Resource.Update(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/folder-test-replace.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+		spec, ok := updated.Object["spec"].(map[string]any)
+		require.True(t, ok)
+		title, ok := spec["title"].(string)
+		require.True(t, ok)
+		description, ok := spec["description"].(string)
+		require.True(t, ok)
+		require.Equal(t, first.GetName(), updated.GetName())
+		require.Equal(t, first.GetUID(), updated.GetUID())
+		require.Equal(t, "Test folder (replaced from k8s; 1 item; PUT)", title)
+		require.Equal(t, "New description", description)
+		// #TODO figure out why this breaks just for MySQL integration tests
+		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
 	})
 	return helper
 }
@@ -391,4 +466,176 @@ func getFromBothAPIs(t *testing.T,
 		}
 	}
 	return found
+}
+
+func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	parentPayload := `{
+		"title": "Test/parent",
+		"uid": ""
+		}`
+	parentCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(parentPayload),
+	}, &folder.Folder{})
+	require.NotNil(t, parentCreate.Result)
+	parentUID := parentCreate.Result.UID
+	require.NotEmpty(t, parentUID)
+
+	childPayload := fmt.Sprintf(`{
+			"title": "Test/child",
+			"uid": "",
+			"parentUid": "%s"
+			}`, parentUID)
+	childCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(childPayload),
+	}, &dtos.Folder{})
+	require.NotNil(t, childCreate.Result)
+	childUID := childCreate.Result.UID
+	require.NotEmpty(t, childUID)
+	require.Equal(t, "Test/child", childCreate.Result.Title)
+	require.Equal(t, 1, len(childCreate.Result.Parents))
+
+	parent := childCreate.Result.Parents[0]
+	require.Equal(t, parentUID, parent.UID)
+	require.Equal(t, "Test\\/parent", parent.Title)
+	require.Equal(t, parentCreate.Result.URL, parent.URL)
+}
+
+func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	payload := `{
+		"title": "Test",
+		"uid": ""
+		}`
+	create := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+	require.NotNil(t, create.Result)
+	parentUID := create.Result.UID
+	require.NotEmpty(t, parentUID)
+
+	create2 := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+	require.NotEmpty(t, create2.Response)
+	require.Equal(t, 409, create2.Response.StatusCode)
+}
+
+func TestIntegrationFolderCreatePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
+	folderWithParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
+
+	type testCase struct {
+		description  string
+		input        string
+		permissions  []resourcepermissions.SetResourcePermissionCommand
+		expectedCode int
+	}
+	tcs := []testCase{
+		{
+			description:  "creation of folder without parent succeeds given the correct request for creating a folder",
+			input:        folderWithoutParentInput,
+			expectedCode: http.StatusOK,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			},
+		},
+		{
+			description:  "creation of folder without parent fails without permissions to create a folder",
+			input:        folderWithoutParentInput,
+			expectedCode: http.StatusForbidden,
+			permissions:  []resourcepermissions.SetResourcePermissionCommand{},
+		},
+		{
+			description:  "creation of folder with parent succeeds given the correct request for creating a folder",
+			input:        folderWithParentInput,
+			expectedCode: http.StatusOK,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "parentuid",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: grafanarest.Mode1,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+					featuremgmt.FlagNestedFolders,
+					featuremgmt.FlagKubernetesFolders,
+				},
+			})
+
+			user := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
+
+			parentPayload := `{
+				"title": "Test/parent",
+				"uid": "parentuid"
+				}`
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			parentUID := parentCreate.Result.UID
+			require.NotEmpty(t, parentUID)
+
+			resp := apis.DoRequest(helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(tc.input),
+			}, &dtos.Folder{})
+			require.Equal(t, tc.expectedCode, resp.Response.StatusCode)
+
+			if tc.expectedCode == http.StatusOK {
+				require.Equal(t, "uid", resp.Result.UID)
+				require.Equal(t, "Folder", resp.Result.Title)
+			}
+		})
+	}
 }

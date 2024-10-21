@@ -61,14 +61,6 @@
   },
   {
     "type": "label",
-    "name": "type/docs",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/69"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Azure",
     "action": "addToProject",
     "addToProject": {
@@ -477,14 +469,6 @@
   },
   {
     "type": "label",
-    "name": "area/dashboard",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
-    }
-  },
-  {
-    "type": "label",
     "name": "type/build-packaging",
     "action": "addToProject",
     "addToProject": {
@@ -505,14 +489,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "label",
-    "name": "area/dashboard/templating",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
     }
   },
   {
@@ -557,10 +533,10 @@
   },
   {
     "type": "label",
-    "name": "area/provisioning",
+    "name": "area/provisioning/datasources",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/52"
+      "url": "https://github.com/orgs/grafana/projects/76"
     }
   },
   {
@@ -585,14 +561,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/203"
-    }
-  },
-  {
-    "type": "label",
-    "name": "area/dashboards/panel",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
     }
   },
   {
@@ -645,14 +613,6 @@
   },
   {
     "type": "label",
-    "name": "area/dashboard/data-links",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/backend/api",
     "action": "addToProject",
     "addToProject": {
@@ -685,22 +645,6 @@
   },
   {
     "type": "label",
-    "name": "area/dashboard/snapshot",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
-    }
-  },
-  {
-    "type": "label",
-    "name": "area/dashboard/folders",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/configuration",
     "action": "addToProject",
     "addToProject": {
@@ -721,14 +665,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/660"
-    }
-  },
-  {
-    "type": "label",
-    "name": "area/dashboard/timerange",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
     }
   },
   {
@@ -837,6 +773,174 @@
   },
   {
     "type": "label",
+    "name": "area/dashboard/links",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/templating",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/variables",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboards/panel",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/data-links",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/rows",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/edit",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/edit",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/scenes",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/snapshot",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/folders",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/timerange",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/repeating",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/annotations",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/library-panel",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/kiosk",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/tv",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/import",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/field-override",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/panel/repeat",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/dashboard/settings",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/202"
+    }
+  },
+  {
+    "type": "label",
     "name": "area/backend/db/sqlite",
     "action": "addToProject",
     "addToProject": {
@@ -865,14 +969,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/78"
-    }
-  },
-  {
-    "type": "label",
-    "name": "area/dashboard/links",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/202"
     }
   },
   {

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -84,7 +85,7 @@ func TestContactPointService(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
@@ -100,7 +101,7 @@ func TestContactPointService(t *testing.T) {
 		newCp := createTestContactPoint()
 		newCp.UID = customUID
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
@@ -115,7 +116,7 @@ func TestContactPointService(t *testing.T) {
 		newCp := createTestContactPoint()
 		newCp.UID = customUID
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.ErrorIs(t, err, ErrValidation)
 	})
 
@@ -125,10 +126,10 @@ func TestContactPointService(t *testing.T) {
 		newCp := createTestContactPoint()
 		newCp.UID = customUID
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		_, err = sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		_, err = sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.Error(t, err)
 	})
 
@@ -137,7 +138,7 @@ func TestContactPointService(t *testing.T) {
 		newCp := createTestContactPoint()
 		newCp.Type = ""
 
-		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, ErrValidation)
 	})
@@ -145,7 +146,7 @@ func TestContactPointService(t *testing.T) {
 	t.Run("update rejects contact points with no settings", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 		newCp.Settings = nil
 
@@ -157,7 +158,7 @@ func TestContactPointService(t *testing.T) {
 	t.Run("update rejects contact points with no type", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 		newCp.Type = ""
 
@@ -169,7 +170,7 @@ func TestContactPointService(t *testing.T) {
 	t.Run("update rejects contact points which fail validation after merging", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 		newCp.Settings, _ = simplejson.NewJson([]byte(`{}`))
 
@@ -190,7 +191,7 @@ func TestContactPointService(t *testing.T) {
 		oldName := newCp.Name
 		newName := "new-name"
 
-		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		newCp.Name = newName
@@ -274,7 +275,7 @@ func TestContactPointService(t *testing.T) {
 				sut := createContactPointServiceSut(t, secretsService)
 				newCp := createTestContactPoint()
 
-				newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, test.from)
+				newCp, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, test.from)
 				require.NoError(t, err)
 
 				cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
@@ -306,7 +307,7 @@ func TestContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		expectedConcurrencyToken := config.ConcurrencyToken
 
-		_, err = sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		_, err = sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		intercepted := fakeConfigStore.LastSaveCommand
@@ -346,7 +347,7 @@ func TestContactPointService(t *testing.T) {
 				settings, _ := simplejson.NewJson([]byte(tc.settingsJSON))
 				newCp.Settings = settings
 
-				_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+				_, err := sut.CreateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 				require.NoError(t, err)
 
 				q := cpsQueryWithName(1, newCp.Name)
@@ -493,16 +494,20 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		secretService,
 		xact,
 		log.NewNopLogger(),
+		fakes.NewFakeReceiverPermissionsService(),
+		tracing.InitializeTracerForTest(),
 	)
 
-	return &ContactPointService{
-		configStore:       legacy_storage.NewAlertmanagerConfigStore(configStore),
-		provenanceStore:   provisioningStore,
-		receiverService:   receiverService,
-		xact:              xact,
-		encryptionService: secretService,
-		log:               log.NewNopLogger(),
-	}
+	return NewContactPointService(
+		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		secretService,
+		provisioningStore,
+		xact,
+		receiverService,
+		log.NewNopLogger(),
+		nil,
+		fakes.NewFakeReceiverPermissionsService(),
+	)
 }
 
 func createTestContactPoint() definitions.EmbeddedContactPoint {
@@ -545,9 +550,10 @@ func TestStitchReceivers(t *testing.T) {
 		name               string
 		initial            *definitions.PostableUserConfig
 		new                *definitions.PostableGrafanaReceiver
-		expModified        bool
 		expCfg             definitions.PostableApiAlertingConfig
-		expRenamedReceiver string
+		expOldReceiver     string
+		expCreatedReceiver bool
+		expFullRemoval     bool
 	}
 
 	cases := []testCase{
@@ -556,8 +562,8 @@ func TestStitchReceivers(t *testing.T) {
 			new: &definitions.PostableGrafanaReceiver{
 				UID: "does not exist",
 			},
-			expModified: false,
-			expCfg:      createTestConfigWithReceivers().AlertmanagerConfig,
+			expOldReceiver: "",
+			expCfg:         createTestConfigWithReceivers().AlertmanagerConfig,
 		},
 		{
 			name: "matching receiver with unchanged name, replaces",
@@ -566,7 +572,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "teams",
 			},
-			expModified: true,
+			expOldReceiver: "receiver-2",
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -627,8 +633,9 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expModified:        true,
-			expRenamedReceiver: "receiver-1",
+			expOldReceiver:     "receiver-1",
+			expCreatedReceiver: true,
+			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -689,7 +696,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expModified: true,
+			expOldReceiver:     "receiver-2",
+			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -809,7 +817,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "slack",
 			},
-			expModified: true,
+			expOldReceiver:     "receiver-1",
+			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -952,7 +961,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-4",
 				Type: "slack",
 			},
-			expModified: true,
+			expOldReceiver:     "receiver-1",
+			expCreatedReceiver: false,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1036,7 +1046,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expModified: true,
+			expOldReceiver:     "receiver-2",
+			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1107,7 +1118,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expModified: true,
+			expOldReceiver:     "receiver-2", // Not the inconsistent receiver-3?
+			expCreatedReceiver: true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1229,8 +1241,9 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expModified:        true,
-			expRenamedReceiver: "receiver-2",
+			expOldReceiver:     "receiver-2",
+			expCreatedReceiver: false,
+			expFullRemoval:     true,
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1282,13 +1295,10 @@ func TestStitchReceivers(t *testing.T) {
 				cfg = c.initial
 			}
 
-			modified, renamedReceiver := stitchReceiver(cfg, c.new)
-			if c.expRenamedReceiver != "" {
-				assert.Equal(t, c.expRenamedReceiver, renamedReceiver)
-			} else {
-				assert.Empty(t, renamedReceiver)
-			}
-			require.Equal(t, c.expModified, modified)
+			renamedReceiver, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
+			assert.Equalf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %s, got %s", c.expOldReceiver, renamedReceiver)
+			assert.Equalf(t, c.expFullRemoval, fullRemoval, "expected full removal to be %t, got %t", c.expFullRemoval, fullRemoval)
+			assert.Equalf(t, c.expCreatedReceiver, createdReceiver, "expected created receiver to be %t, got %t", c.expCreatedReceiver, createdReceiver)
 			require.Equal(t, c.expCfg, cfg.AlertmanagerConfig)
 		})
 	}

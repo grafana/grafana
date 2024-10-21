@@ -8,10 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -19,12 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
@@ -51,11 +52,23 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(
-	cfg *setting.Cfg, db db.ReplDB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
+	lock *serverlock.ServerLockService,
 ) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db.DB(), permRegistry)
+	service := ProvideOSSService(
+		cfg,
+		database.ProvideService(db),
+		actionResolver,
+		cache,
+		features,
+		tracer,
+		zclient,
+		db,
+		permRegistry,
+		lock,
+	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -76,7 +89,7 @@ func ProvideService(
 func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry,
+	zclient zanzana.Client, db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 ) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
@@ -86,7 +99,7 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		sync:           migrator.NewZanzanaSynchroniser(zclient, db),
+		reconciler:     dualwrite.NewZanzanaReconciler(zclient, db, lock),
 		permRegistry:   permRegistry,
 	}
 
@@ -103,8 +116,20 @@ type Service struct {
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
-	sync           *migrator.ZanzanaSynchroniser
+	reconciler     *dualwrite.ZanzanaReconciler
 	permRegistry   permreg.PermissionRegistry
+}
+
+// Run implements accesscontrol.Service.
+func (s *Service) Run(ctx context.Context) error {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		if err := s.reconciler.Sync(context.Background()); err != nil {
+			s.log.Error("Failed to synchronise permissions to zanzana ", "err", err)
+		}
+
+		return s.reconciler.Reconcile(ctx)
+	}
+	return nil
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -449,12 +474,6 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 		return true
 	})
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		if err := s.sync.Sync(context.Background()); err != nil {
-			s.log.Error("Failed to synchronise permissions to zanzana ", "err", err)
-		}
-	}
-
 	return nil
 }
 
@@ -735,7 +754,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SaveExternalServiceRole")
 	defer span.End()
 
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -751,7 +770,7 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeleteExternalServiceRole")
 	defer span.End()
 
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}

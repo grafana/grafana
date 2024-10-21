@@ -41,7 +41,7 @@ var (
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
-	sqlResourceVersionInc    = mustTemplate("resource_version_inc.sql")
+	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
 	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
 	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
 )
@@ -70,6 +70,7 @@ func (r sqlResourceRequest) Validate() error {
 type historyPollResponse struct {
 	Key             resource.ResourceKey
 	ResourceVersion int64
+	PreviousRV      *int64
 	Value           []byte
 	Action          int
 }
@@ -93,6 +94,10 @@ func (r *sqlResourceHistoryPollRequest) Validate() error {
 }
 
 func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) {
+	prevRV := r.Response.PreviousRV
+	if prevRV == nil {
+		*prevRV = int64(0)
+	}
 	return &historyPollResponse{
 		Key: resource.ResourceKey{
 			Namespace: r.Response.Key.Namespace,
@@ -101,6 +106,7 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 			Name:      r.Response.Key.Name,
 		},
 		ResourceVersion: r.Response.ResourceVersion,
+		PreviousRV:      prevRV,
 		Value:           r.Response.Value,
 		Action:          r.Response.Action,
 	}, nil
@@ -185,8 +191,13 @@ func (r sqlResourceUpdateRVRequest) Validate() error {
 }
 
 // resource_version table requests.
-type resourceVersion struct {
+type resourceVersionResponse struct {
 	ResourceVersion int64
+	CurrentEpoch    int64
+}
+
+func (r *resourceVersionResponse) Results() (*resourceVersionResponse, error) {
+	return r, nil
 }
 
 type groupResourceVersion struct {
@@ -194,19 +205,31 @@ type groupResourceVersion struct {
 	ResourceVersion int64
 }
 
-func (r *resourceVersion) Results() (*resourceVersion, error) {
-	return r, nil
+type sqlResourceVersionUpsertRequest struct {
+	sqltemplate.SQLTemplate
+	Group, Resource string
+	ResourceVersion int64
 }
 
-type sqlResourceVersionRequest struct {
+func (r sqlResourceVersionUpsertRequest) Validate() error {
+	return nil // TODO
+}
+
+type sqlResourceVersionGetRequest struct {
 	sqltemplate.SQLTemplate
 	Group, Resource string
 	ReadOnly        bool
-	*resourceVersion
+	Response        *resourceVersionResponse
 }
 
-func (r sqlResourceVersionRequest) Validate() error {
+func (r sqlResourceVersionGetRequest) Validate() error {
 	return nil // TODO
+}
+func (r sqlResourceVersionGetRequest) Results() (*resourceVersionResponse, error) {
+	return &resourceVersionResponse{
+		ResourceVersion: r.Response.ResourceVersion,
+		CurrentEpoch:    r.Response.CurrentEpoch,
+	}, nil
 }
 
 type sqlResourceVersionListRequest struct {

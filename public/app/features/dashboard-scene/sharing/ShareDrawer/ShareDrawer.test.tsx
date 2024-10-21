@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, SceneTimeRange, UrlSyncContextProvider } from '@grafana/scenes';
+import { SceneTimeRange, UrlSyncContextProvider } from '@grafana/scenes';
 
 import { render } from '../../../../../test/test-utils';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
@@ -21,15 +21,6 @@ setPluginImportUtils({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-}));
-
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useLocation: jest.fn().mockReturnValue({
-    pathname: '/d/dash-1',
-    hash: '',
-    state: null,
-  }),
 }));
 
 describe('ShareDrawer', () => {
@@ -63,9 +54,6 @@ async function buildAndRenderScenario() {
       canEdit: true,
     },
     $timeRange: new SceneTimeRange({}),
-    body: new SceneGridLayout({
-      children: [],
-    }),
     overlay: drawer,
   });
 

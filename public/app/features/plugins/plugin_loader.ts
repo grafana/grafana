@@ -7,6 +7,7 @@ import {
   PluginLoadingStrategy,
   PluginMeta,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
@@ -21,7 +22,8 @@ import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload 
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { buildImportMap, resolveModulePath } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
-import { isFrontendSandboxSupported } from './sandbox/utils';
+import { shouldLoadPluginInFrontendSandbox } from './sandbox/sandbox_plugin_loader_registry';
+import { pluginsLogger } from './utils';
 
 const imports = buildImportMap(sharedDependenciesMap);
 
@@ -73,12 +75,14 @@ export async function importPluginModule({
   loadingStrategy,
   version,
   isAngular,
+  moduleHash,
 }: {
   path: string;
   pluginId: string;
   loadingStrategy: PluginLoadingStrategy;
   version?: string;
   isAngular?: boolean;
+  moduleHash?: string;
 }): Promise<System.Module> {
   if (version) {
     registerPluginInCache({ path, version, loadingStrategy });
@@ -94,14 +98,40 @@ export async function importPluginModule({
     }
   }
 
-  let modulePath = resolveModulePath(path);
+  const modulePath = resolveModulePath(path);
+
+  // inject integrity hash into SystemJS import map
+  if (config.featureToggles.pluginsSriChecks) {
+    const resolvedModule = System.resolve(modulePath);
+    const integrityMap = System.getImportMap().integrity;
+
+    if (moduleHash && integrityMap && !integrityMap[resolvedModule]) {
+      SystemJS.addImportMap({
+        integrity: {
+          [resolvedModule]: moduleHash,
+        },
+      });
+    }
+  }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
-  if (await isFrontendSandboxSupported({ isAngular, pluginId })) {
+  if (await shouldLoadPluginInFrontendSandbox({ isAngular, pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  return SystemJS.import(modulePath);
+  return SystemJS.import(modulePath).catch((e) => {
+    let error = new Error('Could not load plugin: ' + e);
+    console.error(error);
+    pluginsLogger.logError(error, {
+      path,
+      pluginId,
+      pluginVersion: version ?? '',
+      expectedHash: moduleHash ?? '',
+      loadingStrategy: loadingStrategy.toString(),
+      sriChecksEnabled: (config.featureToggles.pluginsSriChecks ?? false).toString(),
+    });
+    throw error;
+  });
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
@@ -113,6 +143,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
     isAngular,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
+    moduleHash: meta.moduleHash,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
@@ -144,6 +175,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     isAngular,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
+    moduleHash: meta.moduleHash,
   }).then((pluginExports) => {
     const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();
     plugin.init(meta);
