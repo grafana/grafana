@@ -16,7 +16,6 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/home',
-      exact: false,
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
       ),
