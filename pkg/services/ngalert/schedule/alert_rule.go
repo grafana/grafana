@@ -381,9 +381,6 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 	} else {
 		results, err = ruleEval.Evaluate(ctx, e.scheduledAt)
 		dur = a.clock.Now().Sub(start)
-		if err != nil {
-			logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
-		}
 	}
 
 	evalAttemptTotal.Inc()
@@ -428,7 +425,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 			err = results.Error()
 		}
 
-		logger.Debug("Alert rule evaluated", "error", err, "duration", dur)
+		logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
 		span.SetStatus(codes.Error, "rule evaluation failed")
 		span.RecordError(err)
 	} else {
