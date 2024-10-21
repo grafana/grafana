@@ -1009,6 +1009,7 @@
       "copy-links-normal-category": "正常链接地址",
       "copy-shortened-link": "复制短网址",
       "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-label": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "取消",
       "refresh-picker-run": "运行查询",
