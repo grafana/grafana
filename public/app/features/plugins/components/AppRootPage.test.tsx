@@ -1,13 +1,12 @@
 import { act, screen } from '@testing-library/react';
 import { Component } from 'react';
-import { Route, Router } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { AppPlugin, PluginType, AppRootProps, NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { locationService, setEchoSrv } from '@grafana/runtime';
-import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
-import { RouteDescriptor } from 'app/core/navigation/types';
+import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 
@@ -90,19 +89,21 @@ async function renderUnderRouter(page = '') {
   const registries = setupPluginExtensionRegistries();
   const pagePath = page ? `/${page}` : '';
   const route = {
+    path: `/a/:pluginId/*`,
     component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} />,
-  } as unknown as RouteDescriptor;
-
-  await act(async () => {
-    locationService.push(`/a/my-awesome-plugin${pagePath}`);
-  });
+  };
 
   render(
-    <Router history={locationService.getHistory()}>
-      <ExtensionRegistriesProvider registries={registries}>
-        <Route path={`/a/:pluginId${pagePath}`} exact render={(props) => <GrafanaRoute {...props} route={route} />} />
-      </ExtensionRegistriesProvider>
-    </Router>
+    <ExtensionRegistriesProvider registries={registries}>
+      <Routes>
+        <Route path={route.path} element={<GrafanaRouteWrapper route={route} />} />
+      </Routes>
+    </ExtensionRegistriesProvider>,
+    {
+      historyOptions: {
+        initialEntries: [`/a/my-awesome-plugin${pagePath}`],
+      },
+    }
   );
 }
 
