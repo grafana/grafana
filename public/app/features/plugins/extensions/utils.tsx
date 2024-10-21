@@ -20,11 +20,14 @@ import {
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
 } from '@grafana/data';
-import { reportInteraction, config } from '@grafana/runtime';
+import {
+  reportInteraction,
+  config,
+  // TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
+  sidecarServiceSingleton_EXPERIMENTAL,
+} from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-// TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
-import { sidecarService } from 'app/core/services/SidecarService';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -388,7 +391,7 @@ export function getLinkExtensionOnClick(
         context,
         openModal: createOpenModalFunction(pluginId),
         isAppOpened: () => isAppOpened(pluginId),
-        openAppInSideview: () => openAppInSideview(pluginId),
+        openAppInSideview: (context?: unknown) => openAppInSideview(pluginId, context),
         closeAppInSideview: () => closeAppInSideview(pluginId),
       };
 
@@ -426,11 +429,12 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
   );
 }
 
-export const openAppInSideview = (pluginId: string) => sidecarService.openApp(pluginId);
+export const openAppInSideview = (pluginId: string, context?: unknown) =>
+  sidecarServiceSingleton_EXPERIMENTAL.openApp(pluginId, context);
 
-export const closeAppInSideview = (pluginId: string) => sidecarService.closeApp(pluginId);
+export const closeAppInSideview = (pluginId: string) => sidecarServiceSingleton_EXPERIMENTAL.closeApp(pluginId);
 
-export const isAppOpened = (pluginId: string) => sidecarService.isAppOpened(pluginId);
+export const isAppOpened = (pluginId: string) => sidecarServiceSingleton_EXPERIMENTAL.isAppOpened(pluginId);
 
 // Comes from the `app_mode` setting in the Grafana config (defaults to "development")
 // Can be set with the `GF_DEFAULT_APP_MODE` environment variable

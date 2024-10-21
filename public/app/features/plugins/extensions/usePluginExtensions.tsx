@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import { PluginExtension, usePluginContext } from '@grafana/data';
-import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
-import { useSidecar } from 'app/core/context/SidecarContext';
+import { GetPluginExtensionsOptions, UsePluginExtensionsResult, useSidecar_EXPERIMENTAL } from '@grafana/runtime';
 
 import { getPluginExtensions } from './getPluginExtensions';
 import { log } from './logs/log';
@@ -19,7 +18,7 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
     const pluginContext = usePluginContext();
     const addedComponentsRegistry = useObservable(observableAddedComponentsRegistry);
     const addedLinksRegistry = useObservable(observableAddedLinksRegistry);
-    const { activePluginId } = useSidecar();
+    const { activePluginId } = useSidecar_EXPERIMENTAL();
     const { extensionPointId, context, limitPerPlugin } = options;
 
     const { extensions } = useMemo(() => {
