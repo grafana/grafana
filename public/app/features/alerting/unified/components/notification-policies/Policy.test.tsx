@@ -6,12 +6,7 @@ import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import {
-  AlertmanagerGroup,
-  MatcherOperator,
-  ObjectMatcher,
-  RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types/alerting';
 
 import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
@@ -48,9 +43,7 @@ describe('Policy', () => {
     const onEditPolicy = jest.fn();
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
-    const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
-    );
+    const onShowAlertInstances = jest.fn();
 
     const routeTree = mockRoutes;
     const user = userEvent.setup();
@@ -156,9 +149,7 @@ describe('Policy', () => {
     const onEditPolicy = jest.fn();
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
-    const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
-    );
+    const onShowAlertInstances = jest.fn();
 
     const routeTree = mockRoutes;
     const user = userEvent.setup();
@@ -187,9 +178,7 @@ describe('Policy', () => {
     const onEditPolicy = jest.fn();
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
-    const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
-    );
+    const onShowAlertInstances = jest.fn();
 
     const routeTree = mockRoutes;
 
@@ -224,9 +213,7 @@ describe('Policy', () => {
     const onEditPolicy = jest.fn();
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
-    const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
-    );
+    const onShowAlertInstances = jest.fn();
 
     const routeTree = mockRoutes;
 
