@@ -11,14 +11,20 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	authnlib "github.com/grafana/authlib/authn"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
+
+// TODO(drclau): decide on the audience for the resource store
+const resourceStoreAudience = "resourceStore"
 
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(
@@ -98,6 +104,19 @@ func ProvideUnifiedStorageClient(
 	}
 }
 
+func clientCfgMapping(clientCfg *grpcutils.GrpcClientConfig) authnlib.GrpcClientConfig {
+	return authnlib.GrpcClientConfig{
+		TokenClientConfig: &authnlib.TokenExchangeConfig{
+			Token:            clientCfg.Token,
+			TokenExchangeURL: clientCfg.TokenExchangeURL,
+		},
+		TokenRequest: &authnlib.TokenExchangeRequest{
+			Namespace: clientCfg.TokenNamespace,
+			Audiences: []string{resourceStoreAudience},
+		},
+	}
+}
+
 func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return resource.NewLegacyResourceClient(conn), nil
@@ -105,5 +124,11 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 	if cfg.StackID == "" {
 		return resource.NewGRPCResourceClient(conn)
 	}
-	return resource.NewCloudResourceClient(conn, cfg)
+
+	grpcClientCfg, err := grpcutils.ReadGrpcClientConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return resource.NewCloudResourceClient(conn, clientCfgMapping(grpcClientCfg), cfg.Env == setting.Dev)
 }
