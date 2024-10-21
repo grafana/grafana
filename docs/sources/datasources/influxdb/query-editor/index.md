@@ -32,6 +32,12 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
 ---
+## Query the data source
+
+The InfluxDB data source's query editor has two modes, InfluxQL and Flux, depending on your choice of query language in
+the [data source configuration](#configure-the-data-source):
+
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 # InfluxDB query editor
 
