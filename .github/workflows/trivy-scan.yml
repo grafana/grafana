@@ -4,11 +4,13 @@ on:
     # only run on PRs where go.mod/go.sum/etc have been updated
     paths:
       - go.*
+      - .github/workflows/trivy-scan.yml
   push:
     branches:
       - main
     paths:
       - go.*
+      - .github/workflows/trivy-scan.yml
 
 jobs:
   trivy-scan:
