@@ -28,7 +28,8 @@ import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
 export function CommandPalette() {
-  const styles = useStyles2(getSearchStyles);
+  const lateralSpace = getCommandPalettePosition();
+  const styles = useStyles2(getSearchStyles, lateralSpace);
 
   const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -86,7 +87,8 @@ interface RenderResultsProps {
 
 const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
-  const styles = useStyles2(getSearchStyles);
+  const lateralSpace = getCommandPalettePosition();
+  const styles = useStyles2(getSearchStyles, lateralSpace);
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
   // because dashboard search results aren't registered as actions, we need to manually
@@ -155,8 +157,7 @@ const getCommandPalettePosition = () => {
   return lateralSpace;
 };
 
-const getSearchStyles = (theme: GrafanaTheme2) => {
-  const lateralSpace = getCommandPalettePosition();
+const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
   const isSingleTopNav = config.featureToggles.singleTopNav;
 
   return {
