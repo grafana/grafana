@@ -33,6 +33,7 @@ import { isUsingAngularPanelPlugin } from '../scene/angular/AngularDeprecation';
 
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
+import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
 
 export interface PanelOptionsPaneState extends SceneObjectState {
   isVizPickerOpen?: boolean;
@@ -45,14 +46,6 @@ interface PluginOptionsCache {
   options: DeepPartial<{}>;
   fieldConfig: FieldConfigSource<DeepPartial<{}>>;
 }
-
-const INTERACTION_EVENT_NAME = 'dashboards_panel_plugin_picker_clicked';
-const INTERACTION_ITEM = {
-  TOGGLE_DROPDOWN: 'toggle_panel_plugin_picker',
-  SELECT_PANEL_PLUGIN: 'select_panel_plugin',
-  CHANGE_TAB: 'change_tab', // for ref - values are used inside PanelVizTypePicker
-  SEARCH: 'search', // for ref PanelVizTypePicker
-};
 
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   private _cachedPluginOptions: Record<string, PluginOptionsCache | undefined> = {};

@@ -15,6 +15,8 @@ import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicke
 
 import { PanelModelCompatibilityWrapper } from '../utils/PanelModelCompatibilityWrapper';
 
+import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './interaction';
+
 export interface Props {
   data?: PanelData;
   panel: VizPanel;
@@ -28,7 +30,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
 
   const handleSearchChange = (value: string) => {
     if (value) {
-      reportInteraction('dashboards_panel_plugin_picker_clicked', { item: 'search', query: value });
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SEARCH, query: value });
     }
     setSearchQuery(value);
   };
@@ -49,8 +51,8 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
   );
   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
   const handleListModeChange = (value: VisualizationSelectPaneTab) => {
-    reportInteraction('dashboards_panel_plugin_picker_clicked', {
-      item: 'change_tab',
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.CHANGE_TAB,
       tab: VisualizationSelectPaneTab[value],
     });
     setListMode(value);
