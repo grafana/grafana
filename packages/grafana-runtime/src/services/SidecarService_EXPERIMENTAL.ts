@@ -48,9 +48,6 @@ export class SidecarService_EXPERIMENTAL {
    * @experimental
    */
   get activePluginIdObservable() {
-    if (!this.assertFeatureEnabled()) {
-      return EMPTY;
-    }
     return this._activePluginId.asObservable();
   }
 
@@ -61,9 +58,6 @@ export class SidecarService_EXPERIMENTAL {
    * @experimental
    */
   get initialContextObservable() {
-    if (!this.assertFeatureEnabled()) {
-      return EMPTY;
-    }
     return this._initialContext.asObservable();
   }
 
@@ -71,9 +65,6 @@ export class SidecarService_EXPERIMENTAL {
   // hook in react with useObservable first render would return undefined even if the behaviourSubject has some
   // value which will be emitted in the next tick and thus next rerender.
   get initialContext() {
-    if (!this.assertFeatureEnabled()) {
-      return undefined;
-    }
     return this._initialContext.getValue();
   }
 
@@ -81,9 +72,6 @@ export class SidecarService_EXPERIMENTAL {
    * @experimental
    */
   get activePluginId() {
-    if (!this.assertFeatureEnabled()) {
-      return undefined;
-    }
     return this._activePluginId.getValue();
   }
 
