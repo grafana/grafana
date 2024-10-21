@@ -24,8 +24,8 @@ export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
 
   const params: UrlQueryMap = {};
   if (mode) {
-    params.kiosk = mode;
-  }
+    params.kiosk = mode.toString(); // LOGZ.IO GRAFANA CHANGE :: DEV-42761 fix playlist sharing url
+   }
   if (autoFit) {
     params.autofitpanels = true;
   }

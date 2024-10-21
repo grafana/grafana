@@ -1031,6 +1031,7 @@ export class ElasticDatasource
   }
 
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
+    return Promise.resolve(null); // LOGZ.IO GRAFANA CHANGE :: DEV-46435-grafana-10-error-500-on-get-api-datasources-uid-uid-resources
     // we want this function to never fail
     const getDbVersionObservable = config.featureToggles.enableElasticsearchBackendQuerying
       ? from(this.getResourceRequest(''))

@@ -189,5 +189,9 @@ ARG RUN_SH=grafana/packaging/docker/run.sh
 
 COPY ${RUN_SH} /run.sh
 
+# LOGZ.IO GRAFANA CHANGE :: Add unique file to avoid ECR tag limit
+ARG VERSION
+RUN echo "$VERSION" > /var/version.txt
+
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
