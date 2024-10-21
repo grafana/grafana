@@ -28,7 +28,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LokiQuery, LokiQueryType } from './types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 /**
  * Returns search terms from a LogQL query.
@@ -314,6 +314,16 @@ export function requestSupportsSplitting(allQueries: LokiQuery[]) {
   return queries.length > 0;
 }
 
+export function requestSupportsSharding(allQueries: LokiQuery[]) {
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => !query.refId.includes('do-not-shard'))
+    .filter((query) => query.expr)
+    .filter((query) => query.direction === LokiQueryDirection.Scan || query.refId?.startsWith('log-volume-'));
+
+  return queries.length > 0;
+}
+
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
   if (!query) {
     return false;
@@ -329,15 +339,6 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
 
   return query;
 };
-
-export function requestSupportsSharding(request: DataQueryRequest<LokiQuery>) {
-  for (let i = 0; i < request.targets.length; i++) {
-    if (request.targets[i].expr?.includes('avg_over_time')) {
-      return false;
-    }
-  }
-  return true;
-}
 
 const SHARDING_PLACEHOLDER = '__stream_shard_number__';
 export const addShardingPlaceholderSelector = (query: string) => {
