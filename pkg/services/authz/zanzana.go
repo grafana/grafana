@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/dskit/services"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,13 +51,16 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zanzana.NewServer(cfg, store, logger)
+		openfga, err := zanzana.NewOpenFGAServer(cfg, store, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
+		srv := zanzana.NewAuthzServer(openfga)
 		channel := &inprocgrpc.Channel{}
-		openfgav1.RegisterOpenFGAServiceServer(channel, srv)
+		openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
+		authzv1.RegisterAuthzServiceServer(channel, srv)
+		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
 
 		client, err = zanzana.NewClient(context.Background(), channel, cfg)
 		if err != nil {
@@ -104,10 +109,12 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	srv, err := zanzana.NewServer(z.cfg, store, z.logger)
+	openfga, err := zanzana.NewOpenFGAServer(z.cfg, store, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
+
+	srv := zanzana.NewAuthzServer(openfga)
 
 	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
 	if err != nil {
@@ -127,7 +134,11 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to create zanzana grpc server: %w", err)
 	}
 
-	openfgav1.RegisterOpenFGAServiceServer(z.handle.GetServer(), srv)
+	s := z.handle.GetServer()
+	openfgav1.RegisterOpenFGAServiceServer(s, openfga)
+	authzv1.RegisterAuthzServiceServer(s, srv)
+	authzextv1.RegisterAuthzExtentionServiceServer(s, srv)
+
 	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
 		return fmt.Errorf("failed to register reflection for zanzana: %w", err)
 	}

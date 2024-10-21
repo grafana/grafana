@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
+
+package authz.extention.v1;
+
+service AuthzExtentionService {}
