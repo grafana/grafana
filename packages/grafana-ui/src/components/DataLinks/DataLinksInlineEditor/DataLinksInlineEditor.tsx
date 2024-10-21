@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
 
@@ -95,7 +96,9 @@ export const DataLinksInlineEditor = ({
       {/* one-link placeholder */}
       {showOneClick && linksSafe.length > 0 && (
         <div className={styles.oneClickOverlay}>
-          <span className={styles.oneClickSpan}>One-click link</span>
+          <span className={styles.oneClickSpan}>
+            <Trans i18nKey="grafana-ui.data-links-inline-editor.one-click-link">One-click link</Trans>
+          </span>
         </div>
       )}
 
@@ -150,7 +153,7 @@ export const DataLinksInlineEditor = ({
       )}
 
       <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary" className={styles.button}>
-        Add link
+        <Trans i18nKey="grafana-ui.data-links-inline-editor.add-link">Add link</Trans>
       </Button>
     </div>
   );

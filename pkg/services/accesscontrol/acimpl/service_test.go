@@ -74,6 +74,7 @@ func TestUsageMetrics(t *testing.T) {
 				nil,
 				nil,
 				permreg.ProvidePermissionRegistry(),
+				nil,
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})

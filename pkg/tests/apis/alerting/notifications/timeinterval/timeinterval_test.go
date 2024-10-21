@@ -18,7 +18,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -365,7 +367,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 
 	created, err := adminClient.Create(ctx, &v0alpha1.TimeInterval{
@@ -593,7 +595,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	require.NoError(t, err)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
 		MuteTimeInterval: config.MuteTimeInterval{
@@ -653,7 +655,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	helper := getTestHelper(t)
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
 	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
@@ -775,4 +777,55 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
 		})
 	})
+}
+
+func TestIntegrationTimeIntervalValidation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	testCases := []struct {
+		name     string
+		interval v0alpha1.TimeIntervalSpec
+	}{
+		{
+			name: "missing name",
+			interval: v0alpha1.TimeIntervalSpec{
+				Name:          "",
+				TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(1),
+			},
+		},
+		{
+			name: "invalid interval",
+			interval: v0alpha1.TimeIntervalSpec{
+				Name: "test",
+				TimeIntervals: []v0alpha1.Interval{
+					{
+						DaysOfMonth: []string{"1-31"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			i := &v0alpha1.TimeInterval{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: tc.interval,
+			}
+			_, err = adminClient.Create(ctx, i, v1.CreateOptions{})
+			require.Error(t, err)
+			require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %s", err)
+		})
+	}
 }

@@ -37,15 +37,10 @@ function ResourceInfo({ data }: { data: ResourceTableItem }) {
       return <FolderInfo data={data} />;
     case 'LIBRARY_ELEMENT':
       return <LibraryElementInfo data={data} />;
+    // Starting from 11.4.x, new resources have both `name` and optionally a `parentName`, so we can use this catch-all component.
+    default:
+      return <BasicResourceInfo data={data} />;
   }
-}
-
-function getDashboardTitle(dashboardData: object) {
-  if ('title' in dashboardData && typeof dashboardData.title === 'string') {
-    return dashboardData.title;
-  }
-
-  return undefined;
 }
 
 function DatasourceInfo({ data }: { data: ResourceTableItem }) {
@@ -75,72 +70,91 @@ function DatasourceInfo({ data }: { data: ResourceTableItem }) {
   );
 }
 
+function getTitleFromDashboardJSON(dashboardData: object | undefined): string | null {
+  if (dashboardData && 'title' in dashboardData && typeof dashboardData.title === 'string') {
+    return dashboardData.title;
+  }
+
+  return null;
+}
+
 function DashboardInfo({ data }: { data: ResourceTableItem }) {
   const dashboardUID = data.refId;
-  // TODO: really, the API should return this directly
-  const { data: dashboardData, isError } = useGetDashboardByUidQuery({
-    uid: dashboardUID,
-  });
+  const skipApiCall = !!data.name && !!data.parentName;
+  const {
+    data: dashboardData,
+    isLoading,
+    isError,
+  } = useGetDashboardByUidQuery({ uid: dashboardUID }, { skip: skipApiCall });
 
-  const dashboardName = useMemo(() => {
-    return (dashboardData?.dashboard && getDashboardTitle(dashboardData.dashboard)) ?? dashboardUID;
-  }, [dashboardData, dashboardUID]);
+  const dashboardName = data.name || getTitleFromDashboardJSON(dashboardData?.dashboard) || dashboardUID;
+  const dashboardParentName = data.parentName || dashboardData?.meta?.folderTitle || 'Dashboards';
 
   if (isError) {
-    // Not translated because this is only temporary until the data comes through in the MigrationRun API
     return (
       <>
-        <Text italic>Unable to load dashboard</Text>
+        <Text italic>
+          <Trans i18nKey="migrate-to-cloud.resource-table.dashboard-load-error">Unable to load dashboard</Trans>
+        </Text>
         <Text color="secondary">Dashboard {dashboardUID}</Text>
       </>
     );
   }
 
-  if (!dashboardData) {
+  if (isLoading) {
     return <InfoSkeleton />;
   }
 
   return (
     <>
       <span>{dashboardName}</span>
-      <Text color="secondary">{dashboardData.meta?.folderTitle ?? 'Dashboards'}</Text>
+      <Text color="secondary">{dashboardParentName}</Text>
     </>
   );
 }
 
 function FolderInfo({ data }: { data: ResourceTableItem }) {
-  const { data: folderData, isLoading, isError } = useGetFolderQuery(data.refId);
+  const folderUID = data.refId;
+  const skipApiCall = !!data.name && !!data.parentName;
 
-  if (isLoading || !folderData) {
-    return <InfoSkeleton />;
-  }
+  const { data: folderData, isLoading, isError } = useGetFolderQuery(folderUID, { skip: skipApiCall });
+
+  const folderName = data.name || folderData?.title;
+  const folderParentName = data.parentName || folderData?.parents?.[folderData.parents.length - 1]?.title;
 
   if (isError) {
     return (
       <>
-        <Text italic>Unable to load dashboard</Text>
-        <Text color="secondary">Dashboard {data.refId}</Text>
+        <Text italic>Unable to load folder</Text>
+        <Text color="secondary">Folder {data.refId}</Text>
       </>
     );
   }
 
-  const parentFolderName = folderData.parents?.[folderData.parents.length - 1]?.title;
+  if (isLoading) {
+    return <InfoSkeleton />;
+  }
 
   return (
     <>
-      <span>{folderData.title}</span>
-      <Text color="secondary">{parentFolderName ?? 'Dashboards'}</Text>
+      <span>{folderName}</span>
+      <Text color="secondary">{folderParentName ?? 'Dashboards'}</Text>
     </>
   );
 }
 
 function LibraryElementInfo({ data }: { data: ResourceTableItem }) {
   const uid = data.refId;
-  const { data: libraryElementData, isError, isLoading } = useGetLibraryElementByUidQuery({ libraryElementUid: uid });
+  const skipApiCall = !!data.name && !!data.parentName;
 
-  const name = useMemo(() => {
-    return data?.name || (libraryElementData?.result?.name ?? uid);
-  }, [data, libraryElementData, uid]);
+  const {
+    data: libraryElementData,
+    isError,
+    isLoading,
+  } = useGetLibraryElementByUidQuery({ libraryElementUid: uid }, { skip: skipApiCall });
+
+  const name = data.name || libraryElementData?.result?.name || uid;
+  const parentName = data.parentName || libraryElementData?.result?.meta?.folderName || 'General';
 
   if (isError) {
     return (
@@ -158,16 +172,14 @@ function LibraryElementInfo({ data }: { data: ResourceTableItem }) {
     );
   }
 
-  if (isLoading || !libraryElementData) {
+  if (isLoading) {
     return <InfoSkeleton />;
   }
-
-  const folderName = libraryElementData?.result?.meta?.folderName ?? 'General';
 
   return (
     <>
       <span>{name}</span>
-      <Text color="secondary">{folderName}</Text>
+      <Text color="secondary">{parentName}</Text>
     </>
   );
 }
@@ -181,23 +193,43 @@ function InfoSkeleton() {
   );
 }
 
+function BasicResourceInfo({ data }: { data: ResourceTableItem }) {
+  return (
+    <>
+      <span>{data.name}</span>
+      {data.parentName && <Text color="secondary">{data.parentName}</Text>}
+    </>
+  );
+}
+
 function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const styles = useStyles2(getIconStyles);
   const datasource = useDatasource(resource.type === 'DATASOURCE' ? resource.refId : undefined);
 
-  if (resource.type === 'DASHBOARD') {
-    return <Icon size="xl" name="dashboard" />;
-  } else if (resource.type === 'FOLDER') {
-    return <Icon size="xl" name="folder" />;
-  } else if (resource.type === 'DATASOURCE' && datasource?.meta?.info?.logos?.small) {
-    return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
-  } else if (resource.type === 'DATASOURCE') {
-    return <Icon size="xl" name="database" />;
-  } else if (resource.type === 'LIBRARY_ELEMENT') {
-    return <Icon size="xl" name="library-panel" />;
-  }
+  switch (resource.type) {
+    case 'DASHBOARD':
+      return <Icon size="xl" name="dashboard" />;
+    case 'FOLDER':
+      return <Icon size="xl" name="folder" />;
+    case 'DATASOURCE':
+      if (datasource?.meta?.info?.logos?.small) {
+        return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
+      }
 
-  return undefined;
+      return <Icon size="xl" name="database" />;
+    case 'LIBRARY_ELEMENT':
+      return <Icon size="xl" name="library-panel" />;
+    case 'MUTE_TIMING':
+      return <Icon size="xl" name="bell" />;
+    case 'NOTIFICATION_TEMPLATE':
+      return <Icon size="xl" name="bell" />;
+    case 'CONTACT_POINT':
+      return <Icon size="xl" name="bell" />;
+    case 'NOTIFICATION_POLICY':
+      return <Icon size="xl" name="bell" />;
+    default:
+      return undefined;
+  }
 }
 
 function getIconStyles() {

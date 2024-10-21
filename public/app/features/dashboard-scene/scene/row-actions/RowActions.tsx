@@ -54,15 +54,21 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
       }
     }
 
-    if (repeat && !repeatBehavior) {
-      const repeatBehavior = new RowRepeaterBehavior({ variableName: repeat });
-      row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
-    } else if (repeatBehavior) {
-      repeatBehavior.removeBehavior();
-    }
-
     if (title !== row.state.title) {
       row.setState({ title });
+    }
+
+    if (repeat) {
+      // Remove repeat behavior if it exists
+      // to retrigger repeat when adding new one
+      if (repeatBehavior) {
+        repeatBehavior.removeBehavior();
+      }
+
+      repeatBehavior = new RowRepeaterBehavior({ variableName: repeat });
+      row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
+    } else {
+      repeatBehavior?.removeBehavior();
     }
   };
 
