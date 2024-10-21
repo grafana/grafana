@@ -460,6 +460,10 @@ const (
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
+	// Alerting routes policies actions
+	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
+	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
+
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
 	ActionAlertingRuleExternalRead  = "alert.rules.external:read"

@@ -258,6 +258,6 @@ func updateNotificationPolicyTree(t *testing.T, ctx context.Context, service *Se
 		Routes:   []*definition.Route{&child},
 	}
 
-	err := service.ngAlert.Api.Policies.UpdatePolicyTree(ctx, user.GetOrgID(), tree, "", "")
+	_, _, err := service.ngAlert.Api.Policies.UpdatePolicyTree(ctx, user.GetOrgID(), tree, "", "")
 	require.NoError(t, err)
 }
