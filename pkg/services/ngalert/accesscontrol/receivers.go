@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	// #nosec G505 Used only for shortening the uid, not for security purposes.
 	"crypto/sha1"
 	"encoding/hex"
 
@@ -34,6 +35,7 @@ func (p ReceiverScopeProvider) GetResourceIDFromUID(uid string) string {
 	if len(uid) <= util.MaxUIDLength {
 		return uid
 	}
+	// #nosec G505 Used only for shortening the uid, not for security purposes.
 	h := sha1.New()
 	h.Write([]byte(uid))
 	return hex.EncodeToString(h.Sum(nil))
