@@ -8,13 +8,9 @@ import {
   AdHocVariableModel,
   TypedVariableModel,
   ScopedVar,
-} from '@grafana/data';
-import {
-  getDataSourceSrv,
-  setTemplateSrv,
-  TemplateSrv as BaseTemplateSrv,
   VariableInterpolation,
-} from '@grafana/runtime';
+} from '@grafana/data';
+import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { sceneGraph, VariableCustomFormatterFn, SceneObject } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 

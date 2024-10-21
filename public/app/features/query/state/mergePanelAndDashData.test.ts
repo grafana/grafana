@@ -34,7 +34,7 @@ describe('mergePanelAndDashboardData', () => {
         const panelObservable = cold('a', { a: panelData });
         const dashObservable = cold('a', { a: { annotations: [{ id: 'dashData' }] } });
 
-        const result = mergePanelAndDashData(panelObservable, dashObservable);
+        const result = mergePanelAndDashData({ annotations: true, alertStates: true }, panelObservable, dashObservable);
 
         expectObservable(result).toBe('a', {
           a: {
@@ -63,7 +63,7 @@ describe('mergePanelAndDashboardData', () => {
           },
         });
 
-        const result = mergePanelAndDashData(panelObservable, dashObservable);
+        const result = mergePanelAndDashData({ annotations: true, alertStates: true }, panelObservable, dashObservable);
 
         expectObservable(result).toBe('a', {
           a: {
@@ -92,7 +92,7 @@ describe('mergePanelAndDashboardData', () => {
           },
         });
 
-        const result = mergePanelAndDashData(panelObservable, dashObservable);
+        const result = mergePanelAndDashData({ annotations: true, alertStates: true }, panelObservable, dashObservable);
 
         expectObservable(result).toBe('a', {
           a: {

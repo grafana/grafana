@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { AlertStateInfo, AnnotationEvent, AnnotationQuery, DataSourceApi, TimeRange } from '@grafana/data';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
 
 import { DashboardModel } from '../../../dashboard/state';
 
@@ -12,6 +13,7 @@ export interface DashboardQueryRunnerOptions {
 export interface DashboardQueryRunnerResult {
   annotations: AnnotationEvent[];
   alertState?: AlertStateInfo;
+  correlations?: CorrelationData[];
 }
 
 export interface DashboardQueryRunner {
@@ -25,6 +27,7 @@ export interface DashboardQueryRunner {
 export interface DashboardQueryRunnerWorkerResult {
   annotations: AnnotationEvent[];
   alertStates: AlertStateInfo[];
+  correlations: CorrelationData[];
 }
 
 export interface DashboardQueryRunnerWorker {
