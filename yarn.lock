@@ -3442,7 +3442,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/ui": "workspace:*"
-    "@lezer/common": "npm:1.2.2"
+    "@lezer/common": "npm:1.2.3"
     "@lezer/lr": "npm:1.3.3"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
@@ -3918,7 +3918,7 @@ __metadata:
     "@grafana/ui": "npm:11.4.0-pre"
     "@hello-pangea/dnd": "npm:17.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.14"
-    "@lezer/common": "npm:1.2.2"
+    "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
     "@prometheus-io/lezer-promql": "npm:0.54.1"
@@ -4989,10 +4989,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:1.2.2, @lezer/common@npm:^1.0.0":
-  version: 1.2.2
-  resolution: "@lezer/common@npm:1.2.2"
-  checksum: 10/3894115f8c4ed7ee3f9a8160fb9a984ced272e13883c8f4e6a34c49e6fd50b6890201114417f9bc1e2fd08c8d575edec015c60ea9f8447fedf5909d8ce13327d
+"@lezer/common@npm:1.2.3, @lezer/common@npm:^1.0.0":
+  version: 1.2.3
+  resolution: "@lezer/common@npm:1.2.3"
+  checksum: 10/dad24e353e4e67d88b203191361ca1dff26c01c2b7b4ae829b668a1d115929334d077217367683e39180c0556510ed2066ea8ddba2b079be7c08a7152208cc87
   languageName: node
   linkType: hard
 
@@ -6314,14 +6314,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.48.0":
-  version: 1.48.0
-  resolution: "@playwright/test@npm:1.48.0"
+"@playwright/test@npm:1.48.1":
+  version: 1.48.1
+  resolution: "@playwright/test@npm:1.48.1"
   dependencies:
-    playwright: "npm:1.48.0"
+    playwright: "npm:1.48.1"
   bin:
     playwright: cli.js
-  checksum: 10/8845ed0f0b303e10ee0a0f04562ef83be3f9123fac91d722f697ad964a119af74cd5fb08e1139f1b20b27396479456c984bfdc699fadedd92af9c0490fb4c7c0
+  checksum: 10/26fe791868a965790bb39e434a799d743261fb073fa0bec49435e0f2d1aceca99dc2f408fc64b0e2d4c07984021059b27096d4477b989e990b551cf60e2652e6
   languageName: node
   linkType: hard
 
@@ -7101,8 +7101,8 @@ __metadata:
   linkType: hard
 
 "@rollup/plugin-typescript@npm:^12.1.0":
-  version: 12.1.0
-  resolution: "@rollup/plugin-typescript@npm:12.1.0"
+  version: 12.1.1
+  resolution: "@rollup/plugin-typescript@npm:12.1.1"
   dependencies:
     "@rollup/pluginutils": "npm:^5.1.0"
     resolve: "npm:^1.22.1"
@@ -7115,7 +7115,7 @@ __metadata:
       optional: true
     tslib:
       optional: true
-  checksum: 10/93e67032377278be3658988423588f2941eb55ccb540312ab847c050ea62a57d056d3f80c292bf463e90cbc71795498805120a0f244040d8304ba57d9bb8c09e
+  checksum: 10/838d5e67d1b383154fab7ae1b0c58e91844c70380210b12c1d5f2ed5d2264d4fbd21ff991a13a4a72078dce897b5c482c70554a21671269219aa9d2525f14dcd
   languageName: node
   linkType: hard
 
@@ -19057,7 +19057,7 @@ __metadata:
     "@hello-pangea/dnd": "npm:17.0.0"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.14"
-    "@lezer/common": "npm:1.2.2"
+    "@lezer/common": "npm:1.2.3"
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.3.3"
     "@locker/near-membrane-dom": "npm:0.13.6"
@@ -19069,7 +19069,7 @@ __metadata:
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.27.0"
-    "@playwright/test": "npm:1.48.0"
+    "@playwright/test": "npm:1.48.1"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/dialog": "npm:3.5.19"
@@ -26003,27 +26003,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.48.0":
-  version: 1.48.0
-  resolution: "playwright-core@npm:1.48.0"
+"playwright-core@npm:1.48.1":
+  version: 1.48.1
+  resolution: "playwright-core@npm:1.48.1"
   bin:
     playwright-core: cli.js
-  checksum: 10/644489b4de9cc181e83eb639a283d3c4f8e4c3b1b1759d7c93b72fd0373b5a66ba376ee6a5ee3eca67f1b773bf15c5e01b6aeedd43c94c355bf4fc0d110713bc
+  checksum: 10/81b51d288be78b75898470eb192ef0bc65594eebfb5f7602d83ba2505e1d2163c9923a0d7bae46779d5f3a16e1daf392acfbccde01d9f302cdf90bf2b21b8988
   languageName: node
   linkType: hard
 
-"playwright@npm:1.48.0":
-  version: 1.48.0
-  resolution: "playwright@npm:1.48.0"
+"playwright@npm:1.48.1":
+  version: 1.48.1
+  resolution: "playwright@npm:1.48.1"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.48.0"
+    playwright-core: "npm:1.48.1"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 10/85b06ae8d0ab7a5a8c9a0d416007b18f35a59455fad40438bda98cbe07c48f338e97b98b1d9214e27f08d6ac284eba0eaab722f5684cd17dd4a47f5b69d004b9
+  checksum: 10/39e231af3d9e576ba835813c5319b8773d8536ba54c7e34c7004cf06fadb412b6bbfc91badf4bb5cda3f138e5a8994c314de4c76d06d9424430e415f86fb3dd1
   languageName: node
   linkType: hard
 
