@@ -19169,7 +19169,7 @@ __metadata:
     glob: "npm:11.0.0"
     history: "npm:4.10.1"
     html-loader: "npm:5.1.0"
-    html-webpack-plugin: "npm:5.6.0"
+    html-webpack-plugin: "npm:5.6.2"
     http-server: "npm:14.1.1"
     i18next: "npm:^23.0.0"
     i18next-browser-languagedetector: "npm:^7.0.2"
@@ -19764,9 +19764,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-webpack-plugin@npm:5.6.0, html-webpack-plugin@npm:^5.5.0":
-  version: 5.6.0
-  resolution: "html-webpack-plugin@npm:5.6.0"
+"html-webpack-plugin@npm:5.6.2, html-webpack-plugin@npm:^5.5.0":
+  version: 5.6.2
+  resolution: "html-webpack-plugin@npm:5.6.2"
   dependencies:
     "@types/html-minifier-terser": "npm:^6.0.0"
     html-minifier-terser: "npm:^6.0.2"
@@ -19781,7 +19781,7 @@ __metadata:
       optional: true
     webpack:
       optional: true
-  checksum: 10/d651f3a88a7c932c72c6a30f0fdd610b49a864a69f1ddb34562c750f1602ea471e27fd8fc32c01adadd484b38fa6b74f055d1ccce26e5f8fcf814ee0d398a121
+  checksum: 10/ab04cd2ac138a9c2b4b9cbe347704d59ea94c54ee279c9e16aeb5d432813bc44a6b0539acebe3a1eddb87f79dbe1f8e2b365faef2624a88457ffcac4122a85ba
   languageName: node
   linkType: hard
 
