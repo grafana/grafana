@@ -147,10 +147,20 @@ Query expressions are different for each data source. For more information, refe
 {{< /admonition >}}
 
 1. [Enter general options](#enter-general-options).
-1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
-1. In the **Refresh** list, select when the variable should update options.
-   - **On Dashboard Load:** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
-   - **On Time Range Change:** Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
+1. Under the **Query options** section of the page, select a target data source in the **Data source** drop-down list.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+   For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+
+1. In the **Query type** drop-down list, select one of the following options:
+
+   - **Label names**
+   - **Label values**
+   - **Metrics**
+   - **Query result**
+   - **Series query**
+   - **Classic query**
+
 1. In the **Query** field, enter a query.
 
    - The query field varies according to your data source. Some data sources have custom query editors.
@@ -159,9 +169,18 @@ Query expressions are different for each data source. For more information, refe
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 
 1. (Optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex](#filter-variables-with-regex).
-1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
-1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
-1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
+1. Under **Refresh**, select when the variable should update options:
+
+   - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
+   - **On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
+
+1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
+
+   - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Include All option** - Enables an option to include all variables.
+
+1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
