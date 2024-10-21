@@ -147,7 +147,7 @@ func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *contextmodel.ReqContext
 	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostAlertRule(ctx, conf)
 }
@@ -155,7 +155,7 @@ func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *contextmodel.ReqCon
 	// Parse Request Body
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostContactpoints(ctx, conf)
 }
@@ -163,7 +163,7 @@ func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *contextmodel.ReqContex
 	// Parse Request Body
 	conf := apimodels.MuteTimeInterval{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePostMuteTiming(ctx, conf)
 }
@@ -173,7 +173,7 @@ func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *contextmodel.ReqContext)
 	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePutAlertRule(ctx, conf, uIDParam)
 }
@@ -184,7 +184,7 @@ func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *contextmodel.ReqCon
 	// Parse Request Body
 	conf := apimodels.AlertRuleGroup{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePutAlertRuleGroup(ctx, conf, folderUIDParam, groupParam)
 }
@@ -194,7 +194,7 @@ func (f *ProvisioningApiHandler) RoutePutContactpoint(ctx *contextmodel.ReqConte
 	// Parse Request Body
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePutContactpoint(ctx, conf, uIDParam)
 }
@@ -204,7 +204,7 @@ func (f *ProvisioningApiHandler) RoutePutMuteTiming(ctx *contextmodel.ReqContext
 	// Parse Request Body
 	conf := apimodels.MuteTimeInterval{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePutMuteTiming(ctx, conf, nameParam)
 }
@@ -212,7 +212,7 @@ func (f *ProvisioningApiHandler) RoutePutPolicyTree(ctx *contextmodel.ReqContext
 	// Parse Request Body
 	conf := apimodels.Route{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePutPolicyTree(ctx, conf)
 }
@@ -222,7 +222,7 @@ func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *contextmodel.ReqContext) 
 	// Parse Request Body
 	conf := apimodels.NotificationTemplateContent{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return ErrResp(http.StatusBadRequest, err, "bad request data")
 	}
 	return f.handleRoutePutTemplate(ctx, conf, nameParam)
 }
