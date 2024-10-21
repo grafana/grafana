@@ -40,9 +40,11 @@ func New(
 		httpMethod = http.MethodPost
 	}
 
+	queryTimeout, err := maputil.GetStringOptional(jsonData, "queryTimeout")
+
 	return &Resource{
 		log:        plog,
-		promClient: client.NewClient(httpClient, httpMethod, settings.URL),
+		promClient: client.NewClient(httpClient, httpMethod, settings.URL, queryTimeout),
 	}, nil
 }
 

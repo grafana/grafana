@@ -24,22 +24,29 @@ type doer interface {
 // objects, we have to go through them and then serialize again into DataFrame which isn't very efficient. Using custom
 // client we can parse response directly into DataFrame.
 type Client struct {
-	doer    doer
-	method  string
-	baseUrl string
+	doer         doer
+	method       string
+	baseUrl      string
+	queryTimeout string
 }
 
-func NewClient(d doer, method, baseUrl string) *Client {
-	return &Client{doer: d, method: method, baseUrl: baseUrl}
+const defaultQueryTimeout = "60s"
+
+func NewClient(d doer, method, baseUrl, queryTimeout string) *Client {
+	if queryTimeout != "" {
+		queryTimeout = defaultQueryTimeout
+	}
+	return &Client{doer: d, method: method, baseUrl: baseUrl, queryTimeout: queryTimeout}
 }
 
 func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Response, error) {
 	tr := q.TimeRange()
 	qv := map[string]string{
-		"query": q.Expr,
-		"start": formatTime(tr.Start),
-		"end":   formatTime(tr.End),
-		"step":  strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64),
+		"query":   q.Expr,
+		"start":   formatTime(tr.Start),
+		"end":     formatTime(tr.End),
+		"step":    strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64),
+		"timeout": c.queryTimeout,
 	}
 
 	req, err := c.createQueryRequest(ctx, "api/v1/query_range", qv)
@@ -57,7 +64,7 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Respo
 	// Which causes a misleading time point.
 	// Instead of aligning we use time point directly.
 	// https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries
-	qv := map[string]string{"query": q.Expr, "time": formatTime(q.End)}
+	qv := map[string]string{"query": q.Expr, "time": formatTime(q.End), "timeout": c.queryTimeout}
 	req, err := c.createQueryRequest(ctx, "api/v1/query", qv)
 	if err != nil {
 		return nil, err
