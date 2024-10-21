@@ -30,7 +30,7 @@ import {
 } from '../api/alertmanager';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
-import { discoverFeatures } from '../api/buildInfo';
+import { discoverFeaturesByUid } from '../api/buildInfo';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import { FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
@@ -190,14 +190,14 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
 
         const discoverFeaturesWithLogging = withPerformanceLogging(
           'unifiedalerting/fetchPromBuildinfo',
-          discoverFeatures,
+          discoverFeaturesByUid,
           {
             dataSourceName: rulesSourceName,
             thunk: 'unifiedalerting/fetchPromBuildinfo',
           }
         );
 
-        const buildInfo = await discoverFeaturesWithLogging(name);
+        const buildInfo = await discoverFeaturesWithLogging(ds.uid);
 
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {

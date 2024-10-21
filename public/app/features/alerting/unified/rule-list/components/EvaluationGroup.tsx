@@ -4,9 +4,9 @@ import { PropsWithChildren } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Badge, Button, Dropdown, Menu, Stack, Text, Icon } from '@grafana/ui';
 
-import { MetaText } from '../MetaText';
-import MoreButton from '../MoreButton';
-import { Spacer } from '../Spacer';
+import { MetaText } from '../../components/MetaText';
+import MoreButton from '../../components/MoreButton';
+import { Spacer } from '../../components/Spacer';
 
 interface EvaluationGroupProps extends PropsWithChildren {
   name: string;
@@ -16,7 +16,14 @@ interface EvaluationGroupProps extends PropsWithChildren {
   onToggle: () => void;
 }
 
-const EvaluationGroup = ({ name, provenance, interval, onToggle, isOpen = false, children }: EvaluationGroupProps) => {
+export const EvaluationGroup = ({
+  name,
+  provenance,
+  interval,
+  onToggle,
+  isOpen = false,
+  children,
+}: EvaluationGroupProps) => {
   const styles = useStyles2(getStyles);
   const isProvisioned = Boolean(provenance);
 
@@ -77,5 +84,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: `-${theme.spacing(0.5)}`,
   }),
 });
-
-export default EvaluationGroup;

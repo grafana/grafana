@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
-import { discoverFeatures } from './api/buildInfo';
+import { discoverFeaturesByUid } from './api/buildInfo';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
@@ -45,7 +45,7 @@ const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
-    discoverFeatures: jest.mocked(discoverFeatures),
+    discoverFeaturesByUid: jest.mocked(discoverFeaturesByUid),
   },
 };
 

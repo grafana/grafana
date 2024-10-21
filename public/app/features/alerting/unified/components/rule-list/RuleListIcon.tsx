@@ -1,6 +1,6 @@
 import type { RequireAtLeastOne } from 'type-fest';
 
-import { Tooltip, type IconName, Text, Icon } from '@grafana/ui';
+import { Icon, Text, Tooltip, type IconName } from '@grafana/ui';
 import type { TextProps } from '@grafana/ui/src/components/Text/Text';
 import type { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
