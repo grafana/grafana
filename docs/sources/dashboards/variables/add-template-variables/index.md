@@ -239,13 +239,17 @@ Constant variables are useful when you have complex values that you need to incl
 _Data source_ variables enable you to quickly change the data source for an entire dashboard. They are useful if you have multiple instances of a data source, perhaps in different environments.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Type** list, select the target data source for the variable.
+1. Under the **Data source options** section of the page, in the **Type** drop-down list, select the target data source for the variable.
+1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list.
 
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+   Leave this field empty to display all instances.
 
-1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
-1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
-1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
+
+   - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Include All option** - Enables an option to include all variables.
+
+1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
