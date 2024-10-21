@@ -158,21 +158,26 @@ export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | nu
  * @param isDocked whether mega menu is docked
  */
 export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean) {
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   // manage focus when opening/closing
   useEffect(() => {
-    if (isOpen) {
-      document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
-    } else {
-      document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
+    if (isSingleTopNav) {
+      if (isOpen) {
+        document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
+      } else {
+        document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, isSingleTopNav]);
 
   // manage focus when docking/undocking
   useEffect(() => {
-    if (isDocked) {
-      document.getElementById(DOCK_MENU_BUTTON_ID)?.focus();
-    } else {
-      document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
+    if (isSingleTopNav) {
+      if (isDocked) {
+        document.getElementById(DOCK_MENU_BUTTON_ID)?.focus();
+      } else {
+        document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
+      }
     }
-  }, [isDocked]);
+  }, [isDocked, isSingleTopNav]);
 }
