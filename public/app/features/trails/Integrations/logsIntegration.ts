@@ -1,7 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataSourceSettings } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import type { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
+import { getBackendSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getLogQueryFromMetricsQuery } from 'app/plugins/datasource/loki/queryUtils';
 
 export type RecordingRuleGroup = {
   name: string;
@@ -20,13 +22,7 @@ export type ExtractedRecordingRules = {
   [dataSourceID: string]: ExtractedRecordingRule[];
 };
 
-export async function fetchLokiDataSources(): Promise<DataSourceSettings[]> {
-  const dataSourcesReq: BackendSrvRequest = { url: 'api/datasources' };
-  const { data } = await lastValueFrom<FetchResponse<DataSourceSettings[]>>(getBackendSrv().fetch(dataSourcesReq));
-  return data.filter((d) => d.type === 'loki');
-}
-
-export function buildRecordingRuleURL(datasourceSettings: DataSourceSettings): string {
+export function buildRecordingRuleURL(datasourceSettings: DataSourceInstanceSettings<DataSourceJsonData>): string {
   return `api/prometheus/${datasourceSettings.uid}/api/v1/rules`;
 }
 
@@ -42,7 +38,7 @@ export async function fetchLokiRecordingRules(url: string) {
 
 export function extractRecordingRules(
   ruleGroups: RecordingRuleGroup[],
-  ds: DataSourceSettings
+  ds: DataSourceInstanceSettings<DataSourceJsonData>
 ): ExtractedRecordingRule[] {
   if (ruleGroups.length === 0) {
     return [];
@@ -66,23 +62,6 @@ export function extractRecordingRules(
   });
 
   return extractedRules;
-}
-
-function extractLokiQueryFromRecordingRule(rule: ExtractedRecordingRule): string {
-  // Remove Unicode escapes and unneeded quotes
-  let cleanedRule = rule.query.replace(/\\u[\dA-Fa-f]{4}/g, (match) => {
-    return String.fromCharCode(parseInt(match.replace('\\u', ''), 16));
-  });
-  cleanedRule = cleanedRule
-    .replace(/\\"/g, '"') // Replace escaped quotes
-    .replace(/^"|"$/g, ''); // Remove starting and ending quotes
-
-  // Extract the Loki query
-  const queryRegex = /{[^}]+}.*?(?=\[|$)/;
-  const match = cleanedRule.match(queryRegex);
-  const extractedQuery = match ? match[0].trim() : '';
-
-  return extractedQuery;
 }
 
 export function getLogsUidOfMetric(
@@ -109,12 +88,12 @@ export function getLogsQueryForMetric(
   if (!dataSourceId || !extractedRecordingRules[dataSourceId]) {
     return '';
   }
-
   const targetRule = extractedRecordingRules[dataSourceId].find((rule) => rule.name === metricName);
   if (!targetRule) {
     return '';
   }
-  const lokiQuery = extractLokiQueryFromRecordingRule(targetRule);
+  const lokiQuery = getLogQueryFromMetricsQuery(targetRule.query);
+
   return lokiQuery;
 }
 
@@ -123,7 +102,9 @@ export function fetchLogsForMetric(): string[] {
 }
 
 export async function fetchAndExtractLokiRecordingRules() {
-  const lokiDataSources = await fetchLokiDataSources();
+  const lokiDataSources = getDatasourceSrv()
+    .getList({ logs: true })
+    .filter((ds) => ds.type === 'loki');
   const extractedRecordingRules: ExtractedRecordingRules = {};
   for (const lokids of lokiDataSources) {
     const url = buildRecordingRuleURL(lokids);
