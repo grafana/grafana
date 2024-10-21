@@ -26,7 +26,7 @@ func (s *NoopServiceImpl) DeleteToken(ctx context.Context, uid string) error {
 }
 
 func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
-	return cloudmigration.ErrFeatureDisabledError
+	return cloudmigration.ErrMigrationDisabled
 }
 
 func (s *NoopServiceImpl) GetSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -38,7 +38,7 @@ func (s *NoopServiceImpl) GetSessionList(ctx context.Context) (*cloudmigration.C
 }
 
 func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
+	return nil, cloudmigration.ErrMigrationDisabled
 }
 
 func (s *NoopServiceImpl) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {

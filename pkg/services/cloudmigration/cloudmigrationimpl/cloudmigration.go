@@ -324,7 +324,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	defer span.End()
 
 	if err := s.gmsClient.ValidateKey(ctx, cm); err != nil {
-		return fmt.Errorf("validating token: %w", err)
+		return err
 	}
 
 	return nil
@@ -398,22 +398,22 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	base64Token := cmd.AuthToken
 	b, err := base64.StdEncoding.DecodeString(base64Token)
 	if err != nil {
-		return nil, fmt.Errorf("token could not be decoded")
+		return nil, cloudmigration.ErrTokenInvalid.Errorf("token could not be decoded")
 	}
 	var token cloudmigration.Base64EncodedTokenPayload
 	if err := json.Unmarshal(b, &token); err != nil {
-		return nil, fmt.Errorf("invalid token") // don't want to leak info here
+		return nil, cloudmigration.ErrTokenInvalid.Errorf("token could not be decoded") // don't want to leak info here
 	}
 
 	migration := token.ToMigration()
 	// validate token against GMS before saving
 	if err := s.ValidateToken(ctx, migration); err != nil {
-		return nil, fmt.Errorf("token validation: %w", err)
+		return nil, err
 	}
 
 	cm, err := s.store.CreateMigrationSession(ctx, migration)
 	if err != nil {
-		return nil, fmt.Errorf("error creating migration: %w", err)
+		return nil, cloudmigration.ErrSessionCreationFailure.Errorf("error creating migration")
 	}
 
 	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)
