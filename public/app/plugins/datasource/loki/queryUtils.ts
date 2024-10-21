@@ -26,9 +26,9 @@ import {
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
-import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 /**
  * Returns search terms from a LogQL query.
@@ -340,17 +340,9 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
   return query;
 };
 
-const SHARDING_PLACEHOLDER = '__stream_shard_number__';
-export const addShardingPlaceholderSelector = (query: string) => {
-  return query.replace('}', `, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`);
-};
-
-export const interpolateShardingSelector = (queries: LokiQuery[], shards?: number[]) => {
-  if (shards === undefined || shards.length === 0) {
-    return queries.map((query) => ({
-      ...query,
-      expr: query.expr.replace(`, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`, '}'),
-    }));
+export const interpolateShardingSelector = (queries: LokiQuery[], shards: number[]) => {
+  if (shards.length === 0) {
+    return queries;
   }
 
   let shardValue = shards.join('|');
@@ -360,13 +352,13 @@ export const interpolateShardingSelector = (queries: LokiQuery[], shards?: numbe
     shardValue = shardValue === '-1' ? '' : shardValue;
     return queries.map((query) => ({
       ...query,
-      expr: query.expr.replace(`, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`, `, __stream_shard__="${shardValue}"}`),
+      expr: addLabelToQuery(query.expr, '__stream_shard__', '=', shardValue, LabelType.Indexed),
     }));
   }
 
   return queries.map((query) => ({
     ...query,
-    expr: query.expr.replace(new RegExp(`${SHARDING_PLACEHOLDER}`, 'g'), shardValue),
+    expr: addLabelToQuery(query.expr, '__stream_shard__', '=~', shardValue, LabelType.Indexed),
   }));
 };
 
@@ -374,8 +366,7 @@ export const getSelectorForShardValues = (query: string) => {
   const selector = getNodesFromQuery(query, [Selector]);
   if (selector.length > 0) {
     return query
-      .substring(selector[0].from, selector[0].to)
-      .replace(`, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`, '}');
+      .substring(selector[0].from, selector[0].to);
   }
   return '';
 };
