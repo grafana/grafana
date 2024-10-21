@@ -10,7 +10,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -136,27 +135,6 @@ func NewDualWriter(
 	default:
 		return newDualWriterMode1(legacy, storage, metrics, resource)
 	}
-}
-
-type updateWrapper struct {
-	upstream rest.UpdatedObjectInfo
-	updated  runtime.Object
-}
-
-// Returns preconditions built from the updated object, if applicable.
-// May return nil, or a preconditions object containing nil fields,
-// if no preconditions can be determined from the updated object.
-func (u *updateWrapper) Preconditions() *metav1.Preconditions {
-	if u.upstream == nil {
-		return nil
-	}
-	return u.upstream.Preconditions()
-}
-
-// UpdatedObject returns the updated object, given a context and old object.
-// The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
-func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
-	return u.updated, nil
 }
 
 type NamespacedKVStore interface {

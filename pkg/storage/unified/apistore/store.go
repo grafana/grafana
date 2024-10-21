@@ -460,11 +460,13 @@ func (s *Storage) GuaranteedUpdate(
 			if err != nil {
 				return err
 			}
+
 			mmm, err := utils.MetaAccessor(existingObj)
 			if err != nil {
 				return err
 			}
 			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
+			res.ResourceVersion = uint64(rsp.ResourceVersion)
 
 			if err := preconditions.Check(key, existingObj); err != nil {
 				if attempt >= MaxUpdateAttempts {
