@@ -1402,8 +1402,17 @@
       "connect": "Connect to this stack",
       "connecting": "Connecting to this stack...",
       "title": "Connect to a cloud stack",
-      "token-error-description": "There was an error saving the token. See the Grafana server logs for more details.",
       "token-error-title": "Error saving token",
+      "token-errors": {
+        "instance-request-error": "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status.",
+        "instance-unreachable": "The cloud instance cannot be reached. Make sure the instance is running and try again.",
+        "migration-disabled": "Cloud migrations are disabled on this instance.",
+        "session-creation-failure": "There was an error creating the migration. Please try again.",
+        "token-invalid": "Token is not valid. Generate a new token on your cloud instance and try again.",
+        "token-not-saved": "There was an error saving the token. See the Grafana server logs for more details.",
+        "token-request-error": "An error occurred while validating the token. Please check the Grafana instance logs.",
+        "token-validation-failure": "Token is not valid. Please ensure the token matches the migration token on your cloud instance."
+      },
       "token-required-error": "Migration token is required"
     },
     "cta": {
