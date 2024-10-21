@@ -210,6 +210,7 @@ Experimental features might be changed or removed without prior notice.
 | `rolePickerDrawer`                            | Enables the new role picker drawer design                                                                                                                                                                                                                                         |
 | `pluginsSriChecks`                            | Enables SRI checks for plugin assets                                                                                                                                                                                                                                              |
 | `unifiedStorageBigObjectsSupport`             | Enables to save big objects in blob storage                                                                                                                                                                                                                                       |
+| `prometheusUsesCombobox`                      | Use new combobox component for Prometheus query editor                                                                                                                                                                                                                            |
 
 ## Development feature toggles
 
