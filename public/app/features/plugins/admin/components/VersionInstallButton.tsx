@@ -18,7 +18,14 @@ interface Props {
   onClick: () => void;
 }
 
-export const VersionInstallButton = ({ pluginId, version, latestCompatibleVersion, installedVersion, disabled, onClick }: Props) => {
+export const VersionInstallButton = ({
+  pluginId,
+  version,
+  latestCompatibleVersion,
+  installedVersion,
+  disabled,
+  onClick,
+}: Props) => {
   const install = useInstall();
   const [isInstalling, setIsInstalling] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,7 +94,7 @@ export const VersionInstallButton = ({ pluginId, version, latestCompatibleVersio
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         disabled={isInstalling}
-        confirmButtonVariant='primary'
+        confirmButtonVariant="primary"
       />
     </>
   );
