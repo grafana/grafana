@@ -158,6 +158,7 @@ These built-in core data sources are also included in the Grafana documentation:
 - [Testdata]({{< relref "./testdata" >}})
 - [Zipkin]({{< relref "./zipkin" >}})
 {{< /column-list >}}
+
 ## Add additional data source plugins
 
 You can add additional data sources as plugins (that are not available in core Grafana), which you can install or create yourself.
