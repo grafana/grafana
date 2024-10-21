@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -186,7 +187,8 @@ func (s *legacyStorage) Create(ctx context.Context,
 		ParentUID:    parent,
 	})
 	if err != nil {
-		return nil, err
+		statusErr := apierrors.ToFolderStatusError(err)
+		return nil, &statusErr
 	}
 	// #TODO can we directly convert instead of doing a Get? the result of the Create
 	// has more data than the one of Get so there is more we can include in the k8s resource

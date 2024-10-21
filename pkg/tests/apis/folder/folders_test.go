@@ -308,6 +308,24 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			},
 		}))
 	})
+
+	t.Run("with dual write (unified storage, mode 1, create existing folder)", func(t *testing.T) {
+		doCreateDuplicateFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagNestedFolders,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
 }
 
 func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
@@ -472,6 +490,36 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 	require.Equal(t, parentUID, parent.UID)
 	require.Equal(t, "Test\\/parent", parent.Title)
 	require.Equal(t, parentCreate.Result.URL, parent.URL)
+}
+
+func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	payload := `{
+		"title": "Test",
+		"uid": ""
+		}`
+	create := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+	require.NotNil(t, create.Result)
+	parentUID := create.Result.UID
+	require.NotEmpty(t, parentUID)
+
+	create2 := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+	require.NotEmpty(t, create2.Response)
+	require.Equal(t, 409, create2.Response.StatusCode)
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
