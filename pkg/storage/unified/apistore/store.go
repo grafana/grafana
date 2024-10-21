@@ -461,19 +461,19 @@ func (s *Storage) GuaranteedUpdate(
 				return err
 			}
 
+			mmm, err := utils.MetaAccessor(existingObj)
+			if err != nil {
+				return err
+			}
+			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
+			res.ResourceVersion = uint64(rsp.ResourceVersion)
+
 			if err := preconditions.Check(key, existingObj); err != nil {
 				if attempt >= MaxUpdateAttempts {
 					return fmt.Errorf("precondition failed: %w", err)
 				}
 				continue
 			}
-
-			acc, err := utils.MetaAccessor(existingObj)
-			if err != nil {
-				return err
-			}
-			acc.SetResourceVersionInt64(rsp.ResourceVersion)
-			res.ResourceVersion = uint64(rsp.ResourceVersion)
 		} else if !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, req.Key.Name)
 		}
