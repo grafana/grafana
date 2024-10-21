@@ -129,12 +129,6 @@ value4 , value5 , value6
 
 If you need to hide columns, you can do so using [data transformations](ref:data-transformation), [field overrides](#field-overrides), or by [building a query](ref:build-query) that returns only the needed columns.
 
-## Debugging in tables
-
-The table visualization can help with debugging when you need to know exactly what results your query is returning and why other visualizations might not be working. This functionality is also accessible in most visualizations by toggling on the **Table view** switch at the top of the panel:
-
-![The Table view switch](/media/docs/grafana/panels-visualizations/screenshot-table-view-on-11.2.png)
-
 ## Column filtering
 
 You can temporarily change how column data is displayed using column filtering.
