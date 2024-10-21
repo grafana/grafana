@@ -280,7 +280,7 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 ## Filter dashboard data
 
-Once you've [added an ad hoc filter](ref:add-ad-hoc-filters) in the dashboard settings, you can create key/value filter pairs on the dashboard.
+Once you've [added an ad hoc filter](ref:add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
 These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
 
 To filter dashboard data, follow these steps:
