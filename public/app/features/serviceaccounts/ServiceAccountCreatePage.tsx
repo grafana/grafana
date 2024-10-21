@@ -188,7 +188,9 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
                       )}
                     </Field>
                   </FieldSet>
-                  <Trans i18nKey="service-account-create-page.create.button">Create</Trans>
+                  <Button type="submit">
+                    <Trans i18nKey="service-account-create-page.create.button">Create</Trans>
+                  </Button>
                 </>
               );
             }}
