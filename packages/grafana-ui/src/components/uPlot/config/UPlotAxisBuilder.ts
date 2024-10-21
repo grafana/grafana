@@ -169,11 +169,11 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       config.values = (u: uPlot, splits, axisIdx, tickSpace, tickIncr) => {
         let decimals = guessDecimals(roundDecimals(tickIncr, 6));
         return splits.map((v) => {
-            if (v == null) {
-                return null;
-            } else {
-                return formatValue!(v, decimals > 0 ? decimals : undefined);
-            }
+          if (v == null) {
+            return null;
+          } else {
+            return formatValue!(v, decimals > 0 ? decimals : undefined);
+          }
         });
       };
     }
