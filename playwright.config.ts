@@ -71,6 +71,15 @@ export default defineConfig<PluginOptions>({
       dependencies: ['authenticate'],
     },
     {
+      name: 'mssql',
+      testDir: path.join(testDirRoot, '/mssql'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'extensions-test-app',
       testDir: 'e2e/test-plugins/grafana-extensionstest-app',
       use: {
