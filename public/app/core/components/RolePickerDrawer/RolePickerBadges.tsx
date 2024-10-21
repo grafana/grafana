@@ -36,9 +36,11 @@ export const RolePickerBadges = ({ disabled, user }: Props) => {
 
   return (
     <>
-      <div className={badgeStyle} onClick={drawerControl}>
-        <Badge color="blue" text={watch('role')} />
-        {user.roles && user.roles.length > 0 && <Badge color="blue" text={'+' + user.roles.length} />}
+      <div className={badgeStyle}>
+        <Badge color="blue" text={watch('role')} onClick={drawerControl} />
+        {user.roles && user.roles.length > 0 && (
+          <Badge color="blue" text={'+' + user.roles.length} onClick={drawerControl} />
+        )}
       </div>
       {isDrawerOpen && (
         <FormProvider {...methods}>
