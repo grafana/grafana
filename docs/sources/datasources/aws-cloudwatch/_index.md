@@ -238,6 +238,11 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
+{{< admonition type="note" >}}
+Using CloudWatch Cross-Account querying functionality lets you to retrieve metrics and logs across different regions but it doesn't let you query EC2 Instance Attributes across regions.
+The EC2 API does not support querying across different accounts because cross-account observabilityis a CloudWatch feature, not an EC2 one.
+{{< /admonition >}}
+
 ### Configure CloudWatch settings
 
 #### Namespaces of Custom Metrics
