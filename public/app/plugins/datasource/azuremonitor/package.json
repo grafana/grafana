@@ -36,7 +36,6 @@
     "@types/prismjs": "1.26.4",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
-    "@types/testing-library__jest-dom": "5.14.9",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
@@ -50,5 +49,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.5.0"
+  "packageManager": "yarn@4.5.1"
 }

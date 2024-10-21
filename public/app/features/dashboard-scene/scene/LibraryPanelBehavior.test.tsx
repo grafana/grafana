@@ -13,6 +13,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { PanelTimeRange } from './PanelTimeRange';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 setPluginImportUtils({
@@ -79,6 +80,31 @@ describe('LibraryPanelBehavior', () => {
     expect(gridItem.state.body.state.options).toEqual({ showHeader: true });
 
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('should set panel timeRange if panel has query options set', async () => {
+    const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+    const behavior = gridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
+    expect(behavior).toBeDefined();
+    expect(gridItem.state.body.state.$timeRange).toBeUndefined();
+
+    const panel = vizPanelToPanel(gridItem.state.body.clone({ $behaviors: undefined }));
+    panel.timeFrom = '2h';
+    panel.timeShift = '3h';
+
+    const libraryPanelState = {
+      name: 'LibraryPanel B',
+      title: 'LibraryPanel B title',
+      uid: '222',
+      type: 'table',
+      version: 2,
+      model: panel,
+    };
+
+    behavior.setPanelFromLibPanel(libraryPanelState);
+
+    expect(gridItem.state.body.state.$timeRange).toBeInstanceOf(PanelTimeRange);
   });
 
   it('should not update panel if version is the same', async () => {

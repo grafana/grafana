@@ -31,6 +31,8 @@ func (v ValidationError) Error() string {
 
 // Provider is a settings provider abstraction
 // with thread-safety and runtime updates.
+//
+//go:generate mockery --name Provider --structname MockProvider --outpkg settingtest --filename provider_mock.go --output ./settingtest/
 type Provider interface {
 	// Current returns a SettingsBag with a static copy of
 	// the current configured pairs of key/values for each
