@@ -851,7 +851,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
 	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	allReceivers := func() []models.Receiver {
 		return []models.Receiver{recv1, recv2, recv3}
 	}
@@ -990,7 +990,7 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
 	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	allReceivers := func() []models.Receiver {
 		return []models.Receiver{recv1, recv2, recv3}
 	}
@@ -1078,7 +1078,7 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
 	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	allReceivers := func() []models.Receiver {
 		return []models.Receiver{recv1, recv2, recv3}
 	}
@@ -1230,7 +1230,7 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))
 	recv1 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	recv2 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
-	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
+	recv3 := models.ReceiverGen(models.ReceiverMuts.WithName("receiver with a really long name that surpasses 40 characters"), models.ReceiverMuts.WithIntegrations(slackIntegration(), emailIntegration()))()
 	allReceivers := func() []models.Receiver {
 		return []models.Receiver{recv1, recv2, recv3}
 	}
