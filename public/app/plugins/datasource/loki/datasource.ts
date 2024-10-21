@@ -360,7 +360,8 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (true) {
+    const lokiShardSplitting = true;
+    if (lokiShardSplitting && requestSupportsSharding(fixedRequest.targets)) {
       return runShardSplitQuery(this, fixedRequest);
     } else if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
       return runSplitQuery(this, fixedRequest);
