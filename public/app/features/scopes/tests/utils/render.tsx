@@ -49,6 +49,50 @@ const getDashboardDTO: (
           name: 'groupBy',
           type: 'groupby',
         },
+        {
+          current: {
+            text: ['1'],
+            value: ['1'],
+          },
+          multi: true,
+          name: 'myVar',
+          options: [
+            {
+              selected: true,
+              text: '1',
+              value: '1',
+            },
+            {
+              selected: false,
+              text: '2',
+              value: '2',
+            },
+          ],
+          query: '1, 2',
+          type: 'custom',
+        },
+        {
+          current: {
+            text: ['1'],
+            value: ['1'],
+          },
+          multi: true,
+          name: 'myVar2',
+          options: [
+            {
+              selected: true,
+              text: '1',
+              value: '1',
+            },
+            {
+              selected: false,
+              text: '2',
+              value: '2',
+            },
+          ],
+          query: '1, 2',
+          type: 'custom',
+        },
       ],
     },
     panels: [
