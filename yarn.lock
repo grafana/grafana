@@ -27544,11 +27544,11 @@ __metadata:
   linkType: hard
 
 "react-hook-form@npm:^7.49.2":
-  version: 7.53.0
-  resolution: "react-hook-form@npm:7.53.0"
+  version: 7.53.1
+  resolution: "react-hook-form@npm:7.53.1"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18 || ^19
-  checksum: 10/b7d73696b7c10e042f6ea6fcec01f951091146bfbc89d1378327a970bcd724b968e93fae1657bddada75caf648cfaf8693c5ba03c25e96816b755079d29f65da
+  checksum: 10/41ac7140add546b90f75b0aef343b67b795d26a60da7bfeac1ded7716ec01234c6050f5c00a4487c28a73c24f9c9347cda741173a8083d7f4b02b588203e7544
   languageName: node
   linkType: hard
 
