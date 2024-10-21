@@ -8,6 +8,7 @@ import {
   DataFrame,
   fieldMatchers,
   FieldMatcherID,
+  FieldConfigSource,
 } from '@grafana/data';
 import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
 
@@ -33,6 +34,12 @@ describe('prepare timeline graph', () => {
       to: dateTime(3),
     },
   };
+
+  const fieldConfig: FieldConfigSource = {
+    defaults: {},
+    overrides: [],
+  };
+
   it('errors with no time fields', () => {
     const frames = [
       toDataFrame({
@@ -42,7 +49,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme, fieldConfig);
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
@@ -55,7 +62,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme, fieldConfig);
     expect(info.warn).toEqual('No graphable fields');
   });
 
@@ -68,7 +75,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme, fieldConfig);
     expect(info.warn).toBeUndefined();
 
     const out = info.frames![0];
@@ -97,7 +104,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    const result = prepareTimelineFields(frames, true, timeRange, theme, fieldConfig);
     expect(result.frames?.[0].fields[0].values).toEqual([1, 2, 3, 4]);
   });
 
@@ -154,7 +161,7 @@ describe('prepare timeline graph', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, true, timeRange2, theme);
+    const info = prepareTimelineFields(frames, true, timeRange2, theme, fieldConfig);
 
     let joined = preparePlotFrame(
       info.frames!,
@@ -245,7 +252,7 @@ describe('prepare timeline graph', () => {
       }),
     ];
 
-    const info = prepareTimelineFields(frames, true, timeRange2, theme);
+    const info = prepareTimelineFields(frames, true, timeRange2, theme, fieldConfig);
 
     let joined = preparePlotFrame(
       info.frames!,
