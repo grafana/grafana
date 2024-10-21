@@ -1,12 +1,12 @@
 import { ByRoleMatcher, waitFor, within } from '@testing-library/dom';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
-import { Provider } from 'react-redux';
-import { Route, Router } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import {
   DataSourceApi,
@@ -43,7 +43,6 @@ import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
-import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -172,19 +171,25 @@ export function setupExplore(options?: SetupOptions): {
   const contextMock = getGrafanaContextMock({ location });
 
   const { unmount, container } = render(
-    <Provider store={storeState}>
-      <GrafanaContext.Provider value={contextMock}>
-        <Router history={history}>
-          <QueriesDrawerContextProvider>
-            <Route
-              path="/explore"
-              exact
-              render={(props) => <GrafanaRoute {...props} route={{ component: ExplorePage, path: '/explore' }} />}
+    <GrafanaContext.Provider value={contextMock}>
+      <Routes>
+        <Route
+          path="/explore"
+          element={
+            <GrafanaRoute
+              route={{ component: ExplorePage, path: '/explore' }}
+              location={contextMock.location.getLocation()}
             />
-          </QueriesDrawerContextProvider>
-        </Router>
-      </GrafanaContext.Provider>
-    </Provider>
+          }
+        />
+      </Routes>
+    </GrafanaContext.Provider>,
+    {
+      store: storeState,
+      historyOptions: {
+        initialEntries: [{ pathname: '/explore', search: stringify(options?.urlParams) }],
+      },
+    }
   );
 
   exploreTestsHelper.tearDownExplore = (options?: TearDownOptions) => {
