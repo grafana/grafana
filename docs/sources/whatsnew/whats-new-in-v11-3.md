@@ -20,7 +20,7 @@ weight: -45
 
 # What’s new in Grafana v11.3
 
-Welcome to Grafana 11.3! In this release, we've made a number of significant updates and improvements. Scenes-powered dashboards are now generally available and the Explore Logs plugin is now installed by default. The dashboard experience has also improved in other ways including the ability to trigger API calls from any canvas element with the new **Actions** option and an update to transformations so you can apply calculations to dynamic fields. We've also simplified the alert setup experience, added customizable announcement banners that admins can send to all users, and improved some default permissions.
+Welcome to Grafana 11.3! Scenes-powered dashboards are now generally available and the Explore Logs plugin is now installed by default. The dashboard experience has also improved in other ways including the ability to trigger API calls from any canvas element with the new **Actions** option and an update to transformations so you can apply calculations to dynamic fields. We've also simplified the alert setup experience, added customizable announcement banners that admins can send to all users, and improved some default permissions.
 
 <!-- {{< youtube id="s6IYpILVDSM" >}} -->
 
