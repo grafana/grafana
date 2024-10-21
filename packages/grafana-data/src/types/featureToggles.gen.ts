@@ -140,6 +140,7 @@ export interface FeatureToggles {
   dashboardSceneForViewers?: boolean;
   dashboardSceneSolo?: boolean;
   dashboardScene?: boolean;
+  dashboardNewLayouts?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;

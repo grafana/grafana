@@ -914,6 +914,14 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:         "dashboardNewLayouts",
+			Description:  "Enables experimental new dashboard layouts",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false", // disabled by default
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,

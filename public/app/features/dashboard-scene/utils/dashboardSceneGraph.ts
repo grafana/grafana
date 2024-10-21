@@ -46,16 +46,11 @@ export function getCursorSync(scene: DashboardScene) {
   return;
 }
 
-export function getNextPanelId(dashboard: DashboardScene): number {
-  return dashboard.state.body.getNextPanelId();
-}
-
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getPanelLinks,
   getVizPanels,
   getDataLayers,
-  getNextPanelId,
   getCursorSync,
 };
