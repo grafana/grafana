@@ -10,6 +10,7 @@ on:
 
 jobs:
   upload-sources-to-crowdin:
+    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
 
     steps:
