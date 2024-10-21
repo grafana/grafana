@@ -255,7 +255,7 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 	// When deleting settings for SAML, clear the Settings table
 	if provider == social.SAMLProviderName {
 		samlSettings := setting.SettingsRemovals{
-			"auth.saml": make([]string, len(s.settingsProvider.Current())),
+			"auth.saml": make([]string, 0, len(s.settingsProvider.Current())),
 		}
 		for k := range s.settingsProvider.Current()["auth.saml"] {
 			samlSettings["auth.saml"] = append(samlSettings["auth.saml"], k)
