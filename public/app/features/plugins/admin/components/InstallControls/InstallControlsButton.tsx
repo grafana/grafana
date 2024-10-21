@@ -119,7 +119,7 @@ export function InstallControlsButton({
 
   let disableUninstall =
     config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-      ? plugin.isUninstallingFromInstance
+      ? plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance
       : isUninstalling;
   let uninstallTitle = '';
   if (plugin.isPreinstalled.found) {
