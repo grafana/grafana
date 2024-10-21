@@ -667,7 +667,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"teamHttpHeaders": newRules,
 			}),
-			OnlyUpdateLBACRulesFromAPI: true,
+			AllowLBACRuleUpdates: true,
 		}
 
 		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)

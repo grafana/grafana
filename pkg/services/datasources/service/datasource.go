@@ -534,26 +534,16 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			}
 		}
 
+		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
-		updatingLBACRules := cmd.OnlyUpdateLBACRulesFromAPI && s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && cmd.JsonData != nil && cmd.JsonData.Get("teamHttpHeaders").Interface() != nil
-		if updatingLBACRules {
-			s.logger.Debug("Overriding LBAC rules with stored ones",
-				"reason", "update_lbac_rules_from_datasource_api",
-				"action", "use_updateLBACRules_API",
+		allowLBACRuleUpdates := cmd.AllowLBACRuleUpdates && s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders)
+		if !allowLBACRuleUpdates && cmd.JsonData != nil {
+			s.logger.Debug("Overriding LBAC rules with stored ones using updateLBACRules API",
+				"reason", "overriding_lbac_rules_from_datasource_api",
 				"datasource_id", dataSource.ID,
 				"datasource_uid", dataSource.UID)
-			cmd.JsonData.Set("teamHttpHeaders", cmd.JsonData.Get("teamHttpHeaders").Interface())
-		} else {
-			// make sure to preserve existing lbac rules when updating datasource, regardless of if we're updating lbac rules or not
-			var existingTeamHttpHeaders interface{}
-			if dataSource.JsonData != nil {
-				existingTeamHttpHeaders = dataSource.JsonData.Get("teamHttpHeaders").Interface()
-			}
-			if existingTeamHttpHeaders != nil {
-				if cmd.JsonData == nil {
-					cmd.JsonData = simplejson.New()
-				}
-				cmd.JsonData.Set("teamHttpHeaders", existingTeamHttpHeaders)
+			if headers := dataSource.JsonData.Get("teamHttpHeaders"); headers != nil {
+				cmd.JsonData.Set("teamHttpHeaders", headers.Interface())
 			}
 		}
 
