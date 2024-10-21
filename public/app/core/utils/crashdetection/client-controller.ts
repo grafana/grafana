@@ -52,17 +52,22 @@ export default function initCrashDetection<CustomProperties extends object = {}>
     detector.port.start();
   }
 
+  function startWhenReady() {
+    // beforeunload is triggered only after at least one interaction
+    window.addEventListener('click', start);
+  }
+
   async function start() {
     initialize();
 
     registerWorker();
 
-    window.onbeforeunload = function () {
+    window.addEventListener('beforeunload', () => {
       worker.postMessage({
         event: 'close',
         info,
       });
-    };
+    });
 
     worker.postMessage({
       event: 'start',
@@ -70,5 +75,11 @@ export default function initCrashDetection<CustomProperties extends object = {}>
     });
   }
 
-  window.addEventListener('load', start);
+  if (document.readyState === 'complete') {
+    startWhenReady();
+  } else {
+    window.addEventListener('load', () => {
+      startWhenReady();
+    });
+  }
 }
