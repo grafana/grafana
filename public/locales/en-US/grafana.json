@@ -1084,9 +1084,6 @@
       "add-link": "Add link",
       "one-click-link": "One-click link"
     },
-    "data-links-list-item": {
-      "compact-explore-disclaimer": "Explore data link may not work in the future. Please edit."
-    },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
       "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
