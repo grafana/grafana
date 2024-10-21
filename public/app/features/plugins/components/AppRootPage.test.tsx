@@ -61,7 +61,7 @@ class RootComponent extends Component<AppRootProps> {
   }
 }
 
-async function renderUnderRouter(page = '') {
+function renderUnderRouter(page = '') {
   const appPluginNavItem: NavModelItem = {
     text: 'App',
     id: 'plugin-page-app',
@@ -137,7 +137,7 @@ describe('AppRootPage', () => {
     jest.spyOn(console, 'error').mockImplementation();
     getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
     // Renders once for the first time
-    await renderUnderRouter();
+    renderUnderRouter();
     expect(await screen.findByText('App not found')).toBeVisible();
   });
 
@@ -151,12 +151,12 @@ describe('AppRootPage', () => {
     importAppPluginMock.mockResolvedValue(plugin);
 
     // Renders once for the first time
-    await renderUnderRouter();
+    renderUnderRouter();
     expect(await screen.findByText('my great component')).toBeVisible();
     expect(RootComponent.timesRendered).toEqual(1);
 
     // Does not render again when navigating to a non-plugin path
-    act(() => {
+    await act(async () => {
       screen.getByRole('link', { name: 'Navigate' }).click();
     });
     expect(RootComponent.timesRendered).toEqual(1);
@@ -232,7 +232,7 @@ describe('AppRootPage', () => {
     it('an User should not be able to see page with not existing role', async () => {
       contextSrv.user.orgRole = OrgRole.Editor;
 
-      await renderUnderRouter('mistake-page');
+      renderUnderRouter('mistake-page');
       expect(await screen.findByText('Access denied')).toBeVisible();
     });
 
@@ -246,27 +246,27 @@ describe('AppRootPage', () => {
       });
 
       it('should allow access to plugin entry page by default', async () => {
-        await renderUnderRouter('');
+        renderUnderRouter('');
         expect(await screen.findByText('my great component')).toBeVisible();
       });
 
       it('should deny access to page with action but no role when user has no permissions', async () => {
-        await renderUnderRouter('page-with-action-no-role');
+        renderUnderRouter('page-with-action-no-role');
         expect(await screen.findByText('Access denied')).toBeVisible();
       });
 
       it('should deny access to page with action and role when user has no permissions', async () => {
-        await renderUnderRouter('page-with-action-and-role');
+        renderUnderRouter('page-with-action-and-role');
         expect(await screen.findByText('Access denied')).toBeVisible();
       });
 
       it('should allow access to page without roles', async () => {
-        await renderUnderRouter('page-without-role');
+        renderUnderRouter('page-without-role');
         expect(await screen.findByText('my great component')).toBeVisible();
       });
 
       it('should deny access to viewer page when user has no permissions', async () => {
-        await renderUnderRouter('viewer-page');
+        renderUnderRouter('viewer-page');
         expect(await screen.findByText('Access denied')).toBeVisible();
       });
 
@@ -278,12 +278,12 @@ describe('AppRootPage', () => {
         });
 
         it('should allow access to page with action but no role when user has permissions', async () => {
-          await renderUnderRouter('page-with-action-no-role');
+          renderUnderRouter('page-with-action-no-role');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
 
         it('should allow access to page with action and role when user has permissions', async () => {
-          await renderUnderRouter('page-with-action-and-role');
+          renderUnderRouter('page-with-action-and-role');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
       });
@@ -293,37 +293,37 @@ describe('AppRootPage', () => {
         });
 
         it('should allow access to plugin entry page', async () => {
-          await renderUnderRouter('');
+          renderUnderRouter('');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
 
         it('should deny access to page with action but no role', async () => {
-          await renderUnderRouter('page-with-action-no-role');
+          renderUnderRouter('page-with-action-no-role');
           expect(await screen.findByText('Access denied')).toBeVisible();
         });
 
         it('should deny access to page with action and role', async () => {
-          await renderUnderRouter('page-with-action-and-role');
+          renderUnderRouter('page-with-action-and-role');
           expect(await screen.findByText('Access denied')).toBeVisible();
         });
 
         it('should allow access to page without roles', async () => {
-          await renderUnderRouter('page-without-role');
+          renderUnderRouter('page-without-role');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
 
         it('should allow access to viewer page', async () => {
-          await renderUnderRouter('viewer-page');
+          renderUnderRouter('viewer-page');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
 
         it('should deny access to editor page', async () => {
-          await renderUnderRouter('editor-page');
+          renderUnderRouter('editor-page');
           expect(await screen.findByText('Access denied')).toBeVisible();
         });
 
         it('should deny access to admin page', async () => {
-          await renderUnderRouter('admin-page');
+          renderUnderRouter('admin-page');
           expect(await screen.findByText('Access denied')).toBeVisible();
         });
       });
@@ -335,31 +335,31 @@ describe('AppRootPage', () => {
 
         describe('without permissions', () => {
           it('should deny access to pages with actions', async () => {
-            await renderUnderRouter('page-with-action-no-role');
+            renderUnderRouter('page-with-action-no-role');
             expect(await screen.findByText('Access denied')).toBeVisible();
 
-            await renderUnderRouter('page-with-action-and-role');
+            renderUnderRouter('page-with-action-and-role');
             expect(await screen.findByText('Access denied')).toBeVisible();
           });
 
           it('should allow access to basic pages', async () => {
-            await renderUnderRouter('');
+            renderUnderRouter('');
             expect(await screen.findByText('my great component')).toBeVisible();
 
-            await renderUnderRouter('page-without-role');
+            renderUnderRouter('page-without-role');
             expect(await screen.findByText('my great component')).toBeVisible();
           });
 
           it('should allow access to viewer and editor pages', async () => {
-            await renderUnderRouter('viewer-page');
+            renderUnderRouter('viewer-page');
             expect(await screen.findByText('my great component')).toBeVisible();
 
-            await renderUnderRouter('editor-page');
+            renderUnderRouter('editor-page');
             expect(await screen.findByText('my great component')).toBeVisible();
           });
 
           it('should deny access to admin page', async () => {
-            await renderUnderRouter('admin-page');
+            renderUnderRouter('admin-page');
             expect(await screen.findByText('Access denied')).toBeVisible();
           });
         });
@@ -372,10 +372,10 @@ describe('AppRootPage', () => {
           });
 
           it('should allow access to pages with actions', async () => {
-            await renderUnderRouter('page-with-action-no-role');
+            renderUnderRouter('page-with-action-no-role');
             expect(await screen.findByText('my great component')).toBeVisible();
 
-            await renderUnderRouter('page-with-action-and-role');
+            renderUnderRouter('page-with-action-and-role');
             expect(await screen.findByText('my great component')).toBeVisible();
           });
         });
@@ -388,35 +388,35 @@ describe('AppRootPage', () => {
 
         describe('without permissions', () => {
           it('should deny access to pages with actions', async () => {
-            await renderUnderRouter('page-with-action-no-role');
+            renderUnderRouter('page-with-action-no-role');
             expect(await screen.findByText('Access denied')).toBeVisible();
 
-            await renderUnderRouter('page-with-action-and-role');
+            renderUnderRouter('page-with-action-and-role');
             expect(await screen.findByText('Access denied')).toBeVisible();
           });
 
           it('should allow access to plugin entry page', async () => {
-            await renderUnderRouter('');
+            renderUnderRouter('');
             expect(await screen.findByText('my great component')).toBeVisible();
           });
 
           it('should allow access to page without role', async () => {
-            await renderUnderRouter('page-without-role');
+            renderUnderRouter('page-without-role');
             expect(await screen.findByText('my great component')).toBeVisible();
           });
 
           it('should allow access to viewer page', async () => {
-            await renderUnderRouter('viewer-page');
+            renderUnderRouter('viewer-page');
             expect(await screen.findByText('my great component')).toBeVisible();
           });
 
           it('should allow access to editor page', async () => {
-            await renderUnderRouter('editor-page');
+            renderUnderRouter('editor-page');
             expect(await screen.findByText('my great component')).toBeVisible();
           });
 
           it('should allow access to admin page', async () => {
-            await renderUnderRouter('admin-page');
+            renderUnderRouter('admin-page');
             expect(await screen.findByText('my great component')).toBeVisible();
           });
         });
@@ -428,35 +428,35 @@ describe('AppRootPage', () => {
         });
 
         it('should deny access to pages with actions', async () => {
-          await renderUnderRouter('page-with-action-no-role');
+          renderUnderRouter('page-with-action-no-role');
           expect(await screen.findByText('Access denied')).toBeVisible();
 
-          await renderUnderRouter('page-with-action-and-role');
+          renderUnderRouter('page-with-action-and-role');
           expect(await screen.findByText('Access denied')).toBeVisible();
         });
 
         it('should allow access to plugin entry page', async () => {
-          await renderUnderRouter('');
+          renderUnderRouter('');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
 
         it('should allow access to page without role', async () => {
-          await renderUnderRouter('page-without-role');
+          renderUnderRouter('page-without-role');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
 
         it('should allow access to viewer page', async () => {
-          await renderUnderRouter('viewer-page');
+          renderUnderRouter('viewer-page');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
 
         it('should allow access to editor page', async () => {
-          await renderUnderRouter('editor-page');
+          renderUnderRouter('editor-page');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
 
         it('should allow access to admin page', async () => {
-          await renderUnderRouter('admin-page');
+          renderUnderRouter('admin-page');
           expect(await screen.findByText('my great component')).toBeVisible();
         });
       });
