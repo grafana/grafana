@@ -56,6 +56,7 @@ import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
+import { startReportingCrashes } from './core/crash/crash.reporter';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { setMonacoEnv } from './core/monacoEnv';
@@ -372,6 +373,8 @@ function initEchoSrv() {
       })
     );
   }
+
+  startReportingCrashes();
 }
 
 /**
