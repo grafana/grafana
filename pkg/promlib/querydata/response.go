@@ -113,14 +113,16 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 	}
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 
-	customName := getName(q, frame.Fields[1])
-	if customName != "" {
-		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
-	}
+	if frame.Meta.Type != "heatmap-cells" {
+		customName := getName(q, frame.Fields[1])
+		if customName != "" {
+			frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
+		}
 
-	valueField := frame.Fields[1]
-	if n, ok := valueField.Labels["__name__"]; ok {
-		valueField.Name = n
+		valueField := frame.Fields[1]
+		if n, ok := valueField.Labels["__name__"]; ok {
+			valueField.Name = n
+		}
 	}
 }
 
