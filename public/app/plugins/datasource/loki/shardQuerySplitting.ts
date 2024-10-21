@@ -2,21 +2,12 @@ import { groupBy, partition } from 'lodash';
 import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  DataQueryRequest,
-  LoadingState,
-  DataQueryResponse,
-  QueryResultMetaStat,
-} from '@grafana/data';
+import { DataQueryRequest, LoadingState, DataQueryResponse, QueryResultMetaStat } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
-import {
-  getSelectorForShardValues,
-  interpolateShardingSelector,
-  requestSupportsSharding,
-} from './queryUtils';
+import { getSelectorForShardValues, interpolateShardingSelector, requestSupportsSharding } from './queryUtils';
 import { LokiQuery } from './types';
 
 /**
@@ -176,8 +167,12 @@ function splitQueriesByStreamShard(
             return;
           }
         }
-        if (groupSize) {
-          nextGroupSize = updateGroupSizeFromResponse(partialResponse, groups[group]);
+        if (groupSize && cycle !== undefined && shards !== undefined) {
+          nextGroupSize = constrainGroupSize(
+            cycle + groupSize,
+            updateGroupSizeFromResponse(partialResponse, groups[group]),
+            shards.length
+          );
           if (nextGroupSize !== groupSize) {
             debug(`New group size ${nextGroupSize}`);
           }
@@ -325,6 +320,14 @@ function updateGroupSizeFromResponse(response: DataQueryResponse, group: Sharded
   }
 
   return currentSize;
+}
+
+/**
+ * Prevents the group size for ever being more than maxFactor% of the pending shards.
+ */
+function constrainGroupSize(cycle: number, groupSize: number, shards: number) {
+  const maxFactor = 0.7;
+  return Math.min(groupSize, Math.max(Math.floor((shards - cycle) * maxFactor), 1));
 }
 
 function groupShardRequests(shards: number[], start: number, groupSize: number) {

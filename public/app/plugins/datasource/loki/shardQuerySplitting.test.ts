@@ -6,7 +6,7 @@ import { createLokiDatasource } from './__mocks__/datasource';
 import { getMockFrames } from './__mocks__/frames';
 import { LokiDatasource } from './datasource';
 import { runShardSplitQuery } from './shardQuerySplitting';
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryDirection } from './types';
 
 jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
@@ -47,7 +47,9 @@ describe('runShardSplitQuery()', () => {
   };
   let request: DataQueryRequest<LokiQuery>;
   beforeEach(() => {
-    request = createRequest([{ expr: 'count_over_time($SELECTOR[1m])', refId: 'A' }]);
+    request = createRequest([
+      { expr: 'count_over_time($SELECTOR[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
+    ]);
     datasource = createLokiDatasource();
     datasource.languageProvider.fetchLabelValues = jest.fn();
     datasource.interpolateVariablesInQueries = jest.fn().mockImplementation((queries: LokiQuery[]) => {
@@ -77,28 +79,48 @@ describe('runShardSplitQuery()', () => {
         intervalMs: expect.any(Number),
         range: expect.any(Object),
         requestId: 'TEST_shard_0_0_2',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"20|10"}[1m])', refId: 'A' }],
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=~"20|10"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
       });
 
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
         requestId: 'TEST_shard_0_2_2',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])', refId: 'A' }],
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
       });
 
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_4_2',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_0_4_1',
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
       });
 
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_5_2',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_0_5_1',
+        targets: [
+          { expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
+        ],
       });
     });
   });
@@ -122,7 +144,11 @@ describe('runShardSplitQuery()', () => {
         range: expect.any(Object),
         requestId: 'TEST_shard_0_0_2',
         targets: [
-          { expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"}[1m])', refId: 'A' },
+          {
+            expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
         ],
       });
     });
@@ -153,16 +179,19 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Adjusts the group size based on errors and execution time', async () => {
-    const request = createRequest([{ expr: 'count_over_time($SELECTOR[1m])', refId: 'A' }], {
-      range: {
-        from: dateTime('2024-11-13T05:00:00.000Z'),
-        to: dateTime('2024-11-14T06:00:00.000Z'),
-        raw: {
+    const request = createRequest(
+      [{ expr: 'count_over_time($SELECTOR[1m])', refId: 'A', direction: LokiQueryDirection.Scan }],
+      {
+        range: {
           from: dateTime('2024-11-13T05:00:00.000Z'),
           to: dateTime('2024-11-14T06:00:00.000Z'),
+          raw: {
+            from: dateTime('2024-11-13T05:00:00.000Z'),
+            to: dateTime('2024-11-14T06:00:00.000Z'),
+          },
         },
-      },
-    });
+      }
+    );
 
     jest
       .mocked(datasource.languageProvider.fetchLabelValues)
@@ -177,7 +206,7 @@ describe('runShardSplitQuery()', () => {
 
     jest.mocked(datasource.runQuery).mockReset();
 
-    // Doubles group size
+    // + 50%
     jest.mocked(datasource.runQuery).mockReturnValueOnce(
       of({
         data: [
@@ -199,12 +228,12 @@ describe('runShardSplitQuery()', () => {
       })
     );
 
-    // Decreases group size
+    // sqrt(currentSize)
     jest
       .mocked(datasource.runQuery)
       .mockReturnValueOnce(of({ state: LoadingState.Error, error: { refId: 'A', message: 'timeout' }, data: [] }));
 
-    // Increases group size by 2
+    // +10%
     jest.mocked(datasource.runQuery).mockReturnValueOnce(
       of({
         data: [
@@ -226,7 +255,7 @@ describe('runShardSplitQuery()', () => {
       })
     );
 
-    // Increases group size by 1
+    // -10%
     jest.mocked(datasource.runQuery).mockReturnValueOnce(
       of({
         data: [
@@ -248,7 +277,7 @@ describe('runShardSplitQuery()', () => {
       })
     );
 
-    // Decreases group size by 1
+    // -10%
     jest.mocked(datasource.runQuery).mockReturnValueOnce(
       of({
         data: [
@@ -270,7 +299,7 @@ describe('runShardSplitQuery()', () => {
       })
     );
 
-    // Halves group size
+    // -50%
     jest.mocked(datasource.runQuery).mockReturnValueOnce(
       of({
         data: [
@@ -292,52 +321,120 @@ describe('runShardSplitQuery()', () => {
       })
     );
 
+    // No more than 50% of the remaining shards
+    jest.mocked(datasource.runQuery).mockReturnValue(
+      of({
+        data: [
+          {
+            ...metricFrameA,
+            meta: {
+              ...metricFrameA.meta,
+              stats: [
+                ...metricFrameA.meta!.stats!,
+                {
+                  displayName: 'Summary: exec time',
+                  unit: 's',
+                  value: 0.5,
+                },
+              ],
+            },
+          },
+        ],
+      })
+    );
+
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
         requestId: 'TEST_shard_0_0_3',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"}[1m])', refId: 'A' }],
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
       });
 
-      // Doubled
+      // +50%
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_3_6',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5|4|3"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_0_3_4',
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
       });
 
-      // Error, decreased
+      // Error, sqrt(currentSize)
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
         requestId: 'TEST_shard_0_3_2',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"8|7"}[1m])', refId: 'A' }],
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=~"8|7"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
       });
 
-      // Increased by 2
+      // +10%
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_5_4',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4|3"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_0_5_3',
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
       });
 
-      // Increased by 1
+      // -10%
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_9_5',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=~"2|1"}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_0_8_2',
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
       });
 
-      // Decreased by 1
+      // No more than 50% of the remaining shards
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
         range: expect.any(Object),
-        requestId: 'TEST_shard_0_11_4',
-        targets: [{ expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A' }],
+        requestId: 'TEST_shard_0_10_1',
+        targets: [
+          {
+            expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
+        ],
+      });
+
+      // No more than 50% of the remaining shards
+      expect(datasource.runQuery).toHaveBeenCalledWith({
+        intervalMs: expect.any(Number),
+        range: expect.any(Object),
+        requestId: 'TEST_shard_0_11_1',
+        targets: [
+          { expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
+        ],
       });
     });
   });
