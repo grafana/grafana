@@ -1,6 +1,8 @@
-import { BehaviorSubject, EMPTY } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
-import { config, locationService } from '../index';
+import { config } from '../config';
+
+import { locationService } from './LocationService';
 
 interface Options {
   localStorageKey?: string;
