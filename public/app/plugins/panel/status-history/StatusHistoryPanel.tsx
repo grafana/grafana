@@ -31,6 +31,7 @@ export const StatusHistoryPanel = ({
   height,
   replaceVariables,
   onChangeTimeRange,
+  fieldConfig,
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
@@ -42,8 +43,8 @@ export const StatusHistoryPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, false, timeRange, theme),
-    [data.series, timeRange, theme]
+    () => prepareTimelineFields(data.series, false, timeRange, theme, fieldConfig),
+    [data.series, timeRange, theme, fieldConfig]
   );
 
   const legendItems = useMemo(

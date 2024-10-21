@@ -167,7 +167,9 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         // filter join field and fields.y
         alignedFrameFinal = {
           ...alignedFrame,
-          fields: alignedFrame.fields.filter((field, i) => i === 0 || fields.y(field, alignedFrame, [alignedFrame])),
+          fields: alignedFrame.fields
+            .filter((field, i) => i === 0 || fields.y(field, alignedFrame, [alignedFrame]))
+            .filter((field) => field.config.custom?.hideFrom?.viz !== true),
         };
       }
 
