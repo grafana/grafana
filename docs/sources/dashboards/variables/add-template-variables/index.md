@@ -211,8 +211,10 @@ _Text box_ variables display a free text input field with an optional default va
 For more information about cardinality, refer to [What are cardinality spikes and why do they matter?](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/)
 
 1. [Enter general options](#enter-general-options).
-1. (Optional) In the **Default value** field, select the default value for the variable. If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
-1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. (Optional) Under the **Text options** section, in the **Default value** field, enter the default value for the variable.
+
+   If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
+
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
