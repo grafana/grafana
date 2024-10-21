@@ -16,9 +16,28 @@ const (
 )
 
 var (
-	ScopeReceiversProvider = ac.NewScopeProvider(ScopeReceiversRoot)
+	ScopeReceiversProvider = ReceiverScopeProvider{ac.NewScopeProvider(ScopeReceiversRoot)}
 	ScopeReceiversAll      = ScopeReceiversProvider.GetResourceAllScope()
 )
+
+type ReceiverScopeProvider struct {
+	ac.ScopeProvider
+}
+
+func (p ReceiverScopeProvider) GetResourceScopeUID(uid string) string {
+	return ScopeReceiversProvider.ScopeProvider.GetResourceScopeUID(p.GetResourceIDFromUID(uid))
+}
+
+// GetResourceIDFromUID converts a receiver uid to a resource id. This is necessary as resource ids are limited to 40 characters.
+// If the uid is already less than or equal to 40 characters, it is returned as is.
+func (p ReceiverScopeProvider) GetResourceIDFromUID(uid string) string {
+	if len(uid) <= util.MaxUIDLength {
+		return uid
+	}
+	h := sha1.New()
+	h.Write([]byte(uid))
+	return hex.EncodeToString(h.Sum(nil))
+}
 
 // ReceiverPermission is a type for representing a receiver permission.
 type ReceiverPermission string
@@ -182,7 +201,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "read",
 			authorizeSome: readRedactedReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return readRedactedReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
+				return readRedactedReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: readRedactedAllReceiversEval,
 		},
@@ -194,7 +213,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "read",
 			authorizeSome: readDecryptedReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return readDecryptedReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
+				return readDecryptedReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: readDecryptedAllReceiversEval,
 		},
@@ -218,7 +237,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "update",
 			authorizeSome: updateReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return updateReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
+				return updateReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: updateAllReceiversEval,
 		},
@@ -230,7 +249,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "delete",
 			authorizeSome: deleteReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return deleteReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
+				return deleteReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: deleteAllReceiversEval,
 		},
@@ -242,7 +261,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			action:        "admin", // Essentially read+write receiver resource permissions.
 			authorizeSome: permissionsReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return permissionsReceiverEval(ReceiverUidToResourceId(receiver.GetUID()))
+				return permissionsReceiverEval(receiver.GetUID())
 			},
 			authorizeAll: permissionsAllReceiversEval,
 		},
@@ -288,16 +307,6 @@ func extendAccessControl[T models.Identified](base *actionAccess[T], operator fu
 	base.authorizeOne = func(resource models.Identified) ac.Evaluator {
 		return operator(extension.authorizeOne(resource), baseOne(resource))
 	}
-}
-
-// ReceiverUidToResourceId converts a receiver uid to a resource id. This is necessary as resource ids are limited to 40 characters.
-func ReceiverUidToResourceId(uid string) string {
-	if len(uid) <= util.MaxUIDLength {
-		return uid
-	}
-	h := sha1.New()
-	h.Write([]byte(uid))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 // HasList checks if user has access to list redacted receivers. Returns false if user does not have access.

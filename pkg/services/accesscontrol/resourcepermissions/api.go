@@ -440,7 +440,7 @@ func MiddlewareReceiverUIDResolver(paramName string) web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		gotParams := web.Params(c.Req)
 		uid := gotParams[paramName]
-		gotParams[paramName] = alertingac.ReceiverUidToResourceId(uid)
+		gotParams[paramName] = alertingac.ScopeReceiversProvider.GetResourceIDFromUID(uid)
 		web.SetURLParams(c.Req, gotParams)
 	}
 }
