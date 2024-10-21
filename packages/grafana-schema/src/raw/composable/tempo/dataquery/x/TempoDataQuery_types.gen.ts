@@ -98,7 +98,10 @@ export enum SearchTableType {
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
 export enum TraceqlSearchScope {
+  Event = 'event',
+  Instrumentation = 'instrumentation',
   Intrinsic = 'intrinsic',
+  Link = 'link',
   Resource = 'resource',
   Span = 'span',
   Unscoped = 'unscoped',
