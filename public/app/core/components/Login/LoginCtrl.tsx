@@ -70,7 +70,8 @@ export class LoginCtrl extends PureComponent<Props, State> {
       isLoggingIn: false,
       isChangingPassword: false,
       showDefaultPasswordWarning: false,
-      loginErrorMessage: config.loginError,
+      // oAuth unauthorized sets the redirect error message in the bootdata, hence we need to check the key here
+      loginErrorMessage: getBootDataErrMessage(config.loginError),
     };
   }
 
@@ -180,7 +181,11 @@ export class LoginCtrl extends PureComponent<Props, State> {
   };
 
   toGrafana = () => {
-    // Use window.location.href to force page reload
+    if (config.featureToggles.useSessionStorageForRedirection) {
+      window.location.assign(config.appSubUrl + '/');
+      return;
+    }
+
     if (this.result?.redirectUrl) {
       if (config.appSubUrl !== '' && !this.result.redirectUrl.startsWith(config.appSubUrl)) {
         window.location.assign(config.appSubUrl + this.result.redirectUrl);
@@ -237,5 +242,14 @@ function getErrorMessage(err: FetchError<undefined | { messageId?: string; messa
       );
     default:
       return err.data?.message;
+  }
+}
+
+function getBootDataErrMessage(str?: string) {
+  switch (str) {
+    case 'oauth.login.error':
+      return t('oauth.login.error', 'Login provider denied login request');
+    default:
+      return str;
   }
 }

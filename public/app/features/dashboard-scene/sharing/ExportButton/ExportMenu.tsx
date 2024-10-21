@@ -1,21 +1,15 @@
 import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { SceneObject } from '@grafana/scenes';
+import { locationService } from '@grafana/runtime';
 import { IconName, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
-import { SceneShareDrawerState } from '../types';
-
-import { ExportAsJson } from './ExportAsJson';
 
 const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton.Menu;
-
-type CustomDashboardDrawer = new (...args: SceneShareDrawerState[]) => SceneObject;
 
 export interface ExportDrawerMenuItem {
   shareId: string;
@@ -34,17 +28,9 @@ export function addDashboardExportDrawerItem(item: ExportDrawerMenuItem) {
 }
 
 export default function ExportMenu({ dashboard }: { dashboard: DashboardScene }) {
-  const onMenuItemClick = useCallback(
-    (title: string, component: CustomDashboardDrawer) => {
-      const drawer = new ShareDrawer({
-        title,
-        body: new component(),
-      });
-
-      dashboard.showModal(drawer);
-    },
-    [dashboard]
-  );
+  const onMenuItemClick = (shareView: string) => {
+    locationService.partial({ shareView });
+  };
 
   const buildMenuItems = useCallback(() => {
     const menuItems: ExportDrawerMenuItem[] = [];
@@ -57,11 +43,11 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       icon: 'arrow',
       label: t('share-dashboard.menu.export-json-title', 'Export as JSON'),
       renderCondition: true,
-      onClick: () => onMenuItemClick(t('export.json.title', 'Save dashboard JSON'), ExportAsJson),
+      onClick: () => onMenuItemClick(shareDashboardType.export),
     });
 
     return menuItems.filter((item) => item.renderCondition);
-  }, [onMenuItemClick]);
+  }, []);
 
   const onClick = (item: ExportDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({

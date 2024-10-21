@@ -93,7 +93,7 @@ func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, folderStore folder.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
@@ -113,6 +113,9 @@ func ProvideDashboardPermissions(
 		Resource:          "dashboards",
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideDashboardPermissions.ResourceValidator")
+			defer span.End()
+
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return err
@@ -142,7 +145,7 @@ func ProvideDashboardPermissions(
 				}
 				parentScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(queryResult.UID)
 
-				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, queryResult.UID, folderService)
+				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, queryResult.UID, folderStore)
 				if err != nil {
 					return nil, err
 				}

@@ -41,7 +41,6 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	hash.Reset()
 	_, _ = hash.Write([]byte(setting.BuildVersion))
 	_, _ = hash.Write([]byte(setting.BuildCommit))
-	_, _ = hash.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
 	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	// Plugin configs
@@ -110,7 +109,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	apps := make(map[string]*plugins.AppDTO, 0)
 	for _, ap := range availablePlugins[plugins.TypeApp] {
-		apps[ap.Plugin.ID] = newAppDTO(
+		apps[ap.Plugin.ID] = hs.newAppDTO(
+			c.Req.Context(),
 			ap.Plugin,
 			ap.Settings,
 		)
@@ -140,18 +140,20 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:            panel.ID,
-			Name:          panel.Name,
-			AliasIDs:      panel.AliasIDs,
-			Info:          panel.Info,
-			Module:        panel.Module,
-			BaseURL:       panel.BaseURL,
-			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  panel.HideFromList,
-			ReleaseState:  string(panel.State),
-			Signature:     string(panel.Signature),
-			Sort:          getPanelSort(panel.ID),
-			Angular:       panel.Angular,
+			ID:              panel.ID,
+			Name:            panel.Name,
+			AliasIDs:        panel.AliasIDs,
+			Info:            panel.Info,
+			Module:          panel.Module,
+			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
+			BaseURL:         panel.BaseURL,
+			SkipDataQuery:   panel.SkipDataQuery,
+			HideFromList:    panel.HideFromList,
+			ReleaseState:    string(panel.State),
+			Signature:       string(panel.Signature),
+			Sort:            getPanelSort(panel.ID),
+			Angular:         panel.Angular,
+			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
 		}
 	}
 
@@ -174,6 +176,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
 	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigration.IsTarget
+	featureToggles := hs.Features.GetEnabled(c.Req.Context())
+	// this is needed for backwards compatibility with external plugins
+	// we should remove this once we can be sure that no external plugins rely on this
+	featureToggles["topnav"] = true
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
@@ -225,7 +231,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                         hs.Cfg.DateFormats,
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
-		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
+		EnableFrontendSandboxForPlugins:     hs.Cfg.EnableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
 		CloudMigrationIsTarget:              isCloudMigrationTarget,
@@ -258,7 +264,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			EnabledFeatures: hs.License.EnabledFeatures(),
 		},
 
-		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		FeatureToggles:                   featureToggles,
 		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
 		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
@@ -274,6 +280,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
 		PluginCatalogManagedPlugins:      hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
+		PluginCatalogPreinstalledPlugins: hs.Cfg.PreinstallPlugins,
 		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
@@ -410,7 +417,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
 			orgDataSources = dataSources
 		} else {
-			filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByQueryPermissions(dataSources)
+			filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
 			if err != nil {
 				return nil, err
 			}
@@ -449,11 +456,14 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
-			JSONData:  plugin.JSONData,
-			Signature: plugin.Signature,
-			Module:    plugin.Module,
-			BaseURL:   plugin.BaseURL,
-			Angular:   plugin.Angular,
+			JSONData:                  plugin.JSONData,
+			Signature:                 plugin.Signature,
+			Module:                    plugin.Module,
+			ModuleHash:                hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
+			BaseURL:                   plugin.BaseURL,
+			Angular:                   plugin.Angular,
+			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
+			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
 		}
 
 		if ds.JsonData == nil {
@@ -535,8 +545,9 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
 					Module:    ds.Module,
-					BaseURL:   ds.BaseURL,
-					Angular:   ds.Angular,
+					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
+					BaseURL: ds.BaseURL,
+					Angular: ds.Angular,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -550,13 +561,17 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 	return dataSources, nil
 }
 
-func newAppDTO(plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
+func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
 	app := &plugins.AppDTO{
-		ID:      plugin.ID,
-		Version: plugin.Info.Version,
-		Path:    plugin.Module,
-		Preload: false,
-		Angular: plugin.Angular,
+		ID:              plugin.ID,
+		Version:         plugin.Info.Version,
+		Path:            plugin.Module,
+		Preload:         false,
+		Angular:         plugin.Angular,
+		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
+		Extensions:      plugin.Extensions,
+		Dependencies:    plugin.Dependencies,
+		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
 	}
 
 	if settings.Enabled {

@@ -7,6 +7,7 @@ module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
+    swagger: './public/swagger/index.tsx',
   },
   output: {
     clean: true,
@@ -94,10 +95,6 @@ module.exports = {
             },
           },
         ],
-      },
-      {
-        test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
       },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,

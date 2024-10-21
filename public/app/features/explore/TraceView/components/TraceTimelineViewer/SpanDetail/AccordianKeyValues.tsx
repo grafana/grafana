@@ -16,11 +16,11 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
+import { TraceLink, TNil } from '../../types';
 
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
@@ -32,68 +32,68 @@ export const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       textOverflow: 'ellipsis',
     }),
-    header: css`
-      label: header;
-      cursor: pointer;
-      overflow: hidden;
-      padding: 0.25em 0.1em;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      &:hover {
-        background: ${autoColor(theme, '#e8e8e8')};
-      }
-    `,
-    headerEmpty: css`
-      label: headerEmpty;
-      background: none;
-      cursor: initial;
-    `,
-    headerHighContrast: css`
-      label: headerHighContrast;
-      &:hover {
-        background: ${autoColor(theme, '#ddd')};
-      }
-    `,
-    emptyIcon: css`
-      label: emptyIcon;
-      color: ${autoColor(theme, '#aaa')};
-    `,
-    summary: css`
-      label: summary;
-      display: inline;
-      list-style: none;
-      padding: 0;
-    `,
-    summaryItem: css`
-      label: summaryItem;
-      display: inline;
-      margin-left: 0.7em;
-      padding-right: 0.5rem;
-      border-right: 1px solid ${autoColor(theme, '#ddd')};
-      &:last-child {
-        padding-right: 0;
-        border-right: none;
-      }
-    `,
-    summaryLabel: css`
-      label: summaryLabel;
-      color: ${autoColor(theme, '#777')};
-    `,
-    summaryDelim: css`
-      label: summaryDelim;
-      color: ${autoColor(theme, '#bbb')};
-      padding: 0 0.2em;
-    `,
+    header: css({
+      label: 'header',
+      cursor: 'pointer',
+      overflow: 'hidden',
+      padding: '0.25em 0.1em',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      '&:hover': {
+        background: autoColor(theme, '#e8e8e8'),
+      },
+    }),
+    headerEmpty: css({
+      label: 'headerEmpty',
+      background: 'none',
+      cursor: 'initial',
+    }),
+    headerHighContrast: css({
+      label: 'headerHighContrast',
+      '&:hover': {
+        background: autoColor(theme, '#ddd'),
+      },
+    }),
+    emptyIcon: css({
+      label: 'emptyIcon',
+      color: autoColor(theme, '#aaa'),
+    }),
+    summary: css({
+      label: 'summary',
+      display: 'inline',
+      listStyle: 'none',
+      padding: 0,
+    }),
+    summaryItem: css({
+      label: 'summaryItem',
+      display: 'inline',
+      paddingRight: '0.5rem',
+      borderRight: `1px solid ${autoColor(theme, '#ddd')}`,
+      '&:last-child': {
+        paddingRight: 0,
+        borderRight: 'none',
+      },
+    }),
+    summaryLabel: css({
+      label: 'summaryLabel',
+      color: autoColor(theme, '#777'),
+    }),
+    summaryDelim: css({
+      label: 'summaryDelim',
+      color: autoColor(theme, '#bbb'),
+      padding: '0 0.2em',
+    }),
   };
 };
 
 export type AccordianKeyValuesProps = {
   className?: string | TNil;
   data: TraceKeyValuePair[];
+  logName?: string;
   highContrast?: boolean;
   interactive?: boolean;
   isOpen: boolean;
-  label: string;
+  label: string | React.ReactNode;
   linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   onToggle?: null | (() => void);
 };
@@ -127,6 +127,7 @@ export function KeyValuesSummary({ data = null }: KeyValuesSummaryProps) {
 export default function AccordianKeyValues({
   className = null,
   data,
+  logName,
   highContrast = false,
   interactive = true,
   isOpen,
@@ -134,11 +135,12 @@ export default function AccordianKeyValues({
   linksGetter,
   onToggle = null,
 }: AccordianKeyValuesProps) {
-  const isEmpty = !Array.isArray(data) || !data.length;
+  const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
   const styles = useStyles2(getStyles);
   const iconCls = cx(alignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
+  const tableFields = logName ? [{ key: 'event name', value: logName }, ...data] : data;
   if (interactive) {
     arrow = isOpen ? (
       <Icon name={'angle-down'} className={iconCls} />
@@ -151,6 +153,8 @@ export default function AccordianKeyValues({
       role: 'switch',
     };
   }
+
+  const showDataSummaryFields = data.length > 0 && !isOpen;
 
   return (
     <div className={cx(className, styles.container)}>
@@ -165,11 +169,15 @@ export default function AccordianKeyValues({
         {arrow}
         <strong data-test={markers.LABEL}>
           {label}
-          {isOpen || ':'}
+          {showDataSummaryFields && ':'}
         </strong>
-        {!isOpen && <KeyValuesSummary data={data} />}
+        {showDataSummaryFields && (
+          <span className={css({ marginLeft: '0.7em' })}>
+            <KeyValuesSummary data={data} />
+          </span>
+        )}
       </div>
-      {isOpen && <KeyValuesTable data={data} linksGetter={linksGetter} />}
+      {isOpen && <KeyValuesTable data={tableFields} linksGetter={linksGetter} />}
     </div>
   );
 }

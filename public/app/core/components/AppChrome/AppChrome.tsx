@@ -9,13 +9,16 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
+import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
 import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
-import { MegaMenu } from './MegaMenu/MegaMenu';
+import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
+import { SingleTopBar } from './TopBar/SingleTopBar';
+import { SingleTopBarActions } from './TopBar/SingleTopBarActions';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -26,11 +29,16 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles, searchBarHidden);
+  const styles = useStyles2(getStyles, searchBarHidden, Boolean(state.actions));
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
+  const scopesDashboardsState = useScopesDashboardsState();
+  const isScopesDashboardsOpen = Boolean(
+    scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened && !scopesDashboardsState?.isReadOnly
+  );
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -87,28 +95,55 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <header className={cx(styles.topNav)}>
-            {!searchBarHidden && <TopSearchBar />}
-            <NavToolbar
-              searchBarHidden={searchBarHidden}
-              sectionNav={state.sectionNav.node}
-              pageNav={state.pageNav}
-              actions={state.actions}
-              onToggleSearchBar={chrome.onToggleSearchBar}
-              onToggleMegaMenu={handleMegaMenu}
-              onToggleKioskMode={chrome.onToggleKioskMode}
-            />
+          {isSingleTopNav && menuDockedAndOpen && (
+            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+          )}
+          <header className={cx(styles.topNav, isSingleTopNav && menuDockedAndOpen && styles.topNavMenuDocked)}>
+            {isSingleTopNav ? (
+              <>
+                <SingleTopBar
+                  sectionNav={state.sectionNav.node}
+                  pageNav={state.pageNav}
+                  onToggleMegaMenu={handleMegaMenu}
+                  onToggleKioskMode={chrome.onToggleKioskMode}
+                />
+                {state.actions && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
+              </>
+            ) : (
+              <>
+                {!searchBarHidden && <TopSearchBar />}
+                <NavToolbar
+                  searchBarHidden={searchBarHidden}
+                  sectionNav={state.sectionNav.node}
+                  pageNav={state.pageNav}
+                  actions={state.actions}
+                  onToggleSearchBar={chrome.onToggleSearchBar}
+                  onToggleMegaMenu={handleMegaMenu}
+                  onToggleKioskMode={chrome.onToggleKioskMode}
+                />
+              </>
+            )}
           </header>
         </>
       )}
       <div className={contentClass}>
         <div className={styles.panes}>
-          {menuDockedAndOpen && (
+          {!isSingleTopNav && menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+          )}
+          {!state.chromeless && (
+            <div
+              className={cx(styles.scopesDashboardsContainer, {
+                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
+              })}
+            >
+              <ScopesDashboards />
+            </div>
           )}
           <main
             className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: config.featureToggles.bodyScrolling && menuDockedAndOpen,
+              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
             })}
             id="pageContent"
           >
@@ -125,14 +160,15 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
+const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean, hasActions: boolean) => {
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   return {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+      paddingTop: !isSingleTopNav || hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
       flexGrow: 1,
-      height: config.featureToggles.bodyScrolling ? 'auto' : '100%',
+      height: 'auto',
     }),
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT,
@@ -145,21 +181,30 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
         background: theme.colors.background.primary,
         borderRight: `1px solid ${theme.colors.border.weak}`,
         display: 'none',
+        width: MENU_WIDTH,
 
         [theme.breakpoints.up('xl')]: {
           display: 'block',
         },
       },
-      config.featureToggles.bodyScrolling
-        ? {
-            position: 'fixed',
-            height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
-            zIndex: 1,
-          }
-        : {
-            zIndex: theme.zIndex.navbarFixed,
-          }
+      {
+        position: 'fixed',
+        height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+        zIndex: 2,
+      },
+      isSingleTopNav && {
+        height: '100%',
+        top: 0,
+      }
     ),
+    scopesDashboardsContainer: css({
+      position: 'fixed',
+      height: `calc(100% - ${searchBarHidden || isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+      zIndex: 1,
+    }),
+    scopesDashboardsContainerDocked: css({
+      left: MENU_WIDTH,
+    }),
     topNav: css({
       display: 'flex',
       position: 'fixed',
@@ -169,46 +214,27 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
-    panes: css(
-      {
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-        label: 'page-panes',
-      },
-      !config.featureToggles.bodyScrolling && {
-        height: '100%',
-        minHeight: 0,
-        width: '100%',
-        [theme.breakpoints.up('md')]: {
-          flexDirection: 'row',
-        },
-      }
-    ),
-    pageContainerMenuDocked: css({
-      paddingLeft: '300px',
+    topNavMenuDocked: css({
+      left: MENU_WIDTH,
     }),
-    pageContainer: css(
-      {
-        label: 'page-container',
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-      },
-      !config.featureToggles.bodyScrolling && {
-        minHeight: 0,
-        minWidth: 0,
-        overflow: 'auto',
-        '@media print': {
-          overflow: 'visible',
-        },
-        '@page': {
-          margin: 0,
-          size: 'auto',
-          padding: 0,
-        },
-      }
-    ),
+    panes: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      label: 'page-panes',
+    }),
+    pageContainerMenuDocked: css({
+      paddingLeft: MENU_WIDTH,
+    }),
+    pageContainerMenuDockedScopes: css({
+      paddingLeft: `calc(${MENU_WIDTH} * 2)`,
+    }),
+    pageContainer: css({
+      label: 'page-container',
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+    }),
     skipLink: css({
       position: 'fixed',
       top: -1000,

@@ -6,6 +6,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
 
@@ -94,7 +95,9 @@ export const DataLinksInlineEditor = ({
     if (showOneClick) {
       return (
         <div className={styles.oneClickOverlay} key={key}>
-          <span className={styles.oneClickSpan}>One-click</span>
+          <span className={styles.oneClickSpan}>
+            <Trans i18nKey="grafana-ui.data-links-inline-editor.one-click-link">One-click link</Trans>
+          </span>
           {linkJSX}
         </div>
       );
@@ -112,16 +115,18 @@ export const DataLinksInlineEditor = ({
                 const key = `${link.title}/${idx}`;
 
                 const linkJSX = (
-                  <DataLinksListItem
-                    key={key}
-                    index={idx}
-                    link={link}
-                    onChange={onDataLinkChange}
-                    onEdit={() => setEditIndex(idx)}
-                    onRemove={() => onDataLinkRemove(idx)}
-                    data={data}
-                    itemKey={key}
-                  />
+                  <div className={styles.itemWrapper} key={key}>
+                    <DataLinksListItem
+                      key={key}
+                      index={idx}
+                      link={link}
+                      onChange={onDataLinkChange}
+                      onEdit={() => setEditIndex(idx)}
+                      onRemove={() => onDataLinkRemove(idx)}
+                      data={data}
+                      itemKey={key}
+                    />
+                  </div>
                 );
 
                 if (idx === 0) {
@@ -156,8 +161,8 @@ export const DataLinksInlineEditor = ({
         </Modal>
       )}
 
-      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary">
-        Add link
+      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary" className={styles.button}>
+        <Trans i18nKey="grafana-ui.data-links-inline-editor.add-link">Add link</Trans>
       </Button>
     </>
   );
@@ -168,19 +173,24 @@ const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(2),
     display: 'flex',
     flexDirection: 'column',
-    gap: 16,
   }),
   oneClickOverlay: css({
     height: 'auto',
-    minHeight: 69,
-    border: `1px dashed ${theme.colors.border.medium}`,
+    border: `2px dashed ${theme.colors.text.link}`,
     fontSize: 10,
-    color: theme.colors.text.link,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing(1),
   }),
   oneClickSpan: css({
     padding: 10,
     // Negates the padding on the span from moving the underlying link
     marginBottom: -10,
     display: 'inline-block',
+  }),
+  itemWrapper: css({
+    padding: '4px 8px 8px 8px',
+  }),
+  button: css({
+    marginLeft: theme.spacing(1),
   }),
 });

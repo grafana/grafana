@@ -60,8 +60,11 @@ func fromSocialErr(err *connectors.SocialError) error {
 	return errutil.Unauthorized("auth.oauth.userinfo.failed", errutil.WithPublicMessage(err.Error())).Errorf("%w", err)
 }
 
-var _ authn.LogoutClient = new(OAuth)
-var _ authn.RedirectClient = new(OAuth)
+var (
+	_ authn.LogoutClient           = new(OAuth)
+	_ authn.RedirectClient         = new(OAuth)
+	_ authn.SSOSettingsAwareClient = new(OAuth)
+)
 
 func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
@@ -203,6 +206,15 @@ func (c *OAuth) IsEnabled() bool {
 	return provider.Enabled
 }
 
+func (c *OAuth) GetConfig() authn.SSOClientConfig {
+	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if provider == nil {
+		return nil
+	}
+
+	return provider
+}
+
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	var opts []oauth2.AuthCodeOption
 
@@ -248,10 +260,9 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
 	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
 
-	namespace, id := user.GetTypedID()
-	userID, err := identity.UserIdentifier(namespace, id)
+	userID, err := identity.UserIdentifier(user.GetID())
 	if err != nil {
-		c.log.FromContext(ctx).Error("Failed to parse user id", "namespace", namespace, "id", id, "error", err)
+		c.log.FromContext(ctx).Error("Failed to parse user id", "id", user.GetID(), "error", err)
 		return nil, false
 	}
 
@@ -260,8 +271,7 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Red
 		AuthId:     user.GetAuthID(),
 		AuthModule: user.GetAuthenticatedBy(),
 	}); err != nil {
-		namespace, id := user.GetTypedID()
-		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "namespace", namespace, "id", id, "error", err)
+		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "id", user.GetID(), "error", err)
 	}
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
@@ -276,7 +286,7 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Red
 		return nil, false
 	}
 
-	if isOICDLogout(redirectURL) && token != nil && token.Valid() {
+	if isOIDCLogout(redirectURL) && token != nil && token.Valid() {
 		if idToken, ok := token.Extra("id_token").(string); ok {
 			redirectURL = withIDTokenHint(redirectURL, idToken)
 		}
@@ -348,7 +358,7 @@ func withIDTokenHint(redirectURL string, idToken string) string {
 	return u.String()
 }
 
-func isOICDLogout(redirectUrl string) bool {
+func isOIDCLogout(redirectUrl string) bool {
 	if redirectUrl == "" {
 		return false
 	}

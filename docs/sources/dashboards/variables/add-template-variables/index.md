@@ -236,7 +236,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 _Ad hoc filters_ enable you to add key/value filters that are automatically added to all metric queries that use the specified data source. Unlike other variables, you do not use ad hoc filters in queries. Instead, you use ad hoc filters to write filters for existing queries.
 
 {{% admonition type="note" %}}
-Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticsearch data sources.
+Not all data sources support ad hoc filters. Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
 {{% /admonition %}}
 
 1. [Enter general options](#enter-general-options).
@@ -304,7 +304,7 @@ Grafana has global built-in variables that can be used in expressions in the que
 
 ### $\_\_dashboard
 
-> Only available in Grafana v6.7+. In Grafana 7.1, the variable changed from showing the UID of the current dashboard to the name of the current dashboard.
+In Grafana 7.1, the variable changed from showing the UID of the current dashboard to the name of the current dashboard.
 
 This variable is the name of the current dashboard.
 
@@ -360,8 +360,6 @@ This variable is the ID of the current organization.
 `${__org.name}` is the name of the current organization.
 
 ### $\_\_user
-
-> Only available in Grafana v7.1+
 
 `${__user.id}` is the ID of the current user.
 `${__user.login}` is the login handle of the current user.

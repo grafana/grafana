@@ -26,7 +26,10 @@ import {
   displayNameOverrideProcessor,
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
+  Action,
 } from '@grafana/data';
+import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
+import { config } from '@grafana/runtime';
 import { FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -34,6 +37,7 @@ import { ThresholdsValueEditor } from 'app/features/dimensions/editors/Threshold
 import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
 
 import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
+import { ActionsValueEditor } from './actions';
 import { ColorValueEditor, ColorValueEditorSettings } from './color';
 import { FieldColorEditor } from './fieldColor';
 import { DataLinksValueEditor } from './links';
@@ -143,6 +147,13 @@ export const getAllOptionEditors = () => {
     editor: DataLinksValueEditor,
   };
 
+  const actions: StandardEditorsRegistryItem<Action[]> = {
+    id: 'actions',
+    name: 'Actions',
+    description: 'Allows defining actions',
+    editor: ActionsValueEditor,
+  };
+
   const statsPicker: StandardEditorsRegistryItem<string[], StatsPickerConfigSettings> = {
     id: 'stats-picker',
     name: 'Stats Picker',
@@ -194,6 +205,7 @@ export const getAllOptionEditors = () => {
     select,
     unit,
     links,
+    actions,
     statsPicker,
     strings,
     timeZone,
@@ -336,6 +348,8 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
+  const dataLinksCategory = config.featureToggles.vizActions ? 'Data links and actions' : 'Data links';
+
   const links: FieldConfigPropertyItem<FieldConfig, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
@@ -347,8 +361,24 @@ export const getAllStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
-    category: ['Data links'],
+    category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
+  };
+
+  const actions: FieldConfigPropertyItem<FieldConfig, Action[], StringFieldConfigSettings> = {
+    id: 'actions',
+    path: 'actions',
+    name: 'Actions',
+    editor: standardEditorsRegistry.get('actions').editor,
+    override: standardEditorsRegistry.get('actions').editor,
+    process: actionsOverrideProcessor,
+    settings: {
+      placeholder: '-',
+    },
+    shouldApply: () => true,
+    category: [dataLinksCategory],
+    getItemsCount: (value) => (value ? value.length : 0),
+    showIf: () => config.featureToggles.vizActions,
   };
 
   const color: FieldConfigPropertyItem<FieldConfig, FieldColor | undefined, FieldColorConfigSettings> = {
@@ -415,5 +445,19 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, fieldMinMax, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
+  return [
+    unit,
+    min,
+    max,
+    fieldMinMax,
+    decimals,
+    displayName,
+    color,
+    noValue,
+    links,
+    actions,
+    mappings,
+    thresholds,
+    filterable,
+  ];
 };

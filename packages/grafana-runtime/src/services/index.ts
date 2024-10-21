@@ -8,6 +8,8 @@ export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
+export * from './SidecarService_EXPERIMENTAL';
+export * from './SidecarContext_EXPERIMENTAL';
 
 export {
   setPluginExtensionGetter,
@@ -26,11 +28,11 @@ export {
   usePluginExtensions,
   usePluginLinkExtensions,
   usePluginComponentExtensions,
-  usePluginComponents,
-  usePluginLinks,
 } from './pluginExtensions/usePluginExtensions';
 
 export { setPluginComponentHook, usePluginComponent } from './pluginExtensions/usePluginComponent';
+export { setPluginComponentsHook, usePluginComponents } from './pluginExtensions/usePluginComponents';
+export { setPluginLinksHook, usePluginLinks } from './pluginExtensions/usePluginLinks';
 
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
 export { setCurrentUser } from './user';

@@ -1,10 +1,11 @@
 package sqltemplate
 
-// MySQL is the default implementation of Dialect for the MySQL DMBS, currently
-// supporting MySQL-8.x. It relies on having ANSI_QUOTES SQL Mode enabled. For
-// more information about ANSI_QUOTES and SQL Modes see:
-//
-//	https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_ansi_quotes
+import (
+	"strings"
+)
+
+// MySQL is the default implementation of Dialect for the MySQL DMBS,
+// currently supporting MySQL-8.x.
 var MySQL = mysql{
 	rowLockingClauseMap: rowLockingClauseAll,
 	argPlaceholderFunc:  argFmtSQL92,
@@ -14,8 +15,25 @@ var MySQL = mysql{
 var _ Dialect = MySQL
 
 type mysql struct {
-	standardIdent
+	backtickIdent
 	rowLockingClauseMap
 	argPlaceholderFunc
 	name
+}
+
+// MySQL always supports backticks for identifiers
+// https://dev.mysql.com/doc/refman/8.4/en/identifiers.html
+type backtickIdent struct{}
+
+func (backtickIdent) Ident(s string) (string, error) {
+	if strings.ContainsRune(s, '`') {
+		return "", ErrInvalidIdentInput
+	}
+	return escapeIdentity(s, '`', func(s string) string {
+		return s
+	})
+}
+
+func (mysql) CurrentEpoch() string {
+	return "CAST(FLOOR(UNIX_TIMESTAMP(NOW(6)) * 1000000) AS SIGNED)"
 }

@@ -1,8 +1,8 @@
-resource "grafana_mute_timing" "mute_timing_9e85e7a27b8f12ca" {
-  name = "interval"
+resource "grafana_mute_timing" "mute_timing_28f674b3cd26d778" {
+  name = "interval-1"
 }
-resource "grafana_mute_timing" "mute_timing_b469bb50150a4298" {
-  name = "full-interval"
+resource "grafana_mute_timing" "mute_timing_28f674b3cd26d77b" {
+  name = "interval-2"
 
   intervals {
 

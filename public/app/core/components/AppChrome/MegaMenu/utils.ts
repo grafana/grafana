@@ -98,7 +98,9 @@ export const getActiveItem = (
     }
   }
 
-  if (parentItem) {
+  // Do not search for the parent in the bookmarks section
+  const isInBookmarksSection = navTree[0]?.parentItem?.id === 'bookmarks';
+  if (parentItem && !isInBookmarksSection) {
     return getActiveItem(navTree, parentItem);
   }
 
@@ -129,4 +131,18 @@ export function getEditionAndUpdateLinks(): NavModelItem[] {
   }
 
   return links;
+}
+
+export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
+  for (const item of nodes) {
+    if (item.url === url) {
+      return item;
+    } else if (item.children?.length) {
+      const found = findByUrl(item.children, url);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
 }

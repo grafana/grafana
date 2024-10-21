@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -12,6 +12,7 @@ import { AngularDeprecationPluginNotice } from '../../angularDeprecation/Angular
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
+import { PluginDetailsRightPanel } from '../components/PluginDetailsRightPanel';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
@@ -72,26 +73,31 @@ export function PluginDetailsPage({
     );
   }
 
+  const conditionalProps = !config.featureToggles.pluginsDetailsRightPanel ? { info: info } : {};
+
   return (
-    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} info={info}>
-      <Page.Contents>
-        <TabContent className={styles.tabContent}>
-          {plugin.angularDetected && (
-            <AngularDeprecationPluginNotice
-              className={styles.alert}
-              angularSupportEnabled={config?.angularSupportEnabled}
-              pluginId={plugin.id}
-              pluginType={plugin.type}
-              showPluginDetailsLink={false}
-              interactionElementId="plugin-details-page"
-            />
-          )}
-          <PluginDetailsSignature plugin={plugin} className={styles.alert} />
-          <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
-          <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
-          <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
-        </TabContent>
-      </Page.Contents>
+    <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} {...conditionalProps}>
+      <Stack gap={4} justifyContent="space-between" direction={{ xs: 'column-reverse', sm: 'row' }}>
+        <Page.Contents>
+          <TabContent className={styles.tabContent}>
+            {plugin.angularDetected && (
+              <AngularDeprecationPluginNotice
+                className={styles.alert}
+                angularSupportEnabled={config?.angularSupportEnabled}
+                pluginId={plugin.id}
+                pluginType={plugin.type}
+                showPluginDetailsLink={false}
+                interactionElementId="plugin-details-page"
+              />
+            )}
+            <PluginDetailsSignature plugin={plugin} className={styles.alert} />
+            <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
+            <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
+            <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
+          </TabContent>
+        </Page.Contents>
+        {config.featureToggles.pluginsDetailsRightPanel && <PluginDetailsRightPanel info={info} plugin={plugin} />}
+      </Stack>
     </Page>
   );
 }
@@ -107,15 +113,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
     }),
     // Needed due to block formatting context
-    tabContent: config.featureToggles.bodyScrolling
-      ? css({
-          paddingLeft: '5px',
-        })
-      : css({
-          overflow: 'auto',
-          height: '100%',
-          paddingLeft: '5px',
-        }),
+    tabContent: css({
+      paddingLeft: '5px',
+    }),
   };
 };
 

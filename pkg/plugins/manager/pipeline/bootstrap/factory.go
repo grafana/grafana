@@ -25,7 +25,8 @@ func NewDefaultPluginFactory(assetPath *assetpath.Service) *DefaultPluginFactory
 
 func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class plugins.Class,
 	sig plugins.Signature) (*plugins.Plugin, error) {
-	plugin, err := f.newPlugin(bundle.Primary, class, sig)
+	parentInfo := assetpath.NewPluginInfo(bundle.Primary.JSONData, class, bundle.Primary.FS, nil)
+	plugin, err := f.newPlugin(bundle.Primary, class, sig, parentInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,8 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 
 	plugin.Children = make([]*plugins.Plugin, 0, len(bundle.Children))
 	for _, child := range bundle.Children {
-		cp, err := f.newPlugin(*child, class, sig)
+		childInfo := assetpath.NewPluginInfo(child.JSONData, class, child.FS, &parentInfo)
+		cp, err := f.newPlugin(*child, class, sig, childInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -47,8 +49,8 @@ func (f *DefaultPluginFactory) createPlugin(bundle *plugins.FoundBundle, class p
 	return plugin, nil
 }
 
-func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Class, sig plugins.Signature) (*plugins.Plugin, error) {
-	info := assetpath.NewPluginInfo(p.JSONData, class, p.FS)
+func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Class, sig plugins.Signature,
+	info assetpath.PluginInfo) (*plugins.Plugin, error) {
 	baseURL, err := f.assetPath.Base(info)
 	if err != nil {
 		return nil, fmt.Errorf("base url: %w", err)
@@ -69,14 +71,13 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
-	if err = setImages(plugin, f.assetPath); err != nil {
+	if err = setImages(plugin, f.assetPath, info); err != nil {
 		return nil, err
 	}
 	return plugin, nil
 }
 
-func setImages(p *plugins.Plugin, assetPath *assetpath.Service) error {
-	info := assetpath.NewPluginInfo(p.JSONData, p.Class, p.FS)
+func setImages(p *plugins.Plugin, assetPath *assetpath.Service, info assetpath.PluginInfo) error {
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
 		if len(*dst) == 0 {

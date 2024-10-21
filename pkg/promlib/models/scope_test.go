@@ -68,7 +68,7 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:  "Adhoc and Scope filter conflict - adhoc wins",
+			name:  "Adhoc and Scope filter conflict - adhoc wins (if not oneOf or notOneOf)",
 			query: `http_requests_total{job="prometheus"}`,
 			scopeFilters: []ScopeFilter{
 				{Key: "status", Value: "404", Operator: FilterOperatorEquals},
@@ -88,6 +88,24 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expected:  `capacity_bytes{job="alloy"} + available_bytes{job="alloy"} / 1024`,
 			expectErr: false,
 		},
+		{
+			name:  "OneOf Operator is combined into a single regex filter",
+			query: `http_requests_total{job="prometheus"}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "status", Values: []string{"404", "400"}, Operator: FilterOperatorOneOf},
+			},
+			expected:  `http_requests_total{job="prometheus",status=~"404|400"}`,
+			expectErr: false,
+		},
+		{
+			name:  "using __name__ as part of the query",
+			query: `{__name__="http_requests_total"}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "namespace", Value: "istio", Operator: FilterOperatorEquals},
+			},
+			expected:  `{__name__="http_requests_total",namespace="istio"}`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -98,7 +116,7 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, expr, tt.expected)
+				require.Equal(t, tt.expected, expr)
 			}
 		})
 	}

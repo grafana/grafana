@@ -54,11 +54,11 @@ export type UseAsyncMeta<Result, Args extends unknown[] = unknown[]> = {
 export function useAsync<Result, Args extends unknown[] = unknown[]>(
   asyncFn: (...params: Args) => Promise<Result>,
   initialValue: Result
-): [AsyncState<Result>, UseAsyncActions<Result, Args>, UseAsyncMeta<Result, Args>];
+): [UseAsyncActions<Result, Args>, AsyncState<Result>, UseAsyncMeta<Result, Args>];
 export function useAsync<Result, Args extends unknown[] = unknown[]>(
   asyncFn: (...params: Args) => Promise<Result>,
   initialValue?: Result
-): [AsyncState<Result | undefined>, UseAsyncActions<Result, Args>, UseAsyncMeta<Result, Args>];
+): [UseAsyncActions<Result, Args>, AsyncState<Result | undefined>, UseAsyncMeta<Result, Args>];
 
 /**
  * Tracks the result and errors of the provided async function and provides handles to control its execution.
@@ -70,7 +70,7 @@ export function useAsync<Result, Args extends unknown[] = unknown[]>(
 export function useAsync<Result, Args extends unknown[] = unknown[]>(
   asyncFn: (...params: Args) => Promise<Result>,
   initialValue?: Result
-): [AsyncState<Result | undefined>, UseAsyncActions<Result, Args>, UseAsyncMeta<Result, Args>] {
+): [UseAsyncActions<Result, Args>, AsyncState<Result | undefined>, UseAsyncMeta<Result, Args>] {
   const [state, setState] = useState<AsyncState<Result | undefined>>({
     status: 'not-executed',
     error: undefined,
@@ -119,7 +119,6 @@ export function useAsync<Result, Args extends unknown[] = unknown[]>(
   });
 
   return [
-    state,
     useMemo(
       () => ({
         reset() {
@@ -130,6 +129,7 @@ export function useAsync<Result, Args extends unknown[] = unknown[]>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
       []
     ),
+    state,
     { promise: promiseRef.current, lastArgs: argsRef.current },
   ];
 }

@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { t } from 'app/core/internationalization';
@@ -20,7 +21,9 @@ export class ShareLibraryPanelTab extends SceneObjectBase<ShareLibraryPanelTabSt
   static Component = ShareLibraryPanelTabRenderer;
 
   public getTabLabel() {
-    return t('share-modal.tab-title.library-panel', 'Library panel');
+    return config.featureToggles.newDashboardSharingComponent
+      ? t('share-panel.drawer.new-library-panel-title', 'New library panel')
+      : t('share-modal.tab-title.library-panel', 'Library panel');
   }
 }
 
@@ -48,7 +51,7 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
         dashboard={dashboardModel}
         panel={panelModel}
         onDismiss={() => {
-          modalRef?.resolve().onDismiss();
+          modalRef ? modalRef.resolve().onDismiss() : dashboardScene.closeModal();
         }}
         onCreateLibraryPanel={(libPanel: LibraryPanel) => dashboardScene.createLibraryPanel(panel, libPanel)}
       />

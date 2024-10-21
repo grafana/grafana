@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -48,7 +49,7 @@ func newQueryREST(builder *QueryAPIBuilder) *queryREST {
 }
 
 func (r *queryREST) New() runtime.Object {
-	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	// This is added as the "ResponseType" regardless what ProducesObject() says :)
 	return &query.QueryDataResponse{}
 }
 
@@ -121,17 +122,28 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
+			reason := metav1.StatusReasonInvalid
+			message := err.Error()
+
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				reason = metav1.StatusReasonNotFound
 				// TODO, can we wrap the error somehow?
-				err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
-					Status:  metav1.StatusFailure,
-					Code:    http.StatusBadRequest, // the URL is found, but includes bad requests
-					Reason:  metav1.StatusReasonNotFound,
-					Message: "datasource not found",
-				}}
+				message = "datasource not found"
 			}
+
+			err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusBadRequest,
+				Reason:  reason,
+				Message: message,
+			}}
+
 			responder.Error(err)
 			return
+		}
+
+		for i := range req.Requests {
+			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
 		}
 
 		// Actually run the query
@@ -153,6 +165,9 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		qdr = &backend.QueryDataResponse{}
 	case 1:
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
+		if alertQueryWithoutExpression(req) {
+			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
+		}
 	default:
 		qdr, err = b.executeConcurrentQueries(ctx, req.Requests)
 	}
@@ -192,11 +207,14 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	// Add user headers... here or in client.QueryData
-	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
-		Type: req.PluginId,
-		UID:  req.UID,
-	})
+	client, err := b.client.GetDataSourceClient(
+		ctx,
+		v0alpha1.DataSourceRef{
+			Type: req.PluginId,
+			UID:  req.UID,
+		},
+		req.Headers,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +277,7 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 			if theErr, ok := r.(error); ok {
 				err = theErr
 			} else if theErrString, ok := r.(string); ok {
-				err = fmt.Errorf(theErrString)
+				err = errors.New(theErrString)
 			} else {
 				err = fmt.Errorf("unexpected error - %s", b.userFacingDefaultError)
 			}
@@ -364,6 +382,35 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	return qdr, nil
 }
 
+func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
+	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
+	if len(req.Request.Queries) == 0 {
+		return nil, errors.New("no queries to convert")
+	}
+	if qdr == nil {
+		return nil, errors.New("queryDataResponse is nil")
+	}
+	allowLongFrames := false
+	refID := req.Request.Queries[0].RefID
+	if _, exist := qdr.Responses[refID]; !exist {
+		return nil, fmt.Errorf("refID '%s' does not exist", refID)
+	}
+	frames := qdr.Responses[refID].Frames
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, allowLongFrames)
+	if err != nil {
+		results.Error = err
+	}
+	qdr = &backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			refID: {
+				Frames: results.Values.AsDataFrames(refID),
+				Error:  results.Error,
+			},
+		},
+	}
+	return qdr, err
+}
+
 type responderWrapper struct {
 	wrapped    rest.Responder
 	onObjectFn func(statusCode int, obj runtime.Object)
@@ -392,4 +439,17 @@ func (r responderWrapper) Error(err error) {
 	}
 
 	r.wrapped.Error(err)
+}
+
+// Checks if the request only contains a single query and not expression.
+func alertQueryWithoutExpression(req parsedRequestInfo) bool {
+	if len(req.Requests) != 1 {
+		return false
+	}
+	headers := req.Requests[0].Headers
+	_, exist := headers[models.FromAlertHeaderName]
+	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
+		return true
+	}
+	return false
 }

@@ -20,9 +20,10 @@ type ManifestInfo struct {
 	Integrity string `json:"integrity,omitempty"`
 
 	// The known entrypoints
-	App   *EntryPointInfo `json:"app,omitempty"`
-	Dark  *EntryPointInfo `json:"dark,omitempty"`
-	Light *EntryPointInfo `json:"light,omitempty"`
+	App     *EntryPointInfo `json:"app,omitempty"`
+	Dark    *EntryPointInfo `json:"dark,omitempty"`
+	Light   *EntryPointInfo `json:"light,omitempty"`
+	Swagger *EntryPointInfo `json:"swagger,omitempty"`
 }
 
 type EntryPointInfo struct {
@@ -120,26 +121,50 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	}
 
 	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing app entry")
+		return nil, fmt.Errorf("missing app entry, try running `yarn build`")
 	}
 	if entryPoints.Dark == nil || len(entryPoints.Dark.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing dark entry")
+		return nil, fmt.Errorf("missing dark entry, try running `yarn build`")
 	}
 	if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing light entry")
+		return nil, fmt.Errorf("missing light entry, try running `yarn build`")
+	}
+	if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
+		return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
 	}
 
-	entryPointJSAssets := make([]dtos.EntryPointAsset, 0)
+	rsp := &dtos.EntryPointAssets{
+		JSFiles:         make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
+		CSSFiles:        make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.CSS)),
+		Dark:            entryPoints.Dark.Assets.CSS[0],
+		Light:           entryPoints.Light.Assets.CSS[0],
+		Swagger:         make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.JS)),
+		SwaggerCSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.CSS)),
+	}
+
 	for _, entry := range entryPoints.App.Assets.JS {
-		entryPointJSAssets = append(entryPointJSAssets, dtos.EntryPointAsset{
+		rsp.JSFiles = append(rsp.JSFiles, dtos.EntryPointAsset{
 			FilePath:  entry,
 			Integrity: integrity[entry],
 		})
 	}
-
-	return &dtos.EntryPointAssets{
-		JSFiles: entryPointJSAssets,
-		Dark:    entryPoints.Dark.Assets.CSS[0],
-		Light:   entryPoints.Light.Assets.CSS[0],
-	}, nil
+	for _, entry := range entryPoints.App.Assets.CSS {
+		rsp.CSSFiles = append(rsp.CSSFiles, dtos.EntryPointAsset{
+			FilePath:  entry,
+			Integrity: integrity[entry],
+		})
+	}
+	for _, entry := range entryPoints.Swagger.Assets.JS {
+		rsp.Swagger = append(rsp.Swagger, dtos.EntryPointAsset{
+			FilePath:  entry,
+			Integrity: integrity[entry],
+		})
+	}
+	for _, entry := range entryPoints.Swagger.Assets.CSS {
+		rsp.SwaggerCSSFiles = append(rsp.SwaggerCSSFiles, dtos.EntryPointAsset{
+			FilePath:  entry,
+			Integrity: integrity[entry],
+		})
+	}
+	return rsp, nil
 }

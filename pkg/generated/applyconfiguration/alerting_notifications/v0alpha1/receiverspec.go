@@ -4,14 +4,14 @@
 
 package v0alpha1
 
-// ReceiverSpecApplyConfiguration represents an declarative configuration of the ReceiverSpec type for use
+// ReceiverSpecApplyConfiguration represents a declarative configuration of the ReceiverSpec type for use
 // with apply.
 type ReceiverSpecApplyConfiguration struct {
 	Integrations []IntegrationApplyConfiguration `json:"integrations,omitempty"`
 	Title        *string                         `json:"title,omitempty"`
 }
 
-// ReceiverSpecApplyConfiguration constructs an declarative configuration of the ReceiverSpec type for use with
+// ReceiverSpecApplyConfiguration constructs a declarative configuration of the ReceiverSpec type for use with
 // apply.
 func ReceiverSpec() *ReceiverSpecApplyConfiguration {
 	return &ReceiverSpecApplyConfiguration{}

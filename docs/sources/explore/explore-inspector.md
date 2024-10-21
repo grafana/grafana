@@ -8,7 +8,7 @@ labels:
 keywords:
   - Explore
 title: Query inspector in Explore
-weight: 40
+weight: 15
 ---
 
 # Query inspector in Explore

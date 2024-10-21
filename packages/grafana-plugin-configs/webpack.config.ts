@@ -22,6 +22,10 @@ function skipFiles(f: string): boolean {
     // avoid copying package.json
     return false;
   }
+  if (f.includes('/project.json')) {
+    // avoid copying project.json
+    return false;
+  }
   return true;
 }
 
@@ -59,7 +63,6 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       'redux',
       'rxjs',
       'react-router',
-      'react-router-dom',
       'd3',
       'angular',
       '@grafana/ui',

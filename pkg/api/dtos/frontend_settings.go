@@ -204,7 +204,7 @@ type FrontendSettingsDTO struct {
 	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
-	DisableFrontendSandboxForPlugins    []string `json:"disableFrontendSandboxForPlugins"`
+	EnableFrontendSandboxForPlugins     []string `json:"enableFrontendSandboxForPlugins"`
 	ExploreDefaultTimeOffset            string   `json:"exploreDefaultTimeOffset"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
@@ -229,6 +229,7 @@ type FrontendSettingsDTO struct {
 	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
 	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
 	PluginCatalogManagedPlugins      []string                       `json:"pluginCatalogManagedPlugins"`
+	PluginCatalogPreinstalledPlugins []setting.InstallPlugin        `json:"pluginCatalogPreinstalledPlugins"`
 	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`

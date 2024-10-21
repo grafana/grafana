@@ -190,6 +190,18 @@ export const trackAlertRuleFormError = (
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
+export const trackNewGrafanaAlertRuleFormSavedSuccess = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_success');
+};
+
+export const trackNewGrafanaAlertRuleFormCancelled = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_aborted');
+};
+
+export const trackNewGrafanaAlertRuleFormError = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_error');
+};
+
 export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {
   const defaults = {
     grafana_version: config.buildInfo.version,
@@ -240,14 +252,6 @@ export function trackRulesSearchComponentInteraction(filter: keyof RulesFilter) 
 export function trackRulesListViewChange(payload: { view: string }) {
   reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
 }
-export function trackSwitchToSimplifiedRouting() {
-  reportInteraction('grafana_alerting_switch_to_simplified_routing');
-}
-
-export function trackSwitchToPoliciesRouting() {
-  reportInteraction('grafana_alerting_switch_to_policies_routing');
-}
-
 export function trackEditInputWithTemplate() {
   reportInteraction('grafana_alerting_contact_point_form_edit_input_with_template');
 }

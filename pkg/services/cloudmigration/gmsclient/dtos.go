@@ -4,12 +4,6 @@ import "time"
 
 type MigrateDataType string
 
-const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
-)
-
 type MigrateDataRequestDTO struct {
 	Items []MigrateDataRequestItemDTO `json:"items"`
 }
@@ -67,4 +61,15 @@ const (
 	EventDoneBuildingSnapshot   LocalEventType = "done_building_snapshot"
 	EventStartUploadingSnapshot LocalEventType = "start_uploading_snapshot"
 	EventDoneUploadingSnapshot  LocalEventType = "done_uploading_snapshot"
+)
+
+type GMSAPIError struct {
+	Message string `json:"message"`
+}
+
+// Error messages returned from GMS
+var (
+	GMSErrorMessageInstanceUnreachable   = "instance is unreachable"
+	GMSErrorMessageInstanceCheckingError = "checking if instance is reachable"
+	GMSErrorMessageInstanceFetching      = "fetching instance by stack id"
 )

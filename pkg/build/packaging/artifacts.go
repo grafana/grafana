@@ -1,9 +1,6 @@
 package packaging
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/grafana/grafana/pkg/build/config"
 )
 
@@ -12,11 +9,18 @@ const MainFolder = "main"
 const EnterpriseSfx = "-enterprise"
 const CacheSettings = "Cache-Control:public, max-age="
 
-type buildArtifact struct {
-	Os             string
-	Arch           string
-	urlPostfix     string
-	packagePostfix string
+type BuildArtifact struct {
+	// Distro can be "windows", "darwin", "deb", "rhel", or "linux"
+	Distro string
+	Arch   string
+	// Ext is the file extension without the "."
+	Ext         string
+	Musl        bool
+	RaspberryPi bool
+
+	// URL can be set optionally by another process
+	// Note: check other repos before determining this to be dead code
+	URL string
 }
 
 type PublishConfig struct {
@@ -32,110 +36,101 @@ type PublishConfig struct {
 	SimulateRelease bool
 }
 
-const rhelOS = "rhel"
-const debOS = "deb"
-
-func (t buildArtifact) GetURL(baseArchiveURL string, cfg PublishConfig) string {
-	rev := ""
-	prefix := "-"
-	if t.Os == debOS {
-		prefix = "_"
-	} else if t.Os == rhelOS {
-		rev = "-1"
-	}
-
-	version := cfg.Version
-	verComponents := strings.Split(version, "-")
-	if len(verComponents) > 2 {
-		panic(fmt.Sprintf("Version string contains more than one hyphen: %q", version))
-	}
-
-	switch t.Os {
-	case debOS, rhelOS:
-		if len(verComponents) > 1 {
-			// With Debian and RPM packages, it's customary to prefix any pre-release component with a ~, since this
-			// is considered of lower lexical value than the empty character, and this way pre-release versions are
-			// considered to be of a lower version than the final version (which lacks this suffix).
-			version = fmt.Sprintf("%s~%s", verComponents[0], verComponents[1])
-		}
-	}
-
-	// https://dl.grafana.com/oss/main/grafana_8.5.0~54094pre_armhf.deb: 404 Not Found
-	url := fmt.Sprintf("%s%s%s%s%s%s", baseArchiveURL, t.packagePostfix, prefix, version, rev, t.urlPostfix)
-	return url
-}
-
-var ArtifactConfigs = []buildArtifact{
+var LinuxArtifacts = []BuildArtifact{
 	{
-		Os:         debOS,
-		Arch:       "arm64",
-		urlPostfix: "_arm64.deb",
+		Distro: "linux",
+		Arch:   "arm64",
+		Ext:    "tar.gz",
 	},
 	{
-		Os:         rhelOS,
-		Arch:       "arm64",
-		urlPostfix: ".aarch64.rpm",
+		Distro: "deb",
+		Arch:   "amd64",
+		Ext:    "deb",
 	},
 	{
-		Os:         "linux",
-		Arch:       "arm64",
-		urlPostfix: ".linux-arm64.tar.gz",
-	},
-	// https://github.com/golang/go/issues/58425 disabling arm builds until go issue is resolved
-	// {
-	// 	Os:         debOS,
-	// 	Arch:       "armv7",
-	// 	urlPostfix: "_armhf.deb",
-	// },
-	// {
-	// 	Os:             debOS,
-	// 	Arch:           "armv6",
-	// 	packagePostfix: "-rpi",
-	// 	urlPostfix:     "_armhf.deb",
-	// },
-	// {
-	// 	Os:         rhelOS,
-	// 	Arch:       "armv7",
-	// 	urlPostfix: ".armhfp.rpm",
-	// },
-	// {
-	// 	Os:         "linux",
-	// 	Arch:       "armv6",
-	// 	urlPostfix: ".linux-armv6.tar.gz",
-	// },
-	// {
-	// 	Os:         "linux",
-	// 	Arch:       "armv7",
-	// 	urlPostfix: ".linux-armv7.tar.gz",
-	// },
-	{
-		Os:         "darwin",
-		Arch:       "amd64",
-		urlPostfix: ".darwin-amd64.tar.gz",
+		Distro: "rhel",
+		Arch:   "x86_64",
+		Ext:    "rpm",
 	},
 	{
-		Os:         "deb",
-		Arch:       "amd64",
-		urlPostfix: "_amd64.deb",
-	},
-	{
-		Os:         rhelOS,
-		Arch:       "amd64",
-		urlPostfix: ".x86_64.rpm",
-	},
-	{
-		Os:         "linux",
-		Arch:       "amd64",
-		urlPostfix: ".linux-amd64.tar.gz",
-	},
-	{
-		Os:         "win",
-		Arch:       "amd64",
-		urlPostfix: ".windows-amd64.zip",
-	},
-	{
-		Os:         "win-installer",
-		Arch:       "amd64",
-		urlPostfix: ".windows-amd64.msi",
+		Distro: "linux",
+		Arch:   "amd64",
+		Ext:    "tar.gz",
 	},
 }
+
+var DarwinArtifacts = []BuildArtifact{
+	{
+		Distro: "darwin",
+		Arch:   "amd64",
+		Ext:    "tar.gz",
+	},
+}
+
+var WindowsArtifacts = []BuildArtifact{
+	{
+		Distro: "windows",
+		Arch:   "amd64",
+		Ext:    "zip",
+	},
+	{
+		Distro: "windows",
+		Arch:   "amd64",
+		Ext:    "msi",
+	},
+}
+
+var ARMArtifacts = []BuildArtifact{
+	{
+		Distro: "deb",
+		Arch:   "arm64",
+		Ext:    "deb",
+	},
+	{
+		Distro: "rhel",
+		Arch:   "aarch64",
+		Ext:    "rpm",
+	},
+	{
+		Distro:      "deb",
+		Arch:        "armhf",
+		Ext:         "deb",
+		RaspberryPi: false,
+	},
+	{
+		Distro:      "deb",
+		Arch:        "armhf",
+		RaspberryPi: true,
+		Ext:         "deb",
+	},
+	{
+		Distro: "linux",
+		Arch:   "armv6",
+		Ext:    "tar.gz",
+	},
+	{
+		Distro: "linux",
+		Arch:   "armv7",
+		Ext:    "tar.gz",
+	},
+	{
+		Distro: "linux",
+		Arch:   "arm64",
+		Ext:    "tar.gz",
+	},
+	{
+		Distro: "linux",
+		Arch:   "amd64",
+		Ext:    "tar.gz",
+	},
+}
+
+func join(a []BuildArtifact, b ...[]BuildArtifact) []BuildArtifact {
+	for i := range b {
+		a = append(a, b[i]...)
+	}
+
+	return a
+}
+
+var ArtifactConfigs = join(LinuxArtifacts, DarwinArtifacts, WindowsArtifacts, ARMArtifacts)

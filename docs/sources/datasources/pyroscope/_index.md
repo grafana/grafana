@@ -16,8 +16,8 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grafana Pyroscope
-weight: 1150
+title: Pyroscope
+weight: 1350
 refs:
   flame-graph:
     - pattern: /docs/grafana/
@@ -51,7 +51,7 @@ To use profiling data, you should:
 
 - [Configure your application to send profiles](/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/)
 - [Configure the Grafana Pyroscope data source](./configure-pyroscope-data-source/).
-- [View and query profiling data in Explore](./query-profile-data/)
+- [View and query profiling data using Explore Profiles or the query editor ](./query-profile-data/)
 
 ## Integrate profiles into dashboards
 

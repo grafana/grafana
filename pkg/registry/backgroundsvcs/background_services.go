@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -29,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
@@ -63,6 +65,8 @@ func ProvideBackgroundServiceRegistry(
 	anon *anonimpl.AnonDeviceService,
 	ssoSettings *ssosettingsimpl.Service,
 	pluginExternal *pluginexternal.Service,
+	pluginInstaller *plugininstaller.Service,
+	accessControl accesscontrol.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -105,6 +109,8 @@ func ProvideBackgroundServiceRegistry(
 		anon,
 		ssoSettings,
 		pluginExternal,
+		pluginInstaller,
+		accessControl,
 	)
 }
 

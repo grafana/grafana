@@ -23,6 +23,7 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
+import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import {
   AlertmanagerGroup,
@@ -42,7 +43,7 @@ import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { InheritableProperties, getInheritedProperties } from '../../utils/notification-policies';
 import { InsertPosition } from '../../utils/routeTree';
 import { Authorize } from '../Authorize';
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
@@ -163,6 +164,7 @@ const Policy = (props: PolicyComponentProps) => {
 
   const groupBy = currentRoute.group_by;
   const muteTimings = currentRoute.mute_time_intervals ?? [];
+  const activeTimings = currentRoute.active_time_intervals ?? [];
 
   const timingOptions: TimingOptions = {
     group_wait: currentRoute.group_wait,
@@ -245,7 +247,9 @@ const Policy = (props: PolicyComponentProps) => {
                   ) : hasMatchers ? (
                     <Matchers matchers={matchers ?? []} formatter={getAmMatcherFormatter(alertManagerSourceName)} />
                   ) : (
-                    <span className={styles.metadata}>No matchers</span>
+                    <span className={styles.metadata}>
+                      <Trans i18nKey="alerting.policies.no-matchers">No matchers</Trans>
+                    </span>
                   )}
                   <Spacer />
                   {/* TODO maybe we should move errors to the gutter instead? */}
@@ -264,7 +268,7 @@ const Policy = (props: PolicyComponentProps) => {
                               type="button"
                               onClick={() => onAddPolicy(currentRoute, 'child')}
                             >
-                              New child policy
+                              <Trans i18nKey="alerting.policies.new-child">New child policy</Trans>
                             </Button>
                           ) : (
                             <Dropdown
@@ -296,7 +300,7 @@ const Policy = (props: PolicyComponentProps) => {
                                 icon="angle-down"
                                 type="button"
                               >
-                                Add new policy
+                                <Trans i18nKey="alerting.policies.new-policy">Add new policy</Trans>
                               </Button>
                             </Dropdown>
                           )}
@@ -305,12 +309,8 @@ const Policy = (props: PolicyComponentProps) => {
                     )}
                     {dropdownMenuActions.length > 0 && (
                       <Dropdown overlay={<Menu>{dropdownMenuActions}</Menu>}>
-                        <Button
-                          icon="ellipsis-h"
-                          variant="secondary"
-                          size="sm"
-                          type="button"
-                          aria-label="more-actions"
+                        <MoreButton
+                          aria-label={isDefaultPolicy ? 'more actions for default policy' : 'more actions for policy'}
                           data-testid="more-actions"
                         />
                       </Dropdown>
@@ -326,6 +326,7 @@ const Policy = (props: PolicyComponentProps) => {
                 contactPoint={contactPoint ?? undefined}
                 groupBy={groupBy}
                 muteTimings={muteTimings}
+                activeTimings={activeTimings}
                 timingOptions={timingOptions}
                 inheritedProperties={inheritedProperties}
                 alertManagerSourceName={alertManagerSourceName}
@@ -379,7 +380,9 @@ const Policy = (props: PolicyComponentProps) => {
                   className={styles.moreButtons}
                   onClick={() => setVisibleChildPolicies(visibleChildPolicies + POLICIES_PER_PAGE)}
                 >
-                  {moreCount} additional {pluralize('policy', moreCount)}
+                  <Trans i18nKey="alerting.policies.n-more-policies" count={moreCount}>
+                    {{ count: moreCount }} additional policies
+                  </Trans>
                 </Button>
               )}
             </>
@@ -397,6 +400,7 @@ interface MetadataRowProps {
   contactPoint?: string;
   groupBy?: string[];
   muteTimings?: string[];
+  activeTimings?: string[];
   timingOptions?: TimingOptions;
   inheritedProperties?: Partial<InheritableProperties>;
   alertManagerSourceName: string;
@@ -417,6 +421,7 @@ function MetadataRow({
   timingOptions,
   groupBy,
   muteTimings = [],
+  activeTimings = [],
   matchingInstancesPreview,
   inheritedProperties,
   matchingAlertGroups,
@@ -436,6 +441,7 @@ function MetadataRow({
   const singleGroup = isDefaultPolicy && isArray(groupBy) && groupBy.length === 0;
 
   const hasMuteTimings = Boolean(muteTimings.length);
+  const hasActiveTimings = Boolean(activeTimings.length);
 
   return (
     <div className={styles.metadataRow}>
@@ -450,12 +456,18 @@ function MetadataRow({
             data-testid="matching-instances"
           >
             <Text color="primary">{numberOfAlertInstances ?? '-'}</Text>
-            <span>{pluralize('instance', numberOfAlertInstances)}</span>
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.n-instances" count={numberOfAlertInstances ?? 0}>
+                instance
+              </Trans>
+            </span>
           </MetaText>
         )}
         {contactPoint && (
           <MetaText icon="at" data-testid="contact-point">
-            <span>Delivered to</span>
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.delivered-to">Delivered to</Trans>{' '}
+            </span>
             <ContactPointsHoverDetails
               alertManagerSourceName={alertManagerSourceName}
               receivers={receivers}
@@ -467,26 +479,42 @@ function MetadataRow({
           <>
             {customGrouping && (
               <MetaText icon="layer-group" data-testid="grouping">
-                <span>Grouped by</span>
+                <span>
+                  <Trans i18nKey="alerting.policies.metadata.grouped-by">Grouped by</Trans>{' '}
+                </span>
                 <Text color="primary">{groupBy.join(', ')}</Text>
               </MetaText>
             )}
             {singleGroup && (
               <MetaText icon="layer-group">
-                <span>Single group</span>
+                <span>
+                  <Trans i18nKey="alerting.policies.metadata.grouping.single-group">Single group</Trans>
+                </span>
               </MetaText>
             )}
             {noGrouping && (
               <MetaText icon="layer-group">
-                <span>Not grouping</span>
+                <span>
+                  <Trans i18nKey="alerting.policies.metadata.grouping.none">Not grouping</Trans>
+                </span>
               </MetaText>
             )}
           </>
         )}
         {hasMuteTimings && (
           <MetaText icon="calendar-slash" data-testid="mute-timings">
-            <span>Muted when</span>
-            <MuteTimings timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.mute-time">Muted when</Trans>{' '}
+            </span>
+            <TimeIntervals timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
+          </MetaText>
+        )}
+        {hasActiveTimings && (
+          <MetaText icon="calendar-alt" data-testid="active-timings">
+            <span>
+              <Trans i18nKey="alerting.policies.metadata.active-time">Active when</Trans>{' '}
+            </span>
+            <TimeIntervals timings={activeTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>
         )}
         {timingOptions && (
@@ -498,7 +526,9 @@ function MetadataRow({
         {hasInheritedProperties && (
           <>
             <MetaText icon="corner-down-right-alt" data-testid="inherited-properties">
-              <span>Inherited</span>
+              <span>
+                <Trans i18nKey="alerting.policies.metadata.inherited">Inherited</Trans>
+              </span>
               <InheritedProperties properties={inheritedProperties} />
             </MetaText>
           </>
@@ -514,7 +544,7 @@ export const useCreateDropdownMenuActions = (
   provisioned: boolean,
   onEditPolicy: (route: RouteWithID, isDefault?: boolean, readOnly?: boolean) => void,
   currentRoute: RouteWithID,
-  toggleShowExportDrawer: (nextValue?: any) => void,
+  toggleShowExportDrawer: () => void,
   onDeletePolicy: (route: RouteWithID) => void
 ) => {
   const [
@@ -600,7 +630,7 @@ const ProvisionedTooltip = (children: ReactNode) => (
 );
 
 const Errors: FC<{ errors: React.ReactNode[] }> = ({ errors }) => (
-  <HoverCard
+  <PopupCard
     arrow
     placement="top"
     content={
@@ -614,7 +644,7 @@ const Errors: FC<{ errors: React.ReactNode[] }> = ({ errors }) => (
     <span>
       <Badge icon="exclamation-circle" color="red" text={pluralize('error', errors.length, true)} />
     </span>
-  </HoverCard>
+  </PopupCard>
 );
 
 const ContinueMatchingIndicator: FC = () => {
@@ -644,10 +674,12 @@ function DefaultPolicyIndicator() {
   return (
     <>
       <Text element="h2" variant="body" weight="medium">
-        Default policy
+        <Trans i18nKey="alerting.policies.default-policy.title">Default policy</Trans>
       </Text>
       <span className={styles.metadata}>
-        All alert instances will be handled by the default policy if no other matching policies are found.
+        <Trans i18nKey="alerting.policies.default-policy.description">
+          All alert instances will be handled by the default policy if no other matching policies are found.
+        </Trans>
       </span>
     </>
   );
@@ -656,13 +688,13 @@ function DefaultPolicyIndicator() {
 function AutogeneratedRootIndicator() {
   return (
     <Text element="h3" variant="body" weight="medium">
-      Auto-generated policies
+      <Trans i18nKey="alerting.policies.generated-policies">Auto-generated policies</Trans>
     </Text>
   );
 }
 
 const InheritedProperties: FC<{ properties: InheritableProperties }> = ({ properties }) => (
-  <HoverCard
+  <PopupCard
     arrow
     placement="top"
     content={
@@ -680,10 +712,10 @@ const InheritedProperties: FC<{ properties: InheritableProperties }> = ({ proper
     <div>
       <Text color="primary">{pluralize('property', Object.keys(properties).length, true)}</Text>
     </div>
-  </HoverCard>
+  </PopupCard>
 );
 
-const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = ({
+const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> = ({
   timings,
   alertManagerSourceName,
 }) => {
@@ -707,16 +739,18 @@ const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = (
   */
   return (
     <div>
-      {timings.map((timing) => (
-        <TextLink
-          key={timing}
-          href={createMuteTimingLink(timing, alertManagerSourceName)}
-          color="primary"
-          variant="bodySmall"
-          inline={false}
-        >
-          {timing}
-        </TextLink>
+      {timings.map((timing, index) => (
+        <Fragment key={timing}>
+          <TextLink
+            href={createMuteTimingLink(timing, alertManagerSourceName)}
+            color="primary"
+            variant="bodySmall"
+            inline={false}
+          >
+            {timing}
+          </TextLink>
+          {index < timings.length - 1 && ', '}
+        </Fragment>
       ))}
     </div>
   );
@@ -847,12 +881,14 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
   const groupedIntegrations = groupBy(details.grafana_managed_receiver_configs, (config) => config.type);
 
   return (
-    <HoverCard
+    <PopupCard
       arrow
       placement="top"
       header={
         <MetaText icon="at">
-          <div>Contact Point</div>
+          <div>
+            <Trans i18nKey="alerting.contact-point">Contact Point</Trans>
+          </div>
           <Text color="primary">{contactPoint}</Text>
         </MetaText>
       }
@@ -879,7 +915,7 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
       >
         {contactPoint}
       </TextLink>
-    </HoverCard>
+    </PopupCard>
   );
 };
 
@@ -930,7 +966,7 @@ const routePropertyToValue = (
   if (isNotGrouping) {
     return (
       <Text variant="bodySmall" color="secondary">
-        Not grouping
+        <Trans i18nKey="alerting.policies.metadata.grouping.none">Not grouping</Trans>
       </Text>
     );
   }
@@ -938,7 +974,7 @@ const routePropertyToValue = (
   if (isSingleGroup) {
     return (
       <Text variant="bodySmall" color="secondary">
-        Single group
+        <Trans i18nKey="alerting.policies.metadata.grouping.single-group">Single group</Trans>
       </Text>
     );
   }

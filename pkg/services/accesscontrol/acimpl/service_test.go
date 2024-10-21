@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -41,8 +42,7 @@ func setupTestEnv(t testing.TB) *Service {
 		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		tracer:        tracing.InitializeTracerForTest(),
-		store:         database.ProvideService(db.InitTestReplDB(t)),
+		store:         database.ProvideService(db.InitTestDB(t)),
 		permRegistry:  permreg.ProvidePermissionRegistry(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
@@ -66,7 +66,7 @@ func TestUsageMetrics(t *testing.T) {
 
 			s := ProvideOSSService(
 				cfg,
-				database.ProvideService(db.InitTestReplDB(t)),
+				database.ProvideService(db.InitTestDB(t)),
 				&resourcepermissions.FakeActionSetSvc{},
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
@@ -74,6 +74,7 @@ func TestUsageMetrics(t *testing.T) {
 				nil,
 				nil,
 				permreg.ProvidePermissionRegistry(),
+				nil,
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
@@ -546,7 +547,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			// only the user's basic roles and the user's stored permissions
 			name:           "check namespacedId filter works correctly",
 			siuPermissions: listAllPerms,
-			searchOption:   accesscontrol.SearchOptions{TypedID: identity.NewTypedID(identity.TypeServiceAccount, 1)},
+			searchOption:   accesscontrol.SearchOptions{TypedID: identity.NewTypedID(claims.TypeServiceAccount, 1)},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -618,7 +619,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				TypedID:      identity.NewTypedID(identity.TypeUser, 2),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 2),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -643,7 +644,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "stored only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				TypedID:      identity.NewTypedID(identity.TypeUser, 2),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 2),
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
@@ -663,7 +664,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram and stored",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				TypedID:      identity.NewTypedID(identity.TypeUser, 2),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 2),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleAdmin): {Permissions: []accesscontrol.Permission{
@@ -693,7 +694,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action prefix filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				TypedID:      identity.NewTypedID(identity.TypeUser, 1),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 1),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -715,7 +716,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				Action:  accesscontrol.ActionTeamsRead,
-				TypedID: identity.NewTypedID(identity.TypeUser, 1),
+				TypedID: identity.NewTypedID(claims.TypeUser, 1),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -737,7 +738,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action sets are correctly included if an action is specified",
 			searchOption: accesscontrol.SearchOptions{
 				Action:  "dashboards:read",
-				TypedID: identity.NewTypedID(identity.TypeUser, 1),
+				TypedID: identity.NewTypedID(claims.TypeUser, 1),
 			},
 			withActionSets: true,
 			actionSets: map[string][]string{
@@ -770,7 +771,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action sets are correctly included if an action prefix is specified",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "dashboards",
-				TypedID:      identity.NewTypedID(identity.TypeUser, 1),
+				TypedID:      identity.NewTypedID(claims.TypeUser, 1),
 			},
 			withActionSets: true,
 			actionSets: map[string][]string{
@@ -900,6 +901,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
+			ac.cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 			for _, r := range tt.runs {
 				err := ac.SaveExternalServiceRole(ctx, r.cmd)
@@ -946,6 +948,7 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
+			ac.cfg.ManagedServiceAccountsEnabled = true
 			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 			if tt.initCmd != nil {

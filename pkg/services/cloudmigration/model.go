@@ -68,20 +68,29 @@ type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
-	Type   MigrateDataType `xorm:"resource_type" json:"type"`
-	RefID  string          `xorm:"resource_uid" json:"refId"`
-	Status ItemStatus      `xorm:"status" json:"status"`
-	Error  string          `xorm:"error_string" json:"error"`
+	Name      string            `xorm:"name" json:"name"`
+	Type      MigrateDataType   `xorm:"resource_type" json:"type"`
+	RefID     string            `xorm:"resource_uid" json:"refId"`
+	Status    ItemStatus        `xorm:"status" json:"status"`
+	Error     string            `xorm:"error_string" json:"error"`
+	ErrorCode ResourceErrorCode `xorm:"error_code" json:"error_code"`
 
 	SnapshotUID string `xorm:"snapshot_uid"`
+	ParentName  string `xorm:"parent_name" json:"parentName"`
 }
 
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType        MigrateDataType = "DASHBOARD"
+	DatasourceDataType       MigrateDataType = "DATASOURCE"
+	FolderDataType           MigrateDataType = "FOLDER"
+	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
+	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	ContactPointType         MigrateDataType = "CONTACT_POINT"
+	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
+	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
+	MuteTimingType           MigrateDataType = "MUTE_TIMING"
 )
 
 type ItemStatus string
@@ -91,6 +100,20 @@ const (
 	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
+)
+
+type ResourceErrorCode string
+
+const (
+	ErrDatasourceNameConflict     ResourceErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDashboardAlreadyManaged    ResourceErrorCode = "DASHBOARD_ALREADY_MANAGED"
+	ErrLibraryElementNameConflict ResourceErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
+	ErrUnsupportedDataType        ResourceErrorCode = "UNSUPPORTED_DATA_TYPE"
+	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
+	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
+	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
+	ErrOnlyCoreDataSources        ResourceErrorCode = "ONLY_CORE_DATA_SOURCES"
+	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
 )
 
 type SnapshotResourceStats struct {
@@ -142,6 +165,7 @@ type ListSnapshotsQuery struct {
 	SessionUID string
 	Page       int
 	Limit      int
+	Sort       string
 }
 
 type UpdateSnapshotCmd struct {
@@ -182,7 +206,8 @@ type Base64HGInstance struct {
 // GMS domain structs
 
 type MigrateDataRequest struct {
-	Items []MigrateDataRequestItem
+	Items           []MigrateDataRequestItem
+	ItemParentNames map[MigrateDataType]map[string](string)
 }
 
 type MigrateDataRequestItem struct {
@@ -228,4 +253,14 @@ const (
 	SnapshotStateCanceled    SnapshotState = "CANCELED"
 	SnapshotStateError       SnapshotState = "ERROR"
 	SnapshotStateUnknown     SnapshotState = "UNKNOWN"
+)
+
+var (
+	ErrTokenInvalid           = errutil.Internal("cloudmigrations.createMigration.tokenInvalid", errutil.WithPublicMessage("Token is not valid. Generate a new token on your cloud instance and try again."))
+	ErrTokenRequestError      = errutil.Internal("cloudmigrations.createMigration.tokenRequestError", errutil.WithPublicMessage("An error occurred while validating the token. Please check the Grafana instance logs."))
+	ErrTokenValidationFailure = errutil.Internal("cloudmigrations.createMigration.tokenValidationFailure", errutil.WithPublicMessage("Token is not valid. Please ensure the token matches the migration token on your cloud instance."))
+	ErrInstanceUnreachable    = errutil.Internal("cloudmigrations.createMigration.instanceUnreachable", errutil.WithPublicMessage("The cloud instance cannot be reached. Make sure the instance is running and try again."))
+	ErrInstanceRequestError   = errutil.Internal("cloudmigrations.createMigration.instanceRequestError", errutil.WithPublicMessage("An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status."))
+	ErrSessionCreationFailure = errutil.Internal("cloudmigrations.createMigration.sessionCreationFailure", errutil.WithPublicMessage("There was an error creating the migration. Please try again."))
+	ErrMigrationDisabled      = errutil.Internal("cloudmigrations.createMigration.migrationDisabled", errutil.WithPublicMessage("Cloud migrations are disabled on this instance."))
 )

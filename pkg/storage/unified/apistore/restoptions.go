@@ -24,19 +24,25 @@ import (
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
+// This is a copy of the original flag, as we are not allowed to import grafana core.
+const bigObjectSupportFlag = "unifiedStorageBigObjectsSupport"
+
 type RESTOptionsGetter struct {
-	client   resource.ResourceStoreClient
+	client   resource.ResourceClient
 	original storagebackend.Config
+	// As we are not allowed to import the feature management directly, we pass a map of enabled features.
+	features map[string]any
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceStoreClient, original storagebackend.Config) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config, features map[string]any) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:   client,
 		original: original,
+		features: features,
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, features map[string]any) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
@@ -50,8 +56,9 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 		return nil, err
 	}
 	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceStoreClient(server),
+		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
+		features,
 	), nil
 }
 
@@ -59,7 +66,8 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
 func NewRESTOptionsGetterForFile(path string,
-	originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+	originalStorageConfig storagebackend.Config,
+	features map[string]any) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
@@ -84,12 +92,15 @@ func NewRESTOptionsGetterForFile(path string,
 		return nil, err
 	}
 	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceStoreClient(server),
+		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
+		features,
 	), nil
 }
 
-func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+// TODO: The RESTOptionsGetter interface added a new example object parameter to help determine the default
+// storage version for a resource. This is not currently used in this implementation.
+func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runtime.Object) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
 			Type:                      "resource",
@@ -120,7 +131,12 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
+			if _, enabled := r.features[bigObjectSupportFlag]; enabled {
+				return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
+					trigger, indexers, LargeObjectSupportEnabled)
+			}
+			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
+				trigger, indexers, LargeObjectSupportDisabled)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,

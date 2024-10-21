@@ -106,6 +106,7 @@ export const Components = {
           metricsBrowser: {
             openButton: 'data-testid open metrics browser',
             selectMetric: 'data-testid select a metric',
+            seriesLimit: 'data-testid series limit',
             metricList: 'data-testid metric list',
             labelNamesFilter: 'data-testid label names filter',
             labelValuesFilter: 'data-testid label values filter',
@@ -380,6 +381,7 @@ export const Components = {
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
+    commandPaletteTrigger: 'data-testid Command palette trigger',
     shareDashboard: 'data-testid Share dashboard',
     markAsFavorite: 'data-testid Mark as favorite',
     editDashboard: {
@@ -421,6 +423,7 @@ export const Components = {
   },
   Select: {
     option: 'data-testid Select option',
+    toggleAllOptions: 'data-testid toggle all options',
     input: () => 'input[id*="time-options-input"]',
     singleValue: () => 'div[class*="-singleValue"]',
   },
