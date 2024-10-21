@@ -10,6 +10,7 @@ import {
   QueryResultMetaStat,
   shallowCompare,
 } from '@grafana/data';
+
 import { LOADING_FRAME_NAME } from './querySplitting';
 
 export function combineResponses(currentResponse: DataQueryResponse | null, newResponse: DataQueryResponse) {
@@ -109,14 +110,7 @@ export function mergeFrames(dest: DataFrame, source: DataFrame) {
   for (let i = 0; i < sourceTimeValues.length; i++) {
     const destIdx = resolveIdx(destTimeField, sourceTimeField, i);
 
-    const entryExistsInDest = compareEntries(
-      destTimeField,
-      destIdField,
-      destIdx,
-      sourceTimeField,
-      sourceIdField,
-      i
-    );
+    const entryExistsInDest = compareEntries(destTimeField, destIdField, destIdx, sourceTimeField, sourceIdField, i);
 
     for (let f = 0; f < totalFields; f++) {
       // For now, skip undefined fields that exist in the new frame
@@ -200,14 +194,18 @@ function compareEntries(
     return true;
   }
   // Log frames, check indexes
-  return destIdField.values[destIndex] !== undefined && destIdField.values[destIndex] === sourceIdField.values[sourceIndex];
+  return (
+    destIdField.values[destIndex] !== undefined && destIdField.values[destIndex] === sourceIdField.values[sourceIndex]
+  );
 }
 
 function compareNsTimestamps(destField: Field, destIndex: number, sourceField: Field, sourceIndex: number) {
   if (destField.nanos && sourceField.nanos) {
     return (
-      destField.values[destIndex] !== undefined && destField.values[destIndex] === sourceField.values[sourceIndex] &&
-      destField.nanos[destIndex] !== undefined && destField.nanos[destIndex] === sourceField.nanos[sourceIndex]
+      destField.values[destIndex] !== undefined &&
+      destField.values[destIndex] === sourceField.values[sourceIndex] &&
+      destField.nanos[destIndex] !== undefined &&
+      destField.nanos[destIndex] === sourceField.nanos[sourceIndex]
     );
   }
   return destField.values[destIndex] !== undefined && destField.values[destIndex] === sourceField.values[sourceIndex];
