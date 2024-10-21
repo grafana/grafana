@@ -370,28 +370,3 @@ func parseList(legacyList []runtime.Object) (map[string]int, error) {
 	}
 	return indexMap, nil
 }
-
-func addLabelsAndAnnotations(fromObj, toObj runtime.Object) error {
-	accToObj, err := meta.Accessor(toObj)
-	if err != nil {
-		return err
-	}
-
-	accFromObj, err := meta.Accessor(fromObj)
-	if err != nil {
-		return err
-	}
-
-	accToObj.SetLabels(accFromObj.GetLabels())
-
-	ac := accToObj.GetAnnotations()
-	if ac == nil {
-		ac = map[string]string{}
-	}
-	for k, v := range accFromObj.GetAnnotations() {
-		ac[k] = v
-	}
-	accToObj.SetAnnotations(ac)
-
-	return nil
-}
