@@ -2,7 +2,7 @@
   "name": "@grafana-plugins/zipkin",
   "description": "Zipkin plugin for Grafana",
   "private": true,
-  "version": "11.3.0-pre",
+  "version": "11.4.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.4",
     "@grafana/data": "workspace:*",
@@ -21,8 +21,9 @@
   },
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
-    "@testing-library/jest-dom": "6.4.2",
-    "@testing-library/react": "15.0.2",
+    "@testing-library/dom": "10.4.0",
+    "@testing-library/jest-dom": "6.5.0",
+    "@testing-library/react": "16.0.1",
     "@types/jest": "29.5.13",
     "@types/lodash": "4.17.10",
     "@types/node": "20.16.11",
@@ -40,5 +41,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.5.0"
+  "packageManager": "yarn@4.5.1"
 }

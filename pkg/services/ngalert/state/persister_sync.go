@@ -30,12 +30,12 @@ func NewSyncStatePersisiter(log log.Logger, cfg ManagerCfg) StatePersister {
 	}
 }
 
-func (a *SyncStatePersister) Async(_ context.Context, _ *cache) {
+func (a *SyncStatePersister) Async(_ context.Context, _ AlertInstancesProvider) {
 	a.log.Debug("Async: No-Op")
 }
 
 // Sync persists the state transitions to the database. It deletes stale states and saves the current states.
-func (a *SyncStatePersister) Sync(ctx context.Context, span trace.Span, allStates StateTransitions) {
+func (a *SyncStatePersister) Sync(ctx context.Context, span trace.Span, _ ngModels.AlertRuleKeyWithGroup, allStates StateTransitions) {
 	staleStates := allStates.StaleStates()
 	if len(staleStates) > 0 {
 		a.deleteAlertStates(ctx, staleStates)

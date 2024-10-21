@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { isFetchError, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -9,29 +9,12 @@ import {
   useDeleteCloudMigrationTokenMutation,
   useGetCloudMigrationTokenQuery,
 } from '../../api';
+import { maybeAPIError } from '../../api/errors';
 import { TokenErrorAlert } from '../TokenErrorAlert';
 
 import { CreateTokenModal } from './CreateTokenModal';
 import { DeleteTokenConfirmationModal } from './DeleteTokenConfirmationModal';
 import { TokenStatus } from './TokenStatus';
-
-// TODO: candidate to hoist and share
-function maybeAPIError(err: unknown) {
-  if (!isFetchError<unknown>(err) || typeof err.data !== 'object' || !err.data) {
-    return null;
-  }
-
-  const data = err?.data;
-  const message = 'message' in data && typeof data.message === 'string' ? data.message : null;
-  const messageId = 'messageId' in data && typeof data.messageId === 'string' ? data.messageId : null;
-  const statusCode = 'statusCode' in data && typeof data.statusCode === 'number' ? data.statusCode : null;
-
-  if (!message || !messageId || !statusCode) {
-    return null;
-  }
-
-  return { message, messageId, statusCode };
-}
 
 export const MigrationTokenPane = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);

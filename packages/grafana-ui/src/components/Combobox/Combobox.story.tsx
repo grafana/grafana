@@ -1,10 +1,15 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
-import React, { ComponentProps, useEffect, useState } from 'react';
+import React, { ComponentProps, useCallback, useEffect, useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
+
+import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
+import { Divider } from '../Divider/Divider';
 import { Field } from '../Forms/Field';
+import { Select, AsyncSelect } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
 
@@ -73,7 +78,6 @@ async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: chance.sentence({ words: index % 5 }),
     value: chance.guid(),
-    //description: chance.sentence(),
   }));
 }
 
@@ -88,7 +92,6 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
         setIsLoading(false);
         setOptions(options);
         setValue(options[5].value);
-        console.log("I've set stuff");
       });
     }, 1000);
   }, [numberOfOptions]);
@@ -104,6 +107,127 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
         action('onChange')(opt);
       }}
     />
+  );
+};
+
+const SelectComparisonStory: StoryFn<typeof Combobox> = (args) => {
+  const [comboboxValue, setComboboxValue] = useState(args.value);
+  const theme = useTheme2();
+
+  if (typeof args.options === 'function') {
+    throw new Error('This story does not support async options');
+  }
+
+  return (
+    <div style={{ border: '1px solid ' + theme.colors.border.weak, padding: 16 }}>
+      <Field label="Combobox with default size">
+        <Combobox
+          id="combobox-default-size"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with default size">
+        <Select
+          id="select-default-size"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Divider />
+
+      <Field label="Combobox with explicit size (25)">
+        <Combobox
+          id="combobox-explicit-size"
+          width={25}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with explicit size (25)">
+        <Select
+          id="select-explicit-size"
+          width={25}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Divider />
+
+      <Field label="Combobox with auto width, minWidth 15">
+        <Combobox
+          id="combobox-auto-size"
+          width="auto"
+          minWidth={15}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with auto width">
+        <Select
+          id="select-auto-size"
+          width="auto"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Combobox with auto width, minWidth 15, empty value">
+        <Combobox
+          id="combobox-auto-size-empty"
+          width="auto"
+          minWidth={15}
+          value={null}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with auto width, empty value">
+        <Select
+          id="select-auto-size-empty"
+          width="auto"
+          value={null}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+    </div>
   );
 };
 
@@ -130,6 +254,89 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
   },
 };
 
+const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  // Combobox
+  const [selectedOption, setSelectedOption] = useState<ComboboxOption<string> | null>(null);
+
+  // AsyncSelect
+  const [asyncSelectValue, setAsyncSelectValue] = useState<SelectableValue<string> | null>(null);
+
+  // This simulates a kind of search API call
+  const loadOptionsWithLabels = useCallback((inputValue: string) => {
+    console.info(`Load options called with value '${inputValue}' `);
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+  }, []);
+
+  const loadOptionsOnlyValues = useCallback((inputValue: string) => {
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`).then((options) =>
+      options.map((opt) => ({ value: opt.label! }))
+    );
+  }, []);
+
+  return (
+    <>
+      <Field
+        label="Options with labels"
+        description="This tests when options have both a label and a value. Consumers are required to pass in a full ComboboxOption as a value with a label"
+      >
+        <Combobox
+          id="test-combobox-one"
+          placeholder="Select an option"
+          options={loadOptionsWithLabels}
+          value={selectedOption}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+          createCustomValue={args.createCustomValue}
+        />
+      </Field>
+
+      <Field
+        label="Options without labels"
+        description="Or without labels, where consumer can just pass in a raw scalar value Value"
+      >
+        <Combobox
+          id="test-combobox-two"
+          placeholder="Select an option"
+          options={loadOptionsOnlyValues}
+          value={selectedOption?.value ?? null}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+          createCustomValue={args.createCustomValue}
+        />
+      </Field>
+
+      <Field label="Compared to AsyncSelect">
+        <AsyncSelect
+          id="test-async-select"
+          placeholder="Select an option"
+          loadOptions={loadOptionsWithLabels}
+          value={asyncSelectValue}
+          defaultOptions
+          onChange={(val) => {
+            action('onChange')(val);
+            setAsyncSelectValue(val);
+          }}
+        />
+      </Field>
+    </>
+  );
+};
+
+export const Async: StoryObj<PropsAndCustomArgs> = {
+  render: AsyncStory,
+};
+
+export const ComparisonToSelect: StoryObj<PropsAndCustomArgs> = {
+  args: {
+    numberOfOptions: 100,
+  },
+  render: SelectComparisonStory,
+};
+
 export default meta;
 
 function InDevDecorator(Story: React.ElementType) {
@@ -144,4 +351,29 @@ function InDevDecorator(Story: React.ElementType) {
       <Story />
     </div>
   );
+}
+
+let fakeApiOptions: Array<ComboboxOption<string>>;
+async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOption<string>>> {
+  const searchParams = new URL(urlString).searchParams;
+
+  if (!fakeApiOptions) {
+    fakeApiOptions = await generateOptions(1000);
+  }
+
+  const searchQuery = searchParams.get('query')?.toLowerCase();
+
+  if (!searchQuery || searchQuery.length === 0) {
+    return Promise.resolve(fakeApiOptions.slice(0, 10));
+  }
+
+  const filteredOptions = Promise.resolve(
+    fakeApiOptions.filter((opt) => opt.label?.toLowerCase().includes(searchQuery))
+  );
+
+  const delay = searchQuery.length % 2 === 0 ? 200 : 1000;
+
+  return new Promise<Array<ComboboxOption<string>>>((resolve) => {
+    setTimeout(() => resolve(filteredOptions), delay);
+  });
 }

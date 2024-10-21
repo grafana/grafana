@@ -35,9 +35,6 @@
   },
   "alert-rule-form": {
     "evaluation-behaviour": {
-      "description": {
-        "text": "Define how the alert rule is evaluated."
-      },
       "info-help": {
         "text": "Define the alert behavior when the evaluation fails or the query returns no data."
       },
@@ -53,9 +50,33 @@
     "evaluation-behaviour-group": {
       "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
     },
-    "pause": "Pause evaluation"
+    "pause": {
+      "alerting": "Turn on to pause evaluation for this alert rule.",
+      "label": "Pause evaluation",
+      "recording": "Turn on to pause evaluation for this recording rule."
+    }
   },
   "alerting": {
+    "alert-recording-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the recording rule is evaluated."
+        }
+      }
+    },
+    "alert-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the alert rule is evaluated."
+        }
+      }
+    },
+    "alertform": {
+      "labels": {
+        "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
+        "recording": "Add labels to your rule."
+      }
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
@@ -140,6 +161,20 @@
     },
     "contactPointFilter": {
       "label": "Contact point"
+    },
+    "folderAndGroup": {
+      "evaluation": {
+        "modal": {
+          "text": {
+            "alerting": "Create a new evaluation group to use for this alert rule.",
+            "recording": "Create a new evaluation group to use for this recording rule."
+          }
+        },
+        "text": {
+          "alerting": "Define how often the alert rule is evaluated.",
+          "recording": "Define how often the recording rule is evaluated."
+        }
+      }
     },
     "list-view": {
       "empty": {
@@ -284,6 +319,11 @@
       "ofQuery": {
         "To": "TO"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Misconfigured",
+      "misconfigured-warning": "This template is misconfigured.",
+      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
     }
   },
   "annotations": {
@@ -978,6 +1018,7 @@
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
       "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-label": "Share",
       "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
@@ -1021,11 +1062,76 @@
     "send-custom-feedback": "Send"
   },
   "grafana-ui": {
+    "auto-save-field": {
+      "saved": "Saved!",
+      "saving": "Saving <1></1>"
+    },
+    "color-picker-popover": {
+      "palette-tab": "Colors",
+      "spectrum-tab": "Custom"
+    },
+    "confirm-button": {
+      "cancel": "Cancel"
+    },
+    "data-link-editor": {
+      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions."
+    },
+    "data-link-editor-modal": {
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "data-links-inline-editor": {
+      "add-link": "Add link",
+      "one-click-link": "One-click link"
+    },
+    "data-links-list-item": {
+      "compact-explore-disclaimer": "Explore data link may not work in the future. Please edit."
+    },
+    "data-source-http-settings": {
+      "access-help": "Help <1></1>",
+      "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "allowed-cookies": "Allowed cookies",
+      "auth": "Auth",
+      "basic-auth": "Basic Auth Details",
+      "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
+      "browser-mode-title": "<0>Browser access mode:</0>",
+      "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
+      "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
+      "heading": "HTTP",
+      "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
+      "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
+      "server-mode-title": "<0>Server access mode (Default):</0>"
+    },
+    "data-source-settings": {
+      "alerting-settings-heading": "Alerting",
+      "cert-key-reset": "Reset",
+      "custom-headers-add": "Add header",
+      "custom-headers-title": "Custom HTTP Headers",
+      "secure-socks-heading": "Secure Socks Proxy",
+      "tls-heading": "TLS/SSL Auth Details"
+    },
+    "date-time-picker": {
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
     "drawer": {
       "close": "Close"
     },
+    "field-link-list": {
+      "external-links-heading": "External links"
+    },
+    "file-dropzone": {
+      "cancel-upload": "Cancel upload",
+      "file-too-large": "File is larger than {{size}}"
+    },
+    "filter-input": {
+      "clear": "Clear"
+    },
     "modal": {
       "close-tooltip": "Close"
+    },
+    "secret-form-field": {
+      "reset": "Reset"
     },
     "segment-async": {
       "error": "Failed to load options",
@@ -1033,6 +1139,7 @@
       "no-options": "No options found"
     },
     "select": {
+      "default-create-label": "Hit enter to add",
       "no-options-label": "No options found",
       "placeholder": "Choose"
     },
@@ -1040,7 +1147,26 @@
       "aria-label": "Loading"
     },
     "table": {
-      "copy": "Copy to Clipboard"
+      "copy": "Copy to Clipboard",
+      "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
+      "filter-popup-apply": "Ok",
+      "filter-popup-cancel": "Cancel",
+      "filter-popup-clear": "Clear filter",
+      "filter-popup-heading": "Filter by values:",
+      "no-values-label": "No values",
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+    },
+    "tags-input": {
+      "add": "Add"
+    },
+    "user-icon": {
+      "active-text": "Active last 15m"
+    },
+    "viz-legend": {
+      "right-axis-indicator": "(right y-axis)"
+    },
+    "viz-tooltip": {
+      "footer-add-annotation": "Add annotation"
     }
   },
   "graph": {
@@ -1096,7 +1222,6 @@
   "help-wizard": {
     "download-snapshot": "Download snapshot",
     "github-comment": "Copy Github comment",
-    "preview-snapshot": "Preview snapshot",
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
     "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
   },
@@ -1362,8 +1487,17 @@
       "connect": "Connect to this stack",
       "connecting": "Connecting to this stack...",
       "title": "Connect to a cloud stack",
-      "token-error-description": "There was an error saving the token. See the Grafana server logs for more details.",
       "token-error-title": "Error saving token",
+      "token-errors": {
+        "instance-request-error": "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status.",
+        "instance-unreachable": "The cloud instance cannot be reached. Make sure the instance is running and try again.",
+        "migration-disabled": "Cloud migrations are disabled on this instance.",
+        "session-creation-failure": "There was an error creating the migration. Please try again.",
+        "token-invalid": "Token is not valid. Generate a new token on your cloud instance and try again.",
+        "token-not-saved": "There was an error saving the token. See the Grafana server logs for more details.",
+        "token-request-error": "An error occurred while validating the token. Please check the Grafana instance logs.",
+        "token-validation-failure": "Token is not valid. Please ensure the token matches the migration token on your cloud instance."
+      },
       "token-required-error": "Migration token is required"
     },
     "cta": {
@@ -1406,10 +1540,14 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "contact_points": "contact points",
       "dashboards": "dashboards",
       "datasources": "data sources",
       "folders": "folders",
-      "library_elements": "library elements"
+      "library_elements": "library elements",
+      "mute_timings": "mute timings",
+      "notification_policies": "notification policies",
+      "notification_templates": "notification templates"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1443,6 +1581,7 @@
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
       "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-message-generic": "Successfully migrated {{successCount}} resources to your Grafana Cloud instance.",
       "success-title": "Migration completed!",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
@@ -1463,6 +1602,17 @@
     },
     "resource-details": {
       "dismiss-button": "OK",
+      "error-messages": {
+        "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
+        "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
+        "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
+        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
+        "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
+        "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "unsupported-data-type": "Migration of this data type is not currently supported."
+      },
       "error-title": "Unable to migrate this resource:",
       "generic-title": "Resource migration details:",
       "missing-message": "No message provided.",
@@ -1488,10 +1638,14 @@
       "unknown-datasource-type": "Unknown data source"
     },
     "resource-type": {
+      "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
       "folder": "Folder",
       "library_element": "Library Element",
+      "mute_timing": "Mute Timing",
+      "notification_policy": "Notification Policy",
+      "notification_template": "Notification Template",
       "unknown": "Unknown"
     },
     "summary": {
@@ -2670,10 +2824,16 @@
       "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
     },
     "time-range": {
+      "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
+      "example": "Example: to select a time range from 10 minutes ago to now",
+      "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
-      "specify": "Specify time range <1></1>"
+      "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
+      "more-info": "For more information see <2>docs <1></1></2>.",
+      "specify": "Specify time range <1></1>",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
     },
     "zone": {
       "select-aria-label": "Time zone picker",
