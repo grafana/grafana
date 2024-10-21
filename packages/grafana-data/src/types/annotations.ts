@@ -33,6 +33,8 @@ export interface AnnotationEvent {
   login?: string;
   email?: string;
   avatarUrl?: string;
+  created?: number;
+  updated?: number;
   time?: number;
   timeEnd?: number;
   isRegion?: boolean;
