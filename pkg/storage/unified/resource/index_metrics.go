@@ -72,7 +72,7 @@ func (s *IndexMetrics) Collect(ch chan<- prometheus.Metric) {
 	s.IndexCreationTime.Collect(ch)
 
 	// collect index size
-	totalSize, err := calculateTotalFileSize(s.IndexDir)
+	totalSize, err := getTotalIndexSize(s.IndexDir)
 	if err == nil {
 		s.IndexSize.Set(float64(totalSize))
 		s.IndexSize.Collect(ch)
@@ -104,16 +104,19 @@ func getTotalDocCount(index *Index) float64 {
 	return totalCount
 }
 
-// Function to calculate the total size of all files in a directory
-func calculateTotalFileSize(dir string) (int64, error) {
+func getTotalIndexSize(dir string) (int64, error) {
 	var totalSize int64
 
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(dir, func(path string, info os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if !info.IsDir() {
-			totalSize += info.Size()
+			fileInfo, err := info.Info()
+			if err != nil {
+				return err
+			}
+			totalSize += fileInfo.Size()
 		}
 		return nil
 	})
