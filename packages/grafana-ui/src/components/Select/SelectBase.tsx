@@ -15,6 +15,7 @@ import Creatable from 'react-select/creatable';
 import { SelectableValue, toOption } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 
@@ -407,7 +408,7 @@ function defaultFormatCreateLabel(input: string) {
       <div>{input}</div>
       <div style={{ flexGrow: 1 }} />
       <div className="muted small" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        Hit enter to add
+        <Trans i18nKey="grafana-ui.select.default-create-label">Hit enter to add</Trans>
       </div>
     </div>
   );
@@ -432,7 +433,7 @@ function CustomIndicatorsContainer(props: CustomIndicatorsContainerProps) {
         -1,
         0,
         <span key="excess-values" id="excess-values">
-          (+{selectedValuesCount - maxVisibleValues})
+          {`(+${selectedValuesCount - maxVisibleValues})`}
         </span>
       );
 

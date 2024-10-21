@@ -7,6 +7,7 @@ import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue 
 
 import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 
 interface Props {
   values: SelectableValue[];
@@ -95,7 +96,7 @@ export const FilterList = ({
             const fnc = new Function('$', `'use strict'; return ${xpr};`);
             const val = comparableValue(option.value);
             return fnc(val);
-          } catch (_) { }
+          } catch (_) {}
           return false;
         } else {
           if (option.value === undefined) {
@@ -210,7 +211,9 @@ export const FilterList = ({
           </Stack>
         </>
       ) : (
-        <Label className={styles.noValuesLabel}>No values</Label>
+        <Label className={styles.noValuesLabel}>
+          <Trans i18nKey="grafana-ui.table.no-values-label">No values</Trans>
+        </Label>
       )}
     </Stack>
   );

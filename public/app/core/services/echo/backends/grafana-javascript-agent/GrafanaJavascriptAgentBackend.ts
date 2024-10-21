@@ -9,6 +9,7 @@ import {
   SessionInstrumentation,
   FetchTransport,
   type Instrumentation,
+  getWebInstrumentations,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
@@ -20,6 +21,7 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   buildInfo: BuildInfo;
   customEndpoint: string;
   user: User;
+  allInstrumentationsEnabled: boolean;
   errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
@@ -67,7 +69,9 @@ export class GrafanaJavascriptAgentBackend
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
       },
-      instrumentations,
+      instrumentations: options.allInstrumentationsEnabled
+        ? instrumentations
+        : [...getWebInstrumentations(), new TracingInstrumentation()],
       transports,
       ignoreErrors: [
         'ResizeObserver loop limit exceeded',

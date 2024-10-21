@@ -10,14 +10,14 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID, getRowUniqueId } from '@grafana/data';
+import { FieldType, ReducerID, getRowUniqueId, getFieldMatcher } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
-
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
 import { FooterItem, GrafanaTableState, TableRTProps } from '../types';
@@ -35,11 +35,6 @@ import { HeaderRow } from './HeaderRow';
 import { RowsList } from './RowsList';
 import { useTableStyles } from './styles';
 
-
-
-
-
-
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
@@ -50,6 +45,7 @@ export const Table = memo((props: TableRTProps) => {
     data,
     height,
     onCellFilterAdded,
+    onColumnResize,
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
@@ -64,6 +60,7 @@ export const Table = memo((props: TableRTProps) => {
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
     fieldConfig,
+    getActions,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -111,9 +108,9 @@ export const Table = memo((props: TableRTProps) => {
   // This checks whether `Show table footer` is toggled on, the `Calculation` is set to `Count`, and finally, whether `Count rows` is toggled on.
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
-    footerOptions.reducer &&
-    footerOptions.reducer.length &&
-    footerOptions.reducer[0] === ReducerID.count
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
   );
 
   const nestedDataField = data.fields.find((f) => f.type === FieldType.nestedFrames);
@@ -122,7 +119,7 @@ export const Table = memo((props: TableRTProps) => {
   // React-table column definitions
   const memoizedColumns = useMemo(
     () => getColumns(data, width, columnMinWidth, hasNestedData, footerItems, isCountRowsSet),
-    [data, width, columnMinWidth, footerItems, hasNestedData, isCountRowsSet]
+    [data, width, columnMinWidth, hasNestedData, footerItems, isCountRowsSet]
   );
 
   // we need a ref to later store the `toggleAllRowsExpanded` function, returned by `useTable`.
@@ -134,7 +131,7 @@ export const Table = memo((props: TableRTProps) => {
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer({
-    ...props,
+    onColumnResize,
     onSortByChange: (state) => {
       // Collapse all rows. This prevents a known bug that causes the size of the rows to be incorrect due to
       // using `VariableSizeList` and `useExpanded` together.
@@ -144,6 +141,7 @@ export const Table = memo((props: TableRTProps) => {
         props.onSortByChange(state);
       }
     },
+    data,
   });
 
   const hasUniqueId = !!data.meta?.uniqueRowIdFields?.length;
@@ -283,6 +281,8 @@ export const Table = memo((props: TableRTProps) => {
     if (itemsRangeEnd > data.length) {
       itemsRangeEnd = data.length;
     }
+    const numRows = rows.length;
+    const displayedEnd = itemsRangeEnd < rows.length ? itemsRangeEnd : rows.length;
     paginationEl = (
       <div className={tableStyles.paginationWrapper}>
         <Pagination
@@ -293,7 +293,9 @@ export const Table = memo((props: TableRTProps) => {
         />
         {isSmall ? null : (
           <div className={tableStyles.paginationSummary}>
-            {itemsRangeStart} - {itemsRangeEnd < rows.length ? itemsRangeEnd : rows.length} of {rows.length} rows
+            <Trans i18nKey="grafana-ui.table.pagination-summary">
+              {{ itemsRangeStart }} - {{ displayedEnd }} of {{ numRows }} rows
+            </Trans>
           </div>
         )}
       </div>
@@ -301,7 +303,24 @@ export const Table = memo((props: TableRTProps) => {
   }
 
   // Try to determine the longet field
+  // TODO: do we wrap only one field?
+  // What if there are multiple fields with long text?
   const longestField = guessLongestField(fieldConfig, data);
+  let textWrapField = undefined;
+  if (fieldConfig !== undefined) {
+    data.fields.forEach((field) => {
+      fieldConfig.overrides.forEach((override) => {
+        const matcher = getFieldMatcher(override.matcher);
+        if (matcher(field, data, [data])) {
+          for (const property of override.properties) {
+            if (property.id === 'custom.cellOptions' && property.value.wrapText) {
+              textWrapField = field;
+            }
+          }
+        }
+      });
+    });
+  }
 
   return (
     <div
@@ -341,6 +360,8 @@ export const Table = memo((props: TableRTProps) => {
                 enableSharedCrosshair={enableSharedCrosshair}
                 initialRowIndex={initialRowIndex}
                 longestField={longestField}
+                textWrapField={textWrapField}
+                getActions={getActions}
               />
             </div>
           ) : (
