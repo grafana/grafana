@@ -127,6 +127,8 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     setIsOpen(false);
   };
 
+  const { from: timeOptionFrom, to: timeOptionTo } = timeOption;
+
   return (
     <div className={styles.container}>
       <button
@@ -140,7 +142,9 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
           <Icon name="clock-nine" />
         </span>
         <span>
-          {timeOption.from} to {timeOption.to}
+          <Trans i18nKey="time-picker.time-range.from-to">
+            {{ timeOptionFrom }} to {{ timeOptionTo }}
+          </Trans>
         </span>
         <span className={styles.caretIcon}>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
@@ -190,7 +194,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                       />
                     </Field>
                     <Button aria-label="TimePicker submit button" onClick={onApply}>
-                      Apply time range
+                      <Trans i18nKey="time-picker.time-range.apply">Apply time range</Trans>
                     </Button>
                   </div>
                 </div>
@@ -208,16 +212,26 @@ const TooltipContent = () => {
   return (
     <>
       <div className={styles.supported}>
-        Supported formats: <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code>
+        <Trans i18nKey="time-picker.time-range.supported-formats">
+          Supported formats: <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code>
+        </Trans>
       </div>
-      <div>Example: to select a time range from 10 minutes ago to now</div>
-      <code className={styles.tooltip}>From: now-10m To: now</code>
+      <div>
+        <Trans i18nKey="time-picker.time-range.example">
+          Example: to select a time range from 10 minutes ago to now
+        </Trans>
+      </div>
+      <code className={styles.tooltip}>
+        <Trans i18nKey="time-picker.time-range.example-details">From: now-10m To: now</Trans>
+      </code>
       <div className={styles.link}>
-        For more information see{' '}
-        <a href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/">
-          docs <Icon name="external-link-alt" />
-        </a>
-        .
+        <Trans i18nKey="time-picker.time-range.more-info">
+          For more information see{' '}
+          <a href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/">
+            docs <Icon name="external-link-alt" />
+          </a>
+          .
+        </Trans>
       </div>
     </>
   );
