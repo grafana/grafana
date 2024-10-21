@@ -605,14 +605,6 @@
   },
   {
     "type": "label",
-    "name": "area/expressions",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/112"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/backend/api",
     "action": "addToProject",
     "addToProject": {
@@ -1201,6 +1193,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/736"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/expressions",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/699"
     }
   }
 ]
