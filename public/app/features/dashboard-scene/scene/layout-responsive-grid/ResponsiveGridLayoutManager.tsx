@@ -27,7 +27,7 @@ export class ResponsiveGridLayoutManager
     vizPanel.clearParent();
 
     this.state.layout.setState({
-      children: [...this.state.layout.state.children, new ResponsiveGridItem({ body: vizPanel })],
+      children: [new ResponsiveGridItem({ body: vizPanel }), ...this.state.layout.state.children],
     });
   }
 
