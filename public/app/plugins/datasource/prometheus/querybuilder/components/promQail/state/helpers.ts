@@ -272,6 +272,7 @@ function guessMetricFamily(metric: string): string {
  * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled(): Promise<boolean> {
+  return Promise.resolve(false); // LOGZ.IO GRAFANA CHANGE :: DEV-44665-grafana-upgrade-remove-llm
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
   const openaiEnabled = llms.openai.health().then((response) => response.ok);
