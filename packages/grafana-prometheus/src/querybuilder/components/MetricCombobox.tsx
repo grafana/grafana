@@ -1,15 +1,16 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
-import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
 
 import { PrometheusDatasource } from '../../datasource';
+import { truncateResult } from '../../language_utils';
+import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
@@ -51,86 +52,35 @@ export function MetricCombobox({
   /**
    * Reformat the query string and label filters to return all valid results for current query editor state
    */
-  // const formatKeyValueStringsForLabelValuesQuery = (
-  //   query: string,
-  //   labelsFilters?: QueryBuilderLabelFilter[]
-  // ): string => {
-  //   const queryString = regexifyLabelValuesQueryString(query);
+  const formatKeyValueStringsForLabelValuesQuery = (
+    query: string,
+    labelsFilters?: QueryBuilderLabelFilter[]
+  ): string => {
+    const queryString = regexifyLabelValuesQueryString(query);
 
-  //   return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
-  // };
+    return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
+  };
 
   /**
    * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
    */
-  // const getMetricLabels = (query: string) => {
-  //   // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
-  //   const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
-  //   return results.then((results) => {
-  //     const resultsLength = results.length;
-  //     truncateResult(results);
+  const getMetricLabels = useCallback(
+    (query: string) => {
+      const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
 
-  //     if (resultsLength > results.length) {
-  //       setState({ ...state, resultsTruncated: true });
-  //     } else {
-  //       setState({ ...state, resultsTruncated: false });
-  //     }
+      return results.then((results) => {
+        const resultsOptions = results.map((result) => {
+          return {
+            label: result.text,
+            value: result.text,
+          };
+        });
 
-  //     const resultsOptions = results.map((result) => {
-  //       return {
-  //         label: result.text,
-  //         value: result.text,
-  //       };
-  //     });
-
-  //     if (prometheusMetricEncyclopedia) {
-  //       return [...metricsModalOption, ...resultsOptions];
-  //     } else {
-  //       return resultsOptions;
-  //     }
-  //   });
-  // };
-
-  const [comboboxOptions, setCombobboxOptions] = useState<ComboboxOption[]>([]);
-
-  // Load initial options for the dropdown immediately on mount
-  // This is different vs select, which loaded them lazily once the dropdown was opened
-  const hasloadedRef = React.useRef(false);
-  React.useEffect(() => {
-    if (hasloadedRef.current) {
-      return;
-    }
-
-    hasloadedRef.current = true;
-    onGetMetrics().then((selectOptions) => {
-      const options: ComboboxOption[] = selectOptions.map((option) => ({
-        label: option.label ?? option.value,
-        value: option.value,
-      }));
-
-      setCombobboxOptions(options);
-    });
-  }, [onGetMetrics]);
-
-  // TODO: debounce this
-  // const onInputChange = useCallback(
-  //   (input: string) => {
-  //     if (!input) {
-  //       return;
-  //     }
-
-  //     getMetricLabels(input).then((selectOptions) => {
-  //       const options: ComboboxOption[] = selectOptions.map((option) => ({
-  //         label: option.label ?? option.value,
-  //         value: option.value,
-  //       }));
-
-  //       setCombobboxOptions(options);
-  //     });
-  //   },
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  //   []
-  // );
+        return resultsOptions;
+      });
+    },
+    [datasource, labelsFilters]
+  );
 
   const onComboboxChange = useCallback(
     (opt: ComboboxOption<string> | null) => {
@@ -139,15 +89,21 @@ export function MetricCombobox({
     [onChange, query]
   );
 
+  // TODO: not currently debounced
+  const loadOptions = useCallback(
+    async (input: string): Promise<ComboboxOption[]> => {
+      const metrics = input.length ? await getMetricLabels(input) : await onGetMetrics();
+
+      return metrics.map((option) => ({
+        label: option.label ?? option.value,
+        value: option.value,
+      }));
+    },
+    [getMetricLabels, onGetMetrics]
+  );
+
   const asyncSelect = () => {
-    return (
-      <Combobox
-        options={comboboxOptions}
-        value={query.metric}
-        onChange={onComboboxChange}
-        // onInputChange={onInputChange}
-      />
-    );
+    return <Combobox options={loadOptions} value={query.metric} onChange={onComboboxChange} />;
   };
 
   return (
