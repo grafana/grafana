@@ -1062,11 +1062,76 @@
     "send-custom-feedback": "Send"
   },
   "grafana-ui": {
+    "auto-save-field": {
+      "saved": "Saved!",
+      "saving": "Saving <1></1>"
+    },
+    "color-picker-popover": {
+      "palette-tab": "Colors",
+      "spectrum-tab": "Custom"
+    },
+    "confirm-button": {
+      "cancel": "Cancel"
+    },
+    "data-link-editor": {
+      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions."
+    },
+    "data-link-editor-modal": {
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "data-links-inline-editor": {
+      "add-link": "Add link",
+      "one-click-link": "One-click link"
+    },
+    "data-links-list-item": {
+      "compact-explore-disclaimer": "Explore data link may not work in the future. Please edit."
+    },
+    "data-source-http-settings": {
+      "access-help": "Help <1></1>",
+      "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "allowed-cookies": "Allowed cookies",
+      "auth": "Auth",
+      "basic-auth": "Basic Auth Details",
+      "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
+      "browser-mode-title": "<0>Browser access mode:</0>",
+      "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
+      "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
+      "heading": "HTTP",
+      "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
+      "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
+      "server-mode-title": "<0>Server access mode (Default):</0>"
+    },
+    "data-source-settings": {
+      "alerting-settings-heading": "Alerting",
+      "cert-key-reset": "Reset",
+      "custom-headers-add": "Add header",
+      "custom-headers-title": "Custom HTTP Headers",
+      "secure-socks-heading": "Secure Socks Proxy",
+      "tls-heading": "TLS/SSL Auth Details"
+    },
+    "date-time-picker": {
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
     "drawer": {
       "close": "Close"
     },
+    "field-link-list": {
+      "external-links-heading": "External links"
+    },
+    "file-dropzone": {
+      "cancel-upload": "Cancel upload",
+      "file-too-large": "File is larger than {{size}}"
+    },
+    "filter-input": {
+      "clear": "Clear"
+    },
     "modal": {
       "close-tooltip": "Close"
+    },
+    "secret-form-field": {
+      "reset": "Reset"
     },
     "segment-async": {
       "error": "Failed to load options",
@@ -1074,6 +1139,7 @@
       "no-options": "No options found"
     },
     "select": {
+      "default-create-label": "Hit enter to add",
       "no-options-label": "No options found",
       "placeholder": "Choose"
     },
@@ -1081,7 +1147,26 @@
       "aria-label": "Loading"
     },
     "table": {
-      "copy": "Copy to Clipboard"
+      "copy": "Copy to Clipboard",
+      "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
+      "filter-popup-apply": "Ok",
+      "filter-popup-cancel": "Cancel",
+      "filter-popup-clear": "Clear filter",
+      "filter-popup-heading": "Filter by values:",
+      "no-values-label": "No values",
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+    },
+    "tags-input": {
+      "add": "Add"
+    },
+    "user-icon": {
+      "active-text": "Active last 15m"
+    },
+    "viz-legend": {
+      "right-axis-indicator": "(right y-axis)"
+    },
+    "viz-tooltip": {
+      "footer-add-annotation": "Add annotation"
     }
   },
   "graph": {
@@ -2739,10 +2824,16 @@
       "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
     },
     "time-range": {
+      "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
+      "example": "Example: to select a time range from 10 minutes ago to now",
+      "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
-      "specify": "Specify time range <1></1>"
+      "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
+      "more-info": "For more information see <2>docs <1></1></2>.",
+      "specify": "Specify time range <1></1>",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
     },
     "zone": {
       "select-aria-label": "Time zone picker",
