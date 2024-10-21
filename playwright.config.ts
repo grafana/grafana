@@ -62,6 +62,15 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     {
+      name: 'elasticsearch',
+      testDir: path.join(testDirRoot, '/elasticsearch'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'mysql',
       testDir: path.join(testDirRoot, '/mysql'),
       use: {
