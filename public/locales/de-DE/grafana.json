@@ -1018,6 +1018,7 @@
       "copy-links-normal-category": "Normale URL-Links",
       "copy-shortened-link": "Gekürzte URL kopieren",
       "copy-shortened-link-abs-time": "Absolut verkürzte URL kopieren",
+      "copy-shortened-link-label": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
       "refresh-picker-run": "Abfrage ausführen",
