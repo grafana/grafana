@@ -41,7 +41,6 @@ import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
-import { LogsIntegrationContextProvider } from './RelatedLogs/LogsIntegrationContext';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
@@ -611,21 +610,19 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }, [model]);
 
     return (
-      <LogsIntegrationContextProvider>
-        <div className={styles.container}>
-          {showHeaderForFirstTimeUsers && <MetricsHeader />}
-          <history.Component model={history} />
-          {controls && (
-            <div className={styles.controls}>
-              {controls.map((control) => (
-                <control.Component key={control.state.key} model={control} />
-              ))}
-              <settings.Component model={settings} />
-            </div>
-          )}
-          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-        </div>
-      </LogsIntegrationContextProvider>
+      <div className={styles.container}>
+        {showHeaderForFirstTimeUsers && <MetricsHeader />}
+        <history.Component model={history} />
+        {controls && (
+          <div className={styles.controls}>
+            {controls.map((control) => (
+              <control.Component key={control.state.key} model={control} />
+            ))}
+            <settings.Component model={settings} />
+          </div>
+        )}
+        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+      </div>
     );
   };
 }

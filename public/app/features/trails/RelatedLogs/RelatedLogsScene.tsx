@@ -1,4 +1,5 @@
-import { useContext, useEffect } from 'react';
+/* eslint @grafana/no-untranslated-strings: "error" */
+import { useEffect } from 'react';
 
 import {
   SceneComponentProps,
@@ -21,15 +22,21 @@ import { Stack } from '@grafana/ui';
 
 // import { SelectMetricAction } from '../MetricSelect/SelectMetricAction';
 // import type { FoundLokiDataSource } from '../Integrations/logsIntegration';
+import {
+  ExtractedRecordingRules,
+  fetchAndExtractLokiRecordingRules,
+  FoundLokiDataSource,
+  getLogsUidOfMetric,
+  getLogsQueryForMetric,
+} from '../Integrations/logsIntegration';
 import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC } from '../shared';
-
-import { LogsIntegrationContext } from './LogsIntegrationContext';
 
 export interface RelatedLogsSceneState extends SceneObjectState {
   initialDS?: string;
   controls: SceneObject[];
   body: SceneFlexLayout;
   lokiQuery: string;
+  lokiRecordingRules: ExtractedRecordingRules;
 }
 
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
@@ -55,6 +62,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
         height: '400px',
         children: [],
       }),
+      lokiRecordingRules: {},
       lokiQuery: '',
       ...state,
     });
@@ -63,21 +71,22 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   }
 
   private onActivate() {
-    const {} = sceneGraph.getVariables(this);
+    // const {} = sceneGraph.getVariables(this);
+    fetchAndExtractLokiRecordingRules().then((rules) => this.setState({ lokiRecordingRules: rules }));
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_LOGS_DATASOURCE],
-    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
+    onReferencedVariableValueChanged: (variable: SceneVariable) => {
       const { name } = variable.state;
 
       if (name === VAR_LOGS_DATASOURCE) {
-        this.updateBody();
+        this.buildLogsPanel();
       }
     },
   });
 
-  private updateBody() {
+  private buildLogsPanel() {
     this.setState({
       body: new SceneFlexLayout({
         direction: 'column',
@@ -105,24 +114,35 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
     });
   }
 
-  public updateLokiQuery(expr: string) {
+  private readonly findLogsDsForSelectedMetric = (metricName: string): FoundLokiDataSource[] => {
+    if (metricName === '') {
+      return [];
+    }
+
+    return getLogsUidOfMetric(metricName, this.state.lokiRecordingRules);
+  };
+
+  private readonly getLokiQueryForMetric = (metricName: string, dataSourceId: string): string => {
+    return getLogsQueryForMetric(metricName, dataSourceId, this.state.lokiRecordingRules);
+  };
+
+  private readonly updateLokiQuery = (expr: string) => {
     console.log(`NEW LOKI QUERY`, expr);
     this.setState({ lokiQuery: expr });
-    this.updateBody();
-  }
+    this.buildLogsPanel();
+  };
 
   static readonly Component = ({ model }: SceneComponentProps<RelatedLogsScene>) => {
     const { controls, body } = model.useState();
     const selectedMetricVar = sceneGraph.lookupVariable(VAR_METRIC, model);
     const selectedMetric = selectedMetricVar?.getValue()?.toString() ?? '';
     console.log(selectedMetric);
-    const { findLogsDsForSelectedMetric, getLokiQueryForMetric } = useContext(LogsIntegrationContext);
-    const lokiDs = findLogsDsForSelectedMetric(selectedMetric);
+    const lokiDs = model.findLogsDsForSelectedMetric(selectedMetric);
     // const dsNamesWithRelevantLogs = lokiDs.reduce((acc, el) => {
     //   acc.add(el.name);
     //   return acc;
     // }, new Set<string>([]));
-    const lokiQuery = getLokiQueryForMetric(selectedMetric, lokiDs[0]?.uid);
+    const lokiQuery = model.getLokiQueryForMetric(selectedMetric, lokiDs[0]?.uid);
 
     useEffect(() => {
       if (lokiQuery) {
@@ -132,10 +152,6 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
 
     return (
       <div>
-        <h1>Matching Data Sources:</h1>
-        <pre>{JSON.stringify(lokiDs)}</pre>
-        <h1>Loki Query for Selected DS:</h1>
-        <pre>{lokiQuery}</pre>
         <Stack gap={1} direction={'column'} grow={1}>
           {controls && (
             <Stack gap={1}>
