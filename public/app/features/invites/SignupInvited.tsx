@@ -9,7 +9,6 @@ import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { contextSrv } from 'app/core/core';
 
 import { w3cStandardEmailValidator } from '../admin/utils';
 
@@ -37,19 +36,28 @@ export const SignupInvitedPage = () => {
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
   const [invitedBy, setInvitedBy] = useState<string>();
+  const [orgName, setOrgName] = useState<string>(''); // State for organization name
   const styles = useStyles2(getStyles);
 
+  // Fetch invite data including organization name
   useAsync(async () => {
-    const invite = await getBackendSrv().get(`/api/user/invite/${code}`);
+    try {
+      const invite = await getBackendSrv().get(`/api/user/invite/${code}`);
 
-    setInitFormModel({
-      email: invite.email,
-      name: invite.name,
-      username: invite.email,
-    });
+      setInitFormModel({
+        email: invite.email,
+        name: invite.name,
+        username: invite.email,
+      });
 
-    setGreeting(invite.name || invite.email || invite.username);
-    setInvitedBy(invite.invitedBy);
+      setGreeting(invite.name || invite.email || invite.username);
+      setInvitedBy(invite.invitedBy);
+
+      // Fetch organization name from invite or fallback to 'your organization'
+      setOrgName(invite.orgName || 'your organization');
+    } catch (error) {
+      console.error('Failed to load invite data:', error);
+    }
   }, [code]);
 
   const onSubmit = async (formData: FormModel) => {
@@ -68,7 +76,7 @@ export const SignupInvitedPage = () => {
 
         <div className={cx('modal-tagline', styles.tagline)}>
           <em>{invitedBy || 'Someone'}</em> has invited you to join Grafana and the organization{' '}
-          <span className="highlight-word">{contextSrv.user.orgName}</span>
+          <span className="highlight-word">{orgName}</span> {/* Display fetched organization name */}
           <br />
           Please complete the following and choose a password to accept your invitation and continue:
         </div>
