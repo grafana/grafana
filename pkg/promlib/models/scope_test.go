@@ -97,6 +97,15 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expected:  `http_requests_total{job="prometheus",status=~"404|400"}`,
 			expectErr: false,
 		},
+		{
+			name:  "using __name__ as part of the query",
+			query: `{__name__="http_requests_total"}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "namespace", Value: "istio", Operator: FilterOperatorEquals},
+			},
+			expected:  `{__name__="http_requests_total",namespace="istio"}`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
