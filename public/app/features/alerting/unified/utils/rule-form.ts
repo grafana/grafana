@@ -497,14 +497,16 @@ export function recordingRulerRuleToRuleForm(
   };
 }
 
-export const getDefaultQueries = (): AlertQuery[] => {
+export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
 
   if (!dataSource) {
-    return [...getDefaultExpressions('A', 'B')];
+    const expressions = isRecordingRule ? getDefaultExpressionsForRecording('A') : getDefaultExpressions('A', 'B');
+    return [...expressions];
   }
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
+  const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
   return [
     {
       refId: 'A',
@@ -515,7 +517,7 @@ export const getDefaultQueries = (): AlertQuery[] => {
         refId: 'A',
       },
     },
-    ...getDefaultExpressions('B', 'C'),
+    ...expressions,
   ];
 };
 
@@ -536,7 +538,6 @@ export const getDefaultRecordingRulesQueries = (
     },
   ];
 };
-
 const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
@@ -612,6 +613,46 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
       datasourceUid: ExpressionDatasourceUID,
       queryType: '',
       model: thresholdExpression,
+    },
+  ];
+};
+const getDefaultExpressionsForRecording = (refOne: string): AlertQuery[] => {
+  const reduceExpression: ExpressionQuery = {
+    refId: refOne,
+    type: ExpressionQueryType.reduce,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [refOne],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    reducer: 'last',
+    expression: 'A',
+  };
+
+  return [
+    {
+      refId: refOne,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: reduceExpression,
     },
   ];
 };
