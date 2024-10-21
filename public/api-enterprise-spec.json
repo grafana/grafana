@@ -3883,9 +3883,6 @@
         "options": {
           "$ref": "#/definitions/ReportOptions"
         },
-        "pdfCombineOneFile": {
-          "type": "boolean"
-        },
         "recipients": {
           "type": "string"
         },
@@ -6835,9 +6832,6 @@
           "type": "integer",
           "format": "int64"
         },
-        "pdfCombineOneFile": {
-          "type": "boolean"
-        },
         "recipients": {
           "type": "string"
         },
@@ -6942,6 +6936,9 @@
         },
         "orientation": {
           "type": "string"
+        },
+        "pdfCombineOneFile": {
+          "type": "boolean"
         },
         "pdfShowTemplateVariables": {
           "type": "boolean"
