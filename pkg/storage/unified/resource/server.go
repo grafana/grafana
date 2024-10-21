@@ -285,7 +285,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	}
 
 	if obj.GetResourceVersion() != "" {
-		s.log.Error("object must not include a resource version", "key", key)
+		return nil, NewBadRequestError("object must not include resourceVersion")
 	}
 
 	event := &WriteEvent{
