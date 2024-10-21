@@ -87,7 +87,7 @@ export class CompletionDataProvider {
         // Make room in the cache for the fresh result by deleting the "first" index
         const keys = this.queryToLabelKeysCache.keys();
         const firstKey = keys.next().value;
-        if (firstKey) {
+        if (firstKey !== undefined) {
           this.queryToLabelKeysCache.delete(firstKey);
         }
       }
