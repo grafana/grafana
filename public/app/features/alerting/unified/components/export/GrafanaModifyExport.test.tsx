@@ -33,20 +33,12 @@ const ui = {
   loading: byText('Loading the rule...'),
   form: {
     nameInput: byRole('textbox', { name: 'name' }),
-    folder: byTestId('folder-picker'),
-    group: byTestId('group-picker'),
-    annotationKey: (idx: number) => byTestId(`annotation-key-${idx}`),
-    annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
-    labelKey: (idx: number) => byTestId(`label-key-${idx}`),
-    labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
   exportButton: byRole('button', { name: 'Export' }),
   exportDrawer: {
     dialog: byRole('dialog', { name: /Export Group/ }),
-    jsonTab: byRole('tab', { name: /JSON/ }),
     yamlTab: byRole('tab', { name: /YAML/ }),
     editor: byTestId('code-editor'),
-    loadingSpinner: byTestId('Spinner'),
   },
 };
 

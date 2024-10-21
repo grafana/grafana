@@ -9,13 +9,11 @@ import { mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule, mockUnifiedAle
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 jest.mock('./useFolder');
 
 const mocks = {
   useFolder: jest.mocked(useFolder),
-  useUnifiedAlertingSelector: jest.mocked(useUnifiedAlertingSelector),
 };
 
 describe('useIsRuleEditable', () => {
