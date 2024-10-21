@@ -2,10 +2,9 @@ package authz
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -15,14 +14,6 @@ import (
 )
 
 var _ authzv1.AuthzServiceServer = (*legacyServer)(nil)
-
-type legacyServer struct {
-	authzv1.UnimplementedAuthzServiceServer
-
-	acSvc  accesscontrol.Service
-	logger log.Logger
-	tracer tracing.Tracer
-}
 
 func newLegacyServer(
 	acSvc accesscontrol.Service, features featuremgmt.FeatureToggles,
@@ -45,40 +36,15 @@ func newLegacyServer(
 	return s, nil
 }
 
-func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*authzv1.ReadResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "authz.grpc.Read")
-	defer span.End()
+type legacyServer struct {
+	authzv1.UnimplementedAuthzServiceServer
 
-	// FIXME: once we have access tokens, we need to do namespace validation here
+	acSvc  accesscontrol.Service
+	logger log.Logger
+	tracer tracing.Tracer
+}
 
-	action := req.GetAction()
-	subject := req.GetSubject()
-	namespace := req.GetNamespace() // TODO can we consider the stackID as the orgID?
-
-	info, err := claims.ParseNamespace(namespace)
-	if err != nil || info.OrgID == 0 {
-		return nil, fmt.Errorf("invalid namespace: %s", namespace)
-	}
-
-	ctxLogger := s.logger.FromContext(ctx)
-	ctxLogger.Debug("Read", "action", action, "subject", subject, "namespace", namespace)
-
-	permissions, err := s.acSvc.SearchUserPermissions(
-		ctx,
-		info.OrgID,
-		accesscontrol.SearchOptions{Action: action, TypedID: subject},
-	)
-	if err != nil {
-		ctxLogger.Error("failed to search user permissions", "error", err)
-		return nil, tracing.Errorf(span, "failed to search user permissions: %w", err)
-	}
-
-	data := make([]*authzv1.ReadResponse_Data, 0, len(permissions))
-	for _, perm := range permissions {
-		data = append(data, &authzv1.ReadResponse_Data{Scope: perm.Scope})
-	}
-	return &authzv1.ReadResponse{
-		Data:  data,
-		Found: len(data) > 0,
-	}, nil
+func (l *legacyServer) Check(context.Context, *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+	// FIXME: implement for legacy access control
+	return nil, errors.New("unimplemented")
 }

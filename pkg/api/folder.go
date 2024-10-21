@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -67,6 +66,16 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 			folderRoute.Post("/", handler.createFolder)
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
+		}
+		// Only adding support for some routes with the k8s handler for now. Include the rest here.
+		if false {
+			handler := newFolderK8sHandler(hs)
+			folderRoute.Get("/", handler.searchFolders)
+			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+				folderUidRoute.Get("/", handler.getFolder)
+				folderUidRoute.Delete("/", handler.deleteFolder)
+				folderUidRoute.Put("/:uid", handler.updateFolder)
+			})
 		}
 	})
 }
@@ -652,32 +661,31 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 	}
 }
 
-// #TODO uncomment when we reinstate their corresponding routes
-// func (fk8s *folderK8sHandler) searchFolders(c *contextmodel.ReqContext) {
-// 	client, ok := fk8s.getClient(c)
-// 	if !ok {
-// 		return // error is already sent
-// 	}
-// 	out, err := client.List(c.Req.Context(), v1.ListOptions{})
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
+func (fk8s *folderK8sHandler) searchFolders(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	out, err := client.List(c.Req.Context(), v1.ListOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
 
-// 	query := strings.ToUpper(c.Query("query"))
-// 	folders := []folder.Folder{}
-// 	for _, item := range out.Items {
-// 		p := internalfolders.UnstructuredToLegacyFolder(item)
-// 		if p == nil {
-// 			continue
-// 		}
-// 		if query != "" && !strings.Contains(strings.ToUpper(p.Title), query) {
-// 			continue // query filter
-// 		}
-// 		folders = append(folders, *p)
-// 	}
-// 	c.JSON(http.StatusOK, folders)
-// }
+	query := strings.ToUpper(c.Query("query"))
+	folders := []folder.Folder{}
+	for _, item := range out.Items {
+		p := internalfolders.UnstructuredToLegacyFolder(item, c.SignedInUser.GetOrgID())
+		if p == nil {
+			continue
+		}
+		if query != "" && !strings.Contains(strings.ToUpper(p.Title), query) {
+			continue // query filter
+		}
+		folders = append(folders, *p)
+	}
+	c.JSON(http.StatusOK, folders)
+}
 
 func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	client, ok := fk8s.getClient(c)
@@ -710,68 +718,77 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, folderDTO)
 }
 
-// func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
-// 	client, ok := fk8s.getClient(c)
-// 	if !ok {
-// 		return // error is already sent
-// 	}
-// 	uid := web.Params(c.Req)[":uid"]
-// 	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
+func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	uid := web.Params(c.Req)[":uid"]
+	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
 
-// folderDTO, err := fk8s.newToFolderDto(c, *out)
-// if err != nil {
-// 	fk8s.writeError(c, err)
-// 	return
-// }
+	folderDTO, err := fk8s.newToFolderDto(c, *out, c.SignedInUser.GetOrgID())
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
 
-// 	c.JSON(http.StatusOK, folderDTO)
-// }
+	c.JSON(http.StatusOK, folderDTO)
+}
 
-// func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
-// 	client, ok := fk8s.getClient(c)
-// 	if !ok {
-// 		return // error is already sent
-// 	}
-// 	uid := web.Params(c.Req)[":uid"]
-// 	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, "")
-// }
+func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	uid := web.Params(c.Req)[":uid"]
+	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, "")
+}
 
-// func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
-// 	client, ok := fk8s.getClient(c)
-// 	if !ok {
-// 		return // error is already sent
-// 	}
-// 	uid := web.Params(c.Req)[":uid"]
-// 	cmd := folder.UpdateFolderCommand{}
-// 	if err := web.Bind(c.Req, &cmd); err != nil {
-// 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
-// 		return
-// 	}
-// 	obj := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
-// 	obj.SetName(uid)
-// 	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
-// 	if err != nil {
-// 		fk8s.writeError(c, err)
-// 		return
-// 	}
+func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
 
-// folderDTO, err := fk8s.newToFolderDto(c, *out)
-// if err != nil {
-// 	fk8s.writeError(c, err)
-// 	return
-// }
+	cmd := folder.UpdateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.UID = web.Params(c.Req)[":uid"]
+	cmd.SignedInUser = c.SignedInUser
+	// #TODO add version?
 
-// 	c.JSON(http.StatusOK, folderDTO)
-// }
+	obj, err := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	folderDTO, err := fk8s.newToFolderDto(c, *out, c.SignedInUser.GetOrgID())
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, folderDTO)
+}
 
 //-----------------------------------------------------------------------------------------
 // Utility functions
@@ -807,16 +824,13 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return dtos.Folder{}, err
 	}
 
-	toID := func(rawIdentifier string) (int64, error) {
+	// #TODO Is there a preexisting function we can use instead, something along the lines of UserIdentifier?
+	toUID := func(rawIdentifier string) string {
 		parts := strings.Split(rawIdentifier, ":")
 		if len(parts) < 2 {
-			return 0, fmt.Errorf("invalid user identifier")
+			return ""
 		}
-		userID, err := strconv.ParseInt(parts[1], 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("faild to parse user identifier")
-		}
-		return userID, nil
+		return parts[1]
 	}
 
 	toDTO := func(fold *folder.Folder, checkCanView bool) (dtos.Folder, error) {
@@ -835,18 +849,10 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
 		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
 		if len(fDTO.CreatedBy) > 0 {
-			id, err := toID(fDTO.CreatedBy)
-			if err != nil {
-				return dtos.Folder{}, err
-			}
-			creator = fk8s.getUserLogin(ctx, id)
+			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy), orgID)
 		}
 		if len(fDTO.UpdatedBy) > 0 {
-			id, err := toID(fDTO.UpdatedBy)
-			if err != nil {
-				return dtos.Folder{}, err
-			}
-			updater = fk8s.getUserLogin(ctx, id)
+			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy), orgID)
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
@@ -917,12 +923,15 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 	return folderDTO, nil
 }
 
-func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userID int64) string {
+func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string, orgID int64) string {
 	ctx, span := tracer.Start(ctx, "api.getUserLogin")
 	defer span.End()
 
-	query := user.GetUserByIDQuery{ID: userID}
-	user, err := fk8s.userService.GetByID(ctx, &query)
+	query := user.GetUserByUIDQuery{
+		UID:   userUID,
+		OrgID: orgID,
+	}
+	user, err := fk8s.userService.GetByUID(ctx, &query)
 	if err != nil {
 		return anonString
 	}

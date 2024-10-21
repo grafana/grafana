@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import * as H from 'history';
 import { ComponentType } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
@@ -13,7 +12,10 @@ import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { useSidecar } from '../core/context/SidecarContext';
+import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
 import AppRootPage from '../features/plugins/components/AppRootPage';
+
+import { createLocationStorageHistory } from './utils';
 
 type RouterWrapperProps = {
   routes?: JSX.Element | false;
@@ -25,22 +27,24 @@ export function RouterWrapper(props: RouterWrapperProps) {
     <Router history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
-          <ModalsContextProvider>
-            <AppChrome>
-              <AngularRoot />
-              <AppNotificationList />
-              <Stack gap={0} grow={1} direction="column">
-                {props.pageBanners.map((Banner, index) => (
-                  <Banner key={index.toString()} />
+          <QueriesDrawerContextProvider>
+            <ModalsContextProvider>
+              <AppChrome>
+                <AngularRoot />
+                <AppNotificationList />
+                <Stack gap={0} grow={1} direction="column">
+                  {props.pageBanners.map((Banner, index) => (
+                    <Banner key={index.toString()} />
+                  ))}
+                  {props.routes}
+                </Stack>
+                {props.bodyRenderHooks.map((Hook, index) => (
+                  <Hook key={index.toString()} />
                 ))}
-                {props.routes}
-              </Stack>
-              {props.bodyRenderHooks.map((Hook, index) => (
-                <Hook key={index.toString()} />
-              ))}
-            </AppChrome>
-            <ModalRoot />
-          </ModalsContextProvider>
+              </AppChrome>
+              <ModalRoot />
+            </ModalsContextProvider>
+          </QueriesDrawerContextProvider>
         </CompatRouter>
       </LocationServiceProvider>
     </Router>
@@ -75,7 +79,9 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
 
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
-  const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
+  const memoryLocationService = new HistoryWrapper(
+    createLocationStorageHistory({ storageKey: 'grafana.sidecar.history' })
+  );
 
   return (
     // Why do we need these 2 wrappers here? We want for one app case to render very similar as if there was no split
