@@ -397,9 +397,12 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.True(t, ok)
 		title, ok := spec["title"].(string)
 		require.True(t, ok)
+		description, ok := spec["description"].(string)
+		require.True(t, ok)
 		require.Equal(t, first.GetName(), updated.GetName())
 		require.Equal(t, first.GetUID(), updated.GetUID())
 		require.Equal(t, "Test folder (replaced from k8s; 1 item; PUT)", title)
+		require.Equal(t, "New description", description)
 		// #TODO figure out why this breaks just for MySQL integration tests
 		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
 	})
