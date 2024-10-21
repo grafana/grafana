@@ -19,8 +19,8 @@ export function useSidecar_EXPERIMENTAL() {
     throw new Error('No SidecarContext found');
   }
 
-  const activePluginId = useObservable(service.activePluginId, service.activePluginIdCurrent);
-  const initialContext = useObservable(service.initialContext, service.initialContextCurrent);
+  const activePluginId = useObservable(service.activePluginIdObservable, service.activePluginId);
+  const initialContext = useObservable(service.initialContextObservable, service.initialContext);
 
   return {
     activePluginId,

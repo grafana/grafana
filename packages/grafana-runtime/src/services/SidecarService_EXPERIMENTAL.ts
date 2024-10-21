@@ -47,7 +47,7 @@ export class SidecarService_EXPERIMENTAL {
    *
    * @experimental
    */
-  get activePluginId() {
+  get activePluginIdObservable() {
     if (!this.assertFeatureEnabled()) {
       return EMPTY;
     }
@@ -60,7 +60,7 @@ export class SidecarService_EXPERIMENTAL {
    *
    * @experimental
    */
-  get initialContext() {
+  get initialContextObservable() {
     if (!this.assertFeatureEnabled()) {
       return EMPTY;
     }
@@ -70,7 +70,7 @@ export class SidecarService_EXPERIMENTAL {
   // Get the current value of the subject, this is needed if we want the value immediately. For example if used in
   // hook in react with useObservable first render would return undefined even if the behaviourSubject has some
   // value which will be emitted in the next tick and thus next rerender.
-  get initialContextCurrent() {
+  get initialContext() {
     if (!this.assertFeatureEnabled()) {
       return undefined;
     }
@@ -80,7 +80,7 @@ export class SidecarService_EXPERIMENTAL {
   /**
    * @experimental
    */
-  get activePluginIdCurrent() {
+  get activePluginId() {
     if (!this.assertFeatureEnabled()) {
       return undefined;
     }
