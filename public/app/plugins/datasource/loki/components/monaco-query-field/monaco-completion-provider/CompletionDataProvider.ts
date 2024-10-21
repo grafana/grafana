@@ -32,6 +32,7 @@ export class CompletionDataProvider {
 
   setTimeRange(timeRange: TimeRange) {
     this.timeRange = timeRange;
+    this.queryToLabelKeysCache.clear();
   }
 
   getHistory() {

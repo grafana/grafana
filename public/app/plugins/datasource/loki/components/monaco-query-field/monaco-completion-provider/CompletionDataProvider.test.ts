@@ -72,6 +72,15 @@ const mockTimeRange = {
   },
 };
 
+const otherTimeRange = {
+  from: dateTime(1234567800000),
+  to: dateTime(1234567801000),
+  raw: {
+    from: dateTime(1234567800000),
+    to: dateTime(1234567801000),
+  },
+};
+
 describe('CompletionDataProvider', () => {
   let completionProvider: CompletionDataProvider, languageProvider: LokiLanguageProvider, datasource: LokiDatasource;
   let historyRef: { current: Array<HistoryItem<LokiQuery>> } = { current: [] };
@@ -166,6 +175,15 @@ describe('CompletionDataProvider', () => {
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(4);
   });
 
+  test('Clears the cache when the time range changes', async () => {
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+    completionProvider.setTimeRange(otherTimeRange);
+    expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
+
+    expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledTimes(2);
+  });
+
   test('Returns the expected parser and label keys, cache size is 2', async () => {
     //1
     expect(await completionProvider.getParserAndLabelKeys('{a="b"}')).toEqual(parserAndLabelKeys);
@@ -197,15 +215,6 @@ describe('CompletionDataProvider', () => {
   });
 
   test('Updates the time range from CompletionProvider', async () => {
-    const otherTimeRange = {
-      from: dateTime(1234567800000),
-      to: dateTime(1234567801000),
-      raw: {
-        from: dateTime(1234567800000),
-        to: dateTime(1234567801000),
-      },
-    };
-
     completionProvider.getParserAndLabelKeys('{a="b"}');
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledWith('{a="b"}', { timeRange: mockTimeRange });
     completionProvider.setTimeRange(otherTimeRange);
