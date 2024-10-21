@@ -40,6 +40,11 @@ const (
 
 var _ storage.Interface = (*Storage)(nil)
 
+// Optional settings that apply to a single resource
+type StorageOptions struct {
+	LargeObjectSupport LargeObjectSupport
+}
+
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	gr           schema.GroupResource
@@ -56,9 +61,8 @@ type Storage struct {
 
 	versioner storage.Versioner
 
-	// Defines if we want to outsource large objects to another storage type.
-	// By default, this feature is disabled.
-	largeObjectSupport bool
+	// Resource options like large object support
+	opts StorageOptions
 }
 
 // ErrFileNotExists means the file doesn't actually exist.
@@ -78,7 +82,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
-	largeObjectSupport bool,
+	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
 		store:        store,
@@ -95,7 +99,7 @@ func NewStorage(
 
 		versioner: &storage.APIObjectVersioner{},
 
-		largeObjectSupport: largeObjectSupport,
+		opts: opts,
 	}
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
@@ -471,6 +475,19 @@ func (s *Storage) GuaranteedUpdate(
 					return fmt.Errorf("precondition failed: %w", err)
 				}
 				continue
+			}
+
+			// restore the original object before tryUpdate
+			if s.opts.LargeObjectSupport != nil && mmm.GetBlob() != nil {
+				b, err := s.store.GetBlob(ctx, &resource.GetBlobRequest{
+					Resource:        req.Key,
+					MustProxyBytes:  true,
+					ResourceVersion: rsp.ResourceVersion,
+				})
+				if err != nil {
+					return err
+				}
+				fmt.Printf("TODO... build full spec from: %s", b.ContentType)
 			}
 		} else if !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, req.Key.Name)

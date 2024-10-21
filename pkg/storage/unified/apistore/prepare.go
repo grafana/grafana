@@ -49,11 +49,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err = s.codec.Encode(newObject, &buf); err != nil {
 		return nil, err
 	}
-
-	if s.largeObjectSupport {
-		return s.handleLargeResources(ctx, obj, buf)
-	}
-	return buf.Bytes(), nil
+	return s.handleLargeResources(ctx, obj, buf)
 }
 
 // Called on update
@@ -92,27 +88,39 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if err = s.codec.Encode(updateObject, &buf); err != nil {
 		return nil, err
 	}
-	if s.largeObjectSupport {
-		return s.handleLargeResources(ctx, obj, buf)
-	}
-	return buf.Bytes(), nil
+	return s.handleLargeResources(ctx, obj, buf)
 }
 
 func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {
-	if buf.Len() > 1000 {
-		// !!! Currently just write the whole thing
-		// in reality we may only want to write the spec....
-		_, err := s.store.PutBlob(ctx, &resource.PutBlobRequest{
-			ContentType: "application/json",
-			Value:       buf.Bytes(),
-			Resource: &resource.ResourceKey{
-				Group:     s.gr.Group,
-				Resource:  s.gr.Resource,
-				Namespace: obj.GetNamespace(),
-				Name:      obj.GetName(),
-			},
-		})
+	support := s.opts.LargeObjectSupport
+	if support != nil {
+		size := buf.Len()
+		if size > support.Threshold() {
+			if support.MaxSize() > 0 && size > support.MaxSize() {
+				return nil, fmt.Errorf("too big!")
+			}
+		}
+
+		key := &resource.ResourceKey{
+			Group:     s.gr.Group,
+			Resource:  s.gr.Resource,
+			Namespace: obj.GetNamespace(),
+			Name:      obj.GetName(),
+		}
+
+		err := support.Deconstruct(ctx, key, s.store, obj, buf.Bytes())
 		if err != nil {
+			return nil, err
+		}
+
+		buf.Reset()
+		orig, ok := obj.GetRuntimeObject()
+		if !ok {
+			return nil, fmt.Errorf("error using object as runtime object")
+		}
+
+		// Now encode the smaller version
+		if err = s.codec.Encode(orig, &buf); err != nil {
 			return nil, err
 		}
 	}
