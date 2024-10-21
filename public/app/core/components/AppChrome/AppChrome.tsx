@@ -15,10 +15,10 @@ import { KioskMode } from 'app/types';
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
-import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenu/MegaMenuHeader';
+import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
-import { MEGA_MENU_TOGGLE_ID, SingleTopBar } from './TopBar/SingleTopBar';
+import { SingleTopBar } from './TopBar/SingleTopBar';
 import { SingleTopBarActions } from './TopBar/SingleTopBarActions';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -51,24 +51,7 @@ export function AppChrome({ children }: Props) {
       }
     },
   });
-
-  // manage focus when opening/closing
-  useEffect(() => {
-    if (state.megaMenuOpen) {
-      document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
-    } else {
-      document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
-    }
-  }, [state.megaMenuOpen]);
-
-  // manage focus when docking/undocking
-  useEffect(() => {
-    if (state.megaMenuDocked) {
-      document.getElementById(DOCK_MENU_BUTTON_ID)?.focus();
-    } else {
-      document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
-    }
-  }, [state.megaMenuDocked]);
+  useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
 
   const contentClass = cx({
     [styles.content]: true,
