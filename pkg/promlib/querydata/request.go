@@ -44,8 +44,7 @@ type QueryData struct {
 	ID                 int64
 	URL                string
 	TimeInterval       string
-	// QueryTimeout       time.Duration
-	exemplarSampler func() exemplar.Sampler
+	exemplarSampler    func() exemplar.Sampler
 }
 
 func New(
