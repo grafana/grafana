@@ -204,6 +204,7 @@ export interface FeatureToggles {
   alertingFilterV2?: boolean;
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
+  tableNG?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   alertingPrometheusRulesPrimary?: boolean;
   singleTopNav?: boolean;
