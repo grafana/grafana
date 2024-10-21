@@ -14,6 +14,10 @@ export const pluginVersion = "11.4.0-pre";
 
 export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**
+   * Controls name alignment
+   */
+  alignName?: ui.TimelineNameAlignment;
+  /**
    * Controls value alignment on the timelines
    */
   alignValue?: ui.TimelineValueAlignment;
@@ -33,9 +37,14 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    * Show timeline values on chart
    */
   showValue: ui.VisibilityMode;
+  /**
+   * Controls the y axis width
+   */
+  yAxisWidth: number;
 }
 
 export const defaultOptions: Partial<Options> = {
+  alignName: 'right',
   alignValue: 'left',
   mergeValues: true,
   perPage: 20,
