@@ -459,6 +459,10 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 	result := user.SearchUserQueryResult{
 		Users: make([]*user.UserSearchHitDTO, 0),
 	}
+	// if db_type is sqlite, replace / to empty string
+	if ss.db.GetDBType() == migrator.SQLite {
+		query.Query = util.UnEscapeStringFromRegex(query.Query)
+	}
 	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		queryWithWildcards := "%" + query.Query + "%"
 
