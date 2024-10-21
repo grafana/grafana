@@ -12,11 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-<<<<<<< HEAD
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apiserver/pkg/apis/example"
-=======
->>>>>>> 048b25e14dc (All objects should have an UID)
 )
 
 var createFn = func(context.Context, runtime.Object) error { return nil }
@@ -432,125 +427,6 @@ func TestMode2_Update(t *testing.T) {
 
 			assert.Equal(t, tt.expectedObj, obj)
 			assert.NotEqual(t, anotherObj, obj)
-		})
-	}
-}
-
-// func TestEnrichReturnedObject(t *testing.T) {
-// 	testCase := []struct {
-// 		inputOriginal  runtime.Object
-// 		inputReturned  runtime.Object
-// 		expectedObject runtime.Object
-// 		name           string
-// 		isCreated      bool
-// 		wantErr        bool
-// 	}{
-// 		{
-// 			name: "original object does not have labels and annotations",
-// 			inputOriginal: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5")},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 			inputReturned: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 			expectedObject: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5")},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 		},
-// 		{
-// 			name: "returned object does not have labels and annotations",
-// 			inputOriginal: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 			inputReturned: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6")},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 			expectedObject: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 		},
-// 		{
-// 			name: "both objects have labels and annotations",
-// 			inputOriginal: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 			inputReturned: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label2": "2"}, Annotations: map[string]string{"annotation2": "2"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 			expectedObject: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 		},
-// 		{
-// 			name: "both objects have labels and annotations with duplicated keys",
-// 			inputOriginal: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 			inputReturned: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label1": "11"}, Annotations: map[string]string{"annotation1": "11"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 			expectedObject: &example.Pod{
-// 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-// 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-// 				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-// 			},
-// 		},
-// 		{
-// 			name:           "original object does not exist",
-// 			inputOriginal:  nil,
-// 			inputReturned:  &example.Pod{},
-// 			expectedObject: nil,
-// 			wantErr:        true,
-// 		},
-// 		{
-// 			name:           "returned object does not exist",
-// 			inputOriginal:  &example.Pod{},
-// 			inputReturned:  nil,
-// 			expectedObject: nil,
-// 			wantErr:        true,
-// 		},
-// 	}
-
-// 	for _, tt := range testCase {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			err := enrichLegacyObject(tt.inputOriginal, tt.inputReturned)
-// 			if tt.wantErr {
-// 				assert.Error(t, err)
-// 				return
-// 			}
-
-// 			accessorReturned, err := meta.Accessor(tt.inputReturned)
-// 			assert.NoError(t, err)
-
-// 			accessorExpected, err := meta.Accessor(tt.expectedObject)
-// 			assert.NoError(t, err)
-
-// 			assert.Equal(t, accessorExpected.GetLabels(), accessorReturned.GetLabels())
-
-			assert.Equal(t, accessorExpected.GetResourceVersion(), accessorReturned.GetResourceVersion())
-			assert.Equal(t, accessorExpected.GetUID(), accessorReturned.GetUID())
 		})
 	}
 }
