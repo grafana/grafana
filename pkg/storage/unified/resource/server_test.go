@@ -52,29 +52,28 @@ func TestSimpleServer(t *testing.T) {
 
 	t.Run("playlist happy CRUD paths", func(t *testing.T) {
 		raw := []byte(`{
-    "apiVersion": "playlist.grafana.app/v0alpha1",
-    "kind": "Playlist",
-    "metadata": {
-        "name": "fdgsv37qslr0ga",
-        "namespace": "default",
-        "annotations": {
-            "grafana.app/originName": "elsewhere",
-            "grafana.app/originPath": "path/to/item",
-            "grafana.app/originTime\n\t\t\tstamp": "2024-02-02T00:00:00Z"
-        },
-        "uid": "123"
-    },
-    "spec": {
-        "title": "hello",
-        "interval": "5m",
-        "items": [
-            {
-                "type": "dashboard_by_uid",
-                "value": "vmie2cmWz"
-            }
-        ]
-    }
-}`)
+    	"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "fdgsv37qslr0ga",
+				"namespace": "default",
+				"annotations": {
+					"grafana.app/originName": "elsewhere",
+					"grafana.app/originPath": "path/to/item",
+					"grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+				}
+			},
+			"spec": {
+				"title": "hello",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "vmie2cmWz"
+					}
+				]
+			}
+		}`)
 
 		key := &ResourceKey{
 			Group:     "playlist.grafana.app",
@@ -169,28 +168,27 @@ func TestSimpleServer(t *testing.T) {
 	t.Run("playlist update optimistic concurrency check", func(t *testing.T) {
 		raw := []byte(`{
     "apiVersion": "playlist.grafana.app/v0alpha1",
-    "kind": "Playlist",
-    "metadata": {
-        "name": "fdgsv37qslr0ga",
-        "namespace": "default",
-        "annotations": {
-            "grafana.app/originName": "elsewhere",
-            "grafana.app/originPath": "path/to/item",
-            "grafana.app/originTime\n\t\t\tstamp": "2024-02-02T00:00:00Z"
-        },
-        "uid": "123"
-    },
-    "spec": {
-        "title": "hello",
-        "interval": "5m",
-        "items": [
-            {
-                "type": "dashboard_by_uid",
-                "value": "vmie2cmWz"
-            }
-        ]
-    }
-}`)
+			"kind": "Playlist",
+			"metadata": {
+				"name": "fdgsv37qslr0ga",
+				"namespace": "default",
+				"annotations": {
+					"grafana.app/originName": "elsewhere",
+					"grafana.app/originPath": "path/to/item",
+					"grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+				}
+			},
+			"spec": {
+				"title": "hello",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "vmie2cmWz"
+					}
+				]
+			}
+		}`)
 
 		key := &ResourceKey{
 			Group:     "playlist.grafana.app",
