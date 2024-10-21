@@ -42,9 +42,9 @@ func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error)
 		authnlib.WithIDTokenAuthOption(true),
 		authnlib.WithKeyRetrieverOption(keyRetriever),
 	}
-	if authCfg.Mode == ModeOnPrem {
+	// Access token are not yet available on-prem
+	if authCfg.stackID == "" {
 		grpcOpts = append(grpcOpts,
-			// Access token are not yet available on-prem
 			authnlib.WithDisableAccessTokenAuthOption(),
 		)
 	}
