@@ -259,6 +259,11 @@ func fetchResourceTypes() []*ListOptions {
 			Group:    "playlist.grafana.app",
 			Resource: "playlists",
 		},
+	}, &ListOptions{
+		Key: &ResourceKey{
+			Group:    "folder.grafana.app",
+			Resource: "folders",
+		},
 	})
 	return items
 }
