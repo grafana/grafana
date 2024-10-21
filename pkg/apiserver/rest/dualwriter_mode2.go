@@ -57,10 +57,6 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return nil, fmt.Errorf("UID should be empty: %v", accIn.GetUID())
 	}
 
-	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
-		return nil, fmt.Errorf("name or generatename have to be set")
-	}
-
 	startLegacy := time.Now()
 	createdFromLegacy, err := d.Legacy.Create(ctx, in, createValidation, options)
 	if err != nil {
