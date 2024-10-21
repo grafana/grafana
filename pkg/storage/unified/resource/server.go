@@ -721,7 +721,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 
 				// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
 				latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
-				if latencyeconds > 0 {
+				if latencySeconds > 0 {
 					StorageServerMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 				}
 			}
