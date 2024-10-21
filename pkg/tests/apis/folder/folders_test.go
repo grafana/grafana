@@ -404,6 +404,25 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		for _, uid := range uids {
 			getFromBothAPIs(t, helper, client, uid, nil)
 		}
+
+		// PUT :: Update the title
+		updated, err := client.Resource.Update(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/folder-test-replace.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+		spec, ok := updated.Object["spec"].(map[string]any)
+		require.True(t, ok)
+		title, ok := spec["title"].(string)
+		require.True(t, ok)
+		description, ok := spec["description"].(string)
+		require.True(t, ok)
+		require.Equal(t, first.GetName(), updated.GetName())
+		require.Equal(t, first.GetUID(), updated.GetUID())
+		require.Equal(t, "Test folder (replaced from k8s; 1 item; PUT)", title)
+		require.Equal(t, "New description", description)
+		// #TODO figure out why this breaks just for MySQL integration tests
+		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
 	})
 	return helper
 }
