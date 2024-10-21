@@ -1,12 +1,8 @@
-/* eslint @grafana/no-untranslated-strings: "error" */
-import { useEffect } from 'react';
-
 import {
   SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
-  DataSourceVariable,
   PanelBuilders,
   SceneFlexItem,
   SceneFlexLayout,
@@ -14,18 +10,15 @@ import {
   SceneQueryRunner,
   SceneVariableSet,
   VariableValueSelectors,
-  // CustomVariable,
+  CustomVariable,
   VariableDependencyConfig,
   SceneVariable,
 } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
 
-// import { SelectMetricAction } from '../MetricSelect/SelectMetricAction';
-// import type { FoundLokiDataSource } from '../Integrations/logsIntegration';
 import {
   ExtractedRecordingRules,
   fetchAndExtractLokiRecordingRules,
-  FoundLokiDataSource,
   getLogsUidOfMetric,
   getLogsQueryForMetric,
 } from '../Integrations/logsIntegration';
@@ -42,21 +35,7 @@ export interface RelatedLogsSceneState extends SceneObjectState {
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   constructor(state: Partial<RelatedLogsSceneState>) {
     super({
-      $variables: getVariableSet(state.initialDS),
-      // TODO: Replace DataSourceVariable with CustomVariable
-      // that only includes data sources that have relevant logs
-      //
-      // $variables: new SceneVariableSet({
-      //   variables: [
-      //     new CustomVariable({
-      //       name: VAR_LOGS_DATASOURCE,
-      //       label: 'Logs data source',
-      //       value: '',
-      //       query: state.lokiDataSources?.map((ds) => `${ds.name} : ${ds.uid}`).join(','),
-      //     }),
-      //   ],
-      // }),
-      controls: [new VariableValueSelectors({ layout: 'vertical' })],
+      controls: [],
       body: new SceneFlexLayout({
         direction: 'column',
         height: '400px',
@@ -71,8 +50,25 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   }
 
   private onActivate() {
-    // const {} = sceneGraph.getVariables(this);
-    fetchAndExtractLokiRecordingRules().then((rules) => this.setState({ lokiRecordingRules: rules }));
+    fetchAndExtractLokiRecordingRules()
+      .then((rules) => this.setState({ lokiRecordingRules: rules }))
+      .then(() => {
+        const selectedMetricVar = sceneGraph.lookupVariable(VAR_METRIC, this);
+        const selectedMetric = selectedMetricVar?.getValue()?.toString() ?? '';
+        const lokiDs = getLogsUidOfMetric(selectedMetric, this.state.lokiRecordingRules);
+        this.setState({
+          $variables: new SceneVariableSet({
+            variables: [
+              new CustomVariable({
+                name: VAR_LOGS_DATASOURCE,
+                label: 'Logs data source',
+                query: lokiDs?.map((ds) => `${ds.name} : ${ds.uid}`).join(', '),
+              }),
+            ],
+          }),
+          controls: [new VariableValueSelectors({ layout: 'vertical' })],
+        });
+      });
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -81,6 +77,12 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
       const { name } = variable.state;
 
       if (name === VAR_LOGS_DATASOURCE) {
+        const selectedMetricVar = sceneGraph.lookupVariable(VAR_METRIC, this);
+        const selectedMetric = selectedMetricVar?.getValue()?.toString() ?? '';
+        const selectedDatasourceVar = sceneGraph.lookupVariable(VAR_LOGS_DATASOURCE, this);
+        const selectedDatasource = selectedDatasourceVar?.getValue()?.toString() ?? '';
+        const lokiQuery = getLogsQueryForMetric(selectedMetric, selectedDatasource, this.state.lokiRecordingRules);
+        this.setState({ lokiQuery });
         this.buildLogsPanel();
       }
     },
@@ -114,41 +116,8 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
     });
   }
 
-  private readonly findLogsDsForSelectedMetric = (metricName: string): FoundLokiDataSource[] => {
-    if (metricName === '') {
-      return [];
-    }
-
-    return getLogsUidOfMetric(metricName, this.state.lokiRecordingRules);
-  };
-
-  private readonly getLokiQueryForMetric = (metricName: string, dataSourceId: string): string => {
-    return getLogsQueryForMetric(metricName, dataSourceId, this.state.lokiRecordingRules);
-  };
-
-  private readonly updateLokiQuery = (expr: string) => {
-    console.log(`NEW LOKI QUERY`, expr);
-    this.setState({ lokiQuery: expr });
-    this.buildLogsPanel();
-  };
-
   static readonly Component = ({ model }: SceneComponentProps<RelatedLogsScene>) => {
     const { controls, body } = model.useState();
-    const selectedMetricVar = sceneGraph.lookupVariable(VAR_METRIC, model);
-    const selectedMetric = selectedMetricVar?.getValue()?.toString() ?? '';
-    console.log(selectedMetric);
-    const lokiDs = model.findLogsDsForSelectedMetric(selectedMetric);
-    // const dsNamesWithRelevantLogs = lokiDs.reduce((acc, el) => {
-    //   acc.add(el.name);
-    //   return acc;
-    // }, new Set<string>([]));
-    const lokiQuery = model.getLokiQueryForMetric(selectedMetric, lokiDs[0]?.uid);
-
-    useEffect(() => {
-      if (lokiQuery) {
-        model.updateLokiQuery(lokiQuery);
-      }
-    }, [lokiQuery, model]);
 
     return (
       <div>
@@ -169,19 +138,4 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
 
 export function buildRelatedLogsScene() {
   return new RelatedLogsScene({});
-}
-
-// const VAR_LOKI_QUERY = 'lokiQuery';
-
-function getVariableSet(initialDS?: string) {
-  return new SceneVariableSet({
-    variables: [
-      new DataSourceVariable({
-        name: VAR_LOGS_DATASOURCE,
-        label: 'Logs data source',
-        value: initialDS,
-        pluginId: 'loki',
-      }),
-    ],
-  });
 }
