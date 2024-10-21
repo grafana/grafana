@@ -19264,7 +19264,7 @@ __metadata:
     react-zoom-pan-pinch: "npm:^3.3.0"
     reduce-reducers: "npm:^1.0.4"
     redux: "npm:5.0.1"
-    redux-mock-store: "npm:1.5.4"
+    redux-mock-store: "npm:1.5.5"
     redux-thunk: "npm:3.1.0"
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.1.1"
@@ -28416,12 +28416,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux-mock-store@npm:1.5.4":
-  version: 1.5.4
-  resolution: "redux-mock-store@npm:1.5.4"
+"redux-mock-store@npm:1.5.5":
+  version: 1.5.5
+  resolution: "redux-mock-store@npm:1.5.5"
   dependencies:
     lodash.isplainobject: "npm:^4.0.6"
-  checksum: 10/7790554114c81db4eecfaf1596233374f57919b8a925dba9f2cdbaa27b5200c4969ee476fd0d5fe806748d06378a38a9c9e79f37a363c7ba64e11f71cae27c2c
+  peerDependencies:
+    redux: "*"
+  checksum: 10/fac3adf49e9c2d9cdb278e5e49f686e4a00eb568ed3885b7958fa5681049b4fe0df5bd7fd2f7b4450dabb14cede82cb02857f5ff055c990ca99dfe93bf61183c
   languageName: node
   linkType: hard
 
