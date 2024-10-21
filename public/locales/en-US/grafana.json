@@ -2025,8 +2025,8 @@
       "versions": {
         "confirmation-text-1": "Are you really sure you want to downgrade to version",
         "confirmation-text-2": "You should normally not be doing this",
-        "install-confirm": "Install",
-        "install-title": "Install plugin version"
+        "downgrade-confirm": "Downgrade",
+        "downgrade-title": "Downgrade plugin version"
       }
     },
     "details": {

@@ -12,12 +12,13 @@ import { Version } from '../types';
 interface Props {
   pluginId: string;
   version: Version;
+  latestCompatibleVersion?: string;
   installedVersion?: string;
   disabled: boolean;
   onClick: () => void;
 }
 
-export const VersionInstallButton = ({ pluginId, version, installedVersion, disabled, onClick }: Props) => {
+export const VersionInstallButton = ({ pluginId, version, latestCompatibleVersion, installedVersion, disabled, onClick }: Props) => {
   const install = useInstall();
   const [isInstalling, setIsInstalling] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,19 +74,20 @@ export const VersionInstallButton = ({ pluginId, version, installedVersion, disa
         disabled={disabled || isInstalled}
         fullWidth
         size="sm"
-        variant="primary"
+        variant={latestCompatibleVersion === version.version ? 'primary' : 'secondary'}
         onClick={onInstallClick}
       >
         {label} {isInstalling && <Spinner className={styles.spinner} inline size="sm" />}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
-        title={t('plugins.catalog.versions.install-title', 'Install plugin version')}
+        title={t('plugins.catalog.versions.downgrade-title', 'Downgrade plugin version')}
         body={`${t('plugins.catalog.versions.confirmation-text-1', 'Are you really sure you want to downgrade to version')} ${version.version}? ${t('plugins.catalog.versions.confirmation-text-2', 'You should normally not be doing this')}`}
-        confirmText={t('plugins.catalog.versions.install-confirm', 'Install')}
+        confirmText={t('plugins.catalog.versions.downgrade-confirm', 'Downgrade')}
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         disabled={isInstalling}
+        confirmButtonVariant='primary'
       />
     </>
   );
@@ -94,5 +96,8 @@ export const VersionInstallButton = ({ pluginId, version, installedVersion, disa
 const getStyles = (theme: GrafanaTheme2) => ({
   spinner: css({
     marginLeft: theme.spacing(1),
+  }),
+  successIcon: css({
+    color: theme.colors.success.main,
   }),
 });

@@ -70,6 +70,7 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
                 <VersionInstallButton
                   pluginId={pluginId}
                   version={version}
+                  latestCompatibleVersion={latestCompatibleVersion?.version}
                   installedVersion={installedVersion}
                   onClick={onInstallClick}
                   disabled={isInstalledVersion || isInstalling || versionIsIncompatible}
@@ -103,6 +104,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
     th {
       font-size: ${theme.typography.h5.fontSize};
+    }
+    tr:nth-child(odd) {
+      background: ${theme.colors.emphasize(theme.colors.background.primary, 0.02)};
     }
   `,
   currentVersion: css`
