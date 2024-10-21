@@ -38,17 +38,26 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstruct
 	return obj, nil
 }
 
-func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructured.Unstructured {
-	// #TODO add other fields
+func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (unstructured.Unstructured, error) {
+	// #TODO add other fields ; do we support updating the UID/orgID?
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]interface{}{
-				"title": cmd.NewTitle,
+				"title":       cmd.NewTitle,
+				"description": cmd.NewDescription,
 			},
 		},
 	}
 	obj.SetName(cmd.UID)
-	return obj
+
+	if cmd.NewParentUID == nil {
+		return obj, nil
+	}
+	if err := setParentUID(&obj, *cmd.NewParentUID); err != nil {
+		return unstructured.Unstructured{}, err
+	}
+
+	return obj, nil
 }
 
 func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *folder.Folder {
