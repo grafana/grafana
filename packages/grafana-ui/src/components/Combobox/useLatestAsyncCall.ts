@@ -7,16 +7,19 @@ type AsyncFn<T, V> = (value: T) => Promise<V>;
  * Used to prevent a faster call being overwritten by an earlier slower call.
  */
 export function useLatestAsyncCall<T, V>(fn: AsyncFn<T, V>): AsyncFn<T, V> {
-  const latestValue = useRef<T>();
+  const latestValueTimestamp = useRef<number>(0);
 
   const wrappedFn = useCallback(
     (value: T) => {
-      latestValue.current = value;
+      latestValueTimestamp.current = new Date().getTime();
 
       return new Promise<V>((resolve, reject) => {
         fn(value).then((result) => {
+          const processedTimestamp = new Date().getTime();
+
           // Only resolve if the value is still the latest
-          if (latestValue.current === value) {
+          if (processedTimestamp > latestValueTimestamp.current) {
+            latestValueTimestamp.current = processedTimestamp;
             resolve(result);
           } else {
             reject(new StaleResultError());
