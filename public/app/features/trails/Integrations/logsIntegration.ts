@@ -1,8 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import type { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
-import { getBackendSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getBackendSrv, getDataSourceSrv, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { getLogQueryFromMetricsQuery } from 'app/plugins/datasource/loki/queryUtils';
 
 export type RecordingRuleGroup = {
@@ -13,7 +12,7 @@ export type RecordingRuleGroup = {
 export type RecordingRule = {
   name: string;
   query: string;
-  type: 'recording' | 'alerting';
+  type: 'recording' | 'alerting' | string;
 };
 
 export type FoundLokiDataSource = Pick<DataSourceSettings, 'name' | 'uid'>;
@@ -102,19 +101,21 @@ export function fetchLogsForMetric(): string[] {
 }
 
 export async function fetchAndExtractLokiRecordingRules() {
-  const lokiDataSources = getDatasourceSrv()
+  const lokiDataSources = getDataSourceSrv()
     .getList({ logs: true })
     .filter((ds) => ds.type === 'loki');
   const extractedRecordingRules: ExtractedRecordingRules = {};
-  for (const lokids of lokiDataSources) {
-    const url = buildRecordingRuleURL(lokids);
-    try {
-      const ruleGroups: RecordingRuleGroup[] = await fetchLokiRecordingRules(url);
-      const extractedRules = extractRecordingRules(ruleGroups, lokids);
-      extractedRecordingRules[lokids.uid] = extractedRules;
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  await Promise.all(
+    lokiDataSources.map(async (lokids) => {
+      const url = buildRecordingRuleURL(lokids);
+      try {
+        const ruleGroups: RecordingRuleGroup[] = await fetchLokiRecordingRules(url);
+        const extractedRules = extractRecordingRules(ruleGroups, lokids);
+        extractedRecordingRules[lokids.uid] = extractedRules;
+      } catch (err) {
+        console.error(err);
+      }
+    })
+  );
   return extractedRecordingRules;
 }

@@ -1,6 +1,7 @@
-import { DataSourceSettings } from '@grafana/data';
+import type { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
-import { ExtractedRecordingRule, extractRecordingRules, RecordingRuleGroup } from './logsIntegration';
+import { extractRecordingRules, type ExtractedRecordingRule, type RecordingRuleGroup } from './logsIntegration';
 import noRulesJson from './testData/no-rules.json';
 import withRulesJson from './testData/with-rules.json';
 
@@ -27,24 +28,20 @@ describe('logsIntegration', () => {
   });
 });
 
-const mockDatasource: DataSourceSettings = {
-  access: '',
-  basicAuth: false,
-  basicAuthUser: '',
+const mockDatasource: DataSourceInstanceSettings<DataSourceJsonData> = {
+  access: 'proxy',
   database: '',
   id: 10,
   isDefault: false,
   jsonData: {},
+  meta: {
+    ...getMockPlugin(),
+    id: 'loki',
+  },
   name: 'My Test Datasource',
-  orgId: 0,
   readOnly: false,
-  secureJsonData: {},
-  secureJsonFields: {},
   type: '',
-  typeLogoUrl: '',
-  typeName: '',
   uid: 'abcd123',
   url: '',
-  user: '',
   withCredentials: false,
 };
