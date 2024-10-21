@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -76,10 +75,14 @@ export const ConfirmContent = ({
     setIsDisabled(disabled ? true : Boolean(confirmPromptText));
   }, [confirmPromptText, disabled]);
 
-  const onConfirmClick = async () => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
     if (disabled === undefined) {
       setIsDisabled(true);
     }
+
     try {
       await onConfirm();
     } finally {
@@ -89,17 +92,8 @@ export const ConfirmContent = ({
     }
   };
 
-  const { handleSubmit } = useForm();
-
   return (
-    <form
-      onSubmit={(e) => {
-        // handleSubmit() seems to be an async function (promise), so we need to preventDefault and stopPropagation
-        e.stopPropagation();
-        e.preventDefault();
-        handleSubmit(onConfirmClick)(e);
-      }}
-    >
+    <form onSubmit={onSubmit}>
       <div className={styles.text}>
         {body}
         {description ? <div className={styles.description}>{description}</div> : null}
