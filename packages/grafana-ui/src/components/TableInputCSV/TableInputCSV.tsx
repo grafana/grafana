@@ -7,6 +7,7 @@ import { DataFrame, CSVConfig, readCSV, GrafanaTheme2 } from '@grafana/data';
 
 import { stylesFactory, withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types/theme';
+import { Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { TextArea } from '../TextArea/TextArea';
 
@@ -81,10 +82,14 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
         {data && (
           <footer className={styles.footer}>
             {data.map((frame, index) => {
+              const rows = frame.length;
+              const columns = frame.fields.length;
               return (
                 <span key={index}>
-                  Rows:{frame.length}, Columns:{frame.fields.length} &nbsp;
-                  <Icon name="check-circle" />
+                  <Trans i18nKey="grafana-ui.table.csv-counts">
+                    Rows:{{ rows }}, Columns:{{ columns }} &nbsp;
+                    <Icon name="check-circle" />
+                  </Trans>
                 </span>
               );
             })}

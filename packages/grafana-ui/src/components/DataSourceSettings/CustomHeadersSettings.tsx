@@ -5,6 +5,7 @@ import { PureComponent } from 'react';
 import { DataSourceSettings } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
@@ -199,7 +200,9 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
     return (
       <div className={'gf-form-group'}>
         <div className="gf-form">
-          <h6>Custom HTTP Headers</h6>
+          <h6>
+            <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-title">Custom HTTP Headers</Trans>
+          </h6>
         </div>
         <div>
           {headers.map((header, i) => (
@@ -225,7 +228,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
                 this.onHeaderAdd();
               }}
             >
-              Add header
+              <Trans i18nKey="grafana-ui.data-source-settings.custom-headers-add">Add header</Trans>
             </Button>
           </div>
         )}

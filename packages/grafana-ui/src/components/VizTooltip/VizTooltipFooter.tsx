@@ -4,6 +4,7 @@ import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
 import { Button, DataLinkButton, Stack } from '..';
 import { useStyles2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 import { ActionButton } from '../Actions/ActionButton';
 
 interface VizTooltipFooterProps {
@@ -44,7 +45,7 @@ export const VizTooltipFooter = ({ dataLinks, actions, annotate }: VizTooltipFoo
       {annotate != null && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
-            Add annotation
+            <Trans i18nKey="grafana-ui.viz-tooltip.footer-add-annotation">Add annotation</Trans>
           </Button>
         </div>
       )}
