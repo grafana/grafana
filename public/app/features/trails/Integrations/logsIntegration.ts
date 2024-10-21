@@ -13,13 +13,13 @@ export type RecordingRuleGroup = {
 export type RecordingRule = {
   name: string;
   query: string;
-  type: string; // can be alerting or recording
+  type: 'recording' | 'alerting';
 };
 
 export type FoundLokiDataSource = Pick<DataSourceSettings, 'name' | 'uid'>;
 export type ExtractedRecordingRule = RecordingRule & { datasource: FoundLokiDataSource };
 export type ExtractedRecordingRules = {
-  [dataSourceID: string]: ExtractedRecordingRule[];
+  [dataSourceUID: string]: ExtractedRecordingRule[];
 };
 
 export function buildRecordingRuleURL(datasourceSettings: DataSourceInstanceSettings<DataSourceJsonData>): string {
