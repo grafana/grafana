@@ -61,7 +61,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const prevRangeParams = this.startedTimeRange ? this.datasource.getTimeRangeParams(this.startedTimeRange) : null;
     // refetch labels if either there's not already a start task or the time range has changed
     if (
-      !this.startTask || !prevRangeParams ||
+      !this.startTask ||
+      !prevRangeParams ||
       newRangeParams.start !== prevRangeParams.start ||
       newRangeParams.end !== prevRangeParams.end
     ) {
