@@ -82,6 +82,7 @@ import {
   getStreamSelectorsFromQuery,
   isLogsQuery,
   isQueryWithError,
+  requestSupportsSharding,
   requestSupportsSplitting,
 } from './queryUtils';
 import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';

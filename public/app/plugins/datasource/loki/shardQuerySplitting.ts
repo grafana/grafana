@@ -13,11 +13,11 @@ import { LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
 import {
-  addShardingPlaceholderSelector,
   getSelectorForShardValues,
   interpolateShardingSelector,
+  requestSupportsSharding,
 } from './queryUtils';
-import { LokiQuery, LokiQueryDirection } from './types';
+import { LokiQuery } from './types';
 
 /**
  * Query splitting by stream shards.
@@ -57,11 +57,7 @@ export function runShardSplitQuery(datasource: LokiDatasource, request: DataQuer
   const queries = datasource
     .interpolateVariablesInQueries(request.targets, request.scopedVars)
     .filter((query) => query.expr)
-    .filter((query) => !query.hide)
-    .map((target) => ({
-      ...target,
-      expr: addShardingPlaceholderSelector(target.expr),
-    }));
+    .filter((query) => !query.hide);
 
   return splitQueriesByStreamShard(datasource, request, queries);
 }
@@ -246,7 +242,7 @@ async function groupTargetsByQueryType(
   datasource: LokiDatasource,
   request: DataQueryRequest<LokiQuery>
 ) {
-  const [shardedQueries, otherQueries] = partition(targets, (query) => query.direction === LokiQueryDirection.Scan);
+  const [shardedQueries, otherQueries] = partition(targets, (query) => requestSupportsSharding([query]));
   const groups: ShardedQueryGroup[] = [];
 
   if (otherQueries.length) {
