@@ -138,16 +138,16 @@ function getDisplayName(src?: string, name?: string): string | undefined {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  pointer: css`
-    cursor: pointer;
-    input[readonly] {
-      cursor: pointer;
-    }
-  `,
-  icon: css`
-    vertical-align: middle;
-    display: inline-block;
-    fill: currentColor;
-    width: 25px;
-  `,
+  pointer: css({
+    cursor: 'pointer',
+    'input[readonly]': {
+      cursor: 'pointer',
+    },
+  }),
+  icon: css({
+    verticalAlign: 'middle',
+    display: 'inline-block',
+    fill: 'currentColor',
+    width: '25px',
+  }),
 });

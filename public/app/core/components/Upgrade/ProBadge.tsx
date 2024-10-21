@@ -29,14 +29,14 @@ export const ProBadge = ({ text = 'PRO', className, experimentId, eventVariant =
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    badge: css`
-      margin-left: ${theme.spacing(1.25)};
-      border-radius: ${theme.shape.borderRadius(5)};
-      background-color: ${theme.colors.success.main};
-      padding: ${theme.spacing(0.25, 0.75)};
-      color: white; // use the same color for both themes
-      font-weight: ${theme.typography.fontWeightMedium};
-      font-size: ${theme.typography.pxToRem(10)};
-    `,
+    badge: css({
+      marginLeft: theme.spacing(1.25),
+      borderRadius: theme.shape.borderRadius(5),
+      backgroundColor: theme.colors.success.main,
+      padding: theme.spacing(0.25, 0.75),
+      color: 'white', // use the same color for both themes
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.pxToRem(10),
+    }),
   };
 };
