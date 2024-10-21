@@ -34,7 +34,7 @@ func TestIntegrationRequiresDevMode(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    true, // should fail
 		DisableAnonymous:     true,
-		APIServerStorageType: options.StorageTypeUnifiedGrpc, // tests remote connection
+		APIServerStorageType: options.StorageTypeUnified, // tests local unified storage connection
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
