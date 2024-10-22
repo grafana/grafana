@@ -17,6 +17,7 @@ import { Box, Button, Icon, IconButton, Stack, TextLink, useStyles2 } from '@gra
 import { Text } from '@grafana/ui/src/components/Text/Text';
 
 import { DataTrail } from './DataTrail';
+import { DataTrailsBookmarks } from './DataTrailBookmarks';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
 // import { DataTrailsBookmarks } from './DataTrailsBookmarks';
@@ -25,7 +26,6 @@ import { getBookmarkKey, getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
 import { VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
-import { DataTrailsBookmarks } from './DataTrailBookmarks';
 
 export interface DataTrailsHomeState extends SceneObjectState {
   recentExplorations?: RecentExplorationScene[]; // declare the type of the state (of type RecentExplorationScene[])
@@ -102,8 +102,14 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
+    const [showAll, setShowAll] = useState(false);
+    const recentMetrics = getTrailStore().recent;
     const [_, setLastDelete] = useState(Date.now());
     const styles = useStyles2(getStyles);
+
+    const handleToggleShow = () => {
+      setShowAll(!showAll);
+    };
 
     const onDelete = (index: number) => {
       getTrailStore().removeBookmark(index);
@@ -166,26 +172,30 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             </div>
           </Stack>
         </div>
-        {getTrailStore().recent.length > 0 && (
+        {recentMetrics.length > 0 && (
           <>
             <div className={styles.recentExplorationHeader}>
               <div className={styles.header}>Or view a recent exploration</div>
             </div>
             <div className={css(styles.trailList, styles.bottomGap24)}>
-              {getTrailStore().recent.map((trail, index) => {
-                const resolvedTrail = trail.resolve();
-                return (
-                  <DataTrailCard
-                    key={(resolvedTrail.state.key || '') + index}
-                    trail={resolvedTrail}
-                    onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
-                  />
-                );
-              })}
+              {getTrailStore()
+                .recent.slice(0, showAll ? recentMetrics.length : 3)
+                .map((trail, index) => {
+                  const resolvedTrail = trail.resolve();
+                  return (
+                    <DataTrailCard
+                      key={(resolvedTrail.state.key || '') + index}
+                      trail={resolvedTrail}
+                      onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
+                    />
+                  );
+                })}
             </div>
-            <Button variant="secondary" size="sm">
-              Show more
-            </Button>
+            {recentMetrics.length > 3 && (
+              <Button variant="secondary" size="sm" onClick={handleToggleShow}>
+                {showAll ? 'Show less' : 'Show more'}
+              </Button>
+            )}
           </>
         )}
         <DataTrailsBookmarks model={model} onDelete={onDelete} />
