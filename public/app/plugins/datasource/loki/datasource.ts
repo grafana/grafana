@@ -362,7 +362,7 @@ export class LokiDatasource
     }
 
     const lokiShardSplitting = true;
-    if (lokiShardSplitting && requestSupportsSharding(fixedRequest.targets)) {
+    if (lokiShardSplitting && requestSupportsSharding(fixedRequest.targets) && fixedRequest.app === CoreApp.Explore) {
       return runShardSplitQuery(this, fixedRequest);
     } else if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
       return runSplitQuery(this, fixedRequest);
