@@ -186,9 +186,10 @@ describe('Combobox', () => {
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
-      await user.click(input); // First request
-
-      await user.keyboard('ab'); // Second request
+      await user.click(input);
+      await user.keyboard('a'); // First request
+      jest.advanceTimersByTime(10); // Simulate keyboard delay
+      await user.keyboard('b'); // Second request, ab
       jest.advanceTimersByTime(210); // Resolve the second request
 
       let item: HTMLElement | null = await screen.findByRole('option', { name: 'second' });
@@ -197,9 +198,7 @@ describe('Combobox', () => {
       expect(item).toBeInTheDocument();
       expect(firstItem).not.toBeInTheDocument();
 
-      act(() => {
-        jest.advanceTimersByTime(1100); // Resolve the first request
-      });
+      jest.advanceTimersByTime(1100); // Resolve the first request
 
       item = screen.queryByRole('option', { name: 'first' });
       firstItem = screen.queryByRole('option', { name: 'second' });

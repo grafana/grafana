@@ -11,15 +11,13 @@ export function useLatestAsyncCall<T, V>(fn: AsyncFn<T, V>): AsyncFn<T, V> {
 
   const wrappedFn = useCallback(
     (value: T) => {
-      latestValueTimestamp.current = new Date().getTime();
+      const requestTimestamp = new Date().getTime();
 
       return new Promise<V>((resolve, reject) => {
         fn(value).then((result) => {
-          const processedTimestamp = new Date().getTime();
-
           // Only resolve if the value is still the latest
-          if (processedTimestamp > latestValueTimestamp.current) {
-            latestValueTimestamp.current = processedTimestamp;
+          if (requestTimestamp > latestValueTimestamp.current) {
+            latestValueTimestamp.current = requestTimestamp;
             resolve(result);
           } else {
             reject(new StaleResultError());
