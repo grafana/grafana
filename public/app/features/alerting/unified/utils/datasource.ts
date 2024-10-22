@@ -11,7 +11,7 @@ import { RulesSource } from 'app/types/unified-alerting';
 import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
+import { PERMISSIONS_GRAFANA_ALERTMANAGER } from '../components/contact-points/permissions';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
@@ -150,7 +150,7 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
 
   const builtinAlertmanagerPermissions = [
     ...Object.values(permissions).flatMap((permissions) => permissions.grafana),
-    ...PERMISSIONS_CONTACT_POINTS,
+    ...PERMISSIONS_GRAFANA_ALERTMANAGER,
   ];
 
   const hasPermissionsForInternalAlertmanager = builtinAlertmanagerPermissions.some((permission) =>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   Alert,
@@ -164,32 +164,38 @@ const NotificationTemplatesTab = () => {
   );
 };
 
-const useTabQueryParam = () => {
+const useTabQueryParam = (initialTab: ActiveTab) => {
   const [queryParams, setQueryParams] = useURLSearchParams();
+  const setParam = useCallback((tab: ActiveTab) => setQueryParams({ tab }), [setQueryParams]);
   const param = useMemo(() => {
     const queryParam = queryParams.get('tab');
 
     if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
-      return ActiveTab.ContactPoints;
+      setParam(initialTab);
+      return;
     }
 
-    return queryParam || ActiveTab.ContactPoints;
-  }, [queryParams]);
-
-  const setParam = (tab: ActiveTab) => setQueryParams({ tab });
+    return queryParam;
+  }, [queryParams, setParam, initialTab]);
 
   return [param, setParam] as const;
 };
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [activeTab, setActiveTab] = useTabQueryParam();
+  const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+  const [, showContactPointsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+
+  const availableTabs = [
+    showContactPointsTab && ActiveTab.ContactPoints,
+    showTemplatesTab && ActiveTab.NotificationTemplates,
+  ].filter((tab) => !!tab);
+
+  const [activeTab, setActiveTab] = useTabQueryParam(availableTabs[0]);
 
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
-  const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
-  const [, showContactPointsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;

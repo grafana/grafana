@@ -3,7 +3,7 @@ import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types';
 
-import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
+import { PERMISSIONS_CONTACT_POINTS, PERMISSIONS_TEMPLATES } from './unified/components/contact-points/permissions';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -104,6 +104,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
         ...PERMISSIONS_CONTACT_POINTS,
+        ...PERMISSIONS_TEMPLATES,
       ]),
       component: importAlertingComponent(
         () =>
@@ -150,8 +151,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        AccessControlAction.AlertingTemplatesRead,
-        AccessControlAction.AlertingTemplatesWrite,
+        ...PERMISSIONS_TEMPLATES,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "Templates" */ 'app/features/alerting/unified/Templates')
