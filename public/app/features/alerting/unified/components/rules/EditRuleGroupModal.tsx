@@ -27,7 +27,7 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '..
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
 import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
-import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
+import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehaviour';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -178,7 +178,7 @@ export interface ModalProps {
   hideFolder?: boolean;
 }
 
-export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
+export function EditRuleGroupModal(props: ModalProps): React.ReactElement {
   const { namespace, group, onClose, intervalEditOnly, folderUid } = props;
 
   const styles = useStyles2(getStyles);
