@@ -22,7 +22,7 @@ import {
   getLogsUidOfMetric,
   getLogsQueryForMetric,
 } from '../Integrations/logsIntegration';
-import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC } from '../shared';
+import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
 export interface RelatedLogsSceneState extends SceneObjectState {
   initialDS?: string;
@@ -50,25 +50,23 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   }
 
   private onActivate() {
-    fetchAndExtractLokiRecordingRules()
-      .then((rules) => this.setState({ lokiRecordingRules: rules }))
-      .then(() => {
-        const selectedMetricVar = sceneGraph.lookupVariable(VAR_METRIC, this);
-        const selectedMetric = selectedMetricVar?.getValue()?.toString() ?? '';
-        const lokiDs = getLogsUidOfMetric(selectedMetric, this.state.lokiRecordingRules);
-        this.setState({
-          $variables: new SceneVariableSet({
-            variables: [
-              new CustomVariable({
-                name: VAR_LOGS_DATASOURCE,
-                label: 'Logs data source',
-                query: lokiDs?.map((ds) => `${ds.name} : ${ds.uid}`).join(', '),
-              }),
-            ],
-          }),
-          controls: [new VariableValueSelectors({ layout: 'vertical' })],
-        });
+    fetchAndExtractLokiRecordingRules().then((lokiRecordingRules) => {
+      const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
+      const lokiDs = getLogsUidOfMetric(selectedMetric, lokiRecordingRules);
+      this.setState({
+        $variables: new SceneVariableSet({
+          variables: [
+            new CustomVariable({
+              name: VAR_LOGS_DATASOURCE,
+              label: 'Logs data source',
+              query: lokiDs?.map((ds) => `${ds.name} : ${ds.uid}`).join(','),
+            }),
+          ],
+        }),
+        controls: [new VariableValueSelectors({ layout: 'vertical' })],
+        lokiRecordingRules,
       });
+    });
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -77,10 +75,8 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
       const { name } = variable.state;
 
       if (name === VAR_LOGS_DATASOURCE) {
-        const selectedMetricVar = sceneGraph.lookupVariable(VAR_METRIC, this);
-        const selectedMetric = selectedMetricVar?.getValue()?.toString() ?? '';
-        const selectedDatasourceVar = sceneGraph.lookupVariable(VAR_LOGS_DATASOURCE, this);
-        const selectedDatasource = selectedDatasourceVar?.getValue()?.toString() ?? '';
+        const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
+        const selectedDatasource = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
         const lokiQuery = getLogsQueryForMetric(selectedMetric, selectedDatasource, this.state.lokiRecordingRules);
         this.setState({ lokiQuery });
         this.buildLogsPanel();
