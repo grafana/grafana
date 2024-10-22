@@ -70,6 +70,7 @@ export function MetricCombobox({
       const _devStart = Date.now();
 
       const metrics = input.length ? await getMetricLabels(input) : await onGetMetrics();
+
       const _devEnd = Date.now();
       const timeRemaining = _devMinTime - (_devEnd - _devStart);
       if (timeRemaining > 0) {
