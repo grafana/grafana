@@ -94,8 +94,7 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 }
 
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.Check")
-	defer span.End()
+	tracer.Start(ctx, "authzServer.Check")
 
 	return &authzv1.CheckResponse{}, nil
 }
