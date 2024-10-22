@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"strings"
 
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 )
 
@@ -16,6 +17,7 @@ type IndexServer struct {
 	index *Index
 	ws    *indexWatchServer
 	log   *slog.Logger
+	cfg   *setting.Cfg
 }
 
 func (is *IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
@@ -44,7 +46,7 @@ func (is *IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginR
 
 // Load the index
 func (is *IndexServer) Load(ctx context.Context) error {
-	is.index = NewIndex(is.s, Opts{})
+	is.index = NewIndex(is.s, Opts{}, is.cfg.IndexPath)
 	err := is.index.Init(ctx)
 	if err != nil {
 		return err
@@ -86,10 +88,20 @@ func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 	return nil
 }
 
-func NewResourceIndexServer() ResourceIndexServer {
-	return &IndexServer{
-		log: slog.Default().With("logger", "index-server"),
+func NewResourceIndexServer(cfg *setting.Cfg) ResourceIndexServer {
+	logger := slog.Default().With("logger", "index-server")
+
+	indexServer := &IndexServer{
+		log: logger,
+		cfg: cfg,
 	}
+
+	err := prometheus.Register(NewIndexMetrics(cfg.IndexPath, indexServer))
+	if err != nil {
+		logger.Warn("Failed to register index metrics", "error", err)
+	}
+
+	return indexServer
 }
 
 type ResourceIndexer interface {
@@ -191,32 +203,24 @@ type Data struct {
 	Uid   string
 }
 
-func getGroup(r *Resource) string {
-	v := strings.Split(r.ApiVersion, "/")
-	if len(v) > 0 {
-		return v[0]
-	}
-	return ""
-}
-
 func getData(wr *WatchEvent_Resource) (*Data, error) {
-	r, err := getResource(wr.Value)
+	r, err := NewIndexedResource(wr.Value)
 	if err != nil {
 		return nil, err
 	}
 
 	key := &ResourceKey{
-		Group:     getGroup(r),
+		Group:     r.Group,
 		Resource:  r.Kind,
-		Namespace: r.Metadata.Namespace,
-		Name:      r.Metadata.Name,
+		Namespace: r.Namespace,
+		Name:      r.Name,
 	}
 
 	value := &ResourceWrapper{
 		ResourceVersion: wr.Version,
 		Value:           wr.Value,
 	}
-	return &Data{Key: key, Value: value, Uid: r.Metadata.Uid}, nil
+	return &Data{Key: key, Value: value, Uid: r.Uid}, nil
 }
 
 func resource(we *WatchEvent) (*WatchEvent_Resource, error) {

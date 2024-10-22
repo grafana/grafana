@@ -2,10 +2,10 @@ package resource
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	golog "log"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/google/uuid"
@@ -23,30 +23,37 @@ type Index struct {
 	opts   Opts
 	s      *server
 	log    log.Logger
+	path   string
 }
 
-func NewIndex(s *server, opts Opts) *Index {
+func NewIndex(s *server, opts Opts, path string) *Index {
+	if path == "" {
+		path = os.TempDir()
+	}
+
 	idx := &Index{
 		s:      s,
 		opts:   opts,
 		shards: make(map[string]Shard),
 		log:    log.New("unifiedstorage.search.index"),
+		path:   path,
 	}
+
 	return idx
 }
 
 func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 	for _, obj := range list.Items {
-		res, err := getResource(obj.Value)
+		res, err := NewIndexedResource(obj.Value)
 		if err != nil {
 			return err
 		}
 
-		shard, err := i.getShard(tenant(res))
+		shard, err := i.getShard(res.Namespace)
 		if err != nil {
 			return err
 		}
-		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind, "tenant", tenant(res))
+		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind, "tenant", res.Namespace)
 
 		// Transform the raw resource into a more generic indexable resource
 		indexableResource, err := NewIndexedResource(obj.Value)
@@ -54,7 +61,7 @@ func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 			return err
 		}
 
-		err = shard.batch.Index(res.Metadata.Uid, indexableResource)
+		err = shard.batch.Index(res.Uid, indexableResource)
 		if err != nil {
 			return err
 		}
@@ -72,6 +79,8 @@ func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 }
 
 func (i *Index) Init(ctx context.Context) error {
+	start := time.Now().Unix()
+
 	resourceTypes := fetchResourceTypes()
 	for _, rt := range resourceTypes {
 		i.log.Info("indexing resource", "kind", rt.Key.Resource)
@@ -98,29 +107,37 @@ func (i *Index) Init(ctx context.Context) error {
 		}
 	}
 
+	end := time.Now().Unix()
+	if IndexServerMetrics != nil {
+		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	}
+
 	return nil
 }
 
 func (i *Index) Index(ctx context.Context, data *Data) error {
-	res, err := getResource(data.Value.Value)
+	// Transform the raw resource into a more generic indexable resource
+	res, err := NewIndexedResource(data.Value.Value)
 	if err != nil {
 		return err
 	}
-	tenant := tenant(res)
-	i.log.Debug("indexing resource for tenant", "res", res, "tenant", tenant)
+	tenant := res.Namespace
+	i.log.Debug("indexing resource for tenant", "res", string(data.Value.Value), "tenant", tenant)
 	shard, err := i.getShard(tenant)
 	if err != nil {
 		return err
 	}
-	// Transform the raw resource into a more generic indexable resource
-	indexableResource, err := NewIndexedResource(data.Value.Value)
+	err = shard.index.Index(res.Uid, res)
 	if err != nil {
 		return err
 	}
-	err = shard.index.Index(res.Metadata.Uid, indexableResource)
-	if err != nil {
-		return err
+
+	// record latency from when event was created to when it was indexed
+	latencySeconds := float64(time.Now().UnixMicro()-data.Value.ResourceVersion) / 1e6
+	if IndexServerMetrics != nil {
+		IndexServerMetrics.IndexLatency.WithLabelValues(data.Key.Resource).Observe(latencySeconds)
 	}
+
 	return nil
 }
 
@@ -182,39 +199,14 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	return results, nil
 }
 
-func tenant(res *Resource) string {
-	return res.Metadata.Namespace
-}
-
-type SearchSummary struct {
-	Kind     string `json:"kind"`
-	Metadata `json:"metadata"`
-	Spec     map[string]interface{} `json:"spec"`
-}
-
-type Metadata struct {
-	Name              string
-	Namespace         string
-	Uid               string `json:"uid"`
-	CreationTimestamp string `json:"creationTimestamp"`
-	Labels            map[string]string
-	Annotations       map[string]string
-}
-
-type Resource struct {
-	Kind       string
-	ApiVersion string
-	Metadata   Metadata
-}
-
 type Opts struct {
 	Workers    int // This controls how many goroutines are used to index objects
 	BatchSize  int // This is the batch size for how many objects to add to the index at once
 	Concurrent bool
 }
 
-func createFileIndex() (bleve.Index, string, error) {
-	indexPath := fmt.Sprintf("%s%s.bleve", os.TempDir(), uuid.New().String())
+func createFileIndex(path string) (bleve.Index, string, error) {
+	indexPath := filepath.Join(path, uuid.New().String())
 	index, err := bleve.New(indexPath, createIndexMappings())
 	if err != nil {
 		golog.Fatalf("Failed to create index: %v", err)
@@ -222,21 +214,12 @@ func createFileIndex() (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
-func getResource(data []byte) (*Resource, error) {
-	res := &Resource{}
-	err := json.Unmarshal(data, res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
 func (i *Index) getShard(tenant string) (Shard, error) {
 	shard, ok := i.shards[tenant]
 	if ok {
 		return shard, nil
 	}
-	index, path, err := createFileIndex()
+	index, path, err := createFileIndex(i.path)
 	if err != nil {
 		return Shard{}, err
 	}
