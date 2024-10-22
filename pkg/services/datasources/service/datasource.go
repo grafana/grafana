@@ -537,13 +537,20 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
 		allowLBACRuleUpdates := cmd.AllowLBACRuleUpdates && s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders)
-		if !allowLBACRuleUpdates && cmd.JsonData != nil {
+		if !allowLBACRuleUpdates {
 			s.logger.Debug("Overriding LBAC rules with stored ones using updateLBACRules API",
 				"reason", "overriding_lbac_rules_from_datasource_api",
 				"datasource_id", dataSource.ID,
 				"datasource_uid", dataSource.UID)
-			if headers := dataSource.JsonData.Get("teamHttpHeaders"); headers != nil {
+
+			if headers, ok := dataSource.JsonData.CheckGet("teamHttpHeaders"); ok {
+				// in the case where the cmd.JsonData is nil, we need to initialize it
+				if cmd.JsonData == nil {
+					cmd.JsonData = simplejson.New()
+				}
 				cmd.JsonData.Set("teamHttpHeaders", headers.Interface())
+			} else if cmd.JsonData != nil {
+				cmd.JsonData.Del("teamHttpHeaders")
 			}
 		}
 
