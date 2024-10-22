@@ -109,7 +109,7 @@ export function InstallControlsButton({
   };
 
   const onUpdate = async () => {
-    reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME);
+    reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME, trackingProps);
 
     await install(plugin.id, latestCompatibleVersion?.version, true);
     if (!errorInstalling) {

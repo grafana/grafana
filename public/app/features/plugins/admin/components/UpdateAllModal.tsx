@@ -87,7 +87,10 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
 
   const onConfirm = async () => {
     if (!inProgress) {
-      reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME);
+      reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME, {
+        path: location.pathname,
+        count: selectedPlugins?.size,
+      });
 
       setInProgress(true);
 
