@@ -57,9 +57,12 @@ describe('Language completion provider', () => {
 
     it('should again fetch labels on second start with different timerange', async () => {
       const languageProvider = new LanguageProvider(datasource);
+      jest.mocked(datasource.getTimeRangeParams).mockRestore();
       const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
       await languageProvider.start();
       expect(fetchSpy).toHaveBeenCalledTimes(1);
+      await languageProvider.start(mockTimeRange);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
       await languageProvider.start(mockTimeRange);
       expect(fetchSpy).toHaveBeenCalledTimes(2);
     });

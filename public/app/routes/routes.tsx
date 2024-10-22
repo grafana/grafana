@@ -23,6 +23,7 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
+const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
@@ -199,6 +200,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="cfg/plugins" />,
     },
     {
+      path: '/admin/extensions',
+      navId: 'extensions',
+      component: isDevEnv
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
+          )
+        : () => <Navigate replace to="/admin" />,
+    },
+    {
       path: '/admin/access',
       component: () => <NavLandingPage navId="cfg/access" />,
     },
@@ -269,7 +279,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
     },
     {
-      path: '/org/teams/edit/:id/:page?',
+      path: '/org/teams/edit/:uid/:page?',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
@@ -356,7 +366,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         : () => <Navigate replace to="/admin" />,
     },
     {
-      path: '/admin/storage/:path*',
+      path: '/admin/storage/:path/*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
@@ -434,9 +444,9 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
-    config.featureToggles.dashboardRestoreUI && {
+    config.featureToggles.dashboardRestore && {
       path: '/dashboard/recently-deleted',
-      roles: () => ['Admin'],
+      roles: () => ['Admin', 'ServerAdmin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
@@ -506,9 +516,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.exploreMetrics && {
-      path: '/explore/metrics',
+      path: '/explore/metrics/*',
       chromeless: false,
-      exact: false,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')

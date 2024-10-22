@@ -190,6 +190,18 @@ export const trackAlertRuleFormError = (
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
+export const trackNewGrafanaAlertRuleFormSavedSuccess = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_success');
+};
+
+export const trackNewGrafanaAlertRuleFormCancelled = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_aborted');
+};
+
+export const trackNewGrafanaAlertRuleFormError = () => {
+  reportInteraction('grafana_alerting_grafana_rule_creation_new_error');
+};
+
 export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {
   const defaults = {
     grafana_version: config.buildInfo.version,

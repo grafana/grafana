@@ -106,24 +106,31 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
-	Name string `json:"name"`
+	Name       string `json:"name"`
+	ParentName string `json:"parentName"`
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true
 	RefID string `json:"refId"`
 	// required:true
-	Status  ItemStatus `json:"status"`
-	Message string     `json:"message,omitempty"`
+	Status    ItemStatus    `json:"status"`
+	Message   string        `json:"message,omitempty"`
+	ErrorCode ItemErrorCode `json:"errorCode,omitempty"`
 }
 
 // swagger:enum MigrateDataType
 type MigrateDataType string
 
 const (
-	DashboardDataType      MigrateDataType = "DASHBOARD"
-	DatasourceDataType     MigrateDataType = "DATASOURCE"
-	FolderDataType         MigrateDataType = "FOLDER"
-	LibraryElementDataType MigrateDataType = "LIBRARY_ELEMENT"
+	DashboardDataType        MigrateDataType = "DASHBOARD"
+	DatasourceDataType       MigrateDataType = "DATASOURCE"
+	FolderDataType           MigrateDataType = "FOLDER"
+	LibraryElementDataType   MigrateDataType = "LIBRARY_ELEMENT"
+	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	ContactPointType         MigrateDataType = "CONTACT_POINT"
+	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
+	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
+	MuteTimingType           MigrateDataType = "MUTE_TIMING"
 )
 
 // swagger:enum ItemStatus
@@ -135,6 +142,21 @@ const (
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
 	ItemStatusUnknown ItemStatus = "UNKNOWN"
+)
+
+// swagger:enum ItemErrorCode
+type ItemErrorCode string
+
+const (
+	ErrDatasourceNameConflict     ItemErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDashboardAlreadyManaged    ItemErrorCode = "DASHBOARD_ALREADY_MANAGED"
+	ErrLibraryElementNameConflict ItemErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
+	ErrUnsupportedDataType        ItemErrorCode = "UNSUPPORTED_DATA_TYPE"
+	ErrResourceConflict           ItemErrorCode = "RESOURCE_CONFLICT"
+	ErrUnexpectedStatus           ItemErrorCode = "UNEXPECTED_STATUS_CODE"
+	ErrInternalServiceError       ItemErrorCode = "INTERNAL_SERVICE_ERROR"
+	ErrOnlyCoreDataSources        ItemErrorCode = "ONLY_CORE_DATA_SOURCES"
+	ErrGeneric                    ItemErrorCode = "GENERIC_ERROR"
 )
 
 // swagger:parameters getCloudMigrationRun

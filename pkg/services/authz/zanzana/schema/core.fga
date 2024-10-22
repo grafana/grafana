@@ -26,6 +26,8 @@ type role
 type team
   relations
     define org: [org]
+
+    # Action sets
     define admin: [user]
     define member: [user] or admin
 

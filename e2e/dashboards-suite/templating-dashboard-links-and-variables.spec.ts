@@ -34,7 +34,7 @@ describe('Templating', () => {
 
     e2e.components.DashboardLinks.dropDown().should('be.visible').click().wait('@tagsTemplatingSearch');
 
-    verifyLinks('var-custom=%24__all');
+    verifyLinks('var-custom=$__all');
 
     cy.get('body').click();
 

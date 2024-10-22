@@ -4,13 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 type FakeServiceAccountStore struct {
@@ -116,11 +118,22 @@ func (f *SecretsCheckerFake) CheckTokens(ctx context.Context) error {
 	return f.ExpectedError
 }
 
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
 func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	storeMock := newServiceAccountStoreFake()
 	acSvc := actest.FakeService{}
 	pSvc := &actest.FakePermissionsService{}
-	svc := ServiceAccountsService{acSvc, pSvc, storeMock, log.NewNopLogger(), log.NewNopLogger(), &SecretsCheckerFake{}, false, 0}
+	svc := ServiceAccountsService{
+		acService:         acSvc,
+		permissions:       pSvc,
+		store:             storeMock,
+		db:                db.InitTestDB(t),
+		log:               log.NewNopLogger(),
+		secretScanEnabled: false,
+	}
 	testOrgId := 1
 
 	t.Run("should create service account", func(t *testing.T) {

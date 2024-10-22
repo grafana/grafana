@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { Page } from 'app/core/components/Page/Page';
 import { DataSourceDashboards } from 'app/features/datasources/components/DataSourceDashboards';
@@ -6,7 +6,7 @@ import { DataSourceDashboards } from 'app/features/datasources/components/DataSo
 import { useDataSourceSettingsNav } from '../hooks/useDataSourceSettingsNav';
 
 export function DataSourceDashboardsPage() {
-  const { uid } = useParams<{ uid: string }>();
+  const { uid = '' } = useParams<{ uid: string }>();
   const { navId, pageNav } = useDataSourceSettingsNav('dashboards');
 
   return (

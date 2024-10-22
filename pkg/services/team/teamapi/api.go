@@ -55,34 +55,35 @@ func ProvideTeamAPI(
 
 func (tapi *TeamAPI) registerRoutes(router routing.RouteRegister, ac accesscontrol.AccessControl) {
 	authorize := accesscontrol.Middleware(ac)
+	teamResolver := team.MiddlewareTeamUIDResolver(tapi.teamService, ":teamId")
 	router.Group("/api", func(apiRoute routing.RouteRegister) {
 		// team (admin permission required)
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
 			teamsRoute.Post("/", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate)),
 				routing.Wrap(tapi.createTeam))
-			teamsRoute.Put("/:teamId", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite,
+			teamsRoute.Put("/:teamId", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.updateTeam))
-			teamsRoute.Delete("/:teamId", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsDelete,
+			teamsRoute.Delete("/:teamId", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsDelete,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.deleteTeamByID))
-			teamsRoute.Get("/:teamId/members", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsRead,
+			teamsRoute.Get("/:teamId/members", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsRead,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.getTeamMembers))
-			teamsRoute.Post("/:teamId/members", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite,
+			teamsRoute.Post("/:teamId/members", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.addTeamMember))
-			teamsRoute.Put("/:teamId/members/:userId", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite,
+			teamsRoute.Put("/:teamId/members/:userId", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.updateTeamMember))
-			teamsRoute.Put("/:teamId/members", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite,
+			teamsRoute.Put("/:teamId/members", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.setTeamMemberships))
-			teamsRoute.Delete("/:teamId/members/:userId", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite,
+			teamsRoute.Delete("/:teamId/members/:userId", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsPermissionsWrite,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.removeTeamMember))
-			teamsRoute.Get("/:teamId/preferences", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead,
+			teamsRoute.Get("/:teamId/preferences", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.getTeamPreferences))
-			teamsRoute.Put("/:teamId/preferences", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite,
+			teamsRoute.Put("/:teamId/preferences", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.updateTeamPreferences))
 		}, requestmeta.SetOwner(requestmeta.TeamAuth))
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Get("/:teamId", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead,
+			teamsRoute.Get("/:teamId", teamResolver, authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead,
 				accesscontrol.ScopeTeamsID)), routing.Wrap(tapi.getTeamByID))
 			teamsRoute.Get("/search", authorize(accesscontrol.EvalPermission(accesscontrol.ActionTeamsRead)),
 				routing.Wrap(tapi.searchTeams))

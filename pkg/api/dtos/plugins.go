@@ -30,6 +30,7 @@ type PluginSetting struct {
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AngularDetected bool                    `json:"angularDetected"`
 	LoadingStrategy plugins.LoadingStrategy `json:"loadingStrategy"`
+	ModuleHash      string                  `json:"moduleHash,omitempty"`
 }
 
 type PluginListItem struct {

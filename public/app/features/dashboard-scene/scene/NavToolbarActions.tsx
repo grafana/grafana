@@ -12,6 +12,7 @@ import {
   Dropdown,
   Icon,
   Menu,
+  Stack,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -23,6 +24,7 @@ import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { ScopesSelector } from 'app/features/scopes';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -67,6 +69,7 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
+  const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters;
 
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
@@ -590,7 +593,12 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>;
+  return (
+    <Stack flex={1} minWidth={0} justifyContent={showScopesSelector ? 'space-between' : 'flex-end'}>
+      {showScopesSelector && <ScopesSelector />}
+      <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
+    </Stack>
+  );
 }
 
 function addDynamicActions(

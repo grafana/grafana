@@ -51,9 +51,9 @@ type TemplateService interface {
 }
 
 type NotificationPolicyService interface {
-	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
-	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
-	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
+	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
+	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) error
+	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
 }
 
 type MuteTimingService interface {
@@ -79,19 +79,19 @@ type AlertRuleService interface {
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	policies, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusOK, policies)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
-	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	policies, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -109,7 +109,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
 	provenance := determineProvenance(c)
-	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance))
+	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), tree, alerting_models.Provenance(provenance), "")
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -117,16 +117,17 @@ func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update notification policy tree", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
 }
 
 func (srv *ProvisioningSrv) RouteResetPolicyTree(c *contextmodel.ReqContext) response.Response {
-	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID())
+	provenance := determineProvenance(c)
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.SignedInUser.GetOrgID(), alerting_models.Provenance(provenance))
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to reset notification policy tree", err)
 	}
 	return response.JSON(http.StatusAccepted, tree)
 }

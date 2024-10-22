@@ -42,7 +42,7 @@ export const CreateTeam = (): JSX.Element => {
       } catch (e) {
         console.error(e);
       }
-      locationService.push(`/org/teams/edit/${newTeam.teamId}`);
+      locationService.push(`/org/teams/edit/${newTeam.uid}`);
     }
   };
 
