@@ -2875,8 +2875,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "",
     "browser-column": "浏览器和操作系统",
     "created-at-column": "已登录",
+    "identity-provider-column": "",
     "ip-column": "IP 地址",
     "revoke": "注销用户会话",
     "seen-at-column": "最后上线时间"
