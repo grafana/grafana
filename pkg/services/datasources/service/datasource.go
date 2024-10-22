@@ -542,14 +542,17 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				"datasource_id", dataSource.ID,
 				"datasource_uid", dataSource.UID)
 
-			if headers, ok := dataSource.JsonData.CheckGet("teamHttpHeaders"); ok {
-				// in the case where the cmd.JsonData is nil, we need to initialize it
-				if cmd.JsonData == nil {
-					cmd.JsonData = simplejson.New()
+			if dataSource.JsonData != nil {
+				// we should not do anything
+				if headers, ok := dataSource.JsonData.CheckGet("teamHttpHeaders"); ok {
+					// in the case where the cmd.JsonData is nil, we need to initialize it
+					if cmd.JsonData == nil {
+						cmd.JsonData = simplejson.New()
+					}
+					cmd.JsonData.Set("teamHttpHeaders", headers.Interface())
+				} else if cmd.JsonData != nil {
+					cmd.JsonData.Del("teamHttpHeaders")
 				}
-				cmd.JsonData.Set("teamHttpHeaders", headers.Interface())
-			} else if cmd.JsonData != nil {
-				cmd.JsonData.Del("teamHttpHeaders")
 			}
 		}
 
