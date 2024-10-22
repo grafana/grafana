@@ -5,7 +5,7 @@ import { createMemoryHistory, MemoryHistoryBuildOptions } from 'history';
 import { Fragment, PropsWithChildren } from 'react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
@@ -56,11 +56,12 @@ const getWrapper = ({
   const locationService = new HistoryWrapper(history);
   setLocationService(locationService);
 
+  const R = historyOptions?.initialEntries ? MemoryRouter : BrowserRouter;
   /**
    * Conditional router - either a MemoryRouter or just a Fragment
    */
   const PotentialRouter = renderWithRouter
-    ? ({ children }: PropsWithChildren) => <Router history={history}>{children}</Router>
+    ? ({ children }: PropsWithChildren) => <R initialEntries={historyOptions?.initialEntries}>{children}</R>
     : ({ children }: PropsWithChildren) => <Fragment>{children}</Fragment>;
 
   const context = {
