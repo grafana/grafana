@@ -1,7 +1,7 @@
 import { Store } from '@reduxjs/toolkit';
 import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryHistory, MemoryHistoryBuildOptions } from 'history';
+import { createMemoryHistory, MemoryHistoryOptions } from 'history';
 import { Fragment, PropsWithChildren } from 'react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
@@ -34,7 +34,7 @@ interface ExtendedRenderOptions extends RenderOptions {
   /**
    * Props to pass to `createMemoryHistory`, if being used
    */
-  historyOptions?: MemoryHistoryBuildOptions;
+  historyOptions?: MemoryHistoryOptions;
 }
 
 /**
