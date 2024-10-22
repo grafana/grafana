@@ -3,6 +3,7 @@ import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Dropdown, Icon, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { MetaText } from '../../components/MetaText';
 import MoreButton from '../../components/MoreButton';
@@ -43,7 +44,7 @@ export const EvaluationGroup = ({
           <Spacer />
           {interval && <MetaText icon="history">{interval}</MetaText>}
           <Button size="sm" icon="pen" variant="secondary" disabled={isProvisioned} data-testid="edit-group-action">
-            Edit
+            <Trans i18nKey="common.edit">Edit</Trans>
           </Button>
           <Dropdown
             overlay={

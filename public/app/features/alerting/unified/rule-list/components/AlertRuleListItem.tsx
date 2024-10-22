@@ -103,7 +103,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   if (!isPaused && contactPoint) {
     metadata.push(
       <MetaText icon="at">
-        Delivered to{' '}
+        <Trans i18nKey="alerting.contact-points.delivered-to">Delivered to</Trans>{' '}
         <TextLink
           href={createContactPointLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
           variant="bodySmall"
@@ -210,15 +210,25 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 
     return (
       <MetaText icon="clock-nine">
-        Firing for <Text color="primary">{firingFor}</Text>
-        {nextEvaluation && <>· next evaluation in {nextEvaluation.humanized}</>}
+        <Trans i18nKey="alerting.alert-rules.firing-for">Firing for</Trans> <Text color="primary">{firingFor}</Text>
+        {nextEvaluation && (
+          <>
+            {'· '}
+            <Trans i18nKey="alerting.alert-rules.next-evaluation-in">next evaluation in</Trans>{' '}
+            {nextEvaluation.humanized}
+          </>
+        )}
       </MetaText>
     );
   }
 
   // for recording rules and normal or pending state alert rules we just show when we evaluated last and how long that took
   if (nextEvaluation) {
-    return <MetaText icon="clock-nine">Next evaluation {nextEvaluation.humanized}</MetaText>;
+    return (
+      <MetaText icon="clock-nine">
+        <Trans i18nKey="alerting.alert-rules.next-evaluation">Next evaluation</Trans> {nextEvaluation.humanized}
+      </MetaText>
+    );
   }
 
   return null;
@@ -239,7 +249,7 @@ export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListIt
     <Alert title={'Unknown rule type'} className={styles.resetMargin}>
       <details>
         <summary>
-          <Trans i18nKey="alerting.rule-list.unknown-rule.summary-header">Rule definition</Trans>
+          <Trans i18nKey="alerting.alert-rules.rule-definition">Rule definition</Trans>
         </summary>
         <pre>
           <code>{JSON.stringify(rule, null, 2)}</code>
