@@ -120,11 +120,8 @@ func newGrpcLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
 
 	cfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
 	client, err := authzlib.NewClient(&cfg,
-		// TODO(drclau): make this configurable (e.g. allow to use insecure connections)
 		authzlib.WithGrpcDialOptionsClientOption(
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
+			getDialOpts(clientInterceptor, authCfg.allowInsecure)...,
 		),
 		// TODO: remove this once access tokens are supported on-prem
 		authzlib.WithDisableAccessTokenClientOption(),
