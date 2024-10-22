@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -290,7 +291,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 				{BuiltinRole: "Viewer", Permission: "Query"},
 				{BuiltinRole: "Editor", Permission: "Query"},
 			}
-			if cmd.UserID != 0 {
+			if cmd.UserID != 0 || (cmd.UserRequester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount)) {
 				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
 			}
 			if _, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {

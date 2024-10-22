@@ -447,6 +447,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	datasourcesLogger.Debug("Received command to add data source", "url", cmd.URL)
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
+	cmd.UserRequester = c.SignedInUser
 	if cmd.URL != "" {
 		if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 			return resp
