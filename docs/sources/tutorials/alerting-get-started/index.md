@@ -195,15 +195,13 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 Next, we'll establish an [alert rule](ref:create-gm-alert-rule) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
-In this tutorial we use the default options for Grafana-managed alert rule creation.
-
 1. In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
 
 1. Enter alert rule name for your alert rule. Make it short and descriptive as this will appear in your alert notification. For instance, **database-metrics**
 
 ### Define query and alert condition
 
-In this section, we define the query, expressions (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
+In this section, we use the default options for Grafana-managed alert rule creation. This option let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
 1. Select the **Prometheus** data source from the drop-down menu.
 1. Enter the following query:

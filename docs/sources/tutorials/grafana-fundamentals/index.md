@@ -423,10 +423,12 @@ We have now created a dummy webhook endpoint and created a new Alerting Contact 
 Now that Grafana knows how to notify us, it's time to set up an alert rule:
 
 1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
+
+   In this tutorial, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
+
 1. Click **+ New alert rule**.
 1. For **Section 1**, name the rule `fundamentals-test`.
-1. For **Section 2**, Find the **query A** box. Choose your Prometheus data source. Note that the rule type should automatically switch to Grafana-managed alert rule.
-1. Switch to code mode by checking the Builder/Code toggle.
+1. For **Section 2**, Find the **query A** box, and choose your Prometheus data source.
 1. Enter the same Prometheus query that we used in our earlier panel:
 
    ```
@@ -434,7 +436,7 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
    ```
 
 1. Scroll down to bottom of section #2 and click the **Preview** button. You should see some data returned.
-1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) are included by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert rule condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. Keep `Last` as the value for the reducer function (`WHEN`), and `0.2` as the threshold value. This is the value above which the alert rule should trigger. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder will contain our alert rules. For example: `fundamentals`. Then, click `create`.
 1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
 1. Choose an Evaluation interval (how often the alert rule will be evaluated). For example, every `10s` (10 seconds).
