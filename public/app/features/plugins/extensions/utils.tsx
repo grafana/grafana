@@ -20,12 +20,7 @@ import {
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
 } from '@grafana/data';
-import {
-  reportInteraction,
-  config,
-  // TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
-  sidecarServiceSingleton_EXPERIMENTAL,
-} from '@grafana/runtime';
+import { reportInteraction, config } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
