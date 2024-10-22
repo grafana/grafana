@@ -1,6 +1,6 @@
 import { InitialEntry } from 'history';
 import { last } from 'lodash';
-import { Route, Routes } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom';
 import { render, screen, userEvent, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 

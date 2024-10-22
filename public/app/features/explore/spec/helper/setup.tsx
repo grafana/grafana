@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Routes, Route } from 'react-router-dom';
 import { of } from 'rxjs';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { render } from 'test/test-utils';

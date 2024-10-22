@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom-v5-compat';
+import { Link } from 'react-router-dom';
 
 import { getAppRoutes } from '../../routes/routes';
 import { PageContents } from '../components/Page/PageContents';

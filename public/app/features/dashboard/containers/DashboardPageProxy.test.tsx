@@ -1,5 +1,5 @@
 import { act, screen, waitFor } from '@testing-library/react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
@@ -81,8 +81,8 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   }),
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
   useParams: jest.fn().mockReturnValue({}),
 }));
 

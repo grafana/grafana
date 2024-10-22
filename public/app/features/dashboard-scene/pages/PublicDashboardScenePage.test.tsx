@@ -1,5 +1,5 @@
 import { screen, waitForElementToBeRemoved } from '@testing-library/react';
-import { Route, Routes } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 

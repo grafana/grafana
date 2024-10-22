@@ -1,5 +1,5 @@
 import 'core-js/stable/structured-clone';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Routes, Route } from 'react-router-dom';
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
