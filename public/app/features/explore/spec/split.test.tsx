@@ -76,7 +76,7 @@ describe('Handles open/close splits and related events in UI and URL', () => {
     });
 
     act(() => {
-      location.getHistory().goBack();
+      location.getHistory().back();
     });
 
     await waitFor(() => {
