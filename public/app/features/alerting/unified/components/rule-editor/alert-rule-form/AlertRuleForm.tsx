@@ -61,7 +61,7 @@ import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
-import { GrafanaFolderAndLabels } from '../GrafanaFolderAndLabels';
+import { GrafanaFolderAndLabelsSection } from '../GrafanaFolderAndLabelsSection';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
@@ -296,7 +296,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               {showDataSourceDependantStep && (
                 <>
                   {/* Step 3 */}
-                  {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabels />}
+                  {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsSection />}
 
                   {isCloudAlertingRuleByType(type) && <CloudEvaluationBehavior />}
 

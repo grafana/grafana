@@ -25,7 +25,7 @@ import { ExportFormats, allGrafanaExportProviders } from '../../export/providers
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
-import { GrafanaFolderAndLabels } from '../GrafanaFolderAndLabels';
+import { GrafanaFolderAndLabelsSection } from '../GrafanaFolderAndLabelsSection';
 import { NotificationsStep } from '../NotificationsStep';
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
 
@@ -94,7 +94,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
                 <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
                 {/* Step 3-4-5 */}
 
-                <GrafanaFolderAndLabels />
+                <GrafanaFolderAndLabelsSection />
 
                 {/* Step 4 & 5 */}
                 <GrafanaEvaluationBehavior
