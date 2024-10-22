@@ -305,9 +305,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   {/* Step 4 & 5 & 6*/}
                   {isGrafanaManagedRuleByType(type) && (
                     <GrafanaEvaluationBehavior
-                      existing={Boolean(existing)}
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
+                      existing={Boolean(existing)}
                       enableProvisionedGroups={false}
                     />
                   )}

@@ -98,9 +98,9 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
 
                 {/* Step 4 & 5 */}
                 <GrafanaEvaluationBehavior
-                  existing={Boolean(existing)}
                   evaluateEvery={evaluateEvery}
                   setEvaluateEvery={setEvaluateEvery}
+                  existing={Boolean(existing)}
                   enableProvisionedGroups={true}
                 />
                 {/* Notifications step*/}
