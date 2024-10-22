@@ -44,7 +44,7 @@
     "dompurify": "^3.0.0",
     "eventemitter3": "5.0.1",
     "fast_array_intersect": "1.1.0",
-    "history": "4.10.1",
+    "history": "5.3.0",
     "lodash": "4.17.21",
     "marked": "12.0.2",
     "marked-mangle": "1.1.9",
