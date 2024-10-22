@@ -250,7 +250,7 @@ func (hs *HTTPServer) LoginPasswordless(c *contextmodel.ReqContext) response.Res
 		}
 		return response.Err(err)
 	}
-	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
+	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
 }
 
 func (hs *HTTPServer) StartPasswordless(c *contextmodel.ReqContext) {

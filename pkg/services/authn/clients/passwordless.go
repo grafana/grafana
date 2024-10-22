@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -327,7 +328,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 	r.SetMeta(authn.MetaKeyAuthModule, "passwordless")
 
 	return &authn.Identity{
-		ID:              identity.NewTypedID(identity.TypeUser, usr.ID),
+		ID:              identity.NewTypedID(claims.TypeUser, usr.ID),
 		OrgID:           r.OrgID,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 		AuthenticatedBy: login.PasswordlessAuthModule,
