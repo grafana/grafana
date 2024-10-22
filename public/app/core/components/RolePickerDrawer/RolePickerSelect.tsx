@@ -27,7 +27,6 @@ export const RolePickerSelect = ({}: Props) => {
               // TODO cannnot remove basic roles
               // TODO open drawer instead
             }}
-            // value={value?.map((role: string) => ({ label: role, value: role }))}
             value={value?.map(toOption)}
           />
         )}
