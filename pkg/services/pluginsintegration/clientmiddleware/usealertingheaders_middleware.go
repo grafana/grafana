@@ -26,7 +26,7 @@ var alertHeaders = []string{
 	"X-Rule-Source",
 	"X-Rule-Type",
 	"X-Rule-Version",
-	// note, this list does not Contain `Fromalert`, we handle that separately
+	ngalertmodels.FromAlertHeaderName,
 }
 
 func applyAlertHeaders(ctx context.Context, req *backend.QueryDataRequest) {
@@ -39,20 +39,13 @@ func applyAlertHeaders(ctx context.Context, req *backend.QueryDataRequest) {
 	for _, key := range alertHeaders {
 		incomingValue := incomingHeaders.Get(key)
 		if incomingValue != "" {
-			req.SetHTTPHeader(key, incomingValue)
+			// FromAlert must be set directly, with the wrong capitalization.
+			if key == ngalertmodels.FromAlertHeaderName {
+				req.Headers[key] = incomingValue
+			} else {
+				req.SetHTTPHeader(key, incomingValue)
+			}
 		}
-	}
-
-	// datasources check for the "alerting" case by checking
-	// req.Headers["FromAlert"]
-	// (yes, incorrectly capitalized).
-	// so we specially add that one
-	// to req.Headers (not to headers-to-forward,
-	// that we solved above)
-	alertHeader := ngalertmodels.FromAlertHeaderName
-	isFromAlert := incomingHeaders.Get(alertHeader)
-	if isFromAlert != "" {
-		req.Headers[alertHeader] = isFromAlert
 	}
 }
 
