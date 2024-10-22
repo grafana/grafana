@@ -31,7 +31,7 @@ export interface LocationService {
 const basename = config.appSubUrl ?? '/';
 /** @internal */
 export class HistoryWrapper implements LocationService {
-  private readonly history: H.History;
+  private readonly history: H.History & { length?: number };
 
   constructor(history?: H.History) {
     // If no history passed create an in memory one if being called from test
@@ -39,6 +39,7 @@ export class HistoryWrapper implements LocationService {
       history ||
       (process.env.NODE_ENV === 'test' ? H.createMemoryHistory({ initialEntries: ['/'] }) : H.createBrowserHistory());
 
+    this.history.length = window?.history?.length || 0;
     this.partial = this.partial.bind(this);
     this.push = this.push.bind(this);
     this.replace = this.replace.bind(this);
@@ -78,11 +79,21 @@ export class HistoryWrapper implements LocationService {
   }
 
   push(location: H.To) {
-    this.history.push(basename + location);
+    if (typeof location === 'string') {
+      location = basename + location;
+    } else {
+      location.pathname = basename + location;
+    }
+    this.history.push(location);
   }
 
   replace(location: H.To) {
-    this.history.replace(basename + location);
+    if (typeof location === 'string') {
+      location = basename + location;
+    } else {
+      location.pathname = basename + location;
+    }
+    this.history.replace(location);
   }
 
   reload() {
