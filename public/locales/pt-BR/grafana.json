@@ -2455,6 +2455,16 @@
     },
     "dismissable-button": "Fechar"
   },
+  "role-picker": {
+    "title": {
+      "description": ""
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": ""
+    }
+  },
   "save-dashboards": {
     "name-exists": {
       "message-info": "",
@@ -2532,6 +2542,21 @@
   "select": {
     "select-menu": {
       "selected-count": ""
+    }
+  },
+  "service-account-create-page": {
+    "create": {
+      "button": ""
+    },
+    "name": {
+      "label": "",
+      "required-error": ""
+    },
+    "page-nav": {
+      "label": ""
+    },
+    "role": {
+      "label": ""
     }
   },
   "service-accounts": {
