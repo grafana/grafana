@@ -189,6 +189,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features),
 		clientmiddleware.NewForwardIDMiddleware(),
+		clientmiddleware.NewUseAlertHeadersMiddleware(),
 	)
 
 	if cfg.SendUserHeader {
@@ -198,8 +199,6 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	if cfg.IPRangeACEnabled {
 		middlewares = append(middlewares, clientmiddleware.NewHostedGrafanaACHeaderMiddleware(cfg))
 	}
-
-	middlewares = append(middlewares, clientmiddleware.NewUseAlertHeadersMiddleware())
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func NewUseAlertHeadersMiddleware() backend.HandlerMiddleware {
@@ -20,12 +21,12 @@ type UseAlertHeadersMiddleware struct {
 }
 
 var alertHeaders = []string{
-	"Fromalert",
 	"X-Rule-Name",
 	"X-Rule-Folder",
 	"X-Rule-Source",
 	"X-Rule-Type",
 	"X-Rule-Version",
+	// note, this list does not Contain `Fromalert`, we handle that separately
 }
 
 func applyAlertHeaders(ctx context.Context, req *backend.QueryDataRequest) {
@@ -48,9 +49,10 @@ func applyAlertHeaders(ctx context.Context, req *backend.QueryDataRequest) {
 	// so we specially add that one
 	// to req.Headers (not to headers-to-forward,
 	// that we solved above)
-	isFromAlert := incomingHeaders.Get("Fromalert")
+	alertHeader := ngalertmodels.FromAlertHeaderName
+	isFromAlert := incomingHeaders.Get(alertHeader)
 	if isFromAlert != "" {
-		req.Headers["FromAlert"] = isFromAlert
+		req.Headers[alertHeader] = isFromAlert
 	}
 }
 
