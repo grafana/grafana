@@ -95,7 +95,7 @@ func parseDirection(jsonPointerValue *string) (Direction, error) {
 		case "forward":
 			return DirectionForward, nil
 		case "scan":
-			return DirectionForward, nil
+			return DirectionBackward, nil
 		default:
 			return DirectionBackward, fmt.Errorf("invalid queryDirection: %s", jsonValue)
 		}
