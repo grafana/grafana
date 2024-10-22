@@ -376,7 +376,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.NoError(t, err)
 		updated := current.DeepCopy()
 		updated.ResourceVersion = ""
-		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.Route{Continue: util.Pointer(true)})
+		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.Route{Continue: true})
 
 		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)

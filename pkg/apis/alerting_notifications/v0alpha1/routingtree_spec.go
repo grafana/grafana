@@ -23,7 +23,7 @@ type MatcherType string
 // Route defines model for Route.
 // +k8s:openapi-gen=true
 type Route struct {
-	Continue          *bool     `json:"continue,omitempty"`
+	Continue          bool     `json:"continue,omitempty"`
 	GroupBy           []string  `json:"group_by,omitempty"`
 	GroupInterval     *string   `json:"group_interval,omitempty"`
 	GroupWait         *string   `json:"group_wait,omitempty"`

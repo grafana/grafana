@@ -53,7 +53,7 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.Route {
 	result := model.Route{
 		GroupBy:           r.GroupByStr,
 		MuteTimeIntervals: r.MuteTimeIntervals,
-		Continue:          util.Pointer(r.Continue),
+		Continue:          r.Continue,
 		GroupWait:         optionalPrometheusDurationToString(r.GroupWait),
 		GroupInterval:     optionalPrometheusDurationToString(r.GroupInterval),
 		RepeatInterval:    optionalPrometheusDurationToString(r.RepeatInterval),
@@ -127,12 +127,10 @@ func convertK8sSubRouteToRoute(r model.Route, path string) (definitions.Route, [
 		MuteTimeIntervals: r.MuteTimeIntervals,
 		Routes:            make([]*definitions.Route, 0, len(r.Routes)),
 		Matchers:          make(config.Matchers, 0, len(r.Matchers)),
+		Continue:          r.Continue,
 	}
 	if r.Receiver != nil {
 		result.Receiver = *r.Receiver
-	}
-	if r.Continue != nil {
-		result.Continue = *r.Continue
 	}
 	var errs []error
 	result.GroupWait = parsePrometheusDuration(r.GroupWait, func(err error) {
