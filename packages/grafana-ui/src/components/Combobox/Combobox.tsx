@@ -280,7 +280,6 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
         })}
       />
-
       <div
         className={cx(styles.menu, !isOpen && styles.menuClosed)}
         style={{
