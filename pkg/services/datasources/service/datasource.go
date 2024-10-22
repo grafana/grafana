@@ -544,9 +544,14 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 			if dataSource.JsonData != nil {
 				previousRules := dataSource.JsonData.Get("teamHttpHeaders")
-				if previousRules == nil {
+				if previousRules == nil && cmd.JsonData != nil {
 					cmd.JsonData.Del("teamHttpHeaders")
 				} else {
+					if cmd.JsonData == nil {
+						// It's fine to instantiate a new JsonData here
+						// Because it's done in the SQLStore.UpdateDataSource anyway
+						cmd.JsonData = simplejson.New()
+					}
 					cmd.JsonData.Set("teamHttpHeaders", previousRules)
 				}
 			}
