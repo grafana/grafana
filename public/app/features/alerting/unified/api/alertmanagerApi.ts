@@ -18,7 +18,7 @@ import {
 } from '../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
-import { matcherToOperator } from '../utils/alertmanager';
+import { matcherToMatcherField } from '../utils/alertmanager';
 import {
   GRAFANA_RULES_SOURCE_NAME,
   getDatasourceAPIUid,
@@ -74,11 +74,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         const filterMatchers = filter?.matchers
           ?.filter((matcher) => matcher.name && matcher.value)
           .map((matcher) => {
-            return encodeMatcher({
-              name: matcher.name,
-              operator: matcherToOperator(matcher),
-              value: matcher.value,
-            });
+            return encodeMatcher(matcherToMatcherField(matcher));
           });
 
         const { silenced, inhibited, unprocessed, active } = filter || {};
