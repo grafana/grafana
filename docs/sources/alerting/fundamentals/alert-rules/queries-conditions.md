@@ -49,9 +49,7 @@ Alerting periodically runs the queries and expressions, evaluating the condition
 
 ## Data source queries
 
-Alerting queries are the same as the queries used in Grafana panels.
-
-However, Grafana-managed alerts can only query [backend data sources with Alerting enabled](ref:data-source-alerting).
+Alerting queries are the same as the queries used in Grafana panels, but Grafana-managed alerts are limited to querying [data sources that have Alerting enabled](ref:data-source-alerting).
 
 Queries in Grafana can be applied in various ways, depending on the data source and query language being used. Each data source’s query editor provides a customized user interface to help you write queries that take advantage of its unique capabilities.
 
