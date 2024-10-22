@@ -75,7 +75,7 @@ const RuleViewer = () => {
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
   const showError = hasError && !isPaused;
-  const ruleOrigin = getRulePluginOrigin(rule);
+  const ruleOrigin = rule.rulerRule ? getRulePluginOrigin(rule.rulerRule ?? rule.promRule) : undefined;
 
   const summary = annotations[Annotation.summary];
 
@@ -94,7 +94,7 @@ const RuleViewer = () => {
           ruleOrigin={ruleOrigin}
         />
       )}
-      actions={<RuleActionsButtons rule={rule} showCopyLinkButton rulesSource={rule.namespace.rulesSource} />}
+      actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">

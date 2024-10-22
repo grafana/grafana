@@ -1,81 +1,83 @@
-import { size } from 'lodash';
-import { useToggle } from 'react-use';
+// TODO This seems to be unused. Remove?
 
-import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
+// import { size } from 'lodash';
+// import { useToggle } from 'react-use';
 
-import { createViewLink } from '../../utils/misc';
-import { hashRulerRule } from '../../utils/rule-id';
-import { isAlertingRule, isGrafanaRulerRule, isRecordingRule } from '../../utils/rules';
+// import { CombinedRuleGroup, RuleGroup, RulesSource } from 'app/types/unified-alerting';
 
-import { AlertRuleListItem, UnknownRuleListItem } from './AlertRuleListItem';
-import EvaluationGroup from './EvaluationGroup';
+// import { createViewLink } from '../../utils/misc';
+// import { hashRulerRule } from '../../utils/rule-id';
+// import { isAlertingRule, isGrafanaRulerRule, isRecordingRule } from '../../utils/rules';
 
-export interface EvaluationGroupWithRulesProps {
-  group: CombinedRuleGroup;
-  rulesSource: RulesSource;
-}
+// import { AlertRuleListItem, UnknownRuleListItem } from './AlertRuleListItem';
+// import { EvaluationGroup } from './EvaluationGroup';
 
-export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRulesProps) => {
-  const [open, toggleOpen] = useToggle(false);
+// export interface EvaluationGroupWithRulesProps {
+//   group: RuleGroup;
+//   rulesSource: RulesSource;
+// }
 
-  return (
-    <EvaluationGroup name={group.name} interval={group.interval} isOpen={open} onToggle={toggleOpen}>
-      {group.rules.map((rule, index) => {
-        const { rulerRule, promRule, annotations } = rule;
+// export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRulesProps) => {
+//   const [open, toggleOpen] = useToggle(false);
 
-        // don't render anything if we don't have the rule definition yet
-        if (!rulerRule) {
-          return null;
-        }
+//   return (
+//     <EvaluationGroup name={group.name} interval={group.interval} isOpen={open} onToggle={toggleOpen}>
+//       {group.rules.map((rule, index) => {
+//         const { rulerRule, promRule, annotations } = rule;
 
-        // keep in mind that we may not have a promRule for the ruler rule – this happens when the target
-        // rule source is eventually consistent - it may know about the rule definition but not its state
-        const isAlertingPromRule = isAlertingRule(promRule);
+//         // don't render anything if we don't have the rule definition yet
+//         if (!rulerRule) {
+//           return null;
+//         }
 
-        if (isAlertingRule(rule.promRule) || isRecordingRule(rule.promRule)) {
-          return (
-            <AlertRuleListItem
-              key={hashRulerRule(rulerRule)}
-              state={isAlertingPromRule ? promRule?.state : undefined}
-              health={promRule?.health}
-              error={promRule?.lastError}
-              name={rule.name}
-              labels={rulerRule.labels}
-              lastEvaluation={promRule?.lastEvaluation}
-              evaluationInterval={group.interval}
-              instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
-              href={createViewLink(rulesSource, rule)}
-              summary={annotations?.summary}
-            />
-          );
-        }
+//         // keep in mind that we may not have a promRule for the ruler rule – this happens when the target
+//         // rule source is eventually consistent - it may know about the rule definition but not its state
+//         const isAlertingPromRule = isAlertingRule(promRule);
 
-        if (isGrafanaRulerRule(rulerRule)) {
-          const contactPoint = rulerRule.grafana_alert.notification_settings?.receiver;
+//         if (isAlertingRule(rule.promRule) || isRecordingRule(rule.promRule)) {
+//           return (
+//             <AlertRuleListItem
+//               key={hashRulerRule(rulerRule)}
+//               state={isAlertingPromRule ? promRule?.state : undefined}
+//               health={promRule?.health}
+//               error={promRule?.lastError}
+//               name={rule.name}
+//               labels={rulerRule.labels}
+//               lastEvaluation={promRule?.lastEvaluation}
+//               evaluationInterval={group.interval}
+//               instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
+//               href={createViewLink(rulesSource, rule)}
+//               summary={annotations?.summary}
+//             />
+//           );
+//         }
 
-          return (
-            <AlertRuleListItem
-              key={rulerRule.grafana_alert.uid}
-              name={rulerRule.grafana_alert.title}
-              state={isAlertingPromRule ? promRule?.state : undefined}
-              health={promRule?.health}
-              error={promRule?.lastError}
-              labels={rulerRule.labels}
-              isPaused={rulerRule.grafana_alert.is_paused}
-              lastEvaluation={promRule?.lastEvaluation}
-              evaluationInterval={group.interval}
-              instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
-              href={createViewLink(rulesSource, rule)}
-              summary={rule.annotations?.summary}
-              isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}
-              contactPoint={contactPoint}
-            />
-          );
-        }
+//         if (isGrafanaRulerRule(rulerRule)) {
+//           const contactPoint = rulerRule.grafana_alert.notification_settings?.receiver;
 
-        // if we get here it means we don't really know how to render this rule
-        return <UnknownRuleListItem key={hashRulerRule(rulerRule)} rule={rule} />;
-      })}
-    </EvaluationGroup>
-  );
-};
+//           return (
+//             <AlertRuleListItem
+//               key={rulerRule.grafana_alert.uid}
+//               name={rulerRule.grafana_alert.title}
+//               state={isAlertingPromRule ? promRule?.state : undefined}
+//               health={promRule?.health}
+//               error={promRule?.lastError}
+//               labels={rulerRule.labels}
+//               isPaused={rulerRule.grafana_alert.is_paused}
+//               lastEvaluation={promRule?.lastEvaluation}
+//               evaluationInterval={group.interval}
+//               instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
+//               href={createViewLink(rulesSource, rule)}
+//               summary={rule.annotations?.summary}
+//               isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}
+//               contactPoint={contactPoint}
+//             />
+//           );
+//         }
+
+//         // if we get here it means we don't really know how to render this rule
+//         return <UnknownRuleListItem key={hashRulerRule(rulerRule)} rule={rule} />;
+//       })}
+//     </EvaluationGroup>
+//   );
+// };

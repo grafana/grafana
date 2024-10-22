@@ -16,7 +16,14 @@ interface EvaluationGroupProps extends PropsWithChildren {
   onToggle: () => void;
 }
 
-const EvaluationGroup = ({ name, provenance, interval, onToggle, isOpen = false, children }: EvaluationGroupProps) => {
+export const EvaluationGroup = ({
+  name,
+  provenance,
+  interval,
+  onToggle,
+  isOpen = false,
+  children,
+}: EvaluationGroupProps) => {
   const styles = useStyles2(getStyles);
   const isProvisioned = Boolean(provenance);
 
@@ -77,5 +84,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: `-${theme.spacing(0.5)}`,
   }),
 });
-
-export default EvaluationGroup;
