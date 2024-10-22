@@ -1,20 +1,15 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
-import { useCallback, useState } from 'react';
-import * as React from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
 
 import { PrometheusDatasource } from '../../datasource';
-import { truncateResult } from '../../language_utils';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
-
-import { MetricsModal } from './metrics-modal/MetricsModal';
 
 export interface MetricComboboxProps {
   metricLookupDisabled: boolean;
@@ -39,28 +34,6 @@ export function MetricCombobox({
   onBlur,
   variableEditor,
 }: Readonly<MetricComboboxProps>) {
-  const [state, setState] = useState<{
-    metrics?: SelectableValue[];
-    isLoading?: boolean;
-    metricsModalOpen?: boolean;
-    initialMetrics?: string[];
-    resultsTruncated?: boolean;
-  }>({});
-
-  const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
-
-  /**
-   * Reformat the query string and label filters to return all valid results for current query editor state
-   */
-  const formatKeyValueStringsForLabelValuesQuery = (
-    query: string,
-    labelsFilters?: QueryBuilderLabelFilter[]
-  ): string => {
-    const queryString = regexifyLabelValuesQueryString(query);
-
-    return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
-  };
-
   /**
    * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
    */
@@ -92,7 +65,16 @@ export function MetricCombobox({
   // TODO: not currently debounced
   const loadOptions = useCallback(
     async (input: string): Promise<ComboboxOption[]> => {
+      // PR DONT MERGE - make it take at least 2 seconds
+      const _devMinTime = 2 * 1000;
+      const _devStart = Date.now();
+
       const metrics = input.length ? await getMetricLabels(input) : await onGetMetrics();
+      const _devEnd = Date.now();
+      const timeRemaining = _devMinTime - (_devEnd - _devStart);
+      if (timeRemaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, timeRemaining));
+      }
 
       return metrics.map((option) => ({
         label: option.label ?? option.value,
@@ -108,7 +90,7 @@ export function MetricCombobox({
 
   return (
     <>
-      {prometheusMetricEncyclopedia && !datasource.lookupsDisabled && state.metricsModalOpen && (
+      {/* {prometheusMetricEncyclopedia && !datasource.lookupsDisabled && state.metricsModalOpen && (
         <MetricsModal
           datasource={datasource}
           isOpen={state.metricsModalOpen}
@@ -117,7 +99,7 @@ export function MetricCombobox({
           onChange={onChange}
           initialMetrics={state.initialMetrics ?? []}
         />
-      )}
+      )} */}
       {/* format the ui for either the query editor or the variable editor */}
       {variableEditor ? (
         <InlineFieldRow>
@@ -151,4 +133,13 @@ export const formatPrometheusLabelFilters = (labelsFilters: QueryBuilderLabelFil
   return labelsFilters.map((label) => {
     return `,${label.label}="${label.value}"`;
   });
+};
+
+/**
+ * Reformat the query string and label filters to return all valid results for current query editor state
+ */
+const formatKeyValueStringsForLabelValuesQuery = (query: string, labelsFilters?: QueryBuilderLabelFilter[]): string => {
+  const queryString = regexifyLabelValuesQueryString(query);
+
+  return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
 };
