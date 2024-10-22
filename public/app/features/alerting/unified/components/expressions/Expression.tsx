@@ -20,6 +20,8 @@ import {
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
+import { RuleFormValues } from '../../types/rule-form';
+import { isGrafanaRecordingRuleByType } from '../../utils/rules';
 import { PopupCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
@@ -58,7 +60,9 @@ export const Expression: FC<ExpressionProps> = ({
 
   const queryType = query?.type;
 
-  const { setError, clearErrors } = useFormContext();
+  const { setError, clearErrors, watch } = useFormContext<RuleFormValues>();
+  const type = watch('type');
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
 
   const onQueriesValidationError = useCallback(
     (errorMsg: string | undefined) => {
@@ -158,20 +162,25 @@ export const Expression: FC<ExpressionProps> = ({
         </div>
         {hasResults && (
           <>
-            <ExpressionResult series={series} isAlertCondition={isAlertCondition} />
+            <ExpressionResult
+              series={series}
+              isAlertCondition={isAlertCondition}
+              isRecordingRule={isGrafanaRecordingRule}
+            />
+            {!isGrafanaRecordingRule && (
+              <div className={styles.footer}>
+                <Stack direction="row" alignItems="center">
+                  <Spacer />
 
-            <div className={styles.footer}>
-              <Stack direction="row" alignItems="center">
-                <Spacer />
-
-                <PreviewSummary
-                  isCondition={Boolean(isAlertCondition)}
-                  firing={groupedByState[PromAlertingRuleState.Firing].length}
-                  normal={groupedByState[PromAlertingRuleState.Inactive].length}
-                  seriesCount={seriesCount}
-                />
-              </Stack>
-            </div>
+                  <PreviewSummary
+                    isCondition={Boolean(isAlertCondition)}
+                    firing={groupedByState[PromAlertingRuleState.Firing].length}
+                    normal={groupedByState[PromAlertingRuleState.Inactive].length}
+                    seriesCount={seriesCount}
+                  />
+                </Stack>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -182,9 +191,10 @@ export const Expression: FC<ExpressionProps> = ({
 interface ExpressionResultProps {
   series: DataFrame[];
   isAlertCondition?: boolean;
+  isRecordingRule?: boolean;
 }
 export const PAGE_SIZE = 20;
-export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
+export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition, isRecordingRule = false }) => {
   const { pageItems, previousPage, nextPage, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
@@ -212,7 +222,13 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
         !isTimeSeriesResults &&
         pageItems.map((frame, index) => (
           // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-          <FrameRow key={uniqueId()} frame={frame} index={pageStart + index} isAlertCondition={isAlertCondition} />
+          <FrameRow
+            key={uniqueId()}
+            frame={frame}
+            index={pageStart + index}
+            isAlertCondition={isAlertCondition}
+            isRecordingRule={isRecordingRule}
+          />
         ))}
       {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
       {shouldShowPagination && (
@@ -353,6 +369,7 @@ const Header: FC<HeaderProps> = ({
 interface FrameProps extends Pick<ExpressionProps, 'isAlertCondition'> {
   frame: DataFrame;
   index: number;
+  isRecordingRule?: boolean;
 }
 
 const OpeningBracket = () => <span>{'{'}</span>;
@@ -361,7 +378,7 @@ const ClosingBracket = () => <span>{'}'}</span>;
 const Quote = () => <span>&quot;</span>;
 const Equals = () => <span>{'='}</span>;
 
-const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
+function FrameRow({ frame, index, isAlertCondition, isRecordingRule }: FrameProps) {
   const styles = useStyles2(getStyles);
 
   const name = getSeriesName(frame) || 'Series ' + index;
@@ -374,6 +391,7 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
   const showNormal = isAlertCondition && value === 0;
 
   const title = `${hasLabels ? '' : name}${hasLabels ? `{${formatLabels(labelsRecord)}}` : ''}`;
+  const shouldRenderSumary = !isRecordingRule;
 
   return (
     <div className={styles.expression.resultsRow}>
@@ -401,14 +419,18 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
           </Text>
         </div>
         <div className={styles.expression.resultValue}>{value}</div>
-        {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
-        {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
+        {shouldRenderSumary && (
+          <>
+            {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
+            {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
+          </>
+        )}
       </Stack>
     </div>
   );
-};
-
-const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => {
+}
+interface TimeseriesRowProps extends Omit<FrameProps, 'isRecordingRule'> {}
+const TimeseriesRow: FC<TimeseriesRowProps & { index: number }> = ({ frame, index }) => {
   const styles = useStyles2(getStyles);
 
   const valueField = frame.fields[1]; // field 0 is "time", field 1 is "value"
