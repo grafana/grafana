@@ -1,6 +1,8 @@
-import { BehaviorSubject, EMPTY } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
-import { config, locationService } from '../index';
+import { config } from '../config';
+
+import { locationService } from './LocationService';
 
 interface Options {
   localStorageKey?: string;
@@ -47,10 +49,7 @@ export class SidecarService_EXPERIMENTAL {
    *
    * @experimental
    */
-  get activePluginId() {
-    if (!this.assertFeatureEnabled()) {
-      return EMPTY;
-    }
+  get activePluginIdObservable() {
     return this._activePluginId.asObservable();
   }
 
@@ -60,30 +59,21 @@ export class SidecarService_EXPERIMENTAL {
    *
    * @experimental
    */
-  get initialContext() {
-    if (!this.assertFeatureEnabled()) {
-      return EMPTY;
-    }
+  get initialContextObservable() {
     return this._initialContext.asObservable();
   }
 
   // Get the current value of the subject, this is needed if we want the value immediately. For example if used in
   // hook in react with useObservable first render would return undefined even if the behaviourSubject has some
   // value which will be emitted in the next tick and thus next rerender.
-  get initialContextCurrent() {
-    if (!this.assertFeatureEnabled()) {
-      return undefined;
-    }
+  get initialContext() {
     return this._initialContext.getValue();
   }
 
   /**
    * @experimental
    */
-  get activePluginIdCurrent() {
-    if (!this.assertFeatureEnabled()) {
-      return undefined;
-    }
+  get activePluginId() {
     return this._activePluginId.getValue();
   }
 

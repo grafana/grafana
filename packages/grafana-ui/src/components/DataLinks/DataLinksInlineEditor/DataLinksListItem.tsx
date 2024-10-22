@@ -5,6 +5,7 @@ import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { isCompactUrl } from '../../../utils';
+import { Trans } from '../../../utils/i18n';
 import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
@@ -51,7 +52,9 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
               </div>
               {isCompactExploreUrl && (
                 <FieldValidationMessage>
-                  Explore data link may not work in the future. Please edit.
+                  <Trans i18nKey="grafana-ui.data-links-list-item.compact-explore-disclaimer">
+                    Explore data link may not work in the future. Please edit.
+                  </Trans>
                 </FieldValidationMessage>
               )}
             </div>

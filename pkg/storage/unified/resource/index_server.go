@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -15,6 +15,7 @@ type IndexServer struct {
 	s     *server
 	index *Index
 	ws    *indexWatchServer
+	log   *slog.Logger
 }
 
 func (is *IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
@@ -60,10 +61,13 @@ func (is *IndexServer) Watch(ctx context.Context) error {
 		}
 
 		go func() {
-			// TODO: handle error
-			err := is.s.Watch(wr, is.ws)
-			if err != nil {
-				log.Printf("Error watching resource %v", err)
+			for {
+				// blocking call
+				err := is.s.Watch(wr, is.ws)
+				if err != nil {
+					is.log.Error("Error watching resource", "error", err)
+				}
+				is.log.Debug("Resource watch ended. Restarting watch")
 			}
 		}()
 	}
@@ -83,7 +87,9 @@ func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 }
 
 func NewResourceIndexServer() ResourceIndexServer {
-	return &IndexServer{}
+	return &IndexServer{
+		log: slog.Default().With("logger", "index-server"),
+	}
 }
 
 type ResourceIndexer interface {

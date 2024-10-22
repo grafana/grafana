@@ -230,7 +230,7 @@ func TestWarmStateCache(t *testing.T) {
 		Log:           log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(cfg, state.NewNoopPersister())
-	st.Warm(ctx, dbstore)
+	st.Warm(ctx, dbstore, dbstore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
@@ -277,7 +277,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		"test2": "{{ $labels.instance_label }}",
 	})
 
-	st.Warm(ctx, dbstore)
+	st.Warm(ctx, dbstore, dbstore)
 	bValue := float64(42)
 	cValue := float64(1)
 	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
@@ -1813,7 +1813,7 @@ func TestStaleResultsHandler(t *testing.T) {
 			Log:           log.New("ngalert.state.manager"),
 		}
 		st := state.NewManager(cfg, state.NewNoopPersister())
-		st.Warm(ctx, dbstore)
+		st.Warm(ctx, dbstore, dbstore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
@@ -2073,7 +2073,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore)
+			st.Warm(ctx, dbstore, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := dbstore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
@@ -2214,7 +2214,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore)
+			st.Warm(ctx, dbstore, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := dbstore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)

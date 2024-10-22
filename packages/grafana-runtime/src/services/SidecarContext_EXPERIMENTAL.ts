@@ -1,9 +1,11 @@
 import { createContext, useContext } from 'react';
 import { useObservable } from 'react-use';
 
-import { SidecarService_EXPERIMENTAL } from './SidecarService_EXPERIMENTAL';
+import { SidecarService_EXPERIMENTAL, sidecarServiceSingleton_EXPERIMENTAL } from './SidecarService_EXPERIMENTAL';
 
-export const SidecarContext_EXPERIMENTAL = createContext<SidecarService_EXPERIMENTAL | undefined>(undefined);
+export const SidecarContext_EXPERIMENTAL = createContext<SidecarService_EXPERIMENTAL>(
+  sidecarServiceSingleton_EXPERIMENTAL
+);
 
 /**
  * This is the main way to interact with the sidecar service inside a react context. It provides a wrapper around the
@@ -19,8 +21,8 @@ export function useSidecar_EXPERIMENTAL() {
     throw new Error('No SidecarContext found');
   }
 
-  const activePluginId = useObservable(service.activePluginId, service.activePluginIdCurrent);
-  const initialContext = useObservable(service.initialContext, service.initialContextCurrent);
+  const activePluginId = useObservable(service.activePluginIdObservable, service.activePluginId);
+  const initialContext = useObservable(service.initialContextObservable, service.initialContext);
 
   return {
     activePluginId,

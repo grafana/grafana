@@ -73,7 +73,7 @@ Therefore, we heavily rely on the expertise of the community.
 
 ## Data sources
 
-You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/data sources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
 Each configuration file can contain a list of `datasources` to add or update during startup.
 If the data source already exists, Grafana reconfigures it to match the provisioned configuration file.
 
