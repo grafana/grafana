@@ -479,6 +479,14 @@ func TestIntegrationAccessControl(t *testing.T) {
 		)...),
 	})
 
+	// Test receivers with uids longer than 40 characters. User name is used in receiver name.
+	adminLikeUserLongName := helper.CreateUser("adminLikeUserCreatingAReallyLongReceiverName", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(append(
+			[]string{accesscontrol.ActionAlertingReceiversCreate},
+			ossaccesscontrol.ReceiversAdminActions...,
+		)...),
+	})
+
 	// endregion
 
 	testCases := []testCase{
@@ -546,6 +554,15 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 		{
 			user:           adminLikeUser,
+			canRead:        true,
+			canCreate:      true,
+			canUpdate:      true,
+			canDelete:      true,
+			canAdmin:       true,
+			canReadSecrets: true,
+		},
+		{
+			user:           adminLikeUserLongName,
 			canRead:        true,
 			canCreate:      true,
 			canUpdate:      true,
