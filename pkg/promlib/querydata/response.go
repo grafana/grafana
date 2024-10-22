@@ -113,16 +113,20 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 	}
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 
-	if frame.Meta.Type != "heatmap-cells" {
-		customName := getName(q, frame.Fields[1])
-		if customName != "" {
-			frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
-		}
+	customName := getName(q, frame.Fields[1])
+	if customName != "" {
+		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
+	}
 
-		valueField := frame.Fields[1]
-		if n, ok := valueField.Labels["__name__"]; ok {
-			valueField.Name = n
-		}
+	// For heatmap-cells type we don't want to set field name
+	// prometheus native histograms have their own field name structure
+	if frame.Meta.Type == "heatmap-cells" {
+		return
+	}
+
+	valueField := frame.Fields[1]
+	if n, ok := valueField.Labels["__name__"]; ok {
+		valueField.Name = n
 	}
 }
 
