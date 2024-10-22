@@ -326,6 +326,17 @@ external group.
 | Set licensing token      | `{"action": "create", "requestUri": "/api/licensing/token"}` |
 | Save billing information | `{"action": "billing-information"}`                          |
 
+#### Cloud migration management\*
+
+| Action                           | Distinguishing fields                                       |
+| -------------------------------- | ----------------------------------------------------------- |
+| Connect to a cloud instance      | `{"action": "connect-instance"}`                            |
+| Disconnect from a cloud instance | `{"action": "disconnect-instance"}`                         |
+| Build a snapshot                 | `{"action": "build", "resources": [{"type": "snapshot"}]}`  |
+| Upload a snapshot                | `{"action": "upload", "resources": [{"type": "snapshot"}]}` |
+
+\* Behind a feature toggle.
+
 #### Generic actions
 
 In addition to the actions listed above, any HTTP request (`POST`, `PATCH`, `PUT`, and `DELETE`)
