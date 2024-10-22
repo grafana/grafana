@@ -35,8 +35,9 @@
 - **ElasticSearch:** Fix errorsource in newInstanceSettings [#93859](https://github.com/grafana/grafana/pull/93859), [@iwysiu](https://github.com/iwysiu)
 - **Reporting:** Fix reports on multi-org instance (Enterprise)
 - **SubMenu:** Fix expanding sub menu items on touch devices [#93208](https://github.com/grafana/grafana/pull/93208), [@yincongcyincong](https://github.com/yincongcyincong)
-  <!-- 11.3.0 END -->
-  <!-- 11.2.2 START -->
+
+<!-- 11.3.0 END -->
+<!-- 11.2.2 START -->
 
 # 11.2.2 (2024-10-01)
 
