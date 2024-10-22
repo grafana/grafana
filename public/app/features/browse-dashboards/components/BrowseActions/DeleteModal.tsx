@@ -27,7 +27,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
         folder: Object.keys(selectedItems.folder).length,
       },
       source: 'browse_dashboards',
-      restore_enabled: config.featureToggles.dashboardRestoreUI,
+      restore_enabled: Boolean(config.featureToggles.dashboardRestore),
     });
     setIsDeleting(true);
     try {

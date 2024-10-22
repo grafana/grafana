@@ -587,6 +587,14 @@ func GenerateRuleKey(orgID int64) AlertRuleKey {
 	}
 }
 
+// GenerateRuleKeyWithGroup generates a random alert rule key with group
+func GenerateRuleKeyWithGroup(orgID int64) AlertRuleKeyWithGroup {
+	return AlertRuleKeyWithGroup{
+		AlertRuleKey: GenerateRuleKey(orgID),
+		RuleGroup:    util.GenerateShortUID(),
+	}
+}
+
 // GenerateGroupKey generates a random group key
 func GenerateGroupKey(orgID int64) AlertRuleGroupKey {
 	return AlertRuleGroupKey{

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -151,16 +152,20 @@ func (s *StandardSearchService) DoQuery(ctx context.Context, user *backend.User,
 }
 
 func (s *StandardSearchService) doQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q Query) *backend.DataResponse {
-	response := s.doSearchQuery(ctx, q, s.cfg.AppSubURL)
+	response := s.doSearchQuery(ctx, q, s.cfg.AppSubURL, orgID)
 	return response
 }
 
-func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ string) *backend.DataResponse {
+func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ string, orgID int64) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
-	req := &resource.SearchRequest{Tenant: s.cfg.StackID, Query: qry.Query}
+	// will use stack id for cloud and org id for on-prem
+	tenantId := request.GetNamespaceMapper(s.cfg)(orgID)
+
+	req := &resource.SearchRequest{Tenant: tenantId, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From)}
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
+		s.logger.Error("Failed to search resources", "error", err)
 		response.Error = err
 		return response
 	}

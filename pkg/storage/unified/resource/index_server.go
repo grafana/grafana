@@ -2,8 +2,9 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -14,25 +15,30 @@ type IndexServer struct {
 	s     *server
 	index *Index
 	ws    *indexWatchServer
+	log   *slog.Logger
 }
 
-func (is IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	results, err := is.index.Search(ctx, req.Tenant, req.Query)
+func (is *IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	results, err := is.index.Search(ctx, req.Tenant, req.Query, int(req.Limit), int(req.Offset))
 	if err != nil {
 		return nil, err
 	}
 	res := &SearchResponse{}
 	for _, r := range results {
-		res.Items = append(res.Items, &ResourceWrapper{Value: []byte(r)})
+		resJsonBytes, err := json.Marshal(r)
+		if err != nil {
+			return nil, err
+		}
+		res.Items = append(res.Items, &ResourceWrapper{Value: resJsonBytes})
 	}
 	return res, nil
 }
 
-func (is IndexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
+func (is *IndexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
 	return nil, nil
 }
 
-func (is IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
+func (is *IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
 	return nil, nil
 }
 
@@ -55,10 +61,13 @@ func (is *IndexServer) Watch(ctx context.Context) error {
 		}
 
 		go func() {
-			// TODO: handle error
-			err := is.s.Watch(wr, is.ws)
-			if err != nil {
-				log.Printf("Error watching resource %v", err)
+			for {
+				// blocking call
+				err := is.s.Watch(wr, is.ws)
+				if err != nil {
+					is.log.Error("Error watching resource", "error", err)
+				}
+				is.log.Debug("Resource watch ended. Restarting watch")
 			}
 		}()
 	}
@@ -78,7 +87,9 @@ func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 }
 
 func NewResourceIndexServer() ResourceIndexServer {
-	return &IndexServer{}
+	return &IndexServer{
+		log: slog.Default().With("logger", "index-server"),
+	}
 }
 
 type ResourceIndexer interface {

@@ -140,7 +140,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 
 			t.Run("PUT returns 500", func(t *testing.T) {
@@ -164,7 +163,6 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 500, response.Status())
 				require.NotEmpty(t, response.Body())
-				require.Contains(t, string(response.Body()), "something went wrong")
 			})
 		})
 	})
@@ -316,11 +314,53 @@ func TestProvisioningApi(t *testing.T) {
 				rule := createTestAlertRule("rule", 1)
 
 				response := sut.RoutePostAlertRule(&rc, rule)
-
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 				require.Contains(t, string(response.Body()), "folder does not exist")
+			})
+
+			t.Run("PUT returns 400 when folderUID not set", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				orgID := int64(1)
+
+				rule := createTestAlertRule("rule", orgID)
+				insertRuleInOrg(t, sut, rule, orgID)
+
+				rule.FolderUID = ""
+
+				rc := createTestRequestCtx()
+				res := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 400, res.Status())
+				require.NotEmpty(t, res.Body())
+				require.Contains(t, string(res.Body()), "invalid alert rule")
+				require.Contains(t, string(res.Body()), "folderUID must be set")
+			})
+
+			t.Run("PUT returns 400 if folder does not exist", func(t *testing.T) {
+				testEnv := createTestEnv(t, testConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &testEnv)
+				orgID := int64(2)
+
+				rule := createTestAlertRule("rule", orgID)
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        orgID,
+					SignedInUser: &user.SignedInUser{OrgID: orgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, orgID)
+				rule.FolderUID = "does-not-exist"
+
+				rc := createTestRequestCtx()
+				res := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+				require.Equal(t, 400, res.Status())
+				require.NotEmpty(t, res.Body())
+				require.Contains(t, string(res.Body()), "invalid alert rule")
+				require.Contains(t, string(res.Body()), "folder does not exist")
 			})
 		})
 
@@ -1832,6 +1872,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			BaseInterval: time.Second * 10,
 		},
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -1894,7 +1935,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
-
+	tracer := tracing.InitializeTracerForTest()
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
@@ -1905,6 +1946,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.xact,
 		env.log,
 		ngalertfakes.NewFakeReceiverPermissionsService(),
+		tracer,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,
@@ -2002,7 +2044,7 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	return nil
 }
 
-func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	f.tree = definitions.Route{} // TODO
 	return f.tree, nil
 }
@@ -2017,7 +2059,7 @@ func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Cont
 	return fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
@@ -2031,7 +2073,7 @@ func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Co
 	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
-func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
 	return definitions.Route{}, nil
 }
 

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -25,6 +26,7 @@ type NotificationPolicyService struct {
 	xact            TransactionManager
 	log             log.Logger
 	settings        setting.UnifiedAlertingSettings
+	validator       validation.ProvenanceStatusTransitionValidator
 }
 
 func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningStore,
@@ -35,6 +37,7 @@ func NewNotificationPolicyService(am alertmanagerConfigStore, prov ProvisioningS
 		xact:            xact,
 		log:             log,
 		settings:        settings,
+		validator:       validation.ValidateProvenanceRelaxed,
 	}
 }
 
@@ -69,8 +72,17 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return err
 	}
 
-	err = nps.checkOptimisticConcurrency(*revision.Config.AlertmanagerConfig.Route, models.Provenance(tree.Provenance), version, "update")
+	err = nps.checkOptimisticConcurrency(*revision.Config.AlertmanagerConfig.Route, p, version, "update")
 	if err != nil {
+		return err
+	}
+
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &tree, orgID)
+	if err != nil {
+		return err
+	}
+	if err := nps.validator(storedProvenance, p); err != nil {
 		return err
 	}
 
@@ -107,7 +119,15 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	})
 }
 
-func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
+func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
+	storedProvenance, err := nps.provenanceStore.GetProvenance(ctx, &definitions.Route{}, orgID)
+	if err != nil {
+		return definitions.Route{}, err
+	}
+	if err := nps.validator(storedProvenance, provenance); err != nil {
+		return definitions.Route{}, err
+	}
+
 	defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 	if err != nil {
 		nps.log.Error("Failed to parse default alertmanager config: %w", err)

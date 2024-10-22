@@ -22,7 +22,8 @@ import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload 
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { buildImportMap, resolveModulePath } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
-import { isFrontendSandboxSupported } from './sandbox/utils';
+import { shouldLoadPluginInFrontendSandbox } from './sandbox/sandbox_plugin_loader_registry';
+import { pluginsLogger } from './utils';
 
 const imports = buildImportMap(sharedDependenciesMap);
 
@@ -114,11 +115,23 @@ export async function importPluginModule({
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
-  if (await isFrontendSandboxSupported({ isAngular, pluginId })) {
+  if (await shouldLoadPluginInFrontendSandbox({ isAngular, pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  return SystemJS.import(modulePath);
+  return SystemJS.import(modulePath).catch((e) => {
+    let error = new Error('Could not load plugin: ' + e);
+    console.error(error);
+    pluginsLogger.logError(error, {
+      path,
+      pluginId,
+      pluginVersion: version ?? '',
+      expectedHash: moduleHash ?? '',
+      loadingStrategy: loadingStrategy.toString(),
+      sriChecksEnabled: (config.featureToggles.pluginsSriChecks ?? false).toString(),
+    });
+    throw error;
+  });
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {

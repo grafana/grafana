@@ -46,6 +46,7 @@ type service struct {
 	authenticator interceptors.Authenticator
 
 	log log.Logger
+	reg prometheus.Registerer
 }
 
 func ProvideUnifiedStorageGrpcService(
@@ -53,6 +54,7 @@ func ProvideUnifiedStorageGrpcService(
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	log log.Logger,
+	reg prometheus.Registerer,
 ) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -75,6 +77,7 @@ func ProvideUnifiedStorageGrpcService(
 		tracing:       tracing,
 		db:            db,
 		log:           log,
+		reg:           reg,
 	}
 
 	// This will be used when running as a dskit service
@@ -84,7 +87,7 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) start(ctx context.Context) error {
-	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing)
+	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {
 		return err
 	}
@@ -101,6 +104,7 @@ func (s *service) start(ctx context.Context) error {
 	srv := s.handler.GetServer()
 	resource.RegisterResourceStoreServer(srv, server)
 	resource.RegisterResourceIndexServer(srv, server)
+	resource.RegisterBlobStoreServer(srv, server)
 	resource.RegisterDiagnosticsServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 

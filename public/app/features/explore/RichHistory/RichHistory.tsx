@@ -11,6 +11,7 @@ import {
   RichHistorySettings,
   createDatasourcesList,
 } from 'app/core/utils/richHistory';
+import { QUERY_LIBRARY_GET_LIMIT, queryLibraryApi } from 'app/features/query-library/api/factory';
 import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -96,8 +97,10 @@ export function RichHistory(props: RichHistoryProps) {
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
 
+  const queryTemplatesCount = useSelector(queryLibraryApi.endpoints.allQueryTemplates.select()).data?.length || 0;
+
   const QueryLibraryTab: TabConfig = {
-    label: i18n.queryLibrary,
+    label: `${i18n.queryLibrary} (${queryTemplatesCount}/${QUERY_LIBRARY_GET_LIMIT})`,
     value: Tabs.QueryLibrary,
     content: <QueryLibrary activeDatasources={activeDatasources} />,
     icon: 'book',

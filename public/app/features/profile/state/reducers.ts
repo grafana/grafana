@@ -82,6 +82,7 @@ export const slice = createSlice({
         clientIp: session.clientIp,
         browser: session.browser,
         browserVersion: session.browserVersion,
+        authModule: session.authModule,
         os: session.os,
         osVersion: session.osVersion,
         device: session.device,

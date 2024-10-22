@@ -223,7 +223,7 @@ type Dashboard = {
 
 // deprecated types
 
-/** @deprecated - use PluginAddedComponentConfig instead */
+/** @deprecated - use PluginExtensionAddedLinkConfig instead */
 export type PluginExtensionLinkConfig<Context extends object = object> = {
   type: PluginExtensionTypes.link;
   title: string;
