@@ -197,7 +197,7 @@ In this tutorial we'll use the default options for Grafana-managed alert rule cr
 
 ### Define query and alert condition
 
-In this section, we define the query, expression (used to manipulate the data -- `WHEN` in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
+In this section, we define the query, expressions (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
 
 1. Select the **Prometheus** data source from the drop-down menu.
