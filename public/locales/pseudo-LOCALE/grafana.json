@@ -2888,8 +2888,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "Ĩđęŉŧįŧy Přővįđęř",
     "browser-column": "ßřőŵşęř & ØŜ",
     "created-at-column": "Ŀőģģęđ őŉ",
+    "identity-provider-column": "Ĩđęŉŧįŧy Přővįđęř",
     "ip-column": "ĨP äđđřęşş",
     "revoke": "Ŗęvőĸę ūşęř şęşşįőŉ",
     "seen-at-column": "Ŀäşŧ şęęŉ"

@@ -2888,8 +2888,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "Identity Provider",
     "browser-column": "Browser & OS",
     "created-at-column": "Logged on",
+    "identity-provider-column": "Identity Provider",
     "ip-column": "IP address",
     "revoke": "Revoke user session",
     "seen-at-column": "Last seen"
