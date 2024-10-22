@@ -18,6 +18,12 @@ killercoda:
   description: Get started with Grafana Alerting by creating your first alert in just a few minutes. Learn how to set up an alert, send alert notifications to a public webhook, and generate sample data to observe your alert in action.
   backend:
     imageid: ubuntu
+refs:
+   create-gm-alert-rule:
+     - patern: /docs/grafana/create-grafana-managed-rule/
+       destination: /docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
+     - patern: /docs/grafana-cloud/create-grafana-managed-rule/
+       destination: docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
 ---
 
 <!-- INTERACTIVE page intro.md START -->
@@ -187,7 +193,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 ## Create an alert
 
-Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
+Next, we'll establish an [alert rule](ref:create-gm-alert-rule) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
 In this tutorial we'll use the default options for Grafana-managed alert rule creation.
 
@@ -213,7 +219,7 @@ In this section, we define the query, expressions (used to manipulate the data -
 
    - Keep `Last` as the value for the reducer function (`WHEN`), and `0` as the threshold value. This is the value above which the alert rule should trigger.
 
-1. Click **Preview alert rule condition** to run the queries.
+1. Click **Preview alert rule condition** to run the query.
 
    It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and the alert rule state is `Firing`.
 
