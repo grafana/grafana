@@ -1,12 +1,3 @@
-<!-- 11.1.7+security-01 START -->
-
-# 11.1.7+security-01 (2024-10-17)
-
-### Bug fixes
-
-- **SQL Expressions**: Fixes CVE-2024-9264
-
-<!-- 11.1.7+security-01 END -->
 <!-- 11.2.2+security-01 START -->
 
 # 11.2.2+security-01 (2024-10-17)
@@ -27,6 +18,27 @@
 - **SQL Expressions**: Fixes CVE-2024-9264
 
 <!-- 11.2.1+security-01 END -->
+<!-- 11.1.8 START -->
+
+# 11.1.8 (2024-10-22)
+
+### Bug fixes
+
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93948](https://github.com/grafana/grafana/pull/93948), [@alexweav](https://github.com/alexweav)
+- **AzureMonitor:** Fix App Insights portal URL for multi-resource trace queries [#94474](https://github.com/grafana/grafana/pull/94474), [@aangelisc](https://github.com/aangelisc)
+- **OrgSync:** Do not set default Organization for a user to a non-existent Organization [#94551](https://github.com/grafana/grafana/pull/94551), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94969](https://github.com/grafana/grafana/pull/94969), [@scottlepp](https://github.com/scottlepp)
+
+<!-- 11.1.8 END -->
+<!-- 11.1.7+security-01 START -->
+
+# 11.1.7+security-01 (2024-10-17)
+
+### Bug fixes
+
+- **SQL Expressions**: Fixes CVE-2024-9264
+
+<!-- 11.1.7+security-01 END -->
 <!-- 11.1.6+security-01 START -->
 
 # 11.1.6+security-01 (2024-10-17)
