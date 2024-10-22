@@ -2888,8 +2888,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "",
     "browser-column": "Navegador e SO",
     "created-at-column": "Logado",
+    "identity-provider-column": "",
     "ip-column": "Endereço de IP",
     "revoke": "Revogar sessão de usuário",
     "seen-at-column": "Última visualização"
