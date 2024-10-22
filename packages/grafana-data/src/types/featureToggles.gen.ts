@@ -221,4 +221,5 @@ export interface FeatureToggles {
   unifiedStorageSearch?: boolean;
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
+  timeRangeProvider?: boolean;
 }

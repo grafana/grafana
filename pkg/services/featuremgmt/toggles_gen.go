@@ -818,4 +818,8 @@ const (
 	// FlagUnifiedStorageBigObjectsSupport
 	// Enables to save big objects in blob storage
 	FlagUnifiedStorageBigObjectsSupport = "unifiedStorageBigObjectsSupport"
+
+	// FlagTimeRangeProvider
+	// Enables time pickers sync
+	FlagTimeRangeProvider = "timeRangeProvider"
 )
