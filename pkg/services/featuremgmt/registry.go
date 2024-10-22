@@ -737,7 +737,7 @@ var (
 		{
 			Name:            "kubernetesDashboardsAPI",
 			Description:     "Use the kubernetes API in the backend for dashboards",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePrivatePreview,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
 		},

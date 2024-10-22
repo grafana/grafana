@@ -1,6 +1,8 @@
 package dashboard
 
 import (
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,6 +59,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
+	fmt.Printf("FlagKubernetesDashboardsAPI=%t", features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI))
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
 		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
 	}
