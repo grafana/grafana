@@ -12,6 +12,7 @@ type Props = {
 
 export function PluginDetailsRightPanel(props: Props): React.ReactElement | null {
   const { info, plugin } = props;
+  console.log('PLUGIN GRAFANA', plugin);
   return (
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={'250px'}>
       <Box padding={2} borderColor="medium" borderStyle="solid">
@@ -29,7 +30,21 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
               <Text color="secondary">
                 <Trans i18nKey="plugins.details.labels.updatedAt">Last updated: </Trans>
               </Text>{' '}
-              <Text>{formatDate(new Date(plugin.updatedAt))}</Text>
+              <Text>{formatDate(new Date(plugin.updatedAt), { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+            </Stack>
+          )}
+          {plugin?.details?.lastCommitDate && (
+            <Stack direction="column" gap={0.5}>
+              <Text color="secondary">
+                <Trans i18nKey="plugins.details.labels.lastCommitDate">Last commit date: </Trans>
+              </Text>{' '}
+              <Text>
+                {formatDate(new Date(plugin.details.lastCommitDate), {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </Text>
             </Stack>
           )}
         </Stack>

@@ -18,6 +18,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
 
+  console.log('remote PLUGIN GRAFANA', remote);
+
   const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
     getLocalPlugins(),
     getPluginVersions(id, isPublished),
@@ -37,6 +39,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
     changelog: localChangelog || remote?.changelog,
+    lastCommitDate: remote?.lastCommitDate,
   };
 }
 
