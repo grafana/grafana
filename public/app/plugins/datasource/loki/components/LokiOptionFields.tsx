@@ -43,6 +43,10 @@ export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
   },
 ];
 
+export function getQueryDirectionLabel(direction: LokiQueryDirection) {
+  return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
+}
+
 if (config.featureToggles.lokiExperimentalStreaming) {
   queryTypeOptions.push({
     value: LokiQueryType.Stream,
