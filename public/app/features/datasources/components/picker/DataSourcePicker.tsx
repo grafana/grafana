@@ -152,7 +152,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   );
 
   function openDropdown() {
-    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
     setOpen(true);
     markerElement?.focus();
   }
@@ -193,6 +192,14 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     const sub = keyboardEvents.subscribe({
       next: (keyEvent) => {
         switch (keyEvent?.code) {
+          case 'ArrowDown':
+            openDropdown();
+            keyEvent.preventDefault();
+            break;
+          case 'ArrowUp':
+            openDropdown();
+            keyEvent.preventDefault();
+            break;
           case 'Escape':
             onClose();
             keyEvent.preventDefault();
@@ -207,7 +214,13 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div className={styles.trigger} onClick={openDropdown}>
+      <div
+        className={styles.trigger}
+        onClick={() => {
+          reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
+          openDropdown();
+        }}
+      >
         <Input
           id={inputId || 'data-source-picker'}
           className={inputHasFocus ? undefined : styles.input}
@@ -226,6 +239,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           onKeyDown={onKeyDownInput}
           value={filterTerm}
           onChange={(e) => {
+            openDropdown();
             setFilterTerm(e.currentTarget.value);
             if (e.currentTarget.value) {
               reportInteraction(INTERACTION_EVENT_NAME, {
