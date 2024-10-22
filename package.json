@@ -113,7 +113,6 @@
     "@types/glob": "^8.0.0",
     "@types/google.analytics": "^0.0.46",
     "@types/gtag.js": "^0.0.20",
-    "@types/history": "4.7.11",
     "@types/ini": "^4",
     "@types/jest": "29.5.13",
     "@types/jquery": "3.5.31",

@@ -3559,7 +3559,6 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.3.0"
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/dompurify": "npm:^3.0.0"
-    "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/papaparse": "npm:5.3.15"
@@ -4027,7 +4026,6 @@ __metadata:
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/angular": "npm:1.8.9"
-    "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.13"
     "@types/lodash": "npm:4.17.12"
     "@types/react": "npm:18.3.3"
@@ -10158,7 +10156,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/history@npm:4.7.11, @types/history@npm:^4.7.11":
+"@types/history@npm:^4.7.11":
   version: 4.7.11
   resolution: "@types/history@npm:4.7.11"
   checksum: 10/1da529a3485f3015daf794effa3185493bf7dd2551c26932389c614f5a0aab76ab97645897d1eef9c74ead216a3848fcaa019f165bbd6e4b71da6eff164b4c68
@@ -19065,7 +19063,6 @@ __metadata:
     "@types/glob": "npm:^8.0.0"
     "@types/google.analytics": "npm:^0.0.46"
     "@types/gtag.js": "npm:^0.0.20"
-    "@types/history": "npm:4.7.11"
     "@types/ini": "npm:^4"
     "@types/jest": "npm:29.5.13"
     "@types/jquery": "npm:3.5.31"
