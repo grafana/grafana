@@ -543,8 +543,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				"datasource_uid", dataSource.UID)
 
 			if dataSource.JsonData != nil {
-				previousRules := dataSource.JsonData.Get("teamHttpHeaders")
-				if previousRules.Interface() == nil && cmd.JsonData != nil {
+				previousRules := dataSource.JsonData.Get("teamHttpHeaders").Interface()
+				if previousRules == nil && cmd.JsonData != nil {
 					cmd.JsonData.Del("teamHttpHeaders")
 				} else {
 					if cmd.JsonData == nil {
