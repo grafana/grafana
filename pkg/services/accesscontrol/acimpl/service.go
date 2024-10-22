@@ -702,7 +702,10 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
 	}
 
-	key := accesscontrol.GetSearchPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)
+	key, err := accesscontrol.GetSearchPermissionCacheKey(s.log, &user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)
+	if err != nil {
+		return nil, err
+	}
 	s.cache.Set(key, permissions, cacheTTL)
 
 	return permissions, nil
@@ -723,7 +726,10 @@ func (s *Service) searchUserPermissionsFromCache(ctx context.Context, orgID int6
 		OrgID:  orgID,
 	}
 
-	key := accesscontrol.GetSearchPermissionCacheKey(tempUser, searchOptions)
+	key, err := accesscontrol.GetSearchPermissionCacheKey(s.log, tempUser, searchOptions)
+	if err != nil {
+		return nil, false
+	}
 	permissions, ok := s.cache.Get((key))
 	if !ok {
 		metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()

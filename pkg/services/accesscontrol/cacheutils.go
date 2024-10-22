@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -11,21 +13,14 @@ func GetUserPermissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
 }
 
-func GetSearchPermissionCacheKey(user identity.Requester, searchOptions SearchOptions) string {
-	key := fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
-	if searchOptions.Action != "" {
-		key += fmt.Sprintf("-%s", searchOptions.Action)
+func GetSearchPermissionCacheKey(log log.Logger, user identity.Requester, searchOptions SearchOptions) (string, error) {
+	searchHash, err := searchOptions.HashString()
+	if err != nil {
+		log.Debug("search options failed to compute hash", "err", err.Error())
+		return "", err
 	}
-	if searchOptions.Scope != "" {
-		key += fmt.Sprintf("-%s", searchOptions.Scope)
-	}
-	if len(searchOptions.RolePrefixes) > 0 {
-		key += "-" + strings.Join(searchOptions.RolePrefixes, "-")
-	}
-	if searchOptions.ActionPrefix != "" {
-		key += fmt.Sprintf("-%s", searchOptions.ActionPrefix)
-	}
-	return key
+	key := fmt.Sprintf("rbac-permissions-%s-%s", user.GetCacheKey(), searchHash)
+	return key, nil
 }
 
 func GetUserDirectPermissionCacheKey(user identity.Requester) string {

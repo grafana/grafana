@@ -1,8 +1,12 @@
 package accesscontrol
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/gob"
 	"fmt"
+	"hash/fnv"
 	"strconv"
 	"strings"
 
@@ -123,6 +127,23 @@ func (s *SearchOptions) ComputeUserID() (int64, error) {
 	}
 
 	return strconv.ParseInt(id, 10, 64)
+}
+
+func (s *SearchOptions) HashString() (string, error) {
+	if s == nil {
+		return "", nil
+	}
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	if err := encoder.Encode(s); err != nil {
+		return "", err
+	}
+	h := fnv.New64a()
+	_, err := h.Write(buf.Bytes())
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(h.Sum(nil)), nil
 }
 
 type SyncUserRolesCommand struct {
