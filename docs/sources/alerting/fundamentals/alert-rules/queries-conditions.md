@@ -22,21 +22,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
-  alert-rule-evaluation:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
   state-and-health:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/state-and-health/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/state-and-health/
-  notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
   query-transform-data:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
@@ -52,8 +42,8 @@ A query specifies the data to extract from a data source, with the syntax varyin
 An alert rule defines the following components:
 
 - A [query](#data-source-queries) that specifies the data to retrieve from a data source.
-- Optional [expressions](#expression-queries) to perform transformations on the retrieved data.
 - A [condition](#alert-condition) that must be met before the alert rule fires.
+- Optional [expressions](#expressions-advanced-options) to perform transformations on the retrieved data.
 
 Alerting periodically runs the queries and expressions, evaluating the condition. If the condition is breached, an alert instance is triggered for each time series.
 
@@ -67,6 +57,8 @@ Queries in Grafana can be applied in various ways, depending on the data source 
 
 For more details about queries in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
+{{< figure src="/media/docs/alerting/alerting-query-conditions-default-options.png" max-width="750px" caption="Define alert query and alert condition" >}}
+
 ## Alert condition
 
 The alert condition is the query or expression that determines whether the alert fires or not depending whether the value satisfies the specified comparison. There can be only one condition which determines the triggering of the alert.
@@ -75,19 +67,17 @@ If the queried data meets the defined condition, Grafana fires the alert.
 
 When using **Default options**, the `When` input reduces the query data, and the last input defines the threshold condition.
 
-When using **Advanced options**, you have to choose one of your queries or expressions as the alert rule condition. By default, the last expression added is used as the alert condition.
+When using **Advanced options**, you have to choose one of your queries or expressions as the alert rule condition.
 
-For more details on how the alert evaluation triggers notifications, refer to [Alert rule evaluation](ref:alert-rule-evaluation) and [Notifications](ref:notifications).
+## Expressions (Advanced options)
 
-## Expression queries
+Expressions are only available for Grafana-managed alerts and when the **Advanced options** are enabled.
 
 In Grafana, expressions allow you to perform calculations, transformations, or aggregations on queried data. They modify existing metrics through mathematical operations, functions, or logical expressions.
 
 With expression queries, you can perform tasks such as calculating the percentage change between two values, applying functions like logarithmic or trigonometric functions, aggregating data over specific time ranges or dimensions, and implementing conditional logic to handle different scenarios.
 
-{{% admonition type="note" %}}
-Expressions are only available for Grafana-managed alert rules.
-{{% /admonition %}}
+{{< figure src="/media/docs/alerting/alert-rule-expressions.png" max-width="750px" caption="Alert rule expressions" >}}
 
 The following expressions are available:
 
@@ -133,7 +123,7 @@ If the threshold is set as the alert condition, the alert fires when the thresho
 
 To reduce the noise from flapping alerts, you can set a recovery threshold different to the alert threshold.
 
-Flapping alerts occur when a metric hovers around the alert threshold condition and may lead to frequent state changes, resulting in too many notifications being generated.
+Flapping alerts occur when a metric hovers around the alert threshold condition and may lead to frequent state changes, resulting in too many notifications.
 
 The value of a flapping metric can continually go above and below a threshold, resulting in a series of firing-resolved-firing notifications and a noisy alert state history.
 
@@ -158,7 +148,7 @@ The recovery threshold mitigates unnecessary alert state changes and reduces ale
 
 {{< collapse title="Classic condition (legacy)" >}}
 
-### Classic condition (legacy)
+#### Classic condition (legacy)
 
 Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
 
