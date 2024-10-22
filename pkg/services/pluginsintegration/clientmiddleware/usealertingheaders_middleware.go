@@ -39,7 +39,9 @@ func applyAlertHeaders(ctx context.Context, req *backend.QueryDataRequest) {
 	for _, key := range alertHeaders {
 		incomingValue := incomingHeaders.Get(key)
 		if incomingValue != "" {
-			// FromAlert must be set directly, with the wrong capitalization.
+			// FromAlert must be set directly, because we need
+			// to keep the incorrect capitalization for backwards-compatibility
+			// reasons. otherwise Go would normalize it to "Fromalert"
 			if key == ngalertmodels.FromAlertHeaderName {
 				req.Headers[key] = incomingValue
 			} else {
