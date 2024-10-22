@@ -101,16 +101,7 @@ export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldCon
       };
 
       // original with perm overrides
-      if (field.config.custom !== undefined) {
-        field.config.custom.hideFrom = hideFrom;
-      } else {
-        field.config = {
-          ...field.config,
-          custom: {
-            hideFrom: hideFrom,
-          },
-        };
-      }
+      field.config.custom.hideFrom = hideFrom;
     });
   });
 }

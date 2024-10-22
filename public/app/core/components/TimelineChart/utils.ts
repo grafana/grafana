@@ -18,9 +18,7 @@ import {
   outerJoinDataFrames,
   ValueMapping,
   ThresholdsConfig,
-  FieldConfigSource,
 } from '@grafana/data';
-import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
@@ -298,15 +296,13 @@ export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
   timeRange: TimeRange,
-  theme: GrafanaTheme2,
-  fieldConfig: FieldConfigSource
+  theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
 
   cacheFieldDisplayNames(series);
-  decoupleHideFromState(series, fieldConfig);
 
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
