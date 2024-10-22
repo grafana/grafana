@@ -251,7 +251,7 @@ If you want to apply a cell type to only some fields instead of all fields, you 
 ##### Sparkline
 
 This cell type shows values rendered as a sparkline.
-You can show sparklines using the [Time series to table transformation](ref:time-series-to-table-transformation) on data with multiple time series to process it into a format the table can show.
+To show sparklines on data with multiple time series, use the [Time series to table transformation](ref:time-series-to-table-transformation) to process it into a format the table can show.
 
 ![Table using sparkline cell type](/media/docs/grafana/panels-visualizations/screenshot-table-as-sparkline-v11.3.png)
 
