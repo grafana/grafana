@@ -536,6 +536,7 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
+	IndexPath      string
 }
 
 type UnifiedStorageConfig struct {
@@ -1342,8 +1343,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 
-	// read unifed storage config
+	// unified storage config
 	cfg.setUnifiedStorageConfig()
+	cfg.setIndexPath()
 
 	return nil
 }

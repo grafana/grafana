@@ -172,6 +172,20 @@ While **Explore Logs** is [GA in cloud](https://grafana.com/blog/2024/09/24/quer
 
 This is configured by the [`preinstall` configuration parameter](https://github.com/grafana/grafana/blob/9ece88d5852dceb90f83271e66902eece24f908f/conf/defaults.ini#L1748) in your Grafana configuration. For more information about Explore logs, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/logs/).
 
+## Correlations
+
+### Add correlations to external URLs in Explore
+
+<!-- #grafana-correlations or @kdurivage -->
+
+_Generally available in all editions of Grafana_
+
+Correlations is a feature that allows Grafana users to set up links between their data sources. Previously, the link generated would only be from one query to another—meaning results from a query could only generate links to open a second Explore pane with other query results.
+
+With this feature, users can now link to third party web-based software based on their search results. The format follows the standard Grafana format for using variables.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/)
+
 ## Alerting
 
 ### Simplified query section for alert rule creation
