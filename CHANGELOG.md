@@ -1,3 +1,14 @@
+<!-- 10.4.11 START -->
+
+# 10.4.11 (2024-10-22)
+
+### Bug fixes
+
+- **Alerting:** Fix broken panelId links [#94686](https://github.com/grafana/grafana/pull/94686), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93946](https://github.com/grafana/grafana/pull/93946), [@alexweav](https://github.com/alexweav)
+- **Dashboard:** Make dashboard search faster [#94703](https://github.com/grafana/grafana/pull/94703), [@knuzhdin](https://github.com/knuzhdin)
+
+<!-- 10.4.11 END -->
 <!-- 11.1.7+security-01 START -->
 
 # 11.1.7+security-01 (2024-10-17)
