@@ -1,3 +1,42 @@
+<!-- 11.3.0 START -->
+
+# 11.3.0 (2024-10-22)
+
+### Features and enhancements
+
+- **Alerting:** Add manage permissions UI logic for Contact Points [#92885](https://github.com/grafana/grafana/pull/92885), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Allow linking to silence form with `__alert_rule_uid__` value preset [#93526](https://github.com/grafana/grafana/pull/93526), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Hide query name when using simplified mode in the alert rule [#93779](https://github.com/grafana/grafana/pull/93779), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Limit and clean up old alert rules versions [#89754](https://github.com/grafana/grafana/pull/89754), [@igloo12](https://github.com/igloo12)
+- **Alerting:** Style nits for the simple query mode [#93930](https://github.com/grafana/grafana/pull/93930), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Update texts in annotations step [#93977](https://github.com/grafana/grafana/pull/93977), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Use useProduceNewAlertmanagerConfiguration for contact points [#88456](https://github.com/grafana/grafana/pull/88456), [@gillesdemey](https://github.com/gillesdemey)
+- **Auth:** Attach external session info to Grafana session [#93849](https://github.com/grafana/grafana/pull/93849), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Auth:** Replace jmespath/go-jmespath with jmespath-community/go-jmespath [#94203](https://github.com/grafana/grafana/pull/94203), [@mgyongyosi](https://github.com/mgyongyosi)
+- **CloudMigrations:** Add support for migration of Library Elements (Panels) resources [#93898](https://github.com/grafana/grafana/pull/93898), [@macabu](https://github.com/macabu)
+- **Cloudwatch:** Update grafana-aws-sdk [#94155](https://github.com/grafana/grafana/pull/94155), [@iwysiu](https://github.com/iwysiu)
+- **Explore Logs:** Preinstall for onprem Grafana instances [#94221](https://github.com/grafana/grafana/pull/94221), [@svennergr](https://github.com/svennergr)
+- **ExploreMetrics:** Ensure compatibility with Incremental Querying [#94355](https://github.com/grafana/grafana/pull/94355), [@NWRichmond](https://github.com/NWRichmond)
+- **FieldConfig:** Add support for Actions [#92874](https://github.com/grafana/grafana/pull/92874), [@adela-almasan](https://github.com/adela-almasan)
+- **Plugin Extensions:** Require meta-data to be defined in `plugin.json` during development mode [#93429](https://github.com/grafana/grafana/pull/93429), [@leventebalogh](https://github.com/leventebalogh)
+- **Reporting:** Display template variables in the PDF (Enterprise)
+- **Tempo:** Add deprecation notice for Aggregate By [#94050](https://github.com/grafana/grafana/pull/94050), [@joey-grafana](https://github.com/joey-grafana)
+
+### Bug fixes
+
+- **Alerting/Chore:** Fix TimeRangeInput not working across multiple months [#93622](https://github.com/grafana/grafana/pull/93622), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Fix default value for input in simple condition [#94248](https://github.com/grafana/grafana/pull/94248), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Fix eval interval not being saved when creating a new group [#93821](https://github.com/grafana/grafana/pull/93821), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93940](https://github.com/grafana/grafana/pull/93940), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Fix panics when attempting to create an Alertmanager after failing [#94023](https://github.com/grafana/grafana/pull/94023), [@santihernandezc](https://github.com/santihernandezc)
+- **DashboardScene:** Fixes url issue with subpath when exiting edit mode [#93962](https://github.com/grafana/grafana/pull/93962), [@torkelo](https://github.com/torkelo)
+- **Dashboards:** Enable scenes by default [#93818](https://github.com/grafana/grafana/pull/93818), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Dashboards:** Fixes view & edit keyboard shortcuts when grafana is behind a subpath [#93955](https://github.com/grafana/grafana/pull/93955), [@torkelo](https://github.com/torkelo)
+- **ElasticSearch:** Fix errorsource in newInstanceSettings [#93859](https://github.com/grafana/grafana/pull/93859), [@iwysiu](https://github.com/iwysiu)
+- **Reporting:** Fix reports on multi-org instance (Enterprise)
+- **SubMenu:** Fix expanding sub menu items on touch devices [#93208](https://github.com/grafana/grafana/pull/93208), [@yincongcyincong](https://github.com/yincongcyincong)
+
+<!-- 11.3.0 END -->
 <!-- 11.2.3 START -->
 
 # 11.2.3 (2024-10-22)
