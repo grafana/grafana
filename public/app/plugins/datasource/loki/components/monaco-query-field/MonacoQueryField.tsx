@@ -119,6 +119,7 @@ const MonacoQueryField = ({
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
+  const completionDataProviderRef = useRef<CompletionDataProvider | null>(null);
 
   const autocompleteCleanupCallback = useRef<(() => void) | null>(null);
 
@@ -131,6 +132,12 @@ const MonacoQueryField = ({
       autocompleteCleanupCallback.current?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (completionDataProviderRef.current && timeRange) {
+      completionDataProviderRef.current.setTimeRange(timeRange);
+    }
+  }, [timeRange]);
 
   const setPlaceholder = (monaco: Monaco, editor: MonacoEditor) => {
     const placeholderDecorators = [
@@ -213,6 +220,7 @@ const MonacoQueryField = ({
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
           const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef, timeRange);
+          completionDataProviderRef.current = dataProvider;
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

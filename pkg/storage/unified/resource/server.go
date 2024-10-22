@@ -168,6 +168,12 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}
 	}
 
+	logger := slog.Default().With("logger", "resource-server")
+	// register metrics
+	if err := prometheus.Register(NewStorageMetrics()); err != nil {
+		logger.Warn("failed to register storage metrics", "error", err)
+	}
+
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
 		&identity.StaticRequester{
@@ -178,7 +184,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}))
 	return &server{
 		tracer:      opts.Tracer,
-		log:         slog.Default().With("logger", "resource-server"),
+		log:         logger,
 		backend:     opts.Backend,
 		index:       opts.Index,
 		blob:        blobstore,
@@ -711,6 +717,12 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				}
 				if err := srv.Send(resp); err != nil {
 					return err
+				}
+
+				// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
+				latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+				if latencySeconds > 0 {
+					StorageServerMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 				}
 			}
 		}
