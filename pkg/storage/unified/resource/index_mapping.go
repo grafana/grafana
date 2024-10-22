@@ -97,7 +97,7 @@ func createIndexMappings() *mapping.IndexMappingImpl {
 	indexMapping.TypeField = "Kind"
 
 	// for all kinds, create their index mappings
-	for k, _ := range getSpecObjectMappings() {
+	for k := range getSpecObjectMappings() {
 		objMapping := createIndexMappingForKind(k)
 		indexMapping.AddDocumentMapping(k, objMapping)
 	}
