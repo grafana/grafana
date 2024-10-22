@@ -171,6 +171,7 @@ export function loadUserSessions(userId: number): ThunkResult<void> {
         clientIp: session.clientIp,
         browser: session.browser,
         browserVersion: session.browserVersion,
+        authModule: session.authModule,
         os: session.os,
         osVersion: session.osVersion,
         device: session.device,
