@@ -122,14 +122,14 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
 			var refError ErrorWithRefID
-			status := backend.StatusBadRequest
 			statusCode := http.StatusBadRequest
+			status := backend.Status(statusCode)
 			message := err
 			refID := "A"
 
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
-				status = backend.StatusNotFound
 				statusCode = http.StatusNotFound
+				status = backend.Status(statusCode)
 				message = errors.New("datasource not found")
 			}
 
