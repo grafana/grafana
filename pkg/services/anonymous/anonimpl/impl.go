@@ -83,7 +83,7 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, er
 	}, nil
 }
 
-func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, device *anonstore.Device) error {
+func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, req *http.Request, device *anonstore.Device) error {
 	err := a.limitValidator.Validate(ctx)
 	if err != nil {
 		return err
