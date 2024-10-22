@@ -207,6 +207,56 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('multiple queries + field + static number', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: 'B',
+          operator: BinaryOperationID.Add,
+          right: '2',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toMatchInlineSnapshot(`
+        [
+          {
+            "fields": [
+              {
+                "config": {},
+                "name": "TheTime",
+                "state": {
+                  "displayName": "TheTime",
+                  "multipleFrames": false,
+                },
+                "type": "time",
+                "values": [
+                  1000,
+                  2000,
+                ],
+              },
+              {
+                "config": {},
+                "name": "B + 2",
+                "type": "number",
+                "values": [
+                  4,
+                  202,
+                ],
+              },
+            ],
+            "length": 2,
+          },
+        ]
+      `);
+    });
+  });
+
   it('all numbers + static number', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
