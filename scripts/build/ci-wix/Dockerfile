@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/windows:1809
 WORKDIR C:\\App
 
 RUN powershell Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-RUN powershell Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+RUN powershell Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 RUN scoop install wixtoolset@3.11.2
 RUN powershell (New-Object Net.WebClient).DownloadFile(\
   \"https://grafana-downloads.storage.googleapis.com/ci-dependencies/nssm-2.24.zip\", \
