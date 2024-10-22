@@ -99,6 +99,26 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	return &authzv1.CheckResponse{}, nil
 }
 
+func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "authzServer.List")
+	defer span.End()
+
+	req, err := translateToListRequest(r)
+	if err != nil {
+		return nil, err
+	}
+
+	req.StoreId = s.storeID
+	req.AuthorizationModelId = s.modelID
+
+	res, err := s.openfga.ListObjects(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authzextv1.ListResponse{Objects: res.GetObjects()}, nil
+}
+
 func (s *Server) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
 	store, err := s.getStore(ctx, name)
 
