@@ -36,7 +36,7 @@ func convertToK8sResource(orgID int64, r definitions.Route, version string, name
 	var result = &model.RoutingTree{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       model.RouteResourceInfo.GroupVersionKind().Kind,
-			APIVersion: model.VERSION,
+			APIVersion: model.APIVERSION,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            model.UserDefinedRoutingTreeName,
