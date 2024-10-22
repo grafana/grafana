@@ -14,8 +14,8 @@ import { LocationUpdate } from './LocationSrv';
  */
 export interface LocationService {
   partial: (query: Record<string, any>, replace?: boolean) => void;
-  push: (location: H.Path | H.LocationDescriptor<any>) => void;
-  replace: (location: H.Path | H.LocationDescriptor<any>) => void;
+  push: (location: H.To, state?: unknown) => void;
+  replace: (location: H.To, state?: unknown) => void;
   reload: () => void;
   getLocation: () => H.Location;
   getHistory: () => H.History;
@@ -28,6 +28,7 @@ export interface LocationService {
   update: (update: LocationUpdate) => void;
 }
 
+const basename = config.appSubUrl ?? '/';
 /** @internal */
 export class HistoryWrapper implements LocationService {
   private readonly history: H.History;
@@ -36,9 +37,7 @@ export class HistoryWrapper implements LocationService {
     // If no history passed create an in memory one if being called from test
     this.history =
       history ||
-      (process.env.NODE_ENV === 'test'
-        ? H.createMemoryHistory({ initialEntries: ['/'] })
-        : H.createBrowserHistory({ basename: config.appSubUrl ?? '/' }));
+      (process.env.NODE_ENV === 'test' ? H.createMemoryHistory({ initialEntries: ['/'] }) : H.createBrowserHistory());
 
     this.partial = this.partial.bind(this);
     this.push = this.push.bind(this);
@@ -78,20 +77,17 @@ export class HistoryWrapper implements LocationService {
     }
   }
 
-  push(location: H.Path | H.LocationDescriptor) {
-    this.history.push(location);
+  push(location: H.To) {
+    this.history.push(basename + location);
   }
 
-  replace(location: H.Path | H.LocationDescriptor) {
-    this.history.replace(location);
+  replace(location: H.To) {
+    this.history.replace(basename + location);
   }
 
   reload() {
     const prevState = (this.history.location.state as any)?.routeReloadCounter;
-    this.history.replace({
-      ...this.history.location,
-      state: { routeReloadCounter: prevState ? prevState + 1 : 1 },
-    });
+    this.history.replace(this.history.location, { routeReloadCounter: prevState ? prevState + 1 : 1 });
   }
 
   getLocation() {
@@ -108,7 +104,7 @@ export class HistoryWrapper implements LocationService {
     if (options.partial && options.query) {
       this.partial(options.query, options.partial);
     } else {
-      const newLocation: H.LocationDescriptor = {
+      const newLocation: H.To = {
         pathname: options.path,
       };
       if (options.query) {
