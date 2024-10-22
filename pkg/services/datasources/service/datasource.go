@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,6 +53,7 @@ type Service struct {
 	pluginStore               pluginstore.Store
 	pluginClient              plugins.Client
 	basePluginContextProvider plugincontext.BasePluginContextProvider
+	userService               user.Service
 
 	ptc proxyTransportCache
 }
@@ -71,6 +73,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	basePluginContextProvider plugincontext.BasePluginContextProvider,
+	userService user.Service,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}
@@ -90,6 +93,7 @@ func ProvideService(
 		pluginStore:               pluginStore,
 		pluginClient:              pluginClient,
 		basePluginContextProvider: basePluginContextProvider,
+		userService:               userService,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -291,8 +295,14 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 				{BuiltinRole: "Viewer", Permission: "Query"},
 				{BuiltinRole: "Editor", Permission: "Query"},
 			}
-			if cmd.UserID != 0 || (cmd.UserRequester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount)) {
-				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
+			if cmd.UserID != 0 {
+				usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{UserID: cmd.UserID, OrgID: cmd.OrgID})
+				if err != nil {
+					return fmt.Errorf("failed to get user: %w", err)
+				}
+				if usr.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+					permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
+				}
 			}
 			if _, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
 				return err
