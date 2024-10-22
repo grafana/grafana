@@ -337,7 +337,7 @@ export function GrafanaEvaluationBehavior({
             <EvaluationGroupCreationModal
               onCreate={handleEvalGroupCreation}
               onClose={() => setIsCreatingEvaluationGroup(false)}
-              groupfoldersForGrafana={groupfoldersForGrafana.result}
+              groupfoldersForGrafana={groupfoldersForGrafana?.result}
             />
           )}
         </Stack>
