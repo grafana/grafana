@@ -159,7 +159,7 @@ const useIsNewGroup = (folder: string, group: string) => {
   return !groupIsInGroupOptions(group);
 };
 
-export function GrafanaEvaluationBehavior({
+export function GrafanaEvaluationBehaviorStep({
   evaluateEvery,
   setEvaluateEvery,
   existing,

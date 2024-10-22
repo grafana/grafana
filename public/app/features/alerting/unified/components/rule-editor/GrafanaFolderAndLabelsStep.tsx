@@ -20,7 +20,7 @@ import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 
 /** Precondition: rule is Grafana managed.
  */
-export function GrafanaFolderAndLabelsSection() {
+export function GrafanaFolderAndLabelsStep() {
   const { setValue, getValues } = useFormContext<RuleFormValues>();
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);

@@ -60,8 +60,8 @@ import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
-import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
-import { GrafanaFolderAndLabelsSection } from '../GrafanaFolderAndLabelsSection';
+import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
+import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
@@ -296,7 +296,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               {showDataSourceDependantStep && (
                 <>
                   {/* Step 3 */}
-                  {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsSection />}
+                  {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsStep />}
 
                   {isCloudAlertingRuleByType(type) && <CloudEvaluationBehavior />}
 
@@ -304,7 +304,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
                   {/* Step 4 & 5 & 6*/}
                   {isGrafanaManagedRuleByType(type) && (
-                    <GrafanaEvaluationBehavior
+                    <GrafanaEvaluationBehaviorStep
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
                       existing={Boolean(existing)}
