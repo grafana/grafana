@@ -818,4 +818,8 @@ const (
 	// FlagUnifiedStorageBigObjectsSupport
 	// Enables to save big objects in blob storage
 	FlagUnifiedStorageBigObjectsSupport = "unifiedStorageBigObjectsSupport"
+
+	// FlagAzureMonitorDisableLogLimit
+	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
+	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
 )

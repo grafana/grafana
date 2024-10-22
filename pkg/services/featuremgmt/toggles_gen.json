@@ -610,6 +610,7 @@
         "name": "azureMonitorDisableLogLimit",
         "resourceVersion": "1727698096407",
         "creationTimestamp": "2024-09-30T11:51:51Z",
+        "deletionTimestamp": "2024-10-22T09:44:12Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-30 12:08:16.407109 +0000 UTC"
         }
