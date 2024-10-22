@@ -36,7 +36,7 @@ export async function shouldLoadPluginInFrontendSandbox({
  * This is a basic check that checks if the plugin is eligible to run in the sandbox.
  * It does not check if the plugin is actually enabled for the sandbox.
  */
-async function isPluginFrontendSandboxElegible({
+export async function isPluginFrontendSandboxElegible({
   isAngular,
   pluginId,
 }: SandboxEligibilityCheckParams): Promise<boolean> {
@@ -61,13 +61,17 @@ async function isPluginFrontendSandboxElegible({
     return false;
   }
 
-  // don't run grafana-signed plugins in sandbox
-  const pluginMeta = await getPluginSettings(pluginId);
-  if (pluginMeta.signatureType === PluginSignatureType.grafana) {
+  try {
+    // don't run grafana-signed plugins in sandbox
+    const pluginMeta = await getPluginSettings(pluginId);
+    if (pluginMeta.signatureType === PluginSignatureType.grafana) {
+      return false;
+    }
+    return true;
+  } catch (e) {
+    // this can fail if we are trying to fetch settings of a non-installed plugin
     return false;
   }
-
-  return true;
 }
 
 /**
