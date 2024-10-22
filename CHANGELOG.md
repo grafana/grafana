@@ -129,6 +129,16 @@
 - **Correlations:** Limit access to correlations page to users who can access Explore [#93673](https://github.com/grafana/grafana/pull/93673), [@ifrost](https://github.com/ifrost)
 
 <!-- 10.4.10 END -->
+<!-- 10.3.12 START -->
+
+# 10.3.12 (2024-10-22)
+
+### Bug fixes
+
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93945](https://github.com/grafana/grafana/pull/93945), [@alexweav](https://github.com/alexweav)
+- **Dashboard:** Make dashboard search faster [#94704](https://github.com/grafana/grafana/pull/94704), [@knuzhdin](https://github.com/knuzhdin)
+
+<!-- 10.3.12 END -->
 <!-- 10.3.11 START -->
 
 # 10.3.11 (2024-10-01)
