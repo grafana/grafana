@@ -497,7 +497,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 	}
 
 	if query.AppInsightsQuery {
-		body["applications"] = query.Resources
+		body["applications"] = []string{query.Resources[0]}
 	}
 
 	jsonValue, err := json.Marshal(body)
