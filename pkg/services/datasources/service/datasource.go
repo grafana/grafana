@@ -536,8 +536,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 		// preserve existing lbac rules when updating datasource if we're not updating lbac rules
 		// TODO: Refactor to store lbac rules separate from a datasource
-		allowLBACRuleUpdates := cmd.AllowLBACRuleUpdates && s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders)
-		if !allowLBACRuleUpdates {
+		if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && !cmd.AllowLBACRuleUpdates {
 			s.logger.Debug("Overriding LBAC rules with stored ones using updateLBACRules API",
 				"reason", "overriding_lbac_rules_from_datasource_api",
 				"datasource_id", dataSource.ID,
