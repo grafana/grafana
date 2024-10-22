@@ -72,7 +72,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.13.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20241010165806-807ddf183724 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20241021123319-be61d61f71e7 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20241018103850-afc1195d8240 // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20241018085709-130ad686d80e // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
