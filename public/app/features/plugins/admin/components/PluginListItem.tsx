@@ -23,7 +23,7 @@ function PluginListItemComponent({ plugin, pathName }: Props) {
 
   const reportUserClickInteraction = () => {
     if (locationService.getSearchObject()?.q) {
-      reportInteraction('plugins_search_user_click', {});
+      reportInteraction('plugins_search_user_click', { plugin_id: plugin.id });
     }
   };
   return (

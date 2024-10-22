@@ -35,12 +35,11 @@ export type PluginFilters = {
 export const selectPlugins = (filters: PluginFilters) =>
   createSelector(selectAll, (plugins) => {
     const keyword = filters.keyword ? unEscapeStringFromRegex(filters.keyword.toLowerCase()) : '';
+    // Fuzzy search does not consider plugin type filter
     const filteredPluginIds = keyword !== '' ? filterByKeyword(plugins, keyword) : null;
 
-    if (keyword) {
-      reportInteraction('plugins_search', { resultsCount: filteredPluginIds?.length });
-    }
-    return plugins.filter((plugin) => {
+    // Filters are applied here
+    const filteredPlugins = plugins.filter((plugin) => {
       if (keyword && filteredPluginIds == null) {
         return false;
       }
@@ -67,6 +66,12 @@ export const selectPlugins = (filters: PluginFilters) =>
 
       return true;
     });
+
+    if (keyword) {
+      reportInteraction('plugins_search', { resultsCount: filteredPlugins.length });
+    }
+
+    return filteredPlugins;
   });
 
 export const selectPluginErrors = (filterByPluginType?: PluginType) =>
