@@ -23,10 +23,6 @@ interface Props {
 
 type GroupedRules = Map<PromAlertingRuleState, CombinedRule[]>;
 
-// If we're using the Prometheus rules as primary, we leave state sections collapsed by default
-// so we defer API calls until the user expands the section
-const defaultSectionsToBeCollapsed = shouldUsePrometheusRulesPrimary();
-
 export const RuleListStateView = ({ namespaces }: Props) => {
   const styles = useStyles2(getStyles);
 
