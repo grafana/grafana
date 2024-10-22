@@ -56,7 +56,10 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv := zanzana.NewAuthzServer(openfga)
+		srv, err := zanzana.NewAuthzServer(cfg, openfga)
+		if err != nil {
+			return nil, fmt.Errorf("failed to start zanzana: %w", err)
+		}
 		channel := &inprocgrpc.Channel{}
 		openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 		authzv1.RegisterAuthzServiceServer(channel, srv)
@@ -114,7 +117,10 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	srv := zanzana.NewAuthzServer(openfga)
+	srv, err := zanzana.NewAuthzServer(z.cfg, openfga)
+	if err != nil {
+		return fmt.Errorf("failed to start zanzana: %w", err)
+	}
 
 	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
 	if err != nil {
