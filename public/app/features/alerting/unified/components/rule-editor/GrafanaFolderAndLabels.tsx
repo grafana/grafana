@@ -18,9 +18,7 @@ import { containsSlashes, Folder } from './RuleFolderPicker';
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
 import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 
-/**
- * 
-Precondition: rule is Grafana managed
+/** Precondition: rule is Grafana managed.
  */
 export function GrafanaFolderAndLabels() {
   const { setValue, getValues } = useFormContext<RuleFormValues>();

@@ -45,7 +45,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
-  const isGrafanaManaged = dataSourceName === GRAFANA_RULES_SOURCE_NAME;
+  const isGrafanaManaged = isGrafanaManagedRuleByType(type);
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
@@ -69,7 +69,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
     return null;
   }
 
-  const step = !isGrafanaManagedRuleByType(type) ? 4 : 5;
+  const step = !isGrafanaManaged ? 4 : 5;
 
   return (
     <RuleEditorSection
