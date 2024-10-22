@@ -43,7 +43,7 @@ An alert rule defines the following components:
 
 - A [query](#data-source-queries) that specifies the data to retrieve from a data source.
 - A [condition](#alert-condition) that must be met before the alert rule fires.
-- Optional [expressions](#expressions-advanced-options) to perform transformations on the retrieved data.
+- Optional [expressions](#advanced-options-expressions) to perform transformations on the retrieved data.
 
 Alerting periodically runs the queries and expressions, evaluating the condition. If the condition is breached, an alert instance is triggered for each time series.
 
@@ -65,11 +65,11 @@ The alert condition is the query or expression that determines whether the alert
 
 If the queried data meets the defined condition, Grafana fires the alert.
 
-When using **Default options**, the `When` input reduces the query data, and the last input defines the threshold condition.
+When using **Default options**, the `When` input [reduces the query data](#reduce), and the last input defines the threshold condition.
 
-When using **Advanced options**, you have to choose one of your queries or expressions as the alert rule condition.
+When using **Advanced options**, you have to choose one of your queries or expressions as the alert condition.
 
-## Expressions (Advanced options)
+## Advanced options: Expressions
 
 Expressions are only available for Grafana-managed alerts and when the **Advanced options** are enabled.
 
