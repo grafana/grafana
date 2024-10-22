@@ -30,23 +30,20 @@ type Client struct {
 	queryTimeout string
 }
 
-const defaultQueryTimeout = "60s"
-
 func NewClient(d doer, method, baseUrl, queryTimeout string) *Client {
-	if queryTimeout != "" {
-		queryTimeout = defaultQueryTimeout
-	}
 	return &Client{doer: d, method: method, baseUrl: baseUrl, queryTimeout: queryTimeout}
 }
 
 func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Response, error) {
 	tr := q.TimeRange()
 	qv := map[string]string{
-		"query":   q.Expr,
-		"start":   formatTime(tr.Start),
-		"end":     formatTime(tr.End),
-		"step":    strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64),
-		"timeout": c.queryTimeout,
+		"query": q.Expr,
+		"start": formatTime(tr.Start),
+		"end":   formatTime(tr.End),
+		"step":  strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64),
+	}
+	if c.queryTimeout != "" {
+		qv["timeout"] = c.queryTimeout
 	}
 
 	req, err := c.createQueryRequest(ctx, "api/v1/query_range", qv)
@@ -64,7 +61,10 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Respo
 	// Which causes a misleading time point.
 	// Instead of aligning we use time point directly.
 	// https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries
-	qv := map[string]string{"query": q.Expr, "time": formatTime(q.End), "timeout": c.queryTimeout}
+	qv := map[string]string{"query": q.Expr, "time": formatTime(q.End)}
+	if c.queryTimeout != "" {
+		qv["timeout"] = c.queryTimeout
+	}
 	req, err := c.createQueryRequest(ctx, "api/v1/query", qv)
 	if err != nil {
 		return nil, err
