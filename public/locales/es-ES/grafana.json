@@ -2888,8 +2888,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "",
     "browser-column": "Navegador y sistema operativo",
     "created-at-column": "Conectado",
+    "identity-provider-column": "",
     "ip-column": "Dirección IP",
     "revoke": "Revocar sesión de usuario",
     "seen-at-column": "Última conexión"

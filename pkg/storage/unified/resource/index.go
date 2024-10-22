@@ -6,14 +6,10 @@ import (
 	"fmt"
 	golog "log"
 	"os"
-	"strings"
 
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/lang/en"
-	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"golang.org/x/exp/slices"
 )
 
 type Shard struct {
@@ -52,12 +48,13 @@ func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 		}
 		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind, "tenant", tenant(res))
 
-		var jsonDoc interface{}
-		err = json.Unmarshal(obj.Value, &jsonDoc)
+		// Transform the raw resource into a more generic indexable resource
+		indexableResource, err := NewIndexedResource(obj.Value)
 		if err != nil {
 			return err
 		}
-		err = shard.batch.Index(res.Metadata.Uid, jsonDoc)
+
+		err = shard.batch.Index(res.Metadata.Uid, indexableResource)
 		if err != nil {
 			return err
 		}
@@ -115,12 +112,12 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	if err != nil {
 		return err
 	}
-	var jsonDoc interface{}
-	err = json.Unmarshal(data.Value.Value, &jsonDoc)
+	// Transform the raw resource into a more generic indexable resource
+	indexableResource, err := NewIndexedResource(data.Value.Value)
 	if err != nil {
 		return err
 	}
-	err = shard.index.Index(res.Metadata.Uid, jsonDoc)
+	err = shard.index.Index(res.Metadata.Uid, indexableResource)
 	if err != nil {
 		return err
 	}
@@ -139,7 +136,7 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 	return nil
 }
 
-func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]SearchSummary, error) {
+func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]IndexedResource, error) {
 	if tenant == "" {
 		tenant = "default"
 	}
@@ -152,6 +149,9 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 		return nil, err
 	}
 	i.log.Info("got index for tenant", "tenant", tenant, "docCount", docCount)
+
+	fields, _ := shard.index.Fields()
+	i.log.Debug("indexed fields", "fields", fields)
 
 	// use 10 as a default limit for now
 	if limit <= 0 {
@@ -173,30 +173,10 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 
 	i.log.Info("got search results", "hits", hits)
 
-	results := make([]SearchSummary, len(hits))
+	results := make([]IndexedResource, len(hits))
 	for resKey, hit := range hits {
-		searchSummary := SearchSummary{}
-
-		// add common fields to search results
-		searchSummary.Kind = hit.Fields["kind"].(string)
-		searchSummary.Metadata.CreationTimestamp = hit.Fields["metadata.creationTimestamp"].(string)
-		searchSummary.Metadata.Uid = hit.Fields["metadata.uid"].(string)
-
-		// add allowed indexed spec fields to search results
-		specResult := map[string]interface{}{}
-		for k, v := range hit.Fields {
-			if strings.HasPrefix(k, "spec.") {
-				mappedFields := specFieldMappings(searchSummary.Kind)
-				// should only include spec fields we care about in search results
-				if slices.Contains(mappedFields, k) {
-					specKey := strings.TrimPrefix(k, "spec.")
-					specResult[specKey] = v
-				}
-			}
-			searchSummary.Spec = specResult
-		}
-
-		results[resKey] = searchSummary
+		ir := IndexedResource{}.FromSearchHit(hit)
+		results[resKey] = ir
 	}
 
 	return results, nil
@@ -242,43 +222,6 @@ func createFileIndex() (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
-func createIndexMappings() *mapping.IndexMappingImpl {
-	//Create mapping for the creationTimestamp field in the metadata
-	creationTimestampFieldMapping := bleve.NewDateTimeFieldMapping()
-	uidMapping := bleve.NewTextFieldMapping()
-	metaMapping := bleve.NewDocumentMapping()
-	metaMapping.AddFieldMappingsAt("creationTimestamp", creationTimestampFieldMapping)
-	metaMapping.AddFieldMappingsAt("uid", uidMapping)
-	metaMapping.Dynamic = false
-	metaMapping.Enabled = true
-
-	// Spec is different for all resources, so we create a dynamic mapping for it to index all fields (for now)
-	specMapping := bleve.NewDocumentMapping()
-	specMapping.Dynamic = true
-	specMapping.Enabled = true
-
-	//Create a sub-document mapping for the metadata field
-	objectMapping := bleve.NewDocumentMapping()
-	objectMapping.AddSubDocumentMapping("metadata", metaMapping)
-	objectMapping.AddSubDocumentMapping("spec", specMapping)
-	objectMapping.Dynamic = true
-	objectMapping.Enabled = true
-
-	// a generic reusable mapping for english text
-	englishTextFieldMapping := bleve.NewTextFieldMapping()
-	englishTextFieldMapping.Analyzer = en.AnalyzerName
-
-	// Map top level fields - just kind for now
-	objectMapping.AddFieldMappingsAt("kind", englishTextFieldMapping)
-	objectMapping.Dynamic = false
-
-	// Create the index mapping
-	indexMapping := bleve.NewIndexMapping()
-	indexMapping.DefaultMapping = objectMapping
-
-	return indexMapping
-}
-
 func getResource(data []byte) (*Resource, error) {
 	res := &Resource{}
 	err := json.Unmarshal(data, res)
@@ -316,17 +259,11 @@ func fetchResourceTypes() []*ListOptions {
 			Group:    "playlist.grafana.app",
 			Resource: "playlists",
 		},
+	}, &ListOptions{
+		Key: &ResourceKey{
+			Group:    "folder.grafana.app",
+			Resource: "folders",
+		},
 	})
 	return items
-}
-
-func specFieldMappings(kind string) []string {
-	mappedFields := map[string][]string{
-		"Playlist": {
-			"spec.title",
-			"spec.interval",
-		},
-	}
-
-	return mappedFields[kind]
 }
