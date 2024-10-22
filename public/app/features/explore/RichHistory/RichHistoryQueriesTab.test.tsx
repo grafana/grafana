@@ -20,6 +20,8 @@ const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
     updateFilters: jest.fn(),
     clearRichHistoryResults: jest.fn(),
     loadMoreRichHistory: jest.fn(),
+    activeDatasources: ['test-ds'],
+    listOfDatasources: [{ name: 'test-ds', uid: 'test-123' }],
     richHistorySearchFilters: {
       search: '',
       sortOrder: SortOrder.Descending,

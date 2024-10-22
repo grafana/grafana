@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -24,9 +23,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type StatusReader interface {
+	Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
+}
+
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
+	status  StatusReader
 	store   RuleStore
 	authz   RuleAccessControlService
 }
@@ -222,7 +226,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		namespaces[namespaceUID] = folder.Fullpath
 	}
 
-	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.manager, srv.store, RuleGroupStatusesOptions{
+	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.manager, srv.status, srv.store, RuleGroupStatusesOptions{
 		Ctx:        c.Req.Context(),
 		OrgID:      c.OrgID,
 		Query:      c.Req.Form,
@@ -235,7 +239,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -346,7 +350,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 			continue
 		}
 
-		ruleGroup, totals := toRuleGroup(log, manager, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
+		ruleGroup, totals := toRuleGroup(log, manager, status, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -432,7 +436,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusReader, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -443,6 +447,15 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
+		status, ok := sr.Status(rule.GetKey())
+		// Grafana by design return "ok" health and default other fields for unscheduled rules.
+		// This differs from Prometheus.
+		if !ok {
+			status = ngmodels.RuleStatus{
+				Health: "ok",
+			}
+		}
+
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
 			Name:        rule.Title,
@@ -454,9 +467,11 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 		newRule := apimodels.Rule{
 			Name:           rule.Title,
 			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
-			Health:         "ok",
+			Health:         status.Health,
+			LastError:      errorOrEmpty(status.LastError),
 			Type:           rule.Type().String(),
-			LastEvaluation: time.Time{},
+			LastEvaluation: status.EvaluationTimestamp,
+			EvaluationTime: status.EvaluationDuration.Seconds(),
 		}
 
 		states := manager.GetStatesForRuleUID(rule.OrgID, rule.UID)
@@ -485,12 +500,6 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 				Value:    valString,
 			}
 
-			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
-				newRule.LastEvaluation = alertState.LastEvaluationTime
-			}
-
-			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
-
 			switch alertState.State {
 			case eval.Normal:
 			case eval.Pending:
@@ -503,14 +512,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 				}
 				alertingRule.State = "firing"
 			case eval.Error:
-				newRule.Health = "error"
 			case eval.NoData:
-				newRule.Health = "nodata"
-			}
-
-			if alertState.Error != nil {
-				newRule.LastError = alertState.Error.Error()
-				newRule.Health = "error"
 			}
 
 			if len(withStates) > 0 {
@@ -603,4 +605,11 @@ func encodedQueriesOrError(rules []ngmodels.AlertQuery) string {
 	}
 
 	return err.Error()
+}
+
+func errorOrEmpty(err error) string {
+	if err != nil {
+		return err.Error()
+	}
+	return ""
 }

@@ -18,6 +18,7 @@ import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
+import { SingleTopBarActions } from './TopBar/SingleTopBarActions';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -28,13 +29,15 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles, searchBarHidden);
+  const styles = useStyles2(getStyles, searchBarHidden, Boolean(state.actions));
 
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const scopesDashboardsState = useScopesDashboardsState();
-  const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
+  const isScopesDashboardsOpen = Boolean(
+    scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened && !scopesDashboardsState?.isReadOnly
+  );
   const isSingleTopNav = config.featureToggles.singleTopNav;
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
@@ -92,14 +95,20 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
+          {isSingleTopNav && menuDockedAndOpen && (
+            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+          )}
           <header className={cx(styles.topNav, isSingleTopNav && menuDockedAndOpen && styles.topNavMenuDocked)}>
             {isSingleTopNav ? (
-              <SingleTopBar
-                sectionNav={state.sectionNav.node}
-                pageNav={state.pageNav}
-                onToggleMegaMenu={handleMegaMenu}
-                onToggleKioskMode={chrome.onToggleKioskMode}
-              />
+              <>
+                <SingleTopBar
+                  sectionNav={state.sectionNav.node}
+                  pageNav={state.pageNav}
+                  onToggleMegaMenu={handleMegaMenu}
+                  onToggleKioskMode={chrome.onToggleKioskMode}
+                />
+                {state.actions && <SingleTopBarActions>{state.actions}</SingleTopBarActions>}
+              </>
             ) : (
               <>
                 {!searchBarHidden && <TopSearchBar />}
@@ -119,7 +128,7 @@ export function AppChrome({ children }: Props) {
       )}
       <div className={contentClass}>
         <div className={styles.panes}>
-          {menuDockedAndOpen && (
+          {!isSingleTopNav && menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
           {!state.chromeless && (
@@ -151,13 +160,13 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
+const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean, hasActions: boolean) => {
   const isSingleTopNav = config.featureToggles.singleTopNav;
   return {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2,
+      paddingTop: !isSingleTopNav || hasActions ? TOP_BAR_LEVEL_HEIGHT * 2 : TOP_BAR_LEVEL_HEIGHT,
       flexGrow: 1,
       height: 'auto',
     }),

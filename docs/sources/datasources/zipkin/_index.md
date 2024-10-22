@@ -103,7 +103,6 @@ To configure basic settings for the data source, complete the following steps:
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
 {{% admonition type="note" %}}
-Available in Grafana v7.4 and higher.
 If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 {{% /admonition %}}
 

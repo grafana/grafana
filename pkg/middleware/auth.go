@@ -98,7 +98,7 @@ func writeRedirectCookie(c *contextmodel.ReqContext) {
 	}
 
 	// remove any forceLogin=true params
-	redirectTo = removeForceLoginParams(redirectTo)
+	redirectTo = RemoveForceLoginParams(redirectTo)
 	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 }
 
@@ -113,13 +113,13 @@ func getRedirectToQueryParam(c *contextmodel.ReqContext) string {
 	}
 
 	// remove any forceLogin=true params
-	redirectTo = removeForceLoginParams(redirectTo)
+	redirectTo = RemoveForceLoginParams(redirectTo)
 	return "?redirectTo=" + url.QueryEscape(redirectTo)
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
 
-func removeForceLoginParams(str string) string {
+func RemoveForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
@@ -138,7 +138,8 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 }
 
 func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles,
-	logger log.Logger) func(c *contextmodel.ReqContext) {
+	logger log.Logger,
+) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		pluginID := web.Params(c.Req)[":id"]
 		p, exists := ps.Plugin(c.Req.Context(), pluginID)

@@ -8,7 +8,6 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/claims"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -24,7 +23,7 @@ import (
 const authzServiceAudience = "authzService"
 
 type Client interface {
-	authzlib.MultiTenantClient
+	authzlib.AccessChecker
 }
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
@@ -41,7 +40,7 @@ func ProvideAuthZClient(
 		return nil, err
 	}
 
-	var client authzlib.MultiTenantClient
+	var client Client
 
 	// Register the server
 	server, err := newLegacyServer(acSvc, features, grpcServer, tracer, authCfg)
@@ -87,7 +86,7 @@ func ProvideStandaloneAuthZClient(
 	return newGrpcLegacyClient(authCfg.remoteAddress)
 }
 
-func newInProcLegacyClient(server *legacyServer) (authzlib.MultiTenantClient, error) {
+func newInProcLegacyClient(server *legacyServer) (authzlib.AccessChecker, error) {
 	noAuth := func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
@@ -102,16 +101,14 @@ func newInProcLegacyClient(server *legacyServer) (authzlib.MultiTenantClient, er
 		server,
 	)
 
-	return authzlib.NewLegacyClient(
-		&authzlib.MultiTenantClientConfig{},
-		authzlib.WithGrpcConnectionLCOption(channel),
-		// nolint:staticcheck
-		authzlib.WithNamespaceFormatterLCOption(claims.OrgNamespaceFormatter),
-		authzlib.WithDisableAccessTokenLCOption(),
+	return authzlib.NewClient(
+		&authzlib.ClientConfig{},
+		authzlib.WithGrpcConnectionClientOption(channel),
+		authzlib.WithDisableAccessTokenClientOption(),
 	)
 }
 
-func newGrpcLegacyClient(address string) (authzlib.MultiTenantClient, error) {
+func newGrpcLegacyClient(address string) (authzlib.AccessChecker, error) {
 	// This client interceptor is a noop, as we don't send an access token
 	grpcClientConfig := authnlib.GrpcClientConfig{}
 	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig,
@@ -121,18 +118,16 @@ func newGrpcLegacyClient(address string) (authzlib.MultiTenantClient, error) {
 		return nil, err
 	}
 
-	cfg := authzlib.MultiTenantClientConfig{RemoteAddress: address}
-	client, err := authzlib.NewLegacyClient(&cfg,
+	cfg := authzlib.ClientConfig{RemoteAddress: address}
+	client, err := authzlib.NewClient(&cfg,
 		// TODO(drclau): make this configurable (e.g. allow to use insecure connections)
-		authzlib.WithGrpcDialOptionsLCOption(
+		authzlib.WithGrpcDialOptionsClientOption(
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),
 		),
-		// nolint:staticcheck
-		authzlib.WithNamespaceFormatterLCOption(claims.OrgNamespaceFormatter),
 		// TODO(drclau): remove this once we have access token support on-prem
-		authzlib.WithDisableAccessTokenLCOption(),
+		authzlib.WithDisableAccessTokenClientOption(),
 	)
 	if err != nil {
 		return nil, err
@@ -141,7 +136,7 @@ func newGrpcLegacyClient(address string) (authzlib.MultiTenantClient, error) {
 	return client, nil
 }
 
-func newCloudLegacyClient(authCfg *Cfg) (authzlib.MultiTenantClient, error) {
+func newCloudLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
 	grpcClientConfig := authnlib.GrpcClientConfig{
 		TokenClientConfig: &authnlib.TokenExchangeConfig{
 			Token:            authCfg.token,
@@ -158,10 +153,10 @@ func newCloudLegacyClient(authCfg *Cfg) (authzlib.MultiTenantClient, error) {
 		return nil, err
 	}
 
-	clientCfg := authzlib.MultiTenantClientConfig{RemoteAddress: authCfg.remoteAddress}
-	client, err := authzlib.NewLegacyClient(&clientCfg,
+	clientCfg := authzlib.ClientConfig{RemoteAddress: authCfg.remoteAddress}
+	client, err := authzlib.NewClient(&clientCfg,
 		// TODO(drclau): make this configurable (e.g. allow to use insecure connections)
-		authzlib.WithGrpcDialOptionsLCOption(
+		authzlib.WithGrpcDialOptionsClientOption(
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithUnaryInterceptor(clientInterceptor.UnaryClientInterceptor),
 			grpc.WithStreamInterceptor(clientInterceptor.StreamClientInterceptor),

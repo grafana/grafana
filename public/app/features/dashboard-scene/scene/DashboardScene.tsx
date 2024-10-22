@@ -10,8 +10,9 @@ import {
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
+  sceneGraph,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
@@ -66,11 +67,14 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
+import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from './types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
+export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
+export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -119,6 +123,10 @@ export interface DashboardSceneState extends SceneObjectState {
   kioskMode?: KioskMode;
   /** Share view */
   shareView?: string;
+  /** Renders panels in grid and filtered */
+  panelSearch?: string;
+  /** How many panels to show per row for search results */
+  panelsPerRow?: number;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -149,11 +157,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * Dashboard changes tracker
    */
   private _changeTracker: DashboardSceneChangeTracker;
-
-  /**
-   * Flag to indicate if the user came from Explore
-   */
-  private _fromExplore = false;
 
   /**
    * A reference to the scopes facade
@@ -188,6 +191,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     window.__grafanaSceneContext = this;
 
+    this._initializePanelSearch();
+
     if (this.state.isEditing) {
       this._initialUrlState = locationService.getLocation();
       this._changeTracker.startTrackingChanges();
@@ -221,8 +226,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     };
   }
 
-  public onEnterEditMode = (fromExplore = false) => {
-    this._fromExplore = fromExplore;
+  private _initializePanelSearch() {
+    const systemPanelFilter = sceneGraph.lookupVariable(PANEL_SEARCH_VAR, this)?.getValue();
+    if (typeof systemPanelFilter === 'string') {
+      this.setState({ panelSearch: systemPanelFilter });
+    }
+
+    const panelsPerRow = sceneGraph.lookupVariable(PANELS_PER_ROW_VAR, this)?.getValue();
+    if (typeof panelsPerRow === 'string') {
+      const perRow = Number.parseInt(panelsPerRow, 10);
+      this.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
+    }
+  }
+
+  public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
     this._initialUrlState = locationService.getLocation();
@@ -301,19 +318,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
-    locationService.replace(
-      locationUtil.getUrlForPartial(this._initialUrlState!, {
-        editPanel: null,
-        editview: null,
-        inspect: null,
-        inspectTab: null,
-        shareView: null,
-      })
-    );
+    const url = locationUtil.getUrlForPartial(this._initialUrlState!, {
+      editPanel: null,
+      editview: null,
+      inspect: null,
+      inspectTab: null,
+      shareView: null,
+    });
 
-    if (this._fromExplore) {
-      this.cleanupStateFromExplore();
-    }
+    locationService.replace(locationUtil.stripBaseFromUrl(url));
 
     if (restoreInitialState) {
       //  Restore initial state and disable editing
@@ -332,18 +345,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // Disable grid dragging
     this.state.body.editModeChanged(false);
-  }
-
-  private cleanupStateFromExplore() {
-    this._fromExplore = false;
-    // When coming from explore but discarding changes, remove the panel that explore is potentially adding.
-    if (this._initialSaveModel?.panels) {
-      this._initialSaveModel.panels = this._initialSaveModel.panels.slice(1);
-    }
-
-    if (this._initialState) {
-      this._initialState.body.cleanUpStateFromExplore?.();
-    }
   }
 
   public canDiscard() {
@@ -459,6 +460,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.onEnterEditMode();
     }
 
+    const panelId = dashboardSceneGraph.getNextPanelId(this);
+    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
+    vizPanel.clearParent();
+
     this.state.body.addPanel(vizPanel);
   }
 
@@ -509,7 +514,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     panel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     panel.clearParent();
 
-    this.state.body.addPanel(panel);
+    this.addPanel(panel);
 
     store.delete(LS_PANEL_COPY_KEY);
   }
@@ -640,6 +645,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.replace('/');
   }
 
+  public getDashboardPanels() {
+    return dashboardSceneGraph.getVizPanels(this);
+  }
+
+  public hasDashboardAngularPlugins() {
+    const sceneGridLayout = this.state.body;
+    if (!(sceneGridLayout instanceof DefaultGridLayoutManager)) {
+      return false;
+    }
+    const gridItems = sceneGridLayout.state.grid.state.children;
+    const dashboardWasAngular = gridItems.some((gridItem) => {
+      if (!(gridItem instanceof DashboardGridItem)) {
+        return false;
+      }
+      const isAngularPanel = isUsingAngularPanelPlugin(gridItem.state.body);
+      const isAngularDs = isUsingAngularDatasourcePlugin(gridItem.state.body);
+      return isAngularPanel || isAngularDs;
+    });
+    return dashboardWasAngular;
+  }
+
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
     this._scrollRef = scrollElement;
   };
@@ -672,6 +698,22 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+      // Backwards compat with plugins that rely on the RefreshEvent when a
+      // variable changes. TODO: We should redirect plugin devs to use VariablesChanged event
+      this._dashboard.publishEvent(new RefreshEvent());
+    }
+
+    if (variable.state.name === PANEL_SEARCH_VAR) {
+      const searchValue = variable.getValue();
+      if (typeof searchValue === 'string') {
+        this._dashboard.setState({ panelSearch: searchValue });
+      }
+    } else if (variable.state.name === PANELS_PER_ROW_VAR) {
+      const panelsPerRow = variable.getValue();
+      if (typeof panelsPerRow === 'string') {
+        const perRow = Number.parseInt(panelsPerRow, 10);
+        this._dashboard.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
+      }
     }
 
     /**

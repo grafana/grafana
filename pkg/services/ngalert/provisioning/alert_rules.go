@@ -185,6 +185,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
 	}
 	var interval = service.defaultIntervalSeconds
+	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
+		return models.AlertRule{}, err
+	}
 	// check if user can bypass fine-grained rule authorization checks. If it cannot, verfiy that the user can add rules to the group
 	canWriteAllRules, err := service.authz.CanWriteAllRules(ctx, user)
 	if err != nil {
@@ -214,9 +217,6 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	rule.IntervalSeconds = interval
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
-		return models.AlertRule{}, err
-	}
-	if err = service.ensureRuleNamespace(ctx, user, rule); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -544,6 +544,9 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 // UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	var storedRule *models.AlertRule
+	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
+		return models.AlertRule{}, err
+	}
 	// check if the user has full access to all rules and can bypass the regular authorization validations.
 	// If it cannot, calculate the changes to the group caused by this update and authorize them.
 	canWriteAllRules, err := service.authz.CanWriteAllRules(ctx, user)
@@ -836,10 +839,10 @@ func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) e
 	return nil
 }
 
-// ensureRuleNamespace ensures that the rule has a valid namespace UID.
+// ensureNamespace ensures that the rule has a valid namespace UID.
 // If the rule does not have a namespace UID or the namespace (folder) does not exist it will return an error.
-func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, user identity.Requester, rule models.AlertRule) error {
-	if rule.NamespaceUID == "" {
+func (service *AlertRuleService) ensureNamespace(ctx context.Context, user identity.Requester, orgID int64, namespaceUID string) error {
+	if namespaceUID == "" {
 		return fmt.Errorf("%w: folderUID must be set", models.ErrAlertRuleFailedValidation)
 	}
 
@@ -851,8 +854,8 @@ func (service *AlertRuleService) ensureRuleNamespace(ctx context.Context, user i
 
 	// ensure the namespace exists
 	_, err := service.folderService.Get(ctx, &folder.GetFolderQuery{
-		OrgID:        rule.OrgID,
-		UID:          &rule.NamespaceUID,
+		OrgID:        orgID,
+		UID:          &namespaceUID,
 		SignedInUser: user,
 	})
 	if err != nil {

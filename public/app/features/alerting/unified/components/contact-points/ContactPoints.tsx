@@ -12,6 +12,7 @@ import {
   TabContent,
   TabsBar,
   Text,
+  withErrorBoundary,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
@@ -24,6 +25,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import { ContactPoint } from './ContactPoint';
@@ -179,7 +181,7 @@ const useTabQueryParam = () => {
   return [param, setParam] as const;
 };
 
-const ContactPointsPageContents = () => {
+export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [activeTab, setActiveTab] = useTabQueryParam();
 
@@ -224,16 +226,10 @@ const ContactPointsPageContents = () => {
 interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
-  disabled?: boolean;
   pageSize?: number;
 }
 
-const ContactPointsList = ({
-  contactPoints,
-  disabled = false,
-  search,
-  pageSize = DEFAULT_PAGE_SIZE,
-}: ContactPointsListProps) => {
+const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
@@ -241,11 +237,19 @@ const ContactPointsList = ({
     <>
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
-        return <ContactPoint key={key} contactPoint={contactPoint} disabled={disabled} />;
+        return <ContactPoint key={key} contactPoint={contactPoint} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>
   );
 };
 
-export default ContactPointsPageContents;
+function ContactPointsPage() {
+  return (
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+      <ContactPointsPageContents />
+    </AlertmanagerPageWrapper>
+  );
+}
+
+export default withErrorBoundary(ContactPointsPage, { style: 'page' });

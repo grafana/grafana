@@ -120,16 +120,20 @@ export class ContextSrv {
    * Indicate the user has been logged out
    */
   setLoggedOut() {
+    this.setRedirectToUrl();
+    this.cancelTokenRotationJob();
+    this.user.isSignedIn = false;
+    this.isSignedIn = false;
+    window.location.reload();
+  }
+
+  setRedirectToUrl() {
     if (config.featureToggles.useSessionStorageForRedirection) {
       window.sessionStorage.setItem(
         RedirectToUrlKey,
         encodeURIComponent(window.location.href.substring(window.location.origin.length))
       );
     }
-    this.cancelTokenRotationJob();
-    this.user.isSignedIn = false;
-    this.isSignedIn = false;
-    window.location.reload();
   }
 
   hasRole(role: string) {

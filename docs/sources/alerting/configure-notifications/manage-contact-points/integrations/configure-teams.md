@@ -43,7 +43,11 @@ To create your MS Teams integration in Grafana Alerting, complete the following 
 1. From the Integration list, select **Microsoft Teams**.
 1. In the **URL** field, copy in your Webhook URL.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
    A test alert notification should be sent to the MS Team channel.
+
 1. Click **Save** contact point.
 
 ## Next steps
