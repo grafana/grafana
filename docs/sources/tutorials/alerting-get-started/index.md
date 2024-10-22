@@ -19,11 +19,12 @@ killercoda:
   backend:
     imageid: ubuntu
 refs:
-   create-gm-alert-rule:
-     - patern: /docs/grafana/create-grafana-managed-rule/
-       destination: /docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
-     - patern: /docs/grafana-cloud/create-grafana-managed-rule/
-       destination: docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
+  create-gm-alert-rule:
+    - pattern: /docs/grafana/create-grafana-managed-rule/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
+    - pattern: /docs/grafana-cloud/create-grafana-managed-rule/
+      destination: docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
+
 ---
 
 <!-- INTERACTIVE page intro.md START -->
@@ -204,7 +205,6 @@ In this tutorial we'll use the default options for Grafana-managed alert rule cr
 ### Define query and alert condition
 
 In this section, we define the query, expressions (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
-
 
 1. Select the **Prometheus** data source from the drop-down menu.
 1. Enter the following query:
