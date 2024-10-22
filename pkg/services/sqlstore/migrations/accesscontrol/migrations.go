@@ -210,4 +210,12 @@ func AddMigration(mg *migrator.Migrator) {
 		Type: migrator.UniqueIndex,
 		Cols: []string{"org_id", "user_id", "role_id"},
 	}))
+
+	// Add index for role_id, action, scope
+	// this index was removed/changed in 10.4 to address performance of legacy alerting upgrades  https://github.com/grafana/grafana/pull/80336
+	// however this caused a performance issue when searching for dashboards https://github.com/grafana/grafana/issues/91766
+	mg.AddMigration("add role_id, action, scope index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Type: migrator.IndexType,
+		Cols: []string{"role_id", "action", "scope"},
+	}))
 }
