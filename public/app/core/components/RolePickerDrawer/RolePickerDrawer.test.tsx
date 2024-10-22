@@ -21,7 +21,7 @@ describe('RolePickerDrawer', () => {
     return <FormProvider {...formMethods}>{props.children}</FormProvider>;
   };
 
-  it('should render', async () => {
+  it('should render', () => {
     render(
       <Wrapper>
         <RolePickerDrawer {...props} />

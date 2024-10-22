@@ -1,13 +1,11 @@
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { SelectableValue } from '@grafana/data';
+import { toOption } from '@grafana/data';
 import { Drawer, Field, RadioButtonGroup, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OrgRole } from 'app/types';
 
-const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map((key) => {
-  return { label: key, value: key };
-});
+const roleOptions = Object.keys(OrgRole).map(toOption);
 
 const drawerSubtitle = (
   <Trans i18nKey="role-picker.title.description">
@@ -30,8 +28,9 @@ export interface Props {
 export const RolePickerDrawer = ({ onClose }: Props) => {
   const methods = useFormContext();
   const { control, getValues, setValue } = methods;
+  const [name, role, roles] = getValues(['name', 'role', 'roles']);
   return (
-    <Drawer title={getValues('name')} subtitle={drawerSubtitle} onClose={onClose}>
+    <Drawer title={name} subtitle={drawerSubtitle} onClose={onClose}>
       <Field label={t('role-picker-drawer.basic-roles.label', 'Basic Roles')}>
         <Controller
           name="role"
@@ -41,8 +40,8 @@ export const RolePickerDrawer = ({ onClose }: Props) => {
               {...fields}
               options={roleOptions}
               onChange={(v) => {
-                setValue('role', v);
-                setValue('roleCollection', [getValues('role'), ...getValues('roles')]);
+                setValue(role, v);
+                setValue('roleCollection', [v, ...roles]);
               }}
             />
           )}

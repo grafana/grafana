@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Badge } from '@grafana/ui';
+import { useStyles2, Badge, Stack } from '@grafana/ui';
 import { OrgUser } from 'app/types';
 
 import { RolePickerDrawer } from './RolePickerDrawer';
@@ -36,12 +36,12 @@ export const RolePickerBadges = ({ disabled, user }: Props) => {
 
   return (
     <>
-      <div className={badgeStyle}>
-        <Badge color="blue" text={watch('role')} onClick={drawerControl} />
+      <Stack gap={1}>
+        <Badge className={badgeStyle} color="blue" onClick={drawerControl} text={watch('role')} />
         {user.roles && user.roles.length > 0 && (
-          <Badge color="blue" text={'+' + user.roles.length} onClick={drawerControl} />
+          <Badge className={badgeStyle} color="blue" onClick={drawerControl} text={`+${user.roles.length}`} />
         )}
-      </div>
+      </Stack>
       {isDrawerOpen && (
         <FormProvider {...methods}>
           <RolePickerDrawer onClose={() => setIsDrawerOpen(false)} />
@@ -55,17 +55,9 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     badge: css({
       cursor: 'pointer',
-      '& > :first-child': {
-        marginRight: theme.spacing(1),
-      },
-      display: 'flex',
     }),
     badgeDisabled: css({
       cursor: 'not-allowed',
-      '& > :first-child': {
-        marginRight: theme.spacing(1),
-      },
-      display: 'flex',
     }),
   };
 }

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { toOption } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
 
 import { RolePickerDrawer } from './RolePickerDrawer';
 
 export interface Props {}
 
-export const RolePickerSelect = ({}: Props): JSX.Element => {
+export const RolePickerSelect = ({}: Props) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { control } = useFormContext();
 
@@ -26,7 +27,8 @@ export const RolePickerSelect = ({}: Props): JSX.Element => {
               // TODO cannnot remove basic roles
               // TODO open drawer instead
             }}
-            value={value?.map((role: string) => ({ label: role, value: role }))}
+            // value={value?.map((role: string) => ({ label: role, value: role }))}
+            value={value?.map(toOption)}
           />
         )}
       />
