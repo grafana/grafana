@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
+import { useCallback } from 'react';
 
 import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { DataSourcePluginCategory } from 'app/types';
 
@@ -20,6 +22,13 @@ export function DataSourceCategories({ categories, onClickDataSourceType }: Prop
   const moreDataSourcesLink = `${ROUTES.AddNewConnection}?cat=data-source`;
   const styles = useStyles2(getStyles);
 
+  const handleClick = useCallback(() => {
+    reportInteraction('connections_ds_more_ds_plugin_clicked', {
+      targetPath: moreDataSourcesLink,
+      path: location.pathname,
+    });
+  }, [moreDataSourcesLink]);
+
   return (
     <>
       {/* Categories */}
@@ -34,7 +43,7 @@ export function DataSourceCategories({ categories, onClickDataSourceType }: Prop
 
       {/* Find more */}
       <div className={styles.more}>
-        <LinkButton variant="secondary" href={moreDataSourcesLink} target="_self" rel="noopener">
+        <LinkButton variant="secondary" href={moreDataSourcesLink} onClick={handleClick} target="_self" rel="noopener">
           Find more data source plugins
         </LinkButton>
       </div>
