@@ -195,7 +195,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 Next, we'll establish an [alert rule](ref:create-gm-alert-rule) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
-In this tutorial we'll use the default options for Grafana-managed alert rule creation.
+In this tutorial we use the default options for Grafana-managed alert rule creation.
 
 1. In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
 
