@@ -19599,6 +19599,9 @@
         "orientation": {
           "type": "string"
         },
+        "pdfCombineOneFile": {
+          "type": "boolean"
+        },
         "pdfShowTemplateVariables": {
           "type": "boolean"
         },
