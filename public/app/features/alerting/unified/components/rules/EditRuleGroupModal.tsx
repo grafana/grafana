@@ -27,7 +27,7 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '..
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { decodeGrafanaNamespace, encodeGrafanaNamespace } from '../expressions/util';
 import { EvaluationGroupQuickPick } from '../rule-editor/EvaluationGroupQuickPick';
-import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehaviour';
+import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const ITEMS_PER_PAGE = 10;
 

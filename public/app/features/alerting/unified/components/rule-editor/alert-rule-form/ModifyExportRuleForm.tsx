@@ -24,7 +24,7 @@ import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
 import { ExportFormats, allGrafanaExportProviders } from '../../export/providers';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
-import { GrafanaEvaluationBehaviour } from '../GrafanaEvaluationBehaviour';
+import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
 import { GrafanaFolderAndLabels } from '../GrafanaFolderAndLabels';
 import { NotificationsStep } from '../NotificationsStep';
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
@@ -97,7 +97,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
                 <GrafanaFolderAndLabels />
 
                 {/* Step 4 & 5 */}
-                <GrafanaEvaluationBehaviour
+                <GrafanaEvaluationBehavior
                   existing={Boolean(existing)}
                   evaluateEvery={evaluateEvery}
                   setEvaluateEvery={setEvaluateEvery}
