@@ -4,7 +4,8 @@ FROM mcr.microsoft.com/windows/servercore:10.0.17763.6414
 WORKDIR C:\\App
 
 RUN powershell Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-RUN powershell Invoke-RestMethod -Uri https://get.scoop.sh | powershell Invoke-Expression -RunAsAdmin
+RUN powershell Invoke-RestMethod -Uri https://get.scoop.sh -outfile 'install.ps1'
+RUN powershell .\install.ps1 -RunAsAdmin
 RUN scoop install wixtoolset@3.11.2
 RUN powershell (New-Object Net.WebClient).DownloadFile(\
   \"https://grafana-downloads.storage.googleapis.com/ci-dependencies/nssm-2.24.zip\", \
