@@ -23,17 +23,12 @@ import {
 import { reportInteraction, config } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-// TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
-import { sidecarService } from 'app/core/services/SidecarService';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { ExtensionsLog, log } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
-
-export function logWarning(message: string) {
-  console.warn(`[Plugin Extensions] ${message}`);
-}
 
 export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
@@ -59,7 +54,11 @@ export function createOpenModalFunction(pluginId: string): PluginExtensionEventH
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: wrapWithPluginContext<ModalWrapperProps>(pluginId, getModalWrapper({ title, body, width, height })),
+        component: wrapWithPluginContext<ModalWrapperProps>(
+          pluginId,
+          getModalWrapper({ title, body, width, height }),
+          log
+        ),
       })
     );
   };
@@ -69,7 +68,7 @@ type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
-export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>) => {
+export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>, log: ExtensionsLog) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const {
       error,
@@ -82,12 +81,15 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
     }
 
     if (error) {
-      logWarning(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`);
+      log.error(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`, {
+        stack: error.stack ?? '',
+        message: error.message,
+      });
       return null;
     }
 
     if (!pluginMeta) {
-      logWarning(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
+      log.error(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
       return null;
     }
 
@@ -298,9 +300,14 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
   return subMenu;
 }
 
-export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkRegistryItem, context?: object) {
+export function getLinkExtensionOverrides(
+  pluginId: string,
+  config: AddedLinkRegistryItem,
+  log: ExtensionsLog,
+  context?: object
+) {
   try {
-    const overrides = config.configure?.(context, { isAppOpened: () => isAppOpened(pluginId) });
+    const overrides = config.configure?.(context);
 
     // Hiding the extension
     if (overrides === undefined) {
@@ -325,7 +332,7 @@ export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkReg
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
-      logWarning(
+      log.warning(
         `Extension "${config.title}", is trying to override restricted properties: ${Object.keys(rest).join(
           ', '
         )} which will be ignored.`
@@ -341,7 +348,10 @@ export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkReg
     };
   } catch (error) {
     if (error instanceof Error) {
-      logWarning(error.message);
+      log.error(`Failed to configure link with title "${config.title}"`, {
+        stack: error.stack ?? '',
+        message: error.message,
+      });
     }
 
     // If there is an error, we hide the extension
@@ -354,6 +364,7 @@ export function getLinkExtensionOnClick(
   pluginId: string,
   extensionPointId: string,
   config: AddedLinkRegistryItem,
+  log: ExtensionsLog,
   context?: object
 ): ((event?: React.MouseEvent) => void) | undefined {
   const { onClick } = config;
@@ -374,23 +385,27 @@ export function getLinkExtensionOnClick(
       const helpers: PluginExtensionEventHelpers = {
         context,
         openModal: createOpenModalFunction(pluginId),
-        isAppOpened: () => isAppOpened(pluginId),
-        openAppInSideview: () => openAppInSideview(pluginId),
-        closeAppInSideview: () => closeAppInSideview(pluginId),
       };
 
+      log.debug(`onClick '${config.title}' at '${extensionPointId}'`);
       const result = onClick(event, helpers);
 
       if (isPromise(result)) {
-        result.catch((e) => {
-          if (e instanceof Error) {
-            logWarning(e.message);
+        result.catch((error) => {
+          if (error instanceof Error) {
+            log.error(error.message, {
+              message: error.message,
+              stack: error.stack ?? '',
+            });
           }
         });
       }
     } catch (error) {
       if (error instanceof Error) {
-        logWarning(error.message);
+        log.error(error.message, {
+          message: error.message,
+          stack: error.stack ?? '',
+        });
       }
     }
   };
@@ -406,23 +421,21 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
   );
 }
 
-export const openAppInSideview = (pluginId: string) => sidecarService.openApp(pluginId);
-
-export const closeAppInSideview = (pluginId: string) => sidecarService.closeApp(pluginId);
-
-export const isAppOpened = (pluginId: string) => sidecarService.isAppOpened(pluginId);
-
 // Comes from the `app_mode` setting in the Grafana config (defaults to "development")
 // Can be set with the `GF_DEFAULT_APP_MODE` environment variable
 export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
 // Checks if the meta information is missing from the plugin's plugin.json file
-export const isExtensionPointMetaInfoMissing = (extensionPointId: string, pluginContext: PluginContextType) => {
+export const isExtensionPointMetaInfoMissing = (
+  extensionPointId: string,
+  pluginContext: PluginContextType,
+  log: ExtensionsLog
+) => {
   const pluginId = pluginContext.meta?.id;
   const extensionPoints = pluginContext.meta?.extensions?.extensionPoints;
 
   if (!extensionPoints || !extensionPoints.some((ep) => ep.id === extensionPointId)) {
-    logWarning(
+    log.warning(
       `Extension point "${extensionPointId}" - it's not recorded in the "plugin.json" for "${pluginId}". Please add it under "extensions.extensionPoints[]".`
     );
     return true;
@@ -432,12 +445,16 @@ export const isExtensionPointMetaInfoMissing = (extensionPointId: string, plugin
 };
 
 // Checks if an exposed component that the plugin is depending on is missing from the `dependencies` in the plugin.json file
-export const isExposedComponentDependencyMissing = (id: string, pluginContext: PluginContextType) => {
+export const isExposedComponentDependencyMissing = (
+  id: string,
+  pluginContext: PluginContextType,
+  log: ExtensionsLog
+) => {
   const pluginId = pluginContext.meta?.id;
   const exposedComponentsDependencies = pluginContext.meta?.dependencies?.extensions?.exposedComponents;
 
   if (!exposedComponentsDependencies || !exposedComponentsDependencies.includes(id)) {
-    logWarning(
+    log.warning(
       `Using exposed component "${id}" - it's not recorded in the "plugin.json" for "${pluginId}". Please add it under "dependencies.extensions.exposedComponents[]".`
     );
     return true;
@@ -446,31 +463,35 @@ export const isExposedComponentDependencyMissing = (id: string, pluginContext: P
   return false;
 };
 
-export const isAddedLinkMetaInfoMissing = (pluginId: string, metaInfo: PluginExtensionAddedLinkConfig) => {
+export const isAddedLinkMetaInfoMissing = (
+  pluginId: string,
+  metaInfo: PluginExtensionAddedLinkConfig,
+  log: ExtensionsLog
+) => {
   const app = config.apps[pluginId];
   const logPrefix = `Added-link "${metaInfo.title}" from "${pluginId}" -`;
   const pluginJsonMetaInfo = app ? app.extensions.addedLinks.find(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
-    logWarning(`${logPrefix} couldn't find app plugin "${pluginId}"`);
+    log.warning(`${logPrefix} couldn't find app plugin "${pluginId}"`);
     return true;
   }
 
   if (!pluginJsonMetaInfo) {
-    logWarning(`${logPrefix} not registered in the plugin.json under "extensions.addedLinks[]".`);
+    log.warning(`${logPrefix} not registered in the plugin.json under "extensions.addedLinks[]".`);
 
     return true;
   }
 
   const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
   if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
-    logWarning(`${logPrefix} the "targets" don't match with ones in the plugin.json under "extensions.addedLinks[]".`);
+    log.warning(`${logPrefix} the "targets" don't match with ones in the plugin.json under "extensions.addedLinks[]".`);
 
     return true;
   }
 
   if (pluginJsonMetaInfo.description !== metaInfo.description) {
-    logWarning(
+    log.warning(
       `${logPrefix} the "description" doesn't match with one in the plugin.json under "extensions.addedLinks[]".`
     );
 
@@ -480,25 +501,29 @@ export const isAddedLinkMetaInfoMissing = (pluginId: string, metaInfo: PluginExt
   return false;
 };
 
-export const isAddedComponentMetaInfoMissing = (pluginId: string, metaInfo: PluginExtensionAddedComponentConfig) => {
+export const isAddedComponentMetaInfoMissing = (
+  pluginId: string,
+  metaInfo: PluginExtensionAddedComponentConfig,
+  log: ExtensionsLog
+) => {
   const app = config.apps[pluginId];
   const logPrefix = `Added component "${metaInfo.title}" -`;
   const pluginJsonMetaInfo = app ? app.extensions.addedComponents.find(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
-    logWarning(`${logPrefix} couldn't find app plugin "${pluginId}"`);
+    log.warning(`${logPrefix} couldn't find app plugin "${pluginId}"`);
     return true;
   }
 
   if (!pluginJsonMetaInfo) {
-    logWarning(`${logPrefix} not registered in the plugin.json under "extensions.addedComponents[]".`);
+    log.warning(`${logPrefix} not registered in the plugin.json under "extensions.addedComponents[]".`);
 
     return true;
   }
 
   const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
   if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
-    logWarning(
+    log.warning(
       `${logPrefix} the "targets" don't match with ones in the plugin.json under "extensions.addedComponents[]".`
     );
 
@@ -506,7 +531,7 @@ export const isAddedComponentMetaInfoMissing = (pluginId: string, metaInfo: Plug
   }
 
   if (pluginJsonMetaInfo.description !== metaInfo.description) {
-    logWarning(
+    log.warning(
       `${logPrefix} the "description" doesn't match with one in the plugin.json under "extensions.addedComponents[]".`
     );
 
@@ -518,25 +543,26 @@ export const isAddedComponentMetaInfoMissing = (pluginId: string, metaInfo: Plug
 
 export const isExposedComponentMetaInfoMissing = (
   pluginId: string,
-  metaInfo: PluginExtensionExposedComponentConfig
+  metaInfo: PluginExtensionExposedComponentConfig,
+  log: ExtensionsLog
 ) => {
   const app = config.apps[pluginId];
   const logPrefix = `Exposed component "${metaInfo.id}" -`;
   const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.find(({ id }) => id === metaInfo.id) : null;
 
   if (!app) {
-    logWarning(`${logPrefix} couldn't find app plugin: "${pluginId}"`);
+    log.warning(`${logPrefix} couldn't find app plugin: "${pluginId}"`);
     return true;
   }
 
   if (!pluginJsonMetaInfo) {
-    logWarning(`${logPrefix} not registered in the plugin.json under "extensions.exposedComponents[]".`);
+    log.warning(`${logPrefix} not registered in the plugin.json under "extensions.exposedComponents[]".`);
 
     return true;
   }
 
   if (pluginJsonMetaInfo.title !== metaInfo.title) {
-    logWarning(
+    log.warning(
       `${logPrefix} the "title" doesn't match with one in the plugin.json under "extensions.exposedComponents[]".`
     );
 
@@ -544,7 +570,7 @@ export const isExposedComponentMetaInfoMissing = (
   }
 
   if (pluginJsonMetaInfo.description !== metaInfo.description) {
-    logWarning(
+    log.warning(
       `${logPrefix} the "description" doesn't match with one in the plugin.json under "extensions.exposedComponents[]".`
     );
 

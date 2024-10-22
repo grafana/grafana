@@ -3,7 +3,14 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 )
+
+//go:generate mockery --with-expecter --name DB
+//go:generate mockery --with-expecter --name Tx
+//go:generate mockery --with-expecter --name Row
+//go:generate mockery --with-expecter --name Rows
+//go:generate mockery --with-expecter --exported --name result
 
 const (
 	DriverPostgres = "postgres"
@@ -55,7 +62,98 @@ type Tx interface {
 // ContextExecer is a set of database operation methods that take
 // context.Context.
 type ContextExecer interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	ExecContext(ctx context.Context, query string, args ...any) (Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) Row
 }
+
+// Row is the set of methods from *sql.Row that we use.
+type Row interface {
+	Err() error
+	Scan(dest ...any) error
+}
+
+// Rows is the set of methods from *sql.Rows that we use.
+type Rows interface {
+	Close() error
+	Err() error
+	Next() bool
+	NextResultSet() bool
+	Scan(dest ...any) error
+}
+
+// Result is the standard sql.Result interface, for convenience.
+type Result = sql.Result
+
+// result is needed for mockery, since it doesn't support type aliases.
+//
+//nolint:unused
+type result interface {
+	Result
+}
+
+// WithTxFunc is an adapter to be able to provide the DB.WithTx method as an
+// embedded function.
+type WithTxFunc func(context.Context, *sql.TxOptions, TxFunc) error
+
+// WithTx implements the DB.WithTx method.
+func (x WithTxFunc) WithTx(ctx context.Context, opts *sql.TxOptions, f TxFunc) error {
+	return x(ctx, opts, f)
+}
+
+// BeginTxFunc is the signature of the DB.BeginTx method.
+type BeginTxFunc = func(context.Context, *sql.TxOptions) (Tx, error)
+
+// NewWithTxFunc provides implementations of DB an easy way to provide the
+// DB.WithTx method.
+// Example usage:
+//
+//	type myDB struct {
+//		db.WithTxFunc // embedded so that `WithTx` is already provided
+//		// other members...
+//	}
+//
+//	func NewMyDB(/* options */) (db.DB, error) {
+//		ret := new(myDB)
+//		ret.WithTxFunc = db.NewWithTxFunc(ret.BeginTx)
+//		// other initialization code ...
+//		return ret, nil
+//	}
+func NewWithTxFunc(x BeginTxFunc) WithTxFunc {
+	return WithTxFunc(
+		func(ctx context.Context, opts *sql.TxOptions, f TxFunc) error {
+			t, err := x(ctx, opts)
+			if err != nil {
+				return fmt.Errorf(oneErrFmt, beginStr, err)
+			}
+
+			if err := f(ctx, t); err != nil {
+				if rollbackErr := t.Rollback(); rollbackErr != nil {
+					return fmt.Errorf(twoErrFmt, txOpStr, err, rollbackStr,
+						rollbackErr)
+				}
+				return fmt.Errorf(oneErrFmt, txOpStr, err)
+			}
+
+			if err = t.Commit(); err != nil {
+				return fmt.Errorf(oneErrFmt, commitStr, err)
+			}
+
+			return nil
+		},
+	)
+}
+
+// Constants that allow testing that the correct scenario was hit.
+const (
+	oneErrFmt = "%s: %w"
+	twoErrFmt = oneErrFmt + "; " + oneErrFmt
+
+	// keep the following ones in sync with the matching ones in
+	// `service_test.go`.
+
+	txOpStr     = "transactional operation"
+	beginStr    = "begin"
+	commitStr   = "commit"
+	rollbackStr = "rollback"
+)

@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { log } from '../logs/log';
+import { resetLogMock } from '../logs/testUtils';
 import { isGrafanaDevMode } from '../utils';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
@@ -17,8 +19,17 @@ jest.mock('../utils', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 
+jest.mock('../logs/log', () => {
+  const { createLogMock } = jest.requireActual('../logs/testUtils');
+  const original = jest.requireActual('../logs/log');
+
+  return {
+    ...original,
+    log: createLogMock(),
+  };
+});
+
 describe('AddedComponentsRegistry', () => {
-  const consoleWarn = jest.fn();
   const originalApps = config.apps;
   const pluginId = 'grafana-basic-app';
   const appPluginConfig = {
@@ -47,8 +58,7 @@ describe('AddedComponentsRegistry', () => {
   };
 
   beforeEach(() => {
-    global.console.warn = consoleWarn;
-    consoleWarn.mockReset();
+    resetLogMock(log);
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     config.apps = {
       [pluginId]: appPluginConfig,
@@ -363,8 +373,8 @@ describe('AddedComponentsRegistry', () => {
       ],
     });
 
-    expect(consoleWarn).toHaveBeenCalledWith(
-      `[Plugin Extensions] Added component "Component 1 title": it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
+    expect(log.warning).toHaveBeenCalledWith(
+      `Added component "Component 1 title": it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
     );
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(1);
@@ -386,8 +396,8 @@ describe('AddedComponentsRegistry', () => {
       ],
     });
 
-    expect(consoleWarn).toHaveBeenCalledWith(
-      "[Plugin Extensions] Could not register added component with title 'Component 1 title'. Reason: Description is missing."
+    expect(log.error).toHaveBeenCalledWith(
+      "Could not register added component with title 'Component 1 title'. Reason: Description is missing."
     );
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);
@@ -401,7 +411,7 @@ describe('AddedComponentsRegistry', () => {
       pluginId,
       configs: [
         {
-          title: 'Component 1 title',
+          title: '',
           description: '',
           targets: [extensionPointId],
           component: () => React.createElement('div', null, 'Hello World1'),
@@ -409,9 +419,7 @@ describe('AddedComponentsRegistry', () => {
       ],
     });
 
-    expect(consoleWarn).toHaveBeenCalledWith(
-      "[Plugin Extensions] Could not register added component with title 'Component 1 title'. Reason: Description is missing."
-    );
+    expect(log.error).toHaveBeenCalledWith('Could not register added component. Reason: Title is missing.');
 
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);
@@ -497,7 +505,7 @@ describe('AddedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(0);
-    expect(consoleWarn).toHaveBeenCalled();
+    expect(log.warning).toHaveBeenCalled();
   });
 
   it('should register a component added by a core Grafana in dev-mode even if the meta-info is missing', async () => {
@@ -520,7 +528,7 @@ describe('AddedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(consoleWarn).not.toHaveBeenCalled();
+    expect(log.warning).not.toHaveBeenCalled();
   });
 
   it('should register a component added by a plugin in production mode even if the meta-info is missing', async () => {
@@ -546,7 +554,7 @@ describe('AddedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(consoleWarn).not.toHaveBeenCalled();
+    expect(log.warning).not.toHaveBeenCalled();
   });
 
   it('should register a component added by a plugin in dev-mode if the meta-info is present', async () => {
@@ -572,6 +580,6 @@ describe('AddedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(consoleWarn).not.toHaveBeenCalled();
+    expect(log.warning).not.toHaveBeenCalled();
   });
 });

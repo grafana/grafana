@@ -20,6 +20,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
     minWidth = 10,
     maxWidth,
     onCommitChange,
+    onChange,
     onKeyDown,
     onBlur,
     value: controlledValue,
@@ -48,6 +49,9 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
       ref={ref}
       value={value.toString()}
       onChange={(event) => {
+        if (onChange) {
+          onChange(event);
+        }
         setValue(event.currentTarget.value);
       }}
       width={inputWidth}

@@ -11,10 +11,10 @@ INSERT INTO `resource_history`
     )
     VALUES (
         '',
-        '',
-        '',
-        '',
-        '',
+        'gg',
+        'rr',
+        'nn',
+        'name',
         1234,
         '[]',
         'UNKNOWN'

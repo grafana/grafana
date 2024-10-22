@@ -39,6 +39,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+  permission:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
   role-based-access-control:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
@@ -109,7 +114,7 @@ For information about recent improvements to the reporting UI, refer to [Grafana
 
 ## Access control
 
-When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions][] to create and manage reports.
+When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions](ref:permission) to create and manage reports.
 
 ## Create or update a report
 

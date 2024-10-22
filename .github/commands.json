@@ -61,14 +61,6 @@
   },
   {
     "type": "label",
-    "name": "type/docs",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/69"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Azure",
     "action": "addToProject",
     "addToProject": {
@@ -537,6 +529,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/599"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/provisioning/datasources",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/76"
     }
   },
   {
