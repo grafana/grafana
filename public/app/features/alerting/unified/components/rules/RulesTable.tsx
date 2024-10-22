@@ -298,7 +298,7 @@ function useColumns(
       label: 'Actions',
       // eslint-disable-next-line react/display-name
       renderCell: ({ data: rule }) => <RuleActionsCell rule={rule} isLoadingRuler={isRulerLoading} />,
-      size: '200px',
+      size: '215px',
     });
 
     return columns;
