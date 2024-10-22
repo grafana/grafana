@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Badge, Button, Dropdown, Menu, Stack, Text, Icon } from '@grafana/ui';
+import { Badge, Button, Dropdown, Icon, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
 import MoreButton from '../../components/MoreButton';

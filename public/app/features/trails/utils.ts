@@ -1,4 +1,4 @@
-import { urlUtil } from '@grafana/data';
+import { AdHocVariableFilter, GetTagResponse, MetricFindValue, urlUtil } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -8,6 +8,8 @@ import {
   SceneObjectUrlValues,
   SceneTimeRange,
   sceneUtils,
+  SceneVariable,
+  SceneVariableState,
 } from '@grafana/scenes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
@@ -16,6 +18,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
+import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
@@ -114,4 +117,70 @@ export function getFilters(scene: SceneObject) {
     return filters.state.filters;
   }
   return null;
+}
+
+// frontend hardening limit
+const MAX_ADHOC_VARIABLE_OPTIONS = 10000;
+
+/**
+ * Add custom providers for the adhoc filters variable that limit the responses for labels keys and label values.
+ * Currently hard coded to 10000.
+ *
+ * The current provider functions for adhoc filter variables are the functions getTagKeys and getTagValues in the data source.
+ * This function still uses these functions from inside the data source helper.
+ *
+ * @param filtersVariable
+ * @param datasourceHelper
+ */
+export function limitAdhocProviders(
+  filtersVariable: SceneVariable<SceneVariableState> | null,
+  datasourceHelper: MetricDatasourceHelper
+) {
+  if (!(filtersVariable instanceof AdHocFiltersVariable)) {
+    return;
+  }
+
+  filtersVariable.setState({
+    getTagKeysProvider: async (
+      variable: AdHocFiltersVariable,
+      currentKey: string | null
+    ): Promise<{
+      replace?: boolean;
+      values: GetTagResponse | MetricFindValue[];
+    }> => {
+      // For the Prometheus label names endpoint, '/api/v1/labels'
+      // get the previously selected filters from the variable
+      // to use in the query to filter the response
+      // using filters, e.g. {previously_selected_label:"value"},
+      // as the series match[] parameter in Prometheus labels endpoint
+      const filters = filtersVariable.state.filters;
+      // call getTagKeys and truncate the response
+      const values = (await datasourceHelper.getTagKeys({ filters })).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      // use replace: true to override the default lookup in adhoc filter variable
+      return { replace: true, values };
+    },
+    getTagValuesProvider: async (
+      variable: AdHocFiltersVariable,
+      filter: AdHocVariableFilter
+    ): Promise<{
+      replace?: boolean;
+      values: GetTagResponse | MetricFindValue[];
+    }> => {
+      // For the Prometheus label values endpoint, /api/v1/label/${interpolatedName}/values
+      // get the previously selected filters from the variable
+      // to use in the query to filter the response
+      // using filters, e.g. {previously_selected_label:"value"},
+      // as the series match[] parameter in Prometheus label values endpoint
+      const filtersValues = filtersVariable.state.filters;
+      // remove current selected filter if updating a chosen filter
+      const filters = filtersValues.filter((f) => f.key !== filter.key);
+      // call getTagValues and truncate the response
+      const values = (await datasourceHelper.getTagValues({ key: filter.key, filters })).slice(
+        0,
+        MAX_ADHOC_VARIABLE_OPTIONS
+      );
+      // use replace: true to override the default lookup in adhoc filter variable
+      return { replace: true, values };
+    },
+  });
 }

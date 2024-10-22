@@ -9,9 +9,9 @@ export const EllipsisAnimated = memo(() => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.ellipsis}>
-      <span className={styles.firstDot}>.</span>
-      <span className={styles.secondDot}>.</span>
-      <span className={styles.thirdDot}>.</span>
+      <span className={styles.firstDot}>{'.'}</span>
+      <span className={styles.secondDot}>{'.'}</span>
+      <span className={styles.thirdDot}>{'.'}</span>
     </div>
   );
 });

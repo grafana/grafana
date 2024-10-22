@@ -110,6 +110,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 				api.RuleStore,
 				ruleAuthzService,
 			),
+			receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
 		},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.

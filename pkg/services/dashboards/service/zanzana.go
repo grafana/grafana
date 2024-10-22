@@ -10,10 +10,11 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 const (
@@ -193,9 +194,16 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashb
 				}
 
 				req := accesscontrol.CheckRequest{
-					User:     query.SignedInUser.GetUID(),
-					Relation: "read",
-					Object:   zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
+					Namespace: claims.OrgNamespaceFormatter(orgId),
+					User:      query.SignedInUser.GetUID(),
+					Relation:  "read",
+					Object:    zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
+				}
+
+				if objectType != zanzana.TypeFolder {
+					// Pass parentn folder for the correct check
+					req.Parent = d.FolderUID
+					req.ObjectType = objectType
 				}
 
 				allowed, err := dr.ac.Check(ctx, req)
@@ -238,45 +246,47 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
-	resourceUIDs, err := dr.listUserResources(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	if len(resourceUIDs) == 0 {
-		return []dashboards.DashboardSearchProjection{}, nil
-	}
+	var result []dashboards.DashboardSearchProjection
 
-	query.DashboardUIDs = resourceUIDs
-	query.SkipAccessControlFilter = true
-	return dr.dashboardStore.FindDashboards(ctx, &query)
-}
-
-func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]string, error) {
-	tasks := make([]func() ([]string, error), 0)
-	var resourceTypes []string
-
-	// For some search types we need dashboards or folders only
-	switch query.Type {
-	case searchstore.TypeDashboard:
-		resourceTypes = []string{zanzana.TypeDashboard}
-	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
-		resourceTypes = []string{zanzana.TypeFolder}
-	default:
-		resourceTypes = []string{zanzana.TypeDashboard, zanzana.TypeFolder}
-	}
-
-	for _, resourceType := range resourceTypes {
-		tasks = append(tasks, func() ([]string, error) {
-			return dr.listAllowedResources(ctx, query, resourceType)
-		})
-	}
-
-	uids, err := runBatch(tasks)
+	allowedFolders, err := dr.listAllowedResources(ctx, query, zanzana.TypeFolder)
 	if err != nil {
 		return nil, err
 	}
 
-	return uids, nil
+	if len(allowedFolders) > 0 {
+		// Find dashboards in folders that user has access to
+		query.SkipAccessControlFilter = true
+		query.FolderUIDs = allowedFolders
+		result, err = dr.dashboardStore.FindDashboards(ctx, &query)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// skip if limit reached
+	rest := query.Limit - int64(len(result))
+	if rest <= 0 {
+		return result, nil
+	}
+
+	// Run second query to find dashboards with direct permission assignments
+	allowedDashboards, err := dr.listAllowedResources(ctx, query, zanzana.TypeDashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(allowedDashboards) > 0 {
+		query.FolderUIDs = []string{}
+		query.DashboardUIDs = allowedDashboards
+		query.Limit = rest
+		dashboardRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, dashboardRes...)
+	}
+
+	return result, err
 }
 
 func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
@@ -306,37 +316,4 @@ func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query 
 	}
 
 	return resourceUIDs, nil
-}
-
-func runBatch(tasks []func() ([]string, error)) ([]string, error) {
-	var wg sync.WaitGroup
-	tasksNum := len(tasks)
-	resChan := make(chan []string, tasksNum)
-	errChan := make(chan error, tasksNum)
-
-	for _, task := range tasks {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			res, err := task()
-			resChan <- res
-			errChan <- err
-		}()
-	}
-
-	wg.Wait()
-	close(resChan)
-	close(errChan)
-
-	for err := range errChan {
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	result := make([]string, 0)
-	for res := range resChan {
-		result = append(result, res...)
-	}
-	return result, nil
 }

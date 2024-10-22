@@ -1,5 +1,5 @@
 import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -750,6 +750,21 @@ describe('DashboardScene', () => {
       variable.setState({ name: 'A' });
       expect(scene.state.isDirty).toBe(false);
     });
+
+    it('should trigger scene RefreshEvent when a scene variable changes', () => {
+      const varA = new TestVariable({ name: 'A', query: 'A.*', value: 'A.AA', text: '', options: [], delayMs: 0 });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [varA] }),
+      });
+
+      scene.activate();
+
+      const eventHandler = jest.fn();
+      // this RefreshEvent is from the scenes library
+      scene.subscribeToEvent(RefreshEvent, eventHandler);
+      varA.changeValueTo('A.AB');
+      expect(eventHandler).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('When a dashboard is restored', () => {
@@ -794,47 +809,6 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
-    });
-  });
-
-  describe('When coming from explore', () => {
-    // When coming from Explore the first panel in a dashboard is a temporary panel
-    it('should remove first panel from the grid when discarding changes', () => {
-      const layout = DefaultGridLayoutManager.fromVizPanels([
-        new VizPanel({
-          title: 'Panel A',
-          key: 'panel-1',
-          pluginId: 'table',
-          $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-        }),
-        new VizPanel({
-          title: 'Panel B',
-          key: 'panel-2',
-          pluginId: 'table',
-        }),
-      ]);
-      const scene = new DashboardScene({
-        title: 'hello',
-        uid: 'dash-1',
-        description: 'hello description',
-        editable: true,
-        $timeRange: new SceneTimeRange({
-          timeZone: 'browser',
-        }),
-        controls: new DashboardControls({}),
-        $behaviors: [new behaviors.CursorSync({})],
-        body: layout,
-      });
-
-      scene.onEnterEditMode(true);
-      expect(scene.state.isEditing).toBe(true);
-      expect(layout.state.grid.state.children.length).toBe(2);
-
-      scene.exitEditMode({ skipConfirm: true });
-
-      const restoredGrid = scene.state.body as DefaultGridLayoutManager;
-      expect(scene.state.isEditing).toBe(false);
-      expect(restoredGrid.state.grid.state.children.length).toBe(1);
     });
   });
 

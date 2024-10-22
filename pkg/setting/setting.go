@@ -175,12 +175,12 @@ type Cfg struct {
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
-	CSPReportOnlyTemplate            string
-	AngularSupportEnabled            bool
-	DisableFrontendSandboxForPlugins []string
-	DisableGravatar                  bool
-	DataProxyWhiteList               map[string]bool
-	ActionsAllowPostURL              string
+	CSPReportOnlyTemplate           string
+	AngularSupportEnabled           bool
+	EnableFrontendSandboxForPlugins []string
+	DisableGravatar                 bool
+	DataProxyWhiteList              map[string]bool
+	ActionsAllowPostURL             string
 
 	TempDataLifetime time.Duration
 
@@ -1555,10 +1555,10 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 
-	disableFrontendSandboxForPlugins := security.Key("disable_frontend_sandbox_for_plugins").MustString("")
-	for _, plug := range strings.Split(disableFrontendSandboxForPlugins, ",") {
+	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
+	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
-		cfg.DisableFrontendSandboxForPlugins = append(cfg.DisableFrontendSandboxForPlugins, plug)
+		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
 	}
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {

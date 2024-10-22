@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
-	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 )
 
 func (s simpleSecret) Rollback(
@@ -317,26 +316,10 @@ func (s ssoSettingsSecret) Rollback(
 
 	for _, result := range results {
 		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-			for field, value := range result.Settings {
-				if ssosettingsimpl.IsSecretField(field) {
-					decrypted, err := s.decryptValue(ctx, value, secretsSrv)
-					if err != nil {
-						logger.Warn("Could not decrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
-						return err
-					}
-
-					if decrypted == nil {
-						continue
-					}
-
-					reencrypted, err := encryptionSrv.Encrypt(ctx, decrypted, secretKey)
-					if err != nil {
-						logger.Warn("Could not re-encrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
-						return err
-					}
-
-					result.Settings[field] = base64.RawStdEncoding.EncodeToString(reencrypted)
-				}
+			result.Settings, err = s.reEncryptSecretsInMap(ctx, result.Settings, secretsSrv, encryptionSrv, secretKey)
+			if err != nil {
+				logger.Warn("failed rolling back SSO settings secret", "id", result.ID, "error", err)
+				return err
 			}
 
 			err = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {

@@ -17,6 +17,10 @@ GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
+GIT_BASE = remotes/origin/main
+
+# GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
+XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
 
 targets := $(shell echo '$(sources)' | tr "," " ")
 
@@ -170,12 +174,16 @@ gen-jsonnet:
 	go generate ./devenv/jsonnet
 
 .PHONY: update-workspace
-update-workspace:
+update-workspace: gen-go
 	@echo "updating workspace"
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
 build-go: gen-go update-workspace ## Build all Go binaries.
+	@echo "build go files with updated workspace"
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
+
+build-go-fast: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -303,6 +311,15 @@ golangci-lint: $(GOLANGCI_LINT)
 .PHONY: lint-go
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
 
+.PHONY: lint-go-diff
+lint-go-diff: $(GOLANGCI_LINT)
+	git diff --name-only $(GIT_BASE) | \
+		grep '\.go$$' | \
+		$(XARGSR) dirname | \
+		sort -u | \
+		sed 's,^,./,' | \
+		$(XARGSR) $(GOLANGCI_LINT) run --config .golangci.toml
+
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
@@ -399,6 +416,7 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
+	buf generate pkg/services/authz/zanzana/proto/v1 --template pkg/services/authz/zanzana/proto/v1/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

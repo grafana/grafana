@@ -11,8 +11,6 @@ import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { logError } from '../../Analytics';
 import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
-import { RuleListIcon } from '../../components/rule-list/RuleListIcon';
-import { calculateNextEvaluationEstimate } from '../../components/rule-list/util';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
@@ -20,6 +18,8 @@ import { createContactPointLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
+import { RuleListIcon } from './RuleListIcon';
+import { calculateNextEvaluationEstimate } from './util';
 
 interface AlertRuleListItemProps {
   name: string;

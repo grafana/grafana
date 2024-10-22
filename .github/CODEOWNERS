@@ -194,6 +194,7 @@
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/ @grafana/dashboards-squad
 /devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-backend
+/devenv/docker/blocks/caddy_tls/ @grafana/alerting-backend
 /devenv/docker/blocks/clickhouse/ @grafana/partner-datasources
 /devenv/docker/blocks/collectd/ @grafana/observability-metrics
 /devenv/docker/blocks/etcd @grafana/grafana-app-platform-squad
@@ -241,7 +242,6 @@
 /devenv/docker/rpmtest/ @grafana/grafana-backend-services-squad
 /devenv/jsonnet/ @grafana/dataviz-squad
 /devenv/local-npm/ @grafana/frontend-ops
-/devenv/vscode/ @grafana/frontend-ops
 /devenv/setup.sh @grafana/grafana-backend-services-squad
 /devenv/plugins.yaml @grafana/plugins-platform-frontend
 
@@ -298,6 +298,7 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-search-and-storage
 /pkg/generated @grafana/grafana-app-platform-squad
+/pkg/services/unifiedSearch/ @grafana/grafana-search-and-storage
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend
@@ -730,7 +731,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/remove-milestone.yml @grafana/grafana-release-guild
 /.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
-/.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-release-guild
 /.github/workflows/update-changelog.yml @grafana/grafana-release-guild
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling

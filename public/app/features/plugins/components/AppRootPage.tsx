@@ -2,7 +2,7 @@
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import * as React from 'react';
-import { useLocation, useRouteMatch } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import {
@@ -61,7 +61,6 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const addedLinksRegistry = useAddedLinksRegistry();
   const addedComponentsRegistry = useAddedComponentsRegistry();
   const exposedComponentsRegistry = useExposedComponentsRegistry();
-  const match = useRouteMatch();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
@@ -110,7 +109,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
       >
         <plugin.root
           meta={plugin.meta}
-          basename={match.url}
+          basename={location.pathname}
           onNavChanged={onNavChanged}
           query={queryParams}
           path={location.pathname}

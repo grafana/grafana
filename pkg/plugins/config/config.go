@@ -32,6 +32,7 @@ type PluginManagementCfg struct {
 type Features struct {
 	ExternalCorePluginsEnabled bool
 	SkipHostEnvVarsEnabled     bool
+	SriChecksEnabled           bool
 }
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.
