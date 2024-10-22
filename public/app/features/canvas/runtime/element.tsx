@@ -687,7 +687,7 @@ export class ElementState implements LayerElement {
     if (this.options.oneClickMode === OneClickMode.Link) {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
-        window.open(primaryDataLink.href, primaryDataLink.target);
+        window.open(primaryDataLink.href, primaryDataLink.target ?? '_self');
       }
     } else if (this.options.oneClickMode === OneClickMode.Action) {
       let primaryAction = this.getPrimaryAction();
