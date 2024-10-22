@@ -28,3 +28,4 @@ jobs:
         with:
           version: latest
           args: build
+          workdir: scripts/build/ci-wix
