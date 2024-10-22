@@ -217,7 +217,6 @@ export const DataLinkInput = memo(
                     maxHeight="300px"
                     ref={scrollRef}
                     onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
-                    hideScrollIndicators
                   >
                     <DataLinkSuggestions
                       activeRef={activeRef}

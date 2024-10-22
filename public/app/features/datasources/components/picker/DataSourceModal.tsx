@@ -159,7 +159,7 @@ export function DataSourceModal({
             reportSearchUsageOnce();
           }}
         />
-        <ScrollContainer hideScrollIndicators>
+        <ScrollContainer>
           <DataSourceList
             onChange={onChangeDataSource}
             current={current}
@@ -187,7 +187,7 @@ export function DataSourceModal({
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
           <div className={styles.builtInDataSourcesList}>
-            <ScrollContainer hideScrollIndicators>
+            <ScrollContainer>
               <BuiltInList />
             </ScrollContainer>
           </div>

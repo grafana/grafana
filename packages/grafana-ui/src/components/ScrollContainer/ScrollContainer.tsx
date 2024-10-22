@@ -9,7 +9,7 @@ import { ScrollIndicators } from '../CustomScrollbar/ScrollIndicators';
 import { Box, BoxProps } from '../Layout/Box/Box';
 
 interface Props extends Omit<BoxProps, 'display' | 'direction' | 'flex'> {
-  hideScrollIndicators?: boolean;
+  showScrollIndicators?: boolean;
   onScroll?: UIEventHandler<HTMLDivElement>;
   overflowX?: Property.OverflowX;
   overflowY?: Property.OverflowY;
@@ -20,7 +20,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
   (
     {
       children,
-      hideScrollIndicators = false,
+      showScrollIndicators = false,
       onScroll,
       overflowX = 'auto',
       overflowY = 'auto',
@@ -39,7 +39,7 @@ export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Prop
     return (
       <Box {...boxProps} display="flex" direction="column" flex={1} position="relative">
         <div onScroll={onScroll} className={styles.scroller} ref={ref}>
-          {hideScrollIndicators ? children : <ScrollIndicators>{children}</ScrollIndicators>}
+          {showScrollIndicators ? <ScrollIndicators>{children}</ScrollIndicators> : children}
         </div>
       </Box>
     );

@@ -48,7 +48,7 @@ export const SelectMenu = ({
 
   return (
     <div {...innerProps} className={styles.menu} style={{ maxHeight }} aria-label="Select options menu">
-      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden">
+      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators>
         {toggleAllOptions && (
           <ToggleAllOption
             state={toggleAllOptions.state}

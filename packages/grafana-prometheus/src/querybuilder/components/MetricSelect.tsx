@@ -245,7 +245,9 @@ export function MetricSelect({
         style={{ maxHeight: Math.round(maxHeight * 0.9) }}
         aria-label="Select options menu"
       >
-        <ScrollContainer ref={innerRef}>{children}</ScrollContainer>
+        <ScrollContainer ref={innerRef} showScrollIndicators>
+          {children}
+        </ScrollContainer>
         {optionsLoaded && (
           <div className={styles.customMenuFooter}>
             <div>

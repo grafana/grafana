@@ -158,7 +158,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
               <div className={styles.content} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
                 <div className={styles.body}>
                   <div className={styles.leftSide}>
-                    <ScrollContainer>
+                    <ScrollContainer showScrollIndicators>
                       <TimeRangeList
                         title={t('time-picker.time-range.example-title', 'Example time ranges')}
                         options={validOptions}

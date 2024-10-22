@@ -53,7 +53,7 @@ export function TextPanel(props: Props) {
 
   return (
     <div className={styles.containStrict}>
-      <ScrollContainer minHeight="100%" hideScrollIndicators>
+      <ScrollContainer minHeight="100%">
         <DangerouslySetHtmlContent
           allowRerender
           html={processed.content}

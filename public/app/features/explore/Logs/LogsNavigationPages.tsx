@@ -37,7 +37,7 @@ export function LogsNavigationPages({ pages, currentPageIndex, oldestLogsFirst, 
   const styles = getStyles(theme, loading);
 
   return (
-    <ScrollContainer hideScrollIndicators>
+    <ScrollContainer>
       <div className={styles.pagesWrapper} data-testid="logsNavigationPages">
         <div className={styles.pagesContainer}>
           {pages.map((page: LogsPage, index: number) => (

@@ -98,7 +98,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     <div style={containerStyle}>
       <div className={styles.viz}>{size && children(size.width, size.height)}</div>
       <div style={legendStyle} ref={legendRef}>
-        <ScrollContainer hideScrollIndicators>{legend}</ScrollContainer>
+        <ScrollContainer>{legend}</ScrollContainer>
       </div>
     </div>
   );

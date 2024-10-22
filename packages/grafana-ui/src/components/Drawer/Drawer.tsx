@@ -167,7 +167,13 @@ export function Drawer({
             </div>
           )}
           {typeof title !== 'string' && title}
-          {!scrollableContent ? content : <ScrollContainer overflowX="hidden">{content}</ScrollContainer>}
+          {!scrollableContent ? (
+            content
+          ) : (
+            <ScrollContainer overflowX="hidden" showScrollIndicators>
+              {content}
+            </ScrollContainer>
+          )}
         </div>
       </FocusScope>
     </RcDrawer>

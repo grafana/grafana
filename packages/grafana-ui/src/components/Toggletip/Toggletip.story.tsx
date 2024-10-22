@@ -96,7 +96,7 @@ export const LongContent: StoryFn<typeof Toggletip> = ({
     <Toggletip
       title={<h2>Toggletip with scrollable content and no interactive controls</h2>}
       content={
-        <ScrollContainer maxHeight="500px" hideScrollIndicators>
+        <ScrollContainer maxHeight="500px">
           {/* one of the few documented cases we can turn this rule off */}
           {/* https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-noninteractive-tabindex.md#case-shouldnt-i-add-a-tabindex-so-that-users-can-navigate-to-this-item */}
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}

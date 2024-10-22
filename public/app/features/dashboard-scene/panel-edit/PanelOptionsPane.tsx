@@ -158,11 +158,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 </AngularDeprecationPluginNotice>
               </div>
             )}
-            {/* <div className={styles.listOfOptions}> */}
             <ScrollContainer>
               <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
             </ScrollContainer>
-            {/* </div> */}
           </>
         )}
         {isVizPickerOpen && (
@@ -185,12 +183,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       padding: theme.spacing(2, 1),
       gap: theme.spacing(2),
-    }),
-    listOfOptions: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: '1',
-      overflow: 'auto',
     }),
     searchOptions: css({
       minHeight: theme.spacing(4),

@@ -352,7 +352,7 @@ export const LogsPanel = ({
           getLogRowContextUi={getLogRowContextUi}
         />
       )}
-      <ScrollContainer ref={(scrollElement) => setScrollElement(scrollElement)} hideScrollIndicators>
+      <ScrollContainer ref={(scrollElement) => setScrollElement(scrollElement)}>
         <div onMouseLeave={onLogContainerMouseLeave} className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows

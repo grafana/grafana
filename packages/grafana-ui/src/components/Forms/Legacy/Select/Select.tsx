@@ -45,7 +45,9 @@ export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
 export const MenuList = (props: MenuListProps) => {
   return (
     <components.MenuList {...props}>
-      <ScrollContainer overflowX="hidden">{props.children}</ScrollContainer>
+      <ScrollContainer overflowX="hidden" showScrollIndicators>
+        {props.children}
+      </ScrollContainer>
     </components.MenuList>
   );
 };

@@ -219,7 +219,7 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
   return (
-    <ScrollContainer minHeight="100%" hideScrollIndicators>
+    <ScrollContainer minHeight="100%">
       <div className={styles.container}>
         {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
         {havePreviousResults && (

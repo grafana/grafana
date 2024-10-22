@@ -206,7 +206,7 @@ export function DashList(props: PanelProps<Options>) {
   );
 
   return (
-    <ScrollContainer minHeight="100%" hideScrollIndicators>
+    <ScrollContainer minHeight="100%">
       {dashboardGroups.map(
         ({ show, header, dashboards }, i) =>
           show && (

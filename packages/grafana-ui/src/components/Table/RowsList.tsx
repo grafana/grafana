@@ -423,7 +423,7 @@ export const RowsList = (props: RowsListProps) => {
   }, [rows, listRef]);
 
   return (
-    <ScrollContainer ref={scrollRef} onScroll={handleScroll} hideScrollIndicators>
+    <ScrollContainer ref={scrollRef} onScroll={handleScroll}>
       <VariableSizeList
         // This component needs an unmount/remount when row height, page changes, or expanded rows change
         key={`${rowHeight}${pageIndex}${expandedKey}`}

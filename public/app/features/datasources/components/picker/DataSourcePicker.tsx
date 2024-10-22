@@ -322,7 +322,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <ScrollContainer>
+      <ScrollContainer showScrollIndicators>
         <DataSourceList
           {...props}
           enableKeyboardNavigation

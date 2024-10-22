@@ -132,7 +132,7 @@ export const MegaMenu = memo(
           </div>
         )}
         <nav className={styles.content}>
-          <ScrollContainer height="100%" overflowX="hidden">
+          <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
                 <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="start">

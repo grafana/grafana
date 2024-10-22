@@ -260,7 +260,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
     const hasFilter = queryUser || queryTags.length > 0;
     return (
-      <ScrollContainer minHeight="100%" hideScrollIndicators>
+      <ScrollContainer minHeight="100%">
         {hasFilter && (
           <div className={this.style.filter}>
             <b>Filter:</b>
