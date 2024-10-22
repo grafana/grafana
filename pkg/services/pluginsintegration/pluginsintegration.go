@@ -199,6 +199,8 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewHostedGrafanaACHeaderMiddleware(cfg))
 	}
 
+	middlewares = append(middlewares, clientmiddleware.NewUseAlertHeadersMiddleware())
+
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
 	// ErrorSourceMiddleware should be at the very bottom, or any middlewares below it won't see the
