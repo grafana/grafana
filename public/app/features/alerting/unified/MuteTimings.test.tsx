@@ -1,7 +1,6 @@
 import { InitialEntry } from 'history';
 import { last } from 'lodash';
-import { ReactNode } from 'react';
-import { Route } from 'react-router';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, userEvent, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -24,14 +23,16 @@ import { grantUserPermissions, mockDataSource } from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 const indexPageText = 'redirected routes page';
-const renderMuteTimings = (component: ReactNode, location?: InitialEntry) => {
+const Index = () => {
+  return <div>{indexPageText}</div>;
+};
+const renderMuteTimings = (location?: InitialEntry) => {
   render(
-    <>
-      <Route path="/alerting/routes" exact>
-        {indexPageText}
-      </Route>
-      {component}
-    </>,
+    <Routes>
+      <Route path={'/alerting/routes'} element={<Index />} />
+      <Route path={'/alerting/routes/new'} element={<NewMuteTimingPage />} />
+      <Route path={'/alerting/routes/edit'} element={<EditMuteTimingPage />} />
+    </Routes>,
     { historyOptions: location ? { initialEntries: [location] } : undefined }
   );
 };
@@ -213,7 +214,7 @@ describe('Mute timings', () => {
 
   it('creates a new mute timing, with mute_time_intervals in config', async () => {
     const capture = captureRequests();
-    renderMuteTimings(<NewMuteTimingPage />);
+    renderMuteTimings('/alerting/routes/new');
 
     await screen.findByText(/add mute timing/i);
 
@@ -240,9 +241,7 @@ describe('Mute timings', () => {
   it('creates a new mute timing, with time_intervals in config', async () => {
     const capture = captureRequests();
     setAlertmanagerConfig(dataSources.am.uid, defaultConfigWithNewTimeIntervalsField);
-    renderMuteTimings(<NewMuteTimingPage />, {
-      search: `?alertmanager=${dataSources.am.name}`,
-    });
+    renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${dataSources.am.name}` });
 
     await fillOutForm({
       name: 'maintenance period',
@@ -264,9 +263,7 @@ describe('Mute timings', () => {
 
   it('creates a new mute timing, with time_intervals and mute_time_intervals in config', async () => {
     setAlertmanagerConfig(dataSources.am.uid, defaultConfigWithBothTimeIntervalsField);
-    renderMuteTimings(<NewMuteTimingPage />, {
-      search: `?alertmanager=${dataSources.am.name}`,
-    });
+    renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${dataSources.am.name}` });
 
     expect(ui.nameField.get()).toBeInTheDocument();
 
@@ -285,7 +282,8 @@ describe('Mute timings', () => {
   it('prepopulates the form when editing a mute timing', async () => {
     const capture = captureRequests();
 
-    renderMuteTimings(<EditMuteTimingPage />, {
+    renderMuteTimings({
+      pathname: '/alerting/routes/edit',
       search: `?muteName=${encodeURIComponent(muteTimeInterval.name)}`,
     });
 
@@ -325,7 +323,7 @@ describe('Mute timings', () => {
   });
 
   it('form is invalid with duplicate mute timing name', async () => {
-    renderMuteTimings(<NewMuteTimingPage />);
+    renderMuteTimings('/alerting/routes/new');
 
     await fillOutForm({ name: muteTimeInterval.name, days: '1' });
 
@@ -335,7 +333,8 @@ describe('Mute timings', () => {
   });
 
   it('replaces mute timings in routes when the mute timing name is changed', async () => {
-    renderMuteTimings(<EditMuteTimingPage />, {
+    renderMuteTimings({
+      pathname: '/alerting/routes/edit',
       search: `?muteName=${encodeURIComponent(muteTimeInterval.name)}`,
     });
 
@@ -350,7 +349,8 @@ describe('Mute timings', () => {
   });
 
   it('shows error when mute timing does not exist', async () => {
-    renderMuteTimings(<EditMuteTimingPage />, {
+    renderMuteTimings({
+      pathname: '/alerting/routes/edit',
       search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${'does not exist'}`,
     });
 
@@ -363,7 +363,7 @@ describe('Mute timings', () => {
     });
 
     it('allows creation of new mute timings', async () => {
-      renderMuteTimings(<NewMuteTimingPage />);
+      renderMuteTimings('/alerting/routes/new');
 
       await fillOutForm({ name: 'a new mute timing' });
 
@@ -372,7 +372,8 @@ describe('Mute timings', () => {
     });
 
     it('shows error when mute timing does not exist', async () => {
-      renderMuteTimings(<EditMuteTimingPage />, {
+      renderMuteTimings({
+        pathname: '/alerting/routes/edit',
         search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${TIME_INTERVAL_NAME_HAPPY_PATH + '_force_breakage'}`,
       });
 
@@ -380,7 +381,8 @@ describe('Mute timings', () => {
     });
 
     it('loads edit form correctly and allows saving', async () => {
-      renderMuteTimings(<EditMuteTimingPage />, {
+      renderMuteTimings({
+        pathname: '/alerting/routes/edit',
         search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${TIME_INTERVAL_NAME_HAPPY_PATH}`,
       });
 
@@ -389,7 +391,8 @@ describe('Mute timings', () => {
     });
 
     it('loads view form for provisioned interval', async () => {
-      renderMuteTimings(<EditMuteTimingPage />, {
+      renderMuteTimings({
+        pathname: '/alerting/routes/edit',
         search: `?muteName=${TIME_INTERVAL_NAME_FILE_PROVISIONED}`,
       });
 
