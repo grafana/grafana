@@ -17,7 +17,6 @@ import { TableCellHeight } from '@grafana/schema';
 import { useTheme2 } from '../../themes';
 import { Trans } from '../../utils/i18n';
 import { Pagination } from '../Pagination/Pagination';
-import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
@@ -331,55 +330,51 @@ export const Table = memo((props: Props) => {
       ref={tableDivRef}
       style={{ width, height }}
     >
-      <ScrollContainer hideScrollIndicators>
-        <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
-          {!noHeader && (
-            <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
-          )}
-          {itemCount > 0 ? (
-            <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <RowsList
-                headerGroups={headerGroups}
-                data={data}
-                rows={rows}
-                width={width}
-                cellHeight={cellHeight}
-                headerHeight={headerHeight}
-                rowHeight={tableStyles.rowHeight}
-                itemCount={itemCount}
-                pageIndex={state.pageIndex}
-                listHeight={listHeight}
-                listRef={listRef}
-                tableState={state}
-                prepareRow={prepareRow}
-                timeRange={timeRange}
-                onCellFilterAdded={onCellFilterAdded}
-                nestedDataField={nestedDataField}
-                tableStyles={tableStyles}
-                footerPaginationEnabled={Boolean(enablePagination)}
-                enableSharedCrosshair={enableSharedCrosshair}
-                initialRowIndex={initialRowIndex}
-                longestField={longestField}
-                textWrapField={textWrapField}
-                getActions={getActions}
-              />
-            </div>
-          ) : (
-            <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
-              {noValuesDisplayText}
-            </div>
-          )}
-          {footerItems && (
-            <FooterRow
-              isPaginationVisible={Boolean(enablePagination)}
-              footerValues={footerItems}
-              footerGroups={footerGroups}
-              totalColumnsWidth={totalColumnsWidth}
+      <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
+        {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />}
+        {itemCount > 0 ? (
+          <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
+            <RowsList
+              headerGroups={headerGroups}
+              data={data}
+              rows={rows}
+              width={width}
+              cellHeight={cellHeight}
+              headerHeight={headerHeight}
+              rowHeight={tableStyles.rowHeight}
+              itemCount={itemCount}
+              pageIndex={state.pageIndex}
+              listHeight={listHeight}
+              listRef={listRef}
+              tableState={state}
+              prepareRow={prepareRow}
+              timeRange={timeRange}
+              onCellFilterAdded={onCellFilterAdded}
+              nestedDataField={nestedDataField}
               tableStyles={tableStyles}
+              footerPaginationEnabled={Boolean(enablePagination)}
+              enableSharedCrosshair={enableSharedCrosshair}
+              initialRowIndex={initialRowIndex}
+              longestField={longestField}
+              textWrapField={textWrapField}
+              getActions={getActions}
             />
-          )}
-        </div>
-      </ScrollContainer>
+          </div>
+        ) : (
+          <div style={{ height: height - headerHeight, width }} className={tableStyles.noData}>
+            {noValuesDisplayText}
+          </div>
+        )}
+        {footerItems && (
+          <FooterRow
+            isPaginationVisible={Boolean(enablePagination)}
+            footerValues={footerItems}
+            footerGroups={footerGroups}
+            totalColumnsWidth={totalColumnsWidth}
+            tableStyles={tableStyles}
+          />
+        )}
+      </div>
       {paginationEl}
     </div>
   );

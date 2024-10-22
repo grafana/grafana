@@ -225,7 +225,10 @@ export const RowsList = (props: RowsListProps) => {
     const firstMatchedRowIndex = rows.findIndex((row) => row.index === rowHighlightIndex);
 
     if (firstMatchedRowIndex !== -1) {
-      setScrollTop(headerHeight + (firstMatchedRowIndex - 1) * rowHeight);
+      const newScrollTop = headerHeight + (firstMatchedRowIndex - 1) * rowHeight;
+      if (newScrollTop !== scrollTop) {
+        setScrollTop(headerHeight + (firstMatchedRowIndex - 1) * rowHeight);
+      }
     }
   }
 
