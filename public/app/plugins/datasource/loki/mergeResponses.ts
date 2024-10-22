@@ -151,6 +151,8 @@ export function mergeFrames(dest: DataFrame, source: DataFrame) {
         if (sourceField.nanos) {
           dest.fields[f].nanos = dest.fields[f].nanos ?? new Array(dest.fields[f].values.length - 1).fill(0);
           dest.fields[f].nanos?.splice(destIdx, 0, sourceField.nanos[i]);
+        } else if (dest.fields[f].nanos) {
+          dest.fields[f].nanos?.splice(destIdx, 0, 0);
         }
       }
     }
