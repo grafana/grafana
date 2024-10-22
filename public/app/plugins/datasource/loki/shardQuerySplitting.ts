@@ -8,6 +8,7 @@ import { LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
 import { getSelectorForShardValues, interpolateShardingSelector, requestSupportsSharding } from './queryUtils';
+import { isRetriableError } from './responseUtils';
 import { LokiQuery } from './types';
 
 /**
@@ -100,11 +101,12 @@ function splitQueriesByStreamShard(
     };
 
     const retry = (errorResponse?: DataQueryResponse) => {
-      if (errorResponse?.errors && errorResponse.errors[0].message?.includes('maximum of series')) {
-        console.warn(`Maximum series reached, skipping retry`);
-        return false;
-      } else if (errorResponse?.errors && errorResponse.errors[0].message?.includes('parse error')) {
-        console.warn(`Parse error, skipping retry`);
+      try {
+        if (errorResponse && !isRetriableError(errorResponse)) {
+          return false;
+        }
+      } catch (e) {
+        console.error(e);
         shouldStop = true;
         return false;
       }

@@ -20,6 +20,7 @@ import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { combineResponses } from './mergeResponses';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
+import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -93,7 +94,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
       subquerySubscription.unsubscribe();
       subquerySubscription = null;
     }
-    
+
     if (shouldStop) {
       subscriber.complete();
       return;
@@ -115,11 +116,12 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     };
 
     const retry = (errorResponse?: DataQueryResponse) => {
-      if (errorResponse?.errors && errorResponse.errors[0].message?.includes('maximum of series')) {
-        console.log(`Maximum series reached, skipping retry`);
-        return false;
-      } else if (errorResponse?.errors && errorResponse.errors[0].message?.includes('parse error')) {
-        console.warn(`Parse error, skipping retry`);
+      try {
+        if (errorResponse && !isRetriableError(errorResponse)) {
+          return false;
+        }
+      } catch (e) {
+        console.error(e);
         shouldStop = true;
         return false;
       }
@@ -138,7 +140,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
         },
         1500 * Math.pow(2, retries)
       ); // Exponential backoff
-      
+
       retrying = true;
 
       return true;
