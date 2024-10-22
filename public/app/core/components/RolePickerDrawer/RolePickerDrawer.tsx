@@ -28,20 +28,20 @@ export interface Props {
 export const RolePickerDrawer = ({ onClose }: Props) => {
   const methods = useFormContext();
   const { control, getValues, setValue } = methods;
-  const [name, role, roles] = getValues(['name', 'role', 'roles']);
+  const [name, roles] = getValues(['name', 'roles']);
   return (
     <Drawer title={name} subtitle={drawerSubtitle} onClose={onClose}>
       <Field label={t('role-picker-drawer.basic-roles.label', 'Basic Roles')}>
         <Controller
           name="role"
           control={control}
-          render={({ field: { ref, ...fields } }) => (
+          render={({ field: { onChange, ref, ...fields } }) => (
             <RadioButtonGroup
               {...fields}
               options={roleOptions}
               onChange={(v) => {
-                setValue(role, v);
                 setValue('roleCollection', [v, ...roles]);
+                onChange(v);
               }}
             />
           )}
