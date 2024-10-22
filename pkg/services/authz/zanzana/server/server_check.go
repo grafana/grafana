@@ -10,7 +10,6 @@ import (
 
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
 	// FIXME: store id should map to namespace somehow
-	// FIXME: handle special resources such as teams, user, folders etc...
 	tracer.Start(ctx, "authzServer.Check")
 
 	if info, ok := typeInfo(r.GetGroup(), r.GetResource()); ok {
