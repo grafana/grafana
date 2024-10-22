@@ -89,7 +89,6 @@ func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 }
 
 func NewResourceIndexServer(cfg *setting.Cfg) ResourceIndexServer {
-	// register metrics
 	logger := slog.Default().With("logger", "index-server")
 
 	indexServer := &IndexServer{
