@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/notify"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -1127,14 +1128,65 @@ func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	// This config has new and modified receivers.
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
+
+	// We modify the receiver, this should cause the POST to be rejected.
+	userDefinedReceiver := amConfig.AlertmanagerConfig.Receivers[slices.IndexFunc(amConfig.AlertmanagerConfig.Receivers, func(receiver *definitions.PostableApiReceiver) bool {
+		return receiver.Receiver.Name == "user-defined"
+	})]
+	userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage = !userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage
 	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Falsef(t, success, "Expected receiver modification to be rejected, but got %s", err)
+	require.Falsef(t, success, "Expected receiver modification to be rejected, but got %t", success)
+	require.ErrorContainsf(t, err, "alertingApiServer", "Expected error message to contain 'alertingApiServer', but got %s", err)
+
+	// Revert the change.
+	userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage = !userDefinedReceiver.GrafanaManagedReceivers[0].DisableResolveMessage
+
+	// We add a receiver, this should be accepted.
+	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, &definitions.PostableApiReceiver{
+		Receiver: config.Receiver{
+			Name: "new receiver",
+		},
+		PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+				{
+					Name:     "new receiver",
+					Type:     "email",
+					Settings: []byte(`{"addresses": "<some@email.com>"}`),
+				},
+			},
+		},
+	})
+	success, err = legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Expected receiver modification to be accepted, but got %s", err)
+	require.NoError(t, err)
+
+	// Sanity check.
+	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
+	require.Equalf(t, http.StatusOK, status, body)
+	require.Lenf(t, gettable.AlertmanagerConfig.Receivers, 3, "Expected 3 receivers, got %d", len(gettable.AlertmanagerConfig.Receivers))
+
+	// We remove the receiver, this should be accepted.
+	amConfig.AlertmanagerConfig.Receivers = slices.DeleteFunc(amConfig.AlertmanagerConfig.Receivers, func(receiver *definitions.PostableApiReceiver) bool {
+		return receiver.GrafanaManagedReceivers[0].Name == "new receiver"
+	})
+	success, err = legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Expected receiver modification to be accepted, but got %s", err)
+	require.NoError(t, err)
+
+	// Sanity check.
+	gettable, status, body = legacyCli.GetAlertmanagerConfigWithStatus(t)
+	require.Equalf(t, http.StatusOK, status, body)
+	require.Lenf(t, gettable.AlertmanagerConfig.Receivers, 2, "Expected 2 receivers, got %d", len(gettable.AlertmanagerConfig.Receivers))
 }
 
 func TestIntegrationReferentialIntegrity(t *testing.T) {
