@@ -92,7 +92,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   const createNewTemplate = useCreateNotificationTemplate({ alertmanager });
   const updateTemplate = useUpdateNotificationTemplate({ alertmanager });
-  const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager });
+  const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager, originalTemplate });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);

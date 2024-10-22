@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 blocks_dir=docker/blocks
 docker_dir=docker
