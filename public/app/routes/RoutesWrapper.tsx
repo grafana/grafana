@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
-import { ComponentType } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { History } from 'history';
+import { ComponentType, memo, useLayoutEffect, useState } from 'react';
+import { BrowserRouterProps, Router } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { HistoryWrapper, locationService, LocationServiceProvider, useChromeHeaderHeight } from '@grafana/runtime';
@@ -22,7 +23,7 @@ type RouterWrapperProps = {
 };
 export function RouterWrapper(props: RouterWrapperProps) {
   return (
-    <Router>
+    <BrowserRouter history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
         <ModalsContextProvider>
           <AppChrome>
@@ -41,9 +42,33 @@ export function RouterWrapper(props: RouterWrapperProps) {
           <ModalRoot />
         </ModalsContextProvider>
       </LocationServiceProvider>
-    </Router>
+    </BrowserRouter>
   );
 }
+
+export interface CustomBrowserRouterProps extends Omit<BrowserRouterProps, 'window'> {
+  history: History;
+}
+
+export const BrowserRouter = memo(({ history, ...restProps }: CustomBrowserRouterProps) => {
+  const [state, setState] = useState({
+    action: history.action,
+    location: history.location,
+  });
+
+  useLayoutEffect(() => history.listen((location, action) => setState({ location, action })), [history]);
+
+  if (!state.location) {
+    return null;
+  }
+
+  return (
+    //@ts-expect-error TODO Update history version
+    <Router {...restProps} location={state.location} navigationType={state.action} navigator={history} />
+  );
+});
+
+BrowserRouter.displayName = 'BrowserRouter';
 
 /**
  * Renders both the main app tree and a secondary sidecar app tree to show 2 apps at the same time in a resizable split
@@ -92,7 +117,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
         <>
           <div {...splitterProps} />
           <div {...secondaryProps}>
-            <Router>
+            <BrowserRouter history={locationService.getHistory()}>
               <LocationServiceProvider service={memoryLocationService}>
                 <GlobalStyles />
                 <div className={styles.secondAppWrapper}>
@@ -108,7 +133,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
                   <AppRootPage pluginId={activePluginId} />
                 </div>
               </LocationServiceProvider>
-            </Router>
+            </BrowserRouter>
           </div>
         </>
       )}
