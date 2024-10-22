@@ -25,7 +25,6 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
-import { useRulesFilter } from '../hooks/useFilteredRules';
 import { getAllRulesSources, isGrafanaRulesSource } from '../utils/datasource';
 import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
@@ -113,8 +112,6 @@ function PaginatedDataSourceLoader({
   uid,
   application,
 }: PaginatedDataSourceLoaderProps) {
-  const { filterState } = useRulesFilter();
-
   const {
     page: ruleNamespaces,
     nextPage,
@@ -122,7 +119,7 @@ function PaginatedDataSourceLoader({
     canMoveForward,
     canMoveBackward,
     isLoading,
-  } = usePaginatedPrometheusRuleNamespaces(ruleSourceName, 10, filterState);
+  } = usePaginatedPrometheusRuleNamespaces(ruleSourceName, 10);
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
