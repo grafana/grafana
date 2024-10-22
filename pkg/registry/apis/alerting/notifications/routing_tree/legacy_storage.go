@@ -121,7 +121,8 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 	}
 	p, ok := obj.(*notifications.RoutingTree)
 	if !ok {
-		return nil, false, fmt.Errorf("expected route but got %s", obj.GetObjectKind().GroupVersionKind())
+		return nil, false, fmt.Errorf("expected %s but got %s", notifications.ReceiverResourceInfo.GroupVersionKind(), obj.GetObjectKind().GroupVersionKind())
+
 	}
 
 	model, version, err := convertToDomainModel(p)

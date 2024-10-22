@@ -98,10 +98,10 @@ func convertToDomainModel(obj *model.RoutingTree) (definitions.Route, string, er
 	result.GroupWait = parsePrometheusDuration(defaults.GroupWait, func(err error) {
 		errs = append(errs, fmt.Errorf("obj '%s' has invalid format of 'groupWait': %w", path, err))
 	})
-	result.GroupWait = parsePrometheusDuration(defaults.GroupInterval, func(err error) {
+	result.GroupInterval = parsePrometheusDuration(defaults.GroupInterval, func(err error) {
 		errs = append(errs, fmt.Errorf("obj '%s' has invalid format of 'groupInterval': %w", path, err))
 	})
-	result.GroupWait = parsePrometheusDuration(defaults.RepeatInterval, func(err error) {
+	result.RepeatInterval = parsePrometheusDuration(defaults.RepeatInterval, func(err error) {
 		errs = append(errs, fmt.Errorf("obj '%s' has invalid format of 'repeatInterval': %w", path, err))
 	})
 
@@ -138,10 +138,10 @@ func convertK8sSubRouteToRoute(r model.Route, path string) (definitions.Route, [
 	result.GroupWait = parsePrometheusDuration(r.GroupWait, func(err error) {
 		errs = append(errs, fmt.Errorf("route '%s' has invalid format of 'groupWait': %w", path, err))
 	})
-	result.GroupWait = parsePrometheusDuration(r.GroupInterval, func(err error) {
+	result.GroupInterval = parsePrometheusDuration(r.GroupInterval, func(err error) {
 		errs = append(errs, fmt.Errorf("route '%s' has invalid format of 'groupInterval': %w", path, err))
 	})
-	result.GroupWait = parsePrometheusDuration(r.RepeatInterval, func(err error) {
+	result.RepeatInterval = parsePrometheusDuration(r.RepeatInterval, func(err error) {
 		errs = append(errs, fmt.Errorf("route '%s' has invalid format of 'repeatInterval': %w", path, err))
 	})
 

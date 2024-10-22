@@ -384,7 +384,7 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole, timeIntervalsReaderRole, timeIntervalsWriterRole, routesWriterRole, routesWriterRole)
+		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole, timeIntervalsReaderRole, timeIntervalsWriterRole, routesReaderRole, routesWriterRole)
 	}
 
 	return service.DeclareFixedRoles(fixedRoles...)
