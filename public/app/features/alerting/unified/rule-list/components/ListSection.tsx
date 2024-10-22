@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { Spacer } from '../../Spacer';
+import { Spacer } from '../../components/Spacer';
 
 interface ListSectionProps extends PropsWithChildren {
   title: ReactNode;

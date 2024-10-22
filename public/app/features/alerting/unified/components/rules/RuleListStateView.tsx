@@ -8,11 +8,11 @@ import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting'
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
+import { AlertRuleListItem } from '../../rule-list/components/AlertRuleListItem';
+import { ListSection } from '../../rule-list/components/ListSection';
 import { createViewLink } from '../../utils/misc';
 import { hashRule } from '../../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
-import { AlertRuleListItem } from '../rule-list/AlertRuleListItem';
-import { ListSection } from '../rule-list/components/ListSection';
 import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
 
 import { RuleActionsButtons } from './RuleActionsButtons';

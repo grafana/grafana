@@ -9,16 +9,16 @@ import { CombinedRule, CombinedRuleNamespace, RuleHealth } from 'app/types/unifi
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
+import { MetaText } from '../../components/MetaText';
+import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
-import { MetaText } from '../MetaText';
-import { ProvisioningBadge } from '../Provisioning';
 
+import { ListItem } from './ListItem';
 import { RuleListIcon } from './RuleListIcon';
-import { ListItem } from './components/ListItem';
 import { calculateNextEvaluationEstimate } from './util';
 
 interface AlertRuleListItemProps {
