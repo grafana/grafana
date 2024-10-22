@@ -91,7 +91,8 @@ export function FolderWithoutGroup() {
                 </>
               )) || (
                 <div>
-                  <Trans i18nKey="alerting.rule-form.folder.creating-new-folder">Creating new folder...</Trans>
+                  <Trans i18nKey="alerting.rule-form.folder.creating-new-folder">Creating new folder</Trans>
+                  {'...'}
                 </div>
               )}
             </Stack>

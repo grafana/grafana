@@ -181,23 +181,28 @@ export function GrafanaEvaluationBehavior({
     control,
   } = useFormContext<RuleFormValues>();
 
-  const [folder, group, type, isPaused] = watch(['folder', 'group', 'type', 'isPaused']);
+  const [folder, group, type, isPaused, folderUid, folderName] = watch([
+    'folder',
+    'group',
+    'type',
+    'isPaused',
+    'folder.uid',
+    'folder.title',
+  ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(type);
   const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
-  const [groupName, folderUid, folderName] = watch(['group', 'folder.uid', 'folder.title']);
-
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const grafanaNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
   const existingNamespace = grafanaNamespaces.find((ns) => ns.uid === folderUid);
-  const existingGroup = existingNamespace?.groups.find((g) => g.name === groupName);
+  const existingGroup = existingNamespace?.groups.find((g) => g.name === group);
 
-  const isNewGroup = useIsNewGroup(folderUid ?? '', groupName);
+  const isNewGroup = useIsNewGroup(folderUid ?? '', group);
 
   useEffect(() => {
     if (!isNewGroup && existingGroup?.interval) {
@@ -214,19 +219,14 @@ export function GrafanaEvaluationBehavior({
 
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
-  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !groupName;
+  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !group;
   const emptyNamespace: CombinedRuleNamespace = {
     name: folderName,
     rulesSource: GRAFANA_RULES_SOURCE_NAME,
     groups: [],
   };
-  const emptyGroup: CombinedRuleGroup = { name: groupName, interval: evaluateEvery, rules: [], totals: {} };
+  const emptyGroup: CombinedRuleGroup = { name: group, interval: evaluateEvery, rules: [], totals: {} };
 
-  useEffect(() => {
-    if (!isNewGroup && existingGroup?.interval) {
-      setEvaluateEvery(existingGroup.interval);
-    }
-  }, [setEvaluateEvery, isNewGroup, setValue, existingGroup]);
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
 
   const handleEvalGroupCreation = (groupName: string, evaluationInterval: string) => {
@@ -352,7 +352,7 @@ export function GrafanaEvaluationBehavior({
             hideFolder={true}
           />
         )}
-        {folderName && groupName && (
+        {folderName && group && (
           <div className={styles.evaluationContainer}>
             <Stack direction="column" gap={0}>
               <div className={styles.marginTop}>
@@ -463,23 +463,12 @@ function EvaluationGroupCreationModal({
   groupfoldersForGrafana?: RulerRulesConfigDTO | null;
 }): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const onSubmit = () => {
-    onCreate(getValues('group'), getValues('evaluateEvery'));
-  };
-
   const { watch } = useFormContext<RuleFormValues>();
 
   const evaluateEveryId = 'eval-every-input';
   const evaluationGroupNameId = 'new-eval-group-name';
   const [groupName, folderName, type] = watch(['group', 'folder.title', 'type']);
   const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
-
-  const groupRules =
-    (groupfoldersForGrafana && groupfoldersForGrafana[folderName]?.find((g) => g.name === groupName)?.rules) ?? [];
-
-  const onCancel = () => {
-    onClose();
-  };
 
   const formAPI = useForm({
     defaultValues: { group: '', evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL },
@@ -489,6 +478,17 @@ function EvaluationGroupCreationModal({
 
   const { register, handleSubmit, formState, setValue, getValues, watch: watchGroupFormValues } = formAPI;
   const evaluationInterval = watchGroupFormValues('evaluateEvery');
+
+  const groupRules =
+    (groupfoldersForGrafana && groupfoldersForGrafana[folderName]?.find((g) => g.name === groupName)?.rules) ?? [];
+
+  const onSubmit = () => {
+    onCreate(getValues('group'), getValues('evaluateEvery'));
+  };
+
+  const onCancel = () => {
+    onClose();
+  };
 
   const setEvaluationInterval = (interval: string) => {
     setValue('evaluateEvery', interval, { shouldValidate: true });
@@ -693,34 +693,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   inlineField: css({
     marginBottom: 0,
   }),
-  evaluateLabel: css({
-    marginRight: theme.spacing(1),
-  }),
   evaluationContainer: css({
     color: theme.colors.text.secondary,
     maxWidth: `${theme.breakpoints.values.sm}px`,
     fontSize: theme.typography.size.sm,
   }),
-  intervalChangedLabel: css({
-    marginBottom: theme.spacing(1),
-  }),
-  warningIcon: css({
-    justifySelf: 'center',
-    marginRight: theme.spacing(1),
-    color: theme.colors.warning.text,
-  }),
   infoIcon: css({
     marginLeft: '10px',
-  }),
-  warningMessage: css({
-    color: theme.colors.warning.text,
-  }),
-  bold: css({
-    fontWeight: 'bold',
-  }),
-  alignInterval: css({
-    marginTop: theme.spacing(1),
-    marginLeft: `-${theme.spacing(1)}`,
   }),
   marginTop: css({
     marginTop: theme.spacing(1),
