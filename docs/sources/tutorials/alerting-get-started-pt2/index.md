@@ -13,6 +13,11 @@ tags:
   - beginner
 title: Get started with Grafana Alerting - Part 2
 weight: 50
+killercoda:
+  title: Get started with Grafana Alerting - Part 2
+  description: Part 2 of the Get Started with Grafana Alerting tutorials. In this guide, we explore alert instances and notification policies.
+  backend:
+    imageid: ubuntu
 ---
 
 <!-- INTERACTIVE page intro.md START -->
