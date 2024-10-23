@@ -160,8 +160,7 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration(usermig.AllowSameLoginCrossOrgs, &usermig.ServiceAccountsSameLoginCrossOrgs{})
 	// Before it was fixed, the previous migration introduced the org_id again in logins that already had it.
 	// This migration removes the duplicate org_id from the login.
-	// TODO(aarongodin): this migration was causing instances to fail to start. It must be corrected before being added
-	// mg.AddMigration(usermig.DedupOrgInLogin, &usermig.ServiceAccountsDeduplicateOrgInLogin{})
+	mg.AddMigration(usermig.DedupOrgInLogin, &usermig.ServiceAccountsDeduplicateOrgInLogin{})
 
 	// Users login and email should be in lower case
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})

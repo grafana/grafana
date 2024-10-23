@@ -32,7 +32,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-const MaxUpdateAttempts = 30
+const (
+	MaxUpdateAttempts          = 30
+	LargeObjectSupportEnabled  = true
+	LargeObjectSupportDisabled = false
+)
 
 var _ storage.Interface = (*Storage)(nil)
 
@@ -51,6 +55,10 @@ type Storage struct {
 	getKey func(string) (*resource.ResourceKey, error)
 
 	versioner storage.Versioner
+
+	// Defines if we want to outsource large objects to another storage type.
+	// By default, this feature is disabled.
+	largeObjectSupport bool
 }
 
 // ErrFileNotExists means the file doesn't actually exist.
@@ -70,6 +78,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
+	largeObjectSupport bool,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
 		store:        store,
@@ -85,6 +94,8 @@ func NewStorage(
 		getKey: keyParser,
 
 		versioner: &storage.APIObjectVersioner{},
+
+		largeObjectSupport: largeObjectSupport,
 	}
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests

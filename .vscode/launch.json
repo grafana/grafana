@@ -9,7 +9,12 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev", "cfg:app_mode=development"]
+      "args": [
+        "server", 
+        "--homepath", "${workspaceFolder}", 
+        "--packaging", "dev", 
+        "cfg:app_mode=development",
+      ]
     },
     {
       "name": "Run API Server (testdata)",
