@@ -55,7 +55,7 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 		},
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(r.GetGroup()),
+				"requested_group": structpb.NewStringValue(formatGroupResource(r.GetGroup(), r.GetResource())),
 			},
 		},
 	})
@@ -92,14 +92,19 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
-	// 3. check if subject has access throug folder
+	// 3. check if subject has access as a sub resource for the folder
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		AuthorizationModelId: modelID,
 		StoreId:              storeID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
-			Object:   newTypedIdent("folder2", r.Folder),
+			Object:   newFolderResourceIdent(r.GetGroup(), r.GetResource()),
+		},
+		Context: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"requested_parent": structpb.NewStringValue(r.GetFolder()),
+			},
 		},
 	})
 

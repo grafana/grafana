@@ -205,12 +205,20 @@ func newTypedIdent(typ string, name string) string {
 	return fmt.Sprintf("%s:%s", typ, name)
 }
 
-func newGroupResourceIdent(group, resource string) string {
-	return fmt.Sprintf("group_resource:%s/%s", group, resource)
+func newFolderResourceIdent(group, resource string) string {
+	return fmt.Sprintf("folder_group_resource:%s", formatGroupResource(group, resource))
 }
 
 func newResourceIdent(group, resource, name string) string {
-	return fmt.Sprintf("resource:%s/%s/%s", group, resource, name)
+	return fmt.Sprintf("resource:%s/%s", formatGroupResource(group, resource), name)
+}
+
+func newGroupResourceIdent(group, resource string) string {
+	return fmt.Sprintf("group_resource:%s", formatGroupResource(group, resource))
+}
+
+func formatGroupResource(group, resource string) string {
+	return fmt.Sprintf("%s/%s", group, resource)
 }
 
 type TypeInfo struct {
