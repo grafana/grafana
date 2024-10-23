@@ -5,6 +5,7 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
@@ -41,12 +42,12 @@ var resourceToTypeTranslations = map[string]string{
 }
 
 var verbToRelationTranslations = map[string]string{
-	"list":             "read",
-	"get":              "read",
-	"watch":            "read",
-	"create":           "create",
-	"update":           "write",
-	"patch":            "write",
-	"delete":           "delete",
-	"deletecollection": "delete",
+	utils.VerbList:             "read",
+	utils.VerbGet:              "read",
+	utils.VerbWatch:            "read",
+	utils.VerbCreate:           "create",
+	utils.VerbUpdate:           "write",
+	utils.VerbPatch:            "write",
+	utils.VerbDelete:           "delete",
+	utils.VerbDeleteCollection: "delete",
 }
