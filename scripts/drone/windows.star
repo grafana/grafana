@@ -17,7 +17,7 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
-    "gcp_grafanauploads_base64",
+    "rgm_gcp_key_base64",
     "prerelease_bucket",
 )
 
@@ -54,7 +54,7 @@ def download_zip_step(target=""):
             "bash -c 'gcloud storage cp {} grafana.zip'".format(path)
         ],
         "environment": {
-            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
+            "GCP_KEY": from_secret(rgm_gcp_key_base64)
         }
     }
 
@@ -113,7 +113,7 @@ def upload_msi_step(depends_on = [], target = ""):
         ],
         "depends_on": depends_on,
         "environment": {
-            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
+            "GCP_KEY": from_secret(rgm_gcp_key_base64)
         },
     }
 
@@ -126,11 +126,6 @@ def build_msi_step(depends_on = []):
             "export WINEPATH=$(winepath ./wix3)",
             "./bin/grabpl windows-installer --target grafana.zip --edition oss",
         ],
-        "environment": {
-            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
-            "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
-            "GITHUB_TOKEN": from_secret("github_token"),
-        },
         "depends_on": depends_on,
     }
 

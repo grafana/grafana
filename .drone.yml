@@ -2728,7 +2728,7 @@ steps:
     grafana.zip'
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
   name: download-zip
 - commands:
@@ -2747,13 +2747,6 @@ steps:
   - download-zip
   entrypoint:
   - /bin/bash
-  environment:
-    GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
   image: scottyhardy/docker-wine:stable-9.0
   name: build-msi
 - commands:
@@ -2765,7 +2758,7 @@ steps:
   - build-msi
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
   name: upload-msi-installer
 trigger:
@@ -4461,7 +4454,7 @@ steps:
     grafana.zip'
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
   name: download-zip
 - commands:
@@ -4480,13 +4473,6 @@ steps:
   - download-zip
   entrypoint:
   - /bin/bash
-  environment:
-    GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
   image: scottyhardy/docker-wine:stable-9.0
   name: build-msi
 - commands:
@@ -4498,7 +4484,7 @@ steps:
   - build-msi
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
   name: upload-msi-installer
 trigger:
@@ -5799,7 +5785,7 @@ steps:
     grafana.zip'
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
   name: download-zip
 - commands:
@@ -5818,13 +5804,6 @@ steps:
   - download-zip
   entrypoint:
   - /bin/bash
-  environment:
-    GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
   image: scottyhardy/docker-wine:stable-9.0
   name: build-msi
 - commands:
@@ -5836,7 +5815,7 @@ steps:
   - build-msi
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
   name: upload-msi-installer
 trigger:
@@ -6048,6 +6027,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: bdf82f02b3a27cf97b3497083b75cd07deb591e8511bc1864d2ee826c346ac2e
+hmac: bcda1814253c43014ec749169e57649e01a2b67af57f997796e4267535223608
 
 ...
