@@ -41,6 +41,9 @@ export interface NestedFolderPickerProps {
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
+
+  /* Whether the user gets the opportunity to create a new folder */
+  canCreateFolder?: boolean;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -65,6 +68,7 @@ export function NestedFolderPicker({
   excludeUIDs,
   permission = PermissionLevelString.Edit,
   onChange,
+  canCreateFolder,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQuery(value || skipToken);
