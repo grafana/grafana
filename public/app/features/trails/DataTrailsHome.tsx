@@ -80,7 +80,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     const app = getAppFor(this);
     const trail = newMetricsTrail(getDatasourceForNewTrail());
     reportExploreMetrics('exploration_started', { cause: 'new_clicked' });
-    getTrailStore().setRecentTrail(trail);
     app.goToUrlForTrail(trail);
   };
 

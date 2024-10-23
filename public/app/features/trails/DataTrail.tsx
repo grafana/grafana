@@ -93,8 +93,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       );
     }
 
-    // Save the current trail as a recent if the browser closes or reloads
-    const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
+    // Save the current trail (if it has a metric) as a recent if the browser closes or reloads
+    const saveRecentTrail = () => this.state.metric && getTrailStore().setRecentTrail(this);
     window.addEventListener('unload', saveRecentTrail);
 
     return () => {

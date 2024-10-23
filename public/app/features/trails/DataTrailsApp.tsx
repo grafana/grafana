@@ -59,7 +59,9 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
 
   useEffect(() => {
     if (!isInitialized) {
-      getTrailStore().setRecentTrail(trail);
+      if (trail.state.metric !== undefined) {
+        getTrailStore().setRecentTrail(trail);
+      }
       setIsInitialized(true);
     }
   }, [trail, isInitialized]);
