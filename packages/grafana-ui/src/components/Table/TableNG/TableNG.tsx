@@ -1,12 +1,12 @@
 import 'react-data-grid/lib/styles.css';
-import { css } from '@emotion/css';
+import { css } from '@linaria/core';
 import React, { useMemo, useState, useLayoutEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn } from 'react-data-grid';
 import { Cell } from 'react-table';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../../themes';
+import { useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
@@ -33,7 +33,7 @@ interface TableColumn extends Column<TableRow> {
 export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight } = props;
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+  // const styles = useStyles2(getStyles);
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -179,7 +179,7 @@ export function TableNG(props: TableNGProps) {
           onClick={() => {
             setIsInspecting(true);
           }}
-          className={styles.menuItem}
+          className={menuItem}
         />
       </>
     );
@@ -261,19 +261,7 @@ function getComparator(sortColumnType: string): Comparator {
   }
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  contextMenu: css({
-    position: 'absolute',
-    backgroundColor: '#ffffff',
-    border: '1px solid black',
-    padding: '16px',
-    listStyle: 'none',
-
-    '> li': {
-      padding: 8,
-    },
-  }),
-  menuItem: css({
-    maxWidth: '200px',
-  }),
-});
+// styles
+const menuItem = css`
+  max-width: 200px;
+`;
