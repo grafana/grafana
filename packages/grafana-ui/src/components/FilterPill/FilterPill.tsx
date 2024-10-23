@@ -20,7 +20,7 @@ export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterP
   const clearButton = useStyles2(clearButtonStyles);
   return (
     <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
-      <span>{label}</span>
+      <span className={styles.label}>{label}</span>
       {selected && <Icon name={icon} className={styles.icon} />}
     </button>
   );
@@ -31,17 +31,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css({
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.pill,
-      padding: theme.spacing(0, 2),
+      padding: theme.spacing(1, 2),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.secondary,
       display: 'flex',
-      alignItems: 'center',
-      height: '32px',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      minHeight: '32px',
       position: 'relative',
       border: `1px solid ${theme.colors.background.secondary}`,
-      whiteSpace: 'nowrap',
+      width: '100%',
+      textAlign: 'left',
 
       '&:hover': {
         background: theme.colors.action.hover,
@@ -56,8 +58,13 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.action.focus,
       },
     }),
+    label: css({
+      wordBreak: 'break-word',
+      marginRight: theme.spacing(1),
+    }),
     icon: css({
       marginLeft: theme.spacing(0.5),
+      alignSelf: 'center',
     }),
   };
 };
