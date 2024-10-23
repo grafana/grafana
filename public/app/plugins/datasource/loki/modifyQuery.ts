@@ -151,7 +151,7 @@ export function addLabelToQuery(
   value: string,
   labelType?: LabelType | null
 ): string {
-  if (!key || !value) {
+  if (!key) {
     throw new Error('Need label to add to query.');
   }
 
