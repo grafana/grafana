@@ -18,16 +18,16 @@ type folder2
 
 type folder_group_resource
   relations
-    define view: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or edit
-    define edit: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or admin
-    define admin: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter]
+    define view: [user, team#member, role#assignee] or edit
+    define edit: [user, team#member, role#assignee] or admin
+    define admin: [user, team#member, role#assignee]
 
-    define read: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or view
-    define create: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or edit
-    define write: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or edit
-    define delete: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or edit
-    define permissions_read: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or admin
-    define permissions_write: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or admin
+    define read: [user, team#member, role#assignee] or view
+    define create: [user, team#member, role#assignee] or edit
+    define write: [user, team#member, role#assignee] or edit
+    define delete: [user, team#member, role#assignee] or edit
+    define permissions_read: [user, team#member, role#assignee] or admin
+    define permissions_write: [user, team#member, role#assignee] or admin
 
 type group_resource
   relations
@@ -58,9 +58,4 @@ type resource
 condition group_filter(requested_group: string, resource_group: string) {
   resource_group == requested_group
 }
-
-condition parent_filter(requested_parent: string, parent: string) {
-  requested_parent == parent
-}
-
 
