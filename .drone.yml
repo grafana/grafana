@@ -2725,7 +2725,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp gs://grafana-downloads/oss/main grafana.zip
+  - gcloud storage cp gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+    grafana.zip
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -2744,6 +2745,7 @@ steps:
   - downlad-nssm
   - download-wix3
   - grabpl
+  - download-zip
   entrypoint:
   - /bin/bash
   environment:
@@ -4457,7 +4459,7 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
+  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
     grafana.zip
   environment:
     GCP_KEY:
@@ -4477,6 +4479,7 @@ steps:
   - downlad-nssm
   - download-wix3
   - grabpl
+  - download-zip
   entrypoint:
   - /bin/bash
   environment:
@@ -5795,7 +5798,7 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
+  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
     grafana.zip
   environment:
     GCP_KEY:
@@ -5815,6 +5818,7 @@ steps:
   - downlad-nssm
   - download-wix3
   - grabpl
+  - download-zip
   entrypoint:
   - /bin/bash
   environment:
@@ -6047,6 +6051,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d2c6737596214ea17b5bc2c8a6f8b92194f6060b165a2a5ec1da8ffedf8ad2f3
+hmac: d94bb551852f177abf7e95887e3bd21b6d323cd264b0a0855829f8bf599f450e
 
 ...

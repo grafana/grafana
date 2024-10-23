@@ -50,7 +50,7 @@ def download_zip_step(target=""):
         "commands": [
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "gcloud storage cp {} grafana.zip".format(target)
+            "gcloud storage cp {} grafana.zip".format(path)
         ],
         "environment": {
             "GCP_KEY": from_secret(gcp_grafanauploads_base64),
@@ -67,6 +67,7 @@ def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], 
             nssm["name"],
             wix["name"],
             grabpl["name"],
+            zip["name"],
         ],
     )
     upload = upload_msi_step(
