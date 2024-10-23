@@ -16,6 +16,19 @@ type folder2
     define permissions_read: [user, team#member, role#assignee] or admin or permissions_read from parent
     define permissions_write: [user, team#member, role#assignee] or admin or permissions_write from parent
 
+type folder_group_resource
+  relations
+    define view: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or edit
+    define edit: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or admin
+    define admin: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter]
+
+    define read: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or view
+    define create: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or edit
+    define write: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or edit
+    define delete: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or edit
+    define permissions_read: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or admin
+    define permissions_write: [user with parent_filter, team#member with parent_filter, role#assignee with parent_filter] or admin
+
 type group_resource
   relations
     define view: [user, team#member, role#assignee] or edit
@@ -45,3 +58,9 @@ type resource
 condition group_filter(requested_group: string, resource_group: string) {
   resource_group == requested_group
 }
+
+condition parent_filter(requested_parent: string, parent: string) {
+  requested_parent == parent
+}
+
+

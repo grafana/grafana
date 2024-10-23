@@ -72,10 +72,19 @@ func TestServer_Check(t *testing.T) {
 		assert.False(t, res.GetAllowed())
 	})
 
-	t.Run("user:4 should be able to read resource:dashboards.grafana.app/dashboards/1 through folder", func(t *testing.T) {
+	t.Run("user:4 should be able to read all dashboards.grafana.app/dashboards through folder group", func(t *testing.T) {
 		res, err := server.Check(context.Background(), newRead("user:4", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
+
+		// sanity check
+		res, err = server.Check(context.Background(), newRead("user:4", dashboardGroup, dashboardResource, "1", "2"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(context.Background(), newRead("user:4", dashboardGroup, dashboardResource, "2", "2"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
 	})
 
 	t.Run("user:5 should be able to read resource:dashboards.grafana.app/dashboards/1 through folder with set relation", func(t *testing.T) {
@@ -84,8 +93,8 @@ func TestServer_Check(t *testing.T) {
 		assert.True(t, res.GetAllowed())
 	})
 
-	t.Run("user:5 should be able to read folder", func(t *testing.T) {
-		res, err := server.Check(context.Background(), newRead("user:5", folderGroup, folderResource, "", "1"))
+	t.Run("user:6 should be able to read folder", func(t *testing.T) {
+		res, err := server.Check(context.Background(), newRead("user:6", folderGroup, folderResource, "", "1"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 	})
@@ -121,14 +130,17 @@ func setup(t *testing.T) *Server {
 				newResourceTuple("user:1", "read", dashboardGroup, dashboardResource, "1"),
 				newGroupResourceTuple("user:2", "read", dashboardGroup, dashboardResource),
 				newResourceTuple("user:3", "view", dashboardGroup, dashboardResource, "1"),
-				newFolderTuple("user:4", "read", "1"),
-				newFolderTuple("user:5", "view", "1"),
+				newFolderGroupResourceTuple("user:4", "read", dashboardGroup, dashboardResource, "1"),
+				newFolderGroupResourceTuple("user:5", "view", dashboardGroup, dashboardResource, "1"),
+				newFolderTuple("user:6", "read", "1"),
 			},
 		},
 	})
 	require.NoError(t, err)
 
-	return NewAuthz(openfga)
+	srv, err := NewAuthz(openfga)
+	require.NoError(t, err)
+	return srv
 }
 
 func newResourceTuple(subject, relation, group, resource, name string) *openfgav1.TupleKey {
@@ -140,7 +152,23 @@ func newResourceTuple(subject, relation, group, resource, name string) *openfgav
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"resource_group": structpb.NewStringValue(group),
+					"resource_group": structpb.NewStringValue(formatGroupResource(group, resource)),
+				},
+			},
+		},
+	}
+}
+
+func newFolderGroupResourceTuple(subject, relation, group, resource, folder string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		User:     subject,
+		Relation: relation,
+		Object:   newFolderResourceIdent(group, resource),
+		Condition: &openfgav1.RelationshipCondition{
+			Name: "parent_filter",
+			Context: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"parent": structpb.NewStringValue(folder),
 				},
 			},
 		},
