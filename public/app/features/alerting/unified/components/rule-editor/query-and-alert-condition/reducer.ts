@@ -1,4 +1,5 @@
 import { createAction, createReducer, original } from '@reduxjs/toolkit';
+import { produce } from 'immer';
 
 import {
   DataQuery,
@@ -264,6 +265,14 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       if (dataQueries.length !== 1 || expressionQueries.length !== 1) {
         return;
       }
+      const thresholdExpression = produce(expressionQueries[0], (draft) => {
+        // we only update the refid and the model to point to the reducer expression
+        draft.model = {
+          ...draft.model,
+          expression: SimpleConditionIdentifier.reducerId,
+        };
+      });
+
       // add reducer expression at first position of expressions (just after query)
       state.queries = [
         dataQueries[0], // the data query
@@ -279,7 +288,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
           refId: SimpleConditionIdentifier.reducerId,
           queryType: 'expression',
         },
-        expressionQueries[0], // the threshold expression
+        thresholdExpression,
       ];
     })
     .addCase(updateExpressionType, (state, action) => {

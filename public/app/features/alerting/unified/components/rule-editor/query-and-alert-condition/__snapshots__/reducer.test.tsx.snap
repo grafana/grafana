@@ -138,6 +138,7 @@ exports[`Query and expressions reducer should add reduce expression if there is 
     {
       "datasourceUid": "__expr__",
       "model": {
+        "expression": "B",
         "refId": "C",
         "type": "threshold",
       },
