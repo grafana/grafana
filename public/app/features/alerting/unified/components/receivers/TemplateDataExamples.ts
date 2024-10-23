@@ -10,8 +10,7 @@ export const GlobalTemplateDataExamples: TemplateExampleItem[] = [
 {{- /* Edit the template name and template content as needed. */ -}}
 {{ define "default.title.copy" }}
   [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
-{{ end }}
-`,
+{{ end }}`,
   },
   {
     description: 'Default template for notification messages',
@@ -37,8 +36,7 @@ Labels:
 
 {{ define "__text_values_list.copy" }}{{ if len .Values }}{{ $first := true }}{{ range $refID, $value := .Values -}}
 {{ if $first }}{{ $first = false }}{{ else }}, {{ end }}{{ $refID }}={{ $value }}{{ end -}}
-{{ else }}[no value]{{ end }}{{ end }}
-`,
+{{ else }}[no value]{{ end }}{{ end }}`,
   },
   {
     description: 'Print alerts with summary and description',
@@ -55,8 +53,7 @@ Labels:
   Summary: {{.Annotations.summary}}
   Status: {{ .Status }}
   Description: {{.Annotations.description}}
-{{ end -}}
-`,
+{{ end -}}`,
   },
   {
     description: 'Print firing and resolved alerts',
@@ -77,8 +74,7 @@ Labels:
   Summary: {{.Annotations.summary}}
   Status: {{ .Status }}
   Description: {{.Annotations.description}}
-{{ end -}}
-`,
+{{ end -}}`,
   },
   {
     description: 'Print common labels and annotations',
@@ -88,7 +84,7 @@ Labels:
 {{ len .Alerts.Resolved }} resolved alert(s)
 {{ len .Alerts.Firing }} firing alert(s)
 
-Common labels: {{ len .CommonLabels.SortedPairs }} 
+Common labels: {{ len .CommonLabels.SortedPairs }}
 {{ range .CommonLabels.SortedPairs -}}
 - {{ .Name }} = {{ .Value }}
 {{ end }}
@@ -98,8 +94,7 @@ Common annotations: {{ len .CommonAnnotations.SortedPairs }}
 - {{ .Name }} = {{ .Value }}
 {{ end }}
 
-{{ end -}}
-`,
+{{ end -}}`,
   },
   {
     description: 'Print individual labels and annotations',
@@ -117,7 +112,7 @@ Common annotations: {{ len .CommonAnnotations.SortedPairs }}
 {{ end -}}
 
 {{ define "alert.labels_and_annotations" }}
-Alert labels: {{ len .Labels.SortedPairs }} 
+Alert labels: {{ len .Labels.SortedPairs }}
 {{ range .Labels.SortedPairs -}}
 - {{ .Name }} = {{ .Value }}
 {{ end -}}
@@ -125,8 +120,7 @@ Alert annotations: {{ len .Annotations.SortedPairs }}
 {{ range .Annotations.SortedPairs -}}
 - {{ .Name }} = {{ .Value }}
 {{ end -}}
-{{ end -}}
-`,
+{{ end -}}`,
   },
   {
     description: 'Print URLs for runbook and alert data in Grafana',
@@ -149,7 +143,6 @@ Alert annotations: {{ len .Annotations.SortedPairs }}
 - AlertGenerator: {{ .GeneratorURL }}
 - Silence: {{ .SilenceURL }}
 - RunbookURL: {{ .Annotations.runbook_url}}
-{{ end -}}
-`,
+{{ end -}}`,
   },
 ];
