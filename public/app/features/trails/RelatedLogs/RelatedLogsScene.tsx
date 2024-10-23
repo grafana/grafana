@@ -92,11 +92,6 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
 
   private setLogsPanelData() {
     const relatedLogsPanel = sceneGraph.findByKeyAndType(this, RELATED_LOGS_PANEL_KEY, VizPanel);
-
-    if (!relatedLogsPanel) {
-      return;
-    }
-
     relatedLogsPanel.setState({
       $data: new SceneQueryRunner({
         datasource: { uid: VAR_LOGS_DATASOURCE_EXPR },
