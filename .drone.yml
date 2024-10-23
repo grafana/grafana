@@ -2725,8 +2725,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-    grafana.zip
+  - bash -c 'gcloud storage cp gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+    grafana.zip'
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -2760,8 +2760,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gsutil cp *.msi gs://grafana-downloads/oss/main
-  - gsutil cp *.msi.sha256 gs://grafana-downloads/oss/main
+  - bash -c 'gcloud storage cp *.msi gs://grafana-downloads/oss/main'
+  - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-downloads/oss/main'
   depends_on:
   - build-and-upload-msi
   environment:
@@ -4459,8 +4459,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-    grafana.zip
+  - bash -c 'gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+    grafana.zip'
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -4494,8 +4494,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gsutil cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release
-  - gsutil cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release
+  - bash -c 'gcloud storage cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release'
+  - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release'
   depends_on:
   - build-and-upload-msi
   environment:
@@ -5798,8 +5798,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-    grafana.zip
+  - bash -c 'gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+    grafana.zip'
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -5833,8 +5833,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gsutil cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release
-  - gsutil cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release
+  - bash -c 'gcloud storage cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release'
+  - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release'
   depends_on:
   - build-and-upload-msi
   environment:
@@ -6051,6 +6051,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8b99cbfd57cc8a0052d208c38d203e4f3c5b059ad0a3988c052b6b3f7c2e2389
+hmac: dd6a6a20de83fae949d4bc4ecf00d29774804602898b9b148910ec03a7629a9a
 
 ...

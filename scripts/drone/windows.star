@@ -50,7 +50,7 @@ def download_zip_step(target=""):
         "commands": [
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "gcloud storage cp {} grafana.zip".format(path)
+            "bash -c 'gcloud storage cp {} grafana.zip'".format(path)
         ],
         "environment": {
             "GCP_KEY": from_secret(gcp_grafanauploads_base64),
@@ -107,8 +107,8 @@ def upload_msi_step(depends_on = [], target = ""):
         "commands": [
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "gsutil cp *.msi {}".format(target),
-            "gsutil cp *.msi.sha256 {}".format(target),
+            "bash -c 'gcloud storage cp *.msi {}'".format(target),
+            "bash -c 'gcloud storage cp *.msi.sha256 {}'".format(target),
         ],
         "depends_on": depends_on,
         "environment": {
