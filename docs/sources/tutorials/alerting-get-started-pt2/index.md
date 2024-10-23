@@ -105,7 +105,6 @@ Create a notification policy if you want to handle metrics returned by alert rul
 
 <!-- INTERACTIVE page step3.md END -->
 <!-- INTERACTIVE page step4.md START -->
-
 ## Create an alert rule that returns alert instances
 
 The alert rule that you are about to create is meant to monitor web traffic page views. The objective is to explore what an alert instance is and how to leverage routing individual alert instances by using label matchers and notification policies.
@@ -120,7 +119,6 @@ Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/da
 1. Click **Save & test**.
 
    You should see a message confirming that the data source is working.
-
 <!-- INTERACTIVE page step4.md END -->
 <!-- INTERACTIVE page step5.md START -->
 
@@ -193,11 +191,11 @@ In this section, you can select how you want to route your alert instances. Sinc
 
 <!-- INTERACTIVE ignore END -->
 
-{{< docs/ignore >}}
+   {{< docs/ignore >}}
 
-   > Even if both labels match the policies, only the alert instance in Firing state produces an alert notification.
+      > Even if both labels match the policies, only the alert instance in Firing state produces an alert notification.
 
-{{< /docs/ignore >}}
+   {{< /docs/ignore >}}
 
 1. Click **Save rule and exit**.
 
