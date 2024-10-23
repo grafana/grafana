@@ -713,7 +713,7 @@ func (s *Service) setDefaultFolderPermissions(ctx context.Context, orgID int64, 
 
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if user.IsIdentityType(claims.TypeUser) {
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err

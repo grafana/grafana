@@ -8,6 +8,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import {
+  getQueryDirectionLabel,
   preprocessMaxLines,
   queryDirections,
   queryTypeOptions,
@@ -102,7 +103,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       <EditorRow>
         <QueryOptionGroup
           title="Options"
-          collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep)}
+          collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep, queryDirection)}
           queryStats={queryStats}
         >
           <EditorField
@@ -203,7 +204,8 @@ function getCollapsedInfo(
   queryType: LokiQueryType,
   maxLines: number,
   isLogQuery: boolean,
-  isValidStep: boolean
+  isValidStep: boolean,
+  direction: LokiQueryDirection
 ): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
@@ -218,9 +220,8 @@ function getCollapsedInfo(
 
   if (isLogQuery) {
     items.push(`Line limit: ${query.maxLines ?? maxLines}`);
-  }
-
-  if (!isLogQuery) {
+    items.push(`Direction: ${getQueryDirectionLabel(direction)}`);
+  } else {
     if (query.step) {
       items.push(`Step: ${isValidStep ? query.step : 'Invalid value'}`);
     }

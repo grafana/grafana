@@ -52,6 +52,7 @@ export interface FeatureToggles {
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
+  lokiShardSplitting?: boolean;
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
@@ -140,6 +141,7 @@ export interface FeatureToggles {
   dashboardSceneForViewers?: boolean;
   dashboardSceneSolo?: boolean;
   dashboardScene?: boolean;
+  dashboardNewLayouts?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
@@ -222,4 +224,5 @@ export interface FeatureToggles {
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
+  prometheusUsesCombobox?: boolean;
 }

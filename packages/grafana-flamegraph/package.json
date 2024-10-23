@@ -56,9 +56,9 @@
     "tslib": "2.7.0"
   },
   "devDependencies": {
-    "@babel/core": "7.25.8",
-    "@babel/preset-env": "7.25.8",
-    "@babel/preset-react": "7.25.7",
+    "@babel/core": "7.25.9",
+    "@babel/preset-env": "7.25.9",
+    "@babel/preset-react": "7.25.9",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "15.3.0",
     "@testing-library/dom": "10.4.0",
@@ -68,7 +68,7 @@
     "@types/d3": "^7",
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.17.12",
-    "@types/node": "20.16.14",
+    "@types/node": "20.16.15",
     "@types/react": "18.3.3",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/tinycolor2": "1.4.6",

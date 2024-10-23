@@ -4,11 +4,13 @@ on:
     # only run on PRs where go.mod/go.sum/etc have been updated
     paths:
       - go.*
+      - .github/workflows/trivy-scan.yml
   push:
     branches:
       - main
     paths:
       - go.*
+      - .github/workflows/trivy-scan.yml
 
 jobs:
   trivy-scan:
@@ -33,7 +35,9 @@ jobs:
         # for the PR check, ignore JS-related issues
         skip-files: 'yarn.lock,package.json'
     - name: Run Trivy vulnerability scanner (SARIF)
-      uses: aquasecurity/trivy-action@0.28.0
+      # Note: versions 0.27.0 and 0.28.0 are broken for SARIF output, but it's
+      # unclear why - worth testing again in the future
+      uses: aquasecurity/trivy-action@0.26.0
       with:
         scan-type: 'fs'
         scanners: 'vuln'

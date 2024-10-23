@@ -91,59 +91,58 @@ export const QueryOperationRowHeader = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  header: css`
-    label: Header;
-    padding: ${theme.spacing(0.5, 0.5)};
-    border-radius: ${theme.shape.radius.default};
-    background: ${theme.colors.background.secondary};
-    min-height: ${theme.spacing(4)};
-    display: grid;
-    grid-template-columns: minmax(100px, max-content) min-content;
-    align-items: center;
-    justify-content: space-between;
-    white-space: nowrap;
+  header: css({
+    label: 'Header',
+    padding: theme.spacing(0.5, 0.5),
+    borderRadius: theme.shape.radius.default,
+    background: theme.colors.background.secondary,
+    minHeight: theme.spacing(4),
+    display: 'grid',
+    gridTemplateColumns: 'minmax(100px, max-content) min-content',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    whiteSpace: 'nowrap',
 
-    &:focus {
-      outline: none;
-    }
-  `,
-  column: css`
-    label: Column;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-  `,
-  dragIcon: css`
-    cursor: grab;
-    color: ${theme.colors.text.disabled};
-    margin: ${theme.spacing(0, 0.5)};
-    &:hover {
-      color: ${theme.colors.text};
-    }
-  `,
-  collapseIcon: css`
-    margin-left: ${theme.spacing(0.5)};
-    color: ${theme.colors.text.disabled};
-    }
-  `,
-  titleWrapper: css`
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-    cursor: pointer;
-    overflow: hidden;
-    margin-right: ${theme.spacing(0.5)};
-  `,
-  title: css`
-    font-weight: ${theme.typography.fontWeightBold};
-    color: ${theme.colors.text.link};
-    margin-left: ${theme.spacing(0.5)};
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `,
-  disabled: css`
-    color: ${theme.colors.text.disabled};
-  `,
+    '&:focus': {
+      outline: 'none',
+    },
+  }),
+  column: css({
+    label: 'Column',
+    display: 'flex',
+    alignItems: 'center',
+    overflow: 'hidden',
+  }),
+  dragIcon: css({
+    cursor: 'grab',
+    color: theme.colors.text.disabled,
+    margin: theme.spacing(0, 0.5),
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
+  collapseIcon: css({
+    marginLeft: theme.spacing(0.5),
+    color: theme.colors.text.disabled,
+  }),
+  titleWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    flexGrow: 1,
+    cursor: 'pointer',
+    overflow: 'hidden',
+    marginRight: theme.spacing(0.5),
+  }),
+  title: css({
+    fontWeight: theme.typography.fontWeightBold,
+    color: theme.colors.text.link,
+    marginLeft: theme.spacing(0.5),
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
+  disabled: css({
+    color: theme.colors.text.disabled,
+  }),
 });
 
 QueryOperationRowHeader.displayName = 'QueryOperationRowHeader';
