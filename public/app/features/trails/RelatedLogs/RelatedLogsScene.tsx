@@ -30,7 +30,7 @@ export interface RelatedLogsSceneState extends SceneObjectState {
   lokiRecordingRules: ExtractedRecordingRules;
 }
 
-const RELATED_LOGS_QUERY_KEY = 'related_logs/query';
+const RELATED_LOGS_QUERY_KEY = 'related_logs/logs_query';
 
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   constructor(state: Partial<RelatedLogsSceneState>) {
