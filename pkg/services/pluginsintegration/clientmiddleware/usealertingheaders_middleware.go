@@ -22,6 +22,7 @@ type UseAlertHeadersMiddleware struct {
 
 var alertHeaders = []string{
 	"X-Rule-Name",
+	"X-Rule-Uid",
 	"X-Rule-Folder",
 	"X-Rule-Source",
 	"X-Rule-Type",
