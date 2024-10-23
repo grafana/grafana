@@ -44,10 +44,6 @@ load(
     "failure_template",
     "notify_pipeline",
 )
-load(
-    "scripts/drone/windows.star",
-    "windows_pipeline_main",
-)
 
 ver_mode = "main"
 trigger = {
@@ -67,34 +63,9 @@ trigger = {
     ],
 }
 
-def windows_pipeline(trigger, ver_mode):
-    """Generates the pipeline used for building Grafana on Windows.
-
-    Args:
-      trigger: a Drone trigger for the pipeline.
-      ver_mode: controls whether a pre-release or actual release pipeline is generated.
-        Also indirectly controls which version of enterprise code is used.
-
-    Returns:
-      A list of drone pipelines that build and upload MSI installers from zip files
-    """
-    environment = {"EDITION": "oss"}
-
-    return windows_pipeline_main(
-        depends_on = [
-            "main-test-frontend",
-            "main-test-backend",
-            "main-build-e2e-publish",
-            "main-integration-tests",
-        ],
-        environment = environment,
-        trigger = trigger,
-    )
-
 def main_pipelines():
     # This is how we should define any new pipelines. At some point we should update existing ones.
     # Let's make an effort to reduce the amount of string constants in "depends_on" lists.
-    windows = windows_pipeline(trigger, ver_mode = ver_mode)
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
         test_frontend(trigger, ver_mode),
@@ -104,7 +75,6 @@ def main_pipelines():
         verify_storybook(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
-        windows,
         enterprise_downstream_pipeline(),
         notify_pipeline(
             name = "main-notify",
@@ -115,7 +85,6 @@ def main_pipelines():
                 "main-test-backend",
                 "main-build-e2e-publish",
                 "main-integration-tests",
-                windows["name"],
             ],
             template = failure_template,
             secret = "slack_webhook",
