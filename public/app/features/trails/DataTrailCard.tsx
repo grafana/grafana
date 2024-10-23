@@ -74,7 +74,7 @@ export function DataTrailCard(props: Props) {
           ))}
         </Card.Meta>
         <div className={styles.datasource}>
-          <div className={styles.secondaryFont}>Datasource: </div>
+          <div className={styles.secondaryFont}>Data source: </div>
           <div className={styles.primaryFont}>{dsValue && getDataSourceName(dsValue)}</div>
         </div>
         <div className={styles.deleteButton}>
