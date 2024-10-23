@@ -326,7 +326,11 @@ external group.
 | Set licensing token      | `{"action": "create", "requestUri": "/api/licensing/token"}` |
 | Save billing information | `{"action": "billing-information"}`                          |
 
-#### Cloud migration management\*
+#### Cloud migration management
+
+{{< docs/public-preview product="Cloud Migration Assistant" featureFlag="onPremToCloudMigrations" >}}
+
+Cloud migration management is available in Grafana Enterprise for users using the Cloud Migration Assistant.
 
 | Action                           | Distinguishing fields                                       |
 | -------------------------------- | ----------------------------------------------------------- |
@@ -334,8 +338,6 @@ external group.
 | Disconnect from a cloud instance | `{"action": "disconnect-instance"}`                         |
 | Build a snapshot                 | `{"action": "build", "resources": [{"type": "snapshot"}]}`  |
 | Upload a snapshot                | `{"action": "upload", "resources": [{"type": "snapshot"}]}` |
-
-\* Behind a feature toggle.
 
 #### Generic actions
 
