@@ -1988,6 +1988,22 @@
     },
     {
       "metadata": {
+        "name": "lokiShardSplitting",
+        "resourceVersion": "1729678036788",
+        "creationTimestamp": "2024-10-23T10:06:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-23 10:07:16.788828 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use stream shards to split queries into smaller subqueries",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiStructuredMetadata",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-11-16T16:06:14Z",

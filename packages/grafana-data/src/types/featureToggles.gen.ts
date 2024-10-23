@@ -52,6 +52,7 @@ export interface FeatureToggles {
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
+  lokiShardSplitting?: boolean;
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;

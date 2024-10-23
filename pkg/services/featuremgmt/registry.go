@@ -266,6 +266,13 @@ var (
 			AllowSelfServe: true,
 		},
 		{
+			Name:         "lokiShardSplitting",
+			Description:  "Use stream shards to split queries into smaller subqueries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:           "lokiQuerySplitting",
 			Description:    "Split large interval queries into subqueries with smaller time intervals",
 			Stage:          FeatureStageGeneralAvailability,
