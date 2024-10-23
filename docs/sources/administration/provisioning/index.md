@@ -73,7 +73,7 @@ Therefore, we heavily rely on the expertise of the community.
 
 ## Data sources
 
-You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/data sources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
 Each configuration file can contain a list of `datasources` to add or update during startup.
 If the data source already exists, Grafana reconfigures it to match the provisioned configuration file.
 
@@ -614,12 +614,22 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
-| Name       | Secure setting |
-| ---------- | -------------- |
-| url        |                |
-| httpMethod |                |
-| username   |                |
-| password   | yes            |
+| Name        | Secure setting |
+| ----------- | -------------- |
+| url         |                |
+| http_method |                |
+| username    |                |
+| password    | yes            |
+| tls_config  |                |
+
+##### TLS config
+
+| Name               | Secure setting |
+| ------------------ | -------------- |
+| insecureSkipVerify |                |
+| clientCertificate  | yes            |
+| clientKey          | yes            |
+| caCertificate      | yes            |
 
 #### Alert notification `googlechat`
 

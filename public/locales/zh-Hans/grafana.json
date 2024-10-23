@@ -2442,6 +2442,16 @@
     },
     "dismissable-button": "关闭"
   },
+  "role-picker": {
+    "title": {
+      "description": ""
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": ""
+    }
+  },
   "save-dashboards": {
     "name-exists": {
       "message-info": "",
@@ -2519,6 +2529,21 @@
   "select": {
     "select-menu": {
       "selected-count": ""
+    }
+  },
+  "service-account-create-page": {
+    "create": {
+      "button": ""
+    },
+    "name": {
+      "label": "",
+      "required-error": ""
+    },
+    "page-nav": {
+      "label": ""
+    },
+    "role": {
+      "label": ""
     }
   },
   "service-accounts": {
@@ -2875,8 +2900,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "",
     "browser-column": "浏览器和操作系统",
     "created-at-column": "已登录",
+    "identity-provider-column": "",
     "ip-column": "IP 地址",
     "revoke": "注销用户会话",
     "seen-at-column": "最后上线时间"
