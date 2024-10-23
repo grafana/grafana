@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import { PureComponent, MouseEvent, createRef } from 'react';
+import { PureComponent, MouseEvent, createRef, CSSProperties } from 'react';
+import { VariableSizeList } from 'react-window';
 
 import {
   TimeZone,
@@ -23,6 +24,7 @@ import { sortLogRows, targetIsElement } from '../utils';
 
 //Components
 import { LogRow } from './LogRow';
+import { restructureLog } from './LogRowMessage';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export const PREVIEW_LIMIT = 100;
@@ -79,6 +81,11 @@ interface State {
   selection: string;
   selectedRow: LogRowModel | null;
   popoverMenuCoordinates: { x: number; y: number };
+  orderedRows: LogRowModel[];
+  showDuplicates: boolean;
+  keyMaker: UniqueKeyMaker;
+  showLogDetails: number[];
+  virtualizedListKey: string;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -94,7 +101,17 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     selection: '',
     selectedRow: null,
     popoverMenuCoordinates: { x: 0, y: 0 },
+    orderedRows: [],
+    showDuplicates: false,
+    keyMaker: new UniqueKeyMaker(),
+    virtualizedListKey: '',
+    showLogDetails: [],
   };
+
+  constructor(props: Props) {
+    super(props);
+    this.setVirtualizedListKey();
+  }
 
   /**
    * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
@@ -160,18 +177,38 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       selectedRow: null,
     });
   };
+  
+  componentDidUpdate(prevProps: Readonly<Props>): void {
+    // How much nicer this would be with useEffect()
+    const dependencyArray = ['deduplicatedRows', 'logRows', 'dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage', 'prettifyLogMessage'];
+    const updated = dependencyArray.reduce((updated: boolean, attr: string) => {
+      // @ts-expect-error
+      return updated || prevProps[attr] !== this.props[attr];
+    }, false);
 
-  componentDidMount() {
-    // Staged rendering
-    const { logRows, previewLimit } = this.props;
-    const rowCount = logRows ? logRows.length : 0;
-    // Render all right away if not too far over the limit
-    const renderAll = rowCount <= previewLimit! * 2;
-    if (renderAll) {
-      this.setState({ renderAll });
-    } else {
-      this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
+    if (!updated) {
+      if (!this.state.orderedRows.length) {
+        this.updateLogRows();
+      }
+      return;
     }
+    this.updateLogRows();
+  }
+
+  updateLogRows() {
+    const { deduplicatedRows, logRows, dedupStrategy, logsSortOrder } = this.props;
+    const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
+    const dedupCount = dedupedRows
+      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
+      : 0;
+    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
+    const processedRows = dedupedRows ? dedupedRows : [];
+    const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
+    
+    this.setState({
+      orderedRows: [...orderedRows],
+      showDuplicates
+    });
   }
 
   componentWillUnmount() {
@@ -191,27 +228,127 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     sortLogRows(logRows, logsSortOrder)
   );
 
+  /**
+   * When settings change, we need the virtualized list to re-render. Passing a new array to the list is not enough to trigger it.
+   */
+  setVirtualizedListKey = () => {
+    const reRenderTriggers = ['dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage', 'prettifyLogMessage'];
+    const virtualizedListKey = reRenderTriggers.reduce((key: string, attr: string) => {
+      // @ts-expect-error
+      return `${key}${this.props[attr]?.toString()}`
+    }, '') + (`details-${this.state.showLogDetails.length}`);
+
+    this.setState({ virtualizedListKey });
+  }
+
+  Row = ({ getRows, rows, showDuplicates, styles }: { getRows(): LogRowModel[], rows: LogRowModel[], showDuplicates: boolean, styles: ReturnType<typeof getLogRowStyles> }, { index, style }: { index: number, style: CSSProperties }) => {
+    return <LogRow
+      style={style}
+      getRows={getRows}
+      row={rows[index]}
+      showDuplicates={showDuplicates}
+      logsSortOrder={this.props.logsSortOrder}
+      onOpenContext={this.openContext}
+      styles={styles}
+      onPermalinkClick={this.props.onPermalinkClick}
+      scrollIntoView={this.props.scrollIntoView}
+      permalinkedRowId={this.props.permalinkedRowId}
+      onPinLine={this.props.onPinLine}
+      onUnpinLine={this.props.onUnpinLine}
+      pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
+      pinned={this.props.pinnedRowId === rows[index].uid || this.props.pinnedLogs?.some((logId) => logId === rows[index].rowId)}
+      isFilterLabelActive={this.props.isFilterLabelActive}
+      handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
+      showDetails={this.isRowExpanded(rows[index])}
+      onRowClick={this.onRowClick}
+      {...this.props}
+    />
+  }
+
+  /**
+   * Heuristic function to estimate row size. Needs to be updated when log row styles changes.
+   * It does not need to be exact, just know the amount of lines that the message will use if the
+   * message is wrapped.
+   */
+  estimateRowHeight = (rows: LogRowModel[], index: number) => {
+    const rowHeight = 20.14;
+    const lineHeight = 18.5;
+    const detailsHeight = this.isRowExpanded(rows[index]) ? window.innerHeight * 0.35 + 41 : 0;
+    const line = restructureLog(rows[index].raw, this.props.prettifyLogMessage, this.props.wrapLogMessage, this.isRowExpanded(rows[index]));
+
+    if (this.props.prettifyLogMessage) {
+      try {
+        const parsed: Record<string, string> = JSON.parse(line);
+        let jsonHeight = 2 * rowHeight; // {}
+        for (let key in parsed) {
+          jsonHeight += this.estimateMessageLines(`  "${key}": "${parsed[key]}"`) * lineHeight;
+        }
+        return jsonHeight + detailsHeight;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    if (!this.props.wrapLogMessage) {
+      return rowHeight + detailsHeight;
+    }
+    return (this.estimateMessageLines(line) * rowHeight) + detailsHeight;
+  }
+
+  estimateMessageLines = (line: string) => {
+    if (!this.props.wrapLogMessage) {
+      return 1;
+    }
+    let margins = 48 + 65;
+    if (this.props.showTime) {
+      margins += 177;
+    }
+    if (this.props.showLabels) {
+      margins += Math.round(window.innerWidth * 0.17);
+    }
+    const letter = 8.4;
+    return Math.ceil((line.length * letter) / (window.innerWidth - margins));
+  }
+
+  onRowClick = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => {
+    if (this.handleSelection(e, row)) {
+      // Event handled by the parent.
+      return;
+    }
+
+    if (!this.props.enableLogDetails) {
+      return;
+    }
+
+    const rowIndex = this.props.logRows?.indexOf(row);
+    if (rowIndex === undefined) {
+      return;
+    }
+    const showLogDetails: number[] = [...this.state.showLogDetails];
+    if (showLogDetails.indexOf(rowIndex) >= 0) {
+      showLogDetails.splice(showLogDetails.indexOf(rowIndex), 1);
+    } else {
+      showLogDetails.push(rowIndex);
+    }
+
+    this.setState({
+      showLogDetails,
+    });
+  };
+
+  isRowExpanded = (row: LogRowModel) => {
+    const rowIndex = this.props.logRows?.indexOf(row) ?? -1;
+    return this.state.showLogDetails.indexOf(rowIndex) >= 0;
+  }
+
   render() {
-    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, pinnedLogs, ...rest } =
-      this.props;
-    const { renderAll } = this.state;
+    const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, ...rest } = this.props;
+    const { orderedRows, showDuplicates } = this.state;
     const styles = getLogRowStyles(theme);
-    const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
-    const hasData = logRows && logRows.length > 0;
-    const dedupCount = dedupedRows
-      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
-      : 0;
-    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    // Staged rendering
-    const processedRows = dedupedRows ? dedupedRows : [];
-    const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
-    const firstRows = orderedRows.slice(0, previewLimit!);
-    const lastRows = orderedRows.slice(previewLimit!, orderedRows.length);
+    this.setVirtualizedListKey();
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
-
-    const keyMaker = new UniqueKeyMaker();
+    const height = window.innerHeight * 0.75;
 
     return (
       <div className={styles.logRows} ref={this.logRowsRef}>
@@ -226,58 +363,17 @@ class UnThemedLogRows extends PureComponent<Props, State> {
           />
         )}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
-          <tbody>
-            {hasData &&
-              firstRows.map((row) => (
-                <LogRow
-                  key={keyMaker.getKey(row.uid)}
-                  getRows={getRows}
-                  row={row}
-                  showDuplicates={showDuplicates}
-                  logsSortOrder={logsSortOrder}
-                  onOpenContext={this.openContext}
-                  styles={styles}
-                  onPermalinkClick={this.props.onPermalinkClick}
-                  scrollIntoView={this.props.scrollIntoView}
-                  permalinkedRowId={this.props.permalinkedRowId}
-                  onPinLine={this.props.onPinLine}
-                  onUnpinLine={this.props.onUnpinLine}
-                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
-                  isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
-                  {...rest}
-                />
-              ))}
-            {hasData &&
-              renderAll &&
-              lastRows.map((row) => (
-                <LogRow
-                  key={keyMaker.getKey(row.uid)}
-                  getRows={getRows}
-                  row={row}
-                  showDuplicates={showDuplicates}
-                  logsSortOrder={logsSortOrder}
-                  onOpenContext={this.openContext}
-                  styles={styles}
-                  onPermalinkClick={this.props.onPermalinkClick}
-                  scrollIntoView={this.props.scrollIntoView}
-                  permalinkedRowId={this.props.permalinkedRowId}
-                  onPinLine={this.props.onPinLine}
-                  onUnpinLine={this.props.onUnpinLine}
-                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
-                  pinned={this.props.pinnedRowId === row.uid || pinnedLogs?.some((logId) => logId === row.rowId)}
-                  isFilterLabelActive={this.props.isFilterLabelActive}
-                  handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
-                  {...rest}
-                />
-              ))}
-            {hasData && !renderAll && (
-              <tr>
-                <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
-              </tr>
-            )}
-          </tbody>
+          <VariableSizeList
+            key={this.state.virtualizedListKey}
+            height={height}
+            itemCount={orderedRows?.length || 0}
+            itemSize={this.estimateRowHeight.bind(this, orderedRows)}
+            itemKey={(index: number) => this.state.keyMaker.getKey(orderedRows[index].uid)}
+            width={'100%'}
+            layout="vertical"
+          >
+            {this.Row.bind(this, { getRows, showDuplicates, rows: orderedRows, styles })}  
+          </VariableSizeList>
         </table>
       </div>
     );
