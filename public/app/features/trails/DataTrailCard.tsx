@@ -201,30 +201,3 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
   };
 }
-
-// export function getStyles(theme: GrafanaTheme2) {
-//   return {
-//     tag: css({
-//       maxWidth: '260px',
-//       overflow: 'hidden',
-//       textOverflow: 'ellipsis',
-//     }),
-//     card: css({
-//       padding: theme.spacing(1),
-//     }),
-//     secondary: css({
-//       color: theme.colors.text.secondary,
-//       fontSize: '12px',
-//     }),
-//     description: css({
-//       width: '100%',
-//       gridArea: 'Description',
-//       margin: theme.spacing(1, 0, 0),
-//       color: theme.colors.text.secondary,
-//       lineHeight: theme.typography.body.lineHeight,
-//     }),
-//     actions: css({
-//       marginRight: theme.spacing(1),
-//     }),
-//   };
-// }

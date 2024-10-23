@@ -19,7 +19,6 @@ import { DataTrail } from './DataTrail';
 import { DataTrailsBookmarks } from './DataTrailBookmarks';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
-// import { DataTrailsBookmarks } from './DataTrailsBookmarks';
 import { RecentExplorationScene, RecentExplorationState } from './DataTrailsRecentMetrics';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
@@ -27,26 +26,16 @@ import { VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {
-  recentExplorations?: RecentExplorationScene[]; // declare the type of the state (of type RecentExplorationScene[])
+  recentExplorations?: RecentExplorationScene[];
 }
 
 export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
-  // start function class, in teh class we always need constructor to initialize the previously declared variables/types
   public constructor(state: DataTrailsHomeState) {
-    // need to declare state in the constructor
     super(state);
     this._updateRecentExplorations();
-    // this.addActivationHandler(this._onActivate.bind(this)); // calling the onActivate (have to use bind and pass this to it)
   }
   private _updateRecentExplorations() {
-    console.log('inside _updateRecentExplorations');
-    // everything in here to set up the state
-    // where we make the list of recent explorations
-    // say what type to type the array
-    // if (this.state.recentExplorations === undefined) {
-    // if it's never defined before
     const recentExplorations = getTrailStore().recent.map((trail, index) => {
-      // store data into recentExplorations
       const resolvedTrail = trail.resolve();
       const state: RecentExplorationState = {
         metric: resolvedTrail.state.metric,
@@ -54,15 +43,11 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         $timeRange: resolvedTrail.state.$timeRange,
         filters: [],
       };
-      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, resolvedTrail); // sceneGraph is a bunch of utility methods that lets you get things from graph of scene objects that something belongs to
-      // resolvedTrail is what we want to show in the box,
+      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, resolvedTrail);
       if (filtersVariable instanceof AdHocFiltersVariable) {
-        console.log('in filtersVariable if statement!!!');
         state.filters = filtersVariable.state.filters;
       }
-      console.log('after if statement, filtersVariable: ', filtersVariable);
       const datasourceVariable = sceneGraph.lookupVariable(VAR_DATASOURCE, resolvedTrail);
-      // is this object you gave me an instance of DAtaSourceVariable
       if (datasourceVariable instanceof DataSourceVariable) {
         state.datasource = datasourceVariable?.state.value.toString();
       }
@@ -72,8 +57,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     // }
   }
 
-  // CB funcs we pass into components; convention for react, when doing an event CB func (event handler func? e.g., onClick, onChange, on...) which means it's a CB func we pass into a component. safe to update state in these funcs bc they're not always being called. only called when user interacts w the component
-  // button: new metric exploration
   public onNewMetricsTrail = () => {
     const app = getAppFor(this);
     const trail = newMetricsTrail(getDatasourceForNewTrail());
@@ -81,7 +64,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     app.goToUrlForTrail(trail);
   };
 
-  // called when you click on a recent metric exploration card
   public onSelectRecentTrail = (trail: DataTrail) => {
     const app = getAppFor(this);
     reportExploreMetrics('exploration_started', { cause: 'recent_clicked' });
@@ -89,7 +71,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     app.goToUrlForTrail(trail);
   };
 
-  // called when you click on a bookmark card
   public onSelectBookmark = (bookmarkIndex: number) => {
     const app = getAppFor(this);
     reportExploreMetrics('exploration_started', { cause: 'bookmark_clicked' });
@@ -116,7 +97,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
     const storeLastChanged = getTrailStore().lastModified;
     useEffect(() => {
-      console.log('inside useEffect');
       model._updateRecentExplorations();
     }, [model, storeLastChanged]);
 
@@ -230,20 +210,20 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     trailList: css({
       display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns
+      gridTemplateColumns: 'repeat(3, 1fr)',
       gap: `${theme.spacing(3)} 31px`,
-      alignItems: 'stretch', // vertically center cards in their boxes
+      alignItems: 'stretch',
       justifyItems: 'center',
     }),
     trailCard: css({
       boxSizing: 'border-box',
-      width: '100%', // Make the card take up the full width of the grid cell
+      width: '100%',
       height: 'inherit', // Make the card take up the full height of the grid cell
-      backgroundColor: theme.colors.background.secondary, // Ensure the background color takes up the whole space
+      backgroundColor: theme.colors.background.secondary,
       borderRadius: '4px',
     }),
     recentExplorationHeader: css({
-      marginTop: theme.spacing(6), // ask catherine what the number should be
+      marginTop: theme.spacing(6),
       marginBottom: '20px',
     }),
     bottomGap24: css({

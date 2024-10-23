@@ -7,10 +7,6 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 import { DataTrailCard } from './DataTrailCard';
 import { getTrailStore, getBookmarkKey } from './TrailStore/TrailStore';
 
-//refactored the commented out code in a subcomponent
-// in the subcomponent we need 2 functions (2 values from the upper parent component - model and onDelete)
-// we need button / click event. the click event will just call  toggleBookmark and turn it to !toggleBookmark aka setToggle(!toggle)
-
 export function DataTrailsBookmarks({ model, onDelete }: any) {
   const [toggleBookmark, setToggleBookmark] = useState(false);
   const styles = useStyles2(getStyles);

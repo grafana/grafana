@@ -74,7 +74,6 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
     <UrlSyncContextProvider scene={trail}>
       <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
         <trail.Component model={trail} />
-        {/* data trail scene object above */}
       </Page>
     </UrlSyncContextProvider>
   );

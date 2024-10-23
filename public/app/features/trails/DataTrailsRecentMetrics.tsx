@@ -4,11 +4,9 @@ import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, AdHocFiltersVariable, SceneObjectBase } from '@grafana/scenes';
 import { Card, useStyles2 } from '@grafana/ui';
 
-// import { getStyles } from './DataTrailCard';
-
 import { getDataSourceName } from './utils';
 
-type Filters = AdHocFiltersVariable['state']['filters']; // type is actually AdHocFilterWithLabels[]
+type Filters = AdHocFiltersVariable['state']['filters'];
 
 export interface RecentExplorationState extends SceneObjectState {
   metric?: string;
@@ -49,12 +47,9 @@ function RecentExploration({ model }: Props) {
         </Card.Heading>
         <Card.Meta separator={'|'} className={styles.meta}>
           {filters.map((f, index) => (
-
             <span key={f.key}>
               <div className={styles.secondaryFont}>{f.key}: </div>
-              <div className={styles.primaryFont}>
-                {truncateValue(f.key, f.value, 44)}
-              </div>
+              <div className={styles.primaryFont}>{truncateValue(f.key, f.value, 44)}</div>
             </span>
           ))}
         </Card.Meta>
