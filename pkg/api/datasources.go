@@ -396,8 +396,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	// team HTTP headers update have to be done through `updateDatasourceLBACRules`
 	if hs.Features != nil && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagTeamHttpHeaders) {
 		if cmd.JsonData != nil {
-			teamHttpHeaders := cmd.JsonData.Get("teamHttpHeaders")
-			if teamHttpHeaders.Interface() != nil {
+			if _, ok := cmd.JsonData.CheckGet("teamHttpHeaders"); ok {
 				return response.Error(http.StatusForbidden, "Cannot create datasource with team HTTP headers, need to use updateDatasourceLBACRules API", nil)
 			}
 		}
