@@ -2,18 +2,14 @@ package resource
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	golog "log"
 	"os"
-	"strings"
+	"path/filepath"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/analysis/lang/en"
-	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"golang.org/x/exp/slices"
 )
 
 type Shard struct {
@@ -27,37 +23,45 @@ type Index struct {
 	opts   Opts
 	s      *server
 	log    log.Logger
+	path   string
 }
 
-func NewIndex(s *server, opts Opts) *Index {
+func NewIndex(s *server, opts Opts, path string) *Index {
+	if path == "" {
+		path = os.TempDir()
+	}
+
 	idx := &Index{
 		s:      s,
 		opts:   opts,
 		shards: make(map[string]Shard),
 		log:    log.New("unifiedstorage.search.index"),
+		path:   path,
 	}
+
 	return idx
 }
 
 func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 	for _, obj := range list.Items {
-		res, err := getResource(obj.Value)
+		res, err := NewIndexedResource(obj.Value)
 		if err != nil {
 			return err
 		}
 
-		shard, err := i.getShard(tenant(res))
+		shard, err := i.getShard(res.Namespace)
 		if err != nil {
 			return err
 		}
-		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind, "tenant", tenant(res))
+		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind, "tenant", res.Namespace)
 
-		var jsonDoc interface{}
-		err = json.Unmarshal(obj.Value, &jsonDoc)
+		// Transform the raw resource into a more generic indexable resource
+		indexableResource, err := NewIndexedResource(obj.Value)
 		if err != nil {
 			return err
 		}
-		err = shard.batch.Index(res.Metadata.Uid, jsonDoc)
+
+		err = shard.batch.Index(res.Uid, indexableResource)
 		if err != nil {
 			return err
 		}
@@ -75,6 +79,8 @@ func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 }
 
 func (i *Index) Init(ctx context.Context) error {
+	start := time.Now().Unix()
+
 	resourceTypes := fetchResourceTypes()
 	for _, rt := range resourceTypes {
 		i.log.Info("indexing resource", "kind", rt.Key.Resource)
@@ -101,29 +107,37 @@ func (i *Index) Init(ctx context.Context) error {
 		}
 	}
 
+	end := time.Now().Unix()
+	if IndexServerMetrics != nil {
+		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	}
+
 	return nil
 }
 
 func (i *Index) Index(ctx context.Context, data *Data) error {
-	res, err := getResource(data.Value.Value)
+	// Transform the raw resource into a more generic indexable resource
+	res, err := NewIndexedResource(data.Value.Value)
 	if err != nil {
 		return err
 	}
-	tenant := tenant(res)
-	i.log.Debug("indexing resource for tenant", "res", res, "tenant", tenant)
+	tenant := res.Namespace
+	i.log.Debug("indexing resource for tenant", "res", string(data.Value.Value), "tenant", tenant)
 	shard, err := i.getShard(tenant)
 	if err != nil {
 		return err
 	}
-	var jsonDoc interface{}
-	err = json.Unmarshal(data.Value.Value, &jsonDoc)
+	err = shard.index.Index(res.Uid, res)
 	if err != nil {
 		return err
 	}
-	err = shard.index.Index(res.Metadata.Uid, jsonDoc)
-	if err != nil {
-		return err
+
+	// record latency from when event was created to when it was indexed
+	latencySeconds := float64(time.Now().UnixMicro()-data.Value.ResourceVersion) / 1e6
+	if IndexServerMetrics != nil {
+		IndexServerMetrics.IndexLatency.WithLabelValues(data.Key.Resource).Observe(latencySeconds)
 	}
+
 	return nil
 }
 
@@ -139,7 +153,7 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 	return nil
 }
 
-func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]SearchSummary, error) {
+func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]IndexedResource, error) {
 	if tenant == "" {
 		tenant = "default"
 	}
@@ -152,6 +166,9 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 		return nil, err
 	}
 	i.log.Info("got index for tenant", "tenant", tenant, "docCount", docCount)
+
+	fields, _ := shard.index.Fields()
+	i.log.Debug("indexed fields", "fields", fields)
 
 	// use 10 as a default limit for now
 	if limit <= 0 {
@@ -173,58 +190,13 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 
 	i.log.Info("got search results", "hits", hits)
 
-	results := make([]SearchSummary, len(hits))
+	results := make([]IndexedResource, len(hits))
 	for resKey, hit := range hits {
-		searchSummary := SearchSummary{}
-
-		// add common fields to search results
-		searchSummary.Kind = hit.Fields["kind"].(string)
-		searchSummary.Metadata.CreationTimestamp = hit.Fields["metadata.creationTimestamp"].(string)
-		searchSummary.Metadata.Uid = hit.Fields["metadata.uid"].(string)
-
-		// add allowed indexed spec fields to search results
-		specResult := map[string]interface{}{}
-		for k, v := range hit.Fields {
-			if strings.HasPrefix(k, "spec.") {
-				mappedFields := specFieldMappings(searchSummary.Kind)
-				// should only include spec fields we care about in search results
-				if slices.Contains(mappedFields, k) {
-					specKey := strings.TrimPrefix(k, "spec.")
-					specResult[specKey] = v
-				}
-			}
-			searchSummary.Spec = specResult
-		}
-
-		results[resKey] = searchSummary
+		ir := IndexedResource{}.FromSearchHit(hit)
+		results[resKey] = ir
 	}
 
 	return results, nil
-}
-
-func tenant(res *Resource) string {
-	return res.Metadata.Namespace
-}
-
-type SearchSummary struct {
-	Kind     string `json:"kind"`
-	Metadata `json:"metadata"`
-	Spec     map[string]interface{} `json:"spec"`
-}
-
-type Metadata struct {
-	Name              string
-	Namespace         string
-	Uid               string `json:"uid"`
-	CreationTimestamp string `json:"creationTimestamp"`
-	Labels            map[string]string
-	Annotations       map[string]string
-}
-
-type Resource struct {
-	Kind       string
-	ApiVersion string
-	Metadata   Metadata
 }
 
 type Opts struct {
@@ -233,8 +205,8 @@ type Opts struct {
 	Concurrent bool
 }
 
-func createFileIndex() (bleve.Index, string, error) {
-	indexPath := fmt.Sprintf("%s%s.bleve", os.TempDir(), uuid.New().String())
+func createFileIndex(path string) (bleve.Index, string, error) {
+	indexPath := filepath.Join(path, uuid.New().String())
 	index, err := bleve.New(indexPath, createIndexMappings())
 	if err != nil {
 		golog.Fatalf("Failed to create index: %v", err)
@@ -242,58 +214,12 @@ func createFileIndex() (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
-func createIndexMappings() *mapping.IndexMappingImpl {
-	//Create mapping for the creationTimestamp field in the metadata
-	creationTimestampFieldMapping := bleve.NewDateTimeFieldMapping()
-	uidMapping := bleve.NewTextFieldMapping()
-	metaMapping := bleve.NewDocumentMapping()
-	metaMapping.AddFieldMappingsAt("creationTimestamp", creationTimestampFieldMapping)
-	metaMapping.AddFieldMappingsAt("uid", uidMapping)
-	metaMapping.Dynamic = false
-	metaMapping.Enabled = true
-
-	// Spec is different for all resources, so we create a dynamic mapping for it to index all fields (for now)
-	specMapping := bleve.NewDocumentMapping()
-	specMapping.Dynamic = true
-	specMapping.Enabled = true
-
-	//Create a sub-document mapping for the metadata field
-	objectMapping := bleve.NewDocumentMapping()
-	objectMapping.AddSubDocumentMapping("metadata", metaMapping)
-	objectMapping.AddSubDocumentMapping("spec", specMapping)
-	objectMapping.Dynamic = true
-	objectMapping.Enabled = true
-
-	// a generic reusable mapping for english text
-	englishTextFieldMapping := bleve.NewTextFieldMapping()
-	englishTextFieldMapping.Analyzer = en.AnalyzerName
-
-	// Map top level fields - just kind for now
-	objectMapping.AddFieldMappingsAt("kind", englishTextFieldMapping)
-	objectMapping.Dynamic = false
-
-	// Create the index mapping
-	indexMapping := bleve.NewIndexMapping()
-	indexMapping.DefaultMapping = objectMapping
-
-	return indexMapping
-}
-
-func getResource(data []byte) (*Resource, error) {
-	res := &Resource{}
-	err := json.Unmarshal(data, res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
 func (i *Index) getShard(tenant string) (Shard, error) {
 	shard, ok := i.shards[tenant]
 	if ok {
 		return shard, nil
 	}
-	index, path, err := createFileIndex()
+	index, path, err := createFileIndex(i.path)
 	if err != nil {
 		return Shard{}, err
 	}
@@ -316,17 +242,11 @@ func fetchResourceTypes() []*ListOptions {
 			Group:    "playlist.grafana.app",
 			Resource: "playlists",
 		},
+	}, &ListOptions{
+		Key: &ResourceKey{
+			Group:    "folder.grafana.app",
+			Resource: "folders",
+		},
 	})
 	return items
-}
-
-func specFieldMappings(kind string) []string {
-	mappedFields := map[string][]string{
-		"Playlist": {
-			"spec.title",
-			"spec.interval",
-		},
-	}
-
-	return mappedFields[kind]
 }
