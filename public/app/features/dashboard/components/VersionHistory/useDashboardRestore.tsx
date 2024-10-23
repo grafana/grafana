@@ -26,11 +26,13 @@ export const useDashboardRestore = (version: number) => {
       const location = locationService.getLocation();
       const newUrl = locationUtil.stripBaseFromUrl(state.value.url);
       const prevState = (location.state as any)?.routeReloadCounter;
-      locationService.replace({
-        ...location,
-        pathname: newUrl,
-        state: { routeReloadCounter: prevState ? prevState + 1 : 1 },
-      });
+      locationService.replace(
+        {
+          ...location,
+          pathname: newUrl,
+        },
+        { routeReloadCounter: prevState ? prevState + 1 : 1 }
+      );
       notifyApp.success('Dashboard restored', `Restored from version ${version}`);
     }
   }, [state, version, notifyApp]);
