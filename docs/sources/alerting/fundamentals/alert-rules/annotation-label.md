@@ -28,9 +28,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals#alert-instances
   create-alerts-from-panel:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-alerts-panels/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-alerts-panels/
   templates:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/
@@ -57,8 +57,8 @@ refs:
 
 Labels and annotations add additional information about an alert using key/value pairs:
 
-- [Labels](#labels) are used to differentiate an alert from all other alerts.
-- [Annotations](#annotations) are used to provide extra detail on an existing alert.
+- [Labels](#labels) are used to differentiate an alert from all other alerts and decide how to manage them.
+- [Annotations](#annotations) provide extra details for alert responders to help them understand and address potential issues.
 
 ## Labels
 
@@ -83,9 +83,9 @@ An alert's label set can contain three types of labels:
 
 **User-configured labels**
 
-Labels that you manually configure in the alert rule to identify the generated alert instances or group them.
+Labels that you manually configure in the alert rule to identify the generated alert instances and manage the alerts. Common custom labels, depending on the use case, are: `severity`, `priority`, `team`, and `service`.
 
-You can also use a [template](ref:templates) to customize the label value and generate dynamic values when the rule is evaluated.
+Additionally, you can use a [template](ref:templates) to customize the label value and generate dynamic values from query data.
 
 **Data source query labels**
 
@@ -100,7 +100,7 @@ Reserved labels are automatically added by Grafana:
 - `alert_name`: the name of the alert rule.
 - `grafana_folder`: the title of the folder containing the alert.
 
-Labels prefixed with `grafana_` are reserved by Grafana for special use. To stop Grafana Alerting from adding a reserved label, you can disable it via the `disabled_labels` option in [unified_alerting.reserved_labels](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels) configuration.
+Labels prefixed with `grafana_` are reserved by Grafana for special use. You can disable reserved labels via the [`unified_alerting.reserved_labels`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels) option.
 
 {{<admonition type="note">}}
 
@@ -132,13 +132,29 @@ If multiple label keys are sanitized to the same value, the duplicates have a sh
 
 ## Annotations
 
-The purpose of annotations is to add additional information to alert instances, such as extra details for notification messages.
+Annotations add additional information to alert instances, helping responders identify and address potential issues.
 
-Grafana provides several optional annotations that you can edit for use in notification messages and within Grafana.
+Annotations are displayed in Grafana and are included by default in notifications. Grafana provides several optional annotations that you can edit:
 
 - `summary`: A short summary of what the alert has detected and why.
 - `description`: A detailed description of what happened and what the alert does.
 - `runbook_url`: The runbook page to guide operators managing a potential incident.
 - `dashboardUId` and `panelId`: Link the alert to a dashboard and panel. These are automatically set when [creating an alert from panels](ref:create-alerts-from-panel).
 
-Like labels, annotations can use a [template](ref:templates) to customize the label value and generate dynamic values when the rule is evaluated.
+For example, you can edit the annotation `summary` to explain why the alert was triggered:
+
+```
+CPU usage has exceeded 80% for the last 5 minutes.
+```
+
+And edit the `description` annotation to provide more context and how to respond:
+
+```
+The web server's CPU has exceeded 80% for more than 5 minutes.
+
+This indicates that the system is under heavy load and may result in an outage.
+
+Consider scaling the server's resources and investigating bottlenecks.
+```
+
+Like labels, annotations can use a [template](ref:templates) to include dynamic data from queries.
