@@ -212,44 +212,46 @@ export default memo(LogsNavigation);
 const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
   const navContainerHeight = `calc(100vh - 2*${theme.spacing(2)} - 2*${TOP_BAR_LEVEL_HEIGHT}px)`;
   return {
-    navContainer: css`
-      max-height: ${navContainerHeight};
-      ${oldestLogsFirst ? 'width: 58px;' : ''}
-      display: flex;
-      flex-direction: column;
-      ${config.featureToggles.logsInfiniteScrolling
-        ? `justify-content: flex-end;`
-        : `justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};`}
-      position: sticky;
-      top: ${theme.spacing(2)};
-      right: 0;
-    `,
-    navButton: css`
-      width: 58px;
-      height: 68px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      line-height: 1;
-    `,
-    navButtonContent: css`
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      height: 100%;
-      white-space: normal;
-    `,
-    scrollToTopButton: css`
-      width: 40px;
-      height: 40px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      margin-top: ${theme.spacing(1)};
-    `,
+    navContainer: css({
+      maxHeight: navContainerHeight,
+      width: oldestLogsFirst ? '58px' : 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: config.featureToggles.logsInfiniteScrolling
+        ? 'flex-end'
+        : oldestLogsFirst
+          ? 'flex-start'
+          : 'space-between',
+      position: 'sticky',
+      top: theme.spacing(2),
+      right: 0,
+    }),
+    navButton: css({
+      width: '58px',
+      height: '68px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      lineHeight: 1,
+    }),
+    navButtonContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      height: '100%',
+      whiteSpace: 'normal',
+    }),
+    scrollToTopButton: css({
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: theme.spacing(1),
+    }),
   };
 };

@@ -41,8 +41,9 @@ func New(
 	}
 
 	return &Resource{
-		log:        plog,
-		promClient: client.NewClient(httpClient, httpMethod, settings.URL),
+		log: plog,
+		// we don't use queryTimeout for resource calls
+		promClient: client.NewClient(httpClient, httpMethod, settings.URL, ""),
 	}, nil
 }
 
