@@ -105,23 +105,23 @@ export function LogsVolumePanel(props: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    extraInfoContainer: css`
-      display: flex;
-      justify-content: end;
-      position: absolute;
-      right: 5px;
-      top: -10px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
-    contentContainer: css`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    `,
-    streaming: css`
-      color: ${theme.colors.success.text};
-    `,
+    extraInfoContainer: css({
+      display: 'flex',
+      justifyContent: 'end',
+      position: 'absolute',
+      right: '5px',
+      top: '-10px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    contentContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    }),
+    streaming: css({
+      color: theme.colors.success.text,
+    }),
   };
 };

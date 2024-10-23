@@ -123,10 +123,10 @@ export const FolderPickerTab = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  cardsWrapper: css`
-    height: 30vh;
-    min-height: 50px;
-    margin-top: 5px;
-    max-width: 680px;
-  `,
+  cardsWrapper: css({
+    height: '30vh',
+    minHeight: '50px',
+    marginTop: '5px',
+    maxWidth: '680px',
+  }),
 });

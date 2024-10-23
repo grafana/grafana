@@ -58,48 +58,48 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
   const fontBase = size === 'md' ? 'body' : 'bodySmall';
 
   return {
-    box: css`
-      display: flex;
-      align-items: center;
-      position: relative;
-      border-radius: ${borderRadius};
-      background: ${theme.colors.success.transparent};
-      padding: ${theme.spacing(2)};
-      color: ${theme.colors.success.text};
-      font-size: ${theme.typography[fontBase].fontSize};
-      text-align: left;
-      line-height: 16px;
-      margin: ${theme.spacing(0, 'auto', 3, 'auto')};
-      max-width: ${theme.breakpoints.values.xxl}px;
-      width: 100%;
-    `,
-    inner: css`
-      display: flex;
-      align-items: center;
-      width: 100%;
-      justify-content: space-between;
-    `,
-    text: css`
-      margin: 0;
-    `,
-    button: css`
-      background-color: ${theme.colors.success.main};
-      font-weight: ${theme.typography.fontWeightLight};
-      color: white;
+    box: css({
+      display: 'flex',
+      alignItems: 'center',
+      position: 'relative',
+      borderRadius: borderRadius,
+      background: theme.colors.success.transparent,
+      padding: theme.spacing(2),
+      color: theme.colors.success.text,
+      fontSize: theme.typography[fontBase].fontSize,
+      textAlign: 'left',
+      lineHeight: '16px',
+      margin: theme.spacing(0, 'auto', 3, 'auto'),
+      maxWidth: `${theme.breakpoints.values.xxl}px`,
+      width: '100%',
+    }),
+    inner: css({
+      display: 'flex',
+      alignItems: 'center',
+      width: '100%',
+      justifyContent: 'space-between',
+    }),
+    text: css({
+      margin: 0,
+    }),
+    button: css({
+      backgroundColor: theme.colors.success.main,
+      fontWeight: theme.typography.fontWeightLight,
+      color: 'white',
 
-      &:hover {
-        background-color: ${theme.colors.success.main};
-      }
+      '&:hover': {
+        backgroundColor: theme.colors.success.main,
+      },
 
-      &:focus-visible {
-        box-shadow: none;
-        color: ${theme.colors.text.primary};
-        outline: 2px solid ${theme.colors.primary.main};
-      }
-    `,
-    icon: css`
-      margin: ${theme.spacing(0.5, 1, 0.5, 0.5)};
-    `,
+      '&:focus-visible': {
+        boxShadow: 'none',
+        color: theme.colors.text.primary,
+        outline: `2px solid ${theme.colors.primary.main}`,
+      },
+    }),
+    icon: css({
+      margin: theme.spacing(0.5, 1, 0.5, 0.5),
+    }),
   };
 };
 
@@ -165,50 +165,50 @@ export const UpgradeContent = ({
 
 const getUpgradeContentStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-      justify-content: space-between;
-    `,
-    content: css`
-      width: 45%;
-      margin-right: ${theme.spacing(4)};
-    `,
-    media: css`
-      width: 55%;
+    container: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
+    content: css({
+      width: '45%',
+      marginRight: theme.spacing(4),
+    }),
+    media: css({
+      width: '55%',
 
-      img {
-        width: 100%;
-      }
-    `,
-    title: css`
-      color: ${theme.colors.text.maxContrast};
-    `,
-    description: css`
-      color: ${theme.colors.text.primary};
-      font-weight: ${theme.typography.fontWeightLight};
-    `,
-    list: css`
-      list-style: none;
-      margin: ${theme.spacing(4, 0, 2, 0)};
+      img: {
+        width: '100%',
+      },
+    }),
+    title: css({
+      color: theme.colors.text.maxContrast,
+    }),
+    description: css({
+      color: theme.colors.text.primary,
+      fontWeight: theme.typography.fontWeightLight,
+    }),
+    list: css({
+      listStyle: 'none',
+      margin: theme.spacing(4, 0, 2, 0),
 
-      li {
-        display: flex;
-        align-items: flex-start;
-        color: ${theme.colors.text.primary};
-        padding: ${theme.spacing(1, 0)};
-      }
-    `,
-    icon: css`
-      color: ${theme.colors.success.main};
-      margin-right: ${theme.spacing(1)};
-    `,
-    link: css`
-      margin-left: ${theme.spacing(2)};
-    `,
-    caption: css`
-      font-weight: ${theme.typography.fontWeightLight};
-      margin: ${theme.spacing(1, 0, 0)};
-    `,
+      li: {
+        display: 'flex',
+        alignItems: 'flex-start',
+        color: theme.colors.text.primary,
+        padding: theme.spacing(1, 0),
+      },
+    }),
+    icon: css({
+      color: theme.colors.success.main,
+      marginRight: theme.spacing(1),
+    }),
+    link: css({
+      marginLeft: theme.spacing(2),
+    }),
+    caption: css({
+      fontWeight: theme.typography.fontWeightLight,
+      margin: theme.spacing(1, 0, 0),
+    }),
   };
 };
 
@@ -235,25 +235,25 @@ export const UpgradeContentVertical = ({
 
 const getContentVerticalStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      overflow: auto;
-      height: 100%;
-    `,
-    title: css`
-      color: ${theme.colors.text.maxContrast};
-    `,
-    description: css`
-      color: ${theme.colors.text.primary};
-      font-weight: ${theme.typography.fontWeightLight};
-    `,
-    media: css`
-      width: 100%;
-      margin-top: ${theme.spacing(2)};
+    container: css({
+      overflow: 'auto',
+      height: '100%',
+    }),
+    title: css({
+      color: theme.colors.text.maxContrast,
+    }),
+    description: css({
+      color: theme.colors.text.primary,
+      fontWeight: theme.typography.fontWeightLight,
+    }),
+    media: css({
+      width: '100%',
+      marginTop: theme.spacing(2),
 
-      img {
-        width: 100%;
-      }
-    `,
+      img: {
+        width: '100%',
+      },
+    }),
   };
 };
 

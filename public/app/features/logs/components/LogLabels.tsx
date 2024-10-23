@@ -86,28 +86,28 @@ LogLabel.displayName = 'LogLabel';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    logsLabels: css`
-      display: flex;
-      flex-wrap: wrap;
-      font-size: ${theme.typography.size.xs};
-    `,
-    logsLabel: css`
-      label: logs-label;
-      display: flex;
-      padding: ${theme.spacing(0, 0.25)};
-      background-color: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.radius.default};
-      margin: ${theme.spacing(0.125, 0.5, 0, 0)};
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-    `,
-    logsLabelValue: css`
-      label: logs-label__value;
-      display: inline-block;
-      max-width: ${theme.spacing(25)};
-      text-overflow: ellipsis;
-      overflow: hidden;
-    `,
+    logsLabels: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      fontSize: theme.typography.size.xs,
+    }),
+    logsLabel: css({
+      label: 'logs-label',
+      display: 'flex',
+      padding: theme.spacing(0, 0.25),
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      margin: theme.spacing(0.125, 0.5, 0, 0),
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+    }),
+    logsLabelValue: css({
+      label: 'logs-label__value',
+      display: 'inline-block',
+      maxWidth: theme.spacing(25),
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+    }),
   };
 };

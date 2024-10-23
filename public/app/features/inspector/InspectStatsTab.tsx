@@ -70,7 +70,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   );
 };
 
-const containerStyles = css`
-  height: 100%;
-  overflow-y: scroll;
-`;
+const containerStyles = css({
+  height: '100%',
+  overflowY: 'scroll',
+});

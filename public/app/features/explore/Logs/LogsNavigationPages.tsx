@@ -64,57 +64,51 @@ export function LogsNavigationPages({ pages, currentPageIndex, oldestLogsFirst, 
 
 const getStyles = (theme: GrafanaTheme2, loading: boolean) => {
   return {
-    pagesWrapper: css`
-      height: 100%;
-      padding-left: ${theme.spacing(0.5)};
-      display: flex;
-      flex-direction: column;
-      overflow-y: scroll;
-      &::after {
-        content: '';
-        display: block;
-        background: repeating-linear-gradient(
-          135deg,
-          ${theme.colors.background.primary},
-          ${theme.colors.background.primary} 5px,
-          ${theme.colors.background.secondary} 5px,
-          ${theme.colors.background.secondary} 15px
-        );
-        width: 3px;
-        height: inherit;
-        margin-bottom: 8px;
-      }
-    `,
-    pagesContainer: css`
-      display: flex;
-      padding: 0;
-      flex-direction: column;
-    `,
-    page: css`
-      display: flex;
-      margin: ${theme.spacing(2)} 0;
-      cursor: ${loading ? 'auto' : 'pointer'};
-      white-space: normal;
-      .selectedBg {
-        background: ${theme.colors.primary.main};
-      }
-      .selectedText {
-        color: ${theme.colors.primary.main};
-      }
-    `,
-    line: css`
-      width: 3px;
-      height: 100%;
-      align-items: center;
-      background: ${theme.colors.text.secondary};
-    `,
-    time: css`
-      width: 60px;
-      min-height: 80px;
-      font-size: ${theme.v1.typography.size.sm};
-      padding-left: ${theme.spacing(0.5)};
-      display: flex;
-      align-items: center;
-    `,
+    pagesWrapper: css({
+      height: '100%',
+      paddingLeft: theme.spacing(0.5),
+      display: 'flex',
+      flexDirection: 'column',
+      overflowY: 'scroll',
+      '&::after': {
+        content: "''",
+        display: 'block',
+        background: `repeating-linear-gradient(135deg, ${theme.colors.background.primary}, ${theme.colors.background.primary} 5px, ${theme.colors.background.secondary} 5px, ${theme.colors.background.secondary} 15px)`,
+        width: '3px',
+        height: 'inherit',
+        marginBottom: theme.spacing(1),
+      },
+    }),
+    pagesContainer: css({
+      display: 'flex',
+      padding: 0,
+      flexDirection: 'column',
+    }),
+    page: css({
+      display: 'flex',
+      margin: theme.spacing(2, 0),
+      cursor: loading ? 'auto' : 'pointer',
+      whiteSpace: 'normal',
+      '.selectedBg': {
+        background: theme.colors.primary.main,
+      },
+      '.selectedText': {
+        color: theme.colors.primary.main,
+      },
+    }),
+    line: css({
+      width: '3px',
+      height: '100%',
+      alignItems: 'center',
+      background: theme.colors.text.secondary,
+    }),
+    time: css({
+      width: '60px',
+      minHeight: '80px',
+      fontSize: theme.v1.typography.size.sm,
+      paddingLeft: theme.spacing(0.5),
+      display: 'flex',
+      alignItems: 'center',
+    }),
   };
 };

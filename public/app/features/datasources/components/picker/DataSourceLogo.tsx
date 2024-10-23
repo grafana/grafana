@@ -32,10 +32,10 @@ export function DataSourceLogoPlaceHolder() {
 
 function getStyles(theme: GrafanaTheme2, builtIn = false) {
   return {
-    pickerDSLogo: css`
-      height: 20px;
-      width: 20px;
-      filter: invert(${builtIn && theme.isLight ? 1 : 0});
-    `,
+    pickerDSLogo: css({
+      height: '20px',
+      width: '20px',
+      filter: `invert(${builtIn && theme.isLight ? 1 : 0})`,
+    }),
   };
 }

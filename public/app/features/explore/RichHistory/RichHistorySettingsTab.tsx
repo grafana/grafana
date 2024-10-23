@@ -24,21 +24,21 @@ export interface RichHistorySettingsProps {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    spaceBetween: css`
-      margin-bottom: ${theme.spacing(3)};
-    `,
-    input: css`
-      max-width: 200px;
-    `,
-    bold: css`
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
-    bottomMargin: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    container: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    spaceBetween: css({
+      marginBottom: theme.spacing(3),
+    }),
+    input: css({
+      maxWidth: '200px',
+    }),
+    bold: css({
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    bottomMargin: css({
+      marginBottom: theme.spacing(1),
+    }),
   };
 };
 

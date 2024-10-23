@@ -34,81 +34,81 @@ export interface RichHistoryQueriesTabProps {
 
 const getStyles = (theme: GrafanaTheme2, height: number) => {
   return {
-    container: css`
-      display: flex;
-    `,
-    labelSlider: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      &:last-of-type {
-        margin-top: ${theme.spacing(3)};
-      }
-      &:first-of-type {
-        font-weight: ${theme.typography.fontWeightMedium};
-        margin-bottom: ${theme.spacing(2)};
-      }
-    `,
-    containerContent: css`
+    container: css({
+      display: 'flex',
+    }),
+    labelSlider: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      '&:last-of-type': {
+        marginTop: theme.spacing(3),
+      },
+      '&:first-of-type': {
+        fontWeight: theme.typography.fontWeightMedium,
+        marginBottom: theme.spacing(2),
+      },
+    }),
+    containerContent: css({
       /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
-      width: calc(100% - 134px);
-    `,
-    containerSlider: css`
-      width: 129px;
-      margin-right: ${theme.spacing(1)};
-    `,
-    fixedSlider: css`
-      position: fixed;
-    `,
-    slider: css`
-      bottom: 10px;
-      height: ${height - 180}px;
-      width: 129px;
-      padding: ${theme.spacing(1)} 0;
-    `,
-    selectors: css`
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    `,
-    filterInput: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    multiselect: css`
-      width: 100%;
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    sort: css`
-      width: 170px;
-    `,
-    sessionName: css`
-      display: flex;
-      align-items: flex-start;
-      justify-content: flex-start;
-      margin-top: ${theme.spacing(3)};
-      h4 {
-        margin: 0 10px 0 0;
-      }
-    `,
-    heading: css`
-      font-size: ${theme.typography.h4.fontSize};
-      margin: ${theme.spacing(2, 0.25, 1, 0.25)};
-    `,
-    footer: css`
-      height: 60px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: ${theme.typography.fontWeightLight};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      a {
-        font-weight: ${theme.typography.fontWeightMedium};
-        margin-left: ${theme.spacing(0.25)};
-      }
-    `,
-    queries: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-weight: ${theme.typography.fontWeightRegular};
-      margin-left: ${theme.spacing(0.5)};
-    `,
+      width: 'calc(100% - 134px)',
+    }),
+    containerSlider: css({
+      width: '129px',
+      marginRight: theme.spacing(1),
+    }),
+    fixedSlider: css({
+      position: 'fixed',
+    }),
+    slider: css({
+      bottom: '10px',
+      height: `${height - 180}px`,
+      width: '129px',
+      padding: theme.spacing(1, 0),
+    }),
+    selectors: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+    }),
+    filterInput: css({
+      marginBottom: theme.spacing(1),
+    }),
+    multiselect: css({
+      width: '100%',
+      marginBottom: theme.spacing(1),
+    }),
+    sort: css({
+      width: '170px',
+    }),
+    sessionName: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'flex-start',
+      marginTop: theme.spacing(3),
+      h4: {
+        margin: '0 10px 0 0',
+      },
+    }),
+    heading: css({
+      fontSize: theme.typography.h4.fontSize,
+      margin: theme.spacing(2, 0.25, 1, 0.25),
+    }),
+    footer: css({
+      height: '60px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      fontWeight: theme.typography.fontWeightLight,
+      fontSize: theme.typography.bodySmall.fontSize,
+      a: {
+        fontWeight: theme.typography.fontWeightMedium,
+        marginLeft: theme.spacing(0.25),
+      },
+    }),
+    queries: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightRegular,
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 };
 
