@@ -22,6 +22,12 @@ labels:
 menuTitle: Webhook notifier
 title: Configure the webhook notifier for Alerting
 weight: 0
+refs:
+  notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
 ---
 
 # Configure the webhook notifier for Alerting
@@ -134,12 +140,16 @@ The webhook notification is a simple way to send information about a state chang
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
-| dashboardURL | string | **Will be deprecated soon**                                                        |
-| panelURL     | string | **Will be deprecated soon**                                                        |
+| dashboardURL | string | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation        |
+| panelURL     | string | A link to the panel if the alert has a Panel ID annotation                         |
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 {{< admonition type="note" >}}
-Alert rules are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
+
+You can customize the `title` and `message` fields using [notification templates](ref:notification-templates).
+
+However, you cannot customize webhook data structure or format, including JSON fields or sending data in XML, nor can you change the webhook HTTP headers.
+
 {{< /admonition >}}
 
 ## Procedure

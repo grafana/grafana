@@ -1,6 +1,7 @@
 import { getMock, locationReloadSpy } from './mocks';
 import {
   getDashboard,
+  getDashboardsContainer,
   getDashboardsExpand,
   getDashboardsSearch,
   getNotFoundForFilter,
@@ -62,6 +63,7 @@ export const expectResultCloudOpsNotSelected = () => expectRadioNotChecked(getRe
 
 export const expectDashboardsDisabled = () => expectDisabled(getDashboardsExpand);
 export const expectDashboardsClosed = () => expectNotInDocument(queryDashboardsContainer);
+export const expectDashboardsOpen = () => expectInDocument(getDashboardsContainer);
 export const expectNoDashboardsSearch = () => expectNotInDocument(queryDashboardsSearch);
 export const expectDashboardsSearch = () => expectInDocument(getDashboardsSearch);
 export const expectNoDashboardsNoScopes = () => expectInDocument(getNotFoundNoScopes);

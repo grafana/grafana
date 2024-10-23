@@ -4,9 +4,13 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/openfga/openfga/pkg/logger"
 )
+
+var _ logger.Logger = (*ZanzanaLogger)(nil)
 
 // ZanzanaLogger is a grafana logger wrapper compatible with OpenFGA logger interface
 type ZanzanaLogger struct {
@@ -34,6 +38,13 @@ func zapFieldsToArgs(fields []zap.Field) []any {
 		}
 	}
 	return args
+}
+
+// With implements logger.Logger.
+func (l *ZanzanaLogger) With(fields ...zapcore.Field) logger.Logger {
+	return &ZanzanaLogger{
+		logger: l.logger.New(zapFieldsToArgs(fields)...),
+	}
 }
 
 func (l *ZanzanaLogger) Debug(msg string, fields ...zap.Field) {

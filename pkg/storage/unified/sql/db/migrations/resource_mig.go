@@ -22,7 +22,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
 			{Name: "value", Type: migrator.DB_LongText, Nullable: true},
 			{Name: "action", Type: migrator.DB_Int, Nullable: false}, // 1: create, 2: update, 3: delete
 
@@ -44,7 +44,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
 			{Name: "value", Type: migrator.DB_LongText, Nullable: true},
 			{Name: "action", Type: migrator.DB_Int, Nullable: false}, // 1: create, 2: update, 3: delete
 

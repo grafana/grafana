@@ -48,6 +48,8 @@ type Folder struct {
 	URL          string
 	UpdatedBy    int64
 	CreatedBy    int64
+	UpdatedByUID string
+	CreatedByUID string
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
@@ -148,11 +150,12 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID           *int64
-	Title        *string
-	ParentUID    *string
-	OrgID        int64
-	WithFullpath bool
+	ID               *int64
+	Title            *string
+	ParentUID        *string
+	OrgID            int64
+	WithFullpath     bool
+	WithFullpathUIDs bool
 
 	SignedInUser identity.Requester `json:"-"`
 }

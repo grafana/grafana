@@ -23,6 +23,7 @@ import (
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
+	BlobStoreClient
 	DiagnosticsClient
 }
 
@@ -30,6 +31,7 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
+	BlobStoreClient
 	DiagnosticsClient
 }
 
@@ -38,6 +40,7 @@ func NewResourceClient(channel *grpc.ClientConn) ResourceClient {
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}
 }
@@ -49,6 +52,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
+		&BlobStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
@@ -71,6 +75,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}
 }

@@ -464,6 +464,11 @@ type AlertRuleKeyWithVersion struct {
 	AlertRuleKey `xorm:"extends"`
 }
 
+type AlertRuleKeyWithGroup struct {
+	RuleGroup    string
+	AlertRuleKey `xorm:"extends"`
+}
+
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
 	ID int64
@@ -515,6 +520,11 @@ func (s AlertRuleGroupKeySorter) Less(i, j int) bool { return s.by(&s.keys[i], &
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
+}
+
+// GetKeyWithGroup returns the alert definitions identifier
+func (alertRule *AlertRule) GetKeyWithGroup() AlertRuleKeyWithGroup {
+	return AlertRuleKeyWithGroup{AlertRuleKey: alertRule.GetKey(), RuleGroup: alertRule.RuleGroup}
 }
 
 // GetGroupKey returns the identifier of a group the rule belongs to
@@ -611,17 +621,9 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
 
-	clearRecordingRuleIgnoredFields(rule)
+	ClearRecordingRuleIgnoredFields(rule)
 
 	return nil
-}
-
-func clearRecordingRuleIgnoredFields(rule *AlertRule) {
-	rule.NoDataState = ""
-	rule.ExecErrState = ""
-	rule.Condition = ""
-	rule.For = 0
-	rule.NotificationSettings = nil
 }
 
 func (alertRule *AlertRule) ResourceType() string {
@@ -648,6 +650,14 @@ func (alertRule *AlertRule) Type() RuleType {
 		return RuleTypeRecording
 	}
 	return RuleTypeAlerting
+}
+
+func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
+	rule.NoDataState = ""
+	rule.ExecErrState = ""
+	rule.Condition = ""
+	rule.For = 0
+	rule.NotificationSettings = nil
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
