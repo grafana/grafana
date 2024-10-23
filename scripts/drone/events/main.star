@@ -91,6 +91,9 @@ def windows_pipeline(trigger, ver_mode):
         )
 
 def main_pipelines():
+    # This is how we should define any new pipelines. At some point we should update existing ones.
+    # Let's make an effort to reduce the amount of string constants in "depends_on" lists.
+    windows = windows_pipeline(trigger, ver_mode = ver_mode)
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
         test_frontend(trigger, ver_mode),
@@ -100,7 +103,7 @@ def main_pipelines():
         verify_storybook(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
-        windows_pipeline(trigger, ver_mode = ver_mode),
+        windows,
         enterprise_downstream_pipeline(),
         notify_pipeline(
             name = "main-notify",
@@ -111,7 +114,7 @@ def main_pipelines():
                 "main-test-backend",
                 "main-build-e2e-publish",
                 "main-integration-tests",
-                "main-windows",
+                windows["name"],
             ],
             template = failure_template,
             secret = "slack_webhook",

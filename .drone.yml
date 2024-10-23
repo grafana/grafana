@@ -2820,7 +2820,7 @@ depends_on:
 - main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
-- main-windows
+- main-windows-msi
 kind: pipeline
 name: main-notify
 platform:
@@ -6003,6 +6003,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b91987f7be5e8e21b26f83657e185676c597b89d8db1f667922b655c3b445965
+hmac: 8648dcdcf27c139705f75a45e9237514dfda2b2000d18dfa180900e52b7f6db9
 
 ...
