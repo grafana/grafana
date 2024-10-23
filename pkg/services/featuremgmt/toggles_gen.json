@@ -822,6 +822,22 @@
     },
     {
       "metadata": {
+        "name": "dashboardNewLayouts",
+        "resourceVersion": "1729671312626",
+        "creationTimestamp": "2024-10-16T08:44:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-23 08:15:12.626632 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables experimental new dashboard layouts",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardRestore",
         "resourceVersion": "1728397491294",
         "creationTimestamp": "2024-05-16T17:36:26Z",
@@ -857,10 +873,10 @@
     {
       "metadata": {
         "name": "dashboardScene",
-        "resourceVersion": "1727354524763",
+        "resourceVersion": "1729671397794",
         "creationTimestamp": "2023-11-13T08:51:21Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-23 08:16:37.794144 +0000 UTC"
         }
       },
       "spec": {

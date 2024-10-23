@@ -22,7 +22,7 @@ weight: -45
 
 Welcome to Grafana 11.3! Scenes-powered dashboards are now generally available and the Explore Logs plugin is now installed by default. The dashboard experience has also improved in other ways including the ability to trigger API calls from any canvas element with the new **Actions** option and an update to transformations so you can apply calculations to dynamic fields. We've also simplified the alert setup experience, added customizable announcement banners that admins can send to all users, and improved some default permissions.
 
-<!-- {{< youtube id="s6IYpILVDSM" >}} -->
+{{< youtube id="a0rdRbYPCls" >}}
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.3/).
 
@@ -171,6 +171,20 @@ With **Explore Logs** you can visualize and explore your logs to troubleshoot wi
 While **Explore Logs** is [GA in cloud](https://grafana.com/blog/2024/09/24/queryless-metrics-logs-traces-profiles/#explore-logs) and installed there by default already, with Grafana v11.3.0 it will be automatically installed on your Open Source or Enterprise instance as well. This will let you use Explore Logs alongside **Explore Metrics** without needing to install it manually.
 
 This is configured by the [`preinstall` configuration parameter](https://github.com/grafana/grafana/blob/9ece88d5852dceb90f83271e66902eece24f908f/conf/defaults.ini#L1748) in your Grafana configuration. For more information about Explore logs, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/logs/).
+
+## Correlations
+
+### Add correlations to external URLs in Explore
+
+<!-- #grafana-correlations or @kdurivage -->
+
+_Generally available in all editions of Grafana_
+
+Correlations is a feature that allows Grafana users to set up links between their data sources. Previously, the link generated would only be from one query to another—meaning results from a query could only generate links to open a second Explore pane with other query results.
+
+With this feature, users can now link to third party web-based software based on their search results. The format follows the standard Grafana format for using variables.
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/)
 
 ## Alerting
 
