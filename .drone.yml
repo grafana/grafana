@@ -539,7 +539,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -995,7 +995,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1957,7 +1957,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2510,7 +2510,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2692,53 +2692,6 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- main-test-frontend
-- main-test-backend
-- main-build-e2e-publish
-- main-integration-tests
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: main-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - echo $env:DRONE_RUNNER_NAME
-  image: mcr.microsoft.com/windows:1809
-  name: identify-runner
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
-  repo:
-  - grafana/grafana
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
 - main-build-e2e-publish
 - main-integration-tests
 environment:
@@ -2790,7 +2743,6 @@ depends_on:
 - main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
-- main-windows
 kind: pipeline
 name: main-notify
 platform:
@@ -3142,7 +3094,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3387,7 +3339,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3519,7 +3471,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4265,51 +4217,6 @@ volumes:
 clone:
   retries: 3
 depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: release-whatsnew-checker
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
-- commands:
-  - ./bin/build whatsnew-checker
-  depends_on:
-  - compile-build-cmd
-  image: golang:1.23.1-alpine
-  name: whats-new-checker
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-    exclude:
-    - refs/tags/*-cloud*
-    include:
-    - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
 image_pull_secrets:
 - gcr
 - gar
@@ -4380,53 +4287,34 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on:
-- rgm-tag-prerelease
+depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
-name: rgm-tag-prerelease-windows
+name: release-whatsnew-checker
+node:
+  type: no-parallel
 platform:
   arch: amd64
-  os: windows
-  version: "1809"
+  os: linux
 services: []
 steps:
 - commands:
-  - echo $env:DRONE_RUNNER_NAME
-  image: mcr.microsoft.com/windows:1809
-  name: identify-runner
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-- commands:
-  - $$gcpKey = $$env:GCP_KEY
-  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
-    > gcpkey.json'
-  - dos2unix gcpkey.json
-  - gcloud auth activate-service-account --key-file=gcpkey.json
-  - rm gcpkey.json
-  - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
-    --edition oss ${DRONE_TAG}
-  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
-  depends_on:
-  - windows-init
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
-    GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
-  image: grafana/ci-wix:0.1.1
-  name: build-windows-installer
+    CGO_ENABLED: 0
+  image: golang:1.23.1-alpine
+  name: compile-build-cmd
+- commands:
+  - ./bin/build whatsnew-checker
+  depends_on:
+  - compile-build-cmd
+  image: golang:1.23.1-alpine
+  name: whats-new-checker
 trigger:
   event:
     exclude:
@@ -4439,14 +4327,96 @@ trigger:
 type: docker
 volumes:
 - host:
-    path: //./pipe/docker_engine/
+    path: /var/run/docker.sock
   name: docker
 ---
 clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
-- rgm-tag-prerelease-windows
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: prerelease-windows-msi
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - curl -L0 https://nssm.cc/release/nssm-2.24.zip -o nssm-2.24.zip
+  image: byrnedo/alpine-curl:0.1.8
+  name: downlad-nssm
+- commands:
+  - mkdir wix3 && cd wix3
+  - curl -L0 https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
+    -o wix3.zip
+  - unzip wix3.zip
+  image: byrnedo/alpine-curl:0.1.8
+  name: download-wix3
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - bash -c 'gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+    grafana.zip'
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key_base64
+  image: google/cloud-sdk:431.0.0
+  name: download-zip
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - export WINEPATH=$(winepath ./wix3)
+  - ./bin/grabpl windows-installer --target grafana.zip --edition oss
+  depends_on:
+  - downlad-nssm
+  - download-wix3
+  - grabpl
+  - download-zip
+  entrypoint:
+  - /bin/bash
+  image: scottyhardy/docker-wine:stable-9.0
+  name: build-msi
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - bash -c 'gcloud storage cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release'
+  - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release'
+  depends_on:
+  - build-msi
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key_base64
+  image: google/cloud-sdk:431.0.0
+  name: upload-msi-installer
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- prerelease-windows-msi
+- rgm-tag-prerelease
 image_pull_secrets:
 - gcr
 - gar
@@ -5083,59 +5053,6 @@ volumes:
   name: docker
 ---
 clone:
-  disable: true
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: testing-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/$$env:DRONE_REPO.git" .
-  - git checkout -f $$env:DRONE_COMMIT
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: clone
-- commands: []
-  depends_on:
-  - clone
-  image: golang:1.23.1-windowsservercore-1809
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags oss ./pkg/server
-  depends_on:
-  - windows-init
-  image: golang:1.23.1-windowsservercore-1809
-  name: wire-install
-- commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  image: golang:1.23.1-windowsservercore-1809
-  name: test-backend
-trigger:
-  event:
-  - promote
-  target:
-  - test-windows
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
   retries: 3
 depends_on: []
 environment:
@@ -5199,7 +5116,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.56/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5363,55 +5280,6 @@ volumes:
 - name: mysql80
   temp:
     medium: memory
----
-clone:
-  disable: true
-depends_on: []
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: publish-ci-windows-test-image
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-ci-sandbox.git"
-    .
-  - git checkout -f $$env:DRONE_COMMIT
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: clone
-- commands:
-  - cd scripts\build\ci-windows-test
-  - docker login -u $$env:DOCKER_USERNAME -p $$env:DOCKER_PASSWORD
-  - docker build -t grafana/grafana-ci-windows-test:$$env:TAG .
-  - docker push grafana/grafana-ci-windows-test:$$env:TAG
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USERNAME:
-      from_secret: docker_username
-  image: docker:windowsservercore-1809
-  name: build-and-publish
-  volumes:
-  - name: docker
-    path: //./pipe/docker_engine/
-trigger:
-  event:
-  - promote
-  target:
-  - ci-windows-test-image
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
 ---
 clone:
   retries: 3
@@ -5723,6 +5591,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM rockylinux:9
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM scottyhardy/docker-wine:stable-9.0
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -5760,6 +5629,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
   - trivy --exit-code 1 --severity HIGH,CRITICAL rockylinux:9
+  - trivy --exit-code 1 --severity HIGH,CRITICAL scottyhardy/docker-wine:stable-9.0
   depends_on:
   - authenticate-gcr
   environment:
@@ -5791,6 +5661,82 @@ volumes:
   name: docker
 - name: config
   temp: {}
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: windows-pipeline-manual
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - curl -L0 https://nssm.cc/release/nssm-2.24.zip -o nssm-2.24.zip
+  image: byrnedo/alpine-curl:0.1.8
+  name: downlad-nssm
+- commands:
+  - mkdir wix3 && cd wix3
+  - curl -L0 https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
+    -o wix3.zip
+  - unzip wix3.zip
+  image: byrnedo/alpine-curl:0.1.8
+  name: download-wix3
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - bash -c 'gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+    grafana.zip'
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key_base64
+  image: google/cloud-sdk:431.0.0
+  name: download-zip
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - export WINEPATH=$(winepath ./wix3)
+  - ./bin/grabpl windows-installer --target grafana.zip --edition oss
+  depends_on:
+  - downlad-nssm
+  - download-wix3
+  - grabpl
+  - download-zip
+  entrypoint:
+  - /bin/bash
+  image: scottyhardy/docker-wine:stable-9.0
+  name: build-msi
+- commands:
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - bash -c 'gcloud storage cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release'
+  - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release'
+  depends_on:
+  - build-msi
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key_base64
+  image: google/cloud-sdk:431.0.0
+  name: upload-msi-installer
+trigger:
+  event:
+  - promote
+  target: build-msi
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
 ---
 get:
   name: credentials.json
@@ -5991,6 +5937,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 41df5b1fdbd1b3c9aa915919ae5be16d2a188cbaf6b243c14fd66f94db0db8d8
+hmac: a8084d907b286e710ed331c4c09a23f16c1afed5c428a9a1b99da3ad05ab3a3f
 
 ...
