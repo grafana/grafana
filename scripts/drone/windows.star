@@ -42,7 +42,7 @@ def download_wix_step():
         "image": images["curl"],
         "commands": [
             "mkdir wix3 && cd wix3",
-            "curl https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip -o wix3.zip",
+            "curl -L0 https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip -o wix3.zip",
             "unzip wix3.zip",
         ],
     }

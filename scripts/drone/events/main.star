@@ -88,6 +88,7 @@ def windows_pipeline(trigger, ver_mode):
                 "main-integration-tests",
             ],
             environment=environment,
+            trigger=trigger,
         )
 
 def main_pipelines():

@@ -287,10 +287,15 @@ def rgm_nightly_pipeline():
     ]
 
 def rgm_tag_pipeline():
-    windows = windows_pipeline_release()
+    build = rgm_tag()
+
+    # the Windows step requires an uploaded .zip file to base its compilation on
+    windows = windows_pipeline_release(trigger=tag_trigger, depends_on=[
+        build["name"],
+    ])
     return [
+        build,
         whats_new_checker_pipeline(tag_trigger),
-        rgm_tag(),
         windows,
         verify_release_pipeline(
             trigger = tag_trigger,
@@ -298,7 +303,7 @@ def rgm_tag_pipeline():
             bucket = "grafana-prerelease",
             depends_on = [
                 windows["name"],
-                "rgm-tag-prerelease",
+                build["name"],
             ],
         ),
     ]
