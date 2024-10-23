@@ -132,7 +132,6 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
   ) : (
     <KBarResults
       items={items}
-      maxHeight={650}
       onRender={({ item, active }) => {
         const isFirst = items[0] === item;
 
