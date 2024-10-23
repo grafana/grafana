@@ -232,7 +232,7 @@ describe('calculateField transformer w/ timeseries', () => {
                 "name": "TheTime",
                 "state": {
                   "displayName": "TheTime",
-                  "multipleFrames": false,
+                  "multipleFrames": true,
                 },
                 "type": "time",
                 "values": [
