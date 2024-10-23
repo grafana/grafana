@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Create alert rules from panels
-weight: 400
+weight: 300
 ---
 
 ## Create alert rules from panels

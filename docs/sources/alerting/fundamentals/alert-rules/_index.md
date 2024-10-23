@@ -41,9 +41,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
   create-recording-rules:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
   expression-queries:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries
@@ -104,8 +104,6 @@ A recording rule allows you to pre-compute frequently needed or computationally 
 
 Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh. For more information, refer to [Create recording rules](ref:create-recording-rules).
 
-Alternatively, Grafana Enterprise and Grafana Cloud offer [recorded queries](ref:recorded-queries) that can be executed against any data source.
-
 ## Comparison between alert rule types
 
 When choosing which alert rule type to use, consider the following comparison between Grafana-managed and data source-managed alert rules.
@@ -114,7 +112,7 @@ When choosing which alert rule type to use, consider the following comparison be
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Create alert rules<wbr /> based on data from any of the supported data sources | Yes                                                                                                                          | No. You can only create alert rules that are based on Prometheus-based data.                                                                            |
 | Mix and match data sources                                                     | Yes                                                                                                                          | No                                                                                                                                                      |
-| Includes support for recording rules                                           | Yes. Only for Grafana OSS users with the `grafanaManagedRecordingRules` feature flag enabled.                                | Yes                                                                                                                                                     |
+| Includes support for recording rules                                           | Yes                                                                                                                          | Yes                                                                                                                                                     |
 | Add expressions to transform<wbr /> your data and set alert conditions         | Yes                                                                                                                          | No                                                                                                                                                      |
 | Use images in alert notifications                                              | Yes                                                                                                                          | No                                                                                                                                                      |
 | Organization                                                                   | Organize and manage access with folders                                                                                      | Use namespaces                                                                                                                                          |
