@@ -124,7 +124,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			var refError ErrorWithRefID
 			statusCode := http.StatusBadRequest
 			message := err
-			refID := "A"
+			refID := ""
 
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
 				statusCode = http.StatusNotFound
