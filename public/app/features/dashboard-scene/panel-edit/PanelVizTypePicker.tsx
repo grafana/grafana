@@ -28,18 +28,17 @@ export interface Props {
 export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedTrackSearch = useMemo(
+  const trackSearch = useMemo(
     () =>
-      debounce((q) => {
-        reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SEARCH, query: q });
+      debounce((q, count) => {
+        if (q) {
+          reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SEARCH, query: q, result_count: count });
+        }
       }, 300),
     []
   );
 
   const handleSearchChange = (value: string) => {
-    if (value) {
-      debouncedTrackSearch(value);
-    }
     setSearchQuery(value);
   };
 
@@ -101,10 +100,21 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
       </Field>
       <CustomScrollbar>
         {listMode === VisualizationSelectPaneTab.Visualizations && (
-          <VizTypePicker pluginId={panel.state.pluginId} searchQuery={searchQuery} onChange={onChange} />
+          <VizTypePicker
+            pluginId={panel.state.pluginId}
+            searchQuery={searchQuery}
+            trackSearch={trackSearch}
+            onChange={onChange}
+          />
         )}
         {listMode === VisualizationSelectPaneTab.Suggestions && (
-          <VisualizationSuggestions onChange={onChange} searchQuery={searchQuery} panel={panelModel} data={data} />
+          <VisualizationSuggestions
+            onChange={onChange}
+            trackSearch={trackSearch}
+            searchQuery={searchQuery}
+            panel={panelModel}
+            data={data}
+          />
         )}
       </CustomScrollbar>
     </div>
