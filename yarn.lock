@@ -3104,7 +3104,7 @@ __metadata:
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/prismjs": "npm:1.26.4"
@@ -3146,7 +3146,7 @@ __metadata:
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/react": "npm:18.3.3"
@@ -3176,7 +3176,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.5.0"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/prismjs": "npm:1.26.4"
@@ -3218,7 +3218,7 @@ __metadata:
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/d3-random": "npm:^3.0.2"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/react": "npm:18.3.3"
@@ -3258,7 +3258,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.5.0"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/logfmt": "npm:^1.2.3"
     "@types/node": "npm:20.16.14"
@@ -3299,7 +3299,7 @@ __metadata:
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/react": "npm:18.3.3"
@@ -3330,7 +3330,7 @@ __metadata:
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/react": "npm:18.3.3"
@@ -3395,7 +3395,7 @@ __metadata:
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/prismjs": "npm:1.26.4"
@@ -3450,7 +3450,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.5.0"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/prismjs": "npm:1.26.4"
@@ -3500,7 +3500,7 @@ __metadata:
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/jest-dom": "npm:6.5.0"
     "@testing-library/react": "npm:16.0.1"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
     "@types/react": "npm:18.3.3"
@@ -3933,7 +3933,7 @@ __metadata:
     "@types/d3": "npm:7.4.3"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/eslint": "npm:9.6.1"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:3.5.31"
     "@types/lodash": "npm:4.17.12"
     "@types/node": "npm:20.16.14"
@@ -4027,7 +4027,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/angular": "npm:1.8.9"
     "@types/history": "npm:4.7.11"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
@@ -4249,7 +4249,7 @@ __metadata:
     "@types/d3": "npm:7.4.3"
     "@types/hoist-non-react-statics": "npm:3.3.5"
     "@types/is-hotkey": "npm:0.1.10"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:3.5.31"
     "@types/lodash": "npm:4.17.12"
     "@types/mock-raf": "npm:1.0.6"
@@ -10243,13 +10243,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:29.5.13, @types/jest@npm:^29.5.4":
-  version: 29.5.13
-  resolution: "@types/jest@npm:29.5.13"
+"@types/jest@npm:29.5.14, @types/jest@npm:^29.5.4":
+  version: 29.5.14
+  resolution: "@types/jest@npm:29.5.14"
   dependencies:
     expect: "npm:^29.0.0"
     pretty-format: "npm:^29.0.0"
-  checksum: 10/7d6e3e4ef4b1cab0f61270d55764709512fdfbcb1bd47c0ef44117d48490529c1f264dacf3440b9188363e99e290b80b79c529eadc3af2184116a90f6856b192
+  checksum: 10/59ec7a9c4688aae8ee529316c43853468b6034f453d08a2e1064b281af9c81234cec986be796288f1bbb29efe943bc950e70c8fa8faae1e460d50e3cf9760f9b
   languageName: node
   linkType: hard
 
@@ -19082,7 +19082,7 @@ __metadata:
     "@types/gtag.js": "npm:^0.0.20"
     "@types/history": "npm:4.7.11"
     "@types/ini": "npm:^4"
-    "@types/jest": "npm:29.5.13"
+    "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:3.5.31"
     "@types/js-yaml": "npm:^4.0.5"
     "@types/jsurl": "npm:^1.2.28"
