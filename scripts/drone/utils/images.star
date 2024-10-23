@@ -36,4 +36,5 @@ images = {
     "shellcheck": "koalaman/shellcheck:stable",
     "playwright": "mcr.microsoft.com/playwright:v1.42.1-jammy",
     "rocky": "rockylinux:9",
+    "wine": "scottyhardy/docker-wine:stable-9.0",
 }
