@@ -569,7 +569,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
-			require.ErrorContains(t, err, fmt.Sprintf("expected metric name(s) not found: [%v]", "grafana_alerting_rule_group_rules"))
+			require.NoError(t, err)
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
@@ -635,7 +635,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
-			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_group_rules]")
+			require.NoError(t, err)
 		})
 	})
 
@@ -649,7 +649,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_groups")
-			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_groups]")
+			require.NoError(t, err)
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()
@@ -713,7 +713,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simple_routing_rules")
-			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simple_routing_rules]")
+			require.NoError(t, err)
 		})
 
 		alertRule1 := models.RuleGen.With(
@@ -773,7 +773,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simple_routing_rules")
-			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simple_routing_rules]")
+			require.NoError(t, err)
 		})
 	})
 
@@ -792,7 +792,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
-			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simplified_editor_rules]")
+			require.NoError(t, err)
 		})
 
 		alertRule1 := models.RuleGen.With(
@@ -850,7 +850,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
-			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simplified_editor_rules]")
+			require.NoError(t, err)
 		})
 	})
 
@@ -864,7 +864,7 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_groups")
-			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_rule_groups]")
+			require.NoError(t, err)
 		})
 
 		alertRule1 := models.RuleGen.With(models.RuleGen.WithOrgID(firstOrgID)).GenerateRef()

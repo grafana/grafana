@@ -179,6 +179,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       textOverflow: 'ellipsis',
       userSelect: 'text',
       whiteSpace: 'nowrap',
+      cursor: 'text',
     }),
     sortIcon: css({
       marginLeft: theme.spacing(0.5),

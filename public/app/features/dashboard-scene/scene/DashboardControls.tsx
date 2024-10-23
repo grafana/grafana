@@ -122,10 +122,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const { variableControls, refreshPicker, timePicker, hideTimeControls, hideVariableControls, hideLinksControls } =
     model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel, $timeRange } = dashboard.useState();
+  const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = location.search.includes('scene-debugger');
-  $timeRange!.useState();
 
   if (!model.hasControls()) {
     return null;
@@ -136,7 +135,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       <Stack grow={1} wrap={'wrap'}>
         {!hideVariableControls && variableControls.map((c) => <c.Component model={c} key={c.state.key} />)}
         <Box grow={1} />
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
       {!hideTimeControls && (

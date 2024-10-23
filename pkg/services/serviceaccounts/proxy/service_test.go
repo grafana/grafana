@@ -43,9 +43,16 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 				expectedError: nil,
 			},
 			{
-				description: "should not allow to create a service account with extsvc prefix",
+				description: "should not allow to create a service account with extsvc- prefix",
 				form: sa.CreateServiceAccountForm{
 					Name: "extsvc-my-service-account",
+				},
+				expectedError: extsvcaccounts.ErrInvalidName,
+			},
+			{
+				description: "should not allow to create a service account with extsvc prefix",
+				form: sa.CreateServiceAccountForm{
+					Name: "extsvc my-service-account",
 				},
 				expectedError: extsvcaccounts.ErrInvalidName,
 			},
