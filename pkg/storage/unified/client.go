@@ -125,10 +125,7 @@ func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features feature
 		return resource.NewGRPCResourceClient(conn)
 	}
 
-	grpcClientCfg, err := grpcutils.ReadGrpcClientConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
+	grpcClientCfg := grpcutils.ReadGrpcClientConfig(cfg)
 
 	return resource.NewCloudResourceClient(conn, clientCfgMapping(grpcClientCfg), cfg.Env == setting.Dev)
 }
