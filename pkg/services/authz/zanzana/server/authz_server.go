@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
@@ -54,6 +55,18 @@ func WithSchema(modules []transformer.ModuleFile) ServerOption {
 	return func(s *Server) {
 		s.modules = modules
 	}
+}
+
+func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*Server, error) {
+	stackID := cfg.StackID
+	if stackID == "" {
+		stackID = "default"
+	}
+
+	return NewAuthz(
+		openfga,
+		WithTenantID(fmt.Sprintf("stack-%s", stackID)),
+	)
 }
 
 func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
@@ -105,7 +118,7 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 
 	req, err := translateToListRequest(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to translate request: %w", err)
 	}
 
 	req.StoreId = s.storeID
