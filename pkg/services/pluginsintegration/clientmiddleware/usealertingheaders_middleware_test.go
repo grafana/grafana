@@ -39,6 +39,7 @@ func TestUserAlertingHeadersMiddleware(t *testing.T) {
 
 		// the normal http headers
 		require.Equal(t, "", outReq.GetHTTPHeader("X-Rule-Name"))
+		require.Equal(t, "", outReq.GetHTTPHeader("X-Rule-Uid"))
 		require.Equal(t, "", outReq.GetHTTPHeader("X-Rule-Folder"))
 		require.Equal(t, "", outReq.GetHTTPHeader("X-Rule-Source"))
 		require.Equal(t, "", outReq.GetHTTPHeader("X-Rule-Type"))
@@ -50,6 +51,7 @@ func TestUserAlertingHeadersMiddleware(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set("Fromalert", "true")
 		req.Header.Set("X-Rule-Name", "n1")
+		req.Header.Set("X-Rule-Uid", "u1")
 		req.Header.Set("X-Rule-Folder", "f1")
 		req.Header.Set("X-Rule-Source", "s1")
 		req.Header.Set("X-Rule-Type", "t1")
@@ -62,6 +64,7 @@ func TestUserAlertingHeadersMiddleware(t *testing.T) {
 
 		// normal http headers
 		require.Equal(t, "n1", outReq.GetHTTPHeader("X-Rule-Name"))
+		require.Equal(t, "u1", outReq.GetHTTPHeader("X-Rule-Uid"))
 		require.Equal(t, "f1", outReq.GetHTTPHeader("X-Rule-Folder"))
 		require.Equal(t, "s1", outReq.GetHTTPHeader("X-Rule-Source"))
 		require.Equal(t, "t1", outReq.GetHTTPHeader("X-Rule-Type"))
