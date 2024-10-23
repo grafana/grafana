@@ -97,8 +97,9 @@ Make it short and descriptive as this will appear in your alert notification. Fo
 
 ### Define query and alert condition
 
-In this section, we define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
+In this section, we use the **Advanced options** for Grafana-managed alert rule creation. The advanced options let us define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
 
+1. Toggle **Advanced options** to view additional configuration options.
 1. Select **TestData** data source from the drop-down menu.
 1. From **Scenario** select **CSV Content**.
 1. Copy in the following CSV data:
