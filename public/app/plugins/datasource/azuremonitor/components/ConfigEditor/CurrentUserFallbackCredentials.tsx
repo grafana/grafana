@@ -1,13 +1,12 @@
 import { useMemo } from 'react';
 
+import { AadCurrentUserCredentials, AzureAuthType, AzureCredentials, instanceOfAzureCredential } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Select, Field, RadioButtonGroup, Alert, Stack } from '@grafana/ui';
 
-import { instanceOfAzureCredential } from '../../credentials';
 import { selectors } from '../../e2e/selectors';
-import { AadCurrentUserCredentials, AzureAuthType, AzureCredentials } from '../../types';
 
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
 
@@ -66,7 +65,7 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
     const updated: AadCurrentUserCredentials = {
       ...credentials,
       serviceCredentials: {
-        authType: selected.value || defaultAuthType,
+        authType: (selected.value || defaultAuthType) as 'clientsecret' | 'msi' | 'workloadidentity',
       },
     };
     onCredentialsChange(updated);

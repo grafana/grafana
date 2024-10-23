@@ -1,19 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { getCredentials, updateCredentials } from '../../credentials';
-import { AzureDataSourceSettings, AzureCredentials } from '../../types';
+import { AzureMonitorDataSourceSettings } from '../../types';
 
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';
 import { DefaultSubscription } from './DefaultSubscription';
 
 export interface Props {
-  options: AzureDataSourceSettings;
-  updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
+  options: AzureMonitorDataSourceSettings;
+  updateOptions: (optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings) => void;
   getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
 }
 

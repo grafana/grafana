@@ -1,13 +1,15 @@
 import { map } from 'lodash';
 
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { AzureCredentials } from '@grafana/azure-sdk';
+import { ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import ResponseParser from '../azure_monitor/response_parser';
-import { getAuthType } from '../credentials';
+import { getCredentials } from '../credentials';
 import {
   AzureAPIResponse,
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceInstanceSettings,
+  AzureMonitorDataSourceJsonData,
   AzureLogsVariable,
   AzureMonitorQuery,
   AzureQueryType,
@@ -21,8 +23,9 @@ import { transformMetadataToKustoSchema } from './utils';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
-  AzureDataSourceJsonData
+  AzureMonitorDataSourceJsonData
 > {
+  readonly credentials: AzureCredentials;
   resourcePath: string;
   declare applicationId: string;
 
@@ -32,10 +35,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   firstWorkspace?: string;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private instanceSettings: AzureMonitorDataSourceInstanceSettings,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.credentials = getCredentials(instanceSettings);
 
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
@@ -222,17 +226,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   private validateDatasource(): DatasourceValidationResult | undefined {
-    const authType = getAuthType(this.instanceSettings);
-
-    if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+    if (this.credentials.authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.credentials.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+      if (!this.isValidConfigField(this.credentials.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',
