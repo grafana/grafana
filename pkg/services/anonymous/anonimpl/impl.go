@@ -2,6 +2,7 @@ package anonimpl
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -79,20 +80,29 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, er
 	}, nil
 }
 
-func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, httpReq *http.Request, device *anonstore.Device) error {
+func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, device *anonstore.Device) error {
 	key := device.CacheKey()
 
-	if _, ok := a.localCache.Get(key); ok {
+	if val, ok := a.localCache.Get(key); ok {
+		if boolVal, ok := val.(bool); ok && !boolVal {
+			return anonstore.ErrDeviceLimitReached
+		}
 		return nil
 	}
 
-	a.localCache.SetDefault(key, struct{}{})
+	a.localCache.SetDefault(key, true)
 
 	if a.cfg.Env == setting.Dev {
 		a.log.Debug("Tagging device for UI", "deviceID", device.DeviceID, "device", device, "key", key)
 	}
 
 	if err := a.anonStore.CreateOrUpdateDevice(ctx, device); err != nil {
+		if errors.Is(err, anonstore.ErrDeviceLimitReached) {
+			a.localCache.SetDefault(key, false)
+			return err
+		}
+		// invalidate cache if there is an error
+		a.localCache.Delete(key)
 		return err
 	}
 
@@ -142,7 +152,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 		UpdatedAt: time.Now(),
 	}
 
-	err = a.tagDeviceUI(ctx, httpReq, taggedDevice)
+	err = a.tagDeviceUI(ctx, taggedDevice)
 	if err != nil {
 		a.log.Debug("Failed to tag device for UI", "error", err)
 		return err

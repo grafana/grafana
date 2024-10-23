@@ -14,8 +14,9 @@ import (
 
 func Test_UsageStats(t *testing.T) {
 	acSvc := actest.FakeService{}
+	pSvc := actest.FakePermissionsService{}
 	storeMock := newServiceAccountStoreFake()
-	svc := ServiceAccountsService{acSvc, storeMock, log.New("test"), log.New("background-test"), &SecretsCheckerFake{}, true, 5}
+	svc := ServiceAccountsService{acSvc, &pSvc, storeMock, log.NewNopLogger(), log.NewNopLogger(), &SecretsCheckerFake{}, true, 5}
 	err := svc.DeleteServiceAccount(context.Background(), 1, 1)
 	require.NoError(t, err)
 

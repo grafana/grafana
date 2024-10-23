@@ -75,6 +75,9 @@ To set up email integration, complete the following steps.
 1. Enter a contact point name.
 1. From the Integration list, select **Email**.
 1. Enter the email addresses you want to send notifications to.
+
+   E-mail addresses are case sensitive. Ensure that the e-mail address entered is correct.
+
 1. Click **Test** to check that your integration works.
 1. Click **Save contact point**.
 

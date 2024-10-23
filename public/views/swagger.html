@@ -7,8 +7,8 @@
     <link
       rel="stylesheet"
       type="text/css"
-      href="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui.css"
-      integrity="sha384-pzdBB6iZwPIzBHgXle+9cgvKuMgtWNrBopXkjrWnKCi3m4uJsPPdLQ4IPMqRDirS"
+      href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css"
+      integrity="sha384-wxLW6kwyHktdDGr6Pv1zgm/VGJh99lfUbzSn6HNHBENZlCN7W602k9VkGdxuFvPn"
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
@@ -32,8 +32,10 @@
         background: #fafafa;
       }
 
-      .topbar-wrapper img {
+      .swagger-ui .topbar a {
         content: url('public/img/grafana_icon.svg');
+        height: 50px;
+        flex: 0;
       }
     </style>
   </head>
@@ -43,17 +45,17 @@
 
     <script
       nonce="[[.Nonce]]"
-      src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-bundle.js"
+      src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"
       charset="UTF-8"
-      integrity="sha384-BGJ5JzR5LEl4ETmxXXlZtXtMWj3uQ9jj9/OHe3yrn5rrtAyLOz1SyyzwMfuwZgPc"
+      integrity="sha384-wmyclcVGX/WhUkdkATwhaK1X1JtiNrr2EoYJ+diV3vj4v6OC5yCeSu+yW13SYJep"
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     ></script>
     <script
       nonce="[[.Nonce]]"
-      src="https://unpkg.com/swagger-ui-dist@4.3.0/swagger-ui-standalone-preset.js"
+      src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js"
       charset="UTF-8"
-      integrity="sha384-AWSfISmlS8fS336GXRkpL0Uv6EbCpsFfXDUwmklhbb3SctGSuvXWBcbjERjgf/e4"
+      integrity="sha384-2YH8WDRaj7V2OqU/trsmzSagmk/E2SutiCsGkdgoQwC9pNUJV1u/141DHB6jgs8t"
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     ></script>

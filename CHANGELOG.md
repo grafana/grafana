@@ -1,3 +1,80 @@
+<!-- 11.1.7+security-01 START -->
+
+# 11.1.7+security-01 (2024-10-17)
+
+### Bug fixes
+
+- **SQL Expressions**: Fixes CVE-2024-9264
+
+<!-- 11.1.7+security-01 END -->
+<!-- 11.1.7 START -->
+
+# 11.1.7 (2024-10-01)
+
+### Features and enhancements
+
+- **Chore:** Bump Go to 1.22.7 [#93355](https://github.com/grafana/grafana/pull/93355), [@hairyhenderson](https://github.com/hairyhenderson)
+- **Chore:** Bump Go to 1.22.7 (Enterprise)
+
+### Bug fixes
+
+- **Alerting:** Fix preview of silences when label name contains spaces [#93050](https://github.com/grafana/grafana/pull/93050), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Make query wrapper match up datasource UIDs if necessary [#93115](https://github.com/grafana/grafana/pull/93115), [@tomratcliffe](https://github.com/tomratcliffe)
+- **AzureMonitor:** Deduplicate resource picker rows [#93704](https://github.com/grafana/grafana/pull/93704), [@aangelisc](https://github.com/aangelisc)
+- **AzureMonitor:** Improve resource picker efficiency [#93439](https://github.com/grafana/grafana/pull/93439), [@aangelisc](https://github.com/aangelisc)
+- **AzureMonitor:** Remove Basic Logs retention warning [#93122](https://github.com/grafana/grafana/pull/93122), [@aangelisc](https://github.com/aangelisc)
+- **Correlations:** Limit access to correlations page to users who can access Explore [#93675](https://github.com/grafana/grafana/pull/93675), [@ifrost](https://github.com/ifrost)
+- **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93487](https://github.com/grafana/grafana/pull/93487), [@wbrowne](https://github.com/wbrowne)
+
+<!-- 11.1.7 END -->
+<!-- 11.1.6+security-01 START -->
+
+# 11.1.6+security-01 (2024-10-17)
+
+### Bug fixes
+
+- **SQL Expressions**: Fixes CVE-2024-9264
+
+<!-- 11.1.6+security-01 END -->
+<!-- 11.1.6 START -->
+
+# 11.1.6 (2024-09-26)
+
+### Features and enhancements
+
+- **Chore:** Update swagger ui (4.3.0 to 5.17.14) [#92341](https://github.com/grafana/grafana/pull/92341), [@ryantxu](https://github.com/ryantxu)
+
+### Bug fixes
+
+- **Templating:** Fix searching non-latin template variables [#92892](https://github.com/grafana/grafana/pull/92892), [@leeoniya](https://github.com/leeoniya)
+- **TutorialCard:** Fix link to tutorial not opening [#92646](https://github.com/grafana/grafana/pull/92646), [@eledobleefe](https://github.com/eledobleefe)
+- **Alerting:** Fixed CVE-2024-8118.
+
+### Plugin development fixes & changes
+
+- **Bugfix:** QueryField typeahead missing background color [#92316](https://github.com/grafana/grafana/pull/92316), [@mckn](https://github.com/mckn)
+
+<!-- 11.1.6 END -->
+<!-- 11.1.5 START -->
+
+# 11.1.5 (2024-08-27)
+
+### Bug fixes
+
+- **Alerting:** Fix permissions for prometheus rule endpoints [#91414](https://github.com/grafana/grafana/pull/91414), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Fix persisting result fingerprint that is used by recovery threshold [#91290](https://github.com/grafana/grafana/pull/91290), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Auditing:** Fix a possible crash when audit logger parses responses for failed requests (Enterprise)
+- **RBAC:** Fix an issue with server admins not being able to manage users in orgs that they don't belong to [#92273](https://github.com/grafana/grafana/pull/92273), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **RBAC:** Fix an issue with server admins not being able to manage users in orgs that they dont belong to (Enterprise)
+- **RBAC:** Fix seeder failures when inserting duplicated permissions (Enterprise)
+- **Snapshots:** Fix panic when snapshot_remove_expired is true [#91232](https://github.com/grafana/grafana/pull/91232), [@ryantxu](https://github.com/ryantxu)
+- **VizTooltip:** Fix positioning at bottom and right edges on mobile [#92137](https://github.com/grafana/grafana/pull/92137), [@leeoniya](https://github.com/leeoniya)
+
+### Plugin development fixes & changes
+
+- **Bugfix:** QueryField typeahead missing background color [#92316](https://github.com/grafana/grafana/pull/92316), [@mckn](https://github.com/mckn)
+
+<!-- 11.1.5 END -->
 <!-- 11.1.4 START -->
 
 # 11.1.4 (2024-08-14)

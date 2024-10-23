@@ -156,9 +156,7 @@ def lint_starlark_step():
             "go install github.com/bazelbuild/buildtools/buildifier@latest",
             "buildifier --lint=warn -mode=check -r .",
         ],
-        "depends_on": [
-            "compile-build-cmd",
-        ],
+        "depends_on": [],
     }
 
 def enterprise_downstream_step(ver_mode):
@@ -1202,7 +1200,8 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def retry_command(command, attempts = 5, delay = 60):
+# This retry will currently continue for 30 minutes until fail, unless successful.
+def retry_command(command, attempts = 60, delay = 30):
     return [
         "for i in $(seq 1 %d); do" % attempts,
         "    if %s; then" % command,
@@ -1221,13 +1220,14 @@ def retry_command(command, attempts = 5, delay = 60):
     ]
 
 def verify_linux_DEB_packages_step(depends_on = []):
-    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1"
+    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=$version >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
         "environment": {},
         "commands": [
+            'export version=$(echo ${TAG} | sed -e "s/+security-/-/g")',
             'echo "Step 1: Updating package lists..."',
             "apt-get update >/dev/null 2>&1",
             'echo "Step 2: Installing prerequisites..."',
@@ -1239,12 +1239,12 @@ def verify_linux_DEB_packages_step(depends_on = []):
             'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
             'echo "Step 5: Installing Grafana..."',
             # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
-        ] + retry_command(install_command, attempts = 10) + [
+        ] + retry_command(install_command) + [
             'echo "Step 6: Verifying Grafana installation..."',
-            'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
-            '    echo "Successfully verified Grafana version ${TAG}"',
+            'if dpkg -s grafana | grep -q "Version: $version"; then',
+            '    echo "Successfully verified Grafana version $version"',
             "else",
-            '    echo "Failed to verify Grafana version ${TAG}"',
+            '    echo "Failed to verify Grafana version $version"',
             "    exit 1",
             "fi",
             'echo "Verification complete."',
@@ -1265,7 +1265,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
         "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
     )
 
-    repo_install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
+    install_command = "dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-RPM-packages",
@@ -1281,24 +1281,25 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 4: Configuring Grafana repository..."',
             "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
-            "dnf list available grafana-${TAG}",
+            'export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")',
+            "dnf list available grafana-$version",
             "if [ $? -eq 0 ]; then",
             '    echo "Grafana package found in repository. Installing from repo..."',
-        ] + retry_command(repo_install_command, attempts = 5) + [
+        ] + retry_command(install_command) + [
             '    echo "Verifying GPG key..."',
             "    rpm --import https://rpm.grafana.com/gpg.key",
             "    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana",
             "else",
-            '    echo "Grafana package version ${TAG} not found in repository."',
+            '    echo "Grafana package version $version not found in repository."',
             "    dnf repolist",
             "    dnf list available grafana*",
             "    exit 1",
             "fi",
             'echo "Step 6: Verifying Grafana installation..."',
-            'if rpm -q grafana | grep -q "${TAG}"; then',
-            '    echo "Successfully verified Grafana version ${TAG}"',
+            'if rpm -q grafana | grep -q "$verison"; then',
+            '    echo "Successfully verified Grafana version $version"',
             "else",
-            '    echo "Failed to verify Grafana version ${TAG}"',
+            '    echo "Failed to verify Grafana version $version"',
             "    exit 1",
             "fi",
             'echo "Verification complete."',
