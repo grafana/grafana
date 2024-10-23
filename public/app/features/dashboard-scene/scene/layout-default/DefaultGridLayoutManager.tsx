@@ -1,4 +1,3 @@
-/* eslint @grafana/no-untranslated-strings: "error" */
 import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
@@ -346,6 +345,8 @@ export class DefaultGridLayoutManager
     let currentX = 0;
 
     for (let panel of panels) {
+      panel.clearParent();
+
       children.push(
         new DashboardGridItem({
           key: `griditem-${getPanelIdForVizPanel(panel)}`,

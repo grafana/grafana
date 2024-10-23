@@ -908,7 +908,7 @@ var (
 		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
-			Stage:        FeatureStageGeneralAvailability,
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "true", // enabled by default
