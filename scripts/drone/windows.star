@@ -93,7 +93,7 @@ def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], 
     )
 
 def windows_pipeline_release(name = "prerelease-windows-msi", depends_on = [], trigger = {}, environment = {}):
-    target = "gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release"
+    target = "gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release"
     return windows_msi_pipeline(name = name, target = target, depends_on = depends_on, trigger = trigger, environment = environment)
 
 def windows_pipeline_main(depends_on = [], trigger = {}, environment = {}):

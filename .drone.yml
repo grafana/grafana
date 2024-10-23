@@ -4459,7 +4459,7 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
     grafana.zip
   environment:
     GCP_KEY:
@@ -4494,8 +4494,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gsutil cp *.msi gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
-  - gsutil cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
+  - gsutil cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release
+  - gsutil cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release
   depends_on:
   - build-and-upload-msi
   environment:
@@ -5798,7 +5798,7 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
     grafana.zip
   environment:
     GCP_KEY:
@@ -5833,8 +5833,8 @@ steps:
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gsutil cp *.msi gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
-  - gsutil cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
+  - gsutil cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release
+  - gsutil cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release
   depends_on:
   - build-and-upload-msi
   environment:
@@ -6051,6 +6051,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d94bb551852f177abf7e95887e3bd21b6d323cd264b0a0855829f8bf599f450e
+hmac: 8b99cbfd57cc8a0052d208c38d203e4f3c5b059ad0a3988c052b6b3f7c2e2389
 
 ...
