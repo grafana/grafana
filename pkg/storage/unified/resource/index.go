@@ -53,7 +53,7 @@ func (i *Index) IndexBatch(list *ListResponse, kind string) error {
 		if err != nil {
 			return err
 		}
-		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind, "tenant", res.Namespace)
+		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "kind", kind, "tenant", res.Namespace)
 
 		// Transform the raw resource into a more generic indexable resource
 		indexableResource, err := NewIndexedResource(obj.Value)
@@ -108,6 +108,7 @@ func (i *Index) Init(ctx context.Context) error {
 	}
 
 	end := time.Now().Unix()
+	i.log.Debug("Initial indexing finished", "seconds", float64(end-start))
 	if IndexServerMetrics != nil {
 		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
