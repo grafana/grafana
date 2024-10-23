@@ -63,9 +63,10 @@ type K8sTestHelper struct {
 
 func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	t.Helper()
+	// TODO (gamab): once #95086 is merged use feature flag
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
+	// opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
 	dir, path := testinfra.CreateGrafDir(t, opts)
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
 
