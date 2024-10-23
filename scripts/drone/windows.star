@@ -41,6 +41,7 @@ def download_wix_step():
         "name": "download-wix3",
         "image": images["curl"],
         "commands": [
+            "mkdir wix3 && cd wix3",
             "curl https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip -o wix3.zip",
             "unzip wix3.zip",
         ],
@@ -143,6 +144,7 @@ def build_msi_step(depends_on=[], target=""):
         "name": "build-and-upload-msi",
         "image": images["wine"],
         "commands": [
+            "export WINEPATH=$(winepath ./wix3)",
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
             "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
             "grabpl windows-installer --target {} --edition oss".format(path),
