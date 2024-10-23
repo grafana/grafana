@@ -104,6 +104,7 @@ def build_msi_step(depends_on = [], target = ""):
     return {
         "name": "build-and-upload-msi",
         "image": images["wine"],
+        "entrypoint": ["/bin/bash"],
         "commands": [
             "export WINEPATH=$(winepath ./wix3)",
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",

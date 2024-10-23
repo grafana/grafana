@@ -2738,6 +2738,8 @@ steps:
   - downlad-nssm
   - download-wix3
   - grabpl
+  entrypoint:
+  - /bin/bash
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -4462,6 +4464,8 @@ steps:
   - downlad-nssm
   - download-wix3
   - grabpl
+  entrypoint:
+  - /bin/bash
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -5791,6 +5795,8 @@ steps:
   - downlad-nssm
   - download-wix3
   - grabpl
+  entrypoint:
+  - /bin/bash
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -6021,6 +6027,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8c747d64ec2b0e52bd1f9857975bf6d67164e7f46f21a5fbf87ae4f72b5604bb
+hmac: c539cdc766d0b6d35492bcf404fd5ba7c6569f9b45b4aff94775ac47bcd7e84d
 
 ...
