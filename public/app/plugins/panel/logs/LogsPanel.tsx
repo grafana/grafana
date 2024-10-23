@@ -96,6 +96,8 @@ export const LogsPanel = ({
     onClickFilterOutString,
     onClickFilterString,
     isFilterLabelActive,
+    logRowMenuIconsBefore,
+    logRowMenuIconsAfter,
     ...options
   },
   id,
@@ -389,6 +391,8 @@ export const LogsPanel = ({
             displayedFields={displayedFields}
             onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
             onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
+            logRowMenuIconsBefore={logRowMenuIconsBefore}
+            logRowMenuIconsAfter={logRowMenuIconsAfter}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>

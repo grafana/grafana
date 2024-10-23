@@ -1,4 +1,4 @@
-import { memo, FocusEvent, SyntheticEvent, useCallback } from 'react';
+import { memo, FocusEvent, SyntheticEvent, useCallback, ReactNode } from 'react';
 
 import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, urlUtil } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -26,6 +26,8 @@ interface Props {
   mouseIsOver: boolean;
   onBlur: () => void;
   onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
+  addonBefore?: ReactNode;
+  addonAfter?: ReactNode;
 }
 
 export const LogRowMenuCell = memo(
@@ -43,6 +45,8 @@ export const LogRowMenuCell = memo(
     mouseIsOver,
     onBlur,
     getRowContextQuery,
+    addonBefore,
+    addonAfter,
   }: Props) => {
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
     const onLogRowClick = useCallback((e: SyntheticEvent) => {
@@ -94,6 +98,7 @@ export const LogRowMenuCell = memo(
       // We keep this click listener here to prevent the row from being selected when clicking on the menu.
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <span className={`log-row-menu ${styles.rowMenu}`} onClick={onLogRowClick} onBlur={handleBlur}>
+        {addonBefore}
         {pinned && !mouseIsOver && (
           <IconButton
             className={styles.unPinButton}
@@ -165,6 +170,7 @@ export const LogRowMenuCell = memo(
                 tabIndex={0}
               />
             )}
+            {addonAfter}
           </>
         )}
       </span>
