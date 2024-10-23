@@ -319,7 +319,9 @@ export function requestSupportsSharding(allQueries: LokiQuery[]) {
     .filter((query) => !query.hide)
     .filter((query) => !query.refId.includes('do-not-shard'))
     .filter((query) => query.expr)
-    .filter((query) => query.direction === LokiQueryDirection.Scan || query.refId?.startsWith(REF_ID_STARTER_LOG_VOLUME));
+    .filter(
+      (query) => query.direction === LokiQueryDirection.Scan || query.refId?.startsWith(REF_ID_STARTER_LOG_VOLUME)
+    );
 
   return queries.length > 0;
 }
