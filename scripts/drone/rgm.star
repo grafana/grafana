@@ -291,6 +291,7 @@ def rgm_tag_pipeline():
     return [
         whats_new_checker_pipeline(tag_trigger),
         rgm_tag(),
+        windows,
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
