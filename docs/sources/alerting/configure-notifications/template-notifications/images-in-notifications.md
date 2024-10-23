@@ -56,6 +56,8 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 8. Grafana does not delete screenshots uploaded to its internal web server. To delete screenshots from `static_root_path/images/attachments` after a certain amount of time, we recommend setting up a CRON job.
 
+9. Note you cannot adjust the number and size of images or their placement in notifications.
+
 ## Configuration
 
 {{% admonition type="note" %}}
