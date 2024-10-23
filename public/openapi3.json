@@ -9496,13 +9496,7 @@
           "emailLogoUrl": {
             "type": "string"
           },
-          "embeddedImageTheme": {
-            "type": "string"
-          },
           "reportLogoUrl": {
-            "type": "string"
-          },
-          "reportPdfTheme": {
             "type": "string"
           }
         },
@@ -9563,6 +9557,9 @@
           "orientation": {
             "type": "string"
           },
+          "pdfCombineOneFile": {
+            "type": "boolean"
+          },
           "pdfShowTemplateVariables": {
             "type": "boolean"
           },
@@ -9609,6 +9606,9 @@
           "branding": {
             "$ref": "#/components/schemas/ReportBrandingOptions"
           },
+          "embeddedImageTheme": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -9616,6 +9616,9 @@
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "reportPdfTheme": {
+            "type": "string"
           },
           "userId": {
             "format": "int64",
