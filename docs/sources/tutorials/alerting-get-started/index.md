@@ -18,12 +18,6 @@ killercoda:
   description: Get started with Grafana Alerting by creating your first alert in just a few minutes. Learn how to set up an alert, send alert notifications to a public webhook, and generate sample data to observe your alert in action.
   backend:
     imageid: ubuntu
-refs:
-  create-gm-alert-rule:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
-    - pattern: /docs/grafana-cloud/create-grafana-managed-rule/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
 ---
 
 <!-- INTERACTIVE page intro.md START -->
@@ -193,7 +187,7 @@ We have created a dummy Webhook endpoint and created a new Alerting contact poin
 
 ## Create an alert
 
-Next, we establish an [alert rule](ref:create-gm-alert-rule) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
+Next, we establish an [alert rule](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/) within Grafana Alerting to notify us whenever alert rules are triggered and resolved.
 
 1. In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
 
