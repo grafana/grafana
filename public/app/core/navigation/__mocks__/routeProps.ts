@@ -11,6 +11,7 @@ export function getRouteComponentProps<T extends {} = {}, Q extends Record<strin
       pathname: '',
       state: {},
       search: '',
+      key: '',
     },
     route: {
       path: '',
