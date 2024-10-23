@@ -183,18 +183,14 @@ In this section, you can select how you want to route your alert instances. Sinc
 
    {{< figure alt="Screenshot showing a routing preview of matched notification policies, detailing how alerts are matched and routed to specific notification channels" src="/media/docs/alerting/get-started-alert-instace-routing-prev.png" max-width="1200px" caption="Routing preview of matched notification policies" >}}
 
-<!-- INTERACTIVE ignore START -->
-
+   <!-- INTERACTIVE ignore START -->
    {{< admonition type="note" >}}
    Even if both labels match the policies, only the alert instance in Firing state produces an alert notification.
    {{</ admonition >}}
-
-<!-- INTERACTIVE ignore END -->
+   <!-- INTERACTIVE ignore END -->
 
    {{< docs/ignore >}}
-
-      > Even if both labels match the policies, only the alert instance in Firing state produces an alert notification.
-
+   Even if both labels match the policies, only the alert instance in Firing state produces an alert notification.
    {{< /docs/ignore >}}
 
 1. Click **Save rule and exit**.
