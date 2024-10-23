@@ -13,6 +13,7 @@ import {
   CustomVariable,
   VariableDependencyConfig,
   SceneVariable,
+  VizPanel,
 } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
 
@@ -32,21 +33,19 @@ export interface RelatedLogsSceneState extends SceneObjectState {
   lokiRecordingRules: ExtractedRecordingRules;
 }
 
-const RELATED_LOGS_PANEL_CONTAINER_KEY = 'relatedLogsPanelContainer';
+const RELATED_LOGS_PANEL_KEY = 'related_logs/logs_panel';
 
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   constructor(state: Partial<RelatedLogsSceneState>) {
+    const logsPanel = PanelBuilders.logs().setTitle('Logs').setNoValue('No logs found').build();
+    logsPanel.setState({ key: RELATED_LOGS_PANEL_KEY });
+
     super({
       controls: [],
       body: new SceneFlexLayout({
         direction: 'column',
         height: '400px',
-        children: [
-          new SceneFlexItem({
-            body: PanelBuilders.logs().setTitle('Logs').setNoValue('No logs found').build(),
-            key: RELATED_LOGS_PANEL_CONTAINER_KEY,
-          }),
-        ],
+        children: [new SceneFlexItem({ body: logsPanel })],
       }),
       lokiRecordingRules: {},
       lokiQuery: '',
@@ -92,8 +91,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   });
 
   private setLogsPanelData() {
-    const relatedLogsPanel = sceneGraph.findByKeyAndType(this, RELATED_LOGS_PANEL_CONTAINER_KEY, SceneFlexItem)?.state
-      .body;
+    const relatedLogsPanel = sceneGraph.findByKeyAndType(this, RELATED_LOGS_PANEL_KEY, VizPanel);
 
     if (!relatedLogsPanel) {
       return;
