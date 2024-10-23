@@ -3889,15 +3889,15 @@ __metadata:
   linkType: soft
 
 "@grafana/plugin-e2e@npm:^1.8.3":
-  version: 1.8.3
-  resolution: "@grafana/plugin-e2e@npm:1.8.3"
+  version: 1.9.0
+  resolution: "@grafana/plugin-e2e@npm:1.9.0"
   dependencies:
     semver: "npm:^7.5.4"
     uuid: "npm:^10.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/bb13d8e9fd6dc5ebb7deb7f3e57ac31c13a6f163337c2eb744a5671a38944ea7c81298bd9c1a65b8d53e1392429a16347134ae215fbda3babc9c4d563312a0bf
+  checksum: 10/afc74b27473412a96b6bcdb77144c8bd25d3a299f55daff91a91aca951caca5cb0d009ec71e74c7efc906140d870076f4d763f7775fe2f5d2971657958daff96
   languageName: node
   linkType: hard
 
