@@ -84,7 +84,6 @@ export class PrometheusDatasource
   basicAuth: any;
   withCredentials: any;
   interval: string;
-  queryTimeout: string | undefined;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
@@ -112,7 +111,6 @@ export class PrometheusDatasource
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
-    this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
