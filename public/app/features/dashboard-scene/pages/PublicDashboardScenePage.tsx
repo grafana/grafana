@@ -59,11 +59,6 @@ export function PublicDashboardScenePage({ route }: Props) {
     return <PublicDashboardNotAvailable />;
   }
 
-  // if no time picker render without url sync
-  if (dashboard.state.controls?.state.hideTimeControls) {
-    return <PublicDashboardSceneRenderer model={dashboard} />;
-  }
-
   return (
     // url sync is needed with or without time picker enabled to make refresh work
     // the backend sanitizes the request payload
