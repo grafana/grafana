@@ -186,6 +186,8 @@ With this feature, users can now link to third party web-based software based on
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/)
 
+{{< youtube id="KuVlzjaVc0Y" >}}
+
 ## Alerting
 
 ### Simplified query section for alert rule creation
