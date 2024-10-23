@@ -39,7 +39,12 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
       body: new SceneFlexLayout({
         direction: 'column',
         height: '400px',
-        children: [],
+        children: [
+          new SceneFlexItem({
+            body: PanelBuilders.logs().setTitle('Logs').setNoValue('No logs found').build(),
+            key: 'relatedLogsPanelContainer',
+          }),
+        ],
       }),
       lokiRecordingRules: {},
       lokiQuery: '',
@@ -79,34 +84,26 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
         const selectedDatasource = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
         const lokiQuery = getLogsQueryForMetric(selectedMetric, selectedDatasource, this.state.lokiRecordingRules);
         this.setState({ lokiQuery });
-        this.buildLogsPanel();
+        this.setLogsPanelData();
       }
     },
   });
 
-  private buildLogsPanel() {
-    this.setState({
-      body: new SceneFlexLayout({
-        direction: 'column',
-        height: '400px',
-        children: [
-          new SceneFlexItem({
-            body: PanelBuilders.logs()
-              .setTitle('Logs')
-              .setNoValue('No logs found')
-              .setData(
-                new SceneQueryRunner({
-                  datasource: { uid: VAR_LOGS_DATASOURCE_EXPR },
-                  queries: [
-                    {
-                      refId: 'A',
-                      expr: this.state.lokiQuery,
-                    },
-                  ],
-                })
-              )
-              .build(),
-          }),
+  private setLogsPanelData() {
+    const relatedLogsPanel = sceneGraph.findByKeyAndType(this, 'relatedLogsPanelContainer', SceneFlexItem)?.state.body;
+
+    if (!relatedLogsPanel) {
+      return;
+    }
+
+    relatedLogsPanel.setState({
+      $data: new SceneQueryRunner({
+        datasource: { uid: VAR_LOGS_DATASOURCE_EXPR },
+        queries: [
+          {
+            refId: 'A',
+            expr: this.state.lokiQuery,
+          },
         ],
       }),
     });
