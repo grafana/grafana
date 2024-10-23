@@ -26,11 +26,11 @@ load(
     "scripts/drone/rgm.star",
     "rgm",
 )
+load("scripts/drone/vault.star", "secrets")
 load(
     "scripts/drone/windows.star",
     "windows_manual_pipeline",
 )
-load("scripts/drone/vault.star", "secrets")
 
 def main(_ctx):
     return (
