@@ -3,6 +3,8 @@ package routing_tree
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -62,6 +64,35 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.Route {
 	if r.Receiver != "" {
 		result.Receiver = util.Pointer(r.Receiver)
 	}
+
+	if r.Match != nil {
+		keys := slices.Collect(maps.Keys(r.Match))
+		slices.Sort(keys)
+		for _, key := range keys {
+			result.Matchers = append(result.Matchers, model.Matcher{
+				Label: key,
+				Type:  model.MatcherTypeEqual,
+				Value: r.Match[key],
+			})
+		}
+	}
+
+	if r.MatchRE != nil {
+		keys := slices.Collect(maps.Keys(r.MatchRE))
+		slices.Sort(keys)
+		for _, key := range keys {
+			m := model.Matcher{
+				Label: key,
+				Type:  model.MatcherTypeEqualRegex,
+			}
+			value, _ := r.MatchRE[key].MarshalYAML()
+			if s, ok := value.(string); ok {
+				m.Value = s
+			}
+			result.Matchers = append(result.Matchers, m)
+		}
+	}
+
 	for _, m := range r.Matchers {
 		result.Matchers = append(result.Matchers, model.Matcher{
 			Label: m.Name,
@@ -164,7 +195,7 @@ func convertK8sSubRouteToRoute(r model.Route, path string) (definitions.Route, [
 			errs = append(errs, fmt.Errorf("route '%s' has illegal matcher: %w", path, err))
 			continue
 		}
-		result.Matchers = append(result.Matchers, m)
+		result.ObjectMatchers = append(result.ObjectMatchers, m)
 	}
 
 	for idx, route := range r.Routes {

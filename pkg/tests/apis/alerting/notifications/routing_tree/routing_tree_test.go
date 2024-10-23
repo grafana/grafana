@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -394,5 +398,227 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
+	})
+}
+
+func TestIntegrationDataConsistency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	client := adminK8sClient.NotificationsV0alpha1().RoutingTrees("default")
+
+	receiver := "grafana-default-email"
+	createRoute := func(t *testing.T, route definitions.Route) {
+		t.Helper()
+		cfg, _, _ := legacyCli.GetAlertmanagerConfigWithStatus(t)
+		var receivers []*definitions.PostableApiReceiver
+		for _, apiReceiver := range cfg.AlertmanagerConfig.Receivers {
+			var recv []*definitions.PostableGrafanaReceiver
+			for _, r := range apiReceiver.GettableGrafanaReceivers.GrafanaManagedReceivers {
+				recv = append(recv, &definitions.PostableGrafanaReceiver{
+					UID:                   r.UID,
+					Name:                  r.Name,
+					Type:                  r.Type,
+					DisableResolveMessage: r.DisableResolveMessage,
+					Settings:              r.Settings,
+				})
+			}
+			receivers = append(receivers, &definitions.PostableApiReceiver{
+				Receiver:                 config.Receiver{Name: apiReceiver.Name},
+				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{GrafanaManagedReceivers: recv},
+			})
+		}
+		_, err := legacyCli.PostConfiguration(t, definitions.PostableUserConfig{
+			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+				Config: definition.Config{
+					Route: &route,
+				},
+				Receivers: receivers,
+			},
+		})
+		require.NoError(t, err)
+	}
+
+	var regex config.Regexp
+	require.NoError(t, json.Unmarshal([]byte(`".*"`), &regex))
+
+	ensureMatcher := func(t *testing.T, mt labels.MatchType, lbl, val string) *labels.Matcher {
+		m, err := labels.NewMatcher(mt, lbl, val)
+		require.NoError(t, err)
+		return m
+	}
+
+	t.Run("on read", func(t *testing.T) {
+		t.Run("converts matchers from legacy format", func(t *testing.T) {
+			route := definitions.Route{
+				Receiver: receiver,
+				Routes: []*definitions.Route{
+					{
+						Match: map[string]string{
+							"label_match": "test-123",
+						},
+					},
+					{
+						MatchRE: map[string]config.Regexp{
+							"label_re": regex,
+						},
+					},
+					{
+						Matchers: config.Matchers{
+							ensureMatcher(t, labels.MatchEqual, "label_matchers", "test-321"),
+						},
+					},
+					{
+						ObjectMatchers: definitions.ObjectMatchers{
+							ensureMatcher(t, labels.MatchNotEqual, "object-label-matchers", "test-456"),
+						},
+					},
+				},
+			}
+			createRoute(t, route)
+
+			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+			require.NoError(t, err)
+			require.Len(t, tree.Spec.Routes, len(route.Routes))
+			routes := tree.Spec.Routes
+			assert.Equal(t, []v0alpha1.Matcher{
+				{
+					Label: "label_match",
+					Type:  v0alpha1.MatcherTypeEqual,
+					Value: "test-123",
+				},
+			}, routes[0].Matchers)
+			assert.Equal(t, []v0alpha1.Matcher{
+				{
+					Label: "label_re",
+					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Value: ".*",
+				},
+			}, routes[1].Matchers)
+			assert.Equal(t, []v0alpha1.Matcher{
+				{
+					Label: "label_matchers",
+					Type:  v0alpha1.MatcherTypeEqual,
+					Value: "test-321",
+				},
+			}, routes[2].Matchers)
+			assert.Equal(t, []v0alpha1.Matcher{
+				{
+					Label: "object-label-matchers",
+					Type:  v0alpha1.MatcherTypeNotEqual,
+					Value: "test-456",
+				},
+			}, routes[3].Matchers)
+		})
+
+		t.Run("combines all matchers", func(t *testing.T) {
+			route := definitions.Route{
+				Receiver: receiver,
+				Routes: []*definitions.Route{
+					{
+						Match: map[string]string{
+							"label_match": "test-123",
+						},
+						MatchRE: map[string]config.Regexp{
+							"label_re": regex,
+						},
+						Matchers: config.Matchers{
+							ensureMatcher(t, labels.MatchRegexp, "label_matchers", "test-321"),
+						},
+						ObjectMatchers: definitions.ObjectMatchers{
+							ensureMatcher(t, labels.MatchNotRegexp, "object-label-matchers", "test-456"),
+						},
+					},
+				},
+			}
+			createRoute(t, route)
+			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+			require.NoError(t, err)
+			assert.Equal(t, []v0alpha1.Matcher{
+				{
+					Label: "label_match",
+					Type:  v0alpha1.MatcherTypeEqual,
+					Value: "test-123",
+				},
+				{
+					Label: "label_re",
+					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Value: ".*",
+				},
+				{
+					Label: "label_matchers",
+					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Value: "test-321",
+				},
+				{
+					Label: "object-label-matchers",
+					Type:  v0alpha1.MatcherTypeNotEqualRegex,
+					Value: "test-456",
+				},
+			}, tree.Spec.Routes[0].Matchers)
+		})
+	})
+
+	t.Run("on write", func(t *testing.T) {
+		t.Run("should save into ObjectMatchers", func(t *testing.T) {
+			route := definitions.Route{
+				Receiver: receiver,
+				Routes: []*definitions.Route{
+					{
+						Match: map[string]string{
+							"oldmatch": "123",
+						},
+					},
+					{
+						MatchRE: map[string]config.Regexp{
+							"oldmatchre": regex,
+						},
+					},
+					{
+						Matchers: config.Matchers{
+							ensureMatcher(t, labels.MatchNotEqual, "matchers", "v"),
+						},
+					},
+					{
+						ObjectMatchers: definitions.ObjectMatchers{
+							ensureMatcher(t, labels.MatchEqual, "t2", "v2"),
+						},
+					},
+				},
+			}
+			createRoute(t, route)
+			cfg, _, _ := legacyCli.GetAlertmanagerConfigWithStatus(t)
+			expectedRoutes := cfg.AlertmanagerConfig.Route.Routes // autogenerated route is the first one
+			expectedRoutes[1].Match = nil
+			expectedRoutes[1].ObjectMatchers = definitions.ObjectMatchers{
+				ensureMatcher(t, labels.MatchEqual, "oldmatch", "123"),
+			}
+			expectedRoutes[2].MatchRE = nil
+			expectedRoutes[2].ObjectMatchers = definitions.ObjectMatchers{
+				ensureMatcher(t, labels.MatchRegexp, "oldmatchre", ".*"),
+			}
+			expectedRoutes[3].Matchers = nil
+			expectedRoutes[3].ObjectMatchers = definitions.ObjectMatchers{
+				ensureMatcher(t, labels.MatchNotEqual, "matchers", "v"),
+			}
+
+			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+			require.NoError(t, err)
+			_, err = client.Update(ctx, tree, v1.UpdateOptions{})
+			require.NoError(t, err)
+
+			cfg, _, _ = legacyCli.GetAlertmanagerConfigWithStatus(t)
+			routes := cfg.AlertmanagerConfig.Route.Routes
+			require.EqualValues(t, expectedRoutes, routes)
+		})
 	})
 }
