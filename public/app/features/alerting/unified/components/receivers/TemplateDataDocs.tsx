@@ -51,7 +51,7 @@ export function TemplateDataDocs() {
   );
 }
 
-const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
+export const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
   header: css({
     color: theme.colors.text.primary,
 
@@ -131,7 +131,7 @@ function KeyValueTemplateDataTable() {
   );
 }
 
-const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
+export const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
   table: css({
     borderCollapse: 'collapse',
     width: '100%',
