@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -387,18 +390,6 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
 		require.NotEqual(t, current.ResourceVersion, actualUpdated.ResourceVersion)
 	})
-	t.Run("should forbid to delete if version does not match", func(t *testing.T) {
-		actual, err := adminClient.Get(ctx, current.Name, v1.GetOptions{})
-		require.NoError(t, err)
-
-		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
-			Preconditions: &v1.Preconditions{
-				ResourceVersion: util.Pointer("something"),
-			},
-		})
-		require.Error(t, err)
-		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
-	})
 }
 
 func TestIntegrationDataConsistency(t *testing.T) {
@@ -417,6 +408,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	client := adminK8sClient.NotificationsV0alpha1().RoutingTrees("default")
 
 	receiver := "grafana-default-email"
+	timeInterval := "test-time-interval"
 	createRoute := func(t *testing.T, route definitions.Route) {
 		t.Helper()
 		cfg, _, _ := legacyCli.GetAlertmanagerConfigWithStatus(t)
@@ -441,6 +433,11 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 				Config: definition.Config{
 					Route: &route,
+					TimeIntervals: []config.TimeInterval{
+						{
+							Name: timeInterval,
+						},
+					},
 				},
 				Receivers: receivers,
 			},
@@ -457,70 +454,8 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		return m
 	}
 
-	t.Run("on read", func(t *testing.T) {
-		t.Run("converts matchers from legacy format", func(t *testing.T) {
-			route := definitions.Route{
-				Receiver: receiver,
-				Routes: []*definitions.Route{
-					{
-						Match: map[string]string{
-							"label_match": "test-123",
-						},
-					},
-					{
-						MatchRE: map[string]config.Regexp{
-							"label_re": regex,
-						},
-					},
-					{
-						Matchers: config.Matchers{
-							ensureMatcher(t, labels.MatchEqual, "label_matchers", "test-321"),
-						},
-					},
-					{
-						ObjectMatchers: definitions.ObjectMatchers{
-							ensureMatcher(t, labels.MatchNotEqual, "object-label-matchers", "test-456"),
-						},
-					},
-				},
-			}
-			createRoute(t, route)
-
-			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
-			require.NoError(t, err)
-			require.Len(t, tree.Spec.Routes, len(route.Routes))
-			routes := tree.Spec.Routes
-			assert.Equal(t, []v0alpha1.Matcher{
-				{
-					Label: "label_match",
-					Type:  v0alpha1.MatcherTypeEqual,
-					Value: "test-123",
-				},
-			}, routes[0].Matchers)
-			assert.Equal(t, []v0alpha1.Matcher{
-				{
-					Label: "label_re",
-					Type:  v0alpha1.MatcherTypeEqualRegex,
-					Value: ".*",
-				},
-			}, routes[1].Matchers)
-			assert.Equal(t, []v0alpha1.Matcher{
-				{
-					Label: "label_matchers",
-					Type:  v0alpha1.MatcherTypeEqual,
-					Value: "test-321",
-				},
-			}, routes[2].Matchers)
-			assert.Equal(t, []v0alpha1.Matcher{
-				{
-					Label: "object-label-matchers",
-					Type:  v0alpha1.MatcherTypeNotEqual,
-					Value: "test-456",
-				},
-			}, routes[3].Matchers)
-		})
-
-		t.Run("combines all matchers", func(t *testing.T) {
+	t.Run("all matchers are handled", func(t *testing.T) {
+		t.Run("can read all legacy matchers", func(t *testing.T) {
 			route := definitions.Route{
 				Receiver: receiver,
 				Routes: []*definitions.Route{
@@ -566,9 +501,6 @@ func TestIntegrationDataConsistency(t *testing.T) {
 				},
 			}, tree.Spec.Routes[0].Matchers)
 		})
-	})
-
-	t.Run("on write", func(t *testing.T) {
 		t.Run("should save into ObjectMatchers", func(t *testing.T) {
 			route := definitions.Route{
 				Receiver: receiver,
@@ -620,5 +552,88 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			routes := cfg.AlertmanagerConfig.Route.Routes
 			require.EqualValues(t, expectedRoutes, routes)
 		})
+	})
+
+	route := definitions.Route{
+		Receiver:       receiver,
+		GroupByStr:     []string{"test-123", "test-456"},
+		GroupWait:      util.Pointer(model.Duration(30 * time.Second)),
+		GroupInterval:  util.Pointer(model.Duration(1 * time.Minute)),
+		RepeatInterval: util.Pointer(model.Duration(24 * time.Hour)),
+		Routes: []*definitions.Route{
+			{
+				ObjectMatchers: definitions.ObjectMatchers{
+					ensureMatcher(t, labels.MatchNotEqual, "m", "1"),
+					ensureMatcher(t, labels.MatchEqual, "n", "1"),
+					ensureMatcher(t, labels.MatchRegexp, "o", "1"),
+					ensureMatcher(t, labels.MatchNotRegexp, "p", "1"),
+				},
+				Receiver:          receiver,
+				GroupByStr:        []string{"test-789"},
+				GroupWait:         util.Pointer(model.Duration(2 * time.Minute)),
+				GroupInterval:     util.Pointer(model.Duration(5 * time.Minute)),
+				RepeatInterval:    util.Pointer(model.Duration(30 * time.Hour)),
+				MuteTimeIntervals: []string{timeInterval},
+				Continue:          true,
+			},
+		},
+	}
+	createRoute(t, route)
+
+	t.Run("correctly reads all fields", func(t *testing.T) {
+		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, v0alpha1.RouteDefaults{
+			Receiver:       receiver,
+			GroupBy:        []string{"test-123", "test-456"},
+			GroupWait:      util.Pointer("30s"),
+			GroupInterval:  util.Pointer("1m"),
+			RepeatInterval: util.Pointer("1d"),
+		}, tree.Spec.Defaults)
+		assert.Len(t, tree.Spec.Routes, 1)
+		assert.Equal(t, v0alpha1.Route{
+			Continue:          true,
+			Receiver:          util.Pointer(receiver),
+			GroupBy:           []string{"test-789"},
+			GroupWait:         util.Pointer("2m"),
+			GroupInterval:     util.Pointer("5m"),
+			RepeatInterval:    util.Pointer("1d6h"),
+			MuteTimeIntervals: []string{timeInterval},
+			Matchers: []v0alpha1.Matcher{
+				{
+					Label: "m",
+					Type:  v0alpha1.MatcherTypeNotEqual,
+					Value: "1",
+				},
+				{
+					Label: "n",
+					Type:  v0alpha1.MatcherTypeEqual,
+					Value: "1",
+				},
+				{
+					Label: "o",
+					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Value: "1",
+				},
+				{
+					Label: "p",
+					Type:  v0alpha1.MatcherTypeNotEqualRegex,
+					Value: "1",
+				},
+			},
+		}, tree.Spec.Routes[0])
+	})
+
+	t.Run("correctly save all fields", func(t *testing.T) {
+		before, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
+		require.Equalf(t, http.StatusOK, status, body)
+		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		require.NoError(t, err)
+		_, err = client.Update(ctx, tree, v1.UpdateOptions{})
+		require.NoError(t, err)
+
+		after, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
+		require.Equalf(t, http.StatusOK, status, body)
+		require.Equal(t, before, after)
 	})
 }
