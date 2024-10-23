@@ -89,7 +89,6 @@ func TestServer_Check(t *testing.T) {
 		res, err = server.Check(context.Background(), newRead("user:4", dashboardGroup, dashboardResource, "2", "2"))
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
-
 	})
 
 	t.Run("user:5 should be able to read resource:dashboards.grafana.app/dashboards/1 through folder with set relation", func(t *testing.T) {
@@ -170,14 +169,6 @@ func newFolderGroupResourceTuple(subject, relation, group, resource, folder stri
 		User:     subject,
 		Relation: relation,
 		Object:   newFolderGroupResourceIdent(folder, group, resource),
-		Condition: &openfgav1.RelationshipCondition{
-			Name: "parent_filter",
-			Context: &structpb.Struct{
-				Fields: map[string]*structpb.Value{
-					"parent": structpb.NewStringValue(folder),
-				},
-			},
-		},
 	}
 }
 
