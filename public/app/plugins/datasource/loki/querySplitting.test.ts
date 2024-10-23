@@ -68,7 +68,6 @@ describe('runSplitQuery()', () => {
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
       // 3 days, 3 chunks, 1 retry, 4 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(4);
-      
     });
   });
 

@@ -153,11 +153,13 @@ export function getMockFrames() {
       custom: {
         frameType: 'LabeledTimeValues',
       },
-      stats: [{
-        "displayName": "Summary: total bytes processed",
-        "unit": "decbytes",
-        "value": 22,
-      }],
+      stats: [
+        {
+          displayName: 'Summary: total bytes processed',
+          unit: 'decbytes',
+          value: 22,
+        },
+      ],
     },
     length: 4,
   };
