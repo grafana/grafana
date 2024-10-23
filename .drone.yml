@@ -2740,7 +2740,7 @@ steps:
   name: grabpl
 - commands:
   - export WINEPATH=$(winepath ./wix3)
-  - grabpl windows-installer --target grafana.zip --edition oss
+  - ./bin/grabpl windows-installer --target grafana.zip --edition oss
   depends_on:
   - downlad-nssm
   - download-wix3
@@ -2756,14 +2756,14 @@ steps:
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: scottyhardy/docker-wine:stable-9.0
-  name: build-and-upload-msi
+  name: build-msi
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
   - bash -c 'gcloud storage cp *.msi gs://grafana-downloads/oss/main'
   - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-downloads/oss/main'
   depends_on:
-  - build-and-upload-msi
+  - build-msi
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -4474,7 +4474,7 @@ steps:
   name: grabpl
 - commands:
   - export WINEPATH=$(winepath ./wix3)
-  - grabpl windows-installer --target grafana.zip --edition oss
+  - ./bin/grabpl windows-installer --target grafana.zip --edition oss
   depends_on:
   - downlad-nssm
   - download-wix3
@@ -4490,14 +4490,14 @@ steps:
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: scottyhardy/docker-wine:stable-9.0
-  name: build-and-upload-msi
+  name: build-msi
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
   - bash -c 'gcloud storage cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release'
   - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release'
   depends_on:
-  - build-and-upload-msi
+  - build-msi
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -5813,7 +5813,7 @@ steps:
   name: grabpl
 - commands:
   - export WINEPATH=$(winepath ./wix3)
-  - grabpl windows-installer --target grafana.zip --edition oss
+  - ./bin/grabpl windows-installer --target grafana.zip --edition oss
   depends_on:
   - downlad-nssm
   - download-wix3
@@ -5829,14 +5829,14 @@ steps:
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: scottyhardy/docker-wine:stable-9.0
-  name: build-and-upload-msi
+  name: build-msi
 - commands:
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
   - bash -c 'gcloud storage cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release'
   - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release'
   depends_on:
-  - build-and-upload-msi
+  - build-msi
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -6051,6 +6051,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: dd6a6a20de83fae949d4bc4ecf00d29774804602898b9b148910ec03a7629a9a
+hmac: 3306ce9bc36afa237a2bf912d0a4dabc0a96ead3edbc81c223ce14b6179bab79
 
 ...

@@ -118,12 +118,12 @@ def upload_msi_step(depends_on = [], target = ""):
 
 def build_msi_step(depends_on = []):
     return {
-        "name": "build-and-upload-msi",
+        "name": "build-msi",
         "image": images["wine"],
         "entrypoint": ["/bin/bash"],
         "commands": [
             "export WINEPATH=$(winepath ./wix3)",
-            "grabpl windows-installer --target grafana.zip --edition oss",
+            "./bin/grabpl windows-installer --target grafana.zip --edition oss",
         ],
         "environment": {
             "GCP_KEY": from_secret(gcp_grafanauploads_base64),
