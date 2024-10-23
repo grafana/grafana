@@ -34,7 +34,7 @@ describe('timeSrv', () => {
 
     locationUpdates = [];
     const history = new HistoryWrapper();
-    history.getHistory().listen((x) => locationUpdates.push(x));
+    history.getHistory().listen(({ location }) => locationUpdates.push(location));
     setLocationService(history);
   });
 
