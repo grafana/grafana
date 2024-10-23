@@ -57,7 +57,17 @@ def download_zip_step(target = ""):
         },
     }
 
-def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], environment = []):
+def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], environment = {}):
+    """windows_msi_pipeline is a pipeline which creates an MSI from a .zip file.
+
+    Args:
+      target: GCS path (with gs:// scheme) to the oflder containing the zip file
+      name: Name of the pipeline, should be unique.
+      depends_on: dependencies (strings)
+      environment: map of environment variables
+    Returns:
+        Drone step.
+    """
     nssm = download_nssm_step()
     wix = download_wix_step()
     grabpl = download_grabpl_step()
