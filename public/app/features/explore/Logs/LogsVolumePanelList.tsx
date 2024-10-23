@@ -109,7 +109,7 @@ export const LogsVolumePanelList = ({
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
 
-  if (numberOfLogVolumes === 0) {
+  if (numberOfLogVolumes === 0 && logsVolumeData?.state !== LoadingState.Streaming) {
     return (
       <div className={styles.alertContainer}>
         <Alert severity="info" title="No logs volume available">
