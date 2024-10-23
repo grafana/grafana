@@ -29,6 +29,14 @@ export interface LocationService {
 }
 
 const basename = config.appSubUrl ?? '/';
+
+const addBaseName = (location: string | H.To) => {
+  if (typeof location === 'string') {
+    return basename + location;
+  } else {
+    return { ...location, pathname: basename + location.pathname };
+  }
+};
 /** @internal */
 export class HistoryWrapper implements LocationService {
   private readonly history: H.History & { length?: number };
@@ -78,22 +86,12 @@ export class HistoryWrapper implements LocationService {
     }
   }
 
-  push(location: H.To) {
-    if (typeof location === 'string') {
-      location = basename + location;
-    } else {
-      location.pathname = basename + location;
-    }
-    this.history.push(location);
+  push(location: H.To, state?: H.State) {
+    this.history.push(addBaseName(location), state);
   }
 
-  replace(location: H.To) {
-    if (typeof location === 'string') {
-      location = basename + location;
-    } else {
-      location.pathname = basename + location;
-    }
-    this.history.replace(location);
+  replace(location: H.To, state?: H.State) {
+    this.history.replace(addBaseName(location), state);
   }
 
   reload() {
