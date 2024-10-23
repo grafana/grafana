@@ -62,7 +62,6 @@ const dataSources = {
       type: DataSourceType.Loki,
       uid: 'loki-with-ruler',
       name: 'loki with ruler',
-      jsonData: { manageAlerts: true },
     },
     { alerting: true }
   ),
@@ -71,9 +70,7 @@ const dataSources = {
       type: DataSourceType.Loki,
       name: 'loki disabled for alerting',
       uid: 'loki-without-alerting',
-      jsonData: {
-        manageAlerts: false,
-      },
+      jsonData: { manageAlerts: false },
     },
     { alerting: true }
   ),
@@ -84,7 +81,6 @@ const dataSources = {
       name: 'cortex with ruler',
       uid: 'cortex-with-ruler',
       isDefault: true,
-      jsonData: { manageAlerts: true },
     },
     { alerting: true }
   ),
@@ -94,7 +90,6 @@ const dataSources = {
       type: DataSourceType.Loki,
       name: 'loki with local rule store',
       uid: 'loki-with-local-rule-store',
-      jsonData: { manageAlerts: true },
     },
     { alerting: true }
   ),
@@ -104,7 +99,6 @@ const dataSources = {
       type: DataSourceType.Loki,
       name: 'cortex without ruler api',
       uid: 'cortex-without-ruler-api',
-      jsonData: { manageAlerts: true },
     },
     { alerting: true }
   ),

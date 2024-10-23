@@ -81,7 +81,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
     name: `Prometheus-${id}`,
     access: 'proxy',
     url: `/api/datasources/proxy/uid/${uid}`,
-    jsonData: { manageAlerts: true } as T,
+    jsonData: {} as T,
     meta: {
       info: {
         logos: {
@@ -776,8 +776,8 @@ export function getGrafanaRule(override?: Partial<CombinedRule>, rulerOverride?:
 }
 
 export function getCloudRule(override?: Partial<CombinedRule>) {
-  const promOverride = pick(override, ['labels', 'annotations']);
-  const rulerOverride = pick(override, ['labels', 'annotations']);
+  const promOverride = pick(override, ['name', 'labels', 'annotations']);
+  const rulerOverride = pick(override, ['name', 'labels', 'annotations']);
 
   return mockCombinedRule({
     namespace: {
@@ -786,7 +786,9 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
       rulesSource: mockDataSource(),
     },
     promRule: mockPromAlertingRule(isEmpty(promOverride) ? undefined : promOverride),
-    rulerRule: mockRulerAlertingRule(isEmpty(rulerOverride) ? undefined : rulerOverride),
+    rulerRule: mockRulerAlertingRule(
+      isEmpty(rulerOverride) ? undefined : { ...rulerOverride, alert: rulerOverride.name }
+    ),
     ...override,
   });
 }

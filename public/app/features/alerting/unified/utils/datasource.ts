@@ -42,7 +42,8 @@ export function getRulesDataSources() {
   }
 
   return getAllDataSources()
-    .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts === true)
+    .filter((ds) => RulesDataSourceTypes.includes(ds.type))
+    .filter((ds) => isDataSourceManagingAlerts(ds))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 

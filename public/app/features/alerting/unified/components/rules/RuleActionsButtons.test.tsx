@@ -162,14 +162,16 @@ describe('RuleActionsButtons', () => {
     });
 
     it('copies correct URL for cloud rule', async () => {
-      const mockRule = getCloudRule();
+      const promDataSource = mockDataSource({ name: 'Prometheus-2' });
 
-      render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
+      const mockRule = getCloudRule({ name: 'pod-1-cpu-firing' });
+
+      render(<RuleActionsButtons rule={mockRule} rulesSource={promDataSource} />);
 
       await clickCopyLink();
 
       expect(await navigator.clipboard.readText()).toBe(
-        'http://localhost:3000/sub/alerting/Prometheus-2/mockRule/find'
+        'http://localhost:3000/sub/alerting/Prometheus-2/pod-1-cpu-firing/find'
       );
     });
   });

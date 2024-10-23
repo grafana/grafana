@@ -30,12 +30,10 @@ import {
   expressionTypes,
   ReducerMode,
 } from 'app/features/expressions/types';
-import { useDispatch } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
-import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
@@ -195,11 +193,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
     }
   }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType]);
-
-  const dispatchReduxAction = useDispatch();
-  useEffect(() => {
-    dispatchReduxAction(fetchAllPromBuildInfoAction());
-  }, [dispatchReduxAction]);
 
   const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
 

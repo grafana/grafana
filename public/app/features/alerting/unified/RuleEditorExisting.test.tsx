@@ -10,10 +10,11 @@ import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from '../../../types';
 
 import RuleEditor from './RuleEditor';
-import { setupMswServer } from './mockApi';
+import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from './mocks';
 import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
+import { buildInfoResponse } from './testSetup/featureDiscovery';
 import { Annotation } from './utils/constants';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -22,7 +23,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 jest.setTimeout(60 * 1000);
 
-setupMswServer();
+const server = setupMswServer();
 
 function renderRuleEditor(identifier: string) {
   return render(
@@ -74,16 +75,15 @@ describe('RuleEditor grafana managed rules', () => {
     ]);
 
     const dataSources = {
-      default: mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom',
-          isDefault: true,
-        },
-        { alerting: false }
-      ),
+      default: mockDataSource({
+        uid: 'cloud-prometheus',
+        type: 'prometheus',
+        name: 'Prom',
+        isDefault: true,
+      }),
     };
     setupDataSources(dataSources.default);
+    mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
     setFolderResponse(mockFolder(folder));
     setFolderResponse(mockFolder(slashedFolder));
   });
