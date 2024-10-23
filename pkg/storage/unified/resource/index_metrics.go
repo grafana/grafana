@@ -26,7 +26,7 @@ type IndexMetrics struct {
 	IndexCreationTime *prometheus.HistogramVec
 }
 
-var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 150, 200, 250, 300}
+var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
 func NewIndexMetrics(indexDir string, indexServer *IndexServer) *IndexMetrics {
 	onceIndex.Do(func() {
