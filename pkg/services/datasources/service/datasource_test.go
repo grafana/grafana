@@ -678,7 +678,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.Equal(t, existingRules, updatedRules)
 	})
 
-	t.Run("Should preserve stored rules without AllowLBACRuleUpdates even if cmd does not contain any rule", func(t *testing.T) {
+	t.Run("Should not remove stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
 		dsService := initDSService(t)
 		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
 
@@ -718,7 +718,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.Equal(t, existingRules, updatedRules)
 	})
 
-	t.Run("Should preserve empty stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
+	t.Run("Should not populate empty stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
 		dsService := initDSService(t)
 		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
 
