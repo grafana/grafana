@@ -908,7 +908,7 @@ var (
 		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "true", // enabled by default
@@ -916,10 +916,9 @@ var (
 		{
 			Name:         "dashboardNewLayouts",
 			Description:  "Enables experimental new dashboard layouts",
-			Stage:        FeatureStageGeneralAvailability,
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false", // disabled by default
 		},
 		{
 			Name:         "panelFilterVariable",
