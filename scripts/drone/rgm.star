@@ -299,7 +299,6 @@ def rgm_tag_pipeline():
             depends_on = [
                 windows["name"],
                 "rgm-tag-prerelease",
-                "rgm-tag-prerelease-windows",
             ],
         ),
     ]
