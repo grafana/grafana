@@ -914,6 +914,13 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:         "dashboardNewLayouts",
+			Description:  "Enables experimental new dashboard layouts",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
@@ -1521,6 +1528,12 @@ var (
 			Description: "Enables to save big objects in blob storage",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
+			Name:        "timeRangeProvider",
+			Description: "Enables time pickers sync",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 	}
 )

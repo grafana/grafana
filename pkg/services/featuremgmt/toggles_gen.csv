@@ -121,6 +121,7 @@ extractFieldsNameDeduplication,experimental,@grafana/dataviz-squad,false,false,t
 dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
 dashboardSceneSolo,GA,@grafana/dashboards-squad,false,false,true
 dashboardScene,GA,@grafana/dashboards-squad,false,false,true
+dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 pdfTables,preview,@grafana/sharing-squad,false,false,false
 ssoSettingsApi,GA,@grafana/identity-access-team,false,false,false
@@ -202,3 +203,4 @@ rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
+timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
