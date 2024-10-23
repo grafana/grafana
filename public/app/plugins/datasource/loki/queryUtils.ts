@@ -25,10 +25,10 @@ import {
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
+import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
 import { addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
 import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
-import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
 
 /**
  * Returns search terms from a LogQL query.
