@@ -99,7 +99,7 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
-			Object:   newFolderResourceIdent(r.GetGroup(), r.GetResource()),
+			Object:   newFolderGroupResourceIdent(r.GetFolder(), r.GetGroup(), r.GetResource()),
 		},
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
