@@ -109,7 +109,7 @@ export const LogsVolumePanelList = ({
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
 
-  if (numberOfLogVolumes === 0) {
+  if (numberOfLogVolumes === 0 && logsVolumeData?.state !== LoadingState.Streaming) {
     return (
       <div className={styles.alertContainer}>
         <Alert severity="info" title="No logs volume available">
@@ -122,7 +122,6 @@ export const LogsVolumePanelList = ({
   return (
     <div className={styles.listContainer}>
       {Object.keys(logVolumes).map((name, index) => {
-        const logsVolumeData = { data: logVolumes[name] };
         return (
           <LogsVolumePanel
             toggleLegendRef={toggleLegendRef}
@@ -130,7 +129,7 @@ export const LogsVolumePanelList = ({
             timeRange={visibleRange}
             allLogsVolumeMaximum={allLogsVolumeMaximumValue}
             width={width}
-            logsVolumeData={logsVolumeData}
+            logsVolumeData={{ data: logVolumes[name], state: logsVolumeData?.state }}
             onUpdateTimeRange={onUpdateTimeRange}
             timeZone={timeZone}
             splitOpen={splitOpen}
