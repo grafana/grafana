@@ -88,6 +88,7 @@ func (i *Index) Init(ctx context.Context) error {
 
 		// Paginate through the list of resources and index each page
 		for {
+			i.log.Debug("fetching resource list", "kind", rt.Key.Resource)
 			list, err := i.s.List(ctx, r)
 			if err != nil {
 				return err
