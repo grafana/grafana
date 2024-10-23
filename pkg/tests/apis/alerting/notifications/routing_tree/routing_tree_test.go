@@ -628,9 +628,13 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		before, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
 		require.Equalf(t, http.StatusOK, status, body)
 		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+		tree.Spec.Defaults.GroupBy = []string{"test-123", "test-456", "test-789"}
 		require.NoError(t, err)
 		_, err = client.Update(ctx, tree, v1.UpdateOptions{})
 		require.NoError(t, err)
+
+		before.AlertmanagerConfig.Route.GroupByStr = []string{"test-123", "test-456", "test-789"}
+		before.AlertmanagerConfig.Route.GroupBy = []model.LabelName{"test-123", "test-456", "test-789"}
 
 		after, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
 		require.Equalf(t, http.StatusOK, status, body)
