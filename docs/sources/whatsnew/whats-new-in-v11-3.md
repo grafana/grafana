@@ -184,6 +184,8 @@ Correlations is a feature that allows Grafana users to set up links between thei
 
 With this feature, users can now link to third party web-based software based on their search results. The format follows the standard Grafana format for using variables.
 
+{{< youtube id="KuVlzjaVc0Y" >}}
+
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/correlations/)
 
 ## Alerting
