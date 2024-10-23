@@ -144,4 +144,22 @@ func TestGetSearchPermissionCacheKey(t *testing.T) {
 	}
 
 	assert.Equal(t, len(cacheKeys), len(uniqueCheck), "The slice contains duplicate strings")
+
+	t.Run("the cache key is consistent", func(t *testing.T) {
+		user := &user.SignedInUser{
+			OrgID:  1,
+			UserID: 1,
+		}
+		key1, err := GetSearchPermissionCacheKey(testLogger, user, SearchOptions{
+			ActionPrefix: "foobar",
+			RolePrefixes: []string{"foo", "bar"},
+		})
+		require.NoError(t, err)
+		key2, err := GetSearchPermissionCacheKey(testLogger, user, SearchOptions{
+			ActionPrefix: "foobar",
+			RolePrefixes: []string{"foo", "bar"},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, key1, key2, "expected search cache keys to be consistent")
+	})
 }
