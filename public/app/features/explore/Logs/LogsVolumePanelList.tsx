@@ -97,8 +97,17 @@ export const LogsVolumePanelList = ({
   } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title="The logs volume query has timed out"
+        title="Unable to show log volume"
         // Using info to avoid users thinking that the actual query has failed.
+        message={
+          <>
+            <p>The query is trying to access too much data. Try one or more of the following:</p>
+            <ul>
+              <li>Add more filters to your query to narrow down your search.</li>
+              <li>Decrease the time range of your query.</li>
+            </ul>
+          </>
+        }
         severity="info"
         suggestedAction="Retry"
         onSuggestedAction={onLoadLogsVolume}
