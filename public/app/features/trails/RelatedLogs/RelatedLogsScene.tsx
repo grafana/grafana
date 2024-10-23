@@ -32,6 +32,8 @@ export interface RelatedLogsSceneState extends SceneObjectState {
   lokiRecordingRules: ExtractedRecordingRules;
 }
 
+const RELATED_LOGS_PANEL_CONTAINER_KEY = 'relatedLogsPanelContainer';
+
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   constructor(state: Partial<RelatedLogsSceneState>) {
     super({
@@ -42,7 +44,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
         children: [
           new SceneFlexItem({
             body: PanelBuilders.logs().setTitle('Logs').setNoValue('No logs found').build(),
-            key: 'relatedLogsPanelContainer',
+            key: RELATED_LOGS_PANEL_CONTAINER_KEY,
           }),
         ],
       }),
@@ -90,7 +92,8 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   });
 
   private setLogsPanelData() {
-    const relatedLogsPanel = sceneGraph.findByKeyAndType(this, 'relatedLogsPanelContainer', SceneFlexItem)?.state.body;
+    const relatedLogsPanel = sceneGraph.findByKeyAndType(this, RELATED_LOGS_PANEL_CONTAINER_KEY, SceneFlexItem)?.state
+      .body;
 
     if (!relatedLogsPanel) {
       return;
