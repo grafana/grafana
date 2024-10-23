@@ -5736,7 +5736,7 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
-name: prerelease-windows-msi
+name: windows-pipeline-manual
 node:
   type: no-parallel
 platform:
@@ -6002,6 +6002,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3c5c6cd74d02fa23acb2e71d046853f196d05a36842153d8335b4958b4f76c54
+hmac: 446407148fe7244ee76244bb89aa903308c11947ce28dd2f5d412113c725162c
 
 ...

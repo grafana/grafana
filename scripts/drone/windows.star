@@ -47,8 +47,7 @@ def download_wix_step():
         ],
     }
 
-def windows_pipeline_release(depends_on=[], trigger={}, environment={}):
-    target = "gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release"
+def windows_msi_pipeline(target="", name="", trigger={}, depends_on=[], environment=[], ):
     nssm = download_nssm_step()
     wix = download_wix_step()
     grabpl = download_grabpl_step()
@@ -68,7 +67,7 @@ def windows_pipeline_release(depends_on=[], trigger={}, environment={}):
     )
 
     return pipeline(
-        name="prerelease-windows-msi",
+        name=name,
         steps=[
             nssm,
             wix,
@@ -80,47 +79,13 @@ def windows_pipeline_release(depends_on=[], trigger={}, environment={}):
         depends_on=depends_on,
         environment=environment,
     )
+def windows_pipeline_release(name="prerelease-windows-msi", depends_on=[], trigger={}, environment={}):
+    target = "gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release"
+    return windows_msi_pipeline(name=name, target=target, depends_on=depends_on, trigger=trigger, environment=environment)
 
 def windows_pipeline_main(depends_on=[], trigger={}, environment={}):
-    """Generate the list of Windows steps.
-
-    Args:
-
-    Returns:
-      List of Drone steps which will build and upload a Grafana MSI package from a Grafana zip
-    """
-
     target = "gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip"
-    nssm = download_nssm_step()
-    wix = download_wix_step()
-    grabpl = download_grabpl_step()
-    build = build_msi_step(
-        depends_on=[
-            nssm["name"],
-            wix["name"],
-            grabpl["name"],
-        ],
-        target=target,
-    )
-    upload = upload_msi_step(
-        depends_on=[
-            build["name"],
-        ],
-        target=target,
-    )
-    return pipeline(
-        name="main-windows-msi",
-        steps=[
-            nssm,
-            wix,
-            grabpl,
-            build,
-            upload,
-        ],
-        trigger=trigger,
-        depends_on=depends_on,
-        environment=environment,
-    )
+    return windows_msi_pipeline(name="main-windows-msi", target=target, depends_on=depends_on, trigger=trigger, environment=environment)
 
 def upload_msi_step(depends_on=[], target=""):
     return {
@@ -158,7 +123,10 @@ def build_msi_step(depends_on=[], target=""):
     }
 
 def windows_manual_pipeline():
-    return windows_pipeline_release(trigger={
-        "event": ["promote"],
-        "target": "build-msi",
-    })
+    return windows_pipeline_release(
+        name="windows-pipeline-manual",
+        trigger={
+            "event": ["promote"],
+            "target": "build-msi",
+        },
+    )
