@@ -163,6 +163,14 @@
    ],
    "type": "object"
   },
+  "AlertRuleEditorSettings": {
+   "properties": {
+    "simplified_query_and_expressions_section": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
   "AlertRuleExport": {
    "properties": {
     "annotations": {
@@ -282,6 +290,14 @@
     "interval": {
      "format": "int64",
      "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "AlertRuleMetadata": {
+   "properties": {
+    "editor_settings": {
+     "$ref": "#/definitions/AlertRuleEditorSettings"
     }
    },
    "type": "object"
@@ -1573,6 +1589,9 @@
     "is_paused": {
      "type": "boolean"
     },
+    "metadata": {
+     "$ref": "#/definitions/AlertRuleMetadata"
+    },
     "namespace_uid": {
      "type": "string"
     },
@@ -1660,10 +1679,23 @@
   },
   "GettableRuleGroupConfig": {
    "properties": {
+    "align_evaluation_time_on_interval": {
+     "type": "boolean"
+    },
+    "evaluation_delay": {
+     "type": "string"
+    },
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "name": {
+     "type": "string"
+    },
+    "query_offset": {
      "type": "string"
     },
     "rules": {
@@ -2786,6 +2818,9 @@
     "is_paused": {
      "type": "boolean"
     },
+    "metadata": {
+     "$ref": "#/definitions/AlertRuleMetadata"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -2824,15 +2859,34 @@
   },
   "PostableRuleGroupConfig": {
    "properties": {
+    "align_evaluation_time_on_interval": {
+     "type": "boolean"
+    },
+    "evaluation_delay": {
+     "type": "string"
+    },
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "name": {
+     "type": "string"
+    },
+    "query_offset": {
      "type": "string"
     },
     "rules": {
      "items": {
       "$ref": "#/definitions/PostableExtendedRuleNode"
+     },
+     "type": "array"
+    },
+    "source_tenants": {
+     "items": {
+      "type": "string"
      },
      "type": "array"
     }
@@ -3616,10 +3670,23 @@
   },
   "RuleGroupConfigResponse": {
    "properties": {
+    "align_evaluation_time_on_interval": {
+     "type": "boolean"
+    },
+    "evaluation_delay": {
+     "type": "string"
+    },
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "name": {
+     "type": "string"
+    },
+    "query_offset": {
      "type": "string"
     },
     "rules": {

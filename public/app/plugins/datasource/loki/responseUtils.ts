@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, isValidGoDuration, Labels } from '@grafana/data';
+import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
@@ -121,11 +121,24 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
 
   // Find first level-like label
   for (let labels of labelsArray) {
-    const label = Object.keys(labels).find((label) => label === 'lvl' || label.includes('level'));
+    const label = Object.keys(labels).find(
+      (label) => label === 'detected_level' || label === 'level' || label === 'lvl' || label.includes('level')
+    );
     if (label) {
       levelLikeLabel = label;
       break;
     }
   }
   return levelLikeLabel;
+}
+
+export function isRetriableError(errorResponse: DataQueryResponse) {
+  const message = errorResponse.errors ? (errorResponse.errors[0].message ?? '').toLowerCase() : '';
+  if (message.includes('timeout')) {
+    return true;
+  } else if (message.includes('parse error') || message.includes('max entries')) {
+    // If the error is a parse error, we want to signal to stop querying.
+    throw new Error(message);
+  }
+  return false;
 }

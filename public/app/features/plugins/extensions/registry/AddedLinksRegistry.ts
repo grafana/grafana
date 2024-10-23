@@ -1,11 +1,12 @@
+import { ReplaySubject } from 'rxjs';
+
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
-import { logWarning } from '../utils';
+import { isAddedLinkMetaInfoMissing, isGrafanaDevMode } from '../utils';
 import {
   extensionPointEndsWithVersion,
   isConfigureFnValid,
-  isExtensionPointIdValid,
   isGrafanaCoreExtensionPoint,
   isLinkPathValid,
 } from '../validators';
@@ -25,10 +26,13 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
 };
 
 export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginExtensionAddedLinkConfig> {
-  constructor(initialState: RegistryType<AddedLinkRegistryItem[]> = {}) {
-    super({
-      initialState,
-    });
+  constructor(
+    options: {
+      registrySubject?: ReplaySubject<RegistryType<AddedLinkRegistryItem[]>>;
+      initialState?: RegistryType<AddedLinkRegistryItem[]>;
+    } = {}
+  ) {
+    super(options);
   }
 
   mapToRegistry(
@@ -39,47 +43,54 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
     for (const config of configs) {
       const { path, title, description, configure, onClick, targets } = config;
+      const configLog = this.logger.child({
+        path: path ?? '',
+        description,
+        title,
+        pluginId,
+        onClick: typeof onClick,
+      });
+
       if (!title) {
-        logWarning(`Could not register added link with title '${title}'. Reason: Title is missing.`);
+        configLog.error(`Could not register added link. Reason: Title is missing.`);
         continue;
       }
 
       if (!description) {
-        logWarning(`Could not register added link with title '${title}'. Reason: Description is missing.`);
+        configLog.error(`Could not register added link. Reason: Description is missing.`);
         continue;
       }
 
       if (!isConfigureFnValid(configure)) {
-        logWarning(`Could not register added link with title '${title}'. Reason: configure is not a function.`);
+        configLog.error(`Could not register added link. Reason: configure is not a function.`);
         continue;
       }
 
       if (!path && !onClick) {
-        logWarning(
-          `Could not register added link with title '${title}'. Reason: Either "path" or "onClick" is required.`
-        );
+        configLog.error(`Could not register added. Reason: Either "path" or "onClick" is required.`);
         continue;
       }
 
       if (path && !isLinkPathValid(pluginId, path)) {
-        logWarning(
-          `Could not register added link with title '${title}'. Reason: The "path" is required and should start with "/a/${pluginId}/" (currently: "${path}"). Skipping the extension.`
+        configLog.error(
+          `Could not register added link. Reason: The "path" is required and should start with "/a/${pluginId}/".`
         );
         continue;
       }
 
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config, configLog)) {
+        configLog.warning(`Did not register links from plugin ${pluginId} due to missing meta information.`);
+        continue;
+      }
+
       const extensionPointIds = Array.isArray(targets) ? targets : [targets];
+
       for (const extensionPointId of extensionPointIds) {
-        if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
-          logWarning(
-            `Could not register added link with id '${extensionPointId}'. Reason: Target extension point id must start with grafana, plugins or plugin id.`
-          );
-          continue;
-        }
+        const pointIdLog = configLog.child({ extensionPointId });
 
         if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          logWarning(
-            `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+          pointIdLog.warning(
+            `Added link "${config.title}: it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
           );
         }
 
@@ -89,10 +100,19 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
           registry[extensionPointId] = [];
         }
 
+        pointIdLog.debug(`Added link from '${pluginId}' to '${extensionPointId}'`);
+
         registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
       }
     }
 
     return registry;
+  }
+
+  // Returns a read-only version of the registry.
+  readOnly() {
+    return new AddedLinksRegistry({
+      registrySubject: this.registrySubject,
+    });
   }
 }

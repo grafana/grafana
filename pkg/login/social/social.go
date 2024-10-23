@@ -27,9 +27,7 @@ const (
 	LDAPProviderName       = "ldap"
 )
 
-var (
-	SocialBaseUrl = "/login/"
-)
+var SocialBaseUrl = "/login/"
 
 type Service interface {
 	GetOAuthProviders() map[string]bool
@@ -99,6 +97,19 @@ func NewOAuthInfo() *OAuthInfo {
 		AllowedGroups:  []string{},
 		Extra:          map[string]string{},
 	}
+}
+
+func (o *OAuthInfo) GetDisplayName() string {
+	return o.Name
+}
+
+func (o *OAuthInfo) IsSingleLogoutEnabled() bool {
+	// OIDC SLO is not supported
+	return false
+}
+
+func (o *OAuthInfo) IsAutoLoginEnabled() bool {
+	return o.AutoLogin
 }
 
 type BasicUserInfo struct {

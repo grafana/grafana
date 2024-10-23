@@ -18,7 +18,7 @@ Grafana uses the [XORM](https://xorm.io) framework for persisting objects to the
 
 > **Deprecated:** We are deprecating `sqlstore` handlers in favor of using the `SQLStore` object directly in each service. Since most services still use the `sqlstore` handlers, we still want to explain how they work.
 
-The `sqlstore` package allows you to register [command handlers](communication.md#handle-commands) that either store or retrieve objects from the database. The `sqlstore` handlers are similar to services:
+The `sqlstore` package allows you to register [command handlers](communication.md#commands-and-queries) that either store or retrieve objects from the database. The `sqlstore` handlers are similar to services:
 
 - [Services](services.md) are command handlers that _contain business logic_.
 - `sqlstore` handlers are command handlers that _access the database_.
@@ -30,7 +30,7 @@ The `sqlstore` package allows you to register [command handlers](communication.m
 To register a handler:
 
 - Create a new file, `myrepo.go`, in the `sqlstore` package.
-- Create a [command handler](communication.md#handle-commands).
+- Create a [command handler](communication.md#commands-and-queries).
 - Register the handler in the `init` function:
 
 ```go
@@ -60,7 +60,7 @@ type MyService struct {
 }
 ```
 
-You can now make SQL queries in any of your [command handlers](communication.md#handle-commands) or [event listeners](communication.md#subscribe-to-an-event):
+You can now make SQL queries in any of your [command handlers](communication.md#commands-and-queries) or [event listeners](communication.md#subscribe-to-an-event):
 
 ```go
 func (s *MyService) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
@@ -107,7 +107,7 @@ To add a migration:
 
 ### Implement `DatabaseMigrator`
 
-During initialization, SQL store queries the service registry, and runs migrations for every service that implements the [DatabaseMigrator](https://github.com/grafana/grafana/blob/44c2007498c76c2dbb48e8366b4af410f1ee1b98/pkg/registry/registry.go#L101-L106) interface.
+During initialization, SQL store queries the service registry, and runs migrations for every service that implements the [DatabaseMigrator](https://github.com/grafana/grafana/blob/d27c3822f28e5f26199b4817892d6d24a7a26567/pkg/registry/registry.go#L46-L50) interface.
 
 To add a migration:
 

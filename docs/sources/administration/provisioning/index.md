@@ -73,7 +73,7 @@ Therefore, we heavily rely on the expertise of the community.
 
 ## Data sources
 
-You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/data sources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
 Each configuration file can contain a list of `datasources` to add or update during startup.
 If the data source already exists, Grafana reconfigures it to match the provisioned configuration file.
 
@@ -81,12 +81,8 @@ The configuration file can also list data sources to automatically delete, calle
 Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
 You can configure Grafana to automatically delete provisioned data sources when they're removed from the provisioning file.
-To do so, add `prune: true` to the root of your provisioning file.
+To do so, add `prune: true` to the root of your data source provisioning file.
 With this configuration, Grafana also removes the provisioned data sources if you remove the provisioning file entirely.
-
-{{< admonition type="note" >}}
-The `prune` parameter is available in Grafana v11.1 and higher.
-{{< /admonition >}}
 
 ### Running multiple Grafana instances
 
@@ -506,15 +502,26 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `MQTT`
 
+| Name          | Secure setting |
+| ------------- | -------------- |
+| brokerUrl     |                |
+| clientId      |                |
+| topic         |                |
+| messageFormat |                |
+| username      |                |
+| password      | yes            |
+| retain        |                |
+| qos           |                |
+| tlsConfig     |                |
+
+##### TLS config
+
 | Name               | Secure setting |
 | ------------------ | -------------- |
-| brokerUrl          |                |
-| clientId           |                |
-| topic              |                |
-| messageFormat      |
-| username           |                |
-| password           | yes            |
 | insecureSkipVerify |                |
+| clientCertificate  | yes            |
+| clientKey          | yes            |
+| caCertificate      | yes            |
 
 #### Alert notification `pagerduty`
 
@@ -607,12 +614,22 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
-| Name       | Secure setting |
-| ---------- | -------------- |
-| url        |                |
-| httpMethod |                |
-| username   |                |
-| password   | yes            |
+| Name        | Secure setting |
+| ----------- | -------------- |
+| url         |                |
+| http_method |                |
+| username    |                |
+| password    | yes            |
+| tls_config  |                |
+
+##### TLS config
+
+| Name               | Secure setting |
+| ------------------ | -------------- |
+| insecureSkipVerify |                |
+| clientCertificate  | yes            |
+| clientKey          | yes            |
+| caCertificate      | yes            |
 
 #### Alert notification `googlechat`
 

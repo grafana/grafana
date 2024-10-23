@@ -6,7 +6,6 @@ import {
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -19,9 +18,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { RowActions } from '../scene/row-actions/RowActions';
-
-import { dashboardSceneGraph } from './dashboardSceneGraph';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -218,12 +214,9 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
-  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
-
+export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
-    key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
@@ -238,17 +231,6 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
       }),
       transformations: [],
     }),
-  });
-}
-
-export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
-  const id = dashboardSceneGraph.getNextPanelId(dashboard);
-
-  return new SceneGridRow({
-    key: getVizPanelKeyForPanelId(id),
-    title: 'Row title',
-    actions: new RowActions({}),
-    y: 0,
   });
 }
 

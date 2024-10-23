@@ -15,6 +15,7 @@ import (
 type NotificationsV0alpha1Interface interface {
 	RESTClient() rest.Interface
 	ReceiversGetter
+	TemplateGroupsGetter
 	TimeIntervalsGetter
 }
 
@@ -25,6 +26,10 @@ type NotificationsV0alpha1Client struct {
 
 func (c *NotificationsV0alpha1Client) Receivers(namespace string) ReceiverInterface {
 	return newReceivers(c, namespace)
+}
+
+func (c *NotificationsV0alpha1Client) TemplateGroups(namespace string) TemplateGroupInterface {
+	return newTemplateGroups(c, namespace)
 }
 
 func (c *NotificationsV0alpha1Client) TimeIntervals(namespace string) TimeIntervalInterface {

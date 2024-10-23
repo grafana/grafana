@@ -4,6 +4,7 @@
 export type TraceKeyValuePair<T = any> = {
   key: string;
   value: T;
+  type?: string;
 };
 
 /**

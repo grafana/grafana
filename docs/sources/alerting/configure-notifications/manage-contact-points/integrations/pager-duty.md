@@ -57,6 +57,8 @@ To create your PagerDuty integration in Grafana Alerting, complete the following
 1. In the **Integration Key** field, copy in your integration key.
 1. Click **Test** to check that your integration works.
 
+   ** For Grafana Alertmanager only.**
+
    An incident should display in the Service’s Activity tab in PagerDuty.
 
 1. Click **Save contact point**.

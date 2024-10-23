@@ -40,7 +40,7 @@ export function prepSeries(
   mapping: SeriesMapping,
   mappedSeries: XYSeriesConfig[],
   frames: DataFrame[],
-  fieldConfig: FieldConfigSource<any>
+  fieldConfig: FieldConfigSource
 ) {
   cacheFieldDisplayNames(frames);
   decoupleHideFromState(frames, fieldConfig);

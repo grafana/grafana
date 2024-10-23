@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { FeatureState, SelectableValue, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
+import { FeatureState, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -11,12 +11,12 @@ import {
   Field,
   FieldSet,
   Label,
-  Select,
   stylesFactory,
   TimeZonePicker,
   WeekStartPicker,
   FeatureBadge,
 } from '@grafana/ui';
+import { Combobox, ComboboxOption } from '@grafana/ui/src/unstable';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
@@ -32,7 +32,7 @@ export interface Props {
 
 export type State = UserPreferencesDTO;
 
-function getLanguageOptions(): Array<SelectableValue<string>> {
+function getLanguageOptions(): ComboboxOption[] {
   const languageOptions = LANGUAGES.map((v) => ({
     value: v.code,
     label: v.name,
@@ -61,7 +61,7 @@ function getLanguageOptions(): Array<SelectableValue<string>> {
 
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
-  themeOptions: SelectableValue[];
+  themeOptions: ComboboxOption[];
 
   constructor(props: Props) {
     super(props);
@@ -110,7 +110,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }
   };
 
-  onThemeChanged = (value: SelectableValue<string>) => {
+  onThemeChanged = (value: ComboboxOption<string> | null) => {
+    if (!value) {
+      return;
+    }
     this.setState({ theme: value.value });
 
     if (value.value) {
@@ -153,11 +156,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
       <form onSubmit={this.onSubmitForm} className={styles.form}>
         <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
           <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
-            <Select
+            <Combobox
               options={this.themeOptions}
-              value={currentThemeOption}
+              value={currentThemeOption.value}
               onChange={this.onThemeChanged}
-              inputId="shared-preferences-theme-select"
+              id="shared-preferences-theme-select"
             />
           </Field>
 
@@ -215,12 +218,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
             }
             data-testid="User preferences language drop down"
           >
-            <Select
-              value={languages.find((lang) => lang.value === language)}
-              onChange={(lang: SelectableValue<string>) => this.onLanguageChanged(lang.value ?? '')}
+            <Combobox
+              value={languages.find((lang) => lang.value === language)?.value || ''}
+              onChange={(lang: ComboboxOption | null) => this.onLanguageChanged(lang?.value ?? '')}
               options={languages}
               placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
-              inputId="locale-select"
+              id="locale-select"
             />
           </Field>
         </FieldSet>

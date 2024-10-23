@@ -1,6 +1,8 @@
+import { AccessControlAction } from 'app/types';
+
 export type ResourcePermission = {
   id: number;
-  resourceId: string;
+  resourceId?: string;
   isManaged: boolean;
   isInherited: boolean;
   isServiceAccount: boolean;
@@ -11,8 +13,9 @@ export type ResourcePermission = {
   teamId?: number;
   teamAvatarUrl?: string;
   builtInRole?: string;
-  actions: string[];
+  actions: AccessControlAction[];
   permission: string;
+  roleName?: string;
   warning?: string;
 };
 

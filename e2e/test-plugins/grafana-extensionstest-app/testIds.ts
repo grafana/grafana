@@ -16,6 +16,11 @@ export const testIds = {
     reusableAddedComponent: 'b-app-add-component',
     exposedComponent: 'b-app-exposed-component',
   },
+  appC: {
+    container: 'c-app-body',
+    section1: 'use-plugin-links',
+    section2: 'use-plugin-extensions',
+  },
   legacyGettersPage: {
     container: 'data-testid pg-legacy-getters-container',
     section1: 'get-plugin-extensions',

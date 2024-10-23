@@ -5,12 +5,13 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -24,13 +25,14 @@ type APIGroupBuilder interface {
 	// Add the kinds to the server scheme
 	InstallSchema(scheme *runtime.Scheme) error
 
-	// Build the group+version behavior
-	GetAPIGroupInfo(
-		scheme *runtime.Scheme,
-		codecs serializer.CodecFactory,
-		optsGetter generic.RESTOptionsGetter,
-		dualWrite grafanarest.DualWriteBuilder,
-	) (*genericapiserver.APIGroupInfo, error)
+	// UpdateAPIGroupInfo used to be a getter until we ran into the issue
+	// where separate API Group Info for the same group (different versions) aren't handled well by
+	// the InstallAPIGroup facility of genericapiserver. Also, we can only ever call InstallAPIGroup
+	// once on the genericapiserver per group, or we run into double registration startup errors.
+	//
+	// The caller should share the apiGroupInfo passed into this function across builder versions of the same group.
+	// UpdateAPIGroupInfo builds the group+version behavior updating the passed in apiGroupInfo in place
+	UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts APIGroupOptions) error
 
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
@@ -42,6 +44,13 @@ type APIGroupBuilder interface {
 	// Standard namespace checking will happen before this is called, specifically
 	// the namespace must matches an org|stack that the user belongs to
 	GetAuthorizer() authorizer.Authorizer
+}
+
+type APIGroupOptions struct {
+	Scheme           *runtime.Scheme
+	OptsGetter       generic.RESTOptionsGetter
+	DualWriteBuilder grafanarest.DualWriteBuilder
+	MetricsRegister  prometheus.Registerer
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly

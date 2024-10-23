@@ -1,3 +1,4 @@
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction, Settings, SettingsSection } from 'app/types';
@@ -51,6 +52,11 @@ export async function getAuthProviderStatus(providerId: string): Promise<AuthPro
 }
 
 export function initAuthConfig() {
+  // skip the LDAP provider if it is enabled by SSO settings
+  if (config.featureToggles.ssoSettingsApi && config.featureToggles.ssoSettingsLDAP) {
+    return;
+  }
+
   const ldapAuthProvider: AuthProviderInfo = {
     id: 'ldap',
     type: 'LDAP',

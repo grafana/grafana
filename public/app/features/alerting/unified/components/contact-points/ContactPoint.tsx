@@ -22,16 +22,15 @@ import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from
 import { ContactPointWithMetadata, getReceiverDescription, ReceiverConfigWithMetadata } from './utils';
 
 interface ContactPointProps {
-  disabled?: boolean;
   contactPoint: ContactPointWithMetadata;
 }
 
-export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointProps) => {
+export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
   const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
-  const handleDelete = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
-  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(handleDelete);
+  const [deleteTrigger] = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
+  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger.execute);
 
   // TODO probably not the best way to figure out if we want to show either only the summary or full metadata for the receivers?
   const showFullMetadata = receivers.some((receiver) => Boolean(receiver[RECEIVER_META_KEY]));
@@ -41,7 +40,6 @@ export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointPro
       <Stack direction="column" gap={0}>
         <ContactPointHeader
           contactPoint={contactPoint}
-          disabled={disabled}
           onDelete={(contactPointToDelete) =>
             showDeleteModal({
               name: contactPointToDelete.id || contactPointToDelete.name,
@@ -49,6 +47,13 @@ export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointPro
             })
           }
         />
+        {receivers.length === 0 && (
+          <div className={styles.noIntegrationsContainer}>
+            <MetaText color="warning" icon="exclamation-circle">
+              <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
+            </MetaText>
+          </div>
+        )}
         {showFullMetadata ? (
           <div>
             {receivers.map((receiver, index) => {
@@ -57,6 +62,7 @@ export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointPro
               const sendingResolved = !Boolean(receiver.disableResolveMessage);
               const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
               const key = metadata.name + index;
+
               return (
                 <ContactPointReceiver
                   key={key}
@@ -285,5 +291,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadataRow: css({
     borderBottomLeftRadius: `${theme.shape.radius.default}`,
     borderBottomRightRadius: `${theme.shape.radius.default}`,
+  }),
+  noIntegrationsContainer: css({
+    paddingTop: `${theme.spacing(1.5)}`,
+    paddingLeft: `${theme.spacing(1.5)}`,
   }),
 });

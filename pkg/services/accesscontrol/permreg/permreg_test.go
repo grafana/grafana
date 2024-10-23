@@ -103,7 +103,11 @@ func Test_permissionRegistry_RegisterPermission(t *testing.T) {
 
 func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 	pr := newPermissionRegistry()
-	err := pr.RegisterPermission("folders:read", "folders:uid:")
+	err := pr.RegisterPermission("folders:read", "folders:*")
+	require.NoError(t, err)
+	err = pr.RegisterPermission("dashboards:read", "dashboards:*")
+	require.NoError(t, err)
+	err = pr.RegisterPermission("dashboards:read", "folders:*")
 	require.NoError(t, err)
 	err = pr.RegisterPermission("test-app.settings:read", "")
 	require.NoError(t, err)
@@ -130,6 +134,18 @@ func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 			name:    "valid folders read with kind level wildcard",
 			action:  "folders:read",
 			scope:   "folders:*",
+			wantErr: false,
+		},
+		{
+			name:    "valid dashboards read with dashboard scope",
+			action:  "dashboards:read",
+			scope:   "dashboards:uid:my_team_dash",
+			wantErr: false,
+		},
+		{
+			name:    "valid dashboards read with folder scope",
+			action:  "dashboards:read",
+			scope:   "folders:uid:my_team_folder",
 			wantErr: false,
 		},
 		{

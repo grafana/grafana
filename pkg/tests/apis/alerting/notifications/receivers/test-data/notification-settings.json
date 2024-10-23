@@ -23,8 +23,9 @@
         "grafana_managed_receiver_configs": [
           {
             "type": "email",
+            "name": "email receiver",
             "settings": {
-              "addresses": "example@email.com"
+              "addresses": "<example@email.com>"
             }
           }
         ]
@@ -34,6 +35,7 @@
         "grafana_managed_receiver_configs": [
           {
             "type": "email",
+            "name": "user-defined",
             "settings": {
               "addresses": "example@email.com"
             }

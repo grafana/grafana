@@ -5,15 +5,18 @@ import (
 	"net/http"
 	"strconv"
 
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/resourcepermissions")
@@ -42,21 +45,30 @@ func (a *api) registerEndpoints() {
 		licenseMW = nopMiddleware
 	}
 
+	teamUIDResolver := team.MiddlewareTeamUIDResolver(a.service.teamService, ":teamID")
+	teamUIDResolverResource := func() web.Handler { return func(c *contextmodel.ReqContext) {} }() // no-op
+	if a.service.options.Resource == "teams" {
+		teamUIDResolverResource = team.MiddlewareTeamUIDResolver(a.service.teamService, ":resourceID")
+	}
+	if a.service.options.Resource == "receivers" {
+		teamUIDResolverResource = MiddlewareReceiverUIDResolver(":resourceID")
+	}
+
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
 		actionRead := fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		actionWrite := fmt.Sprintf("%s.permissions:write", a.service.options.Resource)
 		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
 		r.Get("/description", auth(accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", auth(accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
-		r.Post("/:resourceID", licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))
+		r.Get("/:resourceID", teamUIDResolverResource, auth(accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID", teamUIDResolverResource, licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))
 		if a.service.options.Assignments.Users {
-			r.Post("/:resourceID/users/:userID", licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
+			r.Post("/:resourceID/users/:userID", licenseMW, teamUIDResolverResource, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
 		if a.service.options.Assignments.Teams {
-			r.Post("/:resourceID/teams/:teamID", licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
+			r.Post("/:resourceID/teams/:teamID", licenseMW, teamUIDResolverResource, teamUIDResolver, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
 		}
 		if a.service.options.Assignments.BuiltInRoles {
-			r.Post("/:resourceID/builtInRoles/:builtInRole", licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
+			r.Post("/:resourceID/builtInRoles/:builtInRole", teamUIDResolverResource, licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
 		}
 	})
 }
@@ -422,4 +434,14 @@ func permissionSetResponse(cmd setPermissionCommand) response.Response {
 		message = "Permission removed"
 	}
 	return response.Success(message)
+}
+
+func MiddlewareReceiverUIDResolver(paramName string) web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		gotParams := web.Params(c.Req)
+		if uid, ok := gotParams[paramName]; ok {
+			gotParams[paramName] = alertingac.ScopeReceiversProvider.GetResourceIDFromUID(uid)
+			web.SetURLParams(c.Req, gotParams)
+		}
+	}
 }

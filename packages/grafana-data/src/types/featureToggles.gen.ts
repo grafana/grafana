@@ -41,7 +41,6 @@ export interface FeatureToggles {
   vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  topnav?: boolean;
   grpcServer?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
@@ -53,6 +52,7 @@ export interface FeatureToggles {
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
+  lokiShardSplitting?: boolean;
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
@@ -87,6 +87,7 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
+  datasourceAPIServers?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
@@ -115,6 +116,9 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesDashboardsAPI?: boolean;
+  kubernetesFolders?: boolean;
+  grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -137,6 +141,7 @@ export interface FeatureToggles {
   dashboardSceneForViewers?: boolean;
   dashboardSceneSolo?: boolean;
   dashboardScene?: boolean;
+  dashboardNewLayouts?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
@@ -155,6 +160,7 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
+  onPremToCloudMigrationsAlerts?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   sqlExpressions?: boolean;
@@ -191,23 +197,32 @@ export interface FeatureToggles {
   openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
-  databaseReadReplica?: boolean;
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
-  dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
-  bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  backgroundPluginInstaller?: boolean;
+  alertingFilterV2?: boolean;
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
+  alertingPrometheusRulesPrimary?: boolean;
   singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
-  appPlatformAccessTokens?: boolean;
+  homeSetupGuide?: boolean;
+  appPlatformGrpcClientAuth?: boolean;
   appSidecar?: boolean;
+  groupAttributeSync?: boolean;
+  alertingQueryAndExpressionsStepMode?: boolean;
+  improvedExternalSessionHandling?: boolean;
+  useSessionStorageForRedirection?: boolean;
+  rolePickerDrawer?: boolean;
+  unifiedStorageSearch?: boolean;
+  pluginsSriChecks?: boolean;
+  unifiedStorageBigObjectsSupport?: boolean;
+  timeRangeProvider?: boolean;
+  prometheusUsesCombobox?: boolean;
 }

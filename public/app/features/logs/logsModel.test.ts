@@ -360,6 +360,87 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
+  it('given one series should return expected logs model with detected_level', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['foo=bar', 'foo=bar'],
+            labels: {
+              job: 'grafana',
+            },
+          },
+          {
+            name: 'detected_level',
+            type: FieldType.string,
+            values: ['info', 'error'],
+          },
+        ],
+        meta: {
+          limit: 1000,
+        },
+        refId: 'A',
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.hasUniqueLabels).toBeFalsy();
+    expect(logsModel.rows).toHaveLength(2);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'foo=bar',
+        labels: { job: 'grafana' },
+        logLevel: 'info',
+        uniqueLabels: {},
+        uid: 'A_0',
+      },
+      {
+        entry: 'foo=bar',
+        labels: { job: 'grafana' },
+        logLevel: 'error',
+        uniqueLabels: {},
+        uid: 'A_1',
+      },
+    ]);
+
+    expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.series).toMatchObject([
+      {
+        name: 'info',
+        fields: [
+          { type: 'time', values: [1556270891000, 1556289770000] },
+          { type: 'number', values: [1, 0] },
+        ],
+      },
+      {
+        name: 'error',
+        fields: [
+          { type: 'time', values: [1556289770000] },
+          { type: 'number', values: [1] },
+        ],
+      },
+    ]);
+    expect(logsModel.meta).toHaveLength(2);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: COMMON_LABELS,
+      value: {
+        job: 'grafana',
+      },
+      kind: LogsMetaKind.LabelsMap,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
+      label: LIMIT_LABEL,
+      value: `1000 (2 returned)`,
+      kind: LogsMetaKind.String,
+    });
+  });
+
   it('with infinite scrolling enabled it should return expected logs model', () => {
     config.featureToggles.logsInfiniteScrolling = true;
 

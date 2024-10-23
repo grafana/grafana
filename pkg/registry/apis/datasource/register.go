@@ -5,11 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	openapi "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/utils/strings/slices"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -19,18 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	openapi "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/utils/strings/slices"
 )
 
 var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
@@ -58,16 +56,17 @@ func RegisterAPIService(
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
 ) (*DataSourceAPIBuilder, error) {
+	// We want to expose just a limited set of plugins
+	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
+
 	// This requires devmode!
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !(explictPluginList || features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
 	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
-	// ATTENTION: Adding a datasource here requires the plugin to implement
-	// an AdmissionHandler to validate the datasource settings.
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
@@ -75,8 +74,12 @@ func RegisterAPIService(
 	}
 
 	for _, ds := range all {
-		if !slices.Contains(ids, ds.ID) {
+		if explictPluginList && !slices.Contains(ids, ds.ID) {
 			continue // skip this one
+		}
+
+		if !ds.JSONData.Backend {
+			continue // skip frontend only plugins
 		}
 
 		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
@@ -100,6 +103,7 @@ type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.ConversionHandler
 }
 
 func NewDataSourceAPIBuilder(
@@ -199,12 +203,7 @@ func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
 	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
 }
 
-func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	_ generic.RESTOptionsGetter,
-	_ grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
+func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
 	conn := b.connectionResourceInfo
@@ -226,14 +225,14 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	// Register hardcoded query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
+	if err != nil {
+		return err
+	}
 
-	// Create the group info
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-		conn.GroupResource().Group, scheme,
-		metav1.ParameterCodec, codecs)
+	registerQueryConvert(b.client, b.contextProvider, storage)
 
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
-	return &apiGroupInfo, err
+	return err
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {

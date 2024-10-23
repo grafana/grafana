@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type StorageType string
@@ -22,12 +21,24 @@ const (
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
 )
 
-type StorageOptions struct {
-	StorageType                  StorageType
-	DataPath                     string
-	Address                      string
-	UnifiedStorageConfig         map[string]setting.UnifiedStorageConfig
-	DualWriterDataSyncJobEnabled map[string]bool
+type StorageOptions struct { // The desired storage type
+	StorageType StorageType
+
+	// For unified-grpc, the address is required
+	Address string
+
+	// For file storage, this is the requested path
+	DataPath string
+
+	// Optional blob storage connection string
+	// file:///path/to/dir
+	// gs://my-bucket (using default credentials)
+	// s3://my-bucket?region=us-west-1 (using default credentials)
+	// azblob://my-container
+	BlobStoreURL string
+
+	// {resource}.{group} = 1|2|3|4
+	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
 }
 
 func NewStorageOptions() *StorageOptions {
@@ -54,6 +65,11 @@ func (o *StorageOptions) Validate() []error {
 
 	if _, _, err := net.SplitHostPort(o.Address); err != nil {
 		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-address must be a valid network address: %v", err))
+	}
+
+	// Only works for single tenant grafana right now
+	if o.BlobStoreURL != "" && o.StorageType != StorageTypeUnified {
+		errs = append(errs, fmt.Errorf("blob storage is only valid with unified storage"))
 	}
 	return errs
 }

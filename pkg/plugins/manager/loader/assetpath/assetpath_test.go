@@ -183,6 +183,12 @@ func TestService(t *testing.T) {
 				oneCDNRelativeURL, err = url.JoinPath(oneCDNURL, "child-plugins/two/path/to/file.txt")
 				require.NoError(t, err)
 				require.Equal(t, oneCDNRelativeURL, u)
+
+				u, err = svc.RelativeURL(child, "../path/to/file.txt")
+				require.NoError(t, err)
+				oneCDNRelativeURL, err = url.JoinPath(oneCDNURL, "child-plugins/path/to/file.txt")
+				require.NoError(t, err)
+				require.Equal(t, oneCDNRelativeURL, u)
 			})
 		})
 	}

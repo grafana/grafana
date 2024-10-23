@@ -111,7 +111,7 @@ export interface NotificationChannelDTO {
 }
 
 export type NotificationChannelSecureSettings = Record<string, string | number>;
-export type NotificationChannelSecureFields = Record<string, boolean>;
+export type NotificationChannelSecureFields = Record<string, boolean | ''>;
 
 export interface ChannelTypeSettings {
   [key: string]: any;

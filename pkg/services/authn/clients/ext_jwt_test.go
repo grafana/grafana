@@ -35,7 +35,7 @@ var (
 		Rest: authnlib.AccessTokenClaims{
 			Scopes:               []string{"profile", "groups"},
 			DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
-			Permissions:          []string{"fixed:folders:reader"},
+			Permissions:          []string{"fixed:folders:reader", "folders:read"},
 			Namespace:            "default", // org ID of 1 is special and translates to default
 		},
 	}
@@ -228,6 +228,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         "this-uid",
 				UID:                        "this-uid",
+				Name:                       "this-uid",
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaims,
@@ -236,7 +237,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
-					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}}},
+					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}, AllowedActions: []string{"folders:read"}}},
 			},
 		},
 		{
@@ -246,6 +247,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         "this-uid",
 				UID:                        "this-uid",
+				Name:                       "this-uid",
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWildcard,
@@ -275,7 +277,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
-						ActionsLookup: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
 					},
 				},
 			},
@@ -343,6 +345,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         "this-uid",
 				UID:                        "this-uid",
+				Name:                       "this-uid",
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWithStackSet,
@@ -369,6 +372,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want: &authn.Identity{
 				ID:                         "this-uid",
 				UID:                        "this-uid",
+				Name:                       "this-uid",
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWithDeprecatedStackClaimSet,

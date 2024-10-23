@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { config, setPluginExtensionsHook } from '@grafana/runtime';
+import { config, setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -53,8 +53,8 @@ const getMenuContents = async () => {
   return [...allMenuItems, ...allLinkItems];
 };
 
-setPluginExtensionsHook(() => ({
-  extensions: [],
+setPluginLinksHook(() => ({
+  links: [],
   isLoading: false,
 }));
 

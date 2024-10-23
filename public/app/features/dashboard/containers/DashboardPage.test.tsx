@@ -63,7 +63,7 @@ jest.mock('app/core/core', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
-  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
@@ -100,9 +100,9 @@ function setup(propOverrides?: Partial<Props>) {
 
   const props: Props = {
     ...getRouteComponentProps({
-      match: { params: { slug: 'my-dash', uid: '11' }, isExact: false, path: '', url: '' },
       route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
     }),
+    params: { slug: 'my-dash', uid: '11' },
     navIndex: {
       'dashboards/browse': {
         text: 'Dashboards',
@@ -166,9 +166,9 @@ describe('DashboardPage', () => {
     it('only calls initDashboard once when wrapped in AppChrome', async () => {
       const props: Props = {
         ...getRouteComponentProps({
-          match: { params: { slug: 'my-dash', uid: '11' }, isExact: true, path: '', url: '' },
           route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
         }),
+        params: { slug: 'my-dash', uid: '11' },
         navIndex: {
           'dashboards/browse': {
             text: 'Dashboards',
@@ -270,7 +270,7 @@ describe('DashboardPage', () => {
       const { rerender } = setup();
       rerender({ dashboard: getTestDashboard() });
       rerender({
-        match: { params: { uid: 'new-uid' }, isExact: false, path: '', url: '' },
+        params: { uid: 'new-uid' },
         dashboard: getTestDashboard({ title: 'Another dashboard' }),
       });
       await waitFor(() => {

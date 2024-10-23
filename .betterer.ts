@@ -7,9 +7,10 @@ import { glob } from 'glob';
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
 const eslintPathsToIgnore = [
-  'public/app/angular', // will be removed in Grafana 11
-  'public/app/plugins/panel/graph', // will be removed alongside angular
-  'public/app/plugins/panel/table-old', // will be removed alongside angular
+  'packages/grafana-ui/src/graveyard', // will be removed alongside angular in Grafana 12
+  'public/app/angular', // will be removed in Grafana 12
+  'public/app/plugins/panel/graph', // will be removed alongside angular in Grafana 12
+  'public/app/plugins/panel/table-old', // will be removed alongside angular in Grafana 12
   'e2e/test-plugins',
 ];
 
@@ -21,10 +22,9 @@ export default {
       .exclude(new RegExp(eslintPathsToIgnore.join('|'))),
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
   'no gf-form usage': () =>
-    regexp(
-      /gf-form/gm,
-      'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.'
-    ).include('**/*.{ts,tsx,html}'),
+    regexp(/gf-form/gm, 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.')
+      .include('**/*.{ts,tsx,html}')
+      .exclude(new RegExp('packages/grafana-ui/src/themes/GlobalStyles')),
 };
 
 function countUndocumentedStories() {

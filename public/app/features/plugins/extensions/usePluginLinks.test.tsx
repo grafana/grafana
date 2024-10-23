@@ -1,8 +1,15 @@
 import { act } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
-import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { createUsePluginLinks } from './usePluginLinks';
+import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
+
+import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
+import { log } from './logs/log';
+import { resetLogMock } from './logs/testUtils';
+import { setupPluginExtensionRegistries } from './registry/setup';
+import { PluginExtensionRegistries } from './registry/types';
+import { usePluginLinks } from './usePluginLinks';
+import { isGrafanaDevMode } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn().mockResolvedValue({
@@ -15,29 +22,92 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
   }),
 }));
 
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+
+  // Manually set the dev mode to false
+  // (to make sure that by default we are testing a production scneario)
+  isGrafanaDevMode: jest.fn().mockReturnValue(false),
+}));
+
+jest.mock('./logs/log', () => {
+  const { createLogMock } = jest.requireActual('./logs/testUtils');
+  const original = jest.requireActual('./logs/log');
+
+  return {
+    ...original,
+    log: createLogMock(),
+  };
+});
+
 describe('usePluginLinks()', () => {
-  let registry: AddedLinksRegistry;
+  let registries: PluginExtensionRegistries;
+  let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
+  let pluginMeta: PluginMeta;
+  const pluginId = 'myorg-extensions-app';
+  const extensionPointId = `${pluginId}/extension-point/v1`;
 
   beforeEach(() => {
-    registry = new AddedLinksRegistry();
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+    registries = setupPluginExtensionRegistries();
+    resetLogMock(log);
+
+    pluginMeta = {
+      id: pluginId,
+      name: 'Extensions App',
+      type: PluginType.app,
+      module: '',
+      baseUrl: '',
+      info: {
+        author: {
+          name: 'MyOrg',
+        },
+        description: 'App for testing extensions',
+        links: [],
+        logos: {
+          large: '',
+          small: '',
+        },
+        screenshots: [],
+        updated: '2023-10-26T18:25:01Z',
+        version: '1.0.0',
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      },
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+    };
+
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PluginContextProvider meta={pluginMeta}>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      </PluginContextProvider>
+    );
   });
 
   it('should return an empty array if there are no link extensions registered for the extension point', () => {
-    const usePluginComponents = createUsePluginLinks(registry);
-    const { result } = renderHook(() =>
-      usePluginComponents({
-        extensionPointId: 'foo/bar',
-      })
+    const { result } = renderHook(
+      () =>
+        usePluginLinks({
+          extensionPointId: 'foo/bar',
+        }),
+      { wrapper }
     );
 
     expect(result.current.links).toEqual([]);
   });
 
   it('should only return the link extensions for the given extension point ids', async () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
-
-    registry.register({
+    registries.addedLinksRegistry.register({
       pluginId,
       configs: [
         {
@@ -61,8 +131,7 @@ describe('usePluginLinks()', () => {
       ],
     });
 
-    const usePluginExtensions = createUsePluginLinks(registry);
-    const { result } = renderHook(() => usePluginExtensions({ extensionPointId }));
+    const { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
 
     expect(result.current.links.length).toBe(2);
     expect(result.current.links[0].title).toBe('1');
@@ -70,17 +139,14 @@ describe('usePluginLinks()', () => {
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
-    const usePluginExtensions = createUsePluginLinks(registry);
-    let { result, rerender } = renderHook(() => usePluginExtensions({ extensionPointId }));
+    let { result, rerender } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
 
     // No extensions yet
     expect(result.current.links.length).toBe(0);
 
     // Add extensions to the registry
     act(() => {
-      registry.register({
+      registries.addedLinksRegistry.register({
         pluginId,
         configs: [
           {
@@ -107,12 +173,178 @@ describe('usePluginLinks()', () => {
     expect(result.current.links[1].title).toBe('2');
   });
 
-  it('should only render the hook once', () => {
-    const addedLinksRegistrySpy = jest.spyOn(registry, 'asObservable');
-    const extensionPointId = 'plugins/foo/bar';
-    const usePluginLinks = createUsePluginLinks(registry);
+  it('should not validate the extension point meta-info in production mode', () => {
+    // Empty list of extension points in the plugin meta (from plugin.json)
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PluginContextProvider
+        meta={{
+          ...pluginMeta,
+          extensions: {
+            ...pluginMeta.extensions!,
+            extensionPoints: [],
+          },
+        }}
+      >
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      </PluginContextProvider>
+    );
 
-    renderHook(() => usePluginLinks({ extensionPointId }));
-    expect(addedLinksRegistrySpy).toHaveBeenCalledTimes(1);
+    registries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          path: `/a/${pluginId}/2`,
+        },
+      ],
+    });
+
+    // Trying to render an extension point that is not defined in the plugin meta
+    // (No restrictions due to isGrafanaDevMode() = false)
+    let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
+    expect(result.current.links.length).toBe(1);
+    expect(log.warning).not.toHaveBeenCalled();
+  });
+
+  it('should not validate the extension point id in production mode', () => {
+    // Empty list of extension points in the plugin meta (from plugin.json)
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PluginContextProvider
+        meta={{
+          ...pluginMeta,
+          extensions: {
+            ...pluginMeta.extensions!,
+            extensionPoints: [],
+          },
+        }}
+      >
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      </PluginContextProvider>
+    );
+
+    // Trying to render an extension point that is not defined in the plugin meta
+    // (No restrictions due to isGrafanaDevMode() = false)
+    let { result } = renderHook(() => usePluginLinks({ extensionPointId: 'invalid-extension-point-id' }), { wrapper });
+    expect(result.current.links.length).toBe(0);
+    expect(log.warning).not.toHaveBeenCalled();
+  });
+
+  it('should not validate the extension point meta-info if used in Grafana core (no plugin context)', () => {
+    // Imitate running in dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    // No plugin context -> used in Grafana core
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+    );
+
+    // Adding an extension to the extension point
+    registries.addedLinksRegistry.register({
+      pluginId: 'grafana', // Only core Grafana can register extensions without a plugin context
+      configs: [
+        {
+          targets: 'grafana/extension-point/v1',
+          title: '1',
+          description: '1',
+          path: `/a/grafana/${pluginId}/2`,
+        },
+      ],
+    });
+
+    let { result } = renderHook(() => usePluginLinks({ extensionPointId: 'grafana/extension-point/v1' }), { wrapper });
+    expect(result.current.links.length).toBe(1);
+    expect(log.warning).not.toHaveBeenCalled();
+  });
+
+  it('should not validate the extension point id if used in Grafana core (no plugin context)', () => {
+    // Imitate running in dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    // No plugin context -> used in Grafana core
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+    );
+
+    let { result } = renderHook(() => usePluginLinks({ extensionPointId: 'invalid-extension-point-id' }), { wrapper });
+    expect(result.current.links.length).toBe(0);
+    expect(log.warning).not.toHaveBeenCalled();
+  });
+
+  it('should validate if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
+    // Imitate running in dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    // Empty list of extension points in the plugin meta (from plugin.json)
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PluginContextProvider
+        meta={{
+          ...pluginMeta,
+          extensions: {
+            ...pluginMeta.extensions!,
+            extensionPoints: [],
+          },
+        }}
+      >
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      </PluginContextProvider>
+    );
+
+    // Adding an extension to the extension point - it should not be returned later
+    registries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          path: `/a/${pluginId}/2`,
+        },
+      ],
+    });
+
+    // Trying to render an extension point that is not defined in the plugin meta
+    let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
+    expect(result.current.links.length).toBe(0);
+    expect(log.warning).toHaveBeenCalled();
+  });
+
+  it('should not log a warning if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
+    // Imitate running in dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    // Empty list of extension points in the plugin meta (from plugin.json)
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <PluginContextProvider
+        meta={{
+          ...pluginMeta,
+          extensions: {
+            ...pluginMeta.extensions!,
+            extensionPoints: [],
+          },
+        }}
+      >
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      </PluginContextProvider>
+    );
+
+    // Adding an extension to the extension point - it should not be returned later
+    registries.addedLinksRegistry.register({
+      pluginId,
+      configs: [
+        {
+          targets: extensionPointId,
+          title: '1',
+          description: '1',
+          path: `/a/${pluginId}/2`,
+        },
+      ],
+    });
+
+    // Trying to render an extension point that is not defined in the plugin meta
+    let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
+    expect(result.current.links.length).toBe(0);
+    expect(log.warning).toHaveBeenCalled();
   });
 });

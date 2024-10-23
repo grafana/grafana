@@ -185,7 +185,7 @@ export function toDays(size: number, decimals?: DecimalCount): FormattedValue {
   }
 
   if (Math.abs(size) < 7) {
-    return { text: toFixed(size, decimals), suffix: ' day' };
+    return toFixedScaled(size, decimals, ' day');
   } else if (Math.abs(size) < 365) {
     return toFixedScaled(size / 7, decimals, ' week');
   } else {

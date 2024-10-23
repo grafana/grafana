@@ -195,6 +195,10 @@ export function getStyles(theme: GrafanaTheme2) {
       bottom: theme.spacing(1), // Position it at the bottom
       right: theme.spacing(1), // Position it at the right
     }),
+    wordwrap: css({
+      overflow: 'hidden',
+      overflowWrap: 'anywhere',
+    }),
   };
 }
 

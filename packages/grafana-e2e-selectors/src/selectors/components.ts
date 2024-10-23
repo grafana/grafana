@@ -381,6 +381,7 @@ export const Components = {
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
+    commandPaletteTrigger: 'data-testid Command palette trigger',
     shareDashboard: 'data-testid Share dashboard',
     markAsFavorite: 'data-testid Mark as favorite',
     editDashboard: {
@@ -422,6 +423,7 @@ export const Components = {
   },
   Select: {
     option: 'data-testid Select option',
+    toggleAllOptions: 'data-testid toggle all options',
     input: () => 'input[id*="time-options-input"]',
     singleValue: () => 'div[class*="-singleValue"]',
   },
