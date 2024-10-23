@@ -47,14 +47,13 @@ describe('DefaultGridLayoutManager', () => {
 
       const vizPanel = new VizPanel({
         title: 'Panel Title',
-        key: 'panel-55',
         pluginId: 'timeseries',
         $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
       });
 
       manager.addPanel(vizPanel);
 
-      const panel = findVizPanelByKey(manager, 'panel-55')!;
+      const panel = findVizPanelByKey(manager, vizPanel.state.key)!;
       const gridItem = panel.parent as DashboardGridItem;
 
       expect(panel).toBeDefined();
