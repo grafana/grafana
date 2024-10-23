@@ -3,12 +3,12 @@ This module is a library of Drone steps that exclusively run on windows machines
 """
 
 load(
-    "scripts/drone/utils/images.star",
-    "images",
-)
-load(
     "scripts/drone/steps/lib.star",
     "download_grabpl_step",
+)
+load(
+    "scripts/drone/utils/images.star",
+    "images",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -18,7 +18,6 @@ load(
     "scripts/drone/vault.star",
     "from_secret",
     "rgm_gcp_key_base64",
-    "prerelease_bucket",
 )
 
 def download_nssm_step():
@@ -43,7 +42,7 @@ def download_wix_step():
         ],
     }
 
-def download_zip_step(target=""):
+def download_zip_step(target = ""):
     path = "{}/grafana-$${{DRONE_TAG:1}}.windows-amd64.zip".format(target)
     return {
         "name": "download-zip",
@@ -51,18 +50,18 @@ def download_zip_step(target=""):
         "commands": [
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "bash -c 'gcloud storage cp {} grafana.zip'".format(path)
+            "bash -c 'gcloud storage cp {} grafana.zip'".format(path),
         ],
         "environment": {
-            "GCP_KEY": from_secret(rgm_gcp_key_base64)
-        }
+            "GCP_KEY": from_secret(rgm_gcp_key_base64),
+        },
     }
 
 def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], environment = []):
     nssm = download_nssm_step()
     wix = download_wix_step()
     grabpl = download_grabpl_step()
-    zip = download_zip_step(target=target)
+    zip = download_zip_step(target = target)
     build = build_msi_step(
         depends_on = [
             nssm["name"],
@@ -113,7 +112,7 @@ def upload_msi_step(depends_on = [], target = ""):
         ],
         "depends_on": depends_on,
         "environment": {
-            "GCP_KEY": from_secret(rgm_gcp_key_base64)
+            "GCP_KEY": from_secret(rgm_gcp_key_base64),
         },
     }
 
