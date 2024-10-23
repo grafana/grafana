@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
-// TODO(drclau): decide on the audience for the resource store
 const resourceStoreAudience = "resourceStore"
 
 // This adds a UnifiedStorage client into the wire dependency tree
