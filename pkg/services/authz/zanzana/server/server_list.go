@@ -8,6 +8,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
@@ -23,7 +24,7 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 		StoreId:              storeID,
 		AuthorizationModelId: modelID,
 		Type:                 info.typ,
-		Relation:             "read",
+		Relation:             mapping[utils.VerbGet],
 		User:                 r.GetSubject(),
 	})
 
@@ -37,13 +38,14 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 }
 
 func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
+	relation := mapping[utils.VerbGet]
 	// 1. check if subject has access through group resource because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
-			Relation: "read",
+			Relation: relation,
 			Object:   newGroupResourceIdent(r.GetGroup(), r.GetResource()),
 		},
 	})
@@ -61,7 +63,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,
 		Type:                 "folder_group_resource",
-		Relation:             "read",
+		Relation:             relation,
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
@@ -79,7 +81,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,
 		Type:                 "resource",
-		Relation:             "read",
+		Relation:             relation,
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
@@ -96,7 +98,6 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 		Folders: folderObject(r.GetGroup(), r.GetResource(), folders.GetObjects()),
 		Items:   directObjects(r.GetGroup(), r.GetResource(), direct.GetObjects()),
 	}, nil
-
 }
 
 func typedObjects(typ string, objects []string) []string {
