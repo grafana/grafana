@@ -45,7 +45,6 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       // Move to list component
       marginBottom: 0,
-      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
     }),
     heading: css({

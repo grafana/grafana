@@ -70,7 +70,7 @@ const getUpgradeBoxStyles = (theme: GrafanaTheme2, size: ComponentSize) => {
       textAlign: 'left',
       lineHeight: '16px',
       margin: theme.spacing(0, 'auto', 3, 'auto'),
-      maxWidth: theme.breakpoints.values.xxl,
+      maxWidth: `${theme.breakpoints.values.xxl}px`,
       width: '100%',
     }),
     inner: css({
