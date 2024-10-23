@@ -99,7 +99,7 @@ describe('SignupInvitedPage', () => {
 
   describe('when user submits the form and the required fields are not filled in', () => {
     it('then required fields should show error messages and nothing should be posted', async () => {
-      const { postSpy } = await setupTestContext({ get: { email: '', invitedBy: '', name: '', username: '' } });
+      const { postSpy } = await setupTestContext({ get: { email: '', invitedBy: '', name: '', username: '', orgName: '' } });
 
       await userEvent.click(screen.getByRole('button', { name: /sign up/i }));
 
