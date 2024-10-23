@@ -62,7 +62,6 @@ export const RestoreModal = ({
           <Space v={1} />
           <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
         </>
-        // TODO: replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards)?
       }
       confirmText={
         isLoading
