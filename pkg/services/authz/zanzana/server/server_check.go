@@ -101,6 +101,11 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 			Relation: relation,
 			Object:   newFolderGroupResourceIdent(r.GetFolder(), r.GetGroup(), r.GetResource()),
 		},
+		Context: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"requested_group": structpb.NewStringValue(formatGroupResource(r.GetGroup(), r.GetResource())),
+			},
+		},
 	})
 
 	if err != nil {
