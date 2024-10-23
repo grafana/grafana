@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
@@ -27,10 +28,17 @@ export interface Props {
 export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedTrackSearch = useMemo(
+    () =>
+      debounce((q) => {
+        reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SEARCH, query: q });
+      }, 300),
+    []
+  );
 
   const handleSearchChange = (value: string) => {
     if (value) {
-      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SEARCH, query: value });
+      debouncedTrackSearch(value);
     }
     setSearchQuery(value);
   };

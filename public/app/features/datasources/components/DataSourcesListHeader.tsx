@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { debounce } from 'lodash';
+import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
@@ -20,14 +21,22 @@ const sortOptions = [
 
 export function DataSourcesListHeader() {
   const dispatch = useDispatch();
+  const debouncedTrackSearch = useMemo(
+    () =>
+      debounce((q) => {
+        trackDsSearched({ query: q });
+      }, 300),
+    []
+  );
+
   const setSearchQuery = useCallback(
     (q: string) => {
       dispatch(setDataSourcesSearchQuery(q));
       if (q) {
-        trackDsSearched({ query: q });
+        debouncedTrackSearch(q);
       }
     },
-    [dispatch]
+    [dispatch, debouncedTrackSearch]
   );
   const searchQuery = useSelector(({ dataSources }: StoreState) => getDataSourcesSearchQuery(dataSources));
 

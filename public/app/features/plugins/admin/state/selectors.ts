@@ -1,4 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
+import { debounce } from 'lodash';
 
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -13,6 +14,10 @@ export const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
 export const selectItems = createSelector(selectRoot, ({ items }) => items);
 
 export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
+
+const debouncedTrackSearch = debounce((count) => {
+  reportInteraction('plugins_search', { resultsCount: count });
+}, 300);
 
 export type PluginFilters = {
   // Searches for a string in certain fields (e.g. "name" or "orgName")
@@ -68,7 +73,7 @@ export const selectPlugins = (filters: PluginFilters) =>
     });
 
     if (keyword) {
-      reportInteraction('plugins_search', { resultsCount: filteredPlugins.length });
+      debouncedTrackSearch(filteredPlugins.length);
     }
 
     return filteredPlugins;

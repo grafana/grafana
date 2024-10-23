@@ -3,7 +3,8 @@ import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { debounce } from 'lodash';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
@@ -79,6 +80,16 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [filterTerm, setFilterTerm] = useState<string>('');
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
   const ref = useRef<HTMLDivElement>(null);
+  const debouncedTrackSearch = useMemo(
+    () =>
+      debounce((q) => {
+        reportInteraction(INTERACTION_EVENT_NAME, {
+          item: INTERACTION_ITEM.SEARCH,
+          query: q,
+        });
+      }, 300),
+    []
+  );
 
   // Used to position the popper correctly and to bring back the focus when navigating from footer to input
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
@@ -242,10 +253,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
             openDropdown();
             setFilterTerm(e.currentTarget.value);
             if (e.currentTarget.value) {
-              reportInteraction(INTERACTION_EVENT_NAME, {
-                item: INTERACTION_ITEM.SEARCH,
-                query: e.currentTarget.value,
-              });
+              debouncedTrackSearch(e.currentTarget.value);
             }
           }}
           ref={handleReference}
