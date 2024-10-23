@@ -1,4 +1,4 @@
-import { Location } from 'history';
+import { Location, Action } from 'history';
 
 import { locationService, setBackendSrv, BackendSrv } from '@grafana/runtime';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -50,12 +50,13 @@ describe('NewFrontendAssetsChecker', () => {
     expect(backendApiGet).toHaveBeenCalledTimes(2);
   });
 
+  const dbLocation = { hash: 'foo', pathname: '/d/dashboarduid', state: {}, search: '', key: '' };
   it('should skip reloading if we are playing a playlist', () => {
     const checker = new NewFrontendAssetsCheckerExposedLocationUpdate();
     const reloadMock = jest.fn();
     checker.reloadIfUpdateDetected = reloadMock;
     playlistSrv.state.isPlaying = true;
-    checker.doLocationUpdated({ hash: 'foo', pathname: '/d/dashboarduid', state: {}, search: '' });
+    checker.doLocationUpdated(dbLocation);
     expect(reloadMock).not.toHaveBeenCalled();
     playlistSrv.state.isPlaying = false;
   });
@@ -64,13 +65,13 @@ describe('NewFrontendAssetsChecker', () => {
     const checker = new NewFrontendAssetsCheckerExposedLocationUpdate();
     const reloadMock = jest.fn();
     checker.reloadIfUpdateDetected = reloadMock;
-    checker.doLocationUpdated({ hash: 'foo', pathname: '/d/dashboarduid', state: {}, search: '' });
+    checker.doLocationUpdated(dbLocation);
     expect(reloadMock).toHaveBeenCalled();
   });
 });
 
 class NewFrontendAssetsCheckerExposedLocationUpdate extends NewFrontendAssetsChecker {
   public doLocationUpdated(location: Location) {
-    this.locationUpdated(location);
+    this.locationUpdated({ location, action: Action.Push });
   }
 }
