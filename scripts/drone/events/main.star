@@ -40,8 +40,8 @@ load(
     "verify_storybook",
 )
 load(
-    "scripts/drone/pipelines/windows.star",
-    "windows",
+    "scripts/drone/windows.star",
+    "windows_pipeline_main",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -67,6 +67,29 @@ trigger = {
     ],
 }
 
+def windows_pipeline(trigger, ver_mode):
+    """Generates the pipeline used for building Grafana on Windows.
+
+    Args:
+      trigger: a Drone trigger for the pipeline.
+      ver_mode: controls whether a pre-release or actual release pipeline is generated.
+        Also indirectly controls which version of enterprise code is used.
+
+    Returns:
+      A list of drone pipelines that build and upload MSI installers from zip files
+    """
+    environment = {"EDITION": "oss"}
+
+    return windows_pipeline_main(
+            depends_on=[
+                "main-test-frontend",
+                "main-test-backend",
+                "main-build-e2e-publish",
+                "main-integration-tests",
+            ],
+            environment=environment,
+        )
+
 def main_pipelines():
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
@@ -77,7 +100,7 @@ def main_pipelines():
         verify_storybook(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
-        windows(trigger, ver_mode = ver_mode),
+        windows_pipeline(trigger, ver_mode = ver_mode),
         enterprise_downstream_pipeline(),
         notify_pipeline(
             name = "main-notify",

@@ -21,10 +21,6 @@ load(
     "whats_new_checker_pipeline",
 )
 load(
-    "scripts/drone/steps/lib_windows.star",
-    "get_windows_steps",
-)
-load(
     "scripts/drone/utils/images.star",
     "images",
 )
@@ -36,6 +32,10 @@ load(
 load(
     "scripts/drone/variables.star",
     "golang_version",
+)
+load(
+    "scripts/drone/windows.star",
+    "windows_pipeline_release",
 )
 load(
     "scripts/drone/vault.star",
@@ -228,18 +228,6 @@ def rgm_tag():
         steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
     )
 
-def rgm_tag_windows():
-    return pipeline(
-        name = "rgm-tag-prerelease-windows",
-        trigger = tag_trigger,
-        steps = get_windows_steps(
-            ver_mode = "release",
-            bucket = "grafana-prerelease",
-        ),
-        depends_on = ["rgm-tag-prerelease"],
-        platform = "windows",
-    )
-
 def rgm_version_branch():
     # Runs a package / build proces (with all distros) when a commit lands on a version branch
     return pipeline(
@@ -299,15 +287,16 @@ def rgm_nightly_pipeline():
     ]
 
 def rgm_tag_pipeline():
+    windows = windows_pipeline_release()
     return [
         whats_new_checker_pipeline(tag_trigger),
         rgm_tag(),
-        rgm_tag_windows(),
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
             bucket = "grafana-prerelease",
             depends_on = [
+                windows["name"],
                 "rgm-tag-prerelease",
                 "rgm-tag-prerelease-windows",
             ],
