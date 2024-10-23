@@ -15,7 +15,7 @@ jest.mock('uuid', () => ({
 const originalLog = console.log;
 const originalWarn = console.warn;
 beforeEach(() => {
-  jest.spyOn(console, 'log').mockImplementation(() => {});
+  //jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 afterAll(() => {
@@ -162,11 +162,11 @@ describe('runShardSplitQuery()', () => {
     });
   });
 
-  test('Retries failed requests', async () => {
+  test('Retries failed retriable requests', async () => {
     jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
     jest
       .spyOn(datasource, 'runQuery')
-      .mockReturnValueOnce(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
     // @ts-expect-error
     jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
       callback();
@@ -175,6 +175,20 @@ describe('runShardSplitQuery()', () => {
       // 1 shard + empty shard + 1 retry = 3
       expect(response).toHaveLength(3);
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Does not retry on other errors', async () => {
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
+    jest
+      .spyOn(datasource, 'runQuery')
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'nope nope' }], data: [] }));
+    // @ts-expect-error
+    jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback) => {
+      callback();
+    });
+    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
+      expect(datasource.runQuery).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -231,7 +245,7 @@ describe('runShardSplitQuery()', () => {
     // sqrt(currentSize)
     jest
       .mocked(datasource.runQuery)
-      .mockReturnValueOnce(of({ state: LoadingState.Error, error: { refId: 'A', message: 'timeout' }, data: [] }));
+      .mockReturnValueOnce(of({ state: LoadingState.Error, errors: [{ refId: 'A', message: 'timeout' }], data: [] }));
 
     // +10%
     jest.mocked(datasource.runQuery).mockReturnValueOnce(
