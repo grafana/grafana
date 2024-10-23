@@ -822,6 +822,22 @@
     },
     {
       "metadata": {
+        "name": "dashboardNewLayouts",
+        "resourceVersion": "1729671312626",
+        "creationTimestamp": "2024-10-16T08:44:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-23 08:15:12.626632 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables experimental new dashboard layouts",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardRestore",
         "resourceVersion": "1728397491294",
         "creationTimestamp": "2024-05-16T17:36:26Z",
@@ -857,10 +873,10 @@
     {
       "metadata": {
         "name": "dashboardScene",
-        "resourceVersion": "1727354524763",
+        "resourceVersion": "1729671397794",
         "creationTimestamp": "2023-11-13T08:51:21Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-23 08:16:37.794144 +0000 UTC"
         }
       },
       "spec": {
@@ -1972,6 +1988,22 @@
     },
     {
       "metadata": {
+        "name": "lokiShardSplitting",
+        "resourceVersion": "1729678036788",
+        "creationTimestamp": "2024-10-23T10:06:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-23 10:07:16.788828 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use stream shards to split queries into smaller subqueries",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiStructuredMetadata",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-11-16T16:06:14Z",
@@ -2568,6 +2600,21 @@
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
         "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
+        "name": "prometheusUsesCombobox",
+        "resourceVersion": "1726140033271",
+        "creationTimestamp": "2024-09-12T11:19:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-12 11:20:33.271822988 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use new combobox component for Prometheus query editor",
+        "stage": "experimental",
         "codeowner": "@grafana/observability-metrics"
       }
     },

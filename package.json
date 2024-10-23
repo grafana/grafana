@@ -69,9 +69,9 @@
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
   },
   "devDependencies": {
-    "@babel/core": "7.25.8",
-    "@babel/preset-env": "7.25.8",
-    "@babel/runtime": "7.25.7",
+    "@babel/core": "7.25.9",
+    "@babel/preset-env": "7.25.9",
+    "@babel/runtime": "7.25.9",
     "@betterer/betterer": "5.4.0",
     "@betterer/cli": "5.4.0",
     "@betterer/eslint": "5.4.0",
@@ -115,8 +115,8 @@
     "@types/gtag.js": "^0.0.20",
     "@types/history": "4.7.11",
     "@types/ini": "^4",
-    "@types/jest": "29.5.13",
-    "@types/jquery": "3.5.31",
+    "@types/jest": "29.5.14",
+    "@types/jquery": "3.5.32",
     "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
     "@types/lodash": "4.17.12",
