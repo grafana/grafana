@@ -99,6 +99,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
               {
                 refId: 'A',
                 expr: lokiQuery,
+                maxLines: 100,
               },
             ],
           });
