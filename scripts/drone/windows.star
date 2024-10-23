@@ -44,7 +44,7 @@ def download_wix_step():
     }
 
 def download_zip_step(target=""):
-    path = "{}/grafana-$${{DRONE_TAG}}.windows-amd64.zip".format(target)
+    path = "{}/grafana-$${{DRONE_TAG:1}}.windows-amd64.zip".format(target)
     return {
         "name": "download-zip",
         "image": images["cloudsdk"],
