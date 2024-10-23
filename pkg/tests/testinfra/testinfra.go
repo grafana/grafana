@@ -53,6 +53,11 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
 
+	// Replace the placeholder in the `signing_keys_url` with the actual address
+	grpcServerAuthSection := cfg.SectionWithEnvOverrides("grpc_server_authentication")
+	signingKeysUrl := grpcServerAuthSection.Key("signing_keys_url")
+	signingKeysUrl.SetValue(strings.Replace(signingKeysUrl.String(), "<placeholder>", listener.Addr().String(), 1))
+
 	// Potentially allocate a real gRPC port for unified storage
 	runstore := false
 	unistore, _ := cfg.Raw.GetSection("grafana-apiserver")
@@ -289,6 +294,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
+	require.NoError(t, err)
+
+	grpcServerAuth, err := cfg.NewSection("grpc_server_authentication")
+	require.NoError(t, err)
+	_, err = grpcServerAuth.NewKey("signing_keys_url", "http://<placeholder>/api/signing-keys/keys")
+	require.NoError(t, err)
+	_, err = grpcServerAuth.NewKey("allowed_audiences", "org:1")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
