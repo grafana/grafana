@@ -14,10 +14,12 @@ import (
 func TestFolderAPIBuilder_GetAuthorizer(t *testing.T) {
 	tests := []struct {
 		name  string
-		input authorizer.AuthorizerFunc
+		input authorizer.Authorizer
 		want  authorizer.Authorizer
 	}{
-		// name: ""
+		{
+			name: "When creating folder should not return access denied error",
+		},
 	}
 
 	for _, tt := range tests {
@@ -30,7 +32,6 @@ func TestFolderAPIBuilder_GetAuthorizer(t *testing.T) {
 				accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders"), zanzana.NewNoopClient()),
 			}
 			got := b.GetAuthorizer()
-
 			require.NotNil(t, got)
 		})
 	}
