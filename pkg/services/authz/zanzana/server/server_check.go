@@ -28,11 +28,6 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info T
 			Relation: relation,
 			Object:   newTypedIdent(info.typ, r.GetName()),
 		},
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(r.GetGroup()),
-			},
-		},
 	})
 
 	if err != nil {
@@ -46,7 +41,7 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 	relation := mapping[r.GetVerb()]
 	// 1. check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeID,
+		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
@@ -71,7 +66,7 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 
 	// 2. check if subject has access through group resource
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeID,
+		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
@@ -94,12 +89,12 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 
 	// 3. check if subject has access as a sub resource for the folder
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
+		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,
-		StoreId:              storeID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
-			Object:   newFolderGroupResourceIdent(r.GetFolder(), r.GetGroup(), r.GetResource()),
+			Object:   newFolderGroupResourceIdent(r.GetGroup(), r.GetResource(), r.GetFolder()),
 		},
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
