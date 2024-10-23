@@ -45,6 +45,10 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       // Move to list component
       marginBottom: 0,
+      // set this to 0 to override the default card radius
+      // also need to disable our eslint rule
+      // eslint-disable-next-line @grafana/no-border-radius-literal
+      borderRadius: 0,
       padding: theme.spacing(1),
     }),
     heading: css({
