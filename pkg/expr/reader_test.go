@@ -2,19 +2,23 @@ package expr
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/require"
 )
 
 func TestReaderReduceMode(t *testing.T) {
 	testData := []struct {
-		name          string
-		bytes         []byte
-		expectedError string
+		name        string
+		bytes       []byte
+		expectError bool
+		hasMapper   bool
+		mapperType  reflect.Type
 	}{
 		{
 			name: "no_settings",
@@ -31,7 +35,8 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectedError: "",
+			expectError: false,
+			hasMapper:   false,
 		},
 		{
 			name: "mode_dropnn",
@@ -51,7 +56,9 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectedError: "",
+			expectError: false,
+			hasMapper:   true,
+			mapperType:  reflect.TypeOf(mathexp.DropNonNumber{}),
 		},
 		{
 			name: "mode_replacenn",
@@ -72,7 +79,9 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectedError: "",
+			expectError: false,
+			hasMapper:   true,
+			mapperType:  reflect.TypeOf(mathexp.ReplaceNonNumberWithValue{}),
 		},
 		{
 			name: "mode_strict",
@@ -92,7 +101,8 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectedError: "",
+			expectError: false,
+			hasMapper:   false,
 		},
 		{
 			name: "mode_invalid",
@@ -112,7 +122,7 @@ func TestReaderReduceMode(t *testing.T) {
 					"type": "reduce"
 				}
 			`),
-			expectedError: "unsupported reduce mode",
+			expectError: true,
 		},
 	}
 
@@ -131,12 +141,21 @@ func TestReaderReduceMode(t *testing.T) {
 
 			reader := NewExpressionQueryReader(featuremgmt.WithFeatures())
 
-			_, err = reader.ReadQuery(q, iter)
+			eq, err := reader.ReadQuery(q, iter)
 
-			if test.expectedError == "" {
-				require.NoError(t, err)
+			if test.expectError {
+				require.Error(t, err)
 			} else {
-				require.ErrorContains(t, err, test.expectedError)
+				require.NoError(t, err)
+				rc, ok := eq.Command.(*ReduceCommand)
+				require.True(t, ok)
+
+				if test.hasMapper {
+					require.NotNil(t, rc.seriesMapper)
+					require.Equal(t, test.mapperType, reflect.TypeOf(rc.seriesMapper))
+				} else {
+					require.Nil(t, rc.seriesMapper)
+				}
 			}
 		})
 	}

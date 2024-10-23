@@ -5,9 +5,15 @@
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
+    "allowJs": true,
     "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts"]
+  "include": [
+    "../../public/test/setupTests.ts",
+    "../../public/app/types/*.d.ts",
+    "../grafana-ui/src/types/*.d.ts",
+    "src/**/*.ts*"
+  ]
 }

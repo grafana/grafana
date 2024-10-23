@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,10 +34,9 @@ func TestGetAlertMuteTimings(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
-		var orgID int64 = 1
-		user := &user.SignedInUser{OrgID: orgID}
+		user := &user.SignedInUser{OrgID: 1}
 
-		createdMuteTiming := createMuteTiming(t, ctx, s, orgID)
+		createdMuteTiming := createMuteTiming(t, ctx, s, user)
 
 		muteTimeIntervals, err := s.getAlertMuteTimings(ctx, user)
 		require.NoError(t, err)
@@ -62,10 +63,9 @@ func TestGetNotificationTemplates(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
-		var orgID int64 = 1
-		user := &user.SignedInUser{OrgID: orgID}
+		user := &user.SignedInUser{OrgID: 1}
 
-		createdTemplate := createNotificationTemplate(t, ctx, s, orgID)
+		createdTemplate := createNotificationTemplate(t, ctx, s, user)
 
 		notificationTemplates, err := s.getNotificationTemplates(ctx, user)
 		require.NoError(t, err)
@@ -113,7 +113,41 @@ func TestGetContactPoints(t *testing.T) {
 	})
 }
 
-func createMuteTiming(t *testing.T, ctx context.Context, service *Service, orgID int64) definitions.MuteTimeInterval {
+func TestGetNotificationPolicies(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
+
+		notificationPolicies, err := s.getNotificationPolicies(ctx, nil)
+		require.NoError(t, err)
+		require.Empty(t, notificationPolicies)
+	})
+
+	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the contact points", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		muteTiming := createMuteTiming(t, ctx, s, user)
+		require.NotEmpty(t, muteTiming.Name)
+
+		contactPoints := createContactPoints(t, ctx, s, user)
+		require.GreaterOrEqual(t, len(contactPoints), 1)
+
+		updateNotificationPolicyTree(t, ctx, s, user, contactPoints[0].Name, muteTiming.Name)
+
+		notificationPolicies, err := s.getNotificationPolicies(ctx, user)
+		require.NoError(t, err)
+		require.NotEmpty(t, notificationPolicies.Routes.Receiver)
+		require.NotNil(t, notificationPolicies.Routes.Routes)
+	})
+}
+
+func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) definitions.MuteTimeInterval {
 	t.Helper()
 
 	muteTiming := `{
@@ -133,13 +167,13 @@ func createMuteTiming(t *testing.T, ctx context.Context, service *Service, orgID
 	var mt definitions.MuteTimeInterval
 	require.NoError(t, json.Unmarshal([]byte(muteTiming), &mt))
 
-	createdTiming, err := service.ngAlert.Api.MuteTimings.CreateMuteTiming(ctx, mt, orgID)
+	createdTiming, err := service.ngAlert.Api.MuteTimings.CreateMuteTiming(ctx, mt, user.GetOrgID())
 	require.NoError(t, err)
 
 	return createdTiming
 }
 
-func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, orgID int64) definitions.NotificationTemplate {
+func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) definitions.NotificationTemplate {
 	t.Helper()
 
 	tmpl := definitions.NotificationTemplate{
@@ -147,7 +181,7 @@ func createNotificationTemplate(t *testing.T, ctx context.Context, service *Serv
 		Template: "This is a test template\n{{ .ExternalURL }}",
 	}
 
-	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, orgID, tmpl)
+	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl)
 	require.NoError(t, err)
 
 	return createdTemplate
@@ -204,4 +238,26 @@ func createContactPoints(t *testing.T, ctx context.Context, service *Service, us
 		createdSlack,
 		createdTelegram,
 	}
+}
+
+func updateNotificationPolicyTree(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, receiverGroup, muteTiming string) {
+	t.Helper()
+
+	child := definition.Route{
+		Continue:          true,
+		MuteTimeIntervals: []string{muteTiming},
+		ObjectMatchers: definition.ObjectMatchers{
+			{Name: "label1", Type: labels.MatchEqual, Value: "value1"},
+			{Name: "label2", Type: labels.MatchNotEqual, Value: "value2"},
+		},
+		Receiver: receiverGroup,
+	}
+
+	tree := definition.Route{
+		Receiver: "grafana-default-email",
+		Routes:   []*definition.Route{&child},
+	}
+
+	err := service.ngAlert.Api.Policies.UpdatePolicyTree(ctx, user.GetOrgID(), tree, "", "")
+	require.NoError(t, err)
 }

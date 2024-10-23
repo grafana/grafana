@@ -1530,6 +1530,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 		},
+		{
+			Name:        "timeRangeProvider",
+			Description: "Enables time pickers sync",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+		},
 	}
 )
 

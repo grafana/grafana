@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
 import * as React from 'react';
-import { FormProvider, useForm, useFormContext, Controller } from 'react-hook-form';
+import { useCallback, useMemo, useState } from 'react';
+import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
 import { AccessControlAction } from 'app/types';
@@ -17,7 +18,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaRecordingRuleByType, isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
@@ -98,8 +99,8 @@ export function FolderAndGroup({
 
   const styles = useStyles2(getStyles);
 
-  const folder = watch('folder');
-  const group = watch('group');
+  const [folder, group, type] = watch(['folder', 'group', 'type']);
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
 
   const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
 
@@ -138,6 +139,10 @@ export function FolderAndGroup({
   }, [getOptions]);
 
   const defaultGroupValue = group ? { value: group, label: group } : undefined;
+
+  const evaluationDesc = isGrafanaRecordingRule
+    ? t('alerting.folderAndGroup.evaluation.text.recording', 'Define how often the recording rule is evaluated.')
+    : t('alerting.folderAndGroup.evaluation.text.alerting', 'Define how often the alert rule is evaluated.');
 
   return (
     <div className={styles.container}>
@@ -207,7 +212,7 @@ export function FolderAndGroup({
           <Field
             label="Evaluation group and interval"
             data-testid="group-picker"
-            description="Define how often the alert rule is evaluated."
+            description={evaluationDesc}
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}
@@ -358,7 +363,8 @@ function EvaluationGroupCreationModal({
 
   const evaluateEveryId = 'eval-every-input';
   const evaluationGroupNameId = 'new-eval-group-name';
-  const [groupName, folderName] = watch(['group', 'folder.title']);
+  const [groupName, folderName, type] = watch(['group', 'folder.title', 'type']);
+  const isGrafanaRecordingRule = type ? isGrafanaRecordingRuleByType(type) : false;
 
   const groupRules =
     (groupfoldersForGrafana && groupfoldersForGrafana[folderName]?.find((g) => g.name === groupName)?.rules) ?? [];
@@ -380,6 +386,16 @@ function EvaluationGroupCreationModal({
     setValue('evaluateEvery', interval, { shouldValidate: true });
   };
 
+  const modalTitle = isGrafanaRecordingRule
+    ? t(
+        'alerting.folderAndGroup.evaluation.modal.text.recording',
+        'Create a new evaluation group to use for this recording rule.'
+      )
+    : t(
+        'alerting.folderAndGroup.evaluation.modal.text.alerting',
+        'Create a new evaluation group to use for this alert rule.'
+      );
+
   return (
     <Modal
       className={styles.modal}
@@ -388,7 +404,7 @@ function EvaluationGroupCreationModal({
       onDismiss={onCancel}
       onClickBackdrop={onCancel}
     >
-      <div className={styles.modalTitle}>Create a new evaluation group to use for this alert rule.</div>
+      <div className={styles.modalTitle}>{modalTitle}</div>
 
       <FormProvider {...formAPI}>
         <form onSubmit={handleSubmit(() => onSubmit())}>

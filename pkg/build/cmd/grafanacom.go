@@ -145,6 +145,9 @@ func Builds(baseURL *url.URL, grafana, version string, packages []packaging.Buil
 			if arch == "aarch64" {
 				arch = "arm64"
 			}
+			if arch == "x86_64" {
+				arch = "amd64"
+			}
 		}
 
 		if v.Distro == "deb" {

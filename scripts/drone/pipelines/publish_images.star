@@ -45,12 +45,12 @@ def publish_image_public_step():
     $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
     # Create the grafana manifests
-    $$debug docker manifest create grafana/grafana:${TAG} \
+    $$debug docker manifest create grafana/grafana:$${IMAGE_TAG} \
       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64 \
       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64 \
       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-    $$debug docker manifest create grafana/grafana:${TAG}-ubuntu \
+    $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}-ubuntu \
       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64 \
       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64 \
       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
