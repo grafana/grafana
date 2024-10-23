@@ -14,7 +14,8 @@ labels:
     - enterprise
     - oss
 title: Use images in notifications
-weight: 500
+menuTitle: Use images
+weight: 105
 ---
 
 # Use images in notifications
@@ -54,6 +55,8 @@ Refer to the table at the end of this page for a list of contact points and thei
 7. If Grafana is configured to upload screenshots to its internal web server, and accessing Grafana requires logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens, we recommend using [integrations which support uploading images](#supported-contact-points) or [disabling images in notifications](#configuration) altogether.
 
 8. Grafana does not delete screenshots uploaded to its internal web server. To delete screenshots from `static_root_path/images/attachments` after a certain amount of time, we recommend setting up a CRON job.
+
+9. Note you cannot adjust the number and size of images or their placement in notifications.
 
 ## Configuration
 
@@ -130,7 +133,7 @@ If Grafana has been set up to send images in notifications, however notification
 5. If images cannot be taken because of mis-configuration or an issue with image rendering there are logs for `Failed to take an image` including the Dashboard UID, Panel ID, and the error message.
 6. Check that the contact point supports images in notifications and whether it supports uploading images to the receiving service or referencing images that have been uploaded to a cloud storage service.
 
-## Metrics
+## Monitor
 
 Grafana provides the following metrics to observe the performance and failure rate of images in notifications.
 For example, if a screenshot could not be taken within the expected time (10 seconds) then the counter `grafana_screenshot_failures_total` is updated.
