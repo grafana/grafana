@@ -143,6 +143,10 @@ const (
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
 
+	// FlagLokiShardSplitting
+	// Use stream shards to split queries into smaller subqueries
+	FlagLokiShardSplitting = "lokiShardSplitting"
+
 	// FlagLokiQuerySplitting
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
