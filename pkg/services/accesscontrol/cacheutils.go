@@ -37,7 +37,6 @@ func GetUserPermissionCacheKey(user identity.Requester) string {
 func GetSearchPermissionCacheKey(log log.Logger, user identity.Requester, searchOptions SearchOptions) (string, error) {
 	searchHash, err := searchOptions.HashString()
 	if err != nil {
-		log.Debug("search options failed to compute hash", "err", err.Error())
 		return "", err
 	}
 	key := fmt.Sprintf("rbac-permissions-%s-%s", user.GetCacheKey(), searchHash)
