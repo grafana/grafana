@@ -69,7 +69,7 @@ refs:
 # Table
 
 Tables are a highly flexible visualization designed to display data in columns and rows.
-The table visualization can even take multiple datasets and provide the option to switch between them.
+The table visualization can take multiple datasets and provide the option to switch between them.
 With this versatility, it's the preferred visualization for viewing multiple data types, aiding in your data analysis needs.
 
 ![Basic table visualization](/media/docs/grafana/panels-visualizations/screenshot-basic-table-v11.3.png)
