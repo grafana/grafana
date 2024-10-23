@@ -132,7 +132,7 @@ If multiple label keys are sanitized to the same value, the duplicates have a sh
 
 ## Annotations
 
-Annotations adds additional information to alert instances, helping responders identify and address potential issues.
+Annotations add additional information to alert instances, helping responders identify and address potential issues.
 
 Annotations are displayed in Grafana and are included by default in notifications. Grafana provides several optional annotations that you can edit:
 
