@@ -6,14 +6,16 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types';
+import { AccessControlAction, PermissionLevelString } from 'app/types';
+
+import { contextSrv } from '../../services/context_srv';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
@@ -43,7 +45,7 @@ export interface NestedFolderPickerProps {
   clearable?: boolean;
 
   /* Whether the user gets the opportunity to create a new folder */
-  canCreateFolder?: boolean;
+  createFolder?: boolean;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -68,7 +70,7 @@ export function NestedFolderPicker({
   excludeUIDs,
   permission = PermissionLevelString.Edit,
   onChange,
-  canCreateFolder,
+  createFolder,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQuery(value || skipToken);
@@ -189,6 +191,10 @@ export function NestedFolderPicker({
     [search, fetchFolderPage]
   );
 
+  const handleFolderCreation = () => {
+    console.log('User wants to create a folder');
+  };
+
   const flatTree = useMemo(() => {
     let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];
 
@@ -260,22 +266,36 @@ export function NestedFolderPicker({
 
   if (!overlayOpen) {
     return (
-      <Trigger
-        label={label}
-        handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
-        invalid={invalid}
-        isLoading={selectedFolder.isLoading}
-        autoFocus={autoFocusButton}
-        ref={refs.setReference}
-        aria-label={
-          label
-            ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
-                label,
-              })
-            : undefined
-        }
-        {...getReferenceProps()}
-      />
+      <>
+        <Trigger
+          label={label}
+          handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
+          invalid={invalid}
+          isLoading={selectedFolder.isLoading}
+          autoFocus={autoFocusButton}
+          ref={refs.setReference}
+          aria-label={
+            label
+              ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
+                  label,
+                })
+              : undefined
+          }
+          {...getReferenceProps()}
+        />
+        {createFolder && (
+          <Button
+            onClick={handleFolderCreation}
+            type="button"
+            icon="plus"
+            fill="outline"
+            variant="secondary"
+            disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+          >
+            New folder
+          </Button>
+        )}
+      </>
     );
   }
 
