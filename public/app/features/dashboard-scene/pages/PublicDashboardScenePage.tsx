@@ -59,9 +59,12 @@ export function PublicDashboardScenePage({ route }: Props) {
     return <PublicDashboardNotAvailable />;
   }
 
+  // if no time picker render without url sync
+  if (dashboard.state.controls?.state.hideTimeControls) {
+    return <PublicDashboardSceneRenderer model={dashboard} />;
+  }
+
   return (
-    // url sync is needed with or without time picker enabled to make refresh work
-    // the backend sanitizes the request payload
     <UrlSyncContextProvider scene={dashboard}>
       <PublicDashboardSceneRenderer model={dashboard} />
     </UrlSyncContextProvider>
@@ -74,6 +77,10 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
   const { timePicker, refreshPicker, hideTimeControls } = controls!.useState();
   const bodyToRender = model.getBodyToRender();
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    return refreshPicker.activate();
+  }, [refreshPicker]);
 
   useEffect(() => {
     setIsActive(true);
