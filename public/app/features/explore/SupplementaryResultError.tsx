@@ -74,14 +74,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     suggestedActionWrapper: css({
       minHeight: theme.spacing(3),
-      'button': {
+      ['button']: {
         position: 'absolute',
         right: theme.spacing(2),
         bottom: theme.spacing(2),
       },
-      'ul': {
-        listStyle: 'outside',
-      }
+      ['ul']: {
+        paddingLeft: theme.spacing(2),
+      },
     }),
   };
 };
