@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { Card, IconButton, Stack, Tag, useStyles2 } from '@grafana/ui';
+import { Card, IconButton, useStyles2 } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
 import { getTrailStore, DataTrailBookmark } from './TrailStore/TrailStore';
@@ -139,7 +139,7 @@ export function getStyles(theme: GrafanaTheme2) {
       borderRight: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
       borderLeft: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
       borderBottom: 'none', // Remove the bottom border
-      borderRadius: '4px 4px 0 0', // Top-left and top-right corners are 4px, bottom-left and bottom-right are 0
+      borderRadius: '4px 4px 0 0', // Top-left and top-right corners are 4px, bottom-left and bottom-right are 0; cannot use theme.shape.radius.default because need bottom corners to be 0
     }),
     secondary: css({
       color: theme.colors.text.secondary,

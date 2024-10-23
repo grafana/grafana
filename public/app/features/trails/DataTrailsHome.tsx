@@ -1,7 +1,5 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { Trans } from 'react-i18next';
-// import { Trans } from 'app/core/internationalization'; swap with above import after adding i18nKey property to tags
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -13,8 +11,9 @@ import {
   SceneObjectBase,
   SceneObjectState,
 } from '@grafana/scenes';
-import { Box, Button, Icon, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Trans } from 'app/core/internationalization';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsBookmarks } from './DataTrailBookmarks';
@@ -22,7 +21,7 @@ import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
 // import { DataTrailsBookmarks } from './DataTrailsBookmarks';
 import { RecentExplorationScene, RecentExplorationState } from './DataTrailsRecentMetrics';
-import { getBookmarkKey, getTrailStore } from './TrailStore/TrailStore';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
 import { VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
@@ -54,7 +53,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         createdAt: resolvedTrail.state.createdAt,
         $timeRange: resolvedTrail.state.$timeRange,
         filters: [],
-        bookmarksToggle: false,
       };
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, resolvedTrail); // sceneGraph is a bunch of utility methods that lets you get things from graph of scene objects that something belongs to
       // resolvedTrail is what we want to show in the box,
@@ -116,21 +114,12 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
       setLastDelete(Date.now()); // trigger re-render
     };
 
-    const { recentExplorations } = model.useState(); // current state list of recent explorations in scene format, we want to iterate over it with map
-
     const storeLastChanged = getTrailStore().lastModified;
     useEffect(() => {
       console.log('inside useEffect');
       model._updateRecentExplorations();
     }, [model, storeLastChanged]);
 
-    // current/old code: if there are no recent trails, show metrics select page (all metrics)
-    // probably need to change this logic to - if there are recent trails, show the sparklines, etc
-    // If there are no recent trails, don't show home page and create a new trail
-    // if (!getTrailStore().recent.length) {
-    //   const trail = newMetricsTrail(getDatasourceForNewTrail());
-    //   return <Redirect to={getUrlForTrail(trail)} />;
-    // }
     return (
       <div className={styles.container}>
         <div className={styles.homepageBox}>
@@ -164,7 +153,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             <div className={styles.gap24}>
               <Button size="lg" variant="primary" onClick={model.onNewMetricsTrail}>
                 <div className={styles.startButton}>
-                  <Trans>Let's start!</Trans>
+                  <Trans>Let&apos;s start!</Trans>
                 </div>
                 <Icon name="arrow-right" size="lg" style={{ marginLeft: '8px' }} />
               </Button>
