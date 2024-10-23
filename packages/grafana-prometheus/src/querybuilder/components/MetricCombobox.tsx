@@ -86,7 +86,9 @@ export function MetricCombobox({
   );
 
   const asyncSelect = () => {
-    return <Combobox options={loadOptions} value={query.metric} onChange={onComboboxChange} />;
+    return (
+      <Combobox placeholder="Select metric" options={loadOptions} value={query.metric} onChange={onComboboxChange} />
+    );
   };
 
   return (
@@ -101,6 +103,7 @@ export function MetricCombobox({
           initialMetrics={state.initialMetrics ?? []}
         />
       )} */}
+
       {/* format the ui for either the query editor or the variable editor */}
       {variableEditor ? (
         <InlineFieldRow>
