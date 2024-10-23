@@ -807,8 +807,9 @@ describe('RuleList', () => {
 
         renderRuleList();
 
-        await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+        const groupRows = await ui.ruleGroup.findAll();
 
+        expect(groupRows).toHaveLength(1);
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
     });

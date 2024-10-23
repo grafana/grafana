@@ -132,7 +132,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
     activeAt: string;
     value: string;
   }>;
-  labels: Labels;
+  labels?: Labels;
   annotations?: Annotations;
   duration?: number; // for
   state: PromAlertingRuleState;
@@ -201,6 +201,8 @@ export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
   expression?: string;
+  instant?: boolean;
+  range?: boolean;
 }
 
 export interface AlertQuery<T = AlertDataQuery | ExpressionQuery> {

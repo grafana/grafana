@@ -53,6 +53,12 @@ role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`
 and `<REALM_NAME>` can be `grafana`.
 
+To configure the `kc_idp_hint` parameter for Keycloak, you need to change the `auth_url` configuration to include the `kc_idp_hint` parameter. For example if you want to hint the Google identity provider:
+
+```ini
+auth_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/auth?kc_idp_hint=google
+```
+
 {{% admonition type="note" %}}
 api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
 It is useful as a fallback or if the user has more than 150 group memberships.
@@ -153,11 +159,9 @@ Grafana supports ID token hints for single logout. Grafana automatically adds th
 
 ## Allow assigning Grafana Admin
 
-> Available in Grafana v9.2 and later versions.
-
 If the application role received by Grafana is `GrafanaAdmin` , Grafana grants the user server administrator privileges.
 
-This is useful if you want to grant server administrator privileges to a subset of users.  
+This is useful if you want to grant server administrator privileges to a subset of users.
 Grafana also assigns the user the `Admin` role of the default organization.
 
 ```ini
@@ -166,8 +170,6 @@ allow_assign_grafana_admin = true
 ```
 
 ### Configure refresh token
-
-> Available in Grafana v9.3 and later versions.
 
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -98,7 +99,7 @@ func TestValidateDashboardExists(t *testing.T) {
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	dashboardStore, err := dashdb.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
-	dashSvc, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashboardStore, folderimpl.ProvideDashboardFolderStore(sqlStore), nil, nil, nil, acmock.New(), foldertest.NewFakeService(), nil)
+	dashSvc, err := dashsvc.ProvideDashboardServiceImpl(cfg, dashboardStore, folderimpl.ProvideDashboardFolderStore(sqlStore), nil, nil, nil, acmock.New(), foldertest.NewFakeService(), folder.NewFakeStore(), nil)
 	require.NoError(t, err)
 	s := ProvideService(dsStore, secretsService, dashSvc)
 	ctx := context.Background()

@@ -79,6 +79,9 @@ To set up email integration, complete the following steps.
    E-mail addresses are case sensitive. Ensure that the e-mail address entered is correct.
 
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps

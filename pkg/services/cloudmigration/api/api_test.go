@@ -345,7 +345,7 @@ func TestCloudMigrationAPI_GetSnapshot(t *testing.T) {
 			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1",
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z","results":[],"stats":{"types":{},"statuses":{},"total":0}}`,
+			expectedBody:       `{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z","results":[{"name":"dashboard name","parentName":"dashboard parent name","type":"DASHBOARD","refId":"123","status":"PENDING"},{"name":"datasource name","parentName":"dashboard parent name","type":"DATASOURCE","refId":"456","status":"OK"}],"stats":{"types":{},"statuses":{},"total":0}}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",
@@ -395,7 +395,23 @@ func TestCloudMigrationAPI_GetSnapshotList(t *testing.T) {
 			requestUrl:         "/api/cloudmigration/migration/1234/snapshots",
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"snapshots":[{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z"},{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z"}]}`,
+			expectedBody:       `{"snapshots":[{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"2024-06-05T17:30:40Z","finished":"0001-01-01T00:00:00Z"},{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"2024-06-05T18:30:40Z","finished":"0001-01-01T00:00:00Z"}]}`,
+		},
+		{
+			desc:               "with limit query param should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshots?limit=1",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"snapshots":[{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"2024-06-05T17:30:40Z","finished":"0001-01-01T00:00:00Z"}]}`,
+		},
+		{
+			desc:               "with sort query param should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshots?sort=latest",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"snapshots":[{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"2024-06-05T18:30:40Z","finished":"0001-01-01T00:00:00Z"},{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"2024-06-05T17:30:40Z","finished":"0001-01-01T00:00:00Z"}]}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",

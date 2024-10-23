@@ -399,7 +399,6 @@ function handleRedirectTo(): void {
   }
 
   if (!contextSrv.user.isSignedIn) {
-    locationService.replace('/login');
     return;
   }
 
@@ -409,7 +408,13 @@ function handleRedirectTo(): void {
   }
 
   window.sessionStorage.removeItem(RedirectToUrlKey);
-  locationService.replace(decodeURIComponent(redirectTo));
+  const decodedRedirectTo = decodeURIComponent(redirectTo);
+  if (decodedRedirectTo.startsWith('/goto/')) {
+    // In this case there should be a request to the backend
+    window.location.replace(decodedRedirectTo);
+  } else {
+    locationService.replace(decodedRedirectTo);
+  }
 }
 
 export default new GrafanaApp();

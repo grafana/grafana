@@ -1,10 +1,10 @@
 import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
-import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { SceneQueryRunner, SceneTimeRange, VizPanel, VizPanelMenu } from '@grafana/scenes';
 
-import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelMenuBehavior } from '../../scene/PanelMenuBehavior';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 
 import { SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 
@@ -114,18 +114,7 @@ async function buildTestScene() {
       canEdit: true,
       isEmbedded: false,
     },
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
 
   await new Promise((r) => setTimeout(r, 1));

@@ -10,18 +10,22 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
-	"google.golang.org/protobuf/proto"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
-const trace_prefix = "sql.resource."
+const tracePrefix = "sql.resource."
+const defaultPollingInterval = 100 * time.Millisecond
 
 type Backend interface {
 	resource.StorageBackend
@@ -30,8 +34,9 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider db.DBProvider
-	Tracer     trace.Tracer
+	DBProvider      db.DBProvider
+	Tracer          trace.Tracer
+	PollingInterval time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -43,12 +48,17 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
+	pollingInterval := opts.PollingInterval
+	if pollingInterval == 0 {
+		pollingInterval = defaultPollingInterval
+	}
 	return &backend{
-		done:       ctx.Done(),
-		cancel:     cancel,
-		log:        log.New("sql-resource-server"),
-		tracer:     opts.Tracer,
-		dbProvider: opts.DBProvider,
+		done:            ctx.Done(),
+		cancel:          cancel,
+		log:             log.New("sql-resource-server"),
+		tracer:          opts.Tracer,
+		dbProvider:      opts.DBProvider,
+		pollingInterval: pollingInterval,
 	}, nil
 }
 
@@ -70,6 +80,7 @@ type backend struct {
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
+	pollingInterval time.Duration
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -111,7 +122,7 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	_, span := b.tracer.Start(ctx, trace_prefix+"WriteEvent")
+	_, span := b.tracer.Start(ctx, tracePrefix+"WriteEvent")
 	defer span.End()
 	// TODO: validate key ?
 	switch event.Type {
@@ -127,7 +138,7 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 }
 
 func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, trace_prefix+"Create")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
@@ -155,7 +166,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -180,12 +191,11 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 		return nil
 	})
-
 	return newVersion, err
 }
 
 func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, trace_prefix+"Update")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"Update")
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
@@ -214,7 +224,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -244,7 +254,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, trace_prefix+"Delete")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"Delete")
 	defer span.End()
 	var newVersion int64
 	guid := uuid.New().String()
@@ -274,7 +284,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		// 3. TODO: Rebuild the whole folder tree structure if we're creating a folder
 
 		// 4. Atomically increment resource version for this kind
-		rv, err := resourceVersionAtomicInc(ctx, tx, b.dialect, event.Key)
+		rv, err := b.resourceVersionAtomicInc(ctx, tx, event.Key)
 		if err != nil {
 			return fmt.Errorf("increment resource version: %w", err)
 		}
@@ -296,7 +306,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 }
 
 func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
-	_, span := b.tracer.Start(ctx, trace_prefix+".Read")
+	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
 	defer span.End()
 
 	// TODO: validate key ?
@@ -331,7 +341,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	_, span := b.tracer.Start(ctx, trace_prefix+"List")
+	_, span := b.tracer.Start(ctx, tracePrefix+"List")
 	defer span.End()
 
 	if req.Options == nil || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
@@ -349,7 +359,7 @@ func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, c
 }
 
 type listIter struct {
-	rows   *sql.Rows
+	rows   db.Rows
 	offset int64
 	listRV int64
 
@@ -512,8 +522,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 }
 
 func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan<- *resource.WrittenEvent) {
-	interval := 100 * time.Millisecond // TODO make this configurable
-	t := time.NewTicker(interval)
+	t := time.NewTicker(b.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
 
@@ -526,7 +535,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
 				b.log.Error("get the latest resource version", "err", err)
-				t.Reset(interval)
+				t.Reset(b.pollingInterval)
 				continue
 			}
 			for group, items := range grv {
@@ -543,7 +552,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 					next, err := b.poll(ctx, group, resource, since[group][resource], stream)
 					if err != nil {
 						b.log.Error("polling for resource", "err", err)
-						t.Reset(interval)
+						t.Reset(b.pollingInterval)
 						continue
 					}
 					if next > since[group][resource] {
@@ -552,7 +561,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 				}
 			}
 
-			t.Reset(interval)
+			t.Reset(b.pollingInterval)
 		}
 	}
 }
@@ -586,12 +595,12 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 
 // fetchLatestRV returns the current maximum RV in the resource table
 func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
-		SQLTemplate:     sqltemplate.New(d),
-		Group:           group,
-		Resource:        resource,
-		ReadOnly:        true,
-		resourceVersion: new(resourceVersion),
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+		SQLTemplate: sqltemplate.New(d),
+		Group:       group,
+		Resource:    resource,
+		ReadOnly:    true,
+		Response:    new(resourceVersionResponse),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return 1, nil
@@ -602,9 +611,8 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 }
 
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
-	ctx, span := b.tracer.Start(ctx, trace_prefix+"poll")
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"poll")
 	defer span.End()
-
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -627,6 +635,10 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			return nextRV, fmt.Errorf("missing key in response")
 		}
 		nextRV = rec.ResourceVersion
+		prevRV := rec.PreviousRV
+		if prevRV == nil {
+			*prevRV = int64(0)
+		}
 		stream <- &resource.WrittenEvent{
 			WriteEvent: resource.WriteEvent{
 				Value: rec.Value,
@@ -636,7 +648,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 					Resource:  rec.Key.Resource,
 					Name:      rec.Key.Name,
 				},
-				Type: resource.WatchEvent_Type(rec.Action),
+				Type:       resource.WatchEvent_Type(rec.Action),
+				PreviousRV: *prevRV,
 			},
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
@@ -646,52 +659,66 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 	return nextRV, nil
 }
 
-// resourceVersionAtomicInc atomically increases the version of a kind within a
-// transaction.
+// resourceVersionAtomicInc atomically increases the version of a kind within a transaction.
 // TODO: Ideally we should attempt to update the RV in the resource and resource_history tables
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
-func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
-	// TODO: refactor this code to run in a multi-statement transaction in order to minimize the number of round trips.
-	// 1 Lock the row for update
-	rv, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
-		SQLTemplate:     sqltemplate.New(d),
-		Group:           key.Group,
-		Resource:        key.Resource,
-		resourceVersion: new(resourceVersion),
+func (b *backend) resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, key *resource.ResourceKey) (newVersion int64, err error) {
+	ctx, span := b.tracer.Start(ctx, "resourceVersionAtomicInc", trace.WithAttributes(
+		semconv.K8SNamespaceName(key.Namespace),
+		// TODO: the following attributes could use some standardization.
+		attribute.String("k8s.resource.group", key.Group),
+		attribute.String("k8s.resource.type", key.Resource),
+	))
+	defer span.End()
+
+	// 1. Lock to row and prevent concurrent updates until the transaction is committed.
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Group:       key.Group,
+		Resource:    key.Resource,
+
+		Response: new(resourceVersionResponse), ReadOnly: false, // This locks the row for update
 	})
 
 	if errors.Is(err, sql.ErrNoRows) {
-		// if there wasn't a row associated with the given resource, we create one with
-		// version 1
-		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
-			SQLTemplate: sqltemplate.New(d),
+		// if there wasn't a row associated with the given resource, then we create it.
+		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionUpsertRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
 			Group:       key.Group,
 			Resource:    key.Resource,
 		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}
-		return 1, nil
+		res, err = dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionGetRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Response:    new(resourceVersionResponse),
+			ReadOnly:    true, // This locks the row for update
+		})
+		if err != nil {
+			return 0, fmt.Errorf("fetching RV after read")
+		}
+		return res.ResourceVersion, nil
+	} else if err != nil {
+		return 0, fmt.Errorf("lock the resource version: %w", err)
 	}
 
-	if err != nil {
-		return 0, fmt.Errorf("get current resource version: %w", err)
-	}
-	nextRV := rv.ResourceVersion + 1
+	// 2. Update the RV
+	// Most times, the RV is the current microsecond timestamp generated on the sql server (to avoid clock skew).
+	// In rare occasion, the server clock might go back in time. In those cases, we simply increment the
+	// previous RV until the clock catches up.
+	nextRV := max(res.CurrentEpoch, res.ResourceVersion+1)
 
-	// 2. Increment the resource version
-	_, err = dbutil.Exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
-		SQLTemplate: sqltemplate.New(d),
-		Group:       key.Group,
-		Resource:    key.Resource,
-		resourceVersion: &resourceVersion{
-			ResourceVersion: nextRV,
-		},
+	_, err = dbutil.Exec(ctx, x, sqlResourceVersionUpdate, sqlResourceVersionUpsertRequest{
+		SQLTemplate:     sqltemplate.New(b.dialect),
+		Group:           key.Group,
+		Resource:        key.Resource,
+		ResourceVersion: nextRV,
 	})
 	if err != nil {
 		return 0, fmt.Errorf("increase resource version: %w", err)
 	}
-
-	// 3. Return the incremented value
 	return nextRV, nil
 }

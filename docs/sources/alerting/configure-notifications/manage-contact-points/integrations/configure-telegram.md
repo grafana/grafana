@@ -64,6 +64,9 @@ To create your Telegram integration in Grafana Alerting, complete the following 
 1. In the **BOT API Token** field, copy in the bot API token.
 1. In the **Chat ID** field, copy in the chat ID.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps

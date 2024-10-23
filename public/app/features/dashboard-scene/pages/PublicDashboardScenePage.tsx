@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -20,23 +21,26 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
-export interface Props
-  extends GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams> {}
-
 const selectors = e2eSelectors.pages.PublicDashboardScene;
 
-export function PublicDashboardScenePage({ match, route }: Props) {
+export type Props = Omit<
+  GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>,
+  'match' | 'history'
+>;
+
+export function PublicDashboardScenePage({ route }: Props) {
+  const { accessToken = '' } = useParams();
   const stateManager = getDashboardScenePageStateManager();
   const styles = useStyles2(getStyles);
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid: match.params.accessToken!, route: DashboardRoutes.Public });
+    stateManager.loadDashboard({ uid: accessToken, route: DashboardRoutes.Public });
 
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, match.params.accessToken, route.routeName]);
+  }, [stateManager, accessToken, route.routeName]);
 
   if (!dashboard) {
     return (
@@ -55,12 +59,9 @@ export function PublicDashboardScenePage({ match, route }: Props) {
     return <PublicDashboardNotAvailable />;
   }
 
-  // if no time picker render without url sync
-  if (dashboard.state.controls?.state.hideTimeControls) {
-    return <PublicDashboardSceneRenderer model={dashboard} />;
-  }
-
   return (
+    // url sync is needed with or without time picker enabled to make refresh work
+    // the backend sanitizes the request payload
     <UrlSyncContextProvider scene={dashboard}>
       <PublicDashboardSceneRenderer model={dashboard} />
     </UrlSyncContextProvider>

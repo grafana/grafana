@@ -18,6 +18,7 @@ import { DashboardDTO } from 'app/types';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
@@ -184,8 +185,10 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     $variables: new SceneVariableSet({
       variables: [panelRepeatVariable, rowRepeatVariable],
     }),
-    body: new SceneGridLayout({
-      children: [row],
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [row],
+      }),
     }),
   });
 

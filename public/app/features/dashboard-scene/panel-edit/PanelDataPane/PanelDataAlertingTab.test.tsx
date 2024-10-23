@@ -1,6 +1,5 @@
-import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
@@ -76,11 +75,7 @@ const mocks = {
 };
 
 const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: ReturnType<typeof configureStore>) => {
-  render(
-    <TestProvider store={initialStore}>
-      <PanelDataAlertingTabRendered model={model}></PanelDataAlertingTabRendered>
-    </TestProvider>
-  );
+  render(<PanelDataAlertingTabRendered model={model} />);
 };
 
 const promResponse: PromRulesResponse = {
@@ -348,9 +343,9 @@ async function clickNewButton() {
   const oldPush = locationService.push;
   locationService.push = pushMock;
   const button = await ui.createButton.find();
-  await act(async () => {
-    await userEvent.click(button);
-  });
+
+  await userEvent.click(button);
+
   const match = pushMock.mock.lastCall[0].match(/alerting\/new\?defaults=(.*)&returnTo=/);
   const defaults = JSON.parse(decodeURIComponent(match![1]));
   locationService.push = oldPush;

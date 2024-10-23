@@ -153,31 +153,31 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     button: css(buttonStyles.button),
     buttonDisabled: css(buttonStyles.disabled, { pointerEvents: 'none', cursor: 'not-allowed' }),
-    container: css`
-      display: inline;
-    `,
-    controls: css`
-      display: flex;
-      justify-content: flex-end;
-      margin: 5px 0 0 0;
-    `,
-    matchesOnly: css`
-      display: inline-flex;
-      margin: 0 0 0 25px;
-      vertical-align: middle;
-      align-items: center;
-    `,
-    clearMatchesButton: css`
-      color: ${theme.colors.text.primary};
+    container: css({
+      display: 'inline',
+    }),
+    controls: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      margin: '5px 0 0 0',
+    }),
+    matchesOnly: css({
+      display: 'inline-flex',
+      margin: '0 0 0 25px',
+      verticalAlign: 'middle',
+      alignItems: 'center',
+    }),
+    clearMatchesButton: css({
+      color: theme.colors.text.primary,
 
-      &:hover {
-        background: inherit;
-      }
-    `,
-    nextPrevResult: css`
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-    `,
+      '&:hover': {
+        background: 'inherit',
+      },
+    }),
+    nextPrevResult: css({
+      marginLeft: 'auto',
+      display: 'flex',
+      alignItems: 'center',
+    }),
   };
 };

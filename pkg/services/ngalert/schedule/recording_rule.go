@@ -84,8 +84,8 @@ func (r *recordingRule) Type() ngmodels.RuleType {
 	return ngmodels.RuleTypeRecording
 }
 
-func (r *recordingRule) Status() RuleStatus {
-	return RuleStatus{
+func (r *recordingRule) Status() ngmodels.RuleStatus {
+	return ngmodels.RuleStatus{
 		Health:              r.health.Load(),
 		LastError:           r.lastError.Load(),
 		EvaluationTimestamp: r.evaluationTimestamp.Load(),

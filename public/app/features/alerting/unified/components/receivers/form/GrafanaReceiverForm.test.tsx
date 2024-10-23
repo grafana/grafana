@@ -1,18 +1,21 @@
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, waitFor, screen } from 'test/test-utils';
+import { screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
-import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import {
   setOnCallFeatures,
   setOnCallIntegrations,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
+import { grantUserPermissions } from '../../../mocks';
+import { captureRequests } from '../../../mocks/server/events';
+import { renderWithProvider } from '../../contact-points/ContactPoints.test';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 
@@ -35,6 +38,13 @@ const ui = {
 };
 
 describe('GrafanaReceiverForm', () => {
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+    ]);
+  });
+
   describe('alertingApiServer', () => {
     beforeEach(() => {
       config.featureToggles.alertingApiServer = true;
@@ -47,7 +57,7 @@ describe('GrafanaReceiverForm', () => {
       const capturedRequests = captureRequests(
         (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
       );
-      const { user } = render(<GrafanaReceiverForm />);
+      const { user } = renderWithProvider(<GrafanaReceiverForm />);
       const { type, click } = user;
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
@@ -84,7 +94,7 @@ describe('GrafanaReceiverForm', () => {
     it('OnCall contact point should be disabled if OnCall integration is not enabled', async () => {
       disablePlugin(SupportedPlugin.OnCall);
 
-      render(<GrafanaReceiverForm />);
+      renderWithProvider(<GrafanaReceiverForm />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -104,7 +114,7 @@ describe('GrafanaReceiverForm', () => {
         { display_name: 'apac-oncall', value: 'apac-oncall', integration_url: 'https://apac.oncall.example.com' },
       ]);
 
-      const { user } = render(<GrafanaReceiverForm />);
+      const { user } = renderWithProvider(<GrafanaReceiverForm />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -156,7 +166,7 @@ describe('GrafanaReceiverForm', () => {
         )
       );
 
-      render(<GrafanaReceiverForm contactPoint={amConfig.alertmanager_config.receivers![0]} />);
+      renderWithProvider(<GrafanaReceiverForm contactPoint={amConfig.alertmanager_config.receivers![0]} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 

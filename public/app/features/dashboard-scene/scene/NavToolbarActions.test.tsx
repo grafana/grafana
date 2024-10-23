@@ -5,15 +5,15 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
-import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DashboardMeta } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { ToolbarActions } from './NavToolbarActions';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
@@ -120,9 +120,8 @@ describe('NavToolbarActions', () => {
 
       await act(() => {
         dashboard.onEnterEditMode();
-        const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
-          .body as VizPanel;
-        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel, true) });
+        const panel = dashboard.state.body.getVizPanels()[0];
+        dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
@@ -135,9 +134,8 @@ describe('NavToolbarActions', () => {
 
       await act(() => {
         dashboard.onEnterEditMode();
-        const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
-          .body as VizPanel;
-        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel) });
+        const panel = dashboard.state.body.getVizPanels()[0];
+        dashboard.setState({ editPanel: buildPanelEditScene(panel) });
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
@@ -207,27 +205,19 @@ function setup(meta?: DashboardMeta) {
     },
     title: 'hello',
     uid: 'dash-1',
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-          }),
-        }),
-        new DashboardGridItem({
-          body: new VizPanel({
-            title: 'Panel B',
-            key: 'panel-2',
-            pluginId: 'table',
-          }),
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([
+      new VizPanel({
+        title: 'Panel A',
+        key: 'panel-1',
+        pluginId: 'table',
+        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+      }),
+      new VizPanel({
+        title: 'Panel B',
+        key: 'panel-2',
+        pluginId: 'table',
+      }),
+    ]),
   });
 
   const context = getGrafanaContextMock();

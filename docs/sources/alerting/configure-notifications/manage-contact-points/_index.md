@@ -87,6 +87,8 @@ refs:
 
 Use contact points to select your preferred communication channel for receiving notifications when your alert rules are firing. You can add, edit, delete, export, and test a contact point.
 
+Testing a contact point is only available for Grafana Alertmanager.
+
 On the **Contact Points** tab, you can:
 
 - Search for name and type of contact points and integrations.
@@ -144,6 +146,8 @@ Complete the following steps to add templates to your contact point.
 
 ## Test a contact point
 
+** For Grafana Alertmanager only.**
+
 Complete the following steps to test a contact point.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
@@ -162,6 +166,7 @@ The following table lists the contact point integrations supported by Grafana.
 | Name                         | Type                      |
 | ---------------------------- | ------------------------- |
 | Alertmanager                 | `prometheus-alertmanager` |
+| Amazon SNS                   | `sns`                     |
 | Cisco Webex Teams            | `webex`                   |
 | DingDing                     | `dingding`                |
 | [Discord](ref:discord)       | `discord`                 |

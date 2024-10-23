@@ -43,23 +43,11 @@ func NewStorage(
 		metadata:       metadata,
 	}
 	if optsGetter != nil && dualWriteBuilder != nil {
-		strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
-		s := &genericregistry.Store{
-			NewFunc:                   resourceInfo.NewFunc,
-			NewListFunc:               resourceInfo.NewListFunc,
-			PredicateFunc:             Matcher,
-			DefaultQualifiedResource:  resourceInfo.GroupResource(),
-			SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-			TableConvertor:            legacyStore.tableConverter,
-			CreateStrategy:            strategy,
-			UpdateStrategy:            strategy,
-			DeleteStrategy:            strategy,
-		}
-		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
-		if err := s.CompleteWithOptions(options); err != nil {
+		store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
+		if err != nil {
 			return nil, err
 		}
-		return dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, storage{Store: s})
+		return dualWriteBuilder(resourceInfo.GroupResource(), legacyStore, store)
 	}
 	return legacyStore, nil
 }

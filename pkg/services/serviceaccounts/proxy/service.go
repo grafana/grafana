@@ -38,7 +38,7 @@ func ProvideServiceAccountsProxy(
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
-		isProxyEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		isProxyEnabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService, features)
@@ -183,5 +183,5 @@ func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, que
 }
 
 func isNameValid(name string) bool {
-	return !strings.HasPrefix(name, serviceaccounts.ExtSvcPrefix)
+	return !strings.HasPrefix(name, strings.TrimSuffix(serviceaccounts.ExtSvcPrefix, "-"))
 }

@@ -287,8 +287,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       }
 
       if (missingOtelTargets) {
-        metricNamesWarning +=
-          'The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.';
+        metricNamesWarning = `${metricNamesWarning ?? ''} The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`;
       }
 
       let bodyLayout = this.state.body;

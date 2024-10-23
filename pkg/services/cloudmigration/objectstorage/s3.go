@@ -9,15 +9,26 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
-type S3 struct{}
+type S3 struct {
+	httpClient *http.Client
+	tracer     tracing.Tracer
+}
 
-func NewS3() *S3 {
-	return &S3{}
+func NewS3(httpClient *http.Client, tracer tracing.Tracer) *S3 {
+	return &S3{httpClient: httpClient, tracer: tracer}
 }
 
 func (s3 *S3) PresignedURLUpload(ctx context.Context, presignedURL, key string, reader io.Reader) (err error) {
+	ctx, span := s3.tracer.Start(ctx, "objectstorage.S3.PresignedURLUpload")
+	span.SetAttributes(attribute.String("key", key))
+	defer span.End()
+
 	url, err := url.Parse(presignedURL)
 	if err != nil {
 		return fmt.Errorf("parsing presigned url")
@@ -68,13 +79,13 @@ func (s3 *S3) PresignedURLUpload(ctx context.Context, presignedURL, key string, 
 
 	endpoint := fmt.Sprintf("%s://%s%s", url.Scheme, url.Host, url.Path)
 
-	request, err := http.NewRequest(http.MethodPost, endpoint, buffer)
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, buffer)
 	if err != nil {
 		return fmt.Errorf("creating http request: %w", err)
 	}
 	request.Header.Set("Content-Type", writer.FormDataContentType())
-	httpClient := http.Client{}
-	response, err := httpClient.Do(request)
+
+	response, err := s3.httpClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("sending http request: %w", err)
 	}

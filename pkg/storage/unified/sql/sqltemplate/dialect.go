@@ -62,6 +62,9 @@ type Dialect interface {
 	//		WHERE id = ?
 	//		{{ .SelectFor "Update NoWait" }}; -- will be uppercased
 	SelectFor(...string) (string, error)
+
+	// CurrentEpoch returns the current epoch value for the database in microseconds.
+	CurrentEpoch() string
 }
 
 // RowLockingClause represents a row-locking clause in a SELECT statement.

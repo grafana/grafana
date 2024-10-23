@@ -117,9 +117,9 @@ The webhook notification is a simple way to send information about a state chang
 | version           | string                    | Version of the payload                                                          |
 | groupKey          | string                    | Key that is used for grouping                                                   |
 | truncatedAlerts   | number                    | Number of alerts that were truncated                                            |
-| title             | string                    | **Will be deprecated soon**                                                     |
-| state             | string                    | **Will be deprecated soon**                                                     |
-| message           | string                    | **Will be deprecated soon**                                                     |
+| title             | string                    | Custom title                                                                    |
+| state             | string                    | State of the alert group (either `alerting` or `ok`)                            |
+| message           | string                    | Custom message                                                                  |
 
 ### Alert
 
@@ -134,8 +134,8 @@ The webhook notification is a simple way to send information about a state chang
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
-| dashboardURL | string | **Will be deprecated soon**                                                        |
-| panelURL     | string | **Will be deprecated soon**                                                        |
+| dashboardURL | string | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation        |
+| panelURL     | string | A link to the panel if the alert has a Panel ID annotation                         |
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 {{< admonition type="note" >}}
@@ -152,6 +152,9 @@ To create your Webhook integration in Grafana Alerting, complete the following s
 1. From the Integration list, select **Webhook**.
 1. In the **URL** field, copy in your Webhook URL.
 1. Click **Test** to check that your integration works.
+
+   ** For Grafana Alertmanager only.**
+
 1. Click **Save contact point**.
 
 ## Next steps

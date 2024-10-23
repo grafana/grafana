@@ -10,7 +10,7 @@ import {
   VariableHide,
   urlUtil,
 } from '@grafana/data';
-import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -58,7 +58,7 @@ import {
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
-import { getTrailFor } from './utils';
+import { getTrailFor, limitAdhocProviders } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -381,7 +381,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
   }
   /**
-   *  This function is used to update state and otel variables
+   *  This function is used to update state and otel variables.
    * 
    *  1. Set the otelResources adhoc tagKey and tagValues filter functions
       2. Get the otel join query for state and variable
@@ -392,6 +392,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         - has otel resources flag
         - isStandardOtel flag (for enabliing the otel experience toggle)
         - and useOtelExperience
+   *
+   * This function is called on start and when variables change.
+   * On start will provide the deploymentEnvironments and hasOtelResources parameters.
+   * In the variable change case, we will not provide these parameters. It is assumed that the
+   * data source has been checked for otel resources and standardization and the otel variables are enabled at this point.    
    * @param datasourceUid 
    * @param timeRange 
    * @param otelDepEnvVariable 
@@ -550,6 +555,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({
         otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
+        useOtelExperience: false,
       });
     }
   }
@@ -568,21 +574,27 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
         const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, model);
         const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, model);
-        const filtersvariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
+        const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
 
         if (
           otelResourcesVariable instanceof AdHocFiltersVariable &&
           otelDepEnvVariable instanceof CustomVariable &&
           otelJoinQueryVariable instanceof ConstantVariable &&
-          filtersvariable instanceof AdHocFiltersVariable
+          filtersVariable instanceof AdHocFiltersVariable
         ) {
-          model.resetOtelExperience(otelResourcesVariable, otelDepEnvVariable, otelJoinQueryVariable, filtersvariable);
+          model.resetOtelExperience(otelResourcesVariable, otelDepEnvVariable, otelJoinQueryVariable, filtersVariable);
         }
       } else {
         // if experience is enabled, check standardization and update the otel variables
         model.checkDataSourceForOTelResources();
       }
     }, [model, hasOtelResources, useOtelExperience]);
+
+    useEffect(() => {
+      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
+      const datasourceHelper = model.datasourceHelper;
+      limitAdhocProviders(filtersVariable, datasourceHelper);
+    }, [model]);
 
     return (
       <div className={styles.container}>
@@ -648,7 +660,7 @@ function getVariableSet(
         addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
-        layout: config.featureToggles.newFiltersUI ? 'combobox' : 'vertical',
+        layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
