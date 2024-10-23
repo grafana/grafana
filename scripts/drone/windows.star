@@ -42,17 +42,32 @@ def download_wix_step():
         ],
     }
 
+def download_zip_step(target=""):
+    path = "{}/grafana-$${{DRONE_TAG:1}}.windows-amd64.zip".format(target)
+    return {
+        "name": "download-zip",
+        "image": images["cloudsdk"],
+        "commands": [
+            "printenv GCP_KEY | base64 -d > /tmp/key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/key.json",
+            "gcloud storage cp {} grafana.zip".format(target)
+        ],
+        "environment": {
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
+        }
+    }
+
 def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], environment = []):
     nssm = download_nssm_step()
     wix = download_wix_step()
     grabpl = download_grabpl_step()
+    zip = download_zip_step(target=target)
     build = build_msi_step(
         depends_on = [
             nssm["name"],
             wix["name"],
             grabpl["name"],
         ],
-        target = target,
     )
     upload = upload_msi_step(
         depends_on = [
@@ -66,6 +81,7 @@ def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], 
         steps = [
             nssm,
             wix,
+            zip,
             grabpl,
             build,
             upload,
@@ -80,7 +96,7 @@ def windows_pipeline_release(name = "prerelease-windows-msi", depends_on = [], t
     return windows_msi_pipeline(name = name, target = target, depends_on = depends_on, trigger = trigger, environment = environment)
 
 def windows_pipeline_main(depends_on = [], trigger = {}, environment = {}):
-    target = "gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip"
+    target = "gs://grafana-downloads/oss/main"
     return windows_msi_pipeline(name = "main-windows-msi", target = target, depends_on = depends_on, trigger = trigger, environment = environment)
 
 def upload_msi_step(depends_on = [], target = ""):
@@ -88,8 +104,8 @@ def upload_msi_step(depends_on = [], target = ""):
         "name": "upload-msi-installer",
         "image": images["cloudsdk"],
         "commands": [
-            "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
-            "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
+            "printenv GCP_KEY | base64 -d > /tmp/key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/key.json",
             "gsutil cp *.msi {}".format(target),
             "gsutil cp *.msi.sha256 {}".format(target),
         ],
@@ -99,17 +115,14 @@ def upload_msi_step(depends_on = [], target = ""):
         },
     }
 
-def build_msi_step(depends_on = [], target = ""):
-    path = "{}/grafana-$${{DRONE_TAG:1}}.windows-amd64.zip".format(target)
+def build_msi_step(depends_on = []):
     return {
         "name": "build-and-upload-msi",
         "image": images["wine"],
         "entrypoint": ["/bin/bash"],
         "commands": [
             "export WINEPATH=$(winepath ./wix3)",
-            "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
-            "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
-            "grabpl windows-installer --target {} --edition oss".format(path),
+            "grabpl windows-installer --target grafana.zip --edition oss",
         ],
         "environment": {
             "GCP_KEY": from_secret(gcp_grafanauploads_base64),

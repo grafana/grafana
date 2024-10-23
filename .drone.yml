@@ -2723,6 +2723,15 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: download-wix3
 - commands:
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gcloud storage cp gs://grafana-downloads/oss/main grafana.zip
+  environment:
+    GCP_KEY:
+      from_secret: gcp_grafanauploads_base64
+  image: google/cloud-sdk:431.0.0
+  name: download-zip
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.0/grabpl
   - chmod +x bin/grabpl
@@ -2730,10 +2739,7 @@ steps:
   name: grabpl
 - commands:
   - export WINEPATH=$(winepath ./wix3)
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - grabpl windows-installer --target gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-    --edition oss
+  - grabpl windows-installer --target grafana.zip --edition oss
   depends_on:
   - downlad-nssm
   - download-wix3
@@ -2750,10 +2756,10 @@ steps:
   image: scottyhardy/docker-wine:stable-9.0
   name: build-and-upload-msi
 - commands:
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - gsutil cp *.msi gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-  - gsutil cp *.msi.sha256 gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gsutil cp *.msi gs://grafana-downloads/oss/main
+  - gsutil cp *.msi.sha256 gs://grafana-downloads/oss/main
   depends_on:
   - build-and-upload-msi
   environment:
@@ -4449,6 +4455,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: download-wix3
 - commands:
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
+    grafana.zip
+  environment:
+    GCP_KEY:
+      from_secret: gcp_grafanauploads_base64
+  image: google/cloud-sdk:431.0.0
+  name: download-zip
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.0/grabpl
   - chmod +x bin/grabpl
@@ -4456,10 +4472,7 @@ steps:
   name: grabpl
 - commands:
   - export WINEPATH=$(winepath ./wix3)
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - grabpl windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-    --edition oss
+  - grabpl windows-installer --target grafana.zip --edition oss
   depends_on:
   - downlad-nssm
   - download-wix3
@@ -4476,8 +4489,8 @@ steps:
   image: scottyhardy/docker-wine:stable-9.0
   name: build-and-upload-msi
 - commands:
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
   - gsutil cp *.msi gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
   - gsutil cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
   depends_on:
@@ -5780,6 +5793,16 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: download-wix3
 - commands:
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gcloud storage cp gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
+    grafana.zip
+  environment:
+    GCP_KEY:
+      from_secret: gcp_grafanauploads_base64
+  image: google/cloud-sdk:431.0.0
+  name: download-zip
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.0/grabpl
   - chmod +x bin/grabpl
@@ -5787,10 +5810,7 @@ steps:
   name: grabpl
 - commands:
   - export WINEPATH=$(winepath ./wix3)
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
-  - grabpl windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-    --edition oss
+  - grabpl windows-installer --target grafana.zip --edition oss
   depends_on:
   - downlad-nssm
   - download-wix3
@@ -5807,8 +5827,8 @@ steps:
   image: scottyhardy/docker-wine:stable-9.0
   name: build-and-upload-msi
 - commands:
-  - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
   - gsutil cp *.msi gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
   - gsutil cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release
   depends_on:
@@ -6027,6 +6047,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c539cdc766d0b6d35492bcf404fd5ba7c6569f9b45b4aff94775ac47bcd7e84d
+hmac: 740a1f19b7ee7db8727eae9e6cc71cf1d3034737b315bfac472b9d1d28798867
 
 ...
