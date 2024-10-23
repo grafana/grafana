@@ -62,7 +62,7 @@ describe('addFilterToQuery', () => {
     expect(addFilterToQuery('', 'label:name', 'value')).toBe('label\\:name:"value"');
   });
   it('should support filters with forward slash', () => {
-    expect(addFilterToQuery('', 'label', '/value/foo')).toBe('label:"/value/foo"');
+    expect(addFilterToQuery('', 'label:name', 'the "value"')).toBe('label\\:name:"the \\"value\\""');
   });
 });
 
