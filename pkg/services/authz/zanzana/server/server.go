@@ -205,8 +205,8 @@ func newTypedIdent(typ string, name string) string {
 	return fmt.Sprintf("%s:%s", typ, name)
 }
 
-func newFolderGroupResourceIdent(folder, group, resource string) string {
-	return fmt.Sprintf("folder_group_resource:%s/%s", folder, formatGroupResource(group, resource))
+func newFolderGroupResourceIdent(group, resource, folder string) string {
+	return fmt.Sprintf("folder_group_resource:%s/%s", formatGroupResource(group, resource), folder)
 }
 
 func newResourceIdent(group, resource, name string) string {
