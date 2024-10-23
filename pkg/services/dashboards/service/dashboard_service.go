@@ -492,7 +492,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		userID, err := identity.IntIdentifier(dto.User.GetID())
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "id", dto.User.GetID(), "error", err)
-		} else if identity.IsIdentityType(dto.User.GetID(), identity.TypeUser) {
+		} else if identity.IsIdentityType(dto.User.GetID(), identity.TypeUser, identity.TypeServiceAccount) {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
 			})
