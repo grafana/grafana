@@ -1,13 +1,34 @@
 package accesscontrol
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/gob"
 	"fmt"
+	"hash/fnv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
+
+func (s *SearchOptions) HashString() (string, error) {
+	if s == nil {
+		return "", nil
+	}
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	if err := encoder.Encode(s); err != nil {
+		return "", err
+	}
+	h := fnv.New64a()
+	_, err := h.Write(buf.Bytes())
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(h.Sum(nil)), nil
+}
 
 func GetUserPermissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
