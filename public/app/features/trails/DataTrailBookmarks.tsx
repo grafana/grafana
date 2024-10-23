@@ -49,14 +49,13 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     trailList: css({
       display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns
+      gridTemplateColumns: 'repeat(3, 1fr)',
       gap: `${theme.spacing(3)} 31px`,
-      alignItems: 'stretch', // vertically center cards in their boxes
+      alignItems: 'stretch',
       justifyItems: 'center',
     }),
     gap20: css({
       marginTop: theme.spacing(3),
-      // marginBottom: '20px',
     }),
     bottomGap24: css({
       marginBottom: theme.spacing(3),
@@ -65,7 +64,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      // gap: theme.spacing(2),
     }),
     header: css({
       color: 'var(--text-primary, rgba(204, 204, 220, 0.7))',

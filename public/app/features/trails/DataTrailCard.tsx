@@ -108,8 +108,6 @@ export function getStyles(theme: GrafanaTheme2) {
       fontSize: '14px',
       fontStyle: 'normal',
       fontWeight: 400,
-      // lineHeight: '22px', /* 157.143% */
-      // letterSpacing: '0.021px',
     }),
     metricValue: css({
       display: 'inline',
@@ -118,9 +116,7 @@ export function getStyles(theme: GrafanaTheme2) {
       fontSize: '14px',
       fontStyle: 'normal',
       fontWeight: 500,
-      marginLeft: '8px', // Add some space between the label and the value
-      // lineHeight: '22px', /* 157.143% */
-      // letterSpacing: '0.021px',
+      marginLeft: '8px', // Add space between the label and the value
       wordBreak: 'break-all',
     }),
     tag: css({
@@ -158,16 +154,15 @@ export function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxHeight: '54px', // 3 lines * 18px line-height
+      maxHeight: '54px',
       width: '100%',
       margin: 0,
       gridArea: 'Meta',
       color: theme.colors.text.secondary,
       whiteSpace: 'nowrap',
-      // lineHeight: theme.typography.body.lineHeight,
     }),
     primaryFont: css({
-      display: 'inline', // render the key and value are on the same line (not vertically stacked)
+      display: 'inline',
       color: 'var(--text-primary, #CCCCDC)',
       fontFamily: 'Inter',
       fontSize: '12px',
@@ -175,11 +170,9 @@ export function getStyles(theme: GrafanaTheme2) {
       fontWeight: '500',
       lineHeight: '18px' /* 150% */,
       letterSpacing: '0.018px',
-      // whiteSpace: 'pre',
-      // wordWrap: 'break-word',
     }),
     secondaryFont: css({
-      display: 'inline', // render the key and value are on the same line (not vertically stacked)
+      display: 'inline',
       color: 'var(--text-secondary, rgba(204, 204, 220, 0.65))',
       fontFamily: 'Inter',
       fontSize: '12px',
@@ -187,13 +180,11 @@ export function getStyles(theme: GrafanaTheme2) {
       fontWeight: '400',
       lineHeight: '18px' /* 150% */,
       letterSpacing: '0.018px',
-      // whiteSpace: 'pre',
-      // wordWrap: 'break-word',
     }),
     deleteButton: css({
-      position: 'absolute', // Position the delete button absolutely
-      bottom: theme.spacing(1), // Position it at the bottom
-      right: theme.spacing(1), // Position it at the right
+      position: 'absolute',
+      bottom: theme.spacing(1),
+      right: theme.spacing(1),
     }),
     wordwrap: css({
       overflow: 'hidden',

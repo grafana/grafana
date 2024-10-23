@@ -215,13 +215,6 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'stretch',
       justifyItems: 'center',
     }),
-    trailCard: css({
-      boxSizing: 'border-box',
-      width: '100%',
-      height: 'inherit', // Make the card take up the full height of the grid cell
-      backgroundColor: theme.colors.background.secondary,
-      borderRadius: '4px',
-    }),
     recentExplorationHeader: css({
       marginTop: theme.spacing(6),
       marginBottom: '20px',
@@ -231,12 +224,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     gap24: css({
       marginTop: theme.spacing(2), // Adds a 24px gap since there is already a 8px gap from the button
-    }),
-    bookmarkHeader: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing(2),
     }),
   };
 }
