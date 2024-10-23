@@ -384,7 +384,7 @@ The most basic alert rule consists of two parts:
 
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert rule is triggered.
 
-To begin, let's set up a webhook contact point. Once we have a usable endpoint, we'll write an alert rule and trigger a notification.
+To begin, let's set up a webhook contact point. Once we have a usable endpoint, we write an alert rule and trigger a notification.
 
 <!-- INTERACTIVE page step8.md END -->
 
@@ -392,7 +392,7 @@ To begin, let's set up a webhook contact point. Once we have a usable endpoint, 
 
 ### Create a contact point for Grafana-managed alert rules
 
-In this step, we'll set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert notification. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert manager is actually sending a notification somewhere.
+In this step, we set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert notification. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert manager is actually sending a notification somewhere.
 
 1. Browse to [requestbin.com](https://requestbin.com).
 1. Under the **Create Request Bin** button, click the link to create a **public bin** instead.
