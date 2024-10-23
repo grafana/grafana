@@ -6,7 +6,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/grafana/authlib/claims v0.0.0-20241018085709-130ad686d80e
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240701135906-559738ce6ae1
-	github.com/prometheus/client_golang v1.20.4
+	github.com/prometheus/client_golang v1.20.5
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.30.0
 	go.opentelemetry.io/otel v1.31.0
