@@ -13,7 +13,6 @@ import {
   CustomVariable,
   VariableDependencyConfig,
   SceneVariable,
-  VizPanel,
 } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
 
@@ -26,29 +25,37 @@ import {
 import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
 export interface RelatedLogsSceneState extends SceneObjectState {
-  initialDS?: string;
   controls: SceneObject[];
   body: SceneFlexLayout;
-  lokiQuery: string;
   lokiRecordingRules: ExtractedRecordingRules;
 }
 
-const RELATED_LOGS_PANEL_KEY = 'related_logs/logs_panel';
+const RELATED_LOGS_QUERY_KEY = 'related_logs/query';
 
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   constructor(state: Partial<RelatedLogsSceneState>) {
-    const logsPanel = PanelBuilders.logs().setTitle('Logs').setNoValue('No logs found').build();
-    logsPanel.setState({ key: RELATED_LOGS_PANEL_KEY });
-
     super({
       controls: [],
       body: new SceneFlexLayout({
         direction: 'column',
         height: '400px',
-        children: [new SceneFlexItem({ body: logsPanel })],
+        children: [
+          new SceneFlexItem({
+            body: PanelBuilders.logs()
+              .setTitle('Logs')
+              .setNoValue('No logs found')
+              .setData(
+                new SceneQueryRunner({
+                  datasource: { uid: VAR_LOGS_DATASOURCE_EXPR },
+                  queries: [],
+                  key: RELATED_LOGS_QUERY_KEY,
+                })
+              )
+              .build(),
+          }),
+        ],
       }),
       lokiRecordingRules: {},
-      lokiQuery: '',
       ...state,
     });
 
@@ -82,28 +89,23 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
 
       if (name === VAR_LOGS_DATASOURCE) {
         const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
-        const selectedDatasource = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
-        const lokiQuery = getLogsQueryForMetric(selectedMetric, selectedDatasource, this.state.lokiRecordingRules);
-        this.setState({ lokiQuery });
-        this.setLogsPanelData();
+        const selectedDatasourceUid = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
+        const lokiQuery = getLogsQueryForMetric(selectedMetric, selectedDatasourceUid, this.state.lokiRecordingRules);
+
+        if (lokiQuery) {
+          const relatedLogsQuery = sceneGraph.findByKeyAndType(this, RELATED_LOGS_QUERY_KEY, SceneQueryRunner);
+          relatedLogsQuery.setState({
+            queries: [
+              {
+                refId: 'A',
+                expr: lokiQuery,
+              },
+            ],
+          });
+        }
       }
     },
   });
-
-  private setLogsPanelData() {
-    const relatedLogsPanel = sceneGraph.findByKeyAndType(this, RELATED_LOGS_PANEL_KEY, VizPanel);
-    relatedLogsPanel.setState({
-      $data: new SceneQueryRunner({
-        datasource: { uid: VAR_LOGS_DATASOURCE_EXPR },
-        queries: [
-          {
-            refId: 'A',
-            expr: this.state.lokiQuery,
-          },
-        ],
-      }),
-    });
-  }
 
   static readonly Component = ({ model }: SceneComponentProps<RelatedLogsScene>) => {
     const { controls, body } = model.useState();
