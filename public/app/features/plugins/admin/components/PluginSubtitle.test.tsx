@@ -47,7 +47,7 @@ describe('PluginSubtitle', () => {
     popularity: 0,
   };
 
-  beforeEach(() => { });
+  beforeEach(() => {});
   afterEach(() => {
     jest.clearAllMocks();
   });
