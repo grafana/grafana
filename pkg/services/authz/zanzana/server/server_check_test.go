@@ -169,6 +169,14 @@ func newFolderGroupResourceTuple(subject, relation, group, resource, folder stri
 		User:     subject,
 		Relation: relation,
 		Object:   newFolderGroupResourceIdent(folder, group, resource),
+		Condition: &openfgav1.RelationshipCondition{
+			Name: "group_filter",
+			Context: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"resource_group": structpb.NewStringValue(formatGroupResource(group, resource)),
+				},
+			},
+		},
 	}
 }
 

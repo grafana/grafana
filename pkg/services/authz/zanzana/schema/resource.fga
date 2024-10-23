@@ -18,16 +18,16 @@ type folder2
 
 type folder_group_resource
   relations
-    define view: [user, team#member, role#assignee] or edit
-    define edit: [user, team#member, role#assignee] or admin
-    define admin: [user, team#member, role#assignee]
+    define view: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define edit: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define admin: [user with group_filter, team#member with group_filter, role#assignee with group_filter]
 
-    define read: [user, team#member, role#assignee] or view
-    define create: [user, team#member, role#assignee] or edit
-    define write: [user, team#member, role#assignee] or edit
-    define delete: [user, team#member, role#assignee] or edit
-    define permissions_read: [user, team#member, role#assignee] or admin
-    define permissions_write: [user, team#member, role#assignee] or admin
+    define read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or view
+    define create: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define delete: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define permissions_read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define permissions_write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
 
 type group_resource
   relations
