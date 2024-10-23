@@ -147,7 +147,7 @@
     "@types/jest": "29.5.14",
     "@types/mock-raf": "1.0.6",
     "@types/node": "20.16.15",
-    "@types/prismjs": "1.26.4",
+    "@types/prismjs": "1.26.5",
     "@types/react": "18.3.3",
     "@types/react-color": "3.0.12",
     "@types/react-dom": "18.2.25",
