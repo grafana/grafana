@@ -17,6 +17,7 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstructured.Unstructured, error) {
@@ -29,6 +30,9 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstruct
 		},
 	}
 	// #TODO: let's see if we need to set the json field to "-"
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
 	obj.SetName(cmd.UID)
 
 	if err := setParentUID(&obj, cmd.ParentUID); err != nil {

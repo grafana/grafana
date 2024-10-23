@@ -52,7 +52,7 @@ func TestSimpleServer(t *testing.T) {
 
 	t.Run("playlist happy CRUD paths", func(t *testing.T) {
 		raw := []byte(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
+    		"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
 				"name": "fdgsv37qslr0ga",
@@ -167,7 +167,7 @@ func TestSimpleServer(t *testing.T) {
 
 	t.Run("playlist update optimistic concurrency check", func(t *testing.T) {
 		raw := []byte(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
+    	"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
 				"name": "fdgsv37qslr0ga",
