@@ -44,7 +44,7 @@ def download_wix_step():
     }
 
 def download_zip_step(target=""):
-    path = "{}/grafana-$${{DRONE_TAG:1}}.windows-amd64.zip".format(target)
+    path = "{}/grafana-$${{DRONE_TAG}}.windows-amd64.zip".format(target)
     return {
         "name": "download-zip",
         "image": images["cloudsdk"],
@@ -94,7 +94,7 @@ def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], 
     )
 
 def windows_pipeline_release(name = "prerelease-windows-msi", depends_on = [], trigger = {}, environment = {}):
-    target = "gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG:1}/oss/release"
+    target = "gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release"
     return windows_msi_pipeline(name = name, target = target, depends_on = depends_on, trigger = trigger, environment = environment)
 
 def windows_pipeline_main(depends_on = [], trigger = {}, environment = {}):
