@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 var once sync.Once
@@ -65,12 +64,12 @@ func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error)
 }
 
 type AuthenticatorWithFallback struct {
-	authenticator       *authnlib.GrpcAuthenticator
-	legacyAuthenticator *grpc.Authenticator
-	metrics             *metrics
+	authenticator *authnlib.GrpcAuthenticator
+	fallback      interceptors.Authenticator
+	metrics       *metrics
 }
 
-func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer) (interceptors.Authenticator, error) {
+func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, fallback interceptors.Authenticator) (interceptors.Authenticator, error) {
 	authCfg, err := ReadGrpcServerConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -85,12 +84,10 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 		return authenticator, nil
 	}
 
-	legacyAuthenticator := &grpc.Authenticator{}
-
 	return &AuthenticatorWithFallback{
-		authenticator:       authenticator,
-		legacyAuthenticator: legacyAuthenticator,
-		metrics:             newMetrics(reg),
+		authenticator: authenticator,
+		fallback:      fallback,
+		metrics:       newMetrics(reg),
 	}, nil
 }
 
@@ -99,7 +96,7 @@ func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 	newCtx, err := f.authenticator.Authenticate(ctx)
 	if err != nil {
 		// In case of error, fallback to the legacy authenticator
-		newCtx, err = f.legacyAuthenticator.Authenticate(ctx)
+		newCtx, err = f.fallback.Authenticate(ctx)
 		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
 	}
 	return newCtx, err

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 var (
@@ -67,7 +68,7 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
-	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer)
+	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, &grpc.Authenticator{})
 	if err != nil {
 		return nil, err
 	}
