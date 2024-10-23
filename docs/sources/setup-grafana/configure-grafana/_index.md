@@ -1499,6 +1499,10 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
 
+### instrumentations_all_enabled
+
+Enables all Faro default instrumentation by using `getWebInstrumentations`. Overrides other instrumentation flags.
+
 ### instrumentations_errors_enabled
 
 Turn on error instrumentation. Only affects Grafana Javascript Agent.

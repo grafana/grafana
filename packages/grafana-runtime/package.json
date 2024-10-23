@@ -44,6 +44,7 @@
     "@grafana/ui": "11.4.0-pre",
     "history": "4.10.1",
     "lodash": "4.17.21",
+    "react-use": "17.5.1",
     "rxjs": "7.8.1",
     "tslib": "2.7.0"
   },
@@ -57,7 +58,7 @@
     "@types/angular": "1.8.9",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.13",
-    "@types/lodash": "4.17.10",
+    "@types/lodash": "4.17.12",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
     "@types/systemjs": "6.15.1",
