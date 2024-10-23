@@ -26,8 +26,9 @@ def download_nssm_step():
         "name": "downlad-nssm",
         "image": images["curl"],
         "commands": [
-            "curl https://nssm.cc/release/nssm-2.24.zip -o nssm.zip",
-            "unzip nssm.zip",
+            # We don't need to extract nssm-2.24 because the wix / build process extracts it. It just needs to be in
+            # PWD and be named `nssm-2.24`.
+            "curl https://nssm.cc/release/nssm-2.24.zip",
         ],
     }
 

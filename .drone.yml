@@ -2711,8 +2711,7 @@ platform:
 services: []
 steps:
 - commands:
-  - curl https://nssm.cc/release/nssm-2.24.zip -o nssm.zip
-  - unzip nssm.zip
+  - curl https://nssm.cc/release/nssm-2.24.zip
   image: byrnedo/alpine-curl:0.1.8
   name: downlad-nssm
 - commands:
@@ -4445,8 +4444,7 @@ platform:
 services: []
 steps:
 - commands:
-  - curl https://nssm.cc/release/nssm-2.24.zip -o nssm.zip
-  - unzip nssm.zip
+  - curl https://nssm.cc/release/nssm-2.24.zip
   image: byrnedo/alpine-curl:0.1.8
   name: downlad-nssm
 - commands:
@@ -5784,8 +5782,7 @@ platform:
 services: []
 steps:
 - commands:
-  - curl https://nssm.cc/release/nssm-2.24.zip -o nssm.zip
-  - unzip nssm.zip
+  - curl https://nssm.cc/release/nssm-2.24.zip
   image: byrnedo/alpine-curl:0.1.8
   name: downlad-nssm
 - commands:
@@ -6051,6 +6048,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3306ce9bc36afa237a2bf912d0a4dabc0a96ead3edbc81c223ce14b6179bab79
+hmac: d45a1fdb11cec78654dafb4cd7a5b22499f473e4f8387b12ceb766058c29e0e8
 
 ...
