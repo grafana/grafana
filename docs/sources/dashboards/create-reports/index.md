@@ -344,11 +344,11 @@ You can customize the branding options.
 
 - **Company logo:** Company logo displayed in the report PDF. It can be configured by specifying a URL, or by uploading a file. The maximum file size is 16 MB. Defaults to the Grafana logo.
 
-- **Theme:** Theme of the PDF attached to the report. Defaults to `Light`. Selected theme will also be applied to Preview PDF and Export as PDF. In the case when `Current` is selected, the PDF in the report will be in the admin's instance theme while Preview PDF and Export as PDF will be in the user's instance theme.
+- **Theme:** Theme of the PDF attached to the report. Defaults to **Light**. The selected theme is also applied to the PDFs generated when you click **Preview PDF** during report creation and **Export as PDF**. If **Current** is selected, the PDF in the report will be in the Admin's instance theme, but the preview and exported PDFs will be in the user's instance theme.
 
 #### Embedded Image
 
-- **Theme:** Theme of the dashboard image embedded in the email. Defaults to `Dark`.
+- **Theme:** Theme of the dashboard image embedded in the email. Defaults to **Dark**.
 
 ### Email branding
 
