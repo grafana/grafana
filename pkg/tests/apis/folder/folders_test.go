@@ -781,6 +781,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 				baseUrl,
 				"/api/folders",
 			), bytes.NewBuffer([]byte(tc.input)))
+			require.NoError(t, err)
 			req.Header.Set("Content-Type", "application/json")
 
 			resp, err := http.DefaultClient.Do(req)
