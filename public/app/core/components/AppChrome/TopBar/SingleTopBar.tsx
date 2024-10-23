@@ -23,6 +23,8 @@ import { SignInLink } from './SignInLink';
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 
+export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
+
 interface Props {
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
@@ -52,7 +54,12 @@ export const SingleTopBar = memo(function SingleTopBar({
     <div className={styles.layout}>
       <Stack minWidth={0} gap={0.5} alignItems="center">
         {!menuDockedAndOpen && (
-          <ToolbarButton narrow onClick={onToggleMegaMenu} tooltip={t('navigation.megamenu.open', 'Open menu')}>
+          <ToolbarButton
+            narrow
+            id={MEGA_MENU_TOGGLE_ID}
+            onClick={onToggleMegaMenu}
+            tooltip={t('navigation.megamenu.open', 'Open menu')}
+          >
             <Stack gap={0} alignItems="center">
               <Branding.MenuLogo className={styles.img} />
               <Icon size="sm" name="angle-down" />
