@@ -114,6 +114,14 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 			return &backend.DataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.Query, err)
 		}
 
+		if frame == nil {
+			result.Status = http.StatusNotFound
+			result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s", *model.Query, result.Status)
+			span.RecordError(result.Error)
+			span.SetStatus(codes.Error, result.Error.Error())
+			return result, nil
+		}
+
 		frame.Meta.Custom = map[string]interface{}{
 			"partial": tr.GetStatus() == tempopb.TraceByIDResponse_PARTIAL,
 			"message": tr.GetMessage(),
