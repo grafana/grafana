@@ -40,13 +40,13 @@ load(
     "verify_storybook",
 )
 load(
-    "scripts/drone/windows.star",
-    "windows_pipeline_main",
-)
-load(
     "scripts/drone/utils/utils.star",
     "failure_template",
     "notify_pipeline",
+)
+load(
+    "scripts/drone/windows.star",
+    "windows_pipeline_main",
 )
 
 ver_mode = "main"
@@ -81,15 +81,15 @@ def windows_pipeline(trigger, ver_mode):
     environment = {"EDITION": "oss"}
 
     return windows_pipeline_main(
-            depends_on=[
-                "main-test-frontend",
-                "main-test-backend",
-                "main-build-e2e-publish",
-                "main-integration-tests",
-            ],
-            environment=environment,
-            trigger=trigger,
-        )
+        depends_on = [
+            "main-test-frontend",
+            "main-test-backend",
+            "main-build-e2e-publish",
+            "main-integration-tests",
+        ],
+        environment = environment,
+        trigger = trigger,
+    )
 
 def main_pipelines():
     # This is how we should define any new pipelines. At some point we should update existing ones.

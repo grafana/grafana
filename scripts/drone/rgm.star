@@ -34,10 +34,6 @@ load(
     "golang_version",
 )
 load(
-    "scripts/drone/windows.star",
-    "windows_pipeline_release",
-)
-load(
     "scripts/drone/vault.star",
     "from_secret",
     "npm_token",
@@ -48,6 +44,10 @@ load(
     "rgm_gcp_key_base64",
     "rgm_github_token",
     "rgm_storybook_destination",
+)
+load(
+    "scripts/drone/windows.star",
+    "windows_pipeline_release",
 )
 
 docs_paths = {
@@ -290,7 +290,7 @@ def rgm_tag_pipeline():
     build = rgm_tag()
 
     # the Windows step requires an uploaded .zip file to base its compilation on
-    windows = windows_pipeline_release(trigger=tag_trigger, depends_on=[
+    windows = windows_pipeline_release(trigger = tag_trigger, depends_on = [
         build["name"],
     ])
     return [

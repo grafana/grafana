@@ -7,23 +7,18 @@ load(
     "images",
 )
 load(
-    "scripts/drone/variables.star",
-    "grabpl_version",
+    "scripts/drone/steps/lib.star",
+    "download_grabpl_step",
+)
+load(
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 load(
     "scripts/drone/vault.star",
     "from_secret",
     "gcp_grafanauploads_base64",
     "prerelease_bucket",
-)
-load(
-    "scripts/drone/steps/lib.star",
-    "download_grabpl_step",
-)
-
-load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
 )
 
 def download_nssm_step():
@@ -47,47 +42,48 @@ def download_wix_step():
         ],
     }
 
-def windows_msi_pipeline(target="", name="", trigger={}, depends_on=[], environment=[], ):
+def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], environment = []):
     nssm = download_nssm_step()
     wix = download_wix_step()
     grabpl = download_grabpl_step()
     build = build_msi_step(
-        depends_on=[
+        depends_on = [
             nssm["name"],
             wix["name"],
             grabpl["name"],
         ],
-        target=target,
+        target = target,
     )
     upload = upload_msi_step(
-        depends_on=[
+        depends_on = [
             build["name"],
         ],
-        target=target,
+        target = target,
     )
 
     return pipeline(
-        name=name,
-        steps=[
+        name = name,
+        steps = [
             nssm,
             wix,
             grabpl,
             build,
             upload,
         ],
-        trigger=trigger,
-        depends_on=depends_on,
-        environment=environment,
+        trigger = trigger,
+        depends_on = depends_on,
+        environment = environment,
     )
-def windows_pipeline_release(name="prerelease-windows-msi", depends_on=[], trigger={}, environment={}):
+
+def windows_pipeline_release(name = "prerelease-windows-msi", depends_on = [], trigger = {}, environment = {}):
     target = "gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG:1}/oss/release"
-    return windows_msi_pipeline(name=name, target=target, depends_on=depends_on, trigger=trigger, environment=environment)
+    return windows_msi_pipeline(name = name, target = target, depends_on = depends_on, trigger = trigger, environment = environment)
 
-def windows_pipeline_main(depends_on=[], trigger={}, environment={}):
+def windows_pipeline_main(depends_on = [], trigger = {}, environment = {}):
     target = "gs://grafana-downloads/oss/main/grafana-$${DRONE_TAG:1}.windows-amd64.zip"
-    return windows_msi_pipeline(name="main-windows-msi", target=target, depends_on=depends_on, trigger=trigger, environment=environment)
+    return windows_msi_pipeline(name = "main-windows-msi", target = target, depends_on = depends_on, trigger = trigger, environment = environment)
 
-def upload_msi_step(depends_on=[], target=""):
+def upload_msi_step(depends_on = [], target = ""):
     return {
         "name": "upload-msi-installer",
         "image": images["cloudsdk"],
@@ -95,7 +91,7 @@ def upload_msi_step(depends_on=[], target=""):
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
             "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
             "gsutil cp *.msi {}".format(target),
-            'gsutil cp *.msi.sha256 {}'.format(target)
+            "gsutil cp *.msi.sha256 {}".format(target),
         ],
         "depends_on": depends_on,
         "environment": {
@@ -103,7 +99,7 @@ def upload_msi_step(depends_on=[], target=""):
         },
     }
 
-def build_msi_step(depends_on=[], target=""):
+def build_msi_step(depends_on = [], target = ""):
     path = "{}/grafana-$${{DRONE_TAG:1}}.windows-amd64.zip".format(target)
     return {
         "name": "build-and-upload-msi",
@@ -124,8 +120,8 @@ def build_msi_step(depends_on=[], target=""):
 
 def windows_manual_pipeline():
     return windows_pipeline_release(
-        name="windows-pipeline-manual",
-        trigger={
+        name = "windows-pipeline-manual",
+        trigger = {
             "event": ["promote"],
             "target": "build-msi",
         },
