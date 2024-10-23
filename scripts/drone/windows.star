@@ -63,6 +63,7 @@ def windows_msi_pipeline(target = "", name = "", trigger = {}, depends_on = [], 
     Args:
       target: GCS path (with gs:// scheme) to the oflder containing the zip file
       name: Name of the pipeline, should be unique.
+      trigger: The conditions which trigger the pipeline
       depends_on: dependencies (strings)
       environment: map of environment variables
     Returns:
