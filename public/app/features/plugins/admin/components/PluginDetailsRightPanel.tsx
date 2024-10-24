@@ -3,6 +3,7 @@ import { Stack, Text, LinkButton, Box, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
+import { getLatestCompatibleVersion } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 type Props = {
@@ -16,7 +17,25 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={'250px'}>
       <Box padding={2} borderColor="medium" borderStyle="solid">
         <Stack direction="column" gap={2}>
+          {plugin.isInstalled && plugin.installedVersion && (
+            <Stack wrap direction="column" gap={0.5}>
+              <Text color="secondary">
+                <Trans i18nKey="plugins.details.labels.installedVersion">Installed version: </Trans>
+              </Text>
+              <div>{plugin.installedVersion}</div>
+            </Stack>
+          )}
           {info.map((infoItem, index) => {
+            if (infoItem.label === 'Version') {
+              return (
+                <Stack key={index} wrap direction="column" gap={0.5}>
+                  <Text color="secondary">
+                    <Trans i18nKey="plugins.details.labels.latestVersion">Latest version: </Trans>
+                  </Text>
+                  <div>{getLatestCompatibleVersion(plugin.details?.versions)?.version}</div>
+                </Stack>
+              );
+            }
             return (
               <Stack key={index} wrap direction="column" gap={0.5}>
                 <Text color="secondary">{infoItem.label + ':'}</Text>
