@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { Panel } from '@grafana/schema';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -23,9 +25,11 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   `The description should be, at most, ${PANEL_DESCRIPTION_CHAR_LIMIT} characters.`;
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
+  const messages = useCallback(() => getMessages(panel), [panel]);
+
   return (
     <GenAIButton
-      messages={() => getMessages(panel)}
+      messages={messages}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.panelDescription}
       toggleTipTitle={'Improve your panel description'}
@@ -39,7 +43,9 @@ function getMessages(panel: Panel): Message[] {
 
   return [
     {
-      content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
+      content:
+        `${DESCRIPTION_GENERATION_STANDARD_PROMPT}\n` +
+        `Disregard the current panel description and come up with one that makes sense given the panel's type and purpose. The panel's type is ${panel.type}`,
       role: Role.system,
     },
     {
