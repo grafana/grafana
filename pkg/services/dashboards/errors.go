@@ -32,6 +32,10 @@ var (
 		Reason:     "A dashboard with the same uid already exists",
 		StatusCode: 400,
 	}
+	ErrSoftDeletedDashboardWithSameUIDExists = DashboardErr{
+		Reason:     "A soft deleted dashboard with the same uid already exists",
+		StatusCode: 400,
+	}
 	ErrDashboardWithSameNameInFolderExists = DashboardErr{
 		Reason:     "A dashboard with the same name in the folder already exists",
 		StatusCode: 412,
