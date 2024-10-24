@@ -5,13 +5,25 @@
 package v0alpha1
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaTimeInterval = resource.NewSimpleSchema("notifications.alerting.grafana.app", "v0alpha1", &TimeInterval{}, &TimeIntervalList{}, resource.WithKind("TimeInterval"),
-		resource.WithPlural("timeintervals"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("timeintervals"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
+			FieldSelector: "spec.name",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*TimeInterval)
+				if !ok {
+					return "", fmt.Errorf("provided object must be of type *TimeInterval")
+				}
+				return cast.Spec.Name, nil
+			},
+		},
+		}))
 	kindTimeInterval = resource.Kind{
 		Schema: schemaTimeInterval,
 		Codecs: map[resource.KindEncoding]resource.Codec{

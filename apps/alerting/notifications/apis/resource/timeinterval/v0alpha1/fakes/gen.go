@@ -1,4 +1,4 @@
-package v0alpha1
+package fakes
 
 import (
 	"fmt"
@@ -7,15 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/timeinterval/v0alpha1"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // +k8s:openapi-gen=false
-// +k8s:deepcopy-gen=false
-type IntervalMutator func(spec *Interval)
+type IntervalMutator func(spec *v0alpha1.Interval)
 
 // +k8s:openapi-gen=false
-// +k8s:deepcopy-gen=false
 type IntervalGenerator struct {
 	mutators []IntervalMutator
 }
@@ -36,10 +35,10 @@ func (t IntervalGenerator) generateDaysOfMonth() string {
 	return fmt.Sprintf("%d:%d", from, to)
 }
 
-func (t IntervalGenerator) generateTimeRange() TimeRange {
+func (t IntervalGenerator) generateTimeRange() v0alpha1.TimeRange {
 	from := rand.Int63n(1440 / 2)        // [0, 719]
 	to := from + rand.Int63n(1440/2) + 1 // from < ([0,719] + [1,720]) < 1440
-	return TimeRange{
+	return v0alpha1.TimeRange{
 		StartTime: time.Unix(from*60, 0).UTC().Format("15:04"),
 		EndTime:   time.Unix(to*60, 0).UTC().Format("15:04"),
 	}
@@ -70,16 +69,16 @@ func (t IntervalGenerator) generateMonth() string {
 	return fmt.Sprintf("%d", rand.Intn(12)+1)
 }
 
-func (t IntervalGenerator) GenerateMany(count int) []Interval {
-	result := make([]Interval, 0, count)
+func (t IntervalGenerator) GenerateMany(count int) []v0alpha1.Interval {
+	result := make([]v0alpha1.Interval, 0, count)
 	for i := 0; i < count; i++ {
 		result = append(result, t.Generate())
 	}
 	return result
 }
 
-func (t IntervalGenerator) Generate() Interval {
-	i := Interval{
+func (t IntervalGenerator) Generate() v0alpha1.Interval {
+	i := v0alpha1.Interval{
 		DaysOfMonth: generateMany(rand.Intn(6), true, t.generateDaysOfMonth),
 		Location:    t.generateLocation(),
 		Months:      generateMany(rand.Intn(3), true, t.generateMonth),
@@ -104,12 +103,4 @@ func generateMany[T comparable](repeatTimes int, unique bool, f func() T) []T {
 		result = append(result, f())
 	}
 	return result
-}
-
-func CopyWith(in Interval, mutators ...IntervalMutator) Interval {
-	r := *in.DeepCopy()
-	for _, mut := range mutators {
-		mut(&r)
-	}
-	return r
 }

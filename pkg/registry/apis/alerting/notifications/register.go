@@ -83,11 +83,11 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 	optsGetter := opts.OptsGetter
 	dualWriteBuilder := opts.DualWriteBuilder
 
-	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, optsGetter, dualWriteBuilder)
+	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, opts)
 	if err != nil {
 		return fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
-	addStorage(notificationsModels.TimeIntervalResourceInfo.GroupVersionResource(), intervals)
+	addStorage(timeInterval.ResourceInfo.GroupVersionResource(), intervals)
 
 	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder, t.ng.Api.ReceiverService)
 	if err != nil {
@@ -116,6 +116,9 @@ func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefin
 		for s, definition := range template_group.GetOpenAPIDefinitions(c) {
 			result[s] = definition
 		}
+		for s, definition := range timeInterval.GetOpenAPIDefinitions(c) {
+			result[s] = definition
+		}
 		for s, definition := range notificationsModels.GetOpenAPIDefinitions(c) {
 			result[s] = definition
 		}
@@ -137,7 +140,7 @@ func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3
 
 	// Hide the ability to list or watch across all tenants
 	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+timeInterval.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+template_group.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+notificationsModels.RouteResourceInfo.GroupResource().Resource)
 
@@ -155,7 +158,7 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			switch a.GetResource() {
 			case template_group.ResourceInfo.GroupResource().Resource:
 				return template_group.Authorize(ctx, t.authz, a)
-			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
+			case timeInterval.ResourceInfo.GroupResource().Resource:
 				return timeInterval.Authorize(ctx, t.authz, a)
 			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:
 				return receiver.Authorize(ctx, t.receiverAuth, a)

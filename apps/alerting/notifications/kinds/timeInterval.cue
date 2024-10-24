@@ -32,6 +32,9 @@ timeInterval: {
 					time_intervals: [...#Interval]
 				}
 			}
+			selectableFields: [
+				 "spec.name",
+			]
 		}
 	}
 }
