@@ -222,8 +222,6 @@ function addClickListenersToNode(nodes: ReactNode[], row: LogRowModel) {
         key: index,
       });
     }
-
-    // Return primitive nodes (like strings, numbers) as they are
     return node;
   });
 }
