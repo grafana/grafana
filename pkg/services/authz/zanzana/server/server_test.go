@@ -73,6 +73,7 @@ func setup(t *testing.T) *Server {
 				newFolderResourceTuple("user:4", "read", dashboardGroup, dashboardResource, "3"),
 				newFolderResourceTuple("user:5", "view", dashboardGroup, dashboardResource, "1"),
 				newFolderTuple("user:6", "read", "1"),
+				newNamespaceResourceTuple("user:7", "read", folderGroup, folderResource),
 			},
 		},
 	})

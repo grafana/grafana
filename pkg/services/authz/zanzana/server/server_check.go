@@ -20,6 +20,8 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info TypeInfo) (*authzv1.CheckResponse, error) {
 	relation := mapping[r.GetVerb()]
+
+	// 1. check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              storeID,
 		AuthorizationModelId: modelID,
@@ -29,7 +31,24 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info T
 			Object:   newTypedIdent(info.typ, r.GetName()),
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
+	if res.GetAllowed() {
+		return &authzv1.CheckResponse{Allowed: true}, nil
+	}
+
+	// 2. check if subject has access through namespace
+	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
+		StoreId:              r.GetNamespace(),
+		AuthorizationModelId: modelID,
+		TupleKey: &openfgav1.CheckRequestTupleKey{
+			User:     r.GetSubject(),
+			Relation: relation,
+			Object:   newNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +83,7 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 		return &authzv1.CheckResponse{Allowed: true}, nil
 	}
 
-	// 2. check if subject has access through group resource
+	// 2. check if subject has access through namespace
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,

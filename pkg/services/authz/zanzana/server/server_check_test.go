@@ -35,7 +35,7 @@ func testCheck(t *testing.T, server *Server) {
 		assert.False(t, res.GetAllowed())
 	})
 
-	t.Run("user:2 should be able to read resource:dashboards.grafana.app/dashboards/1 through group", func(t *testing.T) {
+	t.Run("user:2 should be able to read resource:dashboards.grafana.app/dashboards/1 through namespace", func(t *testing.T) {
 		res, err := server.Check(context.Background(), newRead("user:2", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
@@ -52,7 +52,7 @@ func testCheck(t *testing.T, server *Server) {
 		assert.False(t, res.GetAllowed())
 	})
 
-	t.Run("user:4 should be able to read all dashboards.grafana.app/dashboards through folder group", func(t *testing.T) {
+	t.Run("user:4 should be able to read all dashboards.grafana.app/dashboards in folder 1 and 3", func(t *testing.T) {
 		res, err := server.Check(context.Background(), newRead("user:4", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
@@ -77,8 +77,18 @@ func testCheck(t *testing.T, server *Server) {
 		assert.True(t, res.GetAllowed())
 	})
 
-	t.Run("user:6 should be able to read folder", func(t *testing.T) {
+	t.Run("user:6 should be able to read folder 1 ", func(t *testing.T) {
 		res, err := server.Check(context.Background(), newRead("user:6", folderGroup, folderResource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:7 should be able to read folder one through namespace access", func(t *testing.T) {
+		res, err := server.Check(context.Background(), newRead("user:7", folderGroup, folderResource, "", "1"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(context.Background(), newRead("user:7", folderGroup, folderResource, "", "10"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 	})
