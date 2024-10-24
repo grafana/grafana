@@ -136,15 +136,14 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
  * @param matchTerms __name__ and other Prom filters
  * @param jobsList list of jobs in target_info
  * @param instancesList list of instances in target_info
- * @param missingOtelTargets flag to indicate truncated job and instance filters
  * @returns
  */
 export function limitOtelMatchTerms(
   matchTerms: string[],
   jobsList: string[],
-  instancesList: string[],
-  missingOtelTargets: boolean
+  instancesList: string[]
 ): { missingOtelTargets: boolean; jobsRegex: string; instancesRegex: string } {
+  let missingOtelTargets = false;
   const charLimit = 2000;
 
   let initialCharAmount = matchTerms.join(',').length;
