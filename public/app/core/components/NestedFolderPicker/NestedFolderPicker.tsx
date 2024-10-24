@@ -7,7 +7,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
@@ -19,7 +19,7 @@ import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
 import { contextSrv } from '../../services/context_srv';
 
-import {FolderCreationModal} from "./FolderCreationModal";
+import { FolderCreationModal } from './FolderCreationModal';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
@@ -301,7 +301,7 @@ export function NestedFolderPicker({
             variant="secondary"
             disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
           >
-            New folder
+            <Trans i18nKey="browse-dashboards.folder-picker.create-new-folder-button">New folder</Trans>
           </Button>
         )}
       </>

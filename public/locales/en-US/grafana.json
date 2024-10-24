@@ -408,8 +408,13 @@
       "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
       "clear-selection": "Clear selection",
+      "create-new-folder-button": "New folder",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
+      "folder-creation-modal": {
+        "text": "Create a new folder to store your restored dashboard",
+        "title": "New Folder"
+      },
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
