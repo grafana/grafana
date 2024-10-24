@@ -6,7 +6,6 @@ load(
     "build_storybook_step",
     "build_test_plugins_step",
     "cloud_plugins_e2e_tests_step",
-    "compile_build_cmd",
     "download_grabpl_step",
     "e2e_tests_artifacts",
     "e2e_tests_step",
@@ -58,7 +57,6 @@ def build_e2e(trigger, ver_mode):
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
-        compile_build_cmd(),
         verify_gen_cue_step(),
         verify_gen_jsonnet_step(),
         wire_install_step(),
@@ -81,9 +79,9 @@ def build_e2e(trigger, ver_mode):
             "docker:grafana:linux/arm/v7:ubuntu",
         ],
         file = "packages.txt",
-        tag_format = "{{ .version_base }}-{{ .buildid }}-{{ .arch }}",
         ubuntu = images["ubuntu"],
-        ubuntu_tag_format = "{{ .version_base }}-{{ .buildid }}-ubuntu-{{ .arch }}",
+        tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
+        ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
     )
 
     publish_docker = publish_images_step(

@@ -58,6 +58,7 @@ def rgm_artifacts_step(
             "--ubuntu-tag-format='{}' ".format(ubuntu_tag_format) +
             "--verify='{}' ".format(verify) +
             "--grafana-dir=$$PWD > {}".format(file),
+            "find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i",
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }

@@ -544,13 +544,6 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -612,9 +605,10 @@ steps:
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3
-    --tag-format='{{ .version_base }}-{{ .buildid }}-{{ .arch }}' --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildid }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
     > packages.txt
+  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
   environment:
@@ -1948,13 +1942,6 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -2015,9 +2002,10 @@ steps:
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3
-    --tag-format='{{ .version_base }}-{{ .buildid }}-{{ .arch }}' --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildid }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
     > packages.txt
+  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
   environment:
@@ -5747,6 +5735,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9369485da5deec0e8bdd7a34b86062e067a6ed83f0d0cab972a887a416dadf4a
+hmac: f013c4f29990680d071f01eefed5a27df1064123d48c1fe4bee0194b53f85b9d
 
 ...
