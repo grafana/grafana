@@ -31,7 +31,7 @@ interface TableColumn extends Column<TableRow> {
 }
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight } = props;
+  const { height, width, timeRange, cellHeight, noHeader } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -191,6 +191,7 @@ export function TableNG(props: TableNGProps) {
       <DataGrid
         rows={sortedRows}
         columns={columns}
+        headerRowHeight={noHeader ? 0 : undefined}
         defaultColumnOptions={{
           sortable: true,
           resizable: true,
