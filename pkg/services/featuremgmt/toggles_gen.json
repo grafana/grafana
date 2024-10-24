@@ -1233,6 +1233,20 @@
     },
     {
       "metadata": {
+        "name": "enableScopesInMetricsExplore",
+        "resourceVersion": "1729765731452",
+        "creationTimestamp": "2024-10-24T10:28:51Z"
+      },
+      "spec": {
+        "description": "Enables the scopes usage in Metrics Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "exploreContentOutline",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2023-10-13T16:57:13Z",
