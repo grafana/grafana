@@ -322,16 +322,19 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           (updatedQueries[0].model.instant === true ||
             (firstQueryIsPromOrLoki && updatedQueries[0].model.instant === undefined)) &&
           expressionQueries.length === 2;
-        const onlyOnExpressionNotReducer =
+        const onlyOneExpressionNotReducer =
           expressionQueries.length === 1 &&
           'type' in expressionQueries[0].model &&
           expressionQueries[0].model.type !== ExpressionQueryType.reduce;
+
+        // we only add the reducer if we have one data query and one expression query. For other cases we don't do anything,
+        // and let the user add the reducer manually.
         const shouldAddReducer =
           updatedQueries.length === 1 &&
           'instant' in updatedQueries[0].model &&
           (updatedQueries[0].model.instant === false ||
             (firstQueryIsPromOrLoki && updatedQueries[0].model.instant === undefined)) &&
-          onlyOnExpressionNotReducer;
+          onlyOneExpressionNotReducer;
 
         // when changing the data source we need to reset the condition before checking if we should remove the reducer
         // this is important when switching from prometheus or loki to another data source

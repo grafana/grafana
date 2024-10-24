@@ -404,15 +404,7 @@ describe('Query and expressions reducer', () => {
     expect(newState).toEqual(initialState);
   });
 
-  it('should not remove first reducer if we have more than two expressions', () => {
-    const initialState: QueriesAndExpressionsState = {
-      queries: [alertQuery, reduceExpression, thresholdExpression, reduceExpression],
-    };
-
-    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
-    expect(newState).toEqual(initialState);
-  });
-  it('should not remove first reducer if queries length is not 1', () => {
+  it('should not remove first reducer if reducer is not the second query', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, alertQuery, reduceExpression, thresholdExpression],
     };
@@ -428,21 +420,5 @@ describe('Query and expressions reducer', () => {
 
     const newState = queriesAndExpressionsReducer(initialState, addReducerAtFirstPosition());
     expect(newState).toMatchSnapshot();
-  });
-  it('should not add reduce expression if there is already a reduce expression', () => {
-    const initialState: QueriesAndExpressionsState = {
-      queries: [alertQuery, reduceExpression, thresholdExpression],
-    };
-
-    const newState = queriesAndExpressionsReducer(initialState, addReducerAtFirstPosition());
-    expect(newState).toEqual(initialState);
-  });
-  it('should not add reduce expression if there are more than two expressions', () => {
-    const initialState: QueriesAndExpressionsState = {
-      queries: [alertQuery, reduceExpression, thresholdExpression, reduceExpression],
-    };
-
-    const newState = queriesAndExpressionsReducer(initialState, addReducerAtFirstPosition());
-    expect(newState).toEqual(initialState);
   });
 });

@@ -1,5 +1,4 @@
 import { createAction, createReducer, original } from '@reduxjs/toolkit';
-import { produce } from 'immer';
 
 import {
   DataQuery,
@@ -231,65 +230,32 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       state.queries = queriesWithUpdatedReferences(state.queries, payload.oldRefId, payload.newRefId);
     })
     .addCase(removeFirstReducer, (state) => {
-      const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
-      const dataQueries = state.queries.filter((query) => !isExpressionQuery(query.model));
-
-      if (dataQueries.length !== 1 || expressionQueries.length !== 2) {
-        return;
-      }
-      const removedReducerQueries = state.queries.filter(
-        (query, index) =>
-          !isExpressionQuery(query.model) ||
-          (isExpressionQuery(query.model) && !(query.model.type === ExpressionQueryType.reduce && index === 1))
+      const reducerIndex = state.queries.findIndex(
+        (query) => isExpressionQuery(query.model) && query.model.type === ExpressionQueryType.reduce
       );
-      state.queries = removedReducerQueries.map((query, index) => {
-        if (index === 1 && removedReducerQueries.length === 2) {
-          // we update the only expression (threshold) to point to the query as in this case we removed the reducer
-          return {
-            ...query,
-            model: {
-              ...query.model,
-              expression: SimpleConditionIdentifier.queryId,
-            },
-          };
-        } else {
-          return query;
-        }
-      });
+
+      if (reducerIndex === 1) {
+        // means the reducer is the second query
+        state.queries.splice(reducerIndex, 1);
+        state.queries[1].model.expression = SimpleConditionIdentifier.queryId;
+      }
     })
     .addCase(addReducerAtFirstPosition, (state) => {
-      const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
-      const dataQueries = state.queries.filter((query) => !isExpressionQuery(query.model));
-      // we only add the reducer if we have one data query and one expression query. For other cases we don't do anything,
-      // and let the user add the reducer manually.
-      if (dataQueries.length !== 1 || expressionQueries.length !== 1) {
-        return;
-      }
-      const thresholdExpression = produce(expressionQueries[0], (draft) => {
-        // we only update the refid and the model to point to the reducer expression
-        draft.model = {
-          ...draft.model,
-          expression: SimpleConditionIdentifier.reducerId,
-        };
-      });
-
-      // add reducer expression at first position of expressions (just after query)
-      state.queries = [
-        dataQueries[0], // the data query
-        {
-          datasourceUid: ExpressionDatasourceUID,
-          model: expressionDatasource.newQuery({
-            type: ExpressionQueryType.reduce,
-            reducer: ReducerID.last,
-            conditions: [{ ...defaultCondition, query: { params: [] } }],
-            expression: SimpleConditionIdentifier.queryId,
-            refId: SimpleConditionIdentifier.reducerId,
-          }),
+      // we only update the refid and the model to point to the reducer expression
+      state.queries[1].model.expression = SimpleConditionIdentifier.reducerId;
+      // insert in second position the reducer expression
+      state.queries.splice(1, 0, {
+        datasourceUid: ExpressionDatasourceUID,
+        model: expressionDatasource.newQuery({
+          type: ExpressionQueryType.reduce,
+          reducer: ReducerID.last,
+          conditions: [{ ...defaultCondition, query: { params: [] } }],
+          expression: SimpleConditionIdentifier.queryId,
           refId: SimpleConditionIdentifier.reducerId,
-          queryType: 'expression',
-        },
-        thresholdExpression,
-      ];
+        }),
+        refId: SimpleConditionIdentifier.reducerId,
+        queryType: 'expression',
+      });
     })
     .addCase(updateExpressionType, (state, action) => {
       state.queries = state.queries.map((query) => {
