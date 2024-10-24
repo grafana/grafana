@@ -1,5 +1,5 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
-import { remove, unset } from 'lodash';
+import { remove, toArray, unset } from 'lodash';
 
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -41,7 +41,7 @@ export const notificationTemplatesReducer = createReducer(initialState, (builder
       template_files[template.title] = content;
 
       // add the template to the alertmanager_config
-      alertmanager_config.templates?.push(template.title);
+      alertmanager_config.templates = toArray(alertmanager_config.templates).concat(template.title);
     })
     .addCase(updateNotificationTemplateAction, (draft, { payload }) => {
       const { alertmanager_config = {}, template_files = {} } = draft;
@@ -68,7 +68,7 @@ export const notificationTemplatesReducer = createReducer(initialState, (builder
 
         unset(template_files, oldName);
         remove(alertmanager_config.templates ?? [], (templateName) => templateName === oldName);
-        alertmanager_config.templates?.push(newName);
+        alertmanager_config.templates = toArray(alertmanager_config.templates).concat(template.title);
       }
 
       template_files[template.title] = content;
