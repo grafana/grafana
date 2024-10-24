@@ -1,0 +1,61 @@
+module resource
+
+type namespace
+  relations
+    define view: [user, team#member, role#assignee] or edit
+    define edit: [user, team#member, role#assignee] or admin
+    define admin: [user, team#member, role#assignee]
+
+    define read: [user, team#member, role#assignee] or view
+    define create: [user, team#member, role#assignee] or edit
+    define write: [user, team#member, role#assignee] or edit
+    define delete: [user, team#member, role#assignee] or edit
+    define permissions_read: [user, team#member, role#assignee] or admin
+    define permissions_write: [user, team#member, role#assignee] or admin
+
+type folder2
+  relations
+    define parent: [folder2]
+
+    # Action sets
+    define view: [user, team#member, role#assignee] or edit
+    define edit: [user, team#member, role#assignee] or admin
+    define admin: [user, team#member, role#assignee]
+
+    define read: [user, team#member, role#assignee] or view or read from parent
+    define create: [user, team#member, role#assignee] or edit or create from parent
+    define write: [user, team#member, role#assignee] or edit or write from parent
+    define delete: [user, team#member, role#assignee] or edit or delete from parent
+    define permissions_read: [user, team#member, role#assignee] or admin or permissions_read from parent
+    define permissions_write: [user, team#member, role#assignee] or admin or permissions_write from parent
+
+type folder_resource
+  relations
+    define view: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define edit: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define admin: [user with group_filter, team#member with group_filter, role#assignee with group_filter]
+
+    define read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or view
+    define create: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define delete: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define permissions_read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define permissions_write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+
+type resource
+  relations
+    define view: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define edit: [user  with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define admin: [user with group_filter, team#member with group_filter, role#assignee with group_filter]
+
+    define read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or view
+    define create: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define delete: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit
+    define permissions_read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+    define permissions_write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
+
+condition group_filter(requested_group: string, resource_group: string) {
+  resource_group == requested_group
+}
+

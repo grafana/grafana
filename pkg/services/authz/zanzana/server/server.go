@@ -11,9 +11,17 @@ import (
 	"go.opentelemetry.io/otel"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
+)
+
+const (
+	resourceType       = "resource"
+	namespaceType      = "namespace"
+	folderResourceType = "folder_resource"
 )
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
@@ -91,12 +99,6 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 	s.modelID = modelID
 
 	return s, nil
-}
-
-func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	tracer.Start(ctx, "authzServer.Check")
-
-	return &authzv1.CheckResponse{}, nil
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
@@ -196,4 +198,48 @@ func (s *Server) loadModel(ctx context.Context, storeID string, modules []transf
 	}
 
 	return writeRes.GetAuthorizationModelId(), nil
+}
+
+func newTypedIdent(typ string, name string) string {
+	return fmt.Sprintf("%s:%s", typ, name)
+}
+
+func newResourceIdent(group, resource, name string) string {
+	return fmt.Sprintf("%s:%s/%s", resourceType, formatGroupResource(group, resource), name)
+}
+
+func newFolderResourceIdent(group, resource, folder string) string {
+	return fmt.Sprintf("%s:%s/%s", folderResourceType, formatGroupResource(group, resource), folder)
+}
+
+func newNamespaceResourceIdent(group, resource string) string {
+	return fmt.Sprintf("%s:%s", namespaceType, formatGroupResource(group, resource))
+}
+
+func formatGroupResource(group, resource string) string {
+	return fmt.Sprintf("%s/%s", group, resource)
+}
+
+type TypeInfo struct {
+	typ string
+}
+
+var typedResources = map[string]TypeInfo{
+	newNamespaceResourceIdent(folderalpha1.GROUP, folderalpha1.RESOURCE): TypeInfo{typ: "folder2"},
+}
+
+func typeInfo(group, resource string) (TypeInfo, bool) {
+	info, ok := typedResources[newNamespaceResourceIdent(group, resource)]
+	return info, ok
+}
+
+var mapping = map[string]string{
+	utils.VerbGet:              "read",
+	utils.VerbList:             "read",
+	utils.VerbWatch:            "read",
+	utils.VerbCreate:           "create",
+	utils.VerbUpdate:           "write",
+	utils.VerbPatch:            "write",
+	utils.VerbDelete:           "delete",
+	utils.VerbDeleteCollection: "delete",
 }
