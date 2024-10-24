@@ -13,7 +13,7 @@ export function getFilterTableStyles(theme: GrafanaTheme2) {
       borderCollapse: 'separate',
 
       tbody: {
-        'tr:nth-child(odd)': {
+        'tr:nth-of-type(odd)': {
           background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
         },
       },
