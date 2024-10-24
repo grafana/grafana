@@ -47,9 +47,7 @@ export async function getOtelResources(
   const response = await getBackendSrv().get<LabelResponse>(url, params, 'explore-metrics-otel-resources');
 
   // exclude __name__ or deployment_environment or previously chosen filters
-  const resources = response.data?.filter((resource) => !allExcludedFilters.includes(resource)).map((el: string) => el);
-
-  return resources;
+  return response.data?.filter((resource) => !allExcludedFilters.includes(resource)).map((el: string) => el);
 }
 
 /**
@@ -58,7 +56,7 @@ export async function getOtelResources(
  *
  * @param dataSourceUid
  * @param timeRange
- * @param expr
+ * @param filters
  * @returns
  */
 export async function totalOtelResources(
@@ -101,12 +99,10 @@ export async function totalOtelResources(
     }
   });
 
-  const otelTargets: OtelTargetType = {
+  return {
     jobs,
     instances,
   };
-
-  return otelTargets;
 }
 
 /**
@@ -117,14 +113,9 @@ export async function totalOtelResources(
  *
  * @param dataSourceUid
  * @param timeRange
- * @param expr
  * @returns
  */
-export async function isOtelStandardization(
-  dataSourceUid: string,
-  timeRange: RawTimeRange,
-  expr?: string
-): Promise<boolean> {
+export async function isOtelStandardization(dataSourceUid: string, timeRange: RawTimeRange): Promise<boolean> {
   const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/query`;
 
   const start = getPrometheusTime(timeRange.from, false);
@@ -140,9 +131,7 @@ export async function isOtelStandardization(
   const response = await getBackendSrv().get<OtelResponse>(url, paramsTargets, 'explore-metrics-otel-check-standard');
 
   // the response should be not greater than zero if it is standard
-  const checkStandard = !(response.data.result.length > 0);
-
-  return checkStandard;
+  return !(response.data.result.length > 0);
 }
 
 /**
@@ -193,9 +182,7 @@ export async function getDeploymentEnvironmentsWithoutScopes(
   );
 
   // exclude __name__ or deployment_environment or previously chosen filters
-  const resources = response.data;
-
-  return resources;
+  return response.data;
 }
 
 /**
