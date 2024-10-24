@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
@@ -13,14 +14,20 @@ import (
 
 type IndexServer struct {
 	ResourceServer
-	s     *server
-	index *Index
-	ws    *indexWatchServer
-	log   *slog.Logger
-	cfg   *setting.Cfg
+	s      *server
+	index  *Index
+	ws     *indexWatchServer
+	log    *slog.Logger
+	cfg    *setting.Cfg
+	tracer tracing.Tracer
 }
 
+const tracingPrefixIndexServer = "unified_storage.index_server."
+
 func (is *IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	ctx, span := is.tracer.Start(ctx, tracingPrefixIndexServer+"Search")
+	defer span.End()
+
 	results, err := is.index.Search(ctx, req.Tenant, req.Query, int(req.Limit), int(req.Offset))
 	if err != nil {
 		return nil, err
@@ -46,7 +53,10 @@ func (is *IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginR
 
 // Load the index
 func (is *IndexServer) Load(ctx context.Context) error {
-	is.index = NewIndex(is.s, Opts{}, is.cfg.IndexPath)
+	ctx, span := is.tracer.Start(ctx, tracingPrefixIndexServer+"Load")
+	defer span.End()
+
+	is.index = NewIndex(is.s, Opts{}, is.cfg.IndexPath, is.tracer)
 	err := is.index.Init(ctx)
 	if err != nil {
 		return err
@@ -88,12 +98,13 @@ func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 	return nil
 }
 
-func NewResourceIndexServer(cfg *setting.Cfg) ResourceIndexServer {
+func NewResourceIndexServer(cfg *setting.Cfg, tracer tracing.Tracer) ResourceIndexServer {
 	logger := slog.Default().With("logger", "index-server")
 
 	indexServer := &IndexServer{
-		log: logger,
-		cfg: cfg,
+		log:    logger,
+		cfg:    cfg,
+		tracer: tracer,
 	}
 
 	err := prometheus.Register(NewIndexMetrics(cfg.IndexPath, indexServer))
