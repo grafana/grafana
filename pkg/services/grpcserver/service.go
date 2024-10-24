@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -118,14 +117,14 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 		s.logger.Info("GRPC server: starting")
 		err := s.server.Serve(listener)
 		if err != nil {
-			backend.Logger.Error("GRPC server: failed to serve", "err", err)
+			s.logger.Error("GRPC server: failed to serve", "err", err)
 			serveErr <- err
 		}
 	}()
 
 	select {
 	case err := <-serveErr:
-		backend.Logger.Error("GRPC server: failed to serve", "err", err)
+		s.logger.Error("GRPC server: failed to serve", "err", err)
 		return err
 	case <-ctx.Done():
 	}
