@@ -2161,6 +2161,8 @@
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
+        "installedVersion": "Installed version: ",
+        "latestVersion": "Latest version: ",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",
