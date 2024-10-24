@@ -32,7 +32,7 @@ export class DashboardSceneChangeTracker {
   private _changesWorker?: Worker;
   private _dashboard: DashboardScene;
 
-  constructor(dashboard: DashboardScene, debounce?: number) {
+  constructor(dashboard: DashboardScene) {
     this._dashboard = dashboard;
   }
 
