@@ -81,7 +81,7 @@ The configuration file can also list data sources to automatically delete, calle
 Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
 You can configure Grafana to automatically delete provisioned data sources when they're removed from the provisioning file.
-To do so, add `prune: true` to the root of your provisioning file.
+To do so, add `prune: true` to the root of your data source provisioning file.
 With this configuration, Grafana also removes the provisioned data sources if you remove the provisioning file entirely.
 
 ### Running multiple Grafana instances
@@ -614,12 +614,22 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
-| Name       | Secure setting |
-| ---------- | -------------- |
-| url        |                |
-| httpMethod |                |
-| username   |                |
-| password   | yes            |
+| Name        | Secure setting |
+| ----------- | -------------- |
+| url         |                |
+| http_method |                |
+| username    |                |
+| password    | yes            |
+| tls_config  |                |
+
+##### TLS config
+
+| Name               | Secure setting |
+| ------------------ | -------------- |
+| insecureSkipVerify |                |
+| clientCertificate  | yes            |
+| clientKey          | yes            |
+| caCertificate      | yes            |
 
 #### Alert notification `googlechat`
 

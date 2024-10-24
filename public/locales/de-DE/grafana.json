@@ -1084,9 +1084,6 @@
       "add-link": "",
       "one-click-link": ""
     },
-    "data-links-list-item": {
-      "compact-explore-disclaimer": ""
-    },
     "data-source-http-settings": {
       "access-help": "",
       "access-help-details": "",
@@ -2455,6 +2452,16 @@
     },
     "dismissable-button": "Schließen"
   },
+  "role-picker": {
+    "title": {
+      "description": ""
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": ""
+    }
+  },
   "save-dashboards": {
     "name-exists": {
       "message-info": "",
@@ -2532,6 +2539,21 @@
   "select": {
     "select-menu": {
       "selected-count": ""
+    }
+  },
+  "service-account-create-page": {
+    "create": {
+      "button": ""
+    },
+    "name": {
+      "label": "",
+      "required-error": ""
+    },
+    "page-nav": {
+      "label": ""
+    },
+    "role": {
+      "label": ""
     }
   },
   "service-accounts": {
@@ -2888,8 +2910,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "",
     "browser-column": "Browser & Betriebssystem",
     "created-at-column": "Angemeldet",
+    "identity-provider-column": "",
     "ip-column": "IP-Adresse",
     "revoke": "Benutzersitzung widerrufen",
     "seen-at-column": "Zuletzt gesehen"

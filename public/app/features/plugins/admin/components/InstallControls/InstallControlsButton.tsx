@@ -117,10 +117,8 @@ export function InstallControlsButton({
     }
   };
 
-  let disableUninstall =
-    config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-      ? plugin.isUninstallingFromInstance
-      : isUninstalling;
+  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin);
+
   let uninstallTitle = '';
   if (plugin.isPreinstalled.found) {
     disableUninstall = true;
@@ -178,4 +176,12 @@ export function InstallControlsButton({
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );
+}
+
+function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
+  if (config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) {
+    return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
+  }
+
+  return isUninstalling;
 }
