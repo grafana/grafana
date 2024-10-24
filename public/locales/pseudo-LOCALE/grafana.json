@@ -856,6 +856,11 @@
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "logs": {
+      "logs-volume": {
+        "add-filters": "Åđđ mőřę ľäþęľş ŧő yőūř qūęřy ŧő ŉäřřőŵ đőŵŉ yőūř şęäřčĥ.",
+        "decrease-timerange": "Đęčřęäşę ŧĥę ŧįmę řäŉģę őƒ yőūř qūęřy.",
+        "much-data": "Ŧĥę qūęřy įş ŧřyįŉģ ŧő äččęşş ŧőő mūčĥ đäŧä. Ŧřy őŉę őř mőřę őƒ ŧĥę ƒőľľőŵįŉģ:"
+      },
       "maximum-pinned-logs": "Mäχįmūm őƒ {{PINNED_LOGS_LIMIT}} pįŉŉęđ ľőģş řęäčĥęđ. Ůŉpįŉ ä ľőģ ŧő äđđ äŉőŧĥęř.",
       "no-logs-found": "Ńő ľőģş ƒőūŉđ.",
       "scan-for-older-logs": "Ŝčäŉ ƒőř őľđęř ľőģş",
