@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
@@ -284,5 +285,9 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 // Register additional routes with the server
 func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return nil
+}
+
+func (b *DataSourceAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
 	return nil
 }

@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -8,6 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
@@ -145,5 +147,9 @@ func (b *SearchAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 
 func (b *SearchAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	apiGroupInfo.PrioritizedVersions = []schema.GroupVersion{b.GetGroupVersion()}
+	return nil
+}
+
+func (b *SearchAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
 	return nil
 }

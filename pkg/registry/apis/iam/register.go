@@ -6,6 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -132,4 +133,8 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.authorizer
+}
+
+func (b *IdentityAccessManagementAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
+	return nil
 }
