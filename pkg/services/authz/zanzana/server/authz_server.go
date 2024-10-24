@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
@@ -54,6 +55,18 @@ func WithSchema(modules []transformer.ModuleFile) ServerOption {
 	return func(s *Server) {
 		s.modules = modules
 	}
+}
+
+func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*Server, error) {
+	stackID := cfg.StackID
+	if stackID == "" {
+		stackID = "default"
+	}
+
+	return NewAuthz(
+		openfga,
+		WithTenantID(fmt.Sprintf("stack-%s", stackID)),
+	)
 }
 
 func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
@@ -97,6 +110,26 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	tracer.Start(ctx, "authzServer.Check")
 
 	return &authzv1.CheckResponse{}, nil
+}
+
+func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "authzServer.List")
+	defer span.End()
+
+	req, err := translateToListRequest(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to translate request: %w", err)
+	}
+
+	req.StoreId = s.storeID
+	req.AuthorizationModelId = s.modelID
+
+	res, err := s.openfga.ListObjects(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authzextv1.ListResponse{Objects: res.GetObjects()}, nil
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
