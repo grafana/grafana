@@ -2,6 +2,7 @@ import { AdHocVariableFilter, RawTimeRange, Scope } from '@grafana/data';
 import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
 import { config, getBackendSrv } from '@grafana/runtime';
 
+import { limitOtelMatchTerms } from '../otel/util';
 import { callSuggestionsApi, SuggestionsResponse } from '../utils';
 
 const LIMIT_REACHED = 'results truncated due to limit';
@@ -11,24 +12,37 @@ export async function getMetricNames(
   timeRange: RawTimeRange,
   scopes: Scope[],
   filters: AdHocVariableFilter[],
+  jobs: string[],
+  instances: string[],
   limit?: number
-) {
+): Promise<SuggestionsResponse & { limitReached: boolean; missingOtelTargets: boolean }> {
   if (!config.featureToggles.enableScopesInMetricsExplore) {
-    const matchTerms = filters.map((filter) => `${filter.key}${filter.operator}"${filter.value}"`);
-    const match = `${matchTerms.join(',')}`;
-
-    return getMetricNamesWithoutScopes(dataSourceUid, timeRange, match, limit);
+    return await getMetricNamesWithoutScopes(dataSourceUid, timeRange, filters, jobs, instances, limit);
   }
 
-  return getMetricNamesWithScopes(dataSourceUid, timeRange, scopes, filters, limit);
+  return getMetricNamesWithScopes(dataSourceUid, timeRange, scopes, filters, jobs, instances, limit);
 }
 
 export async function getMetricNamesWithoutScopes(
   dataSourceUid: string,
   timeRange: RawTimeRange,
-  filters: string,
+  adhocFilters: AdHocVariableFilter[],
+  jobs: string[],
+  instances: string[],
   limit?: number
 ) {
+  const matchTerms = adhocFilters.map((filter) => `${filter.key}${filter.operator}"${filter.value}"`);
+  let missingOtelTargets = false;
+
+  if (jobs.length > 0 && instances.length > 0) {
+    const otelMatches = limitOtelMatchTerms(matchTerms, jobs, instances);
+    missingOtelTargets = otelMatches.missingOtelTargets;
+    matchTerms.push(otelMatches.jobsRegex);
+    matchTerms.push(otelMatches.instancesRegex);
+  }
+
+  const filters = `{${matchTerms.join(',')}}`;
+
   const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/label/__name__/values`;
   const params: Record<string, string | number> = {
     start: getPrometheusTime(timeRange.from, false),
@@ -40,10 +54,10 @@ export async function getMetricNamesWithoutScopes(
   const response = await getBackendSrv().get<SuggestionsResponse>(url, params, 'explore-metrics-names');
 
   if (limit && response.warnings?.includes(LIMIT_REACHED)) {
-    return { ...response, limitReached: true };
+    return { ...response, limitReached: true, missingOtelTargets };
   }
 
-  return { ...response, limitReached: false };
+  return { ...response, limitReached: false, missingOtelTargets };
 }
 
 export async function getMetricNamesWithScopes(
@@ -51,6 +65,8 @@ export async function getMetricNamesWithScopes(
   timeRange: RawTimeRange,
   scopes: Scope[],
   filters: AdHocVariableFilter[],
+  jobs: string[],
+  instances: string[],
   limit?: number
 ) {
   const response = await callSuggestionsApi(
@@ -63,8 +79,23 @@ export async function getMetricNamesWithScopes(
     'explore-metrics-names'
   );
 
+  if (jobs.length > 0 && instances.length > 0) {
+    filters.push({
+      key: 'job',
+      operator: '=~',
+      value: jobs?.join('|') || '',
+    });
+
+    filters.push({
+      key: 'instance',
+      operator: '=~',
+      value: instances?.join('|') || '',
+    });
+  }
+
   return {
     ...response.data,
-    limitReached: limit && !!response.data.warnings?.includes(LIMIT_REACHED),
+    limitReached: !!limit && !!response.data.warnings?.includes(LIMIT_REACHED),
+    missingOtelTargets: false,
   };
 }

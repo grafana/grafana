@@ -82,7 +82,7 @@ describe('OTEL API', () => {
 
   describe('getDeploymentEnvironments', () => {
     it('should fetch deployment environments', async () => {
-      const environments = await getDeploymentEnvironments(dataSourceUid, timeRange);
+      const environments = await getDeploymentEnvironments(dataSourceUid, timeRange, []);
 
       expect(environments).toEqual(['env1', 'env2']);
     });
