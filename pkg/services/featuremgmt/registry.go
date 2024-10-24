@@ -1374,6 +1374,17 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "enableScopesInMetricsExplore",
+			Description:       "Enables the scopes usage in Metrics Explore",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:            "alertingApiServer",
 			Description:     "Register Alerting APIs with the K8s API server",
 			Stage:           FeatureStageExperimental,

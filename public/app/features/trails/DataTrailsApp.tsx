@@ -7,7 +7,7 @@ import {
   DataSourceGetTagValuesOptions,
   PageLayoutType,
 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -40,12 +40,20 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
   }
 
   public enrichDataRequest(): Partial<DataQueryRequest> {
+    if (!config.featureToggles.promQLScope) {
+      return {};
+    }
+
     return {
       scopes: this._scopesFacade?.value,
     };
   }
 
   public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
+    if (!config.featureToggles.promQLScope) {
+      return {};
+    }
+
     return {
       scopes: this._scopesFacade?.value,
     };
@@ -109,20 +117,24 @@ let dataTrailsApp: DataTrailsApp;
 
 export function getDataTrailsApp() {
   if (!dataTrailsApp) {
+    const $behaviors = config.featureToggles.enableScopesInMetricsExplore
+      ? [
+          new ScopesFacade({
+            handler: (facade) => {
+              const trail = facade.parent && 'trail' in facade.parent.state ? facade.parent.state.trail : undefined;
+
+              if (trail instanceof DataTrail) {
+                sceneGraph.getTimeRange(trail).onRefresh();
+              }
+            },
+          }),
+        ]
+      : undefined;
+
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),
       home: new DataTrailsHome({}),
-      $behaviors: [
-        new ScopesFacade({
-          handler: (facade) => {
-            const trail = facade.parent && 'trail' in facade.parent.state ? facade.parent.state.trail : undefined;
-
-            if (trail instanceof DataTrail) {
-              sceneGraph.getTimeRange(trail).onRefresh();
-            }
-          },
-        }),
-      ],
+      $behaviors,
     });
   }
 
