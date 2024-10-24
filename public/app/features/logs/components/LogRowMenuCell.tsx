@@ -98,7 +98,6 @@ export const LogRowMenuCell = memo(
       // We keep this click listener here to prevent the row from being selected when clicking on the menu.
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <span className={`log-row-menu ${styles.rowMenu}`} onClick={onLogRowClick} onBlur={handleBlur}>
-        {addonBefore}
         {pinned && !mouseIsOver && (
           <IconButton
             className={styles.unPinButton}
@@ -113,6 +112,7 @@ export const LogRowMenuCell = memo(
         )}
         {mouseIsOver && (
           <>
+            {addonBefore}
             {shouldShowContextToggle && (
               <IconButton
                 size="md"
