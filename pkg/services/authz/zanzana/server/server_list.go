@@ -39,14 +39,14 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 
 func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
 	relation := mapping[utils.VerbGet]
-	// 1. check if subject has access through group resource because then they can read all of them
+	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
-			Object:   newGroupResourceIdent(r.GetGroup(), r.GetResource()),
+			Object:   newNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
 		},
 	})
 
@@ -58,11 +58,11 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 		return &authzextv1.ListResponse{All: true}, nil
 	}
 
-	// 2. List all folders subject has access to group resource in
+	// 2. List all folders subject has access to resource type in
 	folders, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              r.GetNamespace(),
 		AuthorizationModelId: modelID,
-		Type:                 "folder_group_resource",
+		Type:                 "folder_resource",
 		Relation:             relation,
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
@@ -117,7 +117,7 @@ func directObjects(group, resource string, objects []string) []string {
 }
 
 func folderObject(group, resource string, objects []string) []string {
-	prefix := fmt.Sprintf("folder_group_resource:%s/%s/", group, resource)
+	prefix := fmt.Sprintf("folder_resource:%s/%s/", group, resource)
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], prefix)
 	}
