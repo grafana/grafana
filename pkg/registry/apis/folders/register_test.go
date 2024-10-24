@@ -6,7 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -14,42 +18,83 @@ import (
 
 func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 	type input struct {
-		permissions map[int64]map[string][]string
-		verb        string
+		user identity.Requester
+		verb string
 	}
 	type expect struct {
-		user identity.Requester
-		eval string
+		eval  string
+		allow bool
 	}
 	var orgID int64 = 1
-	var userInfo = &user.SignedInUser{UserID: 1, Name: "123"}
+
 	tests := []struct {
 		name   string
 		input  input
 		expect expect
 	}{
 		{
-			name: "When creating folder should not return access denied error",
+			name: "user with create permissions should be able to create a folder",
 			input: input{
-				permissions: map[int64]map[string][]string{
-					orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
 				},
 				verb: string(utils.VerbCreate),
 			},
 			expect: expect{
-				user: userInfo,
+				eval:  "folders:create",
+				allow: true,
+			},
+		},
+		{
+			name: "user with no permissions should not be able to create a folder",
+			input: input{
+				user: &user.SignedInUser{},
+				verb: string(utils.VerbCreate),
+			},
+			expect: expect{
+				eval: "folders:create",
+			},
+		},
+		{
+			name: "user in another orgId should not be able to create a folder ",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  2,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbCreate),
+			},
+			expect: expect{
 				eval: "folders:create",
 			},
 		},
 	}
 
+	b := &FolderAPIBuilder{
+		gv:            resourceInfo.GroupVersion(),
+		features:      nil,
+		namespacer:    func(_ int64) string { return "123" },
+		folderSvc:     foldertest.NewFakeService(),
+		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders"), zanzana.NewNoopClient()),
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			userInfo.Permissions = tt.input.permissions
 			ctx := context.Background()
-			_, user, eval, _, _ := authorizerFunc(identity.WithRequester(ctx, userInfo), authorizer.AttributesRecord{User: userInfo, Verb: tt.input.verb, Resource: "folders", ResourceRequest: true, Name: "123"})
-			require.Equal(t, tt.expect.user, user)
+			ctx, user, eval, _, _ := authorizerFunc(identity.WithRequester(ctx, tt.input.user), authorizer.AttributesRecord{User: tt.input.user, Verb: tt.input.verb, Resource: "folders", ResourceRequest: true, Name: "123"})
+			allow, err := b.accessControl.Evaluate(ctx, user, eval)
+			require.NoError(t, err)
 			require.Equal(t, tt.expect.eval, eval.String())
+			require.Equal(t, tt.expect.allow, allow)
 		})
 	}
 }
