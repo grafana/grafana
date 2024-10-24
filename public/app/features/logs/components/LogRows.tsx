@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import { PureComponent, MouseEvent, createRef } from 'react';
+import { PureComponent, MouseEvent, createRef, ReactNode } from 'react';
 
 import {
   TimeZone,
@@ -72,6 +72,8 @@ export interface Props extends Themeable2 {
   overflowingContent?: boolean;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
+  logRowMenuIconsBefore?: ReactNode[];
+  logRowMenuIconsAfter?: ReactNode[];
 }
 
 interface State {

@@ -262,6 +262,33 @@ describe('LogsPanel', () => {
         expect(showContextDs.getLogRowContext).toBeCalled();
       });
     });
+
+    it('supports adding custom options to the log row menu', async () => {
+      const logRowMenuIconsBefore = [
+        <grafanaUI.IconButton name="eye-slash" tooltip="Addon before" aria-label="Addon before" key={1} />,
+      ];
+      const logRowMenuIconsAfter = [
+        <grafanaUI.IconButton name="rss" tooltip="Addon after" aria-label="Addon after" key={1} />,
+      ];
+
+      setup(
+        {
+          data: {
+            series,
+          },
+        },
+        {
+          logRowMenuIconsBefore,
+          logRowMenuIconsAfter,
+        }
+      );
+
+      await waitFor(async () => {
+        await userEvent.hover(screen.getByText(/logline text/i));
+        expect(screen.getByLabelText('Addon before')).toBeInTheDocument();
+        expect(screen.getByLabelText('Addon after')).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Performance regressions', () => {
@@ -571,7 +598,7 @@ describe('LogsPanel', () => {
   });
 });
 
-const setup = (propsOverrides?: {}) => {
+const setup = (propsOverrides?: {}, optionOverrides?: {}) => {
   const props: LogsPanelProps = {
     data: {
       error: undefined,
@@ -604,6 +631,7 @@ const setup = (propsOverrides?: {}) => {
       dedupStrategy: LogsDedupStrategy.none,
       enableLogDetails: true,
       showLogContextToggle: false,
+      ...optionOverrides,
     },
     title: 'Logs panel',
     id: 1,
