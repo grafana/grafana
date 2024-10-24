@@ -11,13 +11,13 @@ export function useLatestAsyncCall<T, V>(fn: AsyncFn<T, V>): AsyncFn<T, V> {
 
   const wrappedFn = useCallback(
     (value: T) => {
-      const requestCount = latestValueCount.current + 1;
+      latestValueCount.current++;
+      const requestCount = latestValueCount.current;
 
       return new Promise<V>((resolve, reject) => {
         fn(value).then((result) => {
           // Only resolve if the value is still the latest
-          if (requestCount > latestValueCount.current) {
-            latestValueCount.current = requestCount;
+          if (requestCount === latestValueCount.current) {
             resolve(result);
           } else {
             reject(new StaleResultError());
