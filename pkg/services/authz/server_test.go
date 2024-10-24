@@ -101,6 +101,88 @@ func Test_legacyServer_Check(t *testing.T) {
 			wantAllowed: true,
 			wantErr:     false,
 		},
+		{
+			name: "should check action only",
+			req: &authzv1.CheckRequest{
+				Subject:   "user:1",
+				Verb:      "get",
+				Group:     "dashboards.grafana.app",
+				Resource:  "dashboards",
+				Namespace: "org-2",
+			},
+			userPerms:   map[string][]string{"dashboards:read": {"dashboards:uid:dash1"}},
+			wantAllowed: true,
+			wantErr:     false,
+		},
+		// Input validation
+		{
+			name: "should return error when group is not set",
+			req: &authzv1.CheckRequest{
+				Subject:   "user:1",
+				Verb:      "get",
+				Resource:  "dashboards",
+				Name:      "dash1",
+				Namespace: "org-2",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when resource is not set",
+			req: &authzv1.CheckRequest{
+				Subject:   "user:1",
+				Verb:      "get",
+				Group:     "dashboards.grafana.app",
+				Name:      "dash1",
+				Namespace: "org-2",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when verb is not set",
+			req: &authzv1.CheckRequest{
+				Subject:   "user:1",
+				Group:     "dashboards.grafana.app",
+				Resource:  "dashboards",
+				Name:      "dash1",
+				Namespace: "org-2",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when subject is not set",
+			req: &authzv1.CheckRequest{
+				Verb:      "get",
+				Group:     "dashboards.grafana.app",
+				Resource:  "dashboards",
+				Name:      "dash1",
+				Namespace: "org-2",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when namespace is incorrect",
+			req: &authzv1.CheckRequest{
+				Subject:   "user:1",
+				Verb:      "get",
+				Group:     "dashboards.grafana.app",
+				Resource:  "dashboards",
+				Name:      "dash1",
+				Namespace: "stacks-2",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when action is not found",
+			req: &authzv1.CheckRequest{
+				Subject:   "user:1",
+				Verb:      "get",
+				Group:     "unknown.grafana.app",
+				Resource:  "unknown",
+				Name:      "unknown",
+				Namespace: "org-2",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

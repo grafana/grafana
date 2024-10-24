@@ -115,7 +115,7 @@ func (l *legacyServer) Check(ctx context.Context, req *authzv1.CheckRequest) (*a
 
 	namespace := req.GetNamespace()
 	info, err := claims.ParseNamespace(namespace)
-	if err != nil || info.OrgID == 0 {
+	if err != nil || info.OrgID == 0 || info.StackID != 0 {
 		ctxLogger.Error("invalid namespace", "namespace", namespace, "error", err)
 		return deny, status.Error(codes.InvalidArgument, "invalid namespace: "+namespace)
 	}
@@ -137,7 +137,7 @@ func (l *legacyServer) Check(ctx context.Context, req *authzv1.CheckRequest) (*a
 
 	// Check if the user has the action solely
 	if req.Name == "" && req.Folder == "" {
-		ev := accesscontrol.EvalPermission(action, action)
+		ev := accesscontrol.EvalPermission(action)
 		hasAccess, err := l.ac.Evaluate(ctx, user, ev)
 		if err != nil {
 			ctxLogger.Error("could not evaluate permission", "subject", req.Subject, "orgId", info.OrgID, "action", action)
