@@ -225,4 +225,5 @@ export interface FeatureToggles {
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
+  azureMonitorDisableLogLimit?: boolean;
 }

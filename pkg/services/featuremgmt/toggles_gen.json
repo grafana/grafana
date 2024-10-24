@@ -607,6 +607,39 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorDisableLogLimit",
+        "resourceVersion": "1727698096407",
+        "creationTimestamp": "2024-09-30T11:51:51Z",
+        "deletionTimestamp": "2024-10-22T09:44:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-30 12:08:16.407109 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "azureMonitorLogLimit",
+        "resourceVersion": "1727696791818",
+        "creationTimestamp": "2024-09-30T11:45:45Z",
+        "deletionTimestamp": "2024-09-30T11:51:51Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-30 11:46:31.818302 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Control the log limit restriction for Azure Monitor",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorPrometheusExemplars",
         "resourceVersion": "1723028568258",
         "creationTimestamp": "2024-06-06T16:53:17Z",
