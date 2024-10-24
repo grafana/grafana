@@ -65,8 +65,8 @@ interface Props extends Themeable2 {
   pinned?: boolean;
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
-  logRowMenuIconsBefore?: ReactNode;
-  logRowMenuIconsAfter?: ReactNode;
+  logRowMenuIconsBefore?: ReactNode[];
+  logRowMenuIconsAfter?: ReactNode[];
 }
 
 interface State {

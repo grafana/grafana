@@ -32,8 +32,8 @@ interface Props {
   mouseIsOver: boolean;
   onBlur: () => void;
   expanded?: boolean;
-  logRowMenuIconsBefore?: ReactNode;
-  logRowMenuIconsAfter?: ReactNode;
+  logRowMenuIconsBefore?: ReactNode[];
+  logRowMenuIconsAfter?: ReactNode[];
 }
 
 interface LogMessageProps {

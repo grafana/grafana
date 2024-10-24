@@ -264,10 +264,12 @@ describe('LogsPanel', () => {
     });
 
     it('supports adding custom options to the log row menu', async () => {
-      const logRowMenuIconsBefore = (
-        <grafanaUI.IconButton name="eye-slash" tooltip="Addon before" aria-label="Addon before" />
-      );
-      const logRowMenuIconsAfter = <grafanaUI.IconButton name="rss" tooltip="Addon after" aria-label="Addon after" />;
+      const logRowMenuIconsBefore = [
+        <grafanaUI.IconButton name="eye-slash" tooltip="Addon before" aria-label="Addon before" key={1} />,
+      ];
+      const logRowMenuIconsAfter = [
+        <grafanaUI.IconButton name="rss" tooltip="Addon after" aria-label="Addon after" key={1} />,
+      ];
 
       setup(
         {

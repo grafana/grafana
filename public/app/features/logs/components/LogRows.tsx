@@ -72,8 +72,8 @@ export interface Props extends Themeable2 {
   overflowingContent?: boolean;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
-  logRowMenuIconsBefore?: ReactNode;
-  logRowMenuIconsAfter?: ReactNode;
+  logRowMenuIconsBefore?: ReactNode[];
+  logRowMenuIconsAfter?: ReactNode[];
 }
 
 interface State {

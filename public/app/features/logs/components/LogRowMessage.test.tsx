@@ -202,22 +202,22 @@ line3`;
   describe('With custom buttons', () => {
     it('supports custom buttons before and after the default options', async () => {
       const onBefore = jest.fn();
-      const logRowMenuIconsBefore = (
-        <IconButton name="eye-slash" onClick={onBefore} tooltip="Addon before" aria-label="Addon before" />
-      );
+      const logRowMenuIconsBefore = [
+        <IconButton name="eye-slash" onClick={onBefore} tooltip="Addon before" aria-label="Addon before" key={1} />,
+      ];
       const onAfter = jest.fn();
-      const logRowMenuIconsAfter = (
-        <IconButton name="rss" onClick={onAfter} tooltip="Addon after" aria-label="Addon after" />
-      );
+      const logRowMenuIconsAfter = [
+        <IconButton name="rss" onClick={onAfter} tooltip="Addon after" aria-label="Addon after" key={1} />,
+      ];
 
-      setup({ logRowMenuIconsBefore, logRowMenuIconsAfter });
+      const { row } = setup({ logRowMenuIconsBefore, logRowMenuIconsAfter });
 
       await userEvent.hover(screen.getByText('test123'));
       await userEvent.click(screen.getByLabelText('Addon before'));
       await userEvent.click(screen.getByLabelText('Addon after'));
 
-      expect(onBefore).toHaveBeenCalled();
-      expect(onAfter).toHaveBeenCalled();
+      expect(onBefore).toHaveBeenCalledWith(expect.anything(), row);
+      expect(onAfter).toHaveBeenCalledWith(expect.anything(), row);
     });
   });
 });
