@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -213,4 +214,8 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 	}
 	return &authorizerParams{evaluator: eval, user: user}, nil
+}
+
+func (b *FolderAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
+	return nil
 }
