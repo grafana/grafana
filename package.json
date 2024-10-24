@@ -165,7 +165,7 @@
     "core-js": "3.38.1",
     "css-loader": "7.1.2",
     "css-minimizer-webpack-plugin": "6.0.0",
-    "cypress": "13.10.0",
+    "cypress": "13.15.1",
     "cypress-file-upload": "5.0.8",
     "cypress-recurse": "^1.35.3",
     "esbuild": "0.24.0",
