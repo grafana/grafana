@@ -21,7 +21,7 @@ describe('DashboardScenePageStateManager', () => {
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash', undefined);
 
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
