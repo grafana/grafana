@@ -102,7 +102,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   moduleHash?: string;
 }
 
-interface PluginDependencyInfo {
+export interface PluginDependencyInfo {
   id: string;
   name: string;
   version: string;
