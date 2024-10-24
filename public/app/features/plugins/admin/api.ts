@@ -36,7 +36,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
-    changelog: localChangelog || remote?.changelog,
+    changelog: remote?.changelog || localChangelog,
   };
 }
 
@@ -122,7 +122,6 @@ async function getLocalPluginChangelog(id: string): Promise<string> {
   try {
     const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/CHANGELOG`);
     const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
-
     return markdownAsHtml;
   } catch (error) {
     if (isFetchError(error)) {
