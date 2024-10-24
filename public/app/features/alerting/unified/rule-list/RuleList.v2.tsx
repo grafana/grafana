@@ -4,12 +4,11 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval, useMeasure } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, LoadingBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
-import { LogMessages, trackRuleListNavigation } from '../Analytics';
+import { logInfo, LogMessages, trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
 import { NoRulesSplash } from '../components/rules/NoRulesCTA';

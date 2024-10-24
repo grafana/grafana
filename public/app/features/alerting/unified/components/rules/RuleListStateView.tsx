@@ -12,7 +12,7 @@ import { AlertRuleListItem } from '../../rule-list/components/AlertRuleListItem'
 import { ListSection } from '../../rule-list/components/ListSection';
 import { createViewLink } from '../../utils/misc';
 import { hashRule } from '../../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { getRulePluginOrigin, isAlertingRule, isProvisionedRule } from '../../utils/rules';
 import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
 
 import { RuleActionsButtons } from './RuleActionsButtons';
@@ -95,7 +95,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
       {pageItems.map((rule) => {
         const { rulerRule, promRule } = rule;
 
-        const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+        const isProvisioned = rulerRule ? isProvisionedRule(rulerRule) : false;
         const instancesCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
 
         if (!promRule) {
