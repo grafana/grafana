@@ -27,10 +27,6 @@ load(
     "rgm",
 )
 load("scripts/drone/vault.star", "secrets")
-load(
-    "scripts/drone/windows.star",
-    "windows_manual_pipeline",
-)
 
 def main(_ctx):
     return (
@@ -44,6 +40,5 @@ def main(_ctx):
         rgm() +
         integration_test_pipelines() +
         cronjobs() +
-        [windows_manual_pipeline()] +
         secrets()
     )

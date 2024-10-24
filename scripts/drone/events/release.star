@@ -310,7 +310,6 @@ def verify_release_pipeline(
         trigger = {},
         depends_on = [
             "release-build-e2e-publish",
-            "release-windows",
         ]):
     """
     Runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release process.

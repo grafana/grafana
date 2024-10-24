@@ -45,10 +45,6 @@ load(
     "rgm_github_token",
     "rgm_storybook_destination",
 )
-load(
-    "scripts/drone/windows.star",
-    "windows_pipeline_release",
-)
 
 docs_paths = {
     "exclude": [
@@ -289,20 +285,14 @@ def rgm_nightly_pipeline():
 def rgm_tag_pipeline():
     build = rgm_tag()
 
-    # the Windows step requires an uploaded .zip file to base its compilation on
-    windows = windows_pipeline_release(trigger = tag_trigger, depends_on = [
-        build["name"],
-    ])
     return [
         build,
         whats_new_checker_pipeline(tag_trigger),
-        windows,
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
             bucket = "grafana-prerelease",
             depends_on = [
-                windows["name"],
                 build["name"],
             ],
         ),
