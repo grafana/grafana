@@ -4,12 +4,12 @@ import _ from 'lodash';
 import { ScopedVars } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType } from '../types';
+import { AzureMonitorQuery, AzureMonitorDataSourceJsonData, AzureQueryType } from '../types';
 import { interpolateVariable } from '../utils/common';
 
 export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
-  AzureDataSourceJsonData
+  AzureMonitorDataSourceJsonData
 > {
   filterQuery(item: AzureMonitorQuery): boolean {
     return !!item.azureResourceGraph?.query && !!item.subscriptions && item.subscriptions.length > 0;
