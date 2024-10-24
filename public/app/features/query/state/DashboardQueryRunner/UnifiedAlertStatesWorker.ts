@@ -105,7 +105,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
             }
           })
         );
-        return { alertStates: Object.values(panelIdToAlertState), annotations: [] };
+        return { alertStates: Object.values(panelIdToAlertState), annotations: [], correlations: [] };
       }),
       catchError(handleDashboardQueryRunnerWorkerError)
     );
