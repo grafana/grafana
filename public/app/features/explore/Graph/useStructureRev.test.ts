@@ -1,3 +1,12 @@
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace jest {
+    interface Matchers<R> {
+      toHaveIncremented(): CustomMatcherResult;
+    }
+  }
+}
+
 import { renderHook } from '@testing-library/react-hooks';
 
 import { DataFrame, FieldType, toDataFrame } from '@grafana/data';

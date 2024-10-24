@@ -346,10 +346,6 @@ The table below describes all SAML configuration options. Continue reading below
 
 ### Signature algorithm
 
-{{% admonition type="note" %}}
-Available in Grafana version 7.3 and later.
-{{% /admonition %}}
-
 The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests. If the `signature_algorithm` option is configured, Grafana will put a digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature validation will fail. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
 
 ### Specify user's Name ID
@@ -398,19 +394,11 @@ The integration provides two key endpoints as part of Grafana:
 
 ### IdP-initiated Single Sign-On (SSO)
 
-{{% admonition type="note" %}}
-Available in Grafana version 7.3 and later.
-{{% /admonition %}}
-
 By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana’s login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
 IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
 
 ### Single logout
-
-{{% admonition type="note" %}}
-Available in Grafana version 7.3 and later.
-{{% /admonition %}}
 
 SAML's single logout feature allows users to log out from all applications associated with the current IdP session established via SAML SSO. If the `single_logout` option is set to `true` and a user logs out, Grafana requests IdP to end the user session which in turn triggers logout from all other applications the user is logged into using the same IdP session (applications should support single logout). Conversely, if another application connected to the same IdP logs out using single logout, Grafana receives a logout request from IdP and ends the user session.
 
@@ -456,10 +444,6 @@ auto_login = true
 
 ### Configure team sync
 
-{{% admonition type="note" %}}
-Team sync support for SAML is available in Grafana version 7.0 and later.
-{{% /admonition %}}
-
 To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
 {{% admonition type="note" %}}
@@ -502,10 +486,6 @@ The following `External Group ID`s would be valid for input in the desired team'
 
 ### Configure role sync
 
-{{% admonition type="note" %}}
-Available in Grafana version 7.0 and later.
-{{% /admonition %}}
-
 Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
 1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_role" >}}) option to the attribute name where the role information will be extracted from.
@@ -533,10 +513,6 @@ role_values_grafana_admin = superadmin
 
 **Important**: When role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
 
-{{% admonition type="note" %}}
-Available in Grafana version 9.2 and later.
-{{% /admonition %}}
-
 If you don't want user organizations and roles to be synchronized with the IdP, you can use the `skip_org_role_sync` configuration option.
 
 Example configuration:
@@ -547,10 +523,6 @@ skip_org_role_sync = true
 ```
 
 ### Configure organization mapping
-
-{{% admonition type="note" %}}
-Available in Grafana version 7.0 and later.
-{{% /admonition %}}
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
@@ -574,20 +546,12 @@ You can use `*` as the SAML Organization if you want all your users to be in som
 
 - `org_mapping = *:2:Editor` to map all users to `2` in Grafana as Editors.
 
-{{% admonition type="note" %}}
-Available in Grafana version 9.2 and later.
-{{% /admonition %}}
-
 You can use `*` as the Grafana organization in the mapping if you want all users from a given SAML Organization to be added to all existing Grafana organizations.
 
 - `org_mapping = Engineering:*` to map users from `Engineering` to all existing Grafana organizations.
 - `org_mapping = Administration:*:Admin` to map users from `Administration` to all existing Grafana organizations as Admins.
 
 ### Configure allowed organizations
-
-{{% admonition type="note" %}}
-Available in Grafana version 7.0 and later.
-{{% /admonition %}}
 
 With the [`allowed_organizations`]({{< relref "../../../configure-grafana/enterprise-configuration#allowed_organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 

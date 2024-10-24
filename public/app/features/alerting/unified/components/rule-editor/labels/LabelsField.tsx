@@ -4,12 +4,14 @@ import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
-import { RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { isPrivateLabelKey } from '../../../utils/labels';
+import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
 import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -64,6 +66,8 @@ export interface LabelsSubFormProps {
 
 export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: LabelsSubFormProps) {
   const styles = useStyles2(getStyles);
+  const { watch } = useFormContext<RuleFormValues>();
+  const type = watch('type') ?? RuleFormType.grafana;
 
   const onSave = (labels: LabelsSubformValues) => {
     onClose(labels.labelsInSubform);
@@ -81,7 +85,7 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
     <FormProvider {...formAPI}>
       <form onSubmit={formAPI.handleSubmit(onSave)}>
         <Stack direction="column" gap={4}>
-          <Text>Add labels to your rule for searching, silencing, or routing to a notification policy.</Text>
+          <Text>{getLabelText(type)}</Text>
           <Stack direction="column" gap={1}>
             <LabelsWithSuggestions dataSourceName={dataSourceName} />
             <Space v={2} />
@@ -393,13 +397,16 @@ export const LabelsWithoutSuggestions: FC = () => {
 };
 
 function LabelsField() {
+  const { watch } = useFormContext<RuleFormValues>();
+  const type = watch('type') ?? RuleFormType.grafana;
+
   return (
     <div>
       <Stack direction="column" gap={1}>
         <Text element="h5">Labels</Text>
         <Stack direction={'row'} gap={1}>
           <Text variant="bodySmall" color="secondary">
-            Add labels to your rule for searching, silencing, or routing to a notification policy.
+            {getLabelText(type)}
           </Text>
           <NeedHelpInfo
             contentText="The dropdown only displays labels that you have previously used for alerts.
@@ -411,6 +418,17 @@ function LabelsField() {
       <LabelsWithoutSuggestions />
     </div>
   );
+}
+
+function getLabelText(type: RuleFormType) {
+  const isRecordingRule = type ? isRecordingRuleByType(type) : false;
+  const text = isRecordingRule
+    ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
+    : t(
+        'alerting.alertform.labels.alerting',
+        'Add labels to your rule for searching, silencing, or routing to a notification policy.'
+      );
+  return text;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

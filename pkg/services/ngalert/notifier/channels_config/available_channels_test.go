@@ -22,7 +22,7 @@ func TestGetSecretKeysForContactPointType(t *testing.T) {
 		{receiverType: "sensugo", expectedSecretFields: []string{"apikey"}},
 		{receiverType: "teams", expectedSecretFields: []string{}},
 		{receiverType: "telegram", expectedSecretFields: []string{"bottoken"}},
-		{receiverType: "webhook", expectedSecretFields: []string{"password", "authorization_credentials"}},
+		{receiverType: "webhook", expectedSecretFields: []string{"password", "authorization_credentials", "tlsConfig.caCertificate", "tlsConfig.clientCertificate", "tlsConfig.clientKey"}},
 		{receiverType: "wecom", expectedSecretFields: []string{"url", "secret"}},
 		{receiverType: "prometheus-alertmanager", expectedSecretFields: []string{"basicAuthPassword"}},
 		{receiverType: "discord", expectedSecretFields: []string{"url"}},

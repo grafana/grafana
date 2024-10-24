@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -29,13 +30,13 @@ var (
 
 var resource = iamv0.UserResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *LegacyStore {
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac authz.AccessClient) *LegacyStore {
 	return &LegacyStore{store, ac}
 }
 
 type LegacyStore struct {
 	store legacy.LegacyIdentityStore
-	ac    claims.AccessClient
+	ac    authz.AccessClient
 }
 
 func (s *LegacyStore) New() runtime.Object {

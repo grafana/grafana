@@ -20,16 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
-	"github.com/grafana/grafana/pkg/setting"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
-
-// TODO(drclau): decide on the audience for the resource store
-const resourceStoreAudience = "resourceStore"
 
 type ResourceClient interface {
 	ResourceStoreClient
 	ResourceIndexClient
+	BlobStoreClient
 	DiagnosticsClient
 }
 
@@ -37,6 +34,7 @@ type ResourceClient interface {
 type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
+	BlobStoreClient
 	DiagnosticsClient
 }
 
@@ -45,6 +43,7 @@ func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}
 }
@@ -57,6 +56,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,
+		&BlobStore_ServiceDesc,
 		&Diagnostics_ServiceDesc,
 	} {
 		channel.RegisterService(
@@ -79,11 +79,12 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
 		ResourceIndexClient: NewResourceIndexClient(cc),
+		BlobStoreClient:     NewBlobStoreClient(cc),
 		DiagnosticsClient:   NewDiagnosticsClient(cc),
 	}
 }
 
-func NewGRPCResourceClient(conn *grpc.ClientConn, tracer tracing.Tracer) (ResourceClient, error) {
+func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (ResourceClient, error) {
 	// scenario: remote on-prem
 	clientInt, err := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
@@ -103,24 +104,18 @@ func NewGRPCResourceClient(conn *grpc.ClientConn, tracer tracing.Tracer) (Resour
 	}, nil
 }
 
-func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, tracer tracing.Tracer) (ResourceClient, error) {
+func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
 	// scenario: remote cloud
-	clientConfig, err := grpcutils.ReadGrpcClientConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-	grpcClientConfig := clientCfgMapping(clientConfig)
-
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 		authnlib.WithTracerOption(tracer),
 	}
 
-	if cfg.Env == setting.Dev {
-		opts = allowInsecureTransportOpt(&grpcClientConfig, opts)
+	if allowInsecure {
+		opts = allowInsecureTransportOpt(&cfg, opts)
 	}
 
-	clientInt, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig, opts...)
+	clientInt, err := authnlib.NewGrpcClientInterceptor(&cfg, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -164,19 +159,6 @@ func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	tokenClient, _ := authnlib.NewTokenExchangeClient(*grpcClientConfig.TokenClientConfig, authnlib.WithHTTPClient(client))
 	return append(opts, authnlib.WithTokenClientOption(tokenClient))
-}
-
-func clientCfgMapping(clientCfg *grpcutils.GrpcClientConfig) authnlib.GrpcClientConfig {
-	return authnlib.GrpcClientConfig{
-		TokenClientConfig: &authnlib.TokenExchangeConfig{
-			Token:            clientCfg.Token,
-			TokenExchangeURL: clientCfg.TokenExchangeURL,
-		},
-		TokenRequest: &authnlib.TokenExchangeRequest{
-			Namespace: clientCfg.TokenNamespace,
-			Audiences: []string{resourceStoreAudience},
-		},
-	}
 }
 
 // createInternalToken creates a symmetrically signed token for using in in-proc mode only.

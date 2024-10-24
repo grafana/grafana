@@ -41,7 +41,7 @@ func TestAggregatorPostStartHooks(t *testing.T) {
 	cfg.GenericConfig.SharedInformerFactory = informers.NewSharedInformerFactory(fake.NewSimpleClientset(), 10*time.Minute)
 
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(*storagebackend.NewDefaultConfig("memory", nil))
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(*storagebackend.NewDefaultConfig("memory", nil), make(map[string]any))
 	require.NoError(t, err)
 	cfg.GenericConfig.RESTOptionsGetter = restOptionsGetter
 

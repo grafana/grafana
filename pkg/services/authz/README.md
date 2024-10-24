@@ -38,14 +38,33 @@ Here is an example to connect the authorization client to a remote grpc server.
 ```ini
 [authorization]
 remote_address = "server.example.org:10000"
+listen = false
 mode = "grpc"
 ```
 
-Here is an example to register the authorization service on the Grafana GRPC server and connect the client to it through grpc
+Here is an example to register the authorization service on the Grafana GRPC server and connect the client to it through grpc.
 
 ```ini
+app_mode = development
+
 [authorization]
 remote_address = "localhost:10000"
 listen = true
 mode = "grpc"
+```
+
+Here is an example to connect the authorization client to a remote grpc server and use access token authentication.
+```ini
+[environment]
+stack_id = 11
+
+[authorization]
+remote_address = "server.example.org:10000"
+mode = "grpc"
+listen = false
+
+[grpc_client_authentication]
+token = "ReplaceWithToken"
+token_exchange_url = "signing-server.example.org/path/to/signing"
+token_namespace = "stacks-11"
 ```

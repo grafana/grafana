@@ -23,8 +23,6 @@ import {
 import { reportInteraction, config } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-// TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
-import { sidecarService } from 'app/core/services/SidecarService';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -309,7 +307,7 @@ export function getLinkExtensionOverrides(
   context?: object
 ) {
   try {
-    const overrides = config.configure?.(context, { isAppOpened: () => isAppOpened(pluginId) });
+    const overrides = config.configure?.(context);
 
     // Hiding the extension
     if (overrides === undefined) {
@@ -387,9 +385,6 @@ export function getLinkExtensionOnClick(
       const helpers: PluginExtensionEventHelpers = {
         context,
         openModal: createOpenModalFunction(pluginId),
-        isAppOpened: () => isAppOpened(pluginId),
-        openAppInSideview: () => openAppInSideview(pluginId),
-        closeAppInSideview: () => closeAppInSideview(pluginId),
       };
 
       log.debug(`onClick '${config.title}' at '${extensionPointId}'`);
@@ -425,12 +420,6 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
     })
   );
 }
-
-export const openAppInSideview = (pluginId: string) => sidecarService.openApp(pluginId);
-
-export const closeAppInSideview = (pluginId: string) => sidecarService.closeApp(pluginId);
-
-export const isAppOpened = (pluginId: string) => sidecarService.isAppOpened(pluginId);
 
 // Comes from the `app_mode` setting in the Grafana config (defaults to "development")
 // Can be set with the `GF_DEFAULT_APP_MODE` environment variable

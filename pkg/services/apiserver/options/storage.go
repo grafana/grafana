@@ -30,6 +30,13 @@ type StorageOptions struct { // The desired storage type
 	// For file storage, this is the requested path
 	DataPath string
 
+	// Optional blob storage connection string
+	// file:///path/to/dir
+	// gs://my-bucket (using default credentials)
+	// s3://my-bucket?region=us-west-1 (using default credentials)
+	// azblob://my-container
+	BlobStoreURL string
+
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
 }
@@ -58,6 +65,11 @@ func (o *StorageOptions) Validate() []error {
 
 	if _, _, err := net.SplitHostPort(o.Address); err != nil {
 		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-address must be a valid network address: %v", err))
+	}
+
+	// Only works for single tenant grafana right now
+	if o.BlobStoreURL != "" && o.StorageType != StorageTypeUnified {
+		errs = append(errs, fmt.Errorf("blob storage is only valid with unified storage"))
 	}
 	return errs
 }

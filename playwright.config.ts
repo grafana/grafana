@@ -62,6 +62,15 @@ export default defineConfig<PluginOptions>({
       dependencies: ['createUserAndAuthenticate'],
     },
     {
+      name: 'elasticsearch',
+      testDir: path.join(testDirRoot, '/elasticsearch'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'mysql',
       testDir: path.join(testDirRoot, '/mysql'),
       use: {
@@ -71,8 +80,26 @@ export default defineConfig<PluginOptions>({
       dependencies: ['authenticate'],
     },
     {
+      name: 'mssql',
+      testDir: path.join(testDirRoot, '/mssql'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'extensions-test-app',
       testDir: 'e2e/test-plugins/grafana-extensionstest-app',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'cloudwatch',
+      testDir: path.join(testDirRoot, '/cloudwatch'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',

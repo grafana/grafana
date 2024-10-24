@@ -21,29 +21,6 @@ const (
 	ModeCloud  Mode = "cloud"
 )
 
-type GrpcClientConfig struct {
-	Token            string
-	TokenExchangeURL string
-	TokenNamespace   string
-	Mode             Mode
-}
-
-func ReadGrpcClientConfig(cfg *setting.Cfg) (*GrpcClientConfig, error) {
-	section := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-
-	mode := Mode(section.Key("mode").MustString(string(ModeOnPrem)))
-	if !mode.IsValid() {
-		return nil, fmt.Errorf("grpc_client_authentication: invalid mode %q", mode)
-	}
-
-	return &GrpcClientConfig{
-		Token:            section.Key("token").MustString(""),
-		TokenExchangeURL: section.Key("token_exchange_url").MustString(""),
-		TokenNamespace:   section.Key("token_namespace").MustString("stacks-" + cfg.StackID),
-		Mode:             mode,
-	}, nil
-}
-
 type GrpcServerConfig struct {
 	SigningKeysURL   string
 	AllowedAudiences []string
@@ -65,4 +42,20 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
 		Mode:             mode,
 		LegacyFallback:   section.Key("legacy_fallback").MustBool(true),
 	}, nil
+}
+
+type GrpcClientConfig struct {
+	Token            string
+	TokenExchangeURL string
+	TokenNamespace   string
+}
+
+func ReadGrpcClientConfig(cfg *setting.Cfg) *GrpcClientConfig {
+	section := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+
+	return &GrpcClientConfig{
+		Token:            section.Key("token").MustString(""),
+		TokenExchangeURL: section.Key("token_exchange_url").MustString(""),
+		TokenNamespace:   section.Key("token_namespace").MustString("stacks-" + cfg.StackID),
+	}
 }

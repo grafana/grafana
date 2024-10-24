@@ -487,8 +487,6 @@ WHERE
 
 **Example region query using time and timeend columns with epoch values:**
 
-> Only available in Grafana v6.6+.
-
 ```sql
 SELECT
   epoch_time as time,

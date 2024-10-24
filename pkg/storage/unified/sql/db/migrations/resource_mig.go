@@ -105,5 +105,9 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: true,
 	}))
 
+	mg.AddMigration("Add index to resource_history for polling", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"group", "resource", "resource_version"}, Type: migrator.IndexType,
+	}))
+
 	return marker
 }

@@ -23,6 +23,7 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
+import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import {
   AlertmanagerGroup,
@@ -308,12 +309,8 @@ const Policy = (props: PolicyComponentProps) => {
                     )}
                     {dropdownMenuActions.length > 0 && (
                       <Dropdown overlay={<Menu>{dropdownMenuActions}</Menu>}>
-                        <Button
-                          icon="ellipsis-h"
-                          variant="secondary"
-                          size="sm"
-                          type="button"
-                          aria-label="more-actions"
+                        <MoreButton
+                          aria-label={isDefaultPolicy ? 'more actions for default policy' : 'more actions for policy'}
                           data-testid="more-actions"
                         />
                       </Dropdown>
@@ -469,7 +466,7 @@ function MetadataRow({
         {contactPoint && (
           <MetaText icon="at" data-testid="contact-point">
             <span>
-              <Trans i18nKey="alerting.policies.metadata.delivered-to">Delivered to</Trans>
+              <Trans i18nKey="alerting.policies.metadata.delivered-to">Delivered to</Trans>{' '}
             </span>
             <ContactPointsHoverDetails
               alertManagerSourceName={alertManagerSourceName}
@@ -483,7 +480,7 @@ function MetadataRow({
             {customGrouping && (
               <MetaText icon="layer-group" data-testid="grouping">
                 <span>
-                  <Trans i18nKey="alerting.policies.metadata.grouped-by">Grouped by</Trans>
+                  <Trans i18nKey="alerting.policies.metadata.grouped-by">Grouped by</Trans>{' '}
                 </span>
                 <Text color="primary">{groupBy.join(', ')}</Text>
               </MetaText>
@@ -507,7 +504,7 @@ function MetadataRow({
         {hasMuteTimings && (
           <MetaText icon="calendar-slash" data-testid="mute-timings">
             <span>
-              <Trans i18nKey="alerting.policies.metadata.mute-time">Muted when</Trans>
+              <Trans i18nKey="alerting.policies.metadata.mute-time">Muted when</Trans>{' '}
             </span>
             <TimeIntervals timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>
@@ -515,7 +512,7 @@ function MetadataRow({
         {hasActiveTimings && (
           <MetaText icon="calendar-alt" data-testid="active-timings">
             <span>
-              <Trans i18nKey="alerting.policies.metadata.active-time">Active when</Trans>
+              <Trans i18nKey="alerting.policies.metadata.active-time">Active when</Trans>{' '}
             </span>
             <TimeIntervals timings={activeTimings} alertManagerSourceName={alertManagerSourceName} />
           </MetaText>

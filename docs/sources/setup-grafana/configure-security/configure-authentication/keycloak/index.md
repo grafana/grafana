@@ -159,11 +159,9 @@ Grafana supports ID token hints for single logout. Grafana automatically adds th
 
 ## Allow assigning Grafana Admin
 
-> Available in Grafana v9.2 and later versions.
-
 If the application role received by Grafana is `GrafanaAdmin` , Grafana grants the user server administrator privileges.
 
-This is useful if you want to grant server administrator privileges to a subset of users.  
+This is useful if you want to grant server administrator privileges to a subset of users.
 Grafana also assigns the user the `Admin` role of the default organization.
 
 ```ini
@@ -172,8 +170,6 @@ allow_assign_grafana_admin = true
 ```
 
 ### Configure refresh token
-
-> Available in Grafana v9.3 and later versions.
 
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 

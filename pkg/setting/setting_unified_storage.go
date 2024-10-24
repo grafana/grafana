@@ -36,3 +36,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.UnifiedStorage = storageConfig
 }
+
+func (cfg *Cfg) setIndexPath() {
+	cfg.IndexPath = cfg.Raw.Section("unified_storage").Key("index_path").String()
+}

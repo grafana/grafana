@@ -66,6 +66,7 @@ func TestSetDualWritingMode(t *testing.T) {
 func TestCompare(t *testing.T) {
 	var exampleObjGen1 = &example.Pod{ObjectMeta: metav1.ObjectMeta{Generation: 1}, Spec: example.PodSpec{Hostname: "one"}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Unix(0, 0)}}}
 	var exampleObjGen2 = &example.Pod{ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: example.PodSpec{Hostname: "one"}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Unix(0, 0)}}}
+	var exampleObjGen3 = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "pod", APIVersion: "pods/v0"}, ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: example.PodSpec{Hostname: "one"}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Unix(0, 0)}}}
 	var exampleObjDifferentTitle = &example.Pod{ObjectMeta: metav1.ObjectMeta{Generation: 2}, Spec: example.PodSpec{Hostname: "two"}, Status: example.PodStatus{StartTime: &metav1.Time{Time: time.Unix(0, 0)}}}
 
 	testCase := []struct {
@@ -84,6 +85,12 @@ func TestCompare(t *testing.T) {
 			name:     "should return true when objects are the same, but different metadata (generation)",
 			input1:   exampleObjGen1,
 			input2:   exampleObjGen2,
+			expected: true,
+		},
+		{
+			name:     "should return true when objects are the same, but different TypeMeta (kind and apiversion)",
+			input1:   exampleObjGen1,
+			input2:   exampleObjGen3,
 			expected: true,
 		},
 		{

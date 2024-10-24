@@ -126,6 +126,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: false,
     customEndpoint: '',
     apiKey: '',
+    allInstrumentationsEnabled: false,
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,
@@ -189,7 +190,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   tokenExpirationDayLimit: undefined;
-  disableFrontendSandboxForPlugins: string[] = [];
+  enableFrontendSandboxForPlugins: string[] = [];
   sharedWithMeFolderUID: string | undefined;
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;

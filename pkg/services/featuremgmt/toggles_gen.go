@@ -99,10 +99,6 @@ const (
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
-	// FlagTopnav
-	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
-	FlagTopnav = "topnav"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -146,6 +142,10 @@ const (
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
+
+	// FlagLokiShardSplitting
+	// Use stream shards to split queries into smaller subqueries
+	FlagLokiShardSplitting = "lokiShardSplitting"
 
 	// FlagLokiQuerySplitting
 	// Split large interval queries into subqueries with smaller time intervals
@@ -499,6 +499,10 @@ const (
 	// Enables dashboard rendering using scenes for all roles
 	FlagDashboardScene = "dashboardScene"
 
+	// FlagDashboardNewLayouts
+	// Enables experimental new dashboard layouts
+	FlagDashboardNewLayouts = "dashboardNewLayouts"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
@@ -818,4 +822,16 @@ const (
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
+
+	// FlagUnifiedStorageBigObjectsSupport
+	// Enables to save big objects in blob storage
+	FlagUnifiedStorageBigObjectsSupport = "unifiedStorageBigObjectsSupport"
+
+	// FlagTimeRangeProvider
+	// Enables time pickers sync
+	FlagTimeRangeProvider = "timeRangeProvider"
+
+	// FlagPrometheusUsesCombobox
+	// Use new combobox component for Prometheus query editor
+	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 )

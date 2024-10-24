@@ -164,6 +164,16 @@ export type CreateSnapshotResponseDto = {
   uid?: string;
 };
 export type MigrateDataResponseItemDto = {
+  errorCode?:
+    | 'DATASOURCE_NAME_CONFLICT'
+    | 'DASHBOARD_ALREADY_MANAGED'
+    | 'LIBRARY_ELEMENT_NAME_CONFLICT'
+    | 'UNSUPPORTED_DATA_TYPE'
+    | 'RESOURCE_CONFLICT'
+    | 'UNEXPECTED_STATUS_CODE'
+    | 'INTERNAL_SERVICE_ERROR'
+    | 'ONLY_CORE_DATA_SOURCES'
+    | 'GENERIC_ERROR';
   message?: string;
   name?: string;
   parentName?: string;

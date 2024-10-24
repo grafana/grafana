@@ -10,7 +10,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -138,27 +137,6 @@ func NewDualWriter(
 	}
 }
 
-type updateWrapper struct {
-	upstream rest.UpdatedObjectInfo
-	updated  runtime.Object
-}
-
-// Returns preconditions built from the updated object, if applicable.
-// May return nil, or a preconditions object containing nil fields,
-// if no preconditions can be determined from the updated object.
-func (u *updateWrapper) Preconditions() *metav1.Preconditions {
-	if u.upstream == nil {
-		return nil
-	}
-	return u.upstream.Preconditions()
-}
-
-// UpdatedObject returns the updated object, given a context and old object.
-// The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
-func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
-	return u.updated, nil
-}
-
 type NamespacedKVStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
 	Set(ctx context.Context, key, value string) error
@@ -274,20 +252,18 @@ func Compare(storageObj, legacyObj runtime.Object) bool {
 	if storageObj == nil || legacyObj == nil {
 		return storageObj == nil && legacyObj == nil
 	}
-	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
 }
 
-func removeMeta(obj runtime.Object) []byte {
+func extractSpec(obj runtime.Object) []byte {
 	cpy := obj.DeepCopyObject()
 	unstObj, err := defaultConverter.ToUnstructured(cpy)
 	if err != nil {
 		return nil
 	}
-	// we don't want to compare meta fields
-	delete(unstObj, "metadata")
-	delete(unstObj, "objectMeta")
 
-	jsonObj, err := json.Marshal(unstObj)
+	// we just want to compare the spec field
+	jsonObj, err := json.Marshal(unstObj["spec"])
 	if err != nil {
 		return nil
 	}

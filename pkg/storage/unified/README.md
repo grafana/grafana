@@ -240,6 +240,14 @@ Make sure you have the gRPC address in the `[grafana-apiserver]` section of your
 address = localhost:10000
 ```
 
+You also need the `[grpc_server_authentication]` section to authenticate incoming requests:
+```ini
+[grpc_server_authentication]
+; http url to Grafana's signing keys to validate incoming id tokens
+signing_keys_url = http://localhost:3000/api/signing-keys/keys
+mode = "on-prem"
+```
+
 This currently only works with a separate database configuration (see previous section).
 
 Start the storage-server with:
@@ -270,3 +278,24 @@ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 ```
 - make changes in `.proto` file
 - to compile all protobuf files in the repository run `make protobuf` at its top level
+
+## Setting up search (EXPERIMENTAL)
+Unified storage now exposes an **experimental** search API. It can be used to search for specific resources, or to filter/query resources. 
+To enable it, add the following to your `custom.ini` under the `[feature_toggles]` section:
+```ini
+[feature_toggles]
+unifiedStorageSearch = true
+```
+
+To access the api through Grafana, go to Explore -> Query Type -> Search.
+
+The query needs to be a valid [Bleve query string](https://blevesearch.com/docs/Query-String-Query/).
+
+Some example queries are:
+- `*` - returns all objects
+- `Kind:Playlist` - returns all playlists
+- `Spec.inveral:5m` - returns all objects with the spec.inverval field set to 5m
+- `+Kind:Playlist +Spec.title:p4` - returns all playlists with the title matching "p4"
+- `*foo*` - returns all objects containing "foo" in any field
+- `CreatedAt:>="2024-10-17"` - returns all objects created after 2024-10-17
+- `+CreatedAt:>="2024-10-17" +Kind:Playlist` - returns all playlists created after 2024-10-17

@@ -1080,6 +1080,15 @@ Here is the result after adding a Limit transformation with a value of '3':
 | 2020-07-07 11:34:20 | Humidity    | 22    |
 | 2020-07-07 10:32:20 | Humidity    | 29    |
 
+Using a negative number, you can keep values from the end of the set. Here is the result after adding a Limit transformation with a value of '-3':
+
+| Time                | Metric      | Value |
+| ------------------- | ----------- | ----- |
+| 2020-07-07 10:31:22 | Temperature | 22    |
+| 2020-07-07 09:30:57 | Humidity    | 33    |
+| 2020-07-07 09:30:05 | Temperature | 19    |
+
+
 This transformation helps you tailor the visual presentation of your data to focus on the most relevant information.
   `;
     },

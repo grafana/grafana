@@ -252,10 +252,6 @@ In your `server` section, add the following configuration:
   }
 ```
 
-{{% admonition type="note" %}}
-Available in Grafana v6.3 and higher.
-{{% /admonition %}}
-
 ## Create a metric query
 
 You can use LogQL to wrap a log query with functions that create metrics from your logs.

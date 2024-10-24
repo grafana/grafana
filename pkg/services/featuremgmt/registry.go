@@ -188,15 +188,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
-			// can afford the breaking change, or we've detemined no one else is relying on it
-			Name:        "topnav",
-			Description: "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
-			Stage:       FeatureStageDeprecated,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
@@ -273,6 +264,13 @@ var (
 			Owner:          grafanaObservabilityLogsSquad,
 			Expression:     "true", // turned on by default
 			AllowSelfServe: true,
+		},
+		{
+			Name:         "lokiShardSplitting",
+			Description:  "Use stream shards to split queries into smaller subqueries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:           "lokiQuerySplitting",
@@ -923,6 +921,13 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:         "dashboardNewLayouts",
+			Description:  "Enables experimental new dashboard layouts",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
@@ -1524,6 +1529,24 @@ var (
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:        "unifiedStorageBigObjectsSupport",
+			Description: "Enables to save big objects in blob storage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
+			Name:        "timeRangeProvider",
+			Description: "Enables time pickers sync",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:        "prometheusUsesCombobox",
+			Description: "Use new combobox component for Prometheus query editor",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 	}
 )

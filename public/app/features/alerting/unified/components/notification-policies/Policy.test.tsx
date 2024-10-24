@@ -133,8 +133,8 @@ describe('Policy', () => {
     expect(within(firstPolicy).getByTestId('continue-matching')).toBeInTheDocument();
     // expect(within(firstPolicy).getByTestId('matching-instances')).toHaveTextContent('0instances');
     expect(within(firstPolicy).getByTestId('contact-point')).toHaveTextContent('provisioned-contact-point');
-    expect(within(firstPolicy).getByTestId('mute-timings')).toHaveTextContent('Muted whenmt-1');
-    expect(within(firstPolicy).getByTestId('active-timings')).toHaveTextContent('Active whenmt-2');
+    expect(within(firstPolicy).getByTestId('mute-timings')).toHaveTextContent('Muted when mt-1');
+    expect(within(firstPolicy).getByTestId('active-timings')).toHaveTextContent('Active when mt-2');
     expect(within(firstPolicy).getByTestId('inherited-properties')).toHaveTextContent('Inherited2 properties');
 
     // second custom policy should be correct

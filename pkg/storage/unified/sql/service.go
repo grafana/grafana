@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
 var (
@@ -46,6 +47,7 @@ type service struct {
 	authenticator interceptors.Authenticator
 
 	log log.Logger
+	reg prometheus.Registerer
 }
 
 func ProvideUnifiedStorageGrpcService(
@@ -53,6 +55,7 @@ func ProvideUnifiedStorageGrpcService(
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	log log.Logger,
+	reg prometheus.Registerer,
 ) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
@@ -65,7 +68,9 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
-	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, tracing)
+	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
+	// grpcutils.NewGrpcAuthenticator should be used instead.
+	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, tracing, &grpc.Authenticator{})
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +83,7 @@ func ProvideUnifiedStorageGrpcService(
 		tracing:       tracing,
 		db:            db,
 		log:           log,
+		reg:           reg,
 	}
 
 	// This will be used when running as a dskit service
@@ -87,7 +93,7 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) start(ctx context.Context) error {
-	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing)
+	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {
 		return err
 	}
@@ -104,6 +110,7 @@ func (s *service) start(ctx context.Context) error {
 	srv := s.handler.GetServer()
 	resource.RegisterResourceStoreServer(srv, server)
 	resource.RegisterResourceIndexServer(srv, server)
+	resource.RegisterBlobStoreServer(srv, server)
 	resource.RegisterDiagnosticsServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 

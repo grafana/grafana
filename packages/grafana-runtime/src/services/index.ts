@@ -8,6 +8,8 @@ export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
+export * from './SidecarService_EXPERIMENTAL';
+export * from './SidecarContext_EXPERIMENTAL';
 
 export {
   setPluginExtensionGetter,

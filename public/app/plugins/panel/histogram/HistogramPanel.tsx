@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
+import { PanelProps, buildHistogram, cacheFieldDisplayNames, getHistogramFields } from '@grafana/data';
 import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
 import { TooltipDisplayMode, TooltipPlugin2, useTheme2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
@@ -31,6 +31,8 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
         };
       });
     });
+
+    cacheFieldDisplayNames(data.series);
 
     if (data.series.length === 1) {
       const info = getHistogramFields(data.series[0]);

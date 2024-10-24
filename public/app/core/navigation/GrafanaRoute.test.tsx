@@ -18,25 +18,6 @@ const mockLocation = {
 function setup(overrides: Partial<Props>) {
   const props: Props = {
     location: mockLocation,
-    history: {
-      length: 0,
-      action: 'PUSH',
-      location: mockLocation,
-      push: jest.fn(),
-      replace: jest.fn(),
-      go: jest.fn(),
-      goBack: jest.fn(),
-      goForward: jest.fn(),
-      block: jest.fn(),
-      listen: jest.fn(),
-      createHref: jest.fn(),
-    },
-    match: {
-      params: {},
-      isExact: false,
-      path: '',
-      url: '',
-    },
     route: {
       path: '/',
       component: () => <div />,

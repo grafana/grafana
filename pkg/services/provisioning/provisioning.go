@@ -82,6 +82,7 @@ func ProvideService(
 		orgService:                   orgService,
 		folderService:                folderService,
 		resourcePermissions:          resourcePermissions,
+		tracer:                       tracer,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {

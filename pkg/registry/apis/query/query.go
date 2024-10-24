@@ -10,12 +10,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -24,7 +24,6 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -122,23 +121,32 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
-			reason := metav1.StatusReasonInvalid
-			message := err.Error()
+			var refError ErrorWithRefID
+			statusCode := http.StatusBadRequest
+			message := err
+			refID := ""
 
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
-				reason = metav1.StatusReasonNotFound
-				// TODO, can we wrap the error somehow?
-				message = "datasource not found"
+				statusCode = http.StatusNotFound
+				message = errors.New("datasource not found")
 			}
 
-			err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    http.StatusBadRequest,
-				Reason:  reason,
-				Message: message,
-			}}
+			if errors.As(err, &refError) {
+				refID = refError.refId
+			}
 
-			responder.Error(err)
+			qdr := &query.QueryDataResponse{
+				QueryDataResponse: backend.QueryDataResponse{
+					Responses: backend.Responses{
+						refID: {
+							Error:  message,
+							Status: backend.Status(statusCode),
+						},
+					},
+				},
+			}
+
+			responder.Object(statusCode, qdr)
 			return
 		}
 

@@ -419,4 +419,6 @@ datasources:
       spanBar:
         type: 'Tag'
         tag: 'http.path'
+      streamingEnabled:
+        search: true
 ```

@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/jeremywohl/flatten"
-	"github.com/scottlepp/go-duck/duck"
 )
 
 const (
@@ -21,7 +20,7 @@ var logger = log.New("sql_expr")
 
 // TablesList returns a list of tables for the sql statement
 func TablesList(rawSQL string) ([]string, error) {
-	duckDB := duck.NewInMemoryDB()
+	duckDB := NewInMemoryDB()
 	rawSQL = strings.Replace(rawSQL, "'", "''", -1)
 	cmd := fmt.Sprintf("SELECT json_serialize_sql('%s')", rawSQL)
 	ret, err := duckDB.RunCommands([]string{cmd})

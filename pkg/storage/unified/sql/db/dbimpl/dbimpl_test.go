@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -111,8 +112,18 @@ func newTestInfraDB(t *testing.T, m cfgMap) infraDB.DB {
 	return sqlstoreDB
 }
 
+// globalUnprotectedMutableState controls access to global mutable state found
+// in the `setting` package that is not appropriately protected. This would
+// ideally be a part of some struct instead of being global, be protected if it
+// needs to change, and be unmutable once it no longer needs to change. Example:
+// `setting.AppUrl`. Nothing can run in parallel because of this.
+// TODO: fix that.
+var globalUnprotectedMutableState sync.Mutex
+
 func newCfgFromIniMap(t *testing.T, m cfgMap) *setting.Cfg {
 	t.Helper()
+	globalUnprotectedMutableState.Lock()
+	defer globalUnprotectedMutableState.Unlock()
 	cfg, err := setting.NewCfgFromINIFile(newTestINIFile(t, m))
 	require.NoError(t, err)
 	return cfg

@@ -181,8 +181,6 @@ Refer to the following table for information on what to configure based on how t
 
 ### Configure a refresh token
 
-> Available in Grafana v9.3 and later versions.
-
 When a user logs in using an OAuth2 provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.

@@ -13,6 +13,7 @@ package dataquery
 const (
 	LokiQueryDirectionBackward LokiQueryDirection = "backward"
 	LokiQueryDirectionForward  LokiQueryDirection = "forward"
+	LokiQueryDirectionScan     LokiQueryDirection = "scan"
 )
 
 // Defines values for LokiQueryType.

@@ -107,7 +107,7 @@ func zanzanaServerIntegrationTest(tb testing.TB) *inprocgrpc.Channel {
 	store, err := zstore.NewEmbeddedStore(cfg, db, logger)
 	require.NoError(tb, err)
 
-	srv, err := zserver.New(&cfg.Zanzana, store, logger)
+	srv, err := zserver.NewOpenFGA(&cfg.Zanzana, store, logger)
 	require.NoError(tb, err)
 
 	channel := &inprocgrpc.Channel{}

@@ -1,0 +1,7 @@
+apiVersion: folder.grafana.app/v0alpha1
+kind: Folder
+metadata:
+  name: test
+spec:
+  title: Test folder (replaced from k8s; 1 item; PUT)
+  description: New description

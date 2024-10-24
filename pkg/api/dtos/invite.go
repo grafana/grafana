@@ -17,6 +17,7 @@ type InviteInfo struct {
 	Name      string `json:"name"`
 	Username  string `json:"username"`
 	InvitedBy string `json:"invitedBy"`
+	OrgName   string `json:"orgName"`
 }
 
 type CompleteInviteForm struct {

@@ -366,7 +366,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         : () => <Navigate replace to="/admin" />,
     },
     {
-      path: '/admin/storage/:path*',
+      path: '/admin/storage/:path/*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
@@ -516,9 +516,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.exploreMetrics && {
-      path: '/explore/metrics',
+      path: '/explore/metrics/*',
       chromeless: false,
-      exact: false,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')

@@ -13,9 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-var (
-	errInvalidRenderKey = errutil.Unauthorized("render-auth.invalid-key", errutil.WithPublicMessage("Invalid Render Key"))
-)
+var errInvalidRenderKey = errutil.Unauthorized("render-auth.invalid-key", errutil.WithPublicMessage("Invalid Render Key"))
 
 const (
 	renderCookieName = "renderKey"
