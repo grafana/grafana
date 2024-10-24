@@ -13,6 +13,7 @@ type MetricsOptions struct {
 	logger            log.Logger
 	Enabled           bool
 	MetricsRegisterer prometheus.Registerer
+	MetricsGatherer   prometheus.Gatherer
 }
 
 func NewMetricsOptions(logger log.Logger) *MetricsOptions {
@@ -30,11 +31,15 @@ func (o *MetricsOptions) Validate() []error {
 }
 
 func (o *MetricsOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
-	c.EnableMetrics = o.Enabled
+	// Disable the default /metrics endpoint
+	c.EnableMetrics = false
+
 	o.MetricsRegisterer = metrics.ProvideRegisterer()
 	metrics.SetBuildInformation(o.MetricsRegisterer, setting.BuildVersion, setting.BuildCommit, setting.BuildBranch, setting.BuildStamp)
 
 	if o.Enabled {
+		// only provide the gatherer if metrics are enabled
+		o.MetricsGatherer = metrics.ProvideGatherer()
 		o.logger.Debug("Metrics enabled")
 	}
 
