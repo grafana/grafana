@@ -33,41 +33,11 @@
       }
     }
   },
-  "alert-rule-form": {
-    "evaluation-behaviour": {
-      "info-help": {
-        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
-      },
-      "pending-period": "Pending period"
-    },
-    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
-    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
-    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
-    "evaluation-behaviour-for": {
-      "error-parsing": "Failed to parse duration",
-      "validation": "Pending period must be greater than or equal to the evaluation interval."
-    },
-    "evaluation-behaviour-group": {
-      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
-    },
-    "pause": {
-      "alerting": "Turn on to pause evaluation for this alert rule.",
-      "label": "Pause evaluation",
-      "recording": "Turn on to pause evaluation for this recording rule."
-    }
-  },
   "alerting": {
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
         "description": {
           "text": "Define how the recording rule is evaluated."
-        }
-      }
-    },
-    "alert-rule-form": {
-      "evaluation-behaviour": {
-        "description": {
-          "text": "Define how the alert rule is evaluated."
         }
       }
     },
@@ -162,9 +132,9 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policies",
+      "used-by_other": "Used by {{ count }} notification policy",
       "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rules"
+      "used-by-rules_other": "Used by {{ count }} alert rule"
     },
     "contactPointFilter": {
       "label": "Contact point"
@@ -176,10 +146,6 @@
             "alerting": "Create a new evaluation group to use for this alert rule.",
             "recording": "Create a new evaluation group to use for this recording rule."
           }
-        },
-        "text": {
-          "alerting": "Define how often the alert rule is evaluated.",
-          "recording": "Define how often the recording rule is evaluated."
         }
       }
     },
@@ -232,7 +198,7 @@
         "inherited": "Inherited",
         "mute-time": "Muted when",
         "n-instances_one": "instance",
-        "n-instances_other": "instances",
+        "n-instances_other": "instance",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -248,7 +214,7 @@
           }
         }
       },
-      "n-more-policies_one": "{{count}} additional policy",
+      "n-more-policies_one": "{{count}} additional policies",
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
@@ -264,6 +230,51 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "rule-form": {
+      "evaluation": {
+        "group": {
+          "cancel": "Cancel",
+          "create": "Create",
+          "interval": "Evaluation interval"
+        },
+        "group-name": "Evaluation group name",
+        "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
+        "new-group": "New evaluation group",
+        "pause": {
+          "alerting": "Turn on to pause evaluation for this alert rule.",
+          "recording": "Turn on to pause evaluation for this recording rule."
+        }
+      },
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the alert rule is evaluated."
+        },
+        "info-help": {
+          "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+        },
+        "pending-period": "Pending period"
+      },
+      "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+      "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+      "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+      "evaluation-behaviour-for": {
+        "error-parsing": "Failed to parse duration",
+        "validation": "Pending period must be greater than or equal to the evaluation interval."
+      },
+      "folder": {
+        "cancel": "Cancel",
+        "create": "Create",
+        "create-folder": "Create a new folder to store your rule",
+        "creating-new-folder": "Creating new folder",
+        "folder-name": "Folder name",
+        "label": "Folder",
+        "new-folder": "New folder",
+        "new-folder-or": "or"
+      },
+      "pause": {
+        "label": "Pause evaluation"
+      }
     },
     "rule-groups": {
       "delete": {
@@ -381,15 +392,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -2424,16 +2435,16 @@
       "confirm-text": "Delete",
       "delete-button": "Delete",
       "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
       "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
       "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
-      "folder-picker-text_one": "Please choose a folder where your dashboard will be restored.",
+      "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
       "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }

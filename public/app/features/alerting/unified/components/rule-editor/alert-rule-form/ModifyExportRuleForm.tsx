@@ -24,7 +24,8 @@ import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
 import { ExportFormats, allGrafanaExportProviders } from '../../export/providers';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
-import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
+import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
+import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
 
@@ -93,14 +94,15 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
                 <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
                 {/* Step 3-4-5 */}
 
-                <GrafanaEvaluationBehavior
+                <GrafanaFolderAndLabelsStep />
+
+                {/* Step 4 & 5 */}
+                <GrafanaEvaluationBehaviorStep
                   evaluateEvery={evaluateEvery}
                   setEvaluateEvery={setEvaluateEvery}
                   existing={Boolean(existing)}
                   enableProvisionedGroups={true}
                 />
-
-                {/* Step 4 & 5 */}
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={alertUid} />
                 {/* Annotations only for cloud and Grafana */}
