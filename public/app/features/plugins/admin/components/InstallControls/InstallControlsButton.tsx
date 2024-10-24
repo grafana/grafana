@@ -55,6 +55,8 @@ export function InstallControlsButton({
     plugin_id: plugin.id,
     plugin_type: plugin.type,
     path: location.pathname,
+    creator_team: 'grafana_plugins_catalog',
+    schema_version: '1.0.0',
   };
 
   useEffect(() => {
@@ -109,7 +111,7 @@ export function InstallControlsButton({
   };
 
   const onUpdate = async () => {
-    reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME);
+    reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME, trackingProps);
 
     await install(plugin.id, latestCompatibleVersion?.version, true);
     if (!errorInstalling) {
