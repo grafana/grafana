@@ -1541,6 +1541,7 @@ func makePod(namePrefix string) *example.Pod {
 	return &example.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("pod-%s", namePrefix),
+			UID:  "123",
 		},
 	}
 }
