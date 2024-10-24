@@ -65,7 +65,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         start /= 1e3;
         end /= 1e3;
       }
-      showMs = Math.abs(end - start) < 60; //show ms when minute or less
+
+      // show ms when minute or less or when the format specified milliseconds
+      const unit = field.config.unit ?? '';
+      showMs = Math.abs(end - start) <= 60 || (unit.startsWith('time:') && unit.includes('S'));
     }
   } else if (field.type === FieldType.boolean) {
     if (!isBooleanUnit(unit)) {
