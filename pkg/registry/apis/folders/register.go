@@ -156,10 +156,10 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		ctx, user, eval, decision, requester := authorizerFunc(ctx, attr)
+		ctx, user, eval, decisionNoOpinion, requester := authorizerFunc(ctx, attr)
 
 		if user == nil {
-			return decision, requester, nil
+			return decisionNoOpinion, requester, nil
 		}
 
 		ok, err := b.accessControl.Evaluate(ctx, user, eval)
