@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
@@ -83,12 +84,13 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 }
 
-func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
+func NewGRPCResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn) (ResourceClient, error) {
 	// scenario: remote on-prem
 	clientInt, err := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
 		authnlib.WithDisableAccessTokenOption(),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithTracerOption(tracer),
 	)
 	if err != nil {
 		return nil, err
@@ -102,10 +104,11 @@ func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
 	}, nil
 }
 
-func NewCloudResourceClient(conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
+func NewCloudResourceClient(tracer tracing.Tracer, conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
 	// scenario: remote cloud
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+		authnlib.WithTracerOption(tracer),
 	}
 
 	if allowInsecure {
