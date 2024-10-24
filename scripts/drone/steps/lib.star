@@ -405,7 +405,7 @@ def playwright_e2e_report_post_link():
         ],
     }
 
-def upload_cdn_step(ver_mode, trigger = None):
+def upload_cdn_step(ver_mode, trigger = None, depends_on = ["grafana-server"]):
     """Uploads CDN assets using the Grafana build tool.
 
     Args:
@@ -420,9 +420,7 @@ def upload_cdn_step(ver_mode, trigger = None):
     step = {
         "name": "upload-cdn-assets",
         "image": images["publish"],
-        "depends_on": [
-            "grafana-server",
-        ],
+        "depends_on": depends_on,
         "environment": {
             "GCP_KEY": from_secret(gcp_grafanauploads),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
@@ -929,7 +927,7 @@ def fetch_images_step():
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def publish_images_step(ver_mode, docker_repo, trigger = None):
+def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rgm-build-docker"]):
     """Generates a step for publishing public Docker images with grabpl.
 
     Args:
@@ -959,7 +957,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
         docker_repo,
     )
 
-    deps = ["rgm-build-docker"]
+    deps = depends_on
     if ver_mode == "release":
         deps = ["fetch-images"]
         cmd += " --version-tag ${DRONE_TAG}"
@@ -1149,7 +1147,12 @@ def release_canary_npm_packages_step(trigger = None):
 
     return step
 
-def upload_packages_step(ver_mode, trigger = None):
+def upload_packages_step(ver_mode, trigger = None, depends_on = [
+    "end-to-end-tests-dashboards-suite",
+    "end-to-end-tests-panels-suite",
+    "end-to-end-tests-smoke-tests-suite",
+    "end-to-end-tests-various-suite",
+]):
     """Upload packages to object storage.
 
     Args:
@@ -1164,7 +1167,7 @@ def upload_packages_step(ver_mode, trigger = None):
     step = {
         "name": "upload-packages",
         "image": images["publish"],
-        "depends_on": end_to_end_tests_deps(),
+        "depends_on": depends_on,
         "environment": {
             "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
