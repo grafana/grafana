@@ -31,6 +31,7 @@ export enum SupportingQueryType {
 export enum LokiQueryDirection {
   Backward = 'backward',
   Forward = 'forward',
+  Scan = 'scan',
 }
 
 export interface LokiDataQuery extends common.DataQuery {
