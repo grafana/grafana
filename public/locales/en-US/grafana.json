@@ -71,6 +71,12 @@
         }
       }
     },
+    "alert-rules": {
+      "firing-for": "Firing for",
+      "next-evaluation": "Next evaluation",
+      "next-evaluation-in": "next evaluation in",
+      "rule-definition": "Rule definition"
+    },
     "alertform": {
       "labels": {
         "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
@@ -141,6 +147,7 @@
         "provisioned": "Contact point is provisioned and cannot be deleted via the UI",
         "rules": "Contact point is referenced by one or more alert rules"
       },
+      "delivered-to": "Delivered to",
       "delivery-duration": "Last delivery took <1></1>",
       "empty-state": {
         "title": "You don't have any contact points yet"
@@ -473,11 +480,14 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "close": "Close",
+    "collapse": "Collapse",
+    "edit": "Edit",
     "locale": {
       "default": "Default"
     },
     "save": "Save",
-    "search": "Search"
+    "search": "Search",
+    "view": "View"
   },
   "configuration-tracker": {
     "config-card": {
@@ -856,6 +866,11 @@
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "logs": {
+      "logs-volume": {
+        "add-filters": "Add more labels to your query to narrow down your search.",
+        "decrease-timerange": "Decrease the time range of your query.",
+        "much-data": "The query is trying to access too much data. Try one or more of the following:"
+      },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
@@ -1601,7 +1616,9 @@
       "dismiss-button": "OK",
       "error-messages": {
         "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-invalid-url": "There is a data source which has an invalid URL. Provide a valid URL and try again.",
         "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
+        "folder-name-conflict": "There is a folder with the same name in the target instance. Rename one of them and try again.",
         "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
         "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
@@ -2156,6 +2173,8 @@
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
+        "installedVersion": "Installed version: ",
+        "latestVersion": "Latest version: ",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",

@@ -1548,6 +1548,13 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "azureMonitorDisableLogLimit",
+			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
 	}
 )
 
