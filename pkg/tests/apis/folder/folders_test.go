@@ -41,8 +41,6 @@ var gvr = schema.GroupVersionResource{
 }
 
 func TestIntegrationFoldersApp(t *testing.T) {
-	t.Skip("skipping integration test")
-
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -490,6 +488,9 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 		Body:   []byte(parentPayload),
 	}, &folder.Folder{})
 	require.NotNil(t, parentCreate.Result)
+	// creating a folder without providing a parent should default to the empty parent folder
+	require.Empty(t, parentCreate.Result.ParentUID)
+
 	parentUID := parentCreate.Result.UID
 	require.NotEmpty(t, parentUID)
 
@@ -511,6 +512,8 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 	require.Equal(t, 1, len(childCreate.Result.Parents))
 
 	parent := childCreate.Result.Parents[0]
+	// creating a folder with a known parent should succeed
+	require.Equal(t, parentUID, childCreate.Result.ParentUID)
 	require.Equal(t, parentUID, parent.UID)
 	require.Equal(t, "Test\\/parent", parent.Title)
 	require.Equal(t, parentCreate.Result.URL, parent.URL)
