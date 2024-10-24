@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { config } from '@grafana/runtime';
+import { config, DependantInfo } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { Stack, Text, LinkButton, Box, TextLink, Icon, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -22,17 +22,22 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
 
   const pluginDependencies = plugin.details?.pluginDependencies;
   let grafanaDependency = plugin.details?.grafanaDependency;
+  if (!grafanaDependency) {
+    grafanaDependency = 'unknown';
+  }
+
   const useLatestCompatibleInfo = !plugin.isInstalled;
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
   if (useLatestCompatibleInfo && latestCompatibleVersion?.grafanaDependency) {
     grafanaDependency = latestCompatibleVersion?.grafanaDependency;
   }
 
-  if (!grafanaDependency) {
-    grafanaDependency = 'unknown';
+  let pluginDependants: DependantInfo[] = [];
+  if (config.pluginDependants && config.pluginDependants[plugin.id]) {
+    pluginDependants = config.pluginDependants[plugin.id];
   }
-
-  const hasDependencyInfo = grafanaDependency || (pluginDependencies && pluginDependencies.length);
+  const hasDependencyInfo =
+    grafanaDependency || (pluginDependencies && pluginDependencies.length) || pluginDependants.length;
 
   return (
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={'250px'}>
@@ -88,12 +93,12 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
               </Stack>
             )}
 
-            {config.pluginDependants && config.pluginDependants[plugin.id] && (
+            {pluginDependants && (
               <Stack direction="column" gap={1}>
                 <Text color="secondary">
                   <Trans i18nKey={'plugins.details.labels.pluginDependants'}>Required by: </Trans>
                 </Text>
-                {config.pluginDependants[plugin.id].map((p) => {
+                {pluginDependants.map((p) => {
                   return (
                     <TextLink key={p.pluginId} href={'/plugins/' + p.pluginId}>
                       <Icon name={PluginIconName[p.pluginType]} className={styles.icon} />
