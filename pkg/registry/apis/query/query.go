@@ -119,6 +119,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			responder.Error(err)
 			return
 		}
+		r.logger.Debug("Query request", "request", raw)
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
