@@ -39,7 +39,7 @@ func ProvideService(
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
 		metrics:  newMetrics(reg),
-		nsMapper: request.GetTemporarySingularNamespaceMapper(cfg), // TODO replace with the plural one
+		nsMapper: request.GetNamespaceMapper(cfg),
 	}
 
 	authnService.RegisterPostAuthHook(s.hook, 140)
