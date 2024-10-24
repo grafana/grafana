@@ -84,6 +84,7 @@ export const Card: CardInterface = ({
     </CardContainer>
   );
 };
+Card.displayName = 'Card';
 
 interface ChildProps {
   className?: string;
