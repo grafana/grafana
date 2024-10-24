@@ -755,7 +755,7 @@
      "type": "string"
     },
     "ErrorSource": {
-     "$ref": "#/definitions/ErrorSource"
+     "$ref": "#/definitions/Source"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
@@ -964,10 +964,6 @@
     }
    },
    "type": "object"
-  },
-  "ErrorSource": {
-   "description": "ErrorSource type defines the source of the error",
-   "type": "string"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
@@ -3975,6 +3971,10 @@
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "Source": {
+   "title": "Source type defines the status source.",
+   "type": "string"
+  },
   "Span": {
    "properties": {
     "Length": {
@@ -4927,6 +4927,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence",
     "type": "object"

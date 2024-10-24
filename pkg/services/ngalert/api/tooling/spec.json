@@ -4388,7 +4388,7 @@
           "type": "string"
         },
         "ErrorSource": {
-          "$ref": "#/definitions/ErrorSource"
+          "$ref": "#/definitions/Source"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
@@ -4596,10 +4596,6 @@
           }
         }
       }
-    },
-    "ErrorSource": {
-      "description": "ErrorSource type defines the source of the error",
-      "type": "string"
     },
     "ErrorType": {
       "type": "string",
@@ -7608,6 +7604,10 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "Source": {
+      "type": "string",
+      "title": "Source type defines the status source."
+    },
     "Span": {
       "type": "object",
       "title": "A Span defines a continuous sequence of buckets.",
@@ -8274,6 +8274,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -8560,7 +8561,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",
