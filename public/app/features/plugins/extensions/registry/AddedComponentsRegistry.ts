@@ -3,7 +3,7 @@ import { ReplaySubject } from 'rxjs';
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import { isAddedComponentMetaInfoMissing, isGrafanaDevMode, wrapWithPluginContext } from '../utils';
-import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint, isReactComponent } from '../validators';
+import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
@@ -39,13 +39,6 @@ export class AddedComponentsRegistry extends Registry<
         title: config.title,
         pluginId,
       });
-
-      if (!isReactComponent(config.component)) {
-        configLog.error(
-          `Could not register added component. Reason: The provided component is not a valid React component.`
-        );
-        continue;
-      }
 
       if (!config.title) {
         configLog.error(`Could not register added component. Reason: Title is missing.`);
