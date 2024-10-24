@@ -3,28 +3,29 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
+import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
-import { LogMessages, logInfo, trackRuleListNavigation } from '../../Analytics';
-import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
-import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
-import { useFilteredRules, useRulesFilter } from '../../hooks/useFilteredRules';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
-import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import RulesFilter from '../rules/Filter/RulesFilter';
-import { NoRulesSplash } from '../rules/NoRulesCTA';
-import { INSTANCES_DISPLAY_LIMIT } from '../rules/RuleDetails';
-import { RuleListErrors } from '../rules/RuleListErrors';
-import { RuleListGroupView } from '../rules/RuleListGroupView';
-import { RuleListStateView } from '../rules/RuleListStateView';
-import { RuleStats } from '../rules/RuleStats';
+import { LogMessages, trackRuleListNavigation } from '../Analytics';
+import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
+import { NoRulesSplash } from '../components/rules/NoRulesCTA';
+import { INSTANCES_DISPLAY_LIMIT } from '../components/rules/RuleDetails';
+import { RuleListErrors } from '../components/rules/RuleListErrors';
+import { RuleListGroupView } from '../components/rules/RuleListGroupView';
+import { RuleListStateView } from '../components/rules/RuleListStateView';
+import { RuleStats } from '../components/rules/RuleStats';
+import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
+import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
+import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
+import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
+import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
+import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
+import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
+import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -115,24 +116,26 @@ const RuleListV1 = () => {
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
     <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
-      <RuleListErrors />
-      <RulesFilter onClear={onFilterCleared} />
-      {hasAlertRulesCreated && (
-        <Stack direction="row" alignItems="center">
-          {view === 'groups' && hasActiveFilters && (
-            <Button
-              icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-              variant="secondary"
-              onClick={() => setExpandAll(!expandAll)}
-            >
-              {expandAll ? 'Collapse all' : 'Expand all'}
-            </Button>
-          )}
-          <RuleStats namespaces={filteredNamespaces} />
-        </Stack>
-      )}
-      {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-      {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+      <Stack direction="column">
+        <RuleListErrors />
+        <RulesFilter onClear={onFilterCleared} />
+        {hasAlertRulesCreated && (
+          <Stack direction="row" alignItems="center">
+            {view === 'groups' && hasActiveFilters && (
+              <Button
+                icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
+                variant="secondary"
+                onClick={() => setExpandAll(!expandAll)}
+              >
+                {expandAll ? 'Collapse all' : 'Expand all'}
+              </Button>
+            )}
+          </Stack>
+        )}
+        <RuleStats namespaces={filteredNamespaces} />
+        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
+        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+      </Stack>
     </AlertingPageWrapper>
   );
 };

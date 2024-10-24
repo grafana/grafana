@@ -71,6 +71,12 @@
         }
       }
     },
+    "alert-rules": {
+      "firing-for": "Fįřįŉģ ƒőř",
+      "next-evaluation": "Ńęχŧ ęväľūäŧįőŉ",
+      "next-evaluation-in": "ŉęχŧ ęväľūäŧįőŉ įŉ",
+      "rule-definition": "Ŗūľę đęƒįŉįŧįőŉ"
+    },
     "alertform": {
       "labels": {
         "alerting": "Åđđ ľäþęľş ŧő yőūř řūľę ƒőř şęäřčĥįŉģ, şįľęŉčįŉģ, őř řőūŧįŉģ ŧő ä ŉőŧįƒįčäŧįőŉ pőľįčy.",
@@ -141,6 +147,7 @@
         "provisioned": "Cőŉŧäčŧ pőįŉŧ įş přővįşįőŉęđ äŉđ čäŉŉőŧ þę đęľęŧęđ vįä ŧĥę ŮĨ",
         "rules": "Cőŉŧäčŧ pőįŉŧ įş řęƒęřęŉčęđ þy őŉę őř mőřę äľęřŧ řūľęş"
       },
+      "delivered-to": "Đęľįvęřęđ ŧő",
       "delivery-duration": "Ŀäşŧ đęľįvęřy ŧőőĸ <1></1>",
       "empty-state": {
         "title": "Ÿőū đőŉ'ŧ ĥävę äŉy čőŉŧäčŧ pőįŉŧş yęŧ"
@@ -473,11 +480,14 @@
     "cancel": "Cäŉčęľ",
     "clear": "Cľęäř",
     "close": "Cľőşę",
+    "collapse": "Cőľľäpşę",
+    "edit": "Ēđįŧ",
     "locale": {
       "default": "Đęƒäūľŧ"
     },
     "save": "Ŝävę",
-    "search": "Ŝęäřčĥ"
+    "search": "Ŝęäřčĥ",
+    "view": "Vįęŵ"
   },
   "configuration-tracker": {
     "config-card": {

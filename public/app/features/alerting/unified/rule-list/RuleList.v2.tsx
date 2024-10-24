@@ -7,25 +7,25 @@ import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Button, LinkButton, LoadingBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
-import { LogMessages, logInfo, trackRuleListNavigation } from '../../Analytics';
-import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
-import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
-import { useFilteredRules, useRulesFilter } from '../../hooks/useFilteredRules';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
-import { getAllRulesSourceNames, getRulesSourceUniqueKey, getApplicationFromRulesSource } from '../../utils/datasource';
-import { makeFolderAlertsLink } from '../../utils/misc';
-import { AlertingPageWrapper } from '../AlertingPageWrapper';
-import RulesFilter from '../rules/Filter/RulesFilter';
-import { NoRulesSplash } from '../rules/NoRulesCTA';
-import { INSTANCES_DISPLAY_LIMIT } from '../rules/RuleDetails';
-import { RuleListErrors } from '../rules/RuleListErrors';
-import { RuleStats } from '../rules/RuleStats';
+import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
+import { logInfo, LogMessages, trackRuleListNavigation } from '../Analytics';
+import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
+import { NoRulesSplash } from '../components/rules/NoRulesCTA';
+import { INSTANCES_DISPLAY_LIMIT } from '../components/rules/RuleDetails';
+import { RuleListErrors } from '../components/rules/RuleListErrors';
+import { RuleStats } from '../components/rules/RuleStats';
+import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
+import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
+import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
+import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
+import { fetchAllPromAndRulerRulesAction } from '../state/actions';
+import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
+import { getAllRulesSourceNames, getApplicationFromRulesSource, getRulesSourceUniqueKey } from '../utils/datasource';
+import { makeFolderAlertsLink } from '../utils/misc';
 
-import { EvaluationGroupWithRules } from './EvaluationGroupWithRules';
-import Namespace from './Namespace';
+import { EvaluationGroupWithRules } from './components/EvaluationGroupWithRules';
+import Namespace from './components/Namespace';
 
 // make sure we ask for 1 more so we show the "show x more" button
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;

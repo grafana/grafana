@@ -5,9 +5,9 @@ import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
 
 import { createViewLink } from '../../utils/misc';
 import { hashRulerRule } from '../../utils/rule-id';
-import { isAlertingRule, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../utils/rules';
+import { isAlertingRule, isGrafanaRulerRule, isRecordingRule } from '../../utils/rules';
 
-import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './AlertRuleListItem';
+import { AlertRuleListItem, UnknownRuleListItem } from './AlertRuleListItem';
 import EvaluationGroup from './EvaluationGroup';
 
 export interface EvaluationGroupWithRulesProps {
@@ -32,35 +32,20 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
         // rule source is eventually consistent - it may know about the rule definition but not its state
         const isAlertingPromRule = isAlertingRule(promRule);
 
-        if (isAlertingRulerRule(rulerRule)) {
+        if (isAlertingRule(rule.promRule) || isRecordingRule(rule.promRule)) {
           return (
             <AlertRuleListItem
               key={hashRulerRule(rulerRule)}
               state={isAlertingPromRule ? promRule?.state : undefined}
               health={promRule?.health}
               error={promRule?.lastError}
-              name={rulerRule.alert}
+              name={rule.name}
               labels={rulerRule.labels}
               lastEvaluation={promRule?.lastEvaluation}
               evaluationInterval={group.interval}
               instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
               href={createViewLink(rulesSource, rule)}
               summary={annotations?.summary}
-            />
-          );
-        }
-
-        if (isRecordingRulerRule(rulerRule)) {
-          return (
-            <RecordingRuleListItem
-              key={hashRulerRule(rulerRule)}
-              name={rulerRule.record}
-              health={promRule?.health}
-              error={promRule?.lastError}
-              lastEvaluation={promRule?.lastEvaluation}
-              evaluationInterval={group.interval}
-              labels={rulerRule.labels}
-              href={createViewLink(rulesSource, rule)}
             />
           );
         }
