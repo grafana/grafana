@@ -203,6 +203,7 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
 func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req datasourceRequest) (*backend.QueryDataResponse, error) {
+	// just testing remove later
 	ctx, span := b.tracer.Start(ctx, "Query.handleQuerySingleDatasource")
 	defer span.End()
 	span.SetAttributes(
