@@ -52,7 +52,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	}
 
 	if c.tenantID == "" {
-		c.tenantID = "stack-default"
+		c.tenantID = "stacks-default"
 	}
 
 	store, err := c.getStore(ctx, c.tenantID)
