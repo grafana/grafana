@@ -3,7 +3,7 @@ import { ReplaySubject } from 'rxjs';
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import { isAddedComponentMetaInfoMissing, isGrafanaDevMode, wrapWithPluginContext } from '../utils';
-import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint, isReactComponent } from '../validators';
+import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
