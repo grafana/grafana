@@ -146,10 +146,6 @@
             "alerting": "Create a new evaluation group to use for this alert rule.",
             "recording": "Create a new evaluation group to use for this recording rule."
           }
-        },
-        "text": {
-          "alerting": "Define how often the alert rule is evaluated.",
-          "recording": "Define how often the recording rule is evaluated."
         }
       }
     },
@@ -248,10 +244,6 @@
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
-        },
-        "text": {
-          "alerting": "Define how often the alert rule is evaluated.",
-          "recording": "Define how often the recording rule is evaluated."
         }
       },
       "evaluation-behaviour": {
