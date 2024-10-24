@@ -3,6 +3,7 @@ package proxyutil
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -128,6 +129,9 @@ func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, e
 		if errors.Is(err, context.Canceled) {
 			ctxLogger.Debug("Proxy request cancelled by client")
 			w.WriteHeader(StatusClientClosedRequest)
+
+			//nolint:errcheck
+			fmt.Fprint(w, "Proxy request cancelled by client")
 			return
 		}
 
@@ -135,11 +139,17 @@ func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, e
 		if timeoutErr, ok := err.(timeoutError); ok && timeoutErr.Timeout() {
 			ctxLogger.Error("Proxy request timed out", "err", err)
 			w.WriteHeader(http.StatusGatewayTimeout)
+
+			//nolint:errcheck
+			fmt.Fprintf(w, "Proxy request timed out: %s", err)
 			return
 		}
 
 		ctxLogger.Error("Proxy request failed", "err", err)
 		w.WriteHeader(http.StatusBadGateway)
+
+		//nolint:errcheck
+		fmt.Fprintf(w, "Proxy request failed: %s", err)
 	}
 }
 
