@@ -64,7 +64,7 @@ func TestWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         util.Pointer(evaluationTime),
 			ResolvedAt:         util.Pointer(evaluationTime),
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 			ResultFingerprint:  data.Fingerprint(math.MaxUint64),
 		}, {
 			AlertRuleUID:       rule.UID,
@@ -77,7 +77,7 @@ func TestWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 			ResultFingerprint:  data.Fingerprint(math.MaxUint64 - 1),
 		},
 		{
@@ -91,7 +91,7 @@ func TestWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 			ResultFingerprint:  data.Fingerprint(0),
 		},
 		{
@@ -105,7 +105,7 @@ func TestWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 			ResultFingerprint:  data.Fingerprint(1),
 		},
 		{
@@ -119,7 +119,7 @@ func TestWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			LastSentAt:         nil,
 			ResolvedAt:         nil,
-			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+			Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 			ResultFingerprint:  data.Fingerprint(2),
 		},
 	}
@@ -237,7 +237,8 @@ func TestWarmStateCache(t *testing.T) {
 			setCacheID(entry)
 			cacheEntry := st.Get(entry.OrgID, entry.AlertRuleUID, entry.CacheID)
 
-			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "LatestResult")); diff != "" {
+			diff := cmp.Diff(entry, cacheEntry, cmp.AllowUnexported(state.SyncLabels{}), cmpopts.IgnoreFields(state.SyncLabels{}, "mu"), cmpopts.IgnoreFields(state.State{}, "LatestResult"))
+			if diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 				t.FailNow()
 			}
@@ -1051,7 +1052,7 @@ func TestProcessEvalResults(t *testing.T) {
 					State:              eval.Pending,
 					StateReason:        eval.Error.String(),
 					Error:              errors.New("with_state_error"),
-					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
+					Annotations:        state.NewSyncLabels(map[string]string{"annotation": "test", "Error": "with_state_error"}),
 					LatestResult:       newEvaluation(t2, eval.Error),
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
@@ -1087,7 +1088,7 @@ func TestProcessEvalResults(t *testing.T) {
 					State:              eval.Alerting,
 					StateReason:        eval.Error.String(),
 					Error:              errors.New("with_state_error"),
-					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
+					Annotations:        state.NewSyncLabels(map[string]string{"annotation": "test", "Error": "with_state_error"}),
 					LatestResult:       newEvaluation(tn(5), eval.Error),
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
@@ -1127,7 +1128,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t2,
 					LastSentAt:         &t2,
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "Error": "[sse.dataQueryError] failed to execute query [A]: this is an error"},
+					Annotations:        state.NewSyncLabels(map[string]string{"annotation": "test", "Error": "[sse.dataQueryError] failed to execute query [A]: this is an error"}),
 				},
 			},
 		},
@@ -1160,7 +1161,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
-					Annotations:        datasourceErrorAnnotations,
+					Annotations:        state.NewSyncLabels(datasourceErrorAnnotations),
 				},
 			},
 		},
@@ -1193,7 +1194,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
 					LastSentAt:         util.Pointer(tn(4)),
-					Annotations:        datasourceErrorAnnotations,
+					Annotations:        state.NewSyncLabels(datasourceErrorAnnotations),
 				},
 			},
 		},
@@ -1216,7 +1217,7 @@ func TestProcessEvalResults(t *testing.T) {
 					State:              eval.Normal,
 					StateReason:        eval.Error.String(),
 					LatestResult:       newEvaluation(t2, eval.Error),
-					Annotations:        datasourceErrorAnnotations,
+					Annotations:        state.NewSyncLabels(datasourceErrorAnnotations),
 					StartsAt:           t1,
 					EndsAt:             t1,
 					LastEvaluationTime: t2,
@@ -1242,7 +1243,7 @@ func TestProcessEvalResults(t *testing.T) {
 					State:              eval.Normal,
 					StateReason:        eval.Error.String(),
 					LatestResult:       newEvaluation(t2, eval.Error),
-					Annotations:        datasourceErrorAnnotations,
+					Annotations:        state.NewSyncLabels(datasourceErrorAnnotations),
 					StartsAt:           t2,
 					EndsAt:             t2,
 					LastEvaluationTime: t2,
@@ -1284,7 +1285,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(6).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(6),
 					LastSentAt:         util.Pointer(tn(6)), // After 30s resend delay, last sent at is t6.
-					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
+					Annotations:        state.NewSyncLabels(map[string]string{"annotation": "test", "Error": "with_state_error"}),
 				},
 			},
 		},
@@ -1380,7 +1381,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             t1,
 					LastEvaluationTime: t1,
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"summary": "grafana is down in us-central-1 cluster -> prod namespace"},
+					Annotations:        state.NewSyncLabels(map[string]string{"summary": "grafana is down in us-central-1 cluster -> prod namespace"}),
 					ResultFingerprint: data.Labels{
 						"cluster":   "us-central-1",
 						"namespace": "prod",
@@ -1544,7 +1545,7 @@ func TestProcessEvalResults(t *testing.T) {
 					s.OrgID = tc.alertRule.OrgID
 				}
 				if s.Annotations == nil {
-					s.Annotations = tc.alertRule.Annotations
+					s.Annotations = state.NewSyncLabels(tc.alertRule.Annotations)
 				}
 				if s.EvaluationDuration == 0 {
 					s.EvaluationDuration = evaluationDuration
@@ -1791,7 +1792,7 @@ func TestStaleResultsHandler(t *testing.T) {
 					LastSentAt:         &lastEval,
 					ResolvedAt:         &lastEval,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 					ResultFingerprint:  data.Labels{"test1": "testValue1"}.Fingerprint(),
 				},
 			},
@@ -2033,7 +2034,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test1": "testValue1"},
 					State:              eval.Normal,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 				},
 				{
 					AlertRuleUID:       rule.UID,
@@ -2041,7 +2042,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test2": "testValue2"},
 					State:              eval.Alerting,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 				},
 			},
 			startingStateCacheCount: 2,
@@ -2176,7 +2177,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test1": "testValue1"},
 					State:              eval.Normal,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 				},
 				{
 					AlertRuleUID:       rule.UID,
@@ -2184,7 +2185,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 					Labels:             data.Labels{"test2": "testValue2"},
 					State:              eval.Alerting,
 					EvaluationDuration: 0,
-					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+					Annotations:        state.NewSyncLabels(map[string]string{"testAnnoKey": "testAnnoValue"}),
 				},
 			},
 			startingStateCacheCount:  2,

@@ -1419,7 +1419,7 @@ func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAl
 			alertingModels.NamespaceUIDLabel: "test_namespace_uid",
 			alertingModels.RuleUIDLabel:      "test_alert_rule_uid_0",
 		}
-		s.Annotations = data.Labels{"severity": "critical"}
+		s.Annotations = state.NewSyncLabels(map[string]string{"severity": "critical"})
 		return s
 	})
 
