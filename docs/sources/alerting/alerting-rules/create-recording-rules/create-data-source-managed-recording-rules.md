@@ -28,6 +28,10 @@ refs:
 
 # Create data source-managed recording rules
 
+Grafana-managed recording rules offer the same Prometheus-like semantics, but allow you to query any Grafana data source supported by alerting. In addition to the above, you can use this to import and map data from other data sources into Prometheus.
+
+For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
+
 ## Before you begin
 
 - Verify that you have write permission to the Prometheus or Loki data source. Otherwise, you will not be able to create or update Grafana Mimir managed alerting rules.
