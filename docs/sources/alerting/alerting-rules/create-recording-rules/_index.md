@@ -42,7 +42,7 @@ You might want to use recording rules when:
 - **Faster queries** are needed. When performing heavy aggregations or querying large data sets, querying precomputed results is faster than querying in real-time.
 - System overload occurs due to multiple simultaneous queries. Precomputing certain queries in advance can **reduce system load** and optimize resource usage.
 - Aggregations can reduce alert noise from flapping metrics. For example, **aggregating noisy metrics** over a longer period can help reduce alerts triggered by short spikes.
-- Enable **multi-step alerts** where precomputing results can help speed up queries and reduce system load
+- Enable **multi-step alerts** where precomputing results can help speed up queries and reduce system load.
 
 Similar to alert rules, Grafana supports two types of recording rules:
 

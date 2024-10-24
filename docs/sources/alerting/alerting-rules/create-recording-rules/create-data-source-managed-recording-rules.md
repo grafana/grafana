@@ -16,19 +16,18 @@ labels:
 title: Create data source-managed recording rules
 weight: 402
 refs:
-  configure-grafana:
-    - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
-  annotation-label:
+  create-recording-rules:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
 ---
 
 # Create data source-managed recording rules
 
-For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
+[Recording rules](ref:create-recording-rules) allow you to pre-compute expensive queries in advance and save the results as a new set of time series. They then query the pre-computed data, which is faster than querying live data in real-time and can help to reduce system load.
+
+Data source-managed recording rules can query Prometheus-based data sources like Mimir or Loki, and store the recording rules within the data source itself. For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
 
 ## Before you begin
 
@@ -40,10 +39,11 @@ For more information on recording rules in Prometheus, refer to [Defining record
 
   - **Grafana Mimir** - use the `/prometheus` prefix. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
 
-To configure data-source managed recording rules, complete the following steps.
+## Add new recording rule
 
-1. Click **Alerts & IRM** -> **Alerting** ->
-   **Alert rules**.
+To create a new data source-managed recording rule:
+
+1. Click **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 1. Scroll to the **Data source-managed section** and click **+New recording rule**.
 
 ## Enter recording rule name
