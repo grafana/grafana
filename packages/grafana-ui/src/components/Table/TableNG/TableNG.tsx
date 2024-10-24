@@ -30,8 +30,12 @@ interface TableColumn extends Column<TableRow> {
   field: Omit<Field, 'values'>;
 }
 
+interface SummaryRow {
+  totalCount: number;
+}
+
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight } = props;
+  const { height, width, timeRange, cellHeight, footerOptions } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -81,7 +85,7 @@ export function TableNG(props: TableNGProps) {
     const columns: TableColumn[] = [];
     const rows: Array<{ [key: string]: string }> = [];
 
-    main.fields.map((field) => {
+    main.fields.map((field, index) => {
       const key = field.name;
       const { values: _, ...shallowField } = field;
 
@@ -122,6 +126,16 @@ export function TableNG(props: TableNGProps) {
             />
           );
         },
+        ...(index === 0 && {
+          renderSummaryCell() {
+            return <div>Count</div>;
+          },
+        }),
+        ...(index === 1 && {
+          renderSummaryCell({ row }) {
+            return row.totalCount;
+          },
+        }),
       });
 
       // Create row objects
@@ -185,6 +199,16 @@ export function TableNG(props: TableNGProps) {
     );
   };
 
+  // footer
+
+  const summaryRows = useMemo((): readonly SummaryRow[] => {
+    return [
+      {
+        totalCount: rows.length,
+      },
+    ];
+  }, [rows]);
+
   // Return the data grid
   return (
     <>
@@ -215,6 +239,8 @@ export function TableNG(props: TableNGProps) {
         // sorting
         sortColumns={sortColumns}
         onSortColumnsChange={setSortColumns}
+        // footer
+        bottomSummaryRows={footerOptions?.show ? summaryRows : undefined}
       />
 
       {isContextMenuOpen && (
