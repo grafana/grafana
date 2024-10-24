@@ -202,7 +202,7 @@ export const install = createAsyncThunk<
     ? { isInstalled: true, installedVersion: version, hasUpdate: false }
     : { isInstalled: true, installedVersion: version };
   try {
-    await installPlugin(id);
+    await installPlugin(id, version);
     await updatePanels();
 
     if (isUpdating) {

@@ -56,7 +56,11 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
   if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div>
-        <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
+        <VersionList
+          pluginId={plugin.id}
+          versions={plugin.details?.versions}
+          installedVersion={plugin.installedVersion}
+        />
       </div>
     );
   }
