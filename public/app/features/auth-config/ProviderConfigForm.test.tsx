@@ -91,8 +91,8 @@ describe('ProviderConfigForm', () => {
     expect(screen.getByRole('textbox', { name: /Client ID/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /Client secret/i })).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Scopes/i })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Allow Sign Up/i })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Auto login/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Allow Sign Up/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Auto login/i)).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /Sign out redirect URL/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Save/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Discard/i })).toBeInTheDocument();
@@ -102,8 +102,8 @@ describe('ProviderConfigForm', () => {
     const { user } = setup(<ProviderConfigForm config={testConfig} provider={testConfig.provider} />);
     await user.click(screen.getByText('User mapping'));
     expect(screen.getByRole('textbox', { name: /Role attribute path/i })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Role attribute strict mode/i })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Skip organization role sync/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Role attribute strict mode/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Skip organization role sync/i)).toBeInTheDocument();
   });
 
   it('renders all extra security fields correctly', async () => {
@@ -114,7 +114,7 @@ describe('ProviderConfigForm', () => {
     expect(screen.getByRole('combobox', { name: /Team Ids/i })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Use PKCE/i })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Use refresh token/i })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /TLS skip verify/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/TLS skip verify/i)).toBeInTheDocument();
   });
 
   it('should save and enable on form submit', async () => {
@@ -124,11 +124,11 @@ describe('ProviderConfigForm', () => {
     await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
     // Type a scope and press enter to select it
     await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
-    await user.click(screen.getByRole('checkbox', { name: /Auto login/i }));
+    await user.click(screen.getByLabelText(/Auto login/i));
 
     await user.click(screen.getByText('User mapping'));
     await user.type(screen.getByRole('textbox', { name: /Role attribute path/i }), 'new-attribute-path');
-    await user.click(screen.getByRole('checkbox', { name: /Role attribute strict mode/i }));
+    await user.click(screen.getByLabelText(/Role attribute strict mode/i));
     await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group A:1:Editor{enter}');
     await user.type(screen.getByRole('combobox', { name: /Organization mapping/i }), 'Group B:2:Admin{enter}');
 
@@ -185,7 +185,7 @@ describe('ProviderConfigForm', () => {
     await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
     // Type a scope and press enter to select it
     await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
-    await user.click(screen.getByRole('checkbox', { name: /Auto login/i }));
+    await user.click(screen.getByLabelText(/Auto login/i));
     await user.click(screen.getByText('Save'));
 
     await waitFor(() => {
