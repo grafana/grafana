@@ -88,7 +88,7 @@ func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.Azu
 	limitExceeded := false
 	if len(t.Rows) > rowLimit && resultFormat == dataquery.ResultFormatLogs && !logLimitDisabled {
 		// We limit the number of rows to 30k to prevent crashing the browser tab as the logs viz is not virtualised.
-		t.Rows = t.Rows[:30000]
+		t.Rows = t.Rows[:rowLimit]
 		limitExceeded = true
 	}
 
