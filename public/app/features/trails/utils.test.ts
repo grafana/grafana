@@ -8,8 +8,6 @@ describe('limitAdhocProviders', () => {
   let datasourceHelper: MetricDatasourceHelper;
 
   beforeEach(() => {
-    // disable console.log called in Scenes for this test
-    // called in scenes/packages/scenes/src/variables/adhoc/patchGetAdhocFilters.ts
     jest.spyOn(console, 'log').mockImplementation(jest.fn());
 
     filtersVariable = new AdHocFiltersVariable({

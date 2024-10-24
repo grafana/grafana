@@ -2883,7 +2883,18 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+      "or-view-bookmarks": "Or view bookmarks"
+    },
+    "card": {
+      "data-source": "Data source: ",
+      "date-created": "Date created: ",
+      "metric": "Metric:"
+    },
+    "home": {
+      "explore-your-prometheus-compatible-metrics-without-writing-a-query": "Explore your Prometheus-compatible metrics without writing a query.",
+      "learn-more": "Learn more",
+      "lets-start": "Let's start!",
+      "start-your-metrics-exploration": "Start your metrics exploration!"
     },
     "metric-overview": {
       "description-label": "Description",
@@ -2897,6 +2908,9 @@
     "metric-select": {
       "filter-by": "Filter by",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": "Or view a recent exploration"
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
