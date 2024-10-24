@@ -46,7 +46,7 @@ InfluxData provides three query languages. Some key points to consider:
 
 - SQL is only available for InfluxDB v3.x.
 - Flux is a functional data scripting language for InfluxDB 2.x. Refer to [Query InfluxDB with Flux](https://docs.influxdata.com/influxdb/cloud/query-data/get-started/query-influxdb/) for a basic guide on working with Flux.
-- InfluxQL - SQL-like query language developed by InfluxData.
+- InfluxQL is SQL-like query language developed by InfluxData. Doesn't support JOINs.
 
 {{< admonition type="note" >}}
 You should decide which query language to use with InfluxDB before adding the InfluxDB data source. Configuration options differ based on query language type.

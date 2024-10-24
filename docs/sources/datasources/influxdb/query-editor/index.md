@@ -32,22 +32,22 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
 ---
-## Query the data source
+
+<!-- ## Query the data source
 
 The InfluxDB data source's query editor has two modes, InfluxQL and Flux, depending on your choice of query language in
 the [data source configuration](#configure-the-data-source):
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}). -->
 
 # InfluxDB query editor
 
-This topic explains querying specific to the InfluxDB data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+The InfluxDB query editor is located on the [Explore page](ref:explore). Grafana's query editors are unique to each data source.
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 ## Choose a query editing mode
 
-The InfluxDB data source's query editor has two modes depending on your choice of query language in
-the [data source configuration]({{< relref "../#configure-the-data-source" >}}):
+The InfluxDB data source has three different types of query editors, each corresponding to the query language selected in the [data source configuration]():
 
 - [InfluxQL](#influxql-query-editor)
 - [SQL](#sql-query-editor)
@@ -57,22 +57,44 @@ You also use the query editor to retrieve [log data](#query-logs) and [annotate]
 
 ## InfluxQL query editor
 
-The InfluxQL query editor helps you select metrics and tags to create InfluxQL queries.
+The InfluxQL query editor helps you select metrics and tags to create InfluxQL queries. There are two modes: visual editor mode and raw query mode. To switch between the two modes click the **pencil icon** in the upper right.
 
-**To enter edit mode:**
+The visual query editor mode contains the following components:
+
+- **FROM** - Select a measurement to query.
+- **WHERE** - Select filters by clicking the **+ sign**.
+- **SELECT** - Select fields and functions from the drop-down. You can add multiple fields and functions by clicking the **+ sign**.
+- **GROUP BY** - Select a tag from the drop-down menu.
+- **TIMEZONE** - _Optional_ Group data by a specific timezone.
+- **ORDER BY TIME** - Sort data by time in either ascending or descending order.
+- **LIMIT** - _Optional_ Limits the number of rows returned by the query.
+- **SLIMIT** - _Optional_ Limits the number of series returned by the query. Refer to [SLIMIT clause](https://docs.influxdata.com/influxdb/cloud/query-data/influxql/explore-data/limit-and-slimit/#slimit-clause) for more information on this option.
+- **FORMAT AS** -
+- **ALIAS** - Add an alias. Refer to [Alias patterns](#alias-patterns) for more information.
+
+### Raw query editor mode
+
+You can write raw InfluxQL queries by switching to raw query mode. Click the pencil in the upper right of the query editor to switch modes. Note that when you switch to editor mode, you will lose any changes made in raw query mode.
+
+If you use raw query mode, your query _must_ include at least `WHERE $timeFilter`.
+
+Also, _always_ provide a group by time and an aggregation function.
+Otherwise, InfluxDB can easily return hundreds of thousands of data points that can hang your browser.
+
+<!-- **To enter edit mode:**
 
 1. Hover over any part of the panel to display the actions menu on the top right corner.
-1. Click the menu and select **Edit**.
+1. Click the menu and select **Edit**. -->
 
 ![InfluxQL query editor](/static/img/docs/influxdb/influxql-query-editor-8-0.png)
 
-### Filter data (WHERE)
+<!-- ### Filter data (WHERE)
 
 To add a tag filter, click the plus icon to the right of the `WHERE` condition.
 
-To remove tag filters, click the tag key, then select **--remove tag filter--**.
+To remove tag filters, click the tag key, then select **--remove tag filter--**. -->
 
-#### Match by regular expressions
+### Match by regular expressions
 
 You can enter regular expressions for metric names or tag filter values.
 Wrap the regex pattern in forward slashes (`/`).
@@ -81,10 +103,9 @@ Grafana automatically adjusts the filter tag condition to use the InfluxDB regex
 
 ### Field and aggregation functions
 
-In the `SELECT` row, you can specify which fields and functions to use.
+<!-- In the `SELECT` row, you can specify which fields and functions to use. -->
 
-If you have a group by time, you must have an aggregation function.
-Some functions like `derivative` also require an aggregation function.
+If you **group by time** you must use an aggregation function. Certain functions such as `derivative` also require an aggregation function.
 
 The editor helps you build this part of the query.
 For example:
@@ -98,12 +119,12 @@ SELECT derivative(mean("value"), 10s) / 10 AS "REQ/s"
 FROM....
 ```
 
-**To select multiple fields:**
+<!-- **To select multiple fields:**
 
 1. Click the plus button.
-1. Select **Field > field** to add another `SELECT` clause.
+1. Select **Field > field** to add another `SELECT` clause. -->
 
-   You can also `SELECT` an asterisk (`*`) to select all fields.
+You can also `SELECT` an asterisk (`*`) to select all fields.
 
 ### Group query results
 
@@ -114,25 +135,24 @@ To group results by a tag, define it in a "Group By".
 1. Click the plus icon at the end of the GROUP BY row.
 1. Select a tag from the dropdown that appears.
 
-**To remove the "Group By":**
+<!-- **To remove the "Group By":**
 
 1. Click the tag.
-1. Click the "x" icon.
+1. Click the "x" icon. -->
 
-### Text editor mode (RAW)
+### Raw ext editor mode
 
-You can write raw InfluxQL queries by switching the editor mode.
-However, be careful when writing queries manually.
+You can write raw InfluxQL queries by switching to raw query mode. Click the pencil in the upper right of the query editor to switch modes. Note that when you switch to editor mode, you will lose any changes made in raw query mode.
 
 If you use raw query mode, your query _must_ include at least `WHERE $timeFilter`.
 
 Also, _always_ provide a group by time and an aggregation function.
 Otherwise, InfluxDB can easily return hundreds of thousands of data points that can hang your browser.
 
-**To switch to raw query mode:**
+<!-- **To switch to raw query mode:**
 
 1. Click the hamburger icon.
-1. Toggle **Switch editor mode**.
+1. Toggle **Switch editor mode**. -->
 
 ### Alias patterns
 
@@ -152,8 +172,10 @@ An example legend value would be `Host: server1`.
 
 ## SQL query editor
 
-Grafana support [SQL querying language](https://docs.influxdata.com/influxdb/cloud-serverless/query-data/sql/)
+Grafana supports the [SQL query language](https://docs.influxdata.com/influxdb/cloud-serverless/query-data/sql/)
 with [InfluxDB v3.0](https://www.influxdata.com/blog/introducing-influxdb-3-0/) and higher.
+
+You construct your SQL query directly in the query editor.
 
 ### Macros
 
@@ -184,7 +206,7 @@ Examples:
 
 ## Flux query editor
 
-Grafana supports Flux when running InfluxDB v1.8 and higher.
+Grafana supports Flux when running InfluxDB v and higher.
 If your data source is [configured for Flux]({{< relref "./#configure-the-data-source" >}}), you can use
 the [Flux query and scripting language](https://www.influxdata.com/products/flux/) in the query editor, which serves as
 a text editor for raw Flux queries with macro support.
