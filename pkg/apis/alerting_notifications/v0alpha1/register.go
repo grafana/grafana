@@ -18,9 +18,10 @@ func init() {
 }
 
 const (
-	GROUP      = "notifications.alerting.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
+	GROUP                      = "notifications.alerting.grafana.app"
+	VERSION                    = "v0alpha1"
+	APIVERSION                 = GROUP + "/" + VERSION
+	UserDefinedRoutingTreeName = "user-defined"
 )
 
 var (
@@ -86,6 +87,27 @@ var (
 			},
 		},
 	)
+	RouteResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+		"routingtrees", "routingtree", "RoutingTree",
+		func() runtime.Object { return &RoutingTree{} },
+		func() runtime.Object { return &RoutingTreeList{} },
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				// {Name: "Intervals", Type: "string", Format: "string", Description: "The display name"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*RoutingTree)
+				if !ok {
+					return nil, fmt.Errorf("expected resource or info")
+				}
+				return []interface{}{
+					r.Name,
+					// r.Spec, //TODO implement formatting for Spec, same as UI?
+				}, nil
+			},
+		},
+	)
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 	// SchemaBuilder is used by standard codegen
@@ -108,6 +130,8 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		&ReceiverList{},
 		&TemplateGroup{},
 		&TemplateGroupList{},
+		&RoutingTree{},
+		&RoutingTreeList{},
 	)
 	metav1.AddToGroupVersion(scheme, g)
 

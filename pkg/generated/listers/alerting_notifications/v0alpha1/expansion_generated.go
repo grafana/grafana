@@ -12,6 +12,14 @@ type ReceiverListerExpansion interface{}
 // ReceiverNamespaceLister.
 type ReceiverNamespaceListerExpansion interface{}
 
+// RoutingTreeListerExpansion allows custom methods to be added to
+// RoutingTreeLister.
+type RoutingTreeListerExpansion interface{}
+
+// RoutingTreeNamespaceListerExpansion allows custom methods to be added to
+// RoutingTreeNamespaceLister.
+type RoutingTreeNamespaceListerExpansion interface{}
+
 // TemplateGroupListerExpansion allows custom methods to be added to
 // TemplateGroupLister.
 type TemplateGroupListerExpansion interface{}

@@ -42,6 +42,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=notifications.alerting.grafana.app, Version=v0alpha1
 	case v0alpha1.SchemeGroupVersion.WithResource("receivers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().Receivers().Informer()}, nil
+	case v0alpha1.SchemeGroupVersion.WithResource("routingtrees"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().RoutingTrees().Informer()}, nil
 	case v0alpha1.SchemeGroupVersion.WithResource("templategroups"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().TemplateGroups().Informer()}, nil
 	case v0alpha1.SchemeGroupVersion.WithResource("timeintervals"):

@@ -16,9 +16,15 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Integration":       schema_pkg_apis_alerting_notifications_v0alpha1_Integration(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Interval":          schema_pkg_apis_alerting_notifications_v0alpha1_Interval(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Matcher":           schema_pkg_apis_alerting_notifications_v0alpha1_Matcher(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Receiver":          schema_pkg_apis_alerting_notifications_v0alpha1_Receiver(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.ReceiverList":      schema_pkg_apis_alerting_notifications_v0alpha1_ReceiverList(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.ReceiverSpec":      schema_pkg_apis_alerting_notifications_v0alpha1_ReceiverSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Route":             schema_pkg_apis_alerting_notifications_v0alpha1_Route(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RouteDefaults":     schema_pkg_apis_alerting_notifications_v0alpha1_RouteDefaults(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RoutingTree":       schema_pkg_apis_alerting_notifications_v0alpha1_RoutingTree(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RoutingTreeList":   schema_pkg_apis_alerting_notifications_v0alpha1_RoutingTreeList(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RoutingTreeSpec":   schema_pkg_apis_alerting_notifications_v0alpha1_RoutingTreeSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TemplateGroup":     schema_pkg_apis_alerting_notifications_v0alpha1_TemplateGroup(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TemplateGroupList": schema_pkg_apis_alerting_notifications_v0alpha1_TemplateGroupList(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TemplateGroupSpec": schema_pkg_apis_alerting_notifications_v0alpha1_TemplateGroupSpec(ref),
@@ -209,6 +215,41 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_Interval(ref common.Referen
 	}
 }
 
+func schema_pkg_apis_alerting_notifications_v0alpha1_Matcher(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Matcher defines model for Matcher.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"label": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"label", "type", "value"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_alerting_notifications_v0alpha1_Receiver(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -336,6 +377,282 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_ReceiverSpec(ref common.Ref
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Integration"},
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_Route(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Route defines model for Route.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"continue": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"group_by": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"group_interval": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"group_wait": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"matchers": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Matcher"),
+									},
+								},
+							},
+						},
+					},
+					"mute_time_intervals": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"receiver": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"repeat_interval": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"routes": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Route"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Matcher", "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Route"},
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_RouteDefaults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RouteDefaults defines model for RouteDefaults.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group_by": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"group_interval": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"group_wait": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"receiver": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"repeat_interval": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"receiver"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_RoutingTree(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RoutingTreeSpec"),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RoutingTreeSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_RoutingTreeList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RoutingTree"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RoutingTree", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_RoutingTreeSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Spec defines model for Spec.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"defaults": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RouteDefaults"),
+						},
+					},
+					"routes": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Route"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"defaults", "routes"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Route", "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.RouteDefaults"},
 	}
 }
 
