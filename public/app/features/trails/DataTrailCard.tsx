@@ -142,6 +142,7 @@ export function getStyles(theme: GrafanaTheme2) {
       borderRight: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
       borderLeft: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
       borderBottom: 'none', // Remove the bottom border
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: '4px 4px 0 0', // Top-left and top-right corners are 4px, bottom-left and bottom-right are 0; cannot use theme.shape.radius.default because need bottom corners to be 0
     }),
     secondary: css({
@@ -153,6 +154,7 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     date: css({
       border: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: '0 0 4px 4px',
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
       backgroundColor: theme.colors.background.primary,
