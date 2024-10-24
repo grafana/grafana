@@ -42,7 +42,6 @@ type folder_resource
     define permissions_read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
     define permissions_write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
 
-
 type resource
   relations
     define view: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or edit

@@ -69,4 +69,12 @@ func testList(t *testing.T, server *Server) {
 		assert.Len(t, res.GetFolders(), 0)
 		assert.Equal(t, res.GetItems()[0], "1")
 	})
+
+	t.Run("user:7 should be able to list all folders", func(t *testing.T) {
+		res, err := server.List(context.Background(), newList("user:7", folderGroup, folderResource))
+		require.NoError(t, err)
+		assert.Len(t, res.GetItems(), 0)
+		assert.Len(t, res.GetFolders(), 0)
+		assert.True(t, res.GetAll())
+	})
 }

@@ -20,20 +20,38 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 	return s.listGeneric(ctx, r)
 }
 func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info TypeInfo) (*authzextv1.ListResponse, error) {
-	res, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+	// 1. check if subject has access through namespace because then they can read all of them
+	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+		StoreId:              r.GetNamespace(),
+		AuthorizationModelId: modelID,
+		TupleKey: &openfgav1.CheckRequestTupleKey{
+			User:     r.GetSubject(),
+			Relation: mapping[utils.VerbGet],
+			Object:   newNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if res.GetAllowed() {
+		return &authzextv1.ListResponse{All: true}, nil
+	}
+
+	// 2. List all resources user has access too
+	listRes, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              storeID,
 		AuthorizationModelId: modelID,
 		Type:                 info.typ,
 		Relation:             mapping[utils.VerbGet],
 		User:                 r.GetSubject(),
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
 	return &authzextv1.ListResponse{
-		Items: typedObjects(info.typ, res.GetObjects()),
+		Items: typedObjects(info.typ, listRes.GetObjects()),
 	}, nil
 }
 
@@ -49,7 +67,6 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 			Object:   newNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +88,6 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 			},
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +105,6 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 			},
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}
