@@ -1,13 +1,14 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import React, { useMemo, useState, useLayoutEffect } from 'react';
-import DataGrid, { Column, RenderRowProps, Row, SortColumn } from 'react-data-grid';
+import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 import { Cell } from 'react-table';
 
 import { DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
+import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellDisplayMode, TableNGProps } from '../types';
@@ -32,6 +33,11 @@ interface TableColumn extends Column<TableRow> {
 
 interface SummaryRow {
   totalCount: number;
+}
+interface TableHeaderProps {
+  column: Column<any>;
+  onSort: (columnKey: string, direction: SortDirection) => void;
+  direction: SortDirection | undefined;
 }
 
 export function TableNG(props: TableNGProps) {
@@ -81,6 +87,32 @@ export function TableNG(props: TableNGProps) {
   }
   const rowHeightNumber = rowHeight();
 
+  const TableHeader: React.FC<TableHeaderProps> = ({ column, onSort, direction }) => {
+    const handleSort = () => {
+      onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
+    };
+
+    return (
+      <div>
+        <button className={styles.headerCellLabel} onClick={handleSort}>
+          <div>{column.name}</div>
+          {direction &&
+            (direction === 'ASC' ? (
+              <Icon size="lg" name="arrow-down" className={styles.sortIcon} />
+            ) : (
+              <Icon name="arrow-up" size="lg" className={styles.sortIcon} />
+            ))}
+        </button>
+
+        {/* put the filter button here */}
+      </div>
+    );
+  };
+
+  const handleSort = (columnKey: string, direction: SortDirection) => {
+    setSortColumns([{ columnKey, direction }]);
+  };
+
   const mapFrameToDataGrid = (main: DataFrame) => {
     const columns: TableColumn[] = [];
     const rows: Array<{ [key: string]: string }> = [];
@@ -96,15 +128,12 @@ export function TableNG(props: TableNGProps) {
         field: shallowField,
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
-          console.log(row);
           // eslint-ignore-next-line
           const value = row[key];
           const displayValue = shallowField.display!(value);
 
-          console.log(value);
           // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
           let colors = getCellColors(theme, shallowField.config.custom, displayValue);
-          console.log(colors);
           // }
 
           // css()
@@ -126,6 +155,7 @@ export function TableNG(props: TableNGProps) {
             />
           );
         },
+
         ...(index === 0 && {
           renderSummaryCell() {
             return <div>Count</div>;
@@ -136,6 +166,10 @@ export function TableNG(props: TableNGProps) {
             return row.totalCount;
           },
         }),
+
+        renderHeaderCell: ({ column, sortDirection }) => (
+          <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
+        ),
       });
 
       // Create row objects
@@ -174,11 +208,11 @@ export function TableNG(props: TableNGProps) {
 
     return [...rows].sort((a, b) => {
       for (const sort of sortColumns) {
-        const { columnKey } = sort;
+        const { columnKey, direction } = sort;
         const comparator = getComparator(columnTypes[columnKey]);
         const compResult = comparator(a[columnKey], b[columnKey]);
         if (compResult !== 0) {
-          return sort.direction === 'ASC' ? compResult : -compResult;
+          return direction === 'ASC' ? compResult : -compResult;
         }
       }
       return 0; // false
@@ -238,7 +272,6 @@ export function TableNG(props: TableNGProps) {
         }}
         // sorting
         sortColumns={sortColumns}
-        onSortColumnsChange={setSortColumns}
         // footer
         bottomSummaryRows={footerOptions?.show ? summaryRows : undefined}
       />
@@ -301,5 +334,26 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   menuItem: css({
     maxWidth: '200px',
+  }),
+  headerCellLabel: css({
+    border: 'none',
+    padding: 0,
+    background: 'inherit',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    fontWeight: theme.typography.fontWeightMedium,
+    display: 'flex',
+    alignItems: 'center',
+    marginRight: theme.spacing(0.5),
+
+    '&:hover': {
+      textDecoration: 'underline',
+      color: theme.colors.text.link,
+    },
+  }),
+  sortIcon: css({
+    marginLeft: theme.spacing(0.5),
   }),
 });
