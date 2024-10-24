@@ -115,25 +115,27 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             </div>
             <Text element="h1" textAlignment="center" weight="medium">
               {/* have to add i18nKey */}
-              <Trans>Start your metrics exploration!</Trans>
+              <Trans i18nKey="trails.home.start-your-metrics-exploration">Start your metrics exploration!</Trans>
             </Text>
             <Box>
               <Text element="p" textAlignment="center" color="secondary">
                 {/* have to add i18nKey */}
-                <Trans>Explore your Prometheus-compatible metrics without writing a query.</Trans>
+                <Trans i18nKey="trails.home.explore-your-prometheus-compatible-metrics-without-writing-a-query">
+                  Explore your Prometheus-compatible metrics without writing a query.
+                </Trans>
                 <TextLink
                   href="https://grafana.com/docs/grafana/latest/explore/explore-metrics/"
                   external
                   style={{ marginLeft: '8px' }}
                 >
-                  Learn more
+                  <Trans i18nKey="trails.home.learn-more">Learn more</Trans>
                 </TextLink>
               </Text>
             </Box>
             <div className={styles.gap24}>
               <Button size="lg" variant="primary" onClick={model.onNewMetricsTrail}>
                 <div className={styles.startButton}>
-                  <Trans>Let&apos;s start!</Trans>
+                  <Trans i18nKey="trails.home.lets-start">Let&apos;s start!</Trans>
                 </div>
                 <Icon name="arrow-right" size="lg" style={{ marginLeft: '8px' }} />
               </Button>
@@ -143,7 +145,9 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         {recentMetrics.length > 0 && (
           <>
             <div className={styles.recentExplorationHeader}>
-              <div className={styles.header}>Or view a recent exploration</div>
+              <div className={styles.header}>
+                <Trans i18nKey="trails.home.or-view-a-recent-exploration">Or view a recent exploration</Trans>
+              </div>
             </div>
             <div className={css(styles.trailList, styles.bottomGap24)}>
               {getTrailStore()
