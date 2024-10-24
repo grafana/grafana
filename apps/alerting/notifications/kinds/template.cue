@@ -10,7 +10,7 @@ templateGroup: {
 		frontend: false
 		backend:  true
 	}
-	pluralName: "TemplatesGroups"
+	pluralName: "TemplateGroups"
 	current:    "v0alpha1"
 	versions: {
 		"v0alpha1": {
@@ -20,6 +20,9 @@ templateGroup: {
 					content: string
 				}
 			}
+			selectableFields: [
+				 "spec.title",
+			]
 		}
 	}
 }
