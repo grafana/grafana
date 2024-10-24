@@ -12,7 +12,6 @@ type Props = {
 
 export function PluginDetailsRightPanel(props: Props): React.ReactElement | null {
   const { info, plugin } = props;
-  console.log('PLUGIN GRAFANA', plugin);
   return (
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={'250px'}>
       <Box padding={2} borderColor="medium" borderStyle="solid">

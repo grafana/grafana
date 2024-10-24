@@ -17,9 +17,6 @@ import {
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
-
-  console.log('remote PLUGIN GRAFANA', remote);
-
   const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
     getLocalPlugins(),
     getPluginVersions(id, isPublished),
