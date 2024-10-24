@@ -88,7 +88,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '400px',
       height: '1px',
       background: 'rgba(204, 204, 220, 0.12)',
-      margin: '0 auto', // Center the line horizontally
+      margin: '0 auto', // Center line horizontally
       marginTop: '32px',
     }),
   };
