@@ -38,6 +38,7 @@ import {
   isOnClickFilterString,
   isOnClickHideField,
   isOnClickShowField,
+  isReactNode,
   Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -391,8 +392,8 @@ export const LogsPanel = ({
             displayedFields={displayedFields}
             onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
             onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
-            logRowMenuIconsBefore={logRowMenuIconsBefore}
-            logRowMenuIconsAfter={logRowMenuIconsAfter}
+            logRowMenuIconsBefore={isReactNode(logRowMenuIconsBefore) ? logRowMenuIconsBefore : undefined}
+            logRowMenuIconsAfter={isReactNode(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>

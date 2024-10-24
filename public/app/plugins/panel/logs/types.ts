@@ -1,3 +1,5 @@
+import React, { ReactNode } from 'react';
+
 import { DataFrame } from '@grafana/data';
 
 export { Options } from './panelcfg.gen';
@@ -36,4 +38,8 @@ export function isOnClickShowField(callback: unknown): callback is isOnClickShow
 
 export function isOnClickHideField(callback: unknown): callback is isOnClickHideFieldType {
   return typeof callback === 'function';
+}
+
+export function isReactNode(node: any): node is ReactNode {
+  return React.isValidElement(node) || (Array.isArray(node) && node.every(isReactNode));
 }
