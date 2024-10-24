@@ -106,6 +106,8 @@ type ResourceErrorCode string
 
 const (
 	ErrDatasourceNameConflict     ResourceErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDatasourceInvalidURL       ResourceErrorCode = "DATASOURCE_INVALID_URL"
+	ErrFolderNameConflict         ResourceErrorCode = "FOLDER_NAME_CONFLICT"
 	ErrDashboardAlreadyManaged    ResourceErrorCode = "DASHBOARD_ALREADY_MANAGED"
 	ErrLibraryElementNameConflict ResourceErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
 	ErrUnsupportedDataType        ResourceErrorCode = "UNSUPPORTED_DATA_TYPE"

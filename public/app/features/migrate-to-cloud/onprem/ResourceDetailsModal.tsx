@@ -18,6 +18,16 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
         'migrate-to-cloud.resource-details.error-messages.datasource-name-conflict',
         'There is a data source with the same name in the target instance. Rename one of them and try again.'
       );
+    case 'DATASOURCE_INVALID_URL':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.datasource-invalid-url',
+        'There is a data source which has an invalid URL. Provide a valid URL and try again.'
+      );
+    case 'FOLDER_NAME_CONFLICT':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.folder-name-conflict',
+        'There is a folder with the same name in the target instance. Rename one of them and try again.'
+      );
     case 'DASHBOARD_ALREADY_MANAGED':
       return t(
         'migrate-to-cloud.resource-details.error-messages.dashboard-already-managed',

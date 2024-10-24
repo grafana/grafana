@@ -149,6 +149,8 @@ type ItemErrorCode string
 
 const (
 	ErrDatasourceNameConflict     ItemErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDatasourceInvalidURL       ItemErrorCode = "DATASOURCE_INVALID_URL"
+	ErrFolderNameConflict         ItemErrorCode = "FOLDER_NAME_CONFLICT"
 	ErrDashboardAlreadyManaged    ItemErrorCode = "DASHBOARD_ALREADY_MANAGED"
 	ErrLibraryElementNameConflict ItemErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
 	ErrUnsupportedDataType        ItemErrorCode = "UNSUPPORTED_DATA_TYPE"
