@@ -63,9 +63,19 @@ export const RulesTable = ({
 
   const { pageItems, page, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
-  const { result: rulesWithRulerDefinitions, status: rulerRulesLoadingStatus } = useLazyLoadRulerRules(pageItems);
+  const [lazyLoadRules, { result: rulesWithRulerDefinitions, status: rulerRulesLoadingStatus }] =
+    useLazyLoadRulerRules(pageItems);
+  const isLoadingRulerGroup = useMemo(
+    () =>
+      !rulerRulesLoadingStatus || rulerRulesLoadingStatus === 'loading' || rulerRulesLoadingStatus === 'not-executed',
+    [rulerRulesLoadingStatus]
+  );
 
-  const isLoadingRulerGroup = rulerRulesLoadingStatus === 'loading';
+  useEffect(() => {
+    if (pageItems.length > 0) {
+      lazyLoadRules.execute();
+    }
+  }, [lazyLoadRules, pageItems, rulerRulesLoadingStatus]);
 
   const items = useMemo((): RuleTableItemProps[] => {
     return rulesWithRulerDefinitions.map((rule, ruleIdx) => {
@@ -114,8 +124,11 @@ function useLazyLoadRulerRules(rules: CombinedRule[]) {
   const [fetchRulerRuleGroup] = useLazyGetRuleGroupForNamespaceQuery();
   const [fetchDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
-  const [actions, state] = useAsync(async () => {
-    const result = Promise.all(
+  return useAsync(async () => {
+    if (!prometheusRulesPrimary) {
+      return rules;
+    }
+    return Promise.all(
       rules.map(async (rule) => {
         const dsFeatures = await fetchDsFeatures(
           { rulesSourceName: getRulesSourceName(rule.namespace.rulesSource) },
@@ -140,20 +153,7 @@ function useLazyLoadRulerRules(rules: CombinedRule[]) {
         return rule;
       })
     );
-    return result;
   }, rules);
-
-  useEffect(() => {
-    if (prometheusRulesPrimary) {
-      actions.execute();
-    } else {
-      // We need to reset the actions to update the rules if they changed
-      // Otherwise useAsync acts like a cache and always return the first rules passed to it
-      actions.reset();
-    }
-  }, [rules, actions]);
-
-  return state;
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
