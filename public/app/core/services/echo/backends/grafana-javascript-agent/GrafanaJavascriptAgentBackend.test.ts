@@ -76,6 +76,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       id: '504',
       orgId: 1,
     },
+    ignoreUrls: [],
   };
 
   it('will set up FetchTransport if customEndpoint is provided', () => {

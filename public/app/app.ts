@@ -317,6 +317,21 @@ function initEchoSrv() {
   }
 
   if (config.grafanaJavascriptAgent.enabled) {
+    // Ignore Rudderstack URLs
+    const rudderstackUrls = [];
+
+    if (config.rudderstackConfigUrl) {
+      rudderstackUrls.push(new RegExp(`${config.rudderstackConfigUrl}.*.`));
+    }
+
+    if (config.rudderstackDataPlaneUrl) {
+      rudderstackUrls.push(new RegExp(`${config.rudderstackDataPlaneUrl}.*.`));
+    }
+
+    if (config.rudderstackIntegrationsUrl) {
+      rudderstackUrls.push(new RegExp(`${config.rudderstackIntegrationsUrl}.*.`));
+    }
+
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
         ...config.grafanaJavascriptAgent,
@@ -329,6 +344,7 @@ function initEchoSrv() {
           id: String(config.bootData.user?.id),
           email: config.bootData.user?.email,
         },
+        ignoreUrls: rudderstackUrls,
       })
     );
   }
