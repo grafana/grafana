@@ -37,7 +37,9 @@ export interface AlertManagerDataSource {
 export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
 
 export function getRulesDataSources() {
-  if (!contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)) {
+  const hasReadPermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
+  const hasWritePermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  if (!hasReadPermission && !hasWritePermission) {
     return [];
   }
 

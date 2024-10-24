@@ -775,7 +775,7 @@ export function getGrafanaRule(override?: Partial<CombinedRule>, rulerOverride?:
   });
 }
 
-export function getCloudRule(override?: Partial<CombinedRule>) {
+export function getCloudRule(override?: Partial<CombinedRule>, nsOverride?: Partial<CombinedRuleNamespace>) {
   const promOverride = pick(override, ['name', 'labels', 'annotations']);
   const rulerOverride = pick(override, ['name', 'labels', 'annotations']);
 
@@ -784,6 +784,7 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
       groups: [],
       name: 'Cortex',
       rulesSource: mockDataSource(),
+      ...nsOverride,
     },
     promRule: mockPromAlertingRule(isEmpty(promOverride) ? undefined : promOverride),
     rulerRule: mockRulerAlertingRule(
