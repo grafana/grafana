@@ -27,6 +27,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
       <div className={cx(styles.switch, invalid && styles.invalid)}>
         <input
           type="checkbox"
+          role="switch"
           disabled={disabled}
           checked={value}
           onChange={(event) => {
@@ -36,7 +37,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchIdRef.current} aria-label={label ?? 'Toggle switch'}>
+        <label htmlFor={switchIdRef.current} aria-label={label}>
           <Icon name="check" size="xs" />
         </label>
       </div>

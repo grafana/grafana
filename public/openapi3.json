@@ -7218,6 +7218,8 @@
           "errorCode": {
             "enum": [
               "DATASOURCE_NAME_CONFLICT",
+              "DATASOURCE_INVALID_URL",
+              "FOLDER_NAME_CONFLICT",
               "DASHBOARD_ALREADY_MANAGED",
               "LIBRARY_ELEMENT_NAME_CONFLICT",
               "UNSUPPORTED_DATA_TYPE",
@@ -9556,6 +9558,9 @@
           },
           "orientation": {
             "type": "string"
+          },
+          "pdfCombineOneFile": {
+            "type": "boolean"
           },
           "pdfShowTemplateVariables": {
             "type": "boolean"
