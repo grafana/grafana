@@ -171,6 +171,13 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         };
       }
 
+      const nonHiddenFields = alignedFrameFinal.fields.filter((field) => field.config.custom?.hideFrom?.viz !== true);
+      alignedFrameFinal = {
+        ...alignedFrameFinal,
+        fields: nonHiddenFields,
+        length: nonHiddenFields.length,
+      };
+
       let config = this.state?.config;
 
       if (withConfig) {
