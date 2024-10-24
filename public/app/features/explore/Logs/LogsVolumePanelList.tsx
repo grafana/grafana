@@ -110,7 +110,7 @@ export const LogsVolumePanelList = ({
             <ul>
               <li>
                 <Trans i18nKey="explore.logs.logs-volume.add-filters">
-                  Add more filters to your query to narrow down your search.
+                  Add more labels to your query to narrow down your search.
                 </Trans>
               </li>
               <li>
