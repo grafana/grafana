@@ -39,6 +39,105 @@ Learning about alert instances and notification policies is useful if you have m
 <!-- INTERACTIVE page intro.md END -->
 <!-- INTERACTIVE page step1.md START -->
 
+<!-- INTERACTIVE ignore START -->
+
+{{< docs/ignore >}}
+
+## Set up the Grafana stack
+
+{{< /docs/ignore >}}
+
+## Before you begin
+
+There are different ways you can follow along with this tutorial.
+
+### Grafana Cloud
+
+As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
+
+Continue to [Create notification policies](#create-notification-policies).
+
+### Interactive learning environment
+
+Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Part 2](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt2/).
+
+It's a fully configured environment with all the dependencies already installed.
+
+### Grafana OSS
+
+If you opt to run a Grafana stack locally, ensure you have the following applications installed:
+
+- [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
+- [Git](https://git-scm.com/)
+
+#### Set up the Grafana stack (OSS users)
+
+<!-- INTERACTIVE ignore END -->
+
+To demonstrate the observation of data using the Grafana stack, download and run the following files.
+
+1. Clone the [tutorial environment repository](https://www.github.com/grafana/tutorial-environment).
+
+   <!-- INTERACTIVE exec START -->
+
+   ```
+   git clone https://github.com/grafana/tutorial-environment.git
+   ```
+
+   <!-- INTERACTIVE exec END -->
+
+1. Change to the directory where you cloned the repository:
+
+   <!-- INTERACTIVE exec START -->
+
+   ```
+   cd tutorial-environment
+   ```
+
+   <!-- INTERACTIVE exec END -->
+
+1. Run the Grafana stack:
+
+   <!-- INTERACTIVE ignore START -->
+
+   ```
+   docker compose up -d
+   ```
+
+   <!-- INTERACTIVE ignore END -->
+
+   {{< docs/ignore >}}
+
+   <!-- INTERACTIVE exec START -->
+
+   ```bash
+   docker-compose up -d
+   ```
+
+   <!-- INTERACTIVE exec END -->
+
+   {{< /docs/ignore >}}
+
+   The first time you run `docker compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
+
+   <!-- INTERACTIVE ignore START -->
+
+   {{< admonition type="note" >}}
+   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+   {{< /admonition >}}
+
+   <!-- INTERACTIVE ignore END -->
+
+   {{< docs/ignore >}}
+
+   NOTE:
+
+   If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
+
+   {{< /docs/ignore >}}
+
+<!-- INTERACTIVE page step1.md END -->
+<!-- INTERACTIVE page step2.md START -->
 ## Alert instances
 
 An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is an event that matches a metric returned by an alert rule query.
@@ -50,10 +149,6 @@ If the query returns more than one time-series, each time-series represents a di
 {{< figure alt="Screenshot displaying alert instances in the context of an alert rule, highlighting the specific alerts triggered by the rule and their respective statuses" src="/media/docs/alerting/get-started-digram-instance-grey.png" max-width="1200px" caption="Alert Instances in the Context of an Alert Rule" >}}
 
 In this scenario, each time-series is evaluated independently against the alert rule. It results in the creation of an alert instance for each time-series. The time-series corresponding to the desktop page views meets the threshold and, therefore, results in an alert instance in **Firing** state for which an alert notification is sent. The mobile alert instance state remains **Normal**.
-
-<!-- INTERACTIVE page step1.md END -->
-
-<!-- INTERACTIVE page step2.md START -->
 
 ## Notification policies
 
@@ -77,6 +172,9 @@ Create a notification policy if you want to handle metrics returned by alert rul
 
 <!-- INTERACTIVE ignore START -->
 
+1. In your browser, **sign in** to your Grafana Cloud account.
+
+   OSS and interactive learning environment users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
 1. Navigate to **Alerts & IRM > Alerting > Notification policies**.
 1. In the Default policy, click **+ New child policy**.
 1. In the field **Label** enter `device`, and in the field **Value** enter `desktop`.
@@ -145,6 +243,7 @@ In this section, we use the **Advanced options** for Grafana-managed alert rule 
 1. Toggle **Advanced options** to view additional configuration options.
 1. Select **TestData** data source from the drop-down menu.
 1. From **Scenario** select **CSV Content**.
+1. In the Query editor, switch to **Code** mode by clicking the button on the right.
 1. Copy in the following CSV data:
 
 ```
