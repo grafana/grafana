@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { Card, IconButton, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DataTrail } from './DataTrail';
 import { getTrailStore, DataTrailBookmark } from './TrailStore/TrailStore';
@@ -62,7 +63,9 @@ export function DataTrailCard(props: Props) {
     <div>
       <Card onClick={onSelect} className={styles.card}>
         <Card.Heading>
-          <div className={styles.metricLabel}>Metric:</div>
+          <div className={styles.metricLabel}>
+            <Trans i18nKey="trails.card.metric">Metric:</Trans>
+          </div>
           <div className={styles.metricValue}>{getMetricName(metric)}</div>
         </Card.Heading>
         <Card.Meta separator={'|'} className={styles.meta}>
@@ -74,7 +77,9 @@ export function DataTrailCard(props: Props) {
           ))}
         </Card.Meta>
         <div className={styles.datasource}>
-          <div className={styles.secondaryFont}>Data source: </div>
+          <div className={styles.secondaryFont}>
+            <Trans i18nKey="trails.card.data-source">Data source: </Trans>
+          </div>
           <div className={styles.primaryFont}>{dsValue && getDataSourceName(dsValue)}</div>
         </div>
         <div className={styles.deleteButton}>
@@ -92,7 +97,9 @@ export function DataTrailCard(props: Props) {
         </div>
       </Card>
       <div className={styles.date}>
-        <div className={styles.secondaryFont}>Date created: </div>
+        <div className={styles.secondaryFont}>
+          <Trans i18nKey="trails.card.date-created">Date created: </Trans>
+        </div>
         <div className={styles.primaryFont}>{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}</div>
       </div>
     </div>
