@@ -2,6 +2,26 @@
 
 The selectors defined in [pages.ts](./pages.ts) and [components.ts](./components.ts) are versioned. A versioned selector consists of an object literal where value is the selector context and key is the minimum Grafana version for which the value is valid. The versioning is important in plugin end-to-end testing, as it allows them to resolve the right selector values for a given Grafana version.
 
+```typescript
+const components = {
+ PanelEditor: {
+   content: {
+        '11.1.0': 'data-testid Panel editor content', // resolved for Grafana >= 11.1.0
+        '9.5.0': 'Panel editor content', // resolved for Grafana >= 9.5.0 <11.1.0
+   },
+ }
+ ...
+}
+```
+
+A few things to keep in mind:
+
+- Strive to use e2e selector for all components in grafana/ui.
+- Only create new selector in case you're creating a new piece of UI. If you're changing an existing piece of UI that already has a selector defined, you need to keep using that selector. Otherwise you might break plugin end-to-end tests.
+- Prefer using string selectors in favour of function selectors. The purpose of the selectors is to provide a canonical way to select elements.
+  `pages.Dashboard.url('ud73s9')` is fine.
+  `components.Panels.Panel.title('Panel header')` is bad.
+
 ## How to change the value of an existing selector
 
 1. Find the versioned selector object in [pages.ts](./pages.ts) or [components.ts](./components.ts).
