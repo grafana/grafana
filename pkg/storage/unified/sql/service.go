@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -67,7 +68,12 @@ func ProvideUnifiedStorageGrpcService(
 		return nil, err
 	}
 
-	authn := &grpc.Authenticator{}
+	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
+	// grpcutils.NewGrpcAuthenticator should be used instead.
+	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, &grpc.Authenticator{})
+	if err != nil {
+		return nil, err
+	}
 
 	s := &service{
 		cfg:           cfg,

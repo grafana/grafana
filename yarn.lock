@@ -3106,8 +3106,8 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
-    "@types/prismjs": "npm:1.26.4"
+    "@types/node": "npm:20.16.15"
+    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     fast-deep-equal: "npm:^3.1.3"
@@ -3148,7 +3148,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
@@ -3178,8 +3178,8 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
-    "@types/prismjs": "npm:1.26.4"
+    "@types/node": "npm:20.16.15"
+    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     css-loader: "npm:7.1.2"
@@ -3220,7 +3220,7 @@ __metadata:
     "@types/d3-random": "npm:^3.0.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/uuid": "npm:9.0.8"
@@ -3261,7 +3261,7 @@ __metadata:
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
     "@types/logfmt": "npm:^1.2.3"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-window": "npm:1.8.8"
@@ -3301,7 +3301,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
@@ -3332,7 +3332,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
@@ -3360,7 +3360,7 @@ __metadata:
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     lodash: "npm:4.17.21"
@@ -3397,8 +3397,8 @@ __metadata:
     "@types/debounce-promise": "npm:3.1.9"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
-    "@types/prismjs": "npm:1.26.4"
+    "@types/node": "npm:20.16.15"
+    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-test-renderer": "npm:18.3.0"
@@ -3452,8 +3452,8 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
-    "@types/prismjs": "npm:1.26.4"
+    "@types/node": "npm:20.16.15"
+    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/semver": "npm:7.5.8"
@@ -3502,7 +3502,7 @@ __metadata:
     "@testing-library/react": "npm:16.0.1"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     lodash: "npm:4.17.21"
@@ -3539,12 +3539,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/azure-sdk@npm:0.0.3":
-  version: 0.0.3
-  resolution: "@grafana/azure-sdk@npm:0.0.3"
+"@grafana/azure-sdk@npm:0.0.4":
+  version: 0.0.4
+  resolution: "@grafana/azure-sdk@npm:0.0.4"
   dependencies:
-    ts-jest: "npm:29.1.2"
-  checksum: 10/fc888711e79865c3ff08f21401ed51b3d5a189e38c691a2dd60915af843612481deb45a1f804fe4a631636dae966f6591984e7e4f37ea0c62fd5e0a4c0cf1166
+    react-dom: "npm:^18.3.1"
+    ts-jest: "npm:29.2.5"
+  checksum: 10/7cc4fe294704d27d223d2563ed71ace718fb6c76e94824d29b61936b5bd6fd27aaa4935234c18e25b1d53f0f514704b06afb7ebad43ba5ae776e5285d171f58b
   languageName: node
   linkType: hard
 
@@ -3560,7 +3561,7 @@ __metadata:
     "@types/dompurify": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/papaparse": "npm:5.3.15"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
@@ -3607,13 +3608,15 @@ __metadata:
   dependencies:
     "@grafana/tsconfig": "npm:^2.0.0"
     "@rollup/plugin-node-resolve": "npm:15.3.0"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
+    "@types/semver": "npm:7.5.8"
     esbuild: "npm:0.24.0"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-dts: "npm:^6.1.1"
     rollup-plugin-esbuild: "npm:6.1.1"
     rollup-plugin-node-externals: "npm:^7.1.3"
+    semver: "npm:7.6.3"
     tslib: "npm:2.7.0"
     typescript: "npm:5.5.4"
   languageName: unknown
@@ -3765,7 +3768,7 @@ __metadata:
     "@types/d3": "npm:^7"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/tinycolor2": "npm:1.4.6"
@@ -3849,7 +3852,7 @@ __metadata:
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     "@types/systemjs": "npm:6.15.1"
     jest: "npm:^29.6.4"
@@ -3936,9 +3939,9 @@ __metadata:
     "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:3.5.32"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/pluralize": "npm:^0.0.33"
-    "@types/prismjs": "npm:1.26.4"
+    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-highlight-words": "npm:0.20.0"
@@ -3960,7 +3963,7 @@ __metadata:
     eslint-plugin-jsdoc: "npm:48.11.0"
     eslint-plugin-jsx-a11y: "npm:6.10.1"
     eslint-plugin-lodash: "npm:7.4.0"
-    eslint-plugin-react: "npm:7.37.1"
+    eslint-plugin-react: "npm:7.37.2"
     eslint-plugin-react-hooks: "npm:4.6.0"
     eslint-webpack-plugin: "npm:4.2.0"
     eventemitter3: "npm:5.0.1"
@@ -4068,7 +4071,7 @@ __metadata:
     "@svgr/plugin-prettier": "npm:^8.1.0"
     "@svgr/plugin-svgo": "npm:^8.1.0"
     "@types/babel__core": "npm:^7"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     esbuild: "npm:0.24.0"
@@ -4088,12 +4091,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:5.20.3":
-  version: 5.20.3
-  resolution: "@grafana/scenes-react@npm:5.20.3"
+"@grafana/scenes-react@npm:5.20.4":
+  version: 5.20.4
+  resolution: "@grafana/scenes-react@npm:5.20.4"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.0.0"
-    "@grafana/scenes": "npm:5.20.3"
+    "@grafana/scenes": "npm:5.20.4"
     react-use: "npm:17.4.0"
   peerDependencies:
     "@grafana/data": ^11.0.0
@@ -4102,13 +4105,13 @@ __metadata:
     "@grafana/ui": ^11.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/a0d97ef54c1185f47d61a1134bc5ac4253c20757df338089e49ce0fea2714fa30a7e112fabda13fa55e804354b8aca3d573dd94b0dc48b6924cc60b5e7679d5a
+  checksum: 10/b12afa34ee48f6cbfd8a96e093193020de20b93629c456c0b31bf81121b2bd7196bdb97c07d9df9cb66dda7c84483abd0a257d6bfd689ffd9290c7e19cfb9703
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.20.3":
-  version: 5.20.3
-  resolution: "@grafana/scenes@npm:5.20.3"
+"@grafana/scenes@npm:5.20.4":
+  version: 5.20.4
+  resolution: "@grafana/scenes@npm:5.20.4"
   dependencies:
     "@floating-ui/react": "npm:0.26.16"
     "@grafana/e2e-selectors": "npm:^11.0.0"
@@ -4125,7 +4128,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/17a0fb49dace617336b5f06bd359779ce060dee9b10217fbf4c686883f1421fefdb93e361676f76fa532535dfb118e4558058e882b5738ee94c9c59d2810e7cd
+  checksum: 10/99dfe8112b3d4d1d74c8dc626de53cf3245749cfd291d99f9e0d6bc2c5ee4870442b70be5010266b945cac32de282be5b87e66892bf0bebcb6b19f082a7f9dab
   languageName: node
   linkType: hard
 
@@ -4166,7 +4169,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.12"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
@@ -4253,8 +4256,8 @@ __metadata:
     "@types/jquery": "npm:3.5.32"
     "@types/lodash": "npm:4.17.12"
     "@types/mock-raf": "npm:1.0.6"
-    "@types/node": "npm:20.16.14"
-    "@types/prismjs": "npm:1.26.4"
+    "@types/node": "npm:20.16.15"
+    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.3"
     "@types/react-color": "npm:3.0.12"
     "@types/react-dom": "npm:18.2.25"
@@ -10451,12 +10454,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:20.16.14":
-  version: 20.16.14
-  resolution: "@types/node@npm:20.16.14"
+"@types/node@npm:20.16.15":
+  version: 20.16.15
+  resolution: "@types/node@npm:20.16.15"
   dependencies:
     undici-types: "npm:~6.19.2"
-  checksum: 10/1a63dd3ef3ec7a6da768c88e3664ca335e09005716aab07890646ca89b5b664df69bf9f0c1b82776d483e49c10e269c5c90d56f38d17945a88587e51d62f0139
+  checksum: 10/f4706676fdff05c7fb188399da578bbcce9260f889cfd767f1c3ee4fb33c369eb1ffa24161651ea3ef5b6a33e2e9b66f393949cab2be77d019277a1e16a7af36
   languageName: node
   linkType: hard
 
@@ -10535,6 +10538,13 @@ __metadata:
   version: 1.26.4
   resolution: "@types/prismjs@npm:1.26.4"
   checksum: 10/fcf7072c56835bfdc9bd9c06acd733440c5198b9fba33c5de09cd7bfe9e6663604120c5d602ffbeb806cdc06447fb711d84fc89c9039b8cc95078702a15e7ff1
+  languageName: node
+  linkType: hard
+
+"@types/prismjs@npm:1.26.5":
+  version: 1.26.5
+  resolution: "@types/prismjs@npm:1.26.5"
+  checksum: 10/617099479db9550119d0f84272dc79d64b2cf3e0d7a17167fe740d55fdf0f155697d935409464392d164e62080c2c88d649cf4bc4fdd30a87127337536657277
   languageName: node
   linkType: hard
 
@@ -13147,7 +13157,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bs-logger@npm:0.x, bs-logger@npm:^0.2.6":
+"bs-logger@npm:^0.2.6":
   version: 0.2.6
   resolution: "bs-logger@npm:0.2.6"
   dependencies:
@@ -16476,7 +16486,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es-iterator-helpers@npm:^1.0.12, es-iterator-helpers@npm:^1.0.19, es-iterator-helpers@npm:^1.1.0":
+"es-iterator-helpers@npm:^1.0.12, es-iterator-helpers@npm:^1.1.0":
   version: 1.1.0
   resolution: "es-iterator-helpers@npm:1.1.0"
   dependencies:
@@ -17219,16 +17229,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-react@npm:7.37.1":
-  version: 7.37.1
-  resolution: "eslint-plugin-react@npm:7.37.1"
+"eslint-plugin-react@npm:7.37.2":
+  version: 7.37.2
+  resolution: "eslint-plugin-react@npm:7.37.2"
   dependencies:
     array-includes: "npm:^3.1.8"
     array.prototype.findlast: "npm:^1.2.5"
     array.prototype.flatmap: "npm:^1.3.2"
     array.prototype.tosorted: "npm:^1.1.4"
     doctrine: "npm:^2.1.0"
-    es-iterator-helpers: "npm:^1.0.19"
+    es-iterator-helpers: "npm:^1.1.0"
     estraverse: "npm:^5.3.0"
     hasown: "npm:^2.0.2"
     jsx-ast-utils: "npm:^2.4.1 || ^3.0.0"
@@ -17243,7 +17253,7 @@ __metadata:
     string.prototype.repeat: "npm:^1.0.0"
   peerDependencies:
     eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7
-  checksum: 10/a7b9cf2c43255844ad0c9d4e3758a8c2b687a2ce9a09f4161ab245581d5d2d91b37742e541c88aa9ce368ec6c860e23dc78c15117f3fc1cdc433847038e8346b
+  checksum: 10/df2f7ab198018d3378f305a8a5ceceebc9bd31f019fc7567a2ef9c77789dc8a6a2c3c3957f8b0805f26c11c02f9f86c972e02cd0eda12f4d0370526c11f8a9a3
   languageName: node
   linkType: hard
 
@@ -19002,7 +19012,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.5.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.5.0"
-    "@grafana/azure-sdk": "npm:0.0.3"
+    "@grafana/azure-sdk": "npm:0.0.4"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:7.0.0"
@@ -19020,8 +19030,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.20.3"
-    "@grafana/scenes-react": "npm:5.20.3"
+    "@grafana/scenes": "npm:5.20.4"
+    "@grafana/scenes-react": "npm:5.20.4"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -19089,11 +19099,11 @@ __metadata:
     "@types/lodash": "npm:4.17.12"
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
-    "@types/node": "npm:20.16.14"
+    "@types/node": "npm:20.16.15"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
     "@types/pluralize": "npm:^0.0.33"
-    "@types/prismjs": "npm:1.26.4"
+    "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-grid-layout": "npm:1.3.5"
@@ -19172,7 +19182,7 @@ __metadata:
     eslint-plugin-jsx-a11y: "npm:6.10.1"
     eslint-plugin-lodash: "npm:7.4.0"
     eslint-plugin-no-barrel-files: "npm:^1.1.0"
-    eslint-plugin-react: "npm:7.37.1"
+    eslint-plugin-react: "npm:7.37.2"
     eslint-plugin-react-hooks: "npm:4.6.0"
     eslint-plugin-testing-library: "npm:^6.2.2"
     eslint-scope: "npm:^8.0.0"
@@ -19185,7 +19195,7 @@ __metadata:
     glob: "npm:11.0.0"
     history: "npm:4.10.1"
     html-loader: "npm:5.1.0"
-    html-webpack-plugin: "npm:5.6.2"
+    html-webpack-plugin: "npm:5.6.3"
     http-server: "npm:14.1.1"
     i18next: "npm:^23.0.0"
     i18next-browser-languagedetector: "npm:^7.0.2"
@@ -19780,9 +19790,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-webpack-plugin@npm:5.6.2, html-webpack-plugin@npm:^5.5.0":
-  version: 5.6.2
-  resolution: "html-webpack-plugin@npm:5.6.2"
+"html-webpack-plugin@npm:5.6.3, html-webpack-plugin@npm:^5.5.0":
+  version: 5.6.3
+  resolution: "html-webpack-plugin@npm:5.6.3"
   dependencies:
     "@types/html-minifier-terser": "npm:^6.0.0"
     html-minifier-terser: "npm:^6.0.2"
@@ -19797,7 +19807,7 @@ __metadata:
       optional: true
     webpack:
       optional: true
-  checksum: 10/ab04cd2ac138a9c2b4b9cbe347704d59ea94c54ee279c9e16aeb5d432813bc44a6b0539acebe3a1eddb87f79dbe1f8e2b365faef2624a88457ffcac4122a85ba
+  checksum: 10/fd2bf1ac04823526c8b609555d027b38b9d61b4ba9f5c8116a37cc6b62d5b86cab1f478616e8c5344fee13663d2566f5c470c66265ecb1e9574dc38d0459889d
   languageName: node
   linkType: hard
 
@@ -22731,7 +22741,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.memoize@npm:4.x, lodash.memoize@npm:^4.1.1, lodash.memoize@npm:^4.1.2":
+"lodash.memoize@npm:^4.1.1, lodash.memoize@npm:^4.1.2":
   version: 4.1.2
   resolution: "lodash.memoize@npm:4.1.2"
   checksum: 10/192b2168f310c86f303580b53acf81ab029761b9bd9caa9506a019ffea5f3363ea98d7e39e7e11e6b9917066c9d36a09a11f6fe16f812326390d8f3a54a1a6da
@@ -22986,7 +22996,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"make-error@npm:1.x, make-error@npm:^1.1.1, make-error@npm:^1.3.6":
+"make-error@npm:^1.1.1, make-error@npm:^1.3.6":
   version: 1.3.6
   resolution: "make-error@npm:1.3.6"
   checksum: 10/b86e5e0e25f7f777b77fabd8e2cbf15737972869d852a22b7e73c17623928fccb826d8e46b9951501d3f20e51ad74ba8c59ed584f610526a48f8ccf88aaec402
@@ -27423,7 +27433,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^16.8.0 || ^17.0.0 || ^18.0.0":
+"react-dom@npm:^16.8.0 || ^17.0.0 || ^18.0.0, react-dom@npm:^18.3.1":
   version: 18.3.1
   resolution: "react-dom@npm:18.3.1"
   dependencies:
@@ -31636,39 +31646,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-jest@npm:29.1.2":
-  version: 29.1.2
-  resolution: "ts-jest@npm:29.1.2"
-  dependencies:
-    bs-logger: "npm:0.x"
-    fast-json-stable-stringify: "npm:2.x"
-    jest-util: "npm:^29.0.0"
-    json5: "npm:^2.2.3"
-    lodash.memoize: "npm:4.x"
-    make-error: "npm:1.x"
-    semver: "npm:^7.5.3"
-    yargs-parser: "npm:^21.0.1"
-  peerDependencies:
-    "@babel/core": ">=7.0.0-beta.0 <8"
-    "@jest/types": ^29.0.0
-    babel-jest: ^29.0.0
-    jest: ^29.0.0
-    typescript: ">=4.3 <6"
-  peerDependenciesMeta:
-    "@babel/core":
-      optional: true
-    "@jest/types":
-      optional: true
-    babel-jest:
-      optional: true
-    esbuild:
-      optional: true
-  bin:
-    ts-jest: cli.js
-  checksum: 10/5e40e7b933a1f3aa0d304d3c53913d1a7125fc79cd44e22b332f6e25dfe13008ddc7ac647066bb4f914d76083f7e8949f0bc156d793c30f3419f4ffd8180968b
-  languageName: node
-  linkType: hard
-
 "ts-jest@npm:29.2.5":
   version: 29.2.5
   resolution: "ts-jest@npm:29.2.5"
@@ -33541,7 +33518,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs-parser@npm:21.1.1, yargs-parser@npm:^21.0.1, yargs-parser@npm:^21.1.1":
+"yargs-parser@npm:21.1.1, yargs-parser@npm:^21.1.1":
   version: 21.1.1
   resolution: "yargs-parser@npm:21.1.1"
   checksum: 10/9dc2c217ea3bf8d858041252d43e074f7166b53f3d010a8c711275e09cd3d62a002969a39858b92bbda2a6a63a585c7127014534a560b9c69ed2d923d113406e

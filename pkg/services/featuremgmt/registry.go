@@ -266,6 +266,13 @@ var (
 			AllowSelfServe: true,
 		},
 		{
+			Name:         "lokiShardSplitting",
+			Description:  "Use stream shards to split queries into smaller subqueries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:           "lokiQuerySplitting",
 			Description:    "Split large interval queries into subqueries with smaller time intervals",
 			Stage:          FeatureStageGeneralAvailability,
@@ -1534,6 +1541,12 @@ var (
 			Description: "Enables time pickers sync",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:        "prometheusUsesCombobox",
+			Description: "Use new combobox component for Prometheus query editor",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 	}
 )

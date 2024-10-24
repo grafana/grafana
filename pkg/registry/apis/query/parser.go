@@ -101,7 +101,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			}
 			exp, err := p.reader.ReadQuery(q, iter)
 			if err != nil {
-				return rsp, err
+				return rsp, NewErrorWithRefID(q.RefID, err)
 			}
 			exp.GraphID = int64(len(expressions) + 1)
 			expressions[q.RefID] = &exp
