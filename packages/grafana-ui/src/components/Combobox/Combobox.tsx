@@ -74,6 +74,21 @@ function itemFilter<T extends string | number>(inputValue: string) {
 
 const asyncNoop = () => Promise.resolve([]);
 
+function useOnValueChange<T>(value: T, fn: Function) {
+  const ref = useRef<T | null>(null);
+
+  if (ref.current !== value) {
+    fn();
+    ref.current = value;
+  }
+}
+
+function CloseLogGroup() {
+  console.groupEnd();
+
+  return <></>;
+}
+
 /**
  * A performant Select replacement.
  *
@@ -90,6 +105,17 @@ export const Combobox = <T extends string | number>({
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
+  let _hasLoggedThisRender = false;
+  function renderLog(...args) {
+    if (!_hasLoggedThisRender) {
+      console.group('Combobox render');
+      _hasLoggedThisRender = true;
+    }
+
+    console.log(...args);
+  }
+
+  // console.log('--- Combobox render ---');
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
@@ -99,7 +125,31 @@ export const Combobox = <T extends string | number>({
   const [asyncLoading, setAsyncLoading] = useState(false);
   const [asyncError, setAsyncError] = useState(false);
 
-  const [items, setItems] = useState(isAsync ? [] : options);
+  // A custom setter to always prepend the custom value at the beginning, if needed
+  const [items, baseSetItems] = useState(isAsync ? [] : options);
+  const setItems = useCallback(
+    (items: Array<ComboboxOption<T>>, inputValue: string | undefined) => {
+      let itemsToSet = items;
+
+      if (inputValue && createCustomValue) {
+        const optionMatchingInput = items.find((opt) => opt.label === inputValue || opt.value === inputValue);
+
+        if (!optionMatchingInput) {
+          const customValueOption = {
+            // Type casting needed to make this work when T is a number
+            value: inputValue as unknown as T,
+            description: t('combobox.custom-value.create', 'Create custom value'),
+          };
+
+          itemsToSet = items.slice(0);
+          itemsToSet.unshift(customValueOption);
+        }
+      }
+
+      baseSetItems(itemsToSet);
+    },
+    [createCustomValue]
+  );
 
   const selectedItemIndex = useMemo(() => {
     if (isAsync) {
@@ -142,10 +192,10 @@ export const Combobox = <T extends string | number>({
 
   const debounceAsync = useMemo(
     () =>
-      debounce((inputValue: string, customValueOption: ComboboxOption<T> | null) => {
+      debounce((inputValue: string) => {
         loadOptions(inputValue)
           .then((opts) => {
-            setItems(customValueOption ? [customValueOption, ...opts] : opts);
+            setItems(opts, inputValue);
             setAsyncLoading(false);
             setAsyncError(false);
           })
@@ -156,7 +206,7 @@ export const Combobox = <T extends string | number>({
             }
           });
       }, 200),
-    [loadOptions]
+    [loadOptions, setItems]
   );
 
   const {
@@ -165,7 +215,9 @@ export const Combobox = <T extends string | number>({
     getItemProps,
     isOpen,
     highlightedIndex,
-    setInputValue,
+
+    inputValue: downshiftInputValue,
+
     openMenu,
     closeMenu,
     selectItem,
@@ -176,75 +228,105 @@ export const Combobox = <T extends string | number>({
     items,
     itemToString,
     selectedItem,
+
     onSelectedItemChange: ({ selectedItem }) => {
+      console.log('> onSelectedItemChange', selectedItem);
+
+      console.log('< emit onChange', selectedItem);
       onChange(selectedItem);
     },
+
     defaultHighlightedIndex: selectedItemIndex ?? 0,
 
     scrollIntoView: () => {},
-    onInputValueChange: ({ inputValue }) => {
-      const customValueOption =
-        createCustomValue &&
-        inputValue &&
-        items.findIndex((opt) => opt.label === inputValue || opt.value === inputValue) === -1
-          ? {
-              // Type casting needed to make this work when T is a number
-              value: inputValue as unknown as T,
-              description: t('combobox.custom-value.create', 'Create custom value'),
-            }
-          : null;
 
-      if (isAsync) {
-        if (customValueOption) {
-          setItems([customValueOption]);
-        }
-        setAsyncLoading(true);
-        debounceAsync(inputValue, customValueOption);
-
+    onInputValueChange: ({ inputValue, isOpen }) => {
+      console.log('> onInputValueChange', { inputValue, isOpen });
+      // onInputValueChange is also called when an item is selected and the menu closes.
+      // No need to update options in that case
+      if (!isOpen) {
         return;
       }
 
-      const filteredItems = options.filter(itemFilter(inputValue));
+      if (!isAsync) {
+        const filteredItems = options.filter(itemFilter(inputValue));
+        setItems(filteredItems, inputValue);
+      }
 
-      setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
+      // if (isAsync) {
+      //   if (inputValue && createCustomValue) {
+      //     setItems([], inputValue);
+      //   }
+
+      //   setAsyncLoading(true);
+      //   debounceAsync(inputValue);
+
+      //   return;
+      // }
     },
 
     onIsOpenChange: ({ isOpen, inputValue }) => {
-      // Default to displaying all values when opening
-      if (isOpen && !isAsync) {
-        setItems(options);
-        return;
-      }
+      console.log('> onIsOpenChange', { isOpen });
 
-      if (isOpen && isAsync) {
-        setAsyncLoading(true);
-        loadOptions(inputValue ?? '')
-          .then((options) => {
-            setItems(options);
-            setAsyncLoading(false);
-            setAsyncError(false);
-          })
-          .catch((err) => {
-            if (!(err instanceof StaleResultError)) {
-              setAsyncError(true);
-              setAsyncLoading(false);
-            }
-          });
-        return;
-      }
+      // // If the menu is closed, don't worry about doing anything :)
+      // if (!isOpen) {
+      //   return;
+      // }
+
+      // // Clear out stale async options
+      // if (isAsync) {
+      //   setAsyncLoading(true);
+      //   setItems([], undefined);
+      // }
+
+      // // Clear out any previous search value when the menu is opened. This will trigger onInputValueChange
+      // // which will update the options
+      // setInputValue('');
+
+      // // However, if the input value is already empty, onInputValueChange won't be called, so we need to
+      // // manually trigger it
+      // if (isAsync && !inputValue) {
+      //   debounceAsync('');
+      // }
     },
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
+      // console.log('> onHighlightedIndexChange', { highlightedIndex, type });
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
         rowVirtualizer.scrollToIndex(highlightedIndex);
       }
+    },
+
+    stateReducer(state, actionAndChanges) {
+      console.log('> stateReducer', state, actionAndChanges);
+      let { changes } = actionAndChanges;
+
+      // When the input is opened, clear out the input value. This will trigger onInputValueChange
+      // to load async options
+      if (state.isOpen === false && changes.isOpen === true) {
+        changes = {
+          ...changes,
+          inputValue: '',
+        };
+      }
+
+      // Also when closing the menu, we need to temporarily set the input value to the selected item
+      // to prevent flashing
+      if (state.isOpen === true && changes.isOpen === false && changes.selectedItem) {
+        changes = {
+          ...changes,
+          inputValue: itemToString(changes.selectedItem),
+        };
+      }
+
+      return changes;
     },
   });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
-  const onBlur = useCallback(() => {
-    setInputValue(selectedItem?.label ?? value?.toString() ?? '');
-  }, [selectedItem, setInputValue, value]);
+  // const onBlur = useCallback(() => {
+  //   setInputValue(selectedItem?.label ?? value?.toString() ?? '');
+  // }, [selectedItem, setInputValue, value]);
 
   const handleSuffixClick = useCallback(() => {
     isOpen ? closeMenu() : openMenu();
@@ -258,6 +340,28 @@ export const Combobox = <T extends string | number>({
       isOpen
       ? 'search'
       : 'angle-down';
+
+  const valueToDisplay = downshiftInputValue;
+
+  useOnValueChange(isOpen, () => {
+    renderLog('$ isOpen changed', isOpen);
+  });
+
+  useOnValueChange(downshiftInputValue, () => {
+    renderLog('$ downshiftInputValue changed', downshiftInputValue);
+  });
+
+  useOnValueChange(selectedItem, () => {
+    renderLog('$ selectedItem changed', selectedItem);
+  });
+
+  useOnValueChange(value, () => {
+    renderLog('$ value prop changed', value);
+  });
+
+  useOnValueChange(valueToDisplay, () => {
+    renderLog('$ valueToDisplay changed', valueToDisplay);
+  });
 
   return (
     <div>
@@ -298,7 +402,7 @@ export const Combobox = <T extends string | number>({
            *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
            */
           onChange: () => {},
-          onBlur,
+          value: valueToDisplay,
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
         })}
       />
@@ -362,6 +466,8 @@ export const Combobox = <T extends string | number>({
           </div>
         </ScrollContainer>
       </div>
+
+      <CloseLogGroup />
     </div>
   );
 };

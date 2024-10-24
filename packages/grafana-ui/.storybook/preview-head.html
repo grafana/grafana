@@ -1,0 +1,33 @@
+<script>
+  const colors = [
+    '#1abc9c', // teal
+    '#e67e22', // orange
+    '#f1c40f', // yellow
+    '#3498db', // blue
+    '#d87efd', // purple
+  ];
+
+  let logCounter = 0;
+  let lastLogMs = undefined;
+  let maxLength = 4;
+
+  const originalConsoleLog = console.log;
+  console.log = function (...args) {
+    const now = Date.now();
+    if (lastLogMs === undefined) {
+      lastLogMs = now;
+    }
+
+    const sinceLast = now - lastLogMs;
+    if (sinceLast > 1000) {
+      logCounter += 1;
+    }
+
+    const sinceString = sinceLast.toString().padStart(maxLength);
+    maxLength = Math.max(maxLength, sinceString.length);
+
+    const color = colors[logCounter % colors.length];
+    originalConsoleLog(`%c${sinceString} ms`, `color: ${color};`, ...args);
+    lastLogMs = now;
+  };
+</script>

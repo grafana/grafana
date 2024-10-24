@@ -93,6 +93,12 @@ describe('Combobox', () => {
     expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
   });
 
+  describe('with a value already selected', () => {
+    it.todo('shows an empty text input when opening the menu');
+    it.todo('shows all options unfiltered when opening the menu');
+    it.todo('exiting the menu without selecting an item restores the value to the text input');
+  });
+
   describe('create custom value', () => {
     it('should allow creating a custom value', async () => {
       const onChangeHandler = jest.fn();
