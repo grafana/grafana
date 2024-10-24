@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, setPluginExtensionsHook } from '@grafana/runtime';
+import { config, locationService, setPluginExtensionsHook, setPluginLinksHook } from '@grafana/runtime';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -58,6 +58,11 @@ async function createModelMock() {
 
 setPluginExtensionsHook(() => ({
   extensions: [],
+  isLoading: false,
+}));
+
+setPluginLinksHook(() => ({
+  links: [],
   isLoading: false,
 }));
 
