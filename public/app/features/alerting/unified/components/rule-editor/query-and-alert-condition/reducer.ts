@@ -6,6 +6,7 @@ import {
   getDefaultRelativeTimeRange,
   getNextRefId,
   rangeUtil,
+  ReducerID,
   RelativeTimeRange,
 } from '@grafana/data';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
@@ -19,6 +20,8 @@ import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource
 import { getDefaultQueries } from '../../../utils/rule-form';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
+
+import { SimpleConditionIdentifier } from './SimpleCondition';
 
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
@@ -60,7 +63,8 @@ export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: 
 export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
 export const resetToSimpleCondition = createAction('resetToSimpleCondition');
-
+export const removeFirstReducer = createAction('removeFirstReducer');
+export const addReducerAtFirstPosition = createAction('addReducerAtFirstPosition');
 export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
   'setRecordingRulesQueries'
 );
@@ -224,6 +228,34 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     .addCase(rewireExpressions, (state, { payload }) => {
       state.queries = queriesWithUpdatedReferences(state.queries, payload.oldRefId, payload.newRefId);
+    })
+    .addCase(removeFirstReducer, (state) => {
+      const reducerIndex = state.queries.findIndex(
+        (query) => isExpressionQuery(query.model) && query.model.type === ExpressionQueryType.reduce
+      );
+
+      if (reducerIndex === 1) {
+        // means the reducer is the second query
+        state.queries.splice(reducerIndex, 1);
+        state.queries[1].model.expression = SimpleConditionIdentifier.queryId;
+      }
+    })
+    .addCase(addReducerAtFirstPosition, (state) => {
+      // we only update the refid and the model to point to the reducer expression
+      state.queries[1].model.expression = SimpleConditionIdentifier.reducerId;
+      // insert in second position the reducer expression
+      state.queries.splice(1, 0, {
+        datasourceUid: ExpressionDatasourceUID,
+        model: expressionDatasource.newQuery({
+          type: ExpressionQueryType.reduce,
+          reducer: ReducerID.last,
+          conditions: [{ ...defaultCondition, query: { params: [] } }],
+          expression: SimpleConditionIdentifier.queryId,
+          refId: SimpleConditionIdentifier.reducerId,
+        }),
+        refId: SimpleConditionIdentifier.reducerId,
+        queryType: 'expression',
+      });
     })
     .addCase(updateExpressionType, (state, action) => {
       state.queries = state.queries.map((query) => {

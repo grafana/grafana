@@ -1,17 +1,25 @@
 import { getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import {
+  ExpressionDatasourceUID,
+  ExpressionQuery,
+  ExpressionQueryType,
+  ReducerMode,
+} from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { SimpleConditionIdentifier } from './SimpleCondition';
 import {
   addNewDataQuery,
   addNewExpression,
+  addReducerAtFirstPosition,
   duplicateQuery,
   queriesAndExpressionsReducer,
   QueriesAndExpressionsState,
   removeExpression,
+  removeFirstReducer,
   rewireExpressions,
   setDataQueries,
   updateExpression,
@@ -19,6 +27,26 @@ import {
   updateExpressionTimeRange,
   updateExpressionType,
 } from './reducer';
+
+const reduceExpression: AlertQuery<ExpressionQuery> = {
+  refId: SimpleConditionIdentifier.reducerId,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.reduce,
+    refId: SimpleConditionIdentifier.reducerId,
+    settings: { mode: ReducerMode.Strict },
+  },
+};
+const thresholdExpression: AlertQuery<ExpressionQuery> = {
+  refId: SimpleConditionIdentifier.thresholdId,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.threshold,
+    refId: SimpleConditionIdentifier.thresholdId,
+  },
+};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -356,6 +384,41 @@ describe('Query and expressions reducer', () => {
       })
     );
 
+    expect(newState).toMatchSnapshot();
+  });
+  it('should remove first reducer', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, reduceExpression, thresholdExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    expect(newState).toMatchSnapshot();
+  });
+
+  it('should not remove first reducer if reducer is not the first expression', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, thresholdExpression, reduceExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    expect(newState).toEqual(initialState);
+  });
+
+  it('should not remove first reducer if reducer is not the second query', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, alertQuery, reduceExpression, thresholdExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    expect(newState).toEqual(initialState);
+  });
+
+  it('should add reduce expression if there is no reduce expression', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, thresholdExpression],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, addReducerAtFirstPosition());
     expect(newState).toMatchSnapshot();
   });
 });
