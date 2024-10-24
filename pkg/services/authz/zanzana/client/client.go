@@ -69,9 +69,6 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 
 	c.modelID = modelID
 
-	fmt.Println("STORE ID: ", c.storeID)
-	fmt.Println("MODEL ID: ", c.modelID)
-
 	return c, nil
 }
 
