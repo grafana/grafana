@@ -34,7 +34,7 @@ func newLegacyServer(
 	}
 
 	l := &legacyServer{
-		ac:        ac,
+		ac:        ac.WithoutResolvers(), // We want to skip the folder tree resolution as it's done by the service
 		authnSvc:  authnSvc,
 		folderSvc: folderSvc,
 		logger:    log.New("authz-grpc-server"),
