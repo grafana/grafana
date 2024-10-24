@@ -17,6 +17,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -97,8 +98,29 @@ export const LogsVolumePanelList = ({
   } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title="The logs volume query has timed out"
+        title="Unable to show log volume"
         // Using info to avoid users thinking that the actual query has failed.
+        message={
+          <>
+            <p>
+              <Trans i18nKey="explore.logs.logs-volume.much-data">
+                The query is trying to access too much data. Try one or more of the following:
+              </Trans>
+            </p>
+            <ul>
+              <li>
+                <Trans i18nKey="explore.logs.logs-volume.add-filters">
+                  Add more labels to your query to narrow down your search.
+                </Trans>
+              </li>
+              <li>
+                <Trans i18nKey="explore.logs.logs-volume.decrease-timerange">
+                  Decrease the time range of your query.
+                </Trans>
+              </li>
+            </ul>
+          </>
+        }
         severity="info"
         suggestedAction="Retry"
         onSuggestedAction={onLoadLogsVolume}
