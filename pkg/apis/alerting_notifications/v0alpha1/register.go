@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 
+	templategroup "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 )
@@ -68,25 +69,6 @@ var (
 			},
 		},
 	)
-	TemplateGroupResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-		"templategroups", "templategroup", "TemplateGroup",
-		func() runtime.Object { return &TemplateGroup{} },
-		func() runtime.Object { return &TemplateGroupList{} },
-		utils.TableColumns{
-			Definition: []metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-			},
-			Reader: func(obj any) ([]interface{}, error) {
-				r, ok := obj.(*TemplateGroup)
-				if !ok {
-					return nil, fmt.Errorf("expected resource or info")
-				}
-				return []interface{}{
-					r.Name,
-				}, nil
-			},
-		},
-	)
 	RouteResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		"routingtrees", "routingtree", "RoutingTree",
 		func() runtime.Object { return &RoutingTree{} },
@@ -128,8 +110,8 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		&TimeIntervalList{},
 		&Receiver{},
 		&ReceiverList{},
-		&TemplateGroup{},
-		&TemplateGroupList{},
+		&templategroup.TemplateGroup{},
+		&templategroup.TemplateGroupList{},
 		&RoutingTree{},
 		&RoutingTreeList{},
 	)
@@ -167,10 +149,12 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		return err
 	}
 
+	templateKind := templategroup.Kind()
+	gvk := templateKind.GroupVersionKind()
 	err = scheme.AddFieldLabelConversionFunc(
-		TemplateGroupResourceInfo.GroupVersionKind(),
+		gvk,
 		func(label, value string) (string, string, error) {
-			fieldSet := SelectableTemplateGroupFields(&TemplateGroup{})
+			fieldSet := templategroup.SelectableFields(&templategroup.TemplateGroup{})
 			for key := range fieldSet {
 				if label == key {
 					return label, value, nil
@@ -197,16 +181,6 @@ func SelectableTimeIntervalsFields(obj *TimeInterval) fields.Set {
 }
 
 func SelectableReceiverFields(obj *Receiver) fields.Set {
-	if obj == nil {
-		return nil
-	}
-	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"metadata.provenance": obj.GetProvenanceStatus(),
-		"spec.title":          obj.Spec.Title,
-	})
-}
-
-func SelectableTemplateGroupFields(obj *TemplateGroup) fields.Set {
 	if obj == nil {
 		return nil
 	}

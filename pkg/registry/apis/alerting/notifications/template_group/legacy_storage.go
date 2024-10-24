@@ -10,7 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	notifications "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1"
+
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -29,20 +30,18 @@ type TemplateService interface {
 	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error
 }
 
-var resourceInfo = notifications.TemplateGroupResourceInfo
-
 type legacyStorage struct {
 	service        TemplateService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
 
-func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errors.NewMethodNotSupported(resourceInfo.GroupResource(), "deleteCollection")
+func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, errors.NewMethodNotSupported(ResourceInfo.GroupResource(), "deleteCollection")
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+	return ResourceInfo.NewFunc()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -52,11 +51,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+	return ResourceInfo.GetSingularName()
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+	return ResourceInfo.NewListFunc()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -104,7 +103,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 			return nil, err
 		}
 	}
-	p, ok := obj.(*notifications.TemplateGroup)
+	p, ok := obj.(*model.TemplateGroup)
 	if !ok {
 		return nil, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
@@ -148,7 +147,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		}
 	}
 
-	p, ok := obj.(*notifications.TemplateGroup)
+	p, ok := obj.(*model.TemplateGroup)
 	if !ok {
 		return nil, false, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
 	}

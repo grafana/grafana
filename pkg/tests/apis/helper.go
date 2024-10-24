@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/apimachinery/pkg/types"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
 	"k8s.io/client-go/discovery"
@@ -636,4 +637,88 @@ func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	team, err := c.env.Server.HTTPServer.TeamService.CreateTeam(context.Background(), name, email, orgID)
 	require.NoError(c.t, err)
 	return team
+}
+
+// GenericClient is the struct that implements a generic interface for resource operations
+type GenericClient[T any, L any] struct {
+	Client dynamic.ResourceInterface
+}
+
+func (c *GenericClient[T, L]) Create(ctx context.Context, resource *T, opts metav1.CreateOptions) (*T, error) {
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
+	if err != nil {
+		return nil, err
+	}
+	u := &unstructured.Unstructured{Object: unstructuredObj}
+	result, err := c.Client.Create(ctx, u, opts)
+	if err != nil {
+		return nil, err
+	}
+	createdObj := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, createdObj)
+	if err != nil {
+		return nil, err
+	}
+	return createdObj, nil
+}
+
+func (c *GenericClient[T, L]) Update(ctx context.Context, resource *T, opts metav1.UpdateOptions) (*T, error) {
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
+	if err != nil {
+		return nil, err
+	}
+	u := &unstructured.Unstructured{Object: unstructuredObj}
+	result, err := c.Client.Update(ctx, u, opts)
+	if err != nil {
+		return nil, err
+	}
+	updatedObj := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, updatedObj)
+	if err != nil {
+		return nil, err
+	}
+	return updatedObj, nil
+}
+
+func (c *GenericClient[T, L]) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+	return c.Client.Delete(ctx, name, opts)
+}
+
+func (c *GenericClient[T, L]) Get(ctx context.Context, name string, opts metav1.GetOptions) (*T, error) {
+	result, err := c.Client.Get(ctx, name, opts)
+	if err != nil {
+		return nil, err
+	}
+	retrievedObj := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, retrievedObj)
+	if err != nil {
+		return nil, err
+	}
+	return retrievedObj, nil
+}
+
+func (c *GenericClient[T, L]) List(ctx context.Context, opts metav1.ListOptions) (*L, error) {
+	result, err := c.Client.List(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	listObj := new(L)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.UnstructuredContent(), listObj)
+	if err != nil {
+		return nil, err
+	}
+	return listObj, nil
+}
+
+func (c *GenericClient[T, L]) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*T, error) {
+	result, err := c.Client.Patch(ctx, name, pt, data, opts, subresources...)
+	if err != nil {
+		return nil, err
+	}
+	patchedObj := new(T)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, patchedObj)
+	if err != nil {
+		return nil, err
+	}
+	return patchedObj, nil
 }

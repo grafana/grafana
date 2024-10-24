@@ -12,9 +12,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -51,22 +50,20 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	client := adminK8sClient.NotificationsV0alpha1().TemplateGroups("default")
+	client := newClient(t, helper.Org1.Admin)
 
 	newTemplate := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v0alpha1.Spec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
 	}
 
 	t.Run("create should fail if object name is specified", func(t *testing.T) {
-		template := newTemplate.DeepCopy()
+		template := newTemplate.Copy().(*v0alpha1.TemplateGroup)
 		template.Name = "new-templateGroup"
 		_, err := client.Create(ctx, template, v1.CreateOptions{})
 		assert.Error(t, err)
@@ -95,7 +92,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		if existingTemplateGroup == nil {
 			t.Skip()
 		}
-		updated := existingTemplateGroup.DeepCopy()
+		updated := existingTemplateGroup.Copy().(*v0alpha1.TemplateGroup)
 		updated.Spec.Title = "another-templateGroup"
 		actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)
@@ -187,22 +184,17 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	}
 
-	admin := org1.Admin
-	adminK8sClient, err := versioned.NewForConfig(admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().TemplateGroups("default")
+	adminClient := newClient(t, org1.Admin)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			k8sClient, err := versioned.NewForConfig(tc.user.NewRestConfig())
-			require.NoError(t, err)
-			client := k8sClient.NotificationsV0alpha1().TemplateGroups("default")
+			client := newClient(t, tc.user)
 
 			var expected = &v0alpha1.TemplateGroup{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.TemplateGroupSpec{
+				Spec: v0alpha1.Spec{
 					Title:   fmt.Sprintf("template-group-1-%s", tc.user.Identity.GetLogin()),
 					Content: `{{ define "test" }} test {{ end }}`,
 				},
@@ -270,7 +262,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				})
 			}
 
-			updatedExpected := expected.DeepCopy()
+			updatedExpected := expected.Copy().(*v0alpha1.TemplateGroup)
 			updatedExpected.Spec.Content = `{{ define "another-test" }} test {{ end }}`
 
 			d, err = json.Marshal(updatedExpected)
@@ -284,7 +276,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					expected = updated
 
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
-						up := updatedExpected.DeepCopy()
+						up := updatedExpected.Copy().(*v0alpha1.TemplateGroup)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, v1.UpdateOptions{})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
@@ -296,7 +288,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
-						up := updatedExpected.DeepCopy()
+						up := updatedExpected.Copy().(*v0alpha1.TemplateGroup)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, v1.UpdateOptions{})
 						require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
@@ -351,9 +343,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminK8sClient, err := versioned.NewForConfig(admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().TemplateGroups("default")
+	adminClient := newClient(t, admin)
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
@@ -364,7 +354,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v0alpha1.Spec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -382,7 +372,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.Equal(t, "API", got.GetProvenanceStatus())
 	})
 	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := created.DeepCopy()
+		updated := created.Copy().(*v0alpha1.TemplateGroup)
 		updated.Spec.Content = `{{ define "another-test" }} test {{ end }}`
 
 		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
@@ -403,15 +393,13 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().TemplateGroups("default")
+	adminClient := newClient(t, helper.Org1.Admin)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v0alpha1.Spec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -423,13 +411,13 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	require.NotEmpty(t, created.ResourceVersion)
 
 	t.Run("should forbid if version does not match", func(t *testing.T) {
-		updated := created.DeepCopy()
+		updated := created.Copy().(*v0alpha1.TemplateGroup)
 		updated.ResourceVersion = "test"
 		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
-		updated := created.DeepCopy()
+		updated := created.Copy().(*v0alpha1.TemplateGroup)
 		updated.Spec.Content = `{{ define "test-another" }} test {{ end }}`
 		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)
@@ -437,7 +425,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.NotEqual(t, updated.ResourceVersion, actualUpdated.ResourceVersion)
 	})
 	t.Run("should update if version is empty", func(t *testing.T) {
-		updated := created.DeepCopy()
+		updated := created.Copy().(*v0alpha1.TemplateGroup)
 		updated.ResourceVersion = ""
 		updated.Spec.Content = `{{ define "test-another-2" }} test {{ end }}`
 
@@ -489,15 +477,13 @@ func TestIntegrationPatch(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().TemplateGroups("default")
+	adminClient := newClient(t, helper.Org1.Admin)
 
 	template := v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v0alpha1.Spec{
 			Title:   "template-group",
 			Content: `{{ define "test" }} test {{ end }}`,
 		},
@@ -537,7 +523,7 @@ func TestIntegrationPatch(t *testing.T) {
 
 		result, err := adminClient.Patch(ctx, current.Name, types.JSONPatchType, patchData, v1.PatchOptions{})
 		require.NoError(t, err)
-		expectedSpec := *current.Spec.DeepCopy()
+		expectedSpec := current.Spec
 		expectedSpec.Content = expected
 		require.EqualValues(t, expectedSpec, result.Spec)
 		current = result
@@ -551,28 +537,25 @@ func TestIntegrationListSelector(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().TemplateGroups("default")
+	adminClient := newClient(t, helper.Org1.Admin)
 
 	template1 := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v0alpha1.Spec{
 			Title:   "test1",
 			Content: `{{ define "test1" }} test {{ end }}`,
 		},
 	}
-	template1, err = adminClient.Create(ctx, template1, v1.CreateOptions{})
+	template1, err := adminClient.Create(ctx, template1, v1.CreateOptions{})
 	require.NoError(t, err)
 
 	template2 := &v0alpha1.TemplateGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TemplateGroupSpec{
+		Spec: v0alpha1.Spec{
 			Title:   "test2",
 			Content: `{{ define "test2" }} test {{ end }}`,
 		},

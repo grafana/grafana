@@ -71,6 +71,14 @@ func (t *NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	addStorage := func(gvr schema.GroupVersionResource, s rest.Storage) {
+		v, ok := apiGroupInfo.VersionedResourcesStorageMap[gvr.Version]
+		if !ok {
+			v = map[string]rest.Storage{}
+			apiGroupInfo.VersionedResourcesStorageMap[gvr.Version] = v
+		}
+		v[gvr.Resource] = s
+	}
 	scheme := opts.Scheme
 	optsGetter := opts.OptsGetter
 	dualWriteBuilder := opts.DualWriteBuilder
@@ -79,33 +87,40 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 	if err != nil {
 		return fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
+	addStorage(notificationsModels.TimeIntervalResourceInfo.GroupVersionResource(), intervals)
 
 	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder, t.ng.Api.ReceiverService)
 	if err != nil {
 		return fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}
+	addStorage(notificationsModels.ReceiverResourceInfo.GroupVersionResource(), recvStorage)
 
-	templ, err := template_group.NewStorage(t.ng.Api.Templates, t.namespacer, scheme, optsGetter, dualWriteBuilder)
+	templ, err := template_group.NewStorage(t.ng.Api.Templates, t.namespacer, opts)
 	if err != nil {
 		return fmt.Errorf("failed to initialize templates group storage: %w", err)
 	}
+	addStorage(template_group.ResourceInfo.GroupVersionResource(), templ)
 
 	routeStorage, err := routing_tree.NewStorage(t.ng.Api.Policies, t.namespacer)
 	if err != nil {
 		return fmt.Errorf("failed to initialize route storage: %w", err)
 	}
+	addStorage(notificationsModels.RouteResourceInfo.GroupVersionResource(), routeStorage)
 
-	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
-		notificationsModels.TimeIntervalResourceInfo.StoragePath():  intervals,
-		notificationsModels.ReceiverResourceInfo.StoragePath():      recvStorage,
-		notificationsModels.TemplateGroupResourceInfo.StoragePath(): templ,
-		notificationsModels.RouteResourceInfo.StoragePath():         routeStorage,
-	}
 	return nil
 }
 
 func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return notificationsModels.GetOpenAPIDefinitions
+	return func(c common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		result := make(map[string]common.OpenAPIDefinition)
+		for s, definition := range template_group.GetOpenAPIDefinitions(c) {
+			result[s] = definition
+		}
+		for s, definition := range notificationsModels.GetOpenAPIDefinitions(c) {
+			result[s] = definition
+		}
+		return result
+	}
 }
 
 func (t *NotificationsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
@@ -123,7 +138,7 @@ func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3
 	// Hide the ability to list or watch across all tenants
 	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+notificationsModels.TemplateGroupResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+template_group.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+notificationsModels.RouteResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
@@ -138,7 +153,7 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
-			case notificationsModels.TemplateGroupResourceInfo.GroupResource().Resource:
+			case template_group.ResourceInfo.GroupResource().Resource:
 				return template_group.Authorize(ctx, t.authz, a)
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeInterval.Authorize(ctx, t.authz, a)
