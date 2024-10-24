@@ -66,7 +66,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	}))
 
 	// --- v2 - asynchronous workflow refactor
-	sessionTable := Table{
+	migrationSessionTable := Table{
 		Name: "cloud_migration_session",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -99,7 +99,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		},
 	}
 
-	addTableReplaceMigrations(mg, migrationTable, sessionTable, 2, map[string]string{
+	addTableReplaceMigrations(mg, migrationTable, migrationSessionTable, 2, map[string]string{
 		"id":           "id",
 		"uid":          "uid",
 		"auth_token":   "auth_token",
@@ -158,4 +158,9 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	// -- delete the snapshot result column while still in the experimental phase
 	mg.AddMigration("delete cloud_migration_snapshot.result column", NewRawSQLMigration("ALTER TABLE cloud_migration_snapshot DROP COLUMN result"))
+
+	// -- Adds org_id column for for all elements - defaults to 1 (default org)
+	mg.AddMigration("add cloud_migration_session.org_id column", NewAddColumnMigration(migrationSessionTable, &Column{
+		Name: "org_id", Type: DB_BigInt, Nullable: false, Default: "1",
+	}))
 }

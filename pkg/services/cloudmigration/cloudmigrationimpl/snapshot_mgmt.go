@@ -25,7 +25,7 @@ import (
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
 	// Data sources
-	dataSources, err := s.getDataSourceCommands(ctx)
+	dataSources, err := s.getDataSourceCommands(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get datasources", "err", err)
 		return nil, err
@@ -85,14 +85,17 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	return migrationData, nil
 }
 
-func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
-	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+func (s *Service) getDataSourceCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]datasources.AddDataSourceCommand, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDataSourceCommands")
+	defer span.End()
+
+	dataSources, err := s.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{OrgID: signedInUser.GetOrgID()})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
 		return nil, err
 	}
 
-	result := []datasources.AddDataSourceCommand{}
+	result := make([]datasources.AddDataSourceCommand, 0, len(dataSources))
 	for _, dataSource := range dataSources {
 		// Decrypt secure json to send raw credentials
 		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
@@ -124,7 +127,10 @@ func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddD
 
 // getDashboardAndFolderCommands returns the json payloads required by the dashboard and folder creation APIs
 func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]dashboards.Dashboard, []folder.CreateFolderCommand, error) {
-	dashs, err := s.dashboardService.GetAllDashboards(ctx)
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDashboardAndFolderCommands")
+	defer span.End()
+
+	dashs, err := s.store.GetAllDashboardsByOrgId(ctx, signedInUser.GetOrgID())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -150,20 +156,21 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUids,
 		SignedInUser:     signedInUser,
+		OrgID:            signedInUser.GetOrgID(),
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	folderCmds := make([]folder.CreateFolderCommand, len(folders))
-	for i, f := range folders {
-		folderCmds[i] = folder.CreateFolderCommand{
+	folderCmds := make([]folder.CreateFolderCommand, 0, len(folders))
+	for _, f := range folders {
+		folderCmds = append(folderCmds, folder.CreateFolderCommand{
 			UID:         f.UID,
 			Title:       f.Title,
 			Description: f.Description,
 			ParentUID:   f.ParentUID,
-		}
+		})
 	}
 
 	return dashboardCmds, folderCmds, nil

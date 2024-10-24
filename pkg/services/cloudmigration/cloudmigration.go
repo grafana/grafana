@@ -17,17 +17,17 @@ type Service interface {
 	DeleteToken(ctx context.Context, uid string) error
 
 	CreateSession(ctx context.Context, req CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, error)
-	GetSession(ctx context.Context, migUID string) (*CloudMigrationSession, error)
-	DeleteSession(ctx context.Context, migUID string) (*CloudMigrationSession, error)
-	GetSessionList(context.Context) (*CloudMigrationSessionListResponse, error)
+	GetSession(ctx context.Context, orgID int64, migUID string) (*CloudMigrationSession, error)
+	DeleteSession(ctx context.Context, orgID int64, migUID string) (*CloudMigrationSession, error)
+	GetSessionList(ctx context.Context, orgID int64) (*CloudMigrationSessionListResponse, error)
 
-	RunMigration(ctx context.Context, migUID string) (*MigrateDataResponse, error)
+	RunMigration(ctx context.Context, orgID int64, migUID string) (*MigrateDataResponse, error)
 	GetMigrationStatus(ctx context.Context, runUID string) (*CloudMigrationSnapshot, error)
 	GetMigrationRunList(ctx context.Context, migUID string) (*CloudMigrationRunList, error)
 
 	CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*CloudMigrationSnapshot, error)
 	GetSnapshot(ctx context.Context, query GetSnapshotsQuery) (*CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query ListSnapshotsQuery) ([]CloudMigrationSnapshot, error)
-	UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error
+	UploadSnapshot(ctx context.Context, orgID int64, sessionUid string, snapshotUid string) error
 	CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error
 }
