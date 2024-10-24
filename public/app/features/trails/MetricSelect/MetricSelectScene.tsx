@@ -22,7 +22,6 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
   SceneTimeRange,
-  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
@@ -35,8 +34,6 @@ import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
-// TODO: fix this
-// import { limitOtelMatchTerms } from '../otel/util';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -106,7 +103,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
-    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+    onReferencedVariableValueChanged: () => {
       // In all cases, we want to reload the metric names
       this._debounceRefreshMetricNames();
     },
@@ -196,7 +193,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     );
 
     this._subs.add(
-      trail.subscribeToState(({ useOtelExperience }, oldState) => {
+      trail.subscribeToState(() => {
         // users will most likely not switch this off but for now,
         // update metric names when changing useOtelExperience
         this._debounceRefreshMetricNames();
@@ -204,7 +201,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     );
 
     this._subs.add(
-      trail.subscribeToState(({ showPreviews }, oldState) => {
+      trail.subscribeToState(() => {
         // move showPreviews into the settings
         // build layout when toggled
         this.buildLayout();
@@ -239,32 +236,22 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       });
     }
 
-    let noOtelMetrics = false;
-    let missingOtelTargets = false;
-
-    // TODO: fix this
-    // if (trail.state.useOtelExperience) {
-    //   const jobsList = trail.state.otelTargets?.jobs;
-    //   const instancesList = trail.state.otelTargets?.instances;
-    //   // no targets have this combination of filters so there are no metrics that can be joined
-    //   // show no metrics
-    //   if (jobsList && jobsList.length > 0 && instancesList && instancesList.length > 0) {
-    //     const otelMatches = limitOtelMatchTerms(matchTerms, jobsList, instancesList, missingOtelTargets);
-    //
-    //     missingOtelTargets = otelMatches.missingOtelTargets;
-    //
-    //     matchTerms.push(otelMatches.jobsRegex);
-    //     matchTerms.push(otelMatches.instancesRegex);
-    //   } else {
-    //     noOtelMetrics = true;
-    //   }
-    // }
-
     const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
     this.setState({ metricNamesLoading: true, metricNamesError: undefined, metricNamesWarning: undefined });
 
     try {
-      const response = await getMetricNames(datasourceUid, timeRange, getSelectedScopes(), filters, MAX_METRIC_NAMES);
+      const jobsList = trail.state.useOtelExperience ? (trail.state.otelTargets?.jobs ?? []) : [];
+      const instancesList = trail.state.useOtelExperience ? (trail.state.otelTargets?.instances ?? []) : [];
+
+      const response = await getMetricNames(
+        datasourceUid,
+        timeRange,
+        getSelectedScopes(),
+        filters,
+        jobsList,
+        instancesList,
+        MAX_METRIC_NAMES
+      );
       const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this));
       let metricNames = searchRegex
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
@@ -287,21 +274,19 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         : undefined;
 
       // if there are no otel targets for otel resources, there will be no labels
-      if (noOtelMetrics) {
+      if (trail.state.useOtelExperience && (jobsList.length === 0 || instancesList.length === 0)) {
         metricNames = [];
         metricNamesWarning = undefined;
       }
 
-      if (missingOtelTargets) {
+      if (response.missingOtelTargets) {
         metricNamesWarning = `${metricNamesWarning ?? ''} The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.`;
       }
 
       let bodyLayout = this.state.body;
 
-      let rootGroupNode = this.state.rootGroup;
-
       // generate groups based on the search metrics input
-      rootGroupNode = await this.generateGroups(filteredMetricNames);
+      let rootGroupNode = await this.generateGroups(filteredMetricNames);
 
       this.setState({
         metricNames,
@@ -370,9 +355,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
       const oldPanel = this.previewCache[metricName];
 
-      const panel = oldPanel || { name: metricName, index, loaded: false };
-
-      metricsMap[metricName] = panel;
+      metricsMap[metricName] = oldPanel || { name: metricName, index, loaded: false };
     }
 
     try {
