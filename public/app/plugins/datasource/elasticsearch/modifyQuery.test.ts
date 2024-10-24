@@ -61,7 +61,7 @@ describe('addFilterToQuery', () => {
   it('should support filters with colons', () => {
     expect(addFilterToQuery('', 'label:name', 'value')).toBe('label\\:name:"value"');
   });
-  it('should support filters with forward slash', () => {
+  it('should support filters with quotes', () => {
     expect(addFilterToQuery('', 'label:name', 'the "value"')).toBe('label\\:name:"the \\"value\\""');
   });
 });
