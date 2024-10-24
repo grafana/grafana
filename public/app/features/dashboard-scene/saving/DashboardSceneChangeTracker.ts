@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -31,7 +32,7 @@ export class DashboardSceneChangeTracker {
   private _changesWorker?: Worker;
   private _dashboard: DashboardScene;
 
-  constructor(dashboard: DashboardScene) {
+  constructor(dashboard: DashboardScene, debounce?: number) {
     this._dashboard = dashboard;
   }
 
@@ -120,13 +121,8 @@ export class DashboardSceneChangeTracker {
     return false;
   }
 
-  private onStateChanged(event: SceneObjectStateChangedEvent) {
-    if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
-      this.detectSaveModelChanges();
-    }
-  }
-
   private detectSaveModelChanges() {
+    console.log('detectSaveModelChanges');
     const changedDashboard = transformSceneToSaveModel(this._dashboard);
     const initialDashboard = this._dashboard.getInitialSaveModel();
 
@@ -165,13 +161,20 @@ export class DashboardSceneChangeTracker {
     if (!this._changesWorker) {
       this.init();
     }
+
     this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
       this.updateIsDirty(e.data);
     };
 
+    const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));
+
     this._changeTrackerSub = this._dashboard.subscribeToEvent(
       SceneObjectStateChangedEvent,
-      this.onStateChanged.bind(this)
+      (event: SceneObjectStateChangedEvent) => {
+        if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+          performSaveModelDiff();
+        }
+      }
     );
   }
 
@@ -184,4 +187,15 @@ export class DashboardSceneChangeTracker {
     this._changesWorker?.terminate();
     this._changesWorker = undefined;
   }
+}
+
+/**
+ * The debouncer makes unit tests slower and more complex so turning it off for unit tests
+ */
+function getChangeTrackerDebouncer(fn: () => void) {
+  if (process.env.NODE_ENV === 'test') {
+    return fn;
+  }
+
+  return debounce(fn, 250);
 }
