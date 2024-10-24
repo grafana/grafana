@@ -55,7 +55,7 @@ There are different ways you can follow along with this tutorial.
 
 As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
 
-Continue to [Create notification policies](#create-notification-policies).
+Continue to [Alert instances](#alert-instances).
 
 ### Interactive learning environment
 
