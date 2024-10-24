@@ -122,7 +122,6 @@ export class DashboardSceneChangeTracker {
   }
 
   private detectSaveModelChanges() {
-    console.log('detectSaveModelChanges');
     const changedDashboard = transformSceneToSaveModel(this._dashboard);
     const initialDashboard = this._dashboard.getInitialSaveModel();
 
