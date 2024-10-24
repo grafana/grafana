@@ -249,10 +249,6 @@ export function GrafanaEvaluationBehaviorStep({
 
   const defaultGroupValue = group ? { value: group, label: group } : undefined;
 
-  const evaluationDesc = isGrafanaRecordingRule
-    ? t('alerting.rule-form.evaluation.text.recording', 'Define how often the recording rule is evaluated.')
-    : t('alerting.rule-form.evaluation.text.alerting', 'Define how often the alert rule is evaluated.');
-
   const pauseContentText = isGrafanaRecordingRule
     ? t('alerting.rule-form.evaluation.pause.recording', 'Turn on to pause evaluation for this recording rule.')
     : t('alerting.rule-form.evaluation.pause.alerting', 'Turn on to pause evaluation for this alert rule.');
@@ -274,7 +270,6 @@ export function GrafanaEvaluationBehaviorStep({
             <Field
               label="Evaluation group and interval"
               data-testid="group-picker"
-              description={evaluationDesc}
               className={styles.formInput}
               error={errors.group?.message}
               invalid={!!errors.group?.message}
@@ -319,7 +314,7 @@ export function GrafanaEvaluationBehaviorStep({
               />
             </Field>
           </div>
-          <Box marginTop={4} gap={1} display={'flex'} alignItems={'center'}>
+          <Box gap={1} display={'flex'} alignItems={'center'}>
             <Text color="secondary">or</Text>
             <Button
               onClick={onOpenEvaluationGroupCreationModal}
