@@ -105,8 +105,8 @@ To add a tag, follow these steps:
 ### Optional: Use Aggregate by
 
 {{% admonition type="warning" %}}
-**Aggregate by** is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
-[Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature. Your Grafana Tempo data source must also point to a Tempo database with the [Metrics Summary API](https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/) enabled. Contact Grafana Support to enable this feature in Grafana Cloud.
+Metrics summary API and the **Aggregate by** feature are deprecated in Grafana Cloud and Grafana 11.3 and later.
+It will be removed in a future release.
 {{% /admonition %}}
 
 Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes.
@@ -118,7 +118,16 @@ For additional information, refer to [Traces to metrics: Ad-hoc RED metrics in G
 
 {{< youtube id="xOolCpm2F8c" >}}
 
-When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
+**Aggregate by** is an [experimental feature](/docs/release-life-cycle/) that is disabled by default.
+[Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature.
+
+Your Grafana Tempo data source must also point to a Tempo database with the [Metrics Summary API](https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/) enabled.
+Contact Grafana Support to enable this feature in Grafana Cloud.
+
+#### Use Aggregate by
+
+When you use **Aggregate by**, the selections you make determine how the information is reported in the Table.
+Every combination that matches selections in your data is listed in the table.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
 
 For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the selections in **Aggregate by**.
