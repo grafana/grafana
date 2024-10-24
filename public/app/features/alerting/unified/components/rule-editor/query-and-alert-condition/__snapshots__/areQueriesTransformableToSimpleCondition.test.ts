@@ -1,40 +1,11 @@
-// QueryAndExpressionsStep.test.tsx
-
 import { produce } from 'immer';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
+import { dataQuery, reduceExpression, thresholdExpression } from 'app/features/alerting/unified/mocks';
+import { ExpressionQuery, ReducerMode } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { areQueriesTransformableToSimpleCondition } from '../QueryAndExpressionsStep';
-import { SimpleConditionIdentifier } from '../SimpleCondition';
-
-const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.queryId,
-  datasourceUid: 'abc123',
-  queryType: '',
-  model: { refId: SimpleConditionIdentifier.queryId },
-};
-
-const reduceExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.reducerId,
-  queryType: 'expression',
-  datasourceUid: '__expr__',
-  model: {
-    type: ExpressionQueryType.reduce,
-    refId: SimpleConditionIdentifier.reducerId,
-    settings: { mode: ReducerMode.Strict },
-  },
-};
-const thresholdExpression: AlertQuery<ExpressionQuery> = {
-  refId: SimpleConditionIdentifier.thresholdId,
-  queryType: 'expression',
-  datasourceUid: '__expr__',
-  model: {
-    type: ExpressionQueryType.threshold,
-    refId: SimpleConditionIdentifier.thresholdId,
-  },
-};
 
 const expressionQueries: Array<AlertQuery<ExpressionQuery>> = [reduceExpression, thresholdExpression];
 
