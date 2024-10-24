@@ -55,6 +55,8 @@ export function InstallControlsButton({
     plugin_id: plugin.id,
     plugin_type: plugin.type,
     path: location.pathname,
+    creator_team: 'grafana_plugins_catalog',
+    schema_version: '1.0.0',
   };
 
   useEffect(() => {

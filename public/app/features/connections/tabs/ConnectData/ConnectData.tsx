@@ -66,8 +66,12 @@ export function AddNewConnection() {
     if (!canCreateDataSources) {
       e.preventDefault();
       e.stopPropagation();
-      reportInteraction('connections_plugin_card_clicked', { plugin_id: item.id });
       openModal(item);
+      reportInteraction('connections_plugin_card_clicked', {
+        plugin_id: item.id,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+      });
     }
   };
 

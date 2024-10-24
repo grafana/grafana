@@ -23,9 +23,11 @@ export function DataSourceCategories({ categories, onClickDataSourceType }: Prop
   const styles = useStyles2(getStyles);
 
   const handleClick = useCallback(() => {
-    reportInteraction('connections_ds_more_ds_plugin_clicked', {
+    reportInteraction('connections_add_datasource_find_more_ds_plugins_clicked', {
       targetPath: moreDataSourcesLink,
       path: location.pathname,
+      creator_team: 'grafana_plugins_catalog',
+      schema_version: '1.0.0',
     });
   }, [moreDataSourcesLink]);
 

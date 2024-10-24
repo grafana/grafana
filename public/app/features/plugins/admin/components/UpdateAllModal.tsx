@@ -90,6 +90,8 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME, {
         path: location.pathname,
         count: selectedPlugins?.size,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
       });
 
       setInProgress(true);

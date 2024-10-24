@@ -32,7 +32,13 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
     () =>
       debounce((q, count) => {
         if (q) {
-          reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SEARCH, query: q, result_count: count });
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.SEARCH,
+            query: q,
+            result_count: count,
+            creator_team: 'grafana_plugins_catalog',
+            schema_version: '1.0.0',
+          });
         }
       }, 300),
     []
@@ -61,6 +67,8 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.CHANGE_TAB,
       tab: VisualizationSelectPaneTab[value],
+      creator_team: 'grafana_plugins_catalog',
+      schema_version: '1.0.0',
     });
     setListMode(value);
   };

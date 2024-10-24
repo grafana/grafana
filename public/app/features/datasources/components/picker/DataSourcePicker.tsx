@@ -86,6 +86,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
         reportInteraction(INTERACTION_EVENT_NAME, {
           item: INTERACTION_ITEM.SEARCH,
           query: q,
+          creator_team: 'grafana_plugins_catalog',
+          schema_version: '1.0.0',
         });
       }, 300),
     []
@@ -228,8 +230,12 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       <div
         className={styles.trigger}
         onClick={() => {
-          reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
           openDropdown();
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.OPEN_DROPDOWN,
+            creator_team: 'grafana_plugins_catalog',
+            schema_version: '1.0.0',
+          });
         }}
       >
         <Input

@@ -16,7 +16,11 @@ export const selectItems = createSelector(selectRoot, ({ items }) => items);
 export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
 const debouncedTrackSearch = debounce((count) => {
-  reportInteraction('plugins_search', { resultsCount: count });
+  reportInteraction('plugins_search', {
+    resultsCount: count,
+    creator_team: 'grafana_plugins_catalog',
+    schema_version: '1.0.0',
+  });
 }, 300);
 
 export type PluginFilters = {
