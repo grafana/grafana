@@ -1,7 +1,11 @@
+import { css } from '@emotion/css';
 import { ActionImpl, getListboxItemId, KBAR_LISTBOX, useKBar } from 'kbar';
 import { usePointerMovedSinceMount } from 'kbar/lib/utils';
 import * as React from 'react';
 import { useVirtual } from 'react-virtual';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { URLCallback } from './types';
 
@@ -20,7 +24,6 @@ interface KBarResultsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: any[];
   onRender: (params: RenderParams) => React.ReactElement;
-  maxHeight?: number;
 }
 
 export const KBarResults = (props: KBarResultsProps) => {
@@ -139,21 +142,16 @@ export const KBarResults = (props: KBarResultsProps) => {
 
   const pointerMoved = usePointerMovedSinceMount();
 
+  const styles = useStyles2(getStyles);
+
   return (
-    <div
-      ref={parentRef}
-      style={{
-        maxHeight: props.maxHeight || 400,
-        position: 'relative',
-        overflow: 'auto',
-      }}
-    >
+    <div ref={parentRef} className={styles.wrapper}>
       <div
         role="listbox"
         id={KBAR_LISTBOX}
+        className={styles.listBox}
         style={{
           height: `${rowVirtualizer.totalSize}px`,
-          width: '100%',
         }}
       >
         {rowVirtualizer.virtualItems.map((virtualRow) => {
@@ -180,13 +178,10 @@ export const KBarResults = (props: KBarResultsProps) => {
             id: getListboxItemId(virtualRow.index),
             role: 'option',
             'aria-selected': active,
+            className: styles.child,
             style: {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
               transform: `translateY(${virtualRow.start}px)`,
-            } as const,
+            },
             ...handlers,
           };
 
@@ -230,3 +225,21 @@ export const KBarResults = (props: KBarResultsProps) => {
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    position: 'relative',
+    overflow: 'auto',
+    overscrollBehavior: 'contain',
+    maxHeight: `calc(100vh - ${theme.spacing(12)})`,
+  }),
+  child: css({
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+  }),
+  listBox: css({
+    width: '100%',
+  }),
+});
