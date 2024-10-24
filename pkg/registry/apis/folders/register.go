@@ -154,15 +154,22 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
+type authorizerParams struct {
+	user identity.Requester
+	eval accesscontrol.Evaluator
+	dec  authorizer.Decision
+	req  string
+}
+
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		ctx, user, eval, decisionNoOpinion, requester := authorizerFunc(ctx, attr)
+		in := authorizerFunc(ctx, attr)
 
-		if user == nil {
-			return decisionNoOpinion, requester, nil
+		if in.user == nil {
+			return in.dec, in.req, nil
 		}
 
-		ok, err := b.accessControl.Evaluate(ctx, user, eval)
+		ok, err := b.accessControl.Evaluate(ctx, in.user, in.eval)
 		if ok {
 			return authorizer.DecisionAllow, "", nil
 		}
@@ -170,17 +177,17 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	})
 }
 
-func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (context.Context, identity.Requester, accesscontrol.Evaluator, authorizer.Decision, string) {
+func authorizerFunc(ctx context.Context, attr authorizer.Attributes) authorizerParams {
 	verb := attr.GetVerb()
 	name := attr.GetName()
 	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
-		return ctx, nil, nil, authorizer.DecisionNoOpinion, ""
+		return authorizerParams{user: nil, eval: nil, dec: authorizer.DecisionNoOpinion, req: ""}
 	}
 
 	// require a user
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return ctx, nil, nil, authorizer.DecisionDeny, "valid user is required"
+		return authorizerParams{user: user, eval: nil, dec: authorizer.DecisionDeny, req: "valid user is required"}
 	}
 
 	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
@@ -199,5 +206,5 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (context.Co
 	case utils.VerbDelete:
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
 	}
-	return ctx, user, eval, authorizer.DecisionNoOpinion, ""
+	return authorizerParams{user: user, eval: eval, dec: authorizer.DecisionNoOpinion, req: ""}
 }
