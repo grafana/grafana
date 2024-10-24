@@ -121,9 +121,10 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 						return nil, errors.New("invalid attribute path")
 					}
 				}
-				if attr, ok := v.Interface().(*string); ok {
+
+				if attr, ok := v.Interface().(*string); ok && attr != nil {
 					data = *attr
-				} else if attr, ok := v.Interface().(*time.Time); ok {
+				} else if attr, ok := v.Interface().(*time.Time); ok && attr != nil {
 					data = attr.String()
 				} else {
 					return nil, errors.New("invalid attribute path")
