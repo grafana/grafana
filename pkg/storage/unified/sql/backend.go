@@ -531,6 +531,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 		case <-b.done:
 			return
 		case <-t.C:
+			ctx, span := b.tracer.Start(ctx, tracePrefix+"poller")
 			// List the latest RVs
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
@@ -562,12 +563,15 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 			}
 
 			t.Reset(b.pollingInterval)
+			span.End()
 		}
 	}
 }
 
 // listLatestRVs returns the latest resource version for each (Group, Resource) pair.
 func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatestRVs")
+	defer span.End()
 	var grvs []*groupResourceVersion
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
