@@ -1,10 +1,13 @@
 package dashboard
 
 import (
+	"context"
+
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -196,4 +199,8 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
+}
+
+func (b *DashboardsAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
+	return nil
 }

@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -356,4 +357,8 @@ func (b *SnapshotsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
 	return oas, nil
+}
+
+func (b *SnapshotsAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
+	return nil
 }

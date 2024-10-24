@@ -1,10 +1,12 @@
 package builder
 
 import (
+	"context"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -44,6 +46,9 @@ type APIGroupBuilder interface {
 	// Standard namespace checking will happen before this is called, specifically
 	// the namespace must matches an org|stack that the user belongs to
 	GetAuthorizer() authorizer.Authorizer
+
+	// Validate is used to validate the object before it is persisted
+	Validate(context.Context, admission.Attributes, admission.ObjectInterfaces) error
 }
 
 type APIGroupOptions struct {

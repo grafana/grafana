@@ -1,12 +1,14 @@
 package playlist
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -147,4 +149,8 @@ func (b *PlaylistAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 func (b *PlaylistAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // default authorizer is fine
+}
+
+func (b *PlaylistAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
+	return nil
 }
