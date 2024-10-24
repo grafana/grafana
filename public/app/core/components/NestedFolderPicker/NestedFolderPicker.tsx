@@ -15,8 +15,11 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction, PermissionLevelString } from 'app/types';
 
+import { ShowModalReactEvent } from '../../../types/events';
+import appEvents from '../../app_events';
 import { contextSrv } from '../../services/context_srv';
 
+import {FolderCreationModal} from "./FolderCreationModal";
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
@@ -193,6 +196,12 @@ export function NestedFolderPicker({
 
   const handleFolderCreation = () => {
     console.log('User wants to create a folder');
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: FolderCreationModal,
+        props: {},
+      })
+    );
   };
 
   const flatTree = useMemo(() => {
