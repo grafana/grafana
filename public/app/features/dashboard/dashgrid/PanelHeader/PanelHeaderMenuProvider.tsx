@@ -26,9 +26,11 @@ interface Props {
 }
 
 export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, children }: Props) {
+  debugger;
   const [items, setItems] = useState<PanelMenuItem[]>([]);
   const angularComponent = useSelector((state) => getPanelStateForModel(state, panel)?.angularComponent);
   const context = useMemo(() => createExtensionContext(panel, dashboard), [panel, dashboard]);
+  debugger;
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context,

@@ -10,8 +10,10 @@ import {
 
 import { useAddedLinksRegistry } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
+import { useLoadAppPlugins } from './useLoadAppPlugins';
 import {
   generateExtensionId,
+  getExtensionPointPluginDependencies,
   getLinkExtensionOnClick,
   getLinkExtensionOverrides,
   getLinkExtensionPathWithTracking,
@@ -30,6 +32,7 @@ export function usePluginLinks({
   const registry = useAddedLinksRegistry();
   const pluginContext = usePluginContext();
   const registryState = useObservable(registry.asObservable());
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
@@ -56,6 +59,13 @@ export function usePluginLinks({
       );
       return {
         isLoading: false,
+        links: [],
+      };
+    }
+
+    if (isLoadingAppPlugins) {
+      return {
+        isLoading: true,
         links: [],
       };
     }
@@ -119,5 +129,5 @@ export function usePluginLinks({
       isLoading: false,
       links: extensions,
     };
-  }, [context, extensionPointId, limitPerPlugin, registryState, pluginContext]);
+  }, [context, extensionPointId, limitPerPlugin, registryState, pluginContext, isLoadingAppPlugins]);
 }

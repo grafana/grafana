@@ -579,3 +579,53 @@ export const isExposedComponentMetaInfoMissing = (
 
   return false;
 };
+
+export const getAppPluginConfigs = (pluginIds: string[] = []) =>
+  Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
+
+export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
+  return exposedComponentId.replace(/^plugins\//, '').split('/')[0];
+};
+
+// Returns a list of app plugin ids that are registering extensions to this extension point.
+// (These plugins are necessary to be loaded to use the extension point.)
+// (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
+export const getExtensionPointPluginDependencies = (extensionPointId: string): string[] => {
+  return Object.values(config.apps)
+    .filter(
+      (app) =>
+        app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
+        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
+    )
+    .map((app) => app.id)
+    .reduce((acc: string[], id: string) => {
+      return [...acc, id, ...getAppPluginDependencies(id)];
+    }, []);
+};
+
+// Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.
+// (It is first the plugin that exposes the component, and then the ones that it depends on.)
+export const getExposedComponentPluginDependencies = (exposedComponentId: string) => {
+  const pluginId = getAppPluginIdFromExposedComponentId(exposedComponentId);
+
+  return [pluginId].reduce((acc: string[], pluginId: string) => {
+    return [...acc, pluginId, ...getAppPluginDependencies(pluginId)];
+  }, []);
+};
+
+// Returns a list of app plugin ids that are necessary to be loaded, based on the `dependencies.extensions`
+// metadata field. (For example the plugins that expose components that the app depends on.)
+// Heads up! This is a recursive function.
+export const getAppPluginDependencies = (pluginId: string): string[] => {
+  if (!config.apps[pluginId]) {
+    return [];
+  }
+
+  const pluginIdDependencies = config.apps[pluginId].dependencies.extensions.exposedComponents.map(
+    getAppPluginIdFromExposedComponentId
+  );
+
+  return pluginIdDependencies.reduce((acc, pluginId) => {
+    return [...acc, pluginId, ...getAppPluginDependencies(pluginId)];
+  }, pluginIdDependencies);
+};

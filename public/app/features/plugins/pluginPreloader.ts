@@ -1,7 +1,6 @@
 import type { PluginExtensionAddedLinkConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
 import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
 import type { AppPluginConfig } from '@grafana/runtime';
-import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { PluginExtensionRegistries } from './extensions/registry/types';
@@ -15,13 +14,14 @@ export type PluginPreloadResult = {
   addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
 };
 
-export async function preloadPlugins(
-  apps: AppPluginConfig[] = [],
-  registries: PluginExtensionRegistries,
-  eventName = 'frontend_plugins_preload'
-) {
-  startMeasure(eventName);
-  const promises = apps.filter((config) => config.preload).map((config) => preload(config));
+// The list of already preloaded plugin ids.
+// (We only want to preload plugins once, as we would like to avoid error messages caused by
+// registering extensions multiple times.)
+const preloadedPluginsCache = new Set<string>();
+
+export async function preloadPlugins(apps: AppPluginConfig[] = [], registries: PluginExtensionRegistries) {
+  const isNotPreloaded = ({ id }: AppPluginConfig) => !preloadedPluginsCache.has(id);
+  const promises = apps.filter(isNotPreloaded).map((config) => preload(config));
   const preloadedPlugins = await Promise.all(promises);
 
   for (const preloadedPlugin of preloadedPlugins) {
@@ -43,14 +43,11 @@ export async function preloadPlugins(
       configs: preloadedPlugin.addedLinkConfigs || [],
     });
   }
-
-  stopMeasure(eventName);
 }
 
 async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
   const { path, version, id: pluginId, loadingStrategy } = config;
   try {
-    startMeasure(`frontend_plugin_preload_${pluginId}`);
     const { plugin } = await importPluginModule({
       path,
       version,
@@ -75,7 +72,5 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
       addedComponentConfigs: [],
       addedLinkConfigs: [],
     };
-  } finally {
-    stopMeasure(`frontend_plugin_preload_${pluginId}`);
   }
 }

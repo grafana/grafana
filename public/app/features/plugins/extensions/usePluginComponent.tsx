@@ -6,7 +6,13 @@ import { UsePluginComponentResult } from '@grafana/runtime';
 
 import { useExposedComponentsRegistry } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
-import { isExposedComponentDependencyMissing, isGrafanaDevMode, wrapWithPluginContext } from './utils';
+import { useLoadAppPlugins } from './useLoadAppPlugins';
+import {
+  getExposedComponentPluginDependencies,
+  isExposedComponentDependencyMissing,
+  isGrafanaDevMode,
+  wrapWithPluginContext,
+} from './utils';
 
 // Returns a component exposed by a plugin.
 // (Exposed components can be defined in plugins by calling .exposeComponent() on the AppPlugin instance.)
@@ -14,10 +20,18 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
   const registry = useExposedComponentsRegistry();
   const registryState = useObservable(registry.asObservable());
   const pluginContext = usePluginContext();
+  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExposedComponentPluginDependencies(id));
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
     const enableRestrictions = isGrafanaDevMode() && pluginContext;
+
+    if (isLoadingAppPlugins) {
+      return {
+        isLoading: true,
+        component: null,
+      };
+    }
 
     if (!registryState?.[id]) {
       return {
@@ -47,5 +61,5 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
       isLoading: false,
       component: wrapWithPluginContext(registryItem.pluginId, registryItem.component, componentLog),
     };
-  }, [id, pluginContext, registryState]);
+  }, [id, pluginContext, registryState, isLoadingAppPlugins]);
 }
