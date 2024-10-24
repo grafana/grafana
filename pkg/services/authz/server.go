@@ -115,7 +115,7 @@ func (l *legacyServer) Check(ctx context.Context, req *authzv1.CheckRequest) (*a
 
 	namespace := req.GetNamespace()
 	info, err := claims.ParseNamespace(namespace)
-	// FIXME: Remove the stackID check once the ParseNamespace function does not return orgID 1 for stacks namespaces
+	// We have to check the stackID as ParseNamespace returns orgID 1 for stacks namespaces
 	if err != nil || info.OrgID == 0 || info.StackID != 0 {
 		ctxLogger.Error("invalid namespace", "namespace", namespace, "error", err)
 		return deny, status.Error(codes.InvalidArgument, "invalid namespace: "+namespace)
