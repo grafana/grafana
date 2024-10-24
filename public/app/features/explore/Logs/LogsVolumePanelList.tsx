@@ -154,25 +154,25 @@ export const LogsVolumePanelList = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    listContainer: css`
-      padding-top: 10px;
-    `,
-    extraInfoContainer: css`
-      display: flex;
-      justify-content: end;
-      position: absolute;
-      right: 5px;
-      top: 5px;
-    `,
-    oldInfoText: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
-    alertContainer: css`
-      width: 50%;
-      min-width: ${theme.breakpoints.values.sm}px;
-      margin: 0 auto;
-    `,
+    listContainer: css({
+      paddingTop: '10px',
+    }),
+    extraInfoContainer: css({
+      display: 'flex',
+      justifyContent: 'end',
+      position: 'absolute',
+      right: '5px',
+      top: '5px',
+    }),
+    oldInfoText: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    alertContainer: css({
+      width: '50%',
+      minWidth: `${theme.breakpoints.values.sm}px`,
+      margin: '0 auto',
+    }),
   };
 };
 
