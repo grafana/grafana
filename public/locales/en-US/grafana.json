@@ -856,6 +856,11 @@
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "logs": {
+      "logs-volume": {
+        "add-filters": "Add more labels to your query to narrow down your search.",
+        "decrease-timerange": "Decrease the time range of your query.",
+        "much-data": "The query is trying to access too much data. Try one or more of the following:"
+      },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
