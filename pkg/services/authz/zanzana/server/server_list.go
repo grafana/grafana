@@ -127,7 +127,7 @@ func typedObjects(typ string, objects []string) []string {
 }
 
 func directObjects(group, resource string, objects []string) []string {
-	prefix := fmt.Sprintf("resource:%s/%s/", group, resource)
+	prefix := fmt.Sprintf("%s:%s/%s/", resourceType, group, resource)
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], prefix)
 	}
@@ -135,7 +135,7 @@ func directObjects(group, resource string, objects []string) []string {
 }
 
 func folderObject(group, resource string, objects []string) []string {
-	prefix := fmt.Sprintf("folder_resource:%s/%s/", group, resource)
+	prefix := fmt.Sprintf("%s:%s/%s/", folderResourceType, group, resource)
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], prefix)
 	}
