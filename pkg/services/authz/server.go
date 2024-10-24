@@ -150,10 +150,9 @@ func (l *legacyServer) Check(ctx context.Context, req *authzv1.CheckRequest) (*a
 	scopes := make([]string, 0, 1)
 	// If a parent is specified: Check if the user has access to any of the parent folders
 	if req.Folder != "" {
-		parent := "folders:uid:" + req.Folder
-		scopes, err = l.getFolderTree(ctx, info.OrgID, parent)
+		scopes, err = l.getFolderTree(ctx, info.OrgID, req.Folder)
 		if err != nil {
-			ctxLogger.Error("could not get folder tree", "folder", parent, "orgId", info.OrgID, "error", err)
+			ctxLogger.Error("could not get folder tree", "folder", req.Folder, "orgId", info.OrgID, "error", err)
 			return nil, wrapErr(err)
 		}
 	}
@@ -187,19 +186,14 @@ func (l *legacyServer) getFolderTree(ctx context.Context, orgID int64, parent st
 	defer span.End()
 
 	scopes := make([]string, 0, 6)
-
-	cur := parent
-	hasParent := true
-	for hasParent {
-		folder, err := l.folderSvc.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &cur})
-		if err != nil {
-			return nil, err
-		}
-		scopes = append(scopes, fmt.Sprintf("folders:uid:%s", folder.UID))
-		cur = folder.ParentUID
-		if folder.ParentUID == "" {
-			hasParent = false
-		}
+	// Get the folder tree
+	folders, err := l.folderSvc.GetParents(ctx, folder.GetParentsQuery{UID: parent, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+	scopes = append(scopes, "folders:uid:"+parent)
+	for _, f := range folders {
+		scopes = append(scopes, "folders:uid:"+f.UID)
 	}
 
 	return scopes, nil
