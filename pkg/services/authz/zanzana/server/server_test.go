@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -46,24 +45,13 @@ func setup(t *testing.T) *Server {
 	openfga, err := NewOpenFGA(&cfg.Zanzana, store, log.NewNopLogger())
 	require.NoError(t, err)
 
-	// 1. create new store we can use in test
-	s, err := store.CreateStore(context.Background(), &openfgav1.Store{
-		Id:   storeID,
-		Name: "stacks-1",
-	})
+	srv, err := NewAuthz(openfga)
 	require.NoError(t, err)
 
-	model, err := schema.TransformModulesToModel(schema.SchemaModules)
-	require.NoError(t, err)
-	model.Id = modelID
-
-	// 2. create our authorization model
-	require.NoError(t, store.WriteAuthorizationModel(context.Background(), s.Id, model))
-
-	// 3. seed tuples
+	// seed tuples
 	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
-		StoreId:              storeID,
-		AuthorizationModelId: modelID,
+		StoreId:              srv.storeID,
+		AuthorizationModelId: srv.modelID,
 		Writes: &openfgav1.WriteRequestWrites{
 			TupleKeys: []*openfgav1.TupleKey{
 				newResourceTuple("user:1", "read", dashboardGroup, dashboardResource, "1"),
@@ -77,10 +65,6 @@ func setup(t *testing.T) *Server {
 			},
 		},
 	})
-	require.NoError(t, err)
-
-	srv, err := NewAuthz(openfga)
-	require.NoError(t, err)
 	return srv
 }
 
