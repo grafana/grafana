@@ -330,8 +330,6 @@ external group.
 
 {{< docs/public-preview product="Cloud Migration Assistant" featureFlag="onPremToCloudMigrations" >}}
 
-Cloud migration management is available in Grafana Enterprise for users using the Cloud Migration Assistant.
-
 | Action                           | Distinguishing fields                                       |
 | -------------------------------- | ----------------------------------------------------------- |
 | Connect to a cloud instance      | `{"action": "connect-instance"}`                            |
