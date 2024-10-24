@@ -36,10 +36,6 @@ load(
     "enterprise_downstream_pipeline",
 )
 load(
-    "scripts/drone/pipelines/windows.star",
-    "windows",
-)
-load(
     "scripts/drone/utils/utils.star",
     "failure_template",
     "notify_pipeline",
@@ -64,6 +60,8 @@ trigger = {
 }
 
 def main_pipelines():
+    # This is how we should define any new pipelines. At some point we should update existing ones.
+    # Let's make an effort to reduce the amount of string constants in "depends_on" lists.
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
         test_frontend(trigger, ver_mode),
@@ -72,7 +70,6 @@ def main_pipelines():
         lint_backend_pipeline(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
-        windows(trigger, ver_mode = ver_mode),
         enterprise_downstream_pipeline(),
         notify_pipeline(
             name = "main-notify",
@@ -83,7 +80,6 @@ def main_pipelines():
                 "main-test-backend",
                 "main-build-e2e-publish",
                 "main-integration-tests",
-                "main-windows",
             ],
             template = failure_template,
             secret = "slack_webhook",
