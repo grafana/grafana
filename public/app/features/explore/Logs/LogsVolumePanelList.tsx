@@ -17,13 +17,13 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
-import { Trans } from 'app/core/internationalization';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
