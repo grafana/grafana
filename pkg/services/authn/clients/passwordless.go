@@ -91,7 +91,7 @@ func (c *Passwordless) RedirectURL(ctx context.Context, r *authn.Request) (*auth
 	}
 
 	if !ok {
-		return nil, errPasswordAuthFailed.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
+		return nil, errPasswordlessAuthFailed.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
 	}
 
 	ok, err = c.loginAttempts.ValidateIPAddress(ctx, web.RemoteAddr(r.HTTPRequest))
