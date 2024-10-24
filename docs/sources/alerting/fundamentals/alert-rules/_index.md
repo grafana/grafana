@@ -75,7 +75,7 @@ Grafana-managed alert rules are the most flexible alert rule type. They allow yo
 
 {{< figure src="/media/docs/alerting/grafana-managed-alerting-architecture.png" max-width="750px" caption="How Grafana-managed alerting works by default" >}}
 
-1. Alert rules are created within Grafana based on one or more data sources.
+1. Alert rules are created within Grafana and query one or more data sources.
 1. Alert rules are evaluated by the Alert Rule Evaluation Engine from within Grafana.
 1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
