@@ -78,6 +78,12 @@ export const SingleTopBar = memo(function SingleTopBar({
           </Dropdown>
         )}
         {config.newsFeedEnabled && <NewsContainer />}
+        <ToolbarButton
+          icon="monitor"
+          className={styles.kioskToggle}
+          onClick={onToggleKioskMode}
+          tooltip="Enable kiosk mode"
+        />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
@@ -89,9 +95,6 @@ export const SingleTopBar = memo(function SingleTopBar({
             />
           </Dropdown>
         )}
-        <ToolbarButton className={styles.kioskToggle} onClick={onToggleKioskMode} narrow aria-label="Enable kiosk mode">
-          <Icon name="angle-up" size="xl" />
-        </ToolbarButton>
       </Stack>
     </div>
   );
@@ -128,7 +131,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     width: theme.spacing(3),
   }),
   profileButton: css({
-    padding: theme.spacing(0, 0.25),
+    padding: theme.spacing(0, 0.5),
     img: {
       borderRadius: theme.shape.radius.circle,
       height: '24px',
