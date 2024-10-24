@@ -1,6 +1,6 @@
 import { RawTimeRange, Scope } from '@grafana/data';
 import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 
 import { callSuggestionsApi } from '../utils';
 
@@ -146,6 +146,59 @@ export async function isOtelStandardization(
  * @returns string[], values for the deployment_environment label
  */
 export async function getDeploymentEnvironments(
+  dataSourceUid: string,
+  timeRange: RawTimeRange,
+  scopes: Scope[]
+): Promise<string[]> {
+  if (!config.featureToggles.enableScopesInMetricsExplore) {
+    return getDeploymentEnvironmentsWithoutScopes(dataSourceUid, timeRange);
+  }
+
+  return getDeploymentEnvironmentsWithScopes(dataSourceUid, timeRange, scopes);
+}
+
+/**
+ * Query the DS for deployment environment label values.
+ *
+ * @param dataSourceUid
+ * @param timeRange
+ * @returns string[], values for the deployment_environment label
+ */
+export async function getDeploymentEnvironmentsWithoutScopes(
+  dataSourceUid: string,
+  timeRange: RawTimeRange
+): Promise<string[]> {
+  const start = getPrometheusTime(timeRange.from, false);
+  const end = getPrometheusTime(timeRange.to, true);
+
+  const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/label/deployment_environment/values`;
+  const params: Record<string, string | number> = {
+    start,
+    end,
+    'match[]': '{__name__="target_info"}',
+  };
+
+  const response = await getBackendSrv().get<LabelResponse>(
+    url,
+    params,
+    'explore-metrics-otel-resources-deployment-env'
+  );
+
+  // exclude __name__ or deployment_environment or previously chosen filters
+  const resources = response.data;
+
+  return resources;
+}
+
+/**
+ * Query the DS for deployment environment label values.
+ *
+ * @param dataSourceUid
+ * @param timeRange
+ * @param scopes
+ * @returns string[], values for the deployment_environment label
+ */
+export async function getDeploymentEnvironmentsWithScopes(
   dataSourceUid: string,
   timeRange: RawTimeRange,
   scopes: Scope[]
