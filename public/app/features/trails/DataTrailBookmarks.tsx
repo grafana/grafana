@@ -2,12 +2,18 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { SceneComponentProps } from '@grafana/scenes';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DataTrailCard } from './DataTrailCard';
+import { DataTrailsHome } from './DataTrailsHome';
 import { getTrailStore, getBookmarkKey } from './TrailStore/TrailStore';
 
-export function DataTrailsBookmarks({ model, onDelete }: any) {
+interface Props extends SceneComponentProps<DataTrailsHome> {
+  onDelete: (index: number) => void;
+}
+export function DataTrailsBookmarks({ model, onDelete }: Props) {
   const [toggleBookmark, setToggleBookmark] = useState(false);
   const styles = useStyles2(getStyles);
   return (
@@ -16,7 +22,9 @@ export function DataTrailsBookmarks({ model, onDelete }: any) {
         <>
           <div className={styles.horizontalLine} />
           <div className={css(styles.gap20, styles.bookmarkHeader, styles.bottomGap24)}>
-            <div className={styles.header}>Or view bookmarks</div>
+            <div className={styles.header}>
+              <Trans i18nKey="trails.bookmarks.or-view-bookmarks">Or view bookmarks</Trans>
+            </div>
             <IconButton
               name="angle-down"
               size="xxxl"

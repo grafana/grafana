@@ -1,60 +1,25 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  AdHocFiltersVariable,
-  DataSourceVariable,
-  SceneComponentProps,
-  sceneGraph,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectState,
-} from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Trans } from 'app/core/internationalization';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsBookmarks } from './DataTrailBookmarks';
-import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
-import { RecentExplorationScene, RecentExplorationState } from './DataTrailsRecentMetrics';
+import { DataTrailsRecentMetrics } from './DataTrailsRecentMetrics';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
-import { VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getDatasourceForNewTrail, newMetricsTrail } from './utils';
 
-export interface DataTrailsHomeState extends SceneObjectState {
-  recentExplorations?: RecentExplorationScene[];
-}
+export interface DataTrailsHomeState extends SceneObjectState {}
 
 export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   public constructor(state: DataTrailsHomeState) {
     super(state);
-    this._updateRecentExplorations();
-  }
-  private _updateRecentExplorations() {
-    const recentExplorations = getTrailStore().recent.map((trail, index) => {
-      const resolvedTrail = trail.resolve();
-      const state: RecentExplorationState = {
-        metric: resolvedTrail.state.metric,
-        createdAt: resolvedTrail.state.createdAt,
-        $timeRange: resolvedTrail.state.$timeRange,
-        filters: [],
-      };
-      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, resolvedTrail);
-      if (filtersVariable instanceof AdHocFiltersVariable) {
-        state.filters = filtersVariable.state.filters;
-      }
-      const datasourceVariable = sceneGraph.lookupVariable(VAR_DATASOURCE, resolvedTrail);
-      if (datasourceVariable instanceof DataSourceVariable) {
-        state.datasource = datasourceVariable?.state.value.toString();
-      }
-      return new RecentExplorationScene(state);
-    });
-    this.setState({ recentExplorations });
-    // }
   }
 
   public onNewMetricsTrail = () => {
@@ -80,25 +45,14 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   };
 
   static Component = ({ model }: SceneComponentProps<DataTrailsHome>) => {
-    const [showAll, setShowAll] = useState(false);
-    const recentMetrics = getTrailStore().recent;
     const [_, setLastDelete] = useState(Date.now());
     const styles = useStyles2(getStyles);
-
-    const handleToggleShow = () => {
-      setShowAll(!showAll);
-    };
 
     const onDelete = (index: number) => {
       getTrailStore().removeBookmark(index);
       reportExploreMetrics('bookmark_changed', { action: 'deleted' });
       setLastDelete(Date.now()); // trigger re-render
     };
-
-    const storeLastChanged = getTrailStore().lastModified;
-    useEffect(() => {
-      model._updateRecentExplorations();
-    }, [model, storeLastChanged]);
 
     return (
       <div className={styles.container}>
@@ -114,12 +68,10 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               </svg>
             </div>
             <Text element="h1" textAlignment="center" weight="medium">
-              {/* have to add i18nKey */}
               <Trans i18nKey="trails.home.start-your-metrics-exploration">Start your metrics exploration!</Trans>
             </Text>
             <Box>
               <Text element="p" textAlignment="center" color="secondary">
-                {/* have to add i18nKey */}
                 <Trans i18nKey="trails.home.explore-your-prometheus-compatible-metrics-without-writing-a-query">
                   Explore your Prometheus-compatible metrics without writing a query.
                 </Trans>
@@ -142,34 +94,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             </div>
           </Stack>
         </div>
-        {recentMetrics.length > 0 && (
-          <>
-            <div className={styles.recentExplorationHeader}>
-              <div className={styles.header}>
-                <Trans i18nKey="trails.home.or-view-a-recent-exploration">Or view a recent exploration</Trans>
-              </div>
-            </div>
-            <div className={css(styles.trailList, styles.bottomGap24)}>
-              {getTrailStore()
-                .recent.slice(0, showAll ? recentMetrics.length : 3)
-                .map((trail, index) => {
-                  const resolvedTrail = trail.resolve();
-                  return (
-                    <DataTrailCard
-                      key={(resolvedTrail.state.key || '') + index}
-                      trail={resolvedTrail}
-                      onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
-                    />
-                  );
-                })}
-            </div>
-            {recentMetrics.length > 3 && (
-              <Button variant="secondary" size="sm" onClick={handleToggleShow}>
-                {showAll ? 'Show less' : 'Show more'}
-              </Button>
-            )}
-          </>
-        )}
+        <DataTrailsRecentMetrics model={model} />
         <DataTrailsBookmarks model={model} onDelete={onDelete} />
       </div>
     );
@@ -200,31 +125,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     startButton: css({
       fontWeight: theme.typography.fontWeightLight,
-    }),
-    header: css({
-      color: 'var(--text-primary, rgba(204, 204, 220, 0.7))',
-      textAlign: 'center',
-      /* H4 */
-      fontFamily: 'Inter',
-      fontSize: '18px',
-      fontStyle: 'normal',
-      fontWeight: '400',
-      lineHeight: '22px' /* 122.222% */,
-      letterSpacing: '0.045px',
-    }),
-    trailList: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: `${theme.spacing(3)} 31px`,
-      alignItems: 'stretch',
-      justifyItems: 'center',
-    }),
-    recentExplorationHeader: css({
-      marginTop: theme.spacing(6),
-      marginBottom: '20px',
-    }),
-    bottomGap24: css({
-      marginBottom: theme.spacing(3),
     }),
     gap24: css({
       marginTop: theme.spacing(2), // Adds a 24px gap since there is already a 8px gap from the button
