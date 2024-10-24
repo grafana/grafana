@@ -13,6 +13,9 @@ import (
 )
 
 func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "authzServer.List")
+	defer span.End()
+
 	if info, ok := typeInfo(r.GetGroup(), r.GetResource()); ok {
 		return s.listTyped(ctx, r, info)
 	}
@@ -22,8 +25,8 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info TypeInfo) (*authzextv1.ListResponse, error) {
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              r.GetNamespace(),
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: mapping[utils.VerbGet],
@@ -40,8 +43,8 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 
 	// 2. List all resources user has access too
 	listRes, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              storeID,
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		Type:                 info.typ,
 		Relation:             mapping[utils.VerbGet],
 		User:                 r.GetSubject(),
@@ -59,8 +62,8 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 	relation := mapping[utils.VerbGet]
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              r.GetNamespace(),
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -77,8 +80,8 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 
 	// 2. List all folders subject has access to resource type in
 	folders, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              r.GetNamespace(),
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		Type:                 "folder_resource",
 		Relation:             relation,
 		User:                 r.GetSubject(),
@@ -94,8 +97,8 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 
 	// 3. List all resource directly assigned to subject
 	direct, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              r.GetNamespace(),
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		Type:                 "resource",
 		Relation:             relation,
 		User:                 r.GetSubject(),

@@ -9,8 +9,8 @@ import (
 )
 
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	// FIXME: store id should map to namespace somehow
-	tracer.Start(ctx, "authzServer.Check")
+	ctx, span := tracer.Start(ctx, "authzServer.Check")
+	defer span.End()
 
 	if info, ok := typeInfo(r.GetGroup(), r.GetResource()); ok {
 		return s.checkTyped(ctx, r, info)
@@ -23,8 +23,8 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info T
 
 	// 1. check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeID,
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -41,8 +41,8 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info T
 
 	// 2. check if subject has access through namespace
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              r.GetNamespace(),
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -60,8 +60,8 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 	relation := mapping[r.GetVerb()]
 	// 1. check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              r.GetNamespace(),
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -85,8 +85,8 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 
 	// 2. check if subject has access through namespace
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              r.GetNamespace(),
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -108,8 +108,8 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 
 	// 3. check if subject has access as a sub resource for the folder
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              r.GetNamespace(),
-		AuthorizationModelId: modelID,
+		StoreId:              s.storeID,
+		AuthorizationModelId: s.modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,

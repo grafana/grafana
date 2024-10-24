@@ -18,13 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
-const (
-	// FIXME: the open fga api requires that the store id is 26 characters long.
-	storeID = "11111111111111111111111111"
-	// FIXME: the open fga api requires that the model id is 26 characters long.
-	modelID = "11111111111111111111111111"
-)
-
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
