@@ -1,9 +1,15 @@
+import * as React from 'react';
+
+import { config, DependantInfo } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
-import { Stack, Text, LinkButton, Box, TextLink } from '@grafana/ui';
+import { Stack, Text, LinkButton, Box, TextLink, Icon, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
-import { CatalogPlugin } from '../types';
+import { getLatestCompatibleVersion } from '../helpers';
+import { CatalogPlugin, PluginIconName } from '../types';
+
+import { getStyles } from './PluginDetailsHeaderDependencies';
 
 type Props = {
   info: PageInfoItem[];
@@ -12,6 +18,27 @@ type Props = {
 
 export function PluginDetailsRightPanel(props: Props): React.ReactElement | null {
   const { info, plugin } = props;
+  const styles = useStyles2(getStyles);
+
+  const pluginDependencies = plugin.details?.pluginDependencies;
+  let grafanaDependency = plugin.details?.grafanaDependency;
+  if (!grafanaDependency) {
+    grafanaDependency = 'unknown';
+  }
+
+  const useLatestCompatibleInfo = !plugin.isInstalled;
+  const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
+  if (useLatestCompatibleInfo && latestCompatibleVersion?.grafanaDependency) {
+    grafanaDependency = latestCompatibleVersion?.grafanaDependency;
+  }
+
+  let pluginDependants: DependantInfo[] = [];
+  if (config.pluginDependants && config.pluginDependants[plugin.id]) {
+    pluginDependants = config.pluginDependants[plugin.id];
+  }
+  const hasDependencyInfo =
+    grafanaDependency || (pluginDependencies && pluginDependencies.length) || pluginDependants.length;
+
   return (
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={'250px'}>
       <Box padding={2} borderColor="medium" borderStyle="solid">
@@ -34,6 +61,56 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
           )}
         </Stack>
       </Box>
+
+      {hasDependencyInfo && (
+        <Box padding={2} borderColor="medium" borderStyle="solid">
+          <Stack direction="column" gap={1}>
+            <Text color="secondary">
+              <Trans i18nKey="plugins.details.labels.dependencies">Dependencies</Trans>
+            </Text>
+            <Stack direction="column" gap={1}>
+              <span className={styles.depBadge}>
+                <Icon name="grafana" className={styles.icon} />
+                <Trans i18nKey="plugins.details.labels.grafanaDependency">Grafana </Trans> {grafanaDependency}
+              </span>
+            </Stack>
+
+            {pluginDependencies && pluginDependencies.length > 0 && (
+              <Stack direction="column" gap={1}>
+                <Text color="secondary">
+                  <Trans i18nKey={'plugins.details.labels.pluginDependencies'}>Plugins: </Trans>
+                </Text>
+                <Stack direction="column" gap={2}>
+                  {pluginDependencies.map((p) => {
+                    return (
+                      <TextLink key={p.id} href={'/plugins/' + p.id}>
+                        <Icon name={PluginIconName[p.type]} className={styles.icon} />
+                        {p.name} {p.version}
+                      </TextLink>
+                    );
+                  })}
+                </Stack>
+              </Stack>
+            )}
+
+            {pluginDependants && (
+              <Stack direction="column" gap={1}>
+                <Text color="secondary">
+                  <Trans i18nKey={'plugins.details.labels.pluginDependants'}>Required by: </Trans>
+                </Text>
+                {pluginDependants.map((p) => {
+                  return (
+                    <TextLink key={p.pluginId} href={'/plugins/' + p.pluginId}>
+                      <Icon name={PluginIconName[p.pluginType]} className={styles.icon} />
+                      {p.pluginName} {p.pluginVersion}
+                    </TextLink>
+                  );
+                })}
+              </Stack>
+            )}
+          </Stack>
+        </Box>
+      )}
 
       {plugin?.details?.links && plugin.details?.links?.length > 0 && (
         <Box padding={2} borderColor="medium" borderStyle="solid">
