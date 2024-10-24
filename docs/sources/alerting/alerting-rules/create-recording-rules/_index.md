@@ -5,7 +5,7 @@ aliases:
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
   - ../alerting-rules/create-mimir-loki-managed-recording-rule/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/
-description: Create recording rules in Grafana Alerting
+description: Recording rules allow you to pre-compute frequently needed or computationally expensive expressions and save the results as a new set of time series. Querying precomputed results is faster and can reduce system load.
 keywords:
   - grafana
   - alerting
@@ -46,5 +46,5 @@ You might want to use recording rules when:
 
 Similar to alert rules, Grafana supports two types of recording rules:
 
-1. [Grafana-managed recording rules](ref:data-source-managed-recording-rules), which can query any Grafana data source supported by alerting.
-2. [Data source-managed recording rules](ref:grafana-managed-recording-rules), which can query Prometheus-based data sources like Mimir or Loki.
+1. [Grafana-managed recording rules](ref:grafana-managed-recording-rules), which can query any Grafana data source supported by alerting.
+2. [Data source-managed recording rules](ref:data-source-managed-recording-rules), which can query Prometheus-based data sources like Mimir or Loki.

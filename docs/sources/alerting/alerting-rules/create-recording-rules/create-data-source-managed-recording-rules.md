@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-data-source-managed-recording-rules/
-description: Create recording rules in Grafana Alerting
+description: Recording rules allow you to pre-compute expensive queries in advance and save the results as a new set of time series. Data source-managed recording rules can create a recording rule for Prometheus-based data sources like Mimir or Loki.
 keywords:
   - grafana
   - alerting
@@ -27,8 +27,6 @@ refs:
 ---
 
 # Create data source-managed recording rules
-
-Grafana-managed recording rules offer the same Prometheus-like semantics, but allow you to query any Grafana data source supported by alerting. In addition to the above, you can use this to import and map data from other data sources into Prometheus.
 
 For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
 
