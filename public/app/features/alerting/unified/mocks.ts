@@ -12,6 +12,7 @@ import {
   DataSourceRef,
   PluginExtensionLink,
   PluginExtensionTypes,
+  ReducerID,
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
@@ -19,6 +20,7 @@ import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtim
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/grafanaRuler';
+import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   AlertManagerCortexConfig,
@@ -45,6 +47,7 @@ import {
   RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
+  AlertDataQuery,
   AlertQuery,
   GrafanaAlertState,
   GrafanaAlertStateDecision,
@@ -61,6 +64,11 @@ import {
 
 import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
+import {
+  SIMPLE_CONDITION_QUERY_ID,
+  SIMPLE_CONDITION_REDUCER_ID,
+  SIMPLE_CONDITION_THRESHOLD_ID,
+} from './components/rule-editor/query-and-alert-condition/SimpleCondition';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 let nextDataSourceId = 1;
@@ -845,3 +853,31 @@ export function mockDashboardDto(
     meta: { ...meta },
   };
 }
+
+export const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
+  refId: SIMPLE_CONDITION_QUERY_ID,
+  datasourceUid: 'abc123',
+  queryType: '',
+  model: { refId: SIMPLE_CONDITION_QUERY_ID },
+};
+
+export const reduceExpression: AlertQuery<ExpressionQuery> = {
+  refId: SIMPLE_CONDITION_REDUCER_ID,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.reduce,
+    refId: SIMPLE_CONDITION_REDUCER_ID,
+    settings: { mode: ReducerMode.Strict },
+    reducer: ReducerID.last,
+  },
+};
+export const thresholdExpression: AlertQuery<ExpressionQuery> = {
+  refId: SIMPLE_CONDITION_THRESHOLD_ID,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.threshold,
+    refId: SIMPLE_CONDITION_THRESHOLD_ID,
+  },
+};

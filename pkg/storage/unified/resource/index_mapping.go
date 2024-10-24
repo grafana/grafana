@@ -11,6 +11,7 @@ import (
 )
 
 type IndexedResource struct {
+	Uid       string
 	Group     string
 	Namespace string
 	Kind      string
@@ -25,6 +26,7 @@ type IndexedResource struct {
 }
 
 func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResource {
+	ir.Uid = hit.Fields["Uid"].(string)
 	ir.Kind = hit.Fields["Kind"].(string)
 	ir.Name = hit.Fields["Name"].(string)
 	ir.Namespace = hit.Fields["Namespace"].(string)
@@ -64,6 +66,7 @@ func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
 		return nil, err
 	}
 
+	ir.Uid = string(meta.GetUID())
 	ir.Name = meta.GetName()
 	ir.Title = meta.FindTitle("")
 	ir.Namespace = meta.GetNamespace()
@@ -108,6 +111,7 @@ func createIndexMappings() *mapping.IndexMappingImpl {
 func createIndexMappingForKind(resourceKind string) *mapping.DocumentMapping {
 	// create mappings for top level fields
 	baseFields := map[string]*mapping.FieldMapping{
+		"Uid":       bleve.NewTextFieldMapping(),
 		"Group":     bleve.NewTextFieldMapping(),
 		"Namespace": bleve.NewTextFieldMapping(),
 		"Kind":      bleve.NewTextFieldMapping(),

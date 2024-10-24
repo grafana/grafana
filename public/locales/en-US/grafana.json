@@ -41,6 +41,12 @@
         }
       }
     },
+    "alert-rules": {
+      "firing-for": "Firing for",
+      "next-evaluation": "Next evaluation",
+      "next-evaluation-in": "next evaluation in",
+      "rule-definition": "Rule definition"
+    },
     "alertform": {
       "labels": {
         "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
@@ -111,6 +117,7 @@
         "provisioned": "Contact point is provisioned and cannot be deleted via the UI",
         "rules": "Contact point is referenced by one or more alert rules"
       },
+      "delivered-to": "Delivered to",
       "delivery-duration": "Last delivery took <1></1>",
       "empty-state": {
         "title": "You don't have any contact points yet"
@@ -125,9 +132,9 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policies",
+      "used-by_other": "Used by {{ count }} notification policy",
       "used-by-rules_one": "Used by {{ count }} alert rule",
-      "used-by-rules_other": "Used by {{ count }} alert rules"
+      "used-by-rules_other": "Used by {{ count }} alert rule"
     },
     "contactPointFilter": {
       "label": "Contact point"
@@ -139,6 +146,10 @@
             "alerting": "Create a new evaluation group to use for this alert rule.",
             "recording": "Create a new evaluation group to use for this recording rule."
           }
+        },
+        "text": {
+          "alerting": "Define how often the alert rule is evaluated.",
+          "recording": "Define how often the recording rule is evaluated."
         }
       }
     },
@@ -191,7 +202,7 @@
         "inherited": "Inherited",
         "mute-time": "Muted when",
         "n-instances_one": "instance",
-        "n-instances_other": "instances",
+        "n-instances_other": "instance",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -207,7 +218,7 @@
           }
         }
       },
-      "n-more-policies_one": "{{count}} additional policy",
+      "n-more-policies_one": "{{count}} additional policies",
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
@@ -389,15 +400,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -488,11 +499,14 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "close": "Close",
+    "collapse": "Collapse",
+    "edit": "Edit",
     "locale": {
       "default": "Default"
     },
     "save": "Save",
-    "search": "Search"
+    "search": "Search",
+    "view": "View"
   },
   "configuration-tracker": {
     "config-card": {
@@ -871,6 +885,11 @@
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "logs": {
+      "logs-volume": {
+        "add-filters": "Add more labels to your query to narrow down your search.",
+        "decrease-timerange": "Decrease the time range of your query.",
+        "much-data": "The query is trying to access too much data. Try one or more of the following:"
+      },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
@@ -1098,9 +1117,6 @@
     "data-links-inline-editor": {
       "add-link": "Add link",
       "one-click-link": "One-click link"
-    },
-    "data-links-list-item": {
-      "compact-explore-disclaimer": "Explore data link may not work in the future. Please edit."
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
@@ -1619,7 +1635,9 @@
       "dismiss-button": "OK",
       "error-messages": {
         "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-invalid-url": "There is a data source which has an invalid URL. Provide a valid URL and try again.",
         "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
+        "folder-name-conflict": "There is a folder with the same name in the target instance. Rename one of them and try again.",
         "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
         "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
@@ -2174,6 +2192,8 @@
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
+        "installedVersion": "Installed version: ",
+        "latestVersion": "Latest version: ",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",
@@ -2423,16 +2443,16 @@
       "confirm-text": "Delete",
       "delete-button": "Delete",
       "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
       "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
       "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
-      "folder-picker-text_one": "Please choose a folder where your dashboard will be restored.",
+      "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
       "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
@@ -2469,6 +2489,16 @@
       "label": "Back to {{title}}"
     },
     "dismissable-button": "Close"
+  },
+  "role-picker": {
+    "title": {
+      "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "Basic Roles"
+    }
   },
   "save-dashboards": {
     "name-exists": {
@@ -2547,6 +2577,21 @@
   "select": {
     "select-menu": {
       "selected-count": "Selected "
+    }
+  },
+  "service-account-create-page": {
+    "create": {
+      "button": "Create"
+    },
+    "name": {
+      "label": "Display name",
+      "required-error": "Display name is required"
+    },
+    "page-nav": {
+      "label": "Create service account"
+    },
+    "role": {
+      "label": "Role"
     }
   },
   "service-accounts": {
