@@ -77,9 +77,7 @@ SELECT hostname FROM host WHERE region IN ($region)
 
 ## Using variables in queries
 
-> From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
->
-> From Grafana 5.0.0, template variable values are only quoted when the template variable is a `multi-value`.
+> Template variable values are only quoted when the template variable is a `multi-value`.
 
 If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
 

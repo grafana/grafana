@@ -22,7 +22,7 @@ title: 'Authentication HTTP API '
 The Authentication HTTP API is used to manage API keys.
 
 {{% admonition type="note" %}}
-If you use Grafana v9.1 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service account API reference]({{< relref "./serviceaccount/" >}}).
+Grafana recommends using service accounts instead of API keys. For more information, refer to [Grafana service account API reference]({{< relref "./serviceaccount/" >}}).
 {{% /admonition %}}
 
 > If you are running Grafana Enterprise, for some endpoints you would need to have relevant permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.

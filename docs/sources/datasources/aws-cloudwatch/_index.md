@@ -417,7 +417,7 @@ Each time you select a dimension in the query editor, Grafana issues a `ListMetr
 Each time you change queries in the query editor, Grafana issues a new request to the `GetMetricData` API.
 
 {{% admonition type="note" %}}
-Grafana v6.5 and higher replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
+Grafana replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
 The `GetMetricStatistics` API qualified for the CloudWatch API free tier, but `GetMetricData` calls don't.
 {{% /admonition %}}
 

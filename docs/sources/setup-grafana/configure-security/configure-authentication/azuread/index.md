@@ -361,8 +361,6 @@ configuring Azure AD authentication in Grafana.
 
 ### Users with over 200 Group assignments
 
-> Supported in Grafana v8.5 and later versions.
-
 To ensure that the token size doesn't exceed HTTP header size limits,
 Entra ID limits the number of object IDs that it includes in the groups claim.
 If a user is member of more groups than the
