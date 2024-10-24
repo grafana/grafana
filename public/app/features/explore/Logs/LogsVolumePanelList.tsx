@@ -23,6 +23,7 @@ import { SupplementaryResultError } from '../SupplementaryResultError';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
+import { Trans } from 'app/core/internationalization';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -101,10 +102,22 @@ export const LogsVolumePanelList = ({
         // Using info to avoid users thinking that the actual query has failed.
         message={
           <>
-            <p>The query is trying to access too much data. Try one or more of the following:</p>
+            <p>
+              <Trans i18nKey="explore.logs.logs-volume.much-data">
+                The query is trying to access too much data. Try one or more of the following:
+              </Trans>
+            </p>
             <ul>
-              <li>Add more filters to your query to narrow down your search.</li>
-              <li>Decrease the time range of your query.</li>
+              <li>
+                <Trans i18nKey="explore.logs.logs-volume.add-filters">
+                  Add more filters to your query to narrow down your search.
+                </Trans>
+              </li>
+              <li>
+                <Trans i18nKey="explore.logs.logs-volume.decrease-timerange">
+                  Decrease the time range of your query.
+                </Trans>
+              </li>
             </ul>
           </>
         }

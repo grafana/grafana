@@ -30,7 +30,7 @@ describe('SupplementaryResultError', () => {
 
   it('allows arbitrary components in the message', async () => {
     const error = { data: { message: 'error' } };
-    render(<SupplementaryResultError error={error} message={<div data-testid="custom-stuff" />} title={"Error"} />);
+    render(<SupplementaryResultError error={error} message={<div data-testid="custom-stuff" />} title={'Error'} />);
     expect(screen.getByTestId('custom-stuff')).toBeInTheDocument();
   });
 });
