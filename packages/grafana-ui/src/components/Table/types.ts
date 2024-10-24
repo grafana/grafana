@@ -5,7 +5,7 @@ import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-t
 import { DataFrame, Field, KeyValue, SelectableValue, TimeRange, FieldConfigSource, ActionModel } from '@grafana/data';
 import * as schema from '@grafana/schema';
 
-import { TableStyles } from './styles';
+import { TableStyles } from './TableRT/styles';
 
 export {
   type FieldTextAlignment,
@@ -82,7 +82,8 @@ export interface TableStateReducerProps {
   data: DataFrame;
 }
 
-export interface Props {
+// export interface Props {
+export interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
   width: number;
@@ -109,6 +110,22 @@ export interface Props {
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
 }
+
+export interface GeneralTableProps extends BaseTableProps {
+  // Should the next generation table based off of react-data-grid be used
+  // 🗻 BIG 🗻 if true
+  useTableNg?: boolean;
+}
+
+/**
+ * Props for the react-data-grid based table.
+ */
+export interface TableNGProps extends BaseTableProps {}
+
+/**
+ * Props for the react-table based table.
+ */
+export interface TableRTProps extends BaseTableProps {}
 
 /**
  * @alpha
