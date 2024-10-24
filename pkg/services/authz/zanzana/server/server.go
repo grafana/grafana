@@ -18,6 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
+const (
+	resourceType       = "resource"
+	namespaceType      = "namespace"
+	folderResourceType = "folder_resource"
+)
+
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
@@ -199,15 +205,15 @@ func newTypedIdent(typ string, name string) string {
 }
 
 func newResourceIdent(group, resource, name string) string {
-	return fmt.Sprintf("resource:%s/%s", formatGroupResource(group, resource), name)
+	return fmt.Sprintf("%s:%s/%s", resourceType, formatGroupResource(group, resource), name)
 }
 
 func newFolderResourceIdent(group, resource, folder string) string {
-	return fmt.Sprintf("folder_resource:%s/%s", formatGroupResource(group, resource), folder)
+	return fmt.Sprintf("%s:%s/%s", folderResourceType, formatGroupResource(group, resource), folder)
 }
 
 func newNamespaceResourceIdent(group, resource string) string {
-	return fmt.Sprintf("namespace:%s", formatGroupResource(group, resource))
+	return fmt.Sprintf("%s:%s", namespaceType, formatGroupResource(group, resource))
 }
 
 func formatGroupResource(group, resource string) string {
