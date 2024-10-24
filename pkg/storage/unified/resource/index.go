@@ -76,7 +76,7 @@ func (i *Index) IndexBatch(ctx context.Context, list *ListResponse, kind string)
 	}
 	span.End()
 
-	ctx, span = i.tracer.Start(ctx, tracingPrexfixIndex+"IndexBatches")
+	_, span = i.tracer.Start(ctx, tracingPrexfixIndex+"IndexBatches")
 	defer span.End()
 	for _, shard := range i.shards {
 		err := shard.index.Batch(shard.batch)
@@ -134,7 +134,7 @@ func (i *Index) Init(ctx context.Context) error {
 }
 
 func (i *Index) Index(ctx context.Context, data *Data) error {
-	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Index")
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Index")
 	defer span.End()
 
 	// Transform the raw resource into a more generic indexable resource
@@ -163,7 +163,7 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 }
 
 func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error {
-	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Delete")
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Delete")
 	defer span.End()
 
 	shard, err := i.getShard(key.Namespace)
@@ -178,7 +178,7 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 }
 
 func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]IndexedResource, error) {
-	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Search")
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Search")
 	defer span.End()
 
 	if tenant == "" {
