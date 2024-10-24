@@ -731,6 +731,10 @@ const (
 	// Enables the passing of scopes to dashboards fetching in Grafana
 	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
 
+	// FlagEnableScopesInMetricsExplore
+	// Enables the scopes usage in Metrics Explore
+	FlagEnableScopesInMetricsExplore = "enableScopesInMetricsExplore"
+
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
 	FlagAlertingApiServer = "alertingApiServer"

@@ -1,10 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 
-import { PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, UrlSyncContextProvider } from '@grafana/scenes';
+import {
+  DataQueryRequest,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  PageLayoutType,
+} from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
+  UrlSyncContextProvider,
+} from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
+import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
@@ -19,8 +31,32 @@ export interface DataTrailsAppState extends SceneObjectState {
 }
 
 export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
+  private _scopesFacade: ScopesFacade | null;
+
   public constructor(state: DataTrailsAppState) {
     super(state);
+
+    this._scopesFacade = getClosestScopesFacade(this);
+  }
+
+  public enrichDataRequest(): Partial<DataQueryRequest> {
+    if (!config.featureToggles.promQLScope) {
+      return {};
+    }
+
+    return {
+      scopes: this._scopesFacade?.value,
+    };
+  }
+
+  public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
+    if (!config.featureToggles.promQLScope) {
+      return {};
+    }
+
+    return {
+      scopes: this._scopesFacade?.value,
+    };
   }
 
   goToUrlForTrail(trail: DataTrail) {
@@ -81,9 +117,24 @@ let dataTrailsApp: DataTrailsApp;
 
 export function getDataTrailsApp() {
   if (!dataTrailsApp) {
+    const $behaviors = config.featureToggles.enableScopesInMetricsExplore
+      ? [
+          new ScopesFacade({
+            handler: (facade) => {
+              const trail = facade.parent && 'trail' in facade.parent.state ? facade.parent.state.trail : undefined;
+
+              if (trail instanceof DataTrail) {
+                sceneGraph.getTimeRange(trail).onRefresh();
+              }
+            },
+          }),
+        ]
+      : undefined;
+
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),
       home: new DataTrailsHome({}),
+      $behaviors,
     });
   }
 
