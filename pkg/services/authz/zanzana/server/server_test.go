@@ -67,11 +67,11 @@ func setup(t *testing.T) *Server {
 		Writes: &openfgav1.WriteRequestWrites{
 			TupleKeys: []*openfgav1.TupleKey{
 				newResourceTuple("user:1", "read", dashboardGroup, dashboardResource, "1"),
-				newGroupResourceTuple("user:2", "read", dashboardGroup, dashboardResource),
+				newNamespaceResourceTuple("user:2", "read", dashboardGroup, dashboardResource),
 				newResourceTuple("user:3", "view", dashboardGroup, dashboardResource, "1"),
-				newFolderGroupResourceTuple("user:4", "read", dashboardGroup, dashboardResource, "1"),
-				newFolderGroupResourceTuple("user:4", "read", dashboardGroup, dashboardResource, "3"),
-				newFolderGroupResourceTuple("user:5", "view", dashboardGroup, dashboardResource, "1"),
+				newFolderResourceTuple("user:4", "read", dashboardGroup, dashboardResource, "1"),
+				newFolderResourceTuple("user:4", "read", dashboardGroup, dashboardResource, "3"),
+				newFolderResourceTuple("user:5", "view", dashboardGroup, dashboardResource, "1"),
 				newFolderTuple("user:6", "read", "1"),
 			},
 		},
@@ -99,11 +99,11 @@ func newResourceTuple(subject, relation, group, resource, name string) *openfgav
 	}
 }
 
-func newFolderGroupResourceTuple(subject, relation, group, resource, folder string) *openfgav1.TupleKey {
+func newFolderResourceTuple(subject, relation, group, resource, folder string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
 		Relation: relation,
-		Object:   newFolderGroupResourceIdent(group, resource, folder),
+		Object:   newFolderResourceIdent(group, resource, folder),
 		Condition: &openfgav1.RelationshipCondition{
 			Name: "group_filter",
 			Context: &structpb.Struct{
@@ -115,11 +115,11 @@ func newFolderGroupResourceTuple(subject, relation, group, resource, folder stri
 	}
 }
 
-func newGroupResourceTuple(subject, relation, group, resource string) *openfgav1.TupleKey {
+func newNamespaceResourceTuple(subject, relation, group, resource string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
 		Relation: relation,
-		Object:   newGroupResourceIdent(group, resource),
+		Object:   newNamespaceResourceIdent(group, resource),
 	}
 }
 

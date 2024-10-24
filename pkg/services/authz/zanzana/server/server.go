@@ -205,16 +205,16 @@ func newTypedIdent(typ string, name string) string {
 	return fmt.Sprintf("%s:%s", typ, name)
 }
 
-func newFolderGroupResourceIdent(group, resource, folder string) string {
-	return fmt.Sprintf("folder_group_resource:%s/%s", formatGroupResource(group, resource), folder)
-}
-
 func newResourceIdent(group, resource, name string) string {
 	return fmt.Sprintf("resource:%s/%s", formatGroupResource(group, resource), name)
 }
 
-func newGroupResourceIdent(group, resource string) string {
-	return fmt.Sprintf("group_resource:%s", formatGroupResource(group, resource))
+func newFolderResourceIdent(group, resource, folder string) string {
+	return fmt.Sprintf("folder_resource:%s/%s", formatGroupResource(group, resource), folder)
+}
+
+func newNamespaceResourceIdent(group, resource string) string {
+	return fmt.Sprintf("namespace:%s", formatGroupResource(group, resource))
 }
 
 func formatGroupResource(group, resource string) string {
@@ -226,11 +226,11 @@ type TypeInfo struct {
 }
 
 var typedResources = map[string]TypeInfo{
-	newGroupResourceIdent(folderalpha1.GROUP, folderalpha1.RESOURCE): TypeInfo{typ: "folder2"},
+	newNamespaceResourceIdent(folderalpha1.GROUP, folderalpha1.RESOURCE): TypeInfo{typ: "folder2"},
 }
 
 func typeInfo(group, resource string) (TypeInfo, bool) {
-	info, ok := typedResources[newGroupResourceIdent(group, resource)]
+	info, ok := typedResources[newNamespaceResourceIdent(group, resource)]
 	return info, ok
 }
 

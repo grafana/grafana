@@ -71,7 +71,7 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
-			Object:   newGroupResourceIdent(r.GetGroup(), r.GetResource()),
+			Object:   newNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
 		},
 	})
 
@@ -94,7 +94,7 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
-			Object:   newFolderGroupResourceIdent(r.GetGroup(), r.GetResource(), r.GetFolder()),
+			Object:   newFolderResourceIdent(r.GetGroup(), r.GetResource(), r.GetFolder()),
 		},
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
