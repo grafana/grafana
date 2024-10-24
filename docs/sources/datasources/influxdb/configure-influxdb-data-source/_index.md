@@ -17,7 +17,7 @@ labels:
     - oss
 menuTitle: Configure the InfluxDB data source
 title: Configure the InfluxDB data source
-weight: 710
+weight: 300
 refs:
   explore:
     - pattern: /docs/grafana/
