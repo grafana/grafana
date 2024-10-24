@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { mockFolder } from 'app/features/alerting/unified/mocks';
 
 export const getFolderHandler = (response = mockFolder()) =>
-  http.get<{ folderUid: string }>(`/api/folders/:folderUid`, ({ request, params }) => {
+  http.get<{ folderUid: string }>(`/api/folders/:folderUid`, ({ request }) => {
     const { accessControl, ...withoutAccessControl } = response;
 
     // Server only responds with ACL if query param is sent
