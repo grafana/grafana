@@ -70,7 +70,7 @@ export function AlertingEnabled({ enabled }: { enabled: boolean }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  badge: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  badge: css({
+    marginBottom: theme.spacing(2),
+  }),
 });

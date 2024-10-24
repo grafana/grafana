@@ -15,13 +15,13 @@ import { FormDTO } from './types';
 import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  label: css`
-    max-width: ${theme.spacing(80)};
-  `,
-  variable: css`
-    font-family: ${theme.typography.fontFamilyMonospace};
-    font-weight: ${theme.typography.fontWeightMedium};
-  `,
+  label: css({
+    maxWidth: theme.spacing(80),
+  }),
+  variable: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontWeight: theme.typography.fontWeightMedium,
+  }),
 });
 
 const getFormText = (queryType: string, dataSourceName?: string) => {
