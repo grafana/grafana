@@ -6,20 +6,22 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingBar, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import {
+  skipToken,
+  useGetFolderQuery,
+  useNewFolderMutation,
+} from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction, PermissionLevelString } from 'app/types';
 
-import { ShowModalReactEvent } from '../../../types/events';
-import appEvents from '../../app_events';
+import { NewFolderForm } from '../../../features/browse-dashboards/components/NewFolderForm';
 import { contextSrv } from '../../services/context_srv';
 
-import { FolderCreationModal } from './FolderCreationModal';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
@@ -89,6 +91,9 @@ export function NestedFolderPicker({
   const overlayId = useId();
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+
+  const [newFolder] = useNewFolderMutation();
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -194,14 +199,23 @@ export function NestedFolderPicker({
     [search, fetchFolderPage]
   );
 
-  const handleFolderCreation = () => {
-    console.log('User wants to create a folder');
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: FolderCreationModal,
-        props: {},
-      })
-    );
+  const onFolderCreation = () => {
+    setIsCreatingFolder(true);
+  };
+
+  const onDismissFolderCreation = () => {
+    setIsCreatingFolder(false);
+  };
+
+  const onCreateNewFolder = async (folderName: string) => {
+    try {
+      await newFolder({
+        title: folderName,
+      });
+    } finally {
+      onDismissFolderCreation();
+    }
+    // TODO: catch error?
   };
 
   const flatTree = useMemo(() => {
@@ -292,17 +306,27 @@ export function NestedFolderPicker({
           }
           {...getReferenceProps()}
         />
-        {createFolder && (
+        {createFolder && !isCreatingFolder && (
           <Button
-            onClick={handleFolderCreation}
+            onClick={onFolderCreation}
             type="button"
             icon="plus"
             fill="outline"
             variant="secondary"
             disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
           >
-            <Trans i18nKey="browse-dashboards.folder-picker.create-new-folder-button">New folder</Trans>
+            <Trans i18nKey="browse-dashboards.folder-picker.create-new-folder-button">Create new folder</Trans>
           </Button>
+        )}
+        {createFolder && isCreatingFolder && (
+          <>
+            <Text>
+              <Trans i18nKey="browse-dashboards.folder-picker.folder-creation-modal.text">
+                Create a new folder to store your restored dashboard
+              </Trans>
+            </Text>
+            <NewFolderForm onConfirm={onCreateNewFolder} onCancel={onDismissFolderCreation} />
+          </>
         )}
       </>
     );
