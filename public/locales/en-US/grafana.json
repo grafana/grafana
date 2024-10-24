@@ -71,6 +71,12 @@
         }
       }
     },
+    "alert-rules": {
+      "firing-for": "Firing for",
+      "next-evaluation": "Next evaluation",
+      "next-evaluation-in": "next evaluation in",
+      "rule-definition": "Rule definition"
+    },
     "alertform": {
       "labels": {
         "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
@@ -141,6 +147,7 @@
         "provisioned": "Contact point is provisioned and cannot be deleted via the UI",
         "rules": "Contact point is referenced by one or more alert rules"
       },
+      "delivered-to": "Delivered to",
       "delivery-duration": "Last delivery took <1></1>",
       "empty-state": {
         "title": "You don't have any contact points yet"
@@ -473,11 +480,14 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "close": "Close",
+    "collapse": "Collapse",
+    "edit": "Edit",
     "locale": {
       "default": "Default"
     },
     "save": "Save",
-    "search": "Search"
+    "search": "Search",
+    "view": "View"
   },
   "configuration-tracker": {
     "config-card": {
