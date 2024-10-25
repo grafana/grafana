@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, StrictMode } from 'react';
 import { useLocation } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';
@@ -32,11 +32,13 @@ export const AlertmanagerPageWrapper = ({ children, accessType, ...props }: Aler
   const disableAlertmanager = useIsDisabledAlertmanagerSelection();
 
   return (
-    <AlertmanagerProvider accessType={accessType}>
-      <AlertingPageWrapper {...props} actions={<AlertManagerPicker disabled={disableAlertmanager} />}>
-        <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
-      </AlertingPageWrapper>
-    </AlertmanagerProvider>
+    <StrictMode>
+      <AlertmanagerProvider accessType={accessType}>
+        <AlertingPageWrapper {...props} actions={<AlertManagerPicker disabled={disableAlertmanager} />}>
+          <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
+        </AlertingPageWrapper>
+      </AlertmanagerProvider>
+    </StrictMode>
   );
 };
 
