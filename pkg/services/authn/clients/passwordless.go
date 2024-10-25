@@ -24,8 +24,15 @@ import (
 )
 
 var (
-	errInvalidConfirmationCode = errutil.Unauthorized("passwordless-auth.invalid", errutil.WithPublicMessage("Invalid code"))
-	errPasswordlessAuthFailed  = errutil.Unauthorized("passwordless-auth.failed", errutil.WithPublicMessage("Invalid code"))
+	errPasswordlessClientInvalidCode             = errutil.Unauthorized("passwordless-auth.invalid.code", errutil.WithPublicMessage("Invalid code"))
+	errPasswordlessClientInvalidConfirmationCode = errutil.Unauthorized("passwordless-auth.invalid.confirmation-code", errutil.WithPublicMessage("Invalid confirmation code"))
+	errPasswordlessClientTooManyLoginAttempts    = errutil.Unauthorized("passwordless-auth.invalid.login-attempt", errutil.WithPublicMessage("Login temporarily blocked"))
+	errPasswordlessClientInvalidEmail            = errutil.Unauthorized("passwordless-auth.invalid.email", errutil.WithPublicMessage("Invalid email"))
+	errPasswordlessClientCodeAlreadySent         = errutil.Unauthorized("passwordless-auth.invalid.code", errutil.WithPublicMessage("Code already sent to email"))
+
+	errPasswordlessClientInternal = errutil.Internal("passwordless-auth.failed", errutil.WithPublicMessage("An internal error occurred in the Passwordless client"))
+
+	errPasswordlessClientMissingCode = errutil.BadRequest("passwordless-auth.missing.code", errutil.WithPublicMessage("Missing code"))
 )
 
 const passwordlessKeyPrefix = "passwordless-%s"
@@ -91,7 +98,7 @@ func (c *Passwordless) RedirectURL(ctx context.Context, r *authn.Request) (*auth
 	}
 
 	if !ok {
-		return nil, errPasswordlessAuthFailed.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
+		return nil, errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
 	}
 
 	ok, err = c.loginAttempts.ValidateIPAddress(ctx, web.RemoteAddr(r.HTTPRequest))
@@ -99,7 +106,7 @@ func (c *Passwordless) RedirectURL(ctx context.Context, r *authn.Request) (*auth
 		return nil, err
 	}
 	if !ok {
-		return nil, errPasswordlessAuthFailed.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
+		return nil, errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for IP address - login for IP address temporarily blocked")
 	}
 
 	err = c.loginAttempts.Add(ctx, form.Email, web.RemoteAddr(r.HTTPRequest))
@@ -135,7 +142,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 	var err error
 
 	if !util.IsEmail(email) {
-		return "", errPasswordlessAuthFailed.Errorf("invalid email %s", email)
+		return "", errPasswordlessClientInvalidEmail.Errorf("invalid email %s", email)
 	}
 
 	cacheKey := fmt.Sprintf(passwordlessKeyPrefix, email)
@@ -146,12 +153,12 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 
 	// if code already sent to email, return error
 	if err == nil {
-		return "", errPasswordlessAuthFailed.Errorf("passwordless code already sent to email %s", email)
+		return "", errPasswordlessClientCodeAlreadySent.Errorf("passwordless code already sent to email %s", email)
 	}
 
 	existingUser, err = c.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
 	if err != nil && err != user.ErrUserNotFound {
-		return "", errPasswordlessAuthFailed.Errorf("error retreiving user by email: %s", email)
+		return "", errPasswordlessClientInternal.Errorf("error retreiving user by email: %w - email: %s", err, email)
 	}
 
 	if existingUser == nil {
@@ -162,7 +169,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 			return "", err
 		}
 		if tempUsers == nil {
-			return "", errPasswordlessAuthFailed.Errorf("no user or invite found with email %s", email)
+			return "", errPasswordlessClientInvalidEmail.Errorf("no user or invite found with email %s", email)
 		}
 
 	}
@@ -248,7 +255,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 	confirmationCode := form.ConfirmationCode
 
 	if len(code) == 0 || len(confirmationCode) == 0 {
-		return nil, errPasswordlessAuthFailed.Errorf("no code provided")
+		return nil, errPasswordlessClientMissingCode.Errorf("no code provided")
 	}
 
 	cacheKey := fmt.Sprintf(passwordlessKeyPrefix, code)
@@ -260,11 +267,11 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 	var codeEntry PasswordlessCacheCodeEntry
 	err = json.Unmarshal(jsonData, &codeEntry)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse entry from passwordless cache: %w - entry: %s", err, string(jsonData))
+		return nil, errPasswordlessClientInternal.Errorf("failed to parse entry from passwordless cache: %w - entry: %s", err, string(jsonData))
 	}
 
 	if subtle.ConstantTimeCompare([]byte(codeEntry.ConfirmationCode), []byte(confirmationCode)) != 1 {
-		return nil, errInvalidConfirmationCode
+		return nil, errPasswordlessClientInvalidConfirmationCode
 	}
 
 	ok, err := c.loginAttempts.ValidateUsername(ctx, codeEntry.Email)
@@ -272,7 +279,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 		return nil, err
 	}
 	if !ok {
-		return nil, errPasswordlessAuthFailed.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
+		return nil, errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
 	}
 
 	if err := c.loginAttempts.Reset(ctx, codeEntry.Email); err != nil {
@@ -281,7 +288,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 
 	usr, err := c.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: codeEntry.Email})
 	if err != nil && err != user.ErrUserNotFound {
-		return nil, err
+		return nil, errPasswordlessClientInternal.Errorf("error retreiving user by email: %w - email: %s", err, codeEntry.Email)
 	}
 
 	if usr == nil {
@@ -290,7 +297,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 			return nil, err
 		}
 		if tempUsers == nil {
-			return nil, errPasswordlessAuthFailed.Errorf("no user or invite found with email %s", codeEntry.Email)
+			return nil, errPasswordlessClientInvalidEmail.Errorf("no user or invite found with email %s", codeEntry.Email)
 		}
 
 		createUserCmd := user.CreateUserCommand{
@@ -314,14 +321,14 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 	// delete cache entry with code as key
 	err = c.cache.Delete(ctx, cacheKey)
 	if err != nil {
-		return nil, err
+		return nil, errPasswordlessClientInternal.Errorf("failed to delete entry from passwordless cache: %w - key: %s", err, cacheKey)
 	}
 
 	// delete cache entry with email as key
 	cacheKey = fmt.Sprintf(passwordlessKeyPrefix, codeEntry.Email)
 	err = c.cache.Delete(ctx, cacheKey)
 	if err != nil {
-		return nil, err
+		return nil, errPasswordlessClientInternal.Errorf("failed to delete entry from passwordless cache: %w - key: %s", err, cacheKey)
 	}
 
 	// user was found so set auth module in req metadata

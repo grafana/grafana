@@ -21,21 +21,26 @@ import (
 
 func TestPasswordless_StartPasswordless(t *testing.T) {
 	type testCase struct {
-		desc         string
-		email        string
-		findUser     bool
-		blockLogin   bool
-		expectedErr  error
-		expectedCode string
+		desc        string
+		email       string
+		findUser    bool
+		blockLogin  bool
+		expectedErr error
 	}
 
 	tests := []testCase{
 		{
+			desc:       "should succeed if user is found",
+			email:      "user@domain.com",
+			findUser:   true,
+			blockLogin: false,
+		},
+		{
 			desc:        "should fail if user is not found",
-			email:       "user2@domain.com",
+			email:       "user@domain.com",
 			findUser:    false,
 			blockLogin:  false,
-			expectedErr: errPasswordlessAuthFailed.Errorf("no user or invite found with email user2@domain.com"),
+			expectedErr: errPasswordlessClientInvalidEmail.Errorf("no user or invite found with email user@domain.com"),
 		},
 	}
 
@@ -56,9 +61,8 @@ func TestPasswordless_StartPasswordless(t *testing.T) {
 			}
 
 			c := ProvidePasswordless(setting.NewCfg(), las, userService, tus, ns, cache)
-			code, err := c.startPasswordless(context.Background(), tt.email)
+			_, err := c.startPasswordless(context.Background(), tt.email)
 			assert.ErrorIs(t, err, tt.expectedErr)
-			assert.EqualValues(t, tt.expectedCode, code)
 		})
 	}
 }
@@ -92,7 +96,7 @@ func TestPasswordless_AuthenticatePasswordless(t *testing.T) {
 			email:       "user@domain.com",
 			findUser:    true,
 			blockLogin:  true,
-			expectedErr: errPasswordlessAuthFailed.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked"),
+			expectedErr: errPasswordlessClientTooManyLoginAttempts.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked"),
 		},
 	}
 
