@@ -12,7 +12,7 @@ func NewNoop() *NoopClient {
 
 type NoopClient struct{}
 
-func (nc NoopClient) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+func (nc NoopClient) CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
 	return nil, nil
 }
 
