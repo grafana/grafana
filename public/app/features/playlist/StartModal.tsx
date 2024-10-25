@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { Playlist, PlaylistMode } from './types';
@@ -46,6 +46,11 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     }
 
     locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.uid}`, params));
+    reportInteraction('grafana_kiosk_mode', {
+      action: 'start_playlist',
+      singleTopNav: Boolean(config.featureToggles.singleTopNav),
+      mode: mode,
+    });
   };
 
   return (
