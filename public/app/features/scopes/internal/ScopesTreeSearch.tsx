@@ -57,6 +57,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     input: css({
       margin: theme.spacing(1, 0),
+      minHeight: theme.spacing(4),
+      height: theme.spacing(4),
+      maxHeight: theme.spacing(4),
+      width: `calc(100% - ${theme.spacing(0.5)})`,
     }),
   };
 };
