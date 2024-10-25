@@ -23,13 +23,15 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 	return s.listGeneric(ctx, r)
 }
 func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info TypeInfo) (*authzextv1.ListResponse, error) {
+	relation := mapping[r.GetVerb()]
+
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              s.storeID,
 		AuthorizationModelId: s.modelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
-			Relation: mapping[utils.VerbGet],
+			Relation: relation,
 			Object:   newNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
 		},
 	})
@@ -59,7 +61,8 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 }
 
 func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
-	relation := mapping[utils.VerbGet]
+	relation := mapping[r.GetVerb()]
+
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              s.storeID,
