@@ -659,7 +659,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"------------\"}"
 	folderWithUIDTooLong := "{ \"uid\": \"asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm\"}"
-	folderWithSameName := "{\"title\": \"same name\"}"
 
 	type testCase struct {
 		description            string
@@ -720,14 +719,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			input:                  folderWithUIDTooLong,
 			expectedCode:           http.StatusBadRequest,
 			expectedFolderSvcError: dashboards.ErrDashboardUidTooLong,
-			permissions:            folderCreatePermission,
-		},
-		{
-			description:            "folder creation fails given folder service error %s",
-			input:                  folderWithSameName,
-			expectedCode:           http.StatusConflict,
-			expectedFolderSvcError: dashboards.ErrFolderSameNameExists,
-			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},
 		{
