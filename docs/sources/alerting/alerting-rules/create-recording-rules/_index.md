@@ -35,14 +35,18 @@ refs:
 
 # Configure recording rules
 
-Recording rules calculate frequently used expressions or computationally expensive expressions in advance, and save the results as a new set of time series.
+Recording rules allows you to periodically pre-compute frequently used or computationally expensive queries, saving the results as a new time series metric.
 
-You might want to use recording rules when:
+For instance, you can create a recording rule generating a new metric, `error_9001_count`, which counts occurrences of a specific log error within one minute. Then, query the `error_9001_count` metric in dashboards and alert rules.
 
-- **Faster queries** are needed. When performing heavy aggregations or querying large data sets, querying precomputed results is faster than querying in real-time.
-- System overload occurs due to multiple simultaneous queries. Precomputing certain queries in advance can **reduce system load** and optimize resource usage.
-- Aggregations can reduce alert noise from flapping metrics. For example, **aggregating noisy metrics** over a longer period can help reduce alerts triggered by short spikes.
-- Enable **multi-step alerts** where precomputing results can help speed up queries and reduce system load.
+Recording rules can be helpful in various scenarios, such as:
+
+- **Faster queries** are needed: Performing heavy aggregations or querying large data sets is quicker with precomputed results than real-time queries.
+- **Reducing system load:** Precomputing specific queries in advance can reduce system overload caused by multiple simultaneous queries.
+- **Simplifying complex aggregations:** Create a new metric from complex aggregations to facilitate alert and dashboard setup.
+- **Reusing queries across alerts:** Improve efficiency by reusing the same query across similar alert rules and dashboards.
+
+The evaluation group of the recording rule determines how often the metric is pre-computed.
 
 Similar to alert rules, Grafana supports two types of recording rules:
 

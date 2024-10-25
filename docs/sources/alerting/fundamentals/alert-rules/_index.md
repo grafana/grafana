@@ -97,11 +97,11 @@ In this setup, the distributed architecture can provide high-availability and fa
 
 ## Recording rules
 
-A recording rule allows you to pre-compute frequently needed or computationally expensive expressions and save the results as a new set of time series.
+A recording rule pre-compute frequently used or computationally expensive queries, and saves the results as a new time series metric.
 
-Recording rules are useful if you want to run alerts on slow or heavy computationally queries. Querying precomputed results is faster and can reduce system load.
+The new metric can then be used in alert rules and dashboards to optimize their queries.
 
-Both alert types support recording rules. For more details, refer to [Create recording rules](ref:create-recording-rules).
+Similar to alert rules, recording rules are evaluated periodically. For more details, refer to [Create recording rules](ref:create-recording-rules).
 
 ## Comparison between alert rule types
 

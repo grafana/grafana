@@ -25,9 +25,13 @@ refs:
 
 # Create data source-managed recording rules
 
-[Recording rules](ref:create-recording-rules) allow you to pre-compute expensive queries in advance and save the results as a new set of time series. They then query the pre-computed data, which is faster than querying live data in real-time and can help to reduce system load.
+[Recording rules](ref:create-recording-rules) allow you to periodically pre-compute frequently used or computationally expensive queries, saving the results as a new time series metric.
 
-Data source-managed recording rules can query Prometheus-based data sources like Mimir or Loki, and store the recording rules within the data source itself. For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
+Alert rules and dashboards can then query the new metric resulting from the recording rule. This is faster than querying real-time data and can help to reduce system load.
+
+Data source-managed recording rules can query Prometheus-based data sources like Mimir or Loki. For more information on recording rules in Prometheus, refer to [Defining recording rules in Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
+
+Note that in data source-managed groups, the alert rules and recording rules within the same evaluation group are evaluated sequentially. This is useful to ensure that a recording rule is evaluated before any other alert rule queries the pre-computed metric.
 
 ## Before you begin
 
@@ -66,6 +70,10 @@ Select your data source and enter a query. The queries used in data source-manag
 
 ## Add labels
 
-1. Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
+Optionally, you can add custom labels to the resulting metric by selecting existing key-value pairs from the drop down or entering the new key or value.
 
-1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
+## Query the new metric in dashboards or alert rules
+
+Click **Save rule** or **Save rule and exit** to save the rule.
+
+Once saved, the new recording metric is available for use in dashboards and alert rules.
