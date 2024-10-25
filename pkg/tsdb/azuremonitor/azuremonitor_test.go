@@ -549,14 +549,14 @@ func Test_QueryData(t *testing.T) {
 			queryType:     "Application Insights",
 			expectedURL:   "",
 			Err:           require.Error,
-			ExpectedError: fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query", "Application Insights"),
+			ExpectedError: fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query (see https://grafana.com/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/ for details)", "Application Insights"),
 		},
 		{
 			name:          "Deprecated Insights Analytics query type",
 			queryType:     "Insights Analytics",
 			expectedURL:   "",
 			Err:           require.Error,
-			ExpectedError: fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query", "Insights Analytics"),
+			ExpectedError: fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query (see https://grafana.com/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/ for details)", "Insights Analytics"),
 		},
 	}
 

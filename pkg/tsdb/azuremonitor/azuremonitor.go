@@ -60,7 +60,7 @@ func handleDeprecatedQueryTypes(req *backend.QueryDataRequest) *backend.QueryDat
 	for _, q := range req.Queries {
 		if q.QueryType == "Application Insights" || q.QueryType == "Insights Analytics" {
 			responses[q.RefID] = backend.DataResponse{
-				Error:       fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query", q.QueryType),
+				Error:       fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query (see https://grafana.com/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/ for details)", q.QueryType),
 				ErrorSource: backend.ErrorSourceDownstream,
 			}
 		}
