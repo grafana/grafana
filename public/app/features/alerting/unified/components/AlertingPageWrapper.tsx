@@ -17,9 +17,11 @@ interface AlertingPageWrapperProps extends PageProps {
 }
 
 export const AlertingPageWrapper = ({ children, isLoading, ...rest }: AlertingPageWrapperProps) => (
-  <Page {...rest}>
-    <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
-  </Page>
+  <StrictMode>
+    <Page {...rest}>
+      <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
+    </Page>
+  </StrictMode>
 );
 
 /**
