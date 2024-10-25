@@ -248,9 +248,6 @@ func (s *service) start(ctx context.Context) error {
 			kubeaggregator.APIVersionPriorities[b.GetGroupVersion()] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
 		}
 
-		admissionOpts := s.options.AdmissionOptions
-		RegisterPlugin(admissionOpts.Plugins)
-
 		auth := b.GetAuthorizer()
 		if auth != nil {
 			s.authorizer.Register(b.GetGroupVersion(), auth)
@@ -306,6 +303,9 @@ func (s *service) start(ctx context.Context) error {
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(
 			s.unified, o.RecommendedOptions.Etcd.StorageConfig, features)
 	}
+
+	admissionOpts := o.AdmissionOptions
+	RegisterPlugin(admissionOpts.Plugins)
 
 	// Add OpenAPI specs for each group+version
 	err = builder.SetupConfig(

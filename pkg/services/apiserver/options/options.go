@@ -31,6 +31,7 @@ type Options struct {
 func NewOptions(codec runtime.Codec) *Options {
 	return &Options{
 		RecommendedOptions:       NewRecommendedOptions(codec),
+		AdmissionOptions:         genericoptions.NewAdmissionOptions(),
 		GrafanaAggregatorOptions: NewGrafanaAggregatorOptions(),
 		KubeAggregatorOptions:    NewAggregatorServerOptions(),
 		StorageOptions:           NewStorageOptions(),
