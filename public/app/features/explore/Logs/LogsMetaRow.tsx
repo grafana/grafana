@@ -28,11 +28,11 @@ import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
 import { getLogsExtractFields } from './LogsTable';
 
 const getStyles = () => ({
-  metaContainer: css`
-    flex: 1;
-    display: flex;
-    flex-wrap: wrap;
-  `,
+  metaContainer: css({
+    flex: 1,
+    display: 'flex',
+    flexWrap: 'wrap',
+  }),
 });
 
 export type Props = {

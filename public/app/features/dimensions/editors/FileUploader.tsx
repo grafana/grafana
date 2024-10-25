@@ -81,53 +81,53 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
 
 function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-    `,
-    dropzone: css`
-      display: flex;
-      flex: 1;
-      flex-direction: column;
-      align-items: center;
-      padding: ${theme.spacing(6)};
-      border-radius: 2px;
-      border: 2px dashed ${theme.colors.border.medium};
-      background-color: ${isDragActive ? theme.colors.background.secondary : theme.colors.background.primary};
-      cursor: pointer;
-    `,
-    iconWrapper: css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    `,
-    acceptMargin: css`
-      margin: ${theme.spacing(2, 0, 1)};
-    `,
-    small: css`
-      color: ${theme.colors.text.secondary};
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    iconContainer: css`
-      display: flex;
-      flex-direction: column;
-      width: 80%;
-      align-items: center;
-      align-self: center;
-    `,
-    iconPreview: css`
-      width: 238px;
-      height: 198px;
-      border: 1px solid ${theme.colors.border.medium};
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
-    img: css`
-      width: 147px;
-      height: 147px;
-      fill: ${theme.colors.text.primary};
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+    }),
+    dropzone: css({
+      display: 'flex',
+      flex: 1,
+      flexDirection: 'column',
+      alignItems: 'center',
+      padding: theme.spacing(6),
+      borderRadius: theme.shape.radius.default,
+      border: `2px dashed ${theme.colors.border.medium}`,
+      backgroundColor: isDragActive ? theme.colors.background.secondary : theme.colors.background.primary,
+      cursor: 'pointer',
+    }),
+    iconWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    }),
+    acceptMargin: css({
+      margin: theme.spacing(2, 0, 1),
+    }),
+    small: css({
+      color: theme.colors.text.secondary,
+      marginBottom: theme.spacing(2),
+    }),
+    iconContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '80%',
+      alignItems: 'center',
+      alignSelf: 'center',
+    }),
+    iconPreview: css({
+      width: '238px',
+      height: '198px',
+      border: `1px solid ${theme.colors.border.medium}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    img: css({
+      width: '147px',
+      height: '147px',
+      fill: theme.colors.text.primary,
+    }),
   };
 }
