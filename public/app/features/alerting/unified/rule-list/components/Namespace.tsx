@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, TextLink, Icon } from '@grafana/ui';
+import { Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
-import { WithReturnButton } from '../WithReturnButton';
+import { WithReturnButton } from '../../components/WithReturnButton';
 
 interface NamespaceProps extends PropsWithChildren {
   name: string;

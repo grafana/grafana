@@ -1363,8 +1363,8 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "passScopeToDashboardApi",
-			Description:       "Enables the passing of scopes to dashboards fetching in Grafana",
+			Name:              "reloadDashboardsOnParamsChange",
+			Description:       "Enables reload of dashboards on scopes, time range and variables changes",
 			FrontendOnly:      false,
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaDashboardsSquad,
@@ -1547,6 +1547,13 @@ var (
 			Description: "Use new combobox component for Prometheus query editor",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "azureMonitorDisableLogLimit",
+			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
 		},
 	}
 )

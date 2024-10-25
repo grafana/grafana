@@ -198,7 +198,7 @@ export interface FeatureToggles {
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
-  passScopeToDashboardApi?: boolean;
+  reloadDashboardsOnParamsChange?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
@@ -225,4 +225,5 @@ export interface FeatureToggles {
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
+  azureMonitorDisableLogLimit?: boolean;
 }

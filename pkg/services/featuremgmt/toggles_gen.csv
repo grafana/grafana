@@ -179,7 +179,7 @@ openSearchBackendFlowEnabled,GA,@grafana/aws-datasources,false,false,false
 ssoSettingsLDAP,preview,@grafana/identity-access-team,false,true,false
 failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
-passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
+reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 cloudwatchMetricInsightsCrossAccount,preview,@grafana/aws-datasources,false,false,true
@@ -206,3 +206,4 @@ pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,fals
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 prometheusUsesCombobox,experimental,@grafana/observability-metrics,false,false,false
+azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false

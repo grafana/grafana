@@ -267,30 +267,30 @@ export default function StoragePage(props: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   // TODO: remove `height: 90%`
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  `,
-  tableControlRowWrapper: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+  }),
+  tableControlRowWrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing(2),
+  }),
   // TODO: remove `height: 100%`
-  tableWrapper: css`
-    border: 1px solid ${theme.colors.border.medium};
-    height: 100%;
-  `,
-  border: css`
-    border: 1px solid ${theme.colors.border.medium};
-    padding: ${theme.spacing(2)};
-  `,
-  errorAlert: css`
-    padding-top: 20px;
-  `,
-  uploadButton: css`
-    margin-right: ${theme.spacing(2)};
-  `,
+  tableWrapper: css({
+    border: `1px solid ${theme.colors.border.medium}`,
+    height: '100%',
+  }),
+  border: css({
+    border: `1px solid ${theme.colors.border.medium}`,
+    padding: theme.spacing(2),
+  }),
+  errorAlert: css({
+    paddingTop: '20px',
+  }),
+  uploadButton: css({
+    marginRight: theme.spacing(2),
+  }),
 });
