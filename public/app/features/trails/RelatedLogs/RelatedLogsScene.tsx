@@ -24,12 +24,15 @@ import {
 } from '../Integrations/logsIntegration';
 import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
+import { NoRelatedLogsScene } from './NoRelatedLogsFoundScene';
+
 export interface RelatedLogsSceneState extends SceneObjectState {
   controls: SceneObject[];
   body: SceneFlexLayout;
   lokiRecordingRules: ExtractedRecordingRules;
 }
 
+const LOGS_PANEL_CONTAINER_KEY = 'related_logs/logs_panel_container';
 const RELATED_LOGS_QUERY_KEY = 'related_logs/logs_query';
 
 export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
@@ -41,17 +44,8 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
         height: '400px',
         children: [
           new SceneFlexItem({
-            body: PanelBuilders.logs()
-              .setTitle('Logs')
-              .setNoValue('No logs found')
-              .setData(
-                new SceneQueryRunner({
-                  datasource: { uid: VAR_LOGS_DATASOURCE_EXPR },
-                  queries: [],
-                  key: RELATED_LOGS_QUERY_KEY,
-                })
-              )
-              .build(),
+            key: LOGS_PANEL_CONTAINER_KEY,
+            body: undefined,
           }),
         ],
       }),
@@ -65,20 +59,40 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   private onActivate() {
     fetchAndExtractLokiRecordingRules().then((lokiRecordingRules) => {
       const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
-      const lokiDs = getLogsUidOfMetric(selectedMetric, lokiRecordingRules);
-      this.setState({
-        $variables: new SceneVariableSet({
-          variables: [
-            new CustomVariable({
-              name: VAR_LOGS_DATASOURCE,
-              label: 'Logs data source',
-              query: lokiDs?.map((ds) => `${ds.name} : ${ds.uid}`).join(','),
-            }),
-          ],
-        }),
-        controls: [new VariableValueSelectors({ layout: 'vertical' })],
-        lokiRecordingRules,
-      });
+      const lokiDatasources = getLogsUidOfMetric(selectedMetric, lokiRecordingRules);
+      const logsPanelContainer = sceneGraph.findByKeyAndType(this, LOGS_PANEL_CONTAINER_KEY, SceneFlexItem);
+
+      if (!lokiDatasources?.length) {
+        logsPanelContainer.setState({
+          body: new NoRelatedLogsScene({}),
+        });
+      } else {
+        logsPanelContainer.setState({
+          body: PanelBuilders.logs()
+            .setTitle('Logs')
+            .setData(
+              new SceneQueryRunner({
+                datasource: { uid: VAR_LOGS_DATASOURCE_EXPR },
+                queries: [],
+                key: RELATED_LOGS_QUERY_KEY,
+              })
+            )
+            .build(),
+        });
+        this.setState({
+          $variables: new SceneVariableSet({
+            variables: [
+              new CustomVariable({
+                name: VAR_LOGS_DATASOURCE,
+                label: 'Logs data source',
+                query: lokiDatasources?.map((ds) => `${ds.name} : ${ds.uid}`).join(','),
+              }),
+            ],
+          }),
+          controls: [new VariableValueSelectors({ layout: 'vertical' })],
+          lokiRecordingRules,
+        });
+      }
     });
   }
 
