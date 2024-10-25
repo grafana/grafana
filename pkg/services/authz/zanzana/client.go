@@ -22,10 +22,15 @@ type Client interface {
 }
 
 func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*client.Client, error) {
+	stackID := cfg.StackID
+	if stackID == "" {
+		stackID = "default"
+	}
+
 	return client.New(
 		ctx,
 		cc,
-		client.WithTenantID(fmt.Sprintf("stack-%s", cfg.StackID)),
+		client.WithTenantID(fmt.Sprintf("stacks-%s", stackID)),
 		client.WithLogger(log.New("zanzana-client")),
 	)
 }
