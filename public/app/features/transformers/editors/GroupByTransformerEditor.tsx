@@ -127,19 +127,19 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    label: css`
-      label {
-        min-width: ${theme.spacing(32)};
-      }
-    `,
-    operation: css`
-      flex-shrink: 0;
-      height: 100%;
-      width: ${theme.spacing(24)};
-    `,
-    aggregations: css`
-      flex-grow: 1;
-    `,
+    label: css({
+      label: {
+        minWidth: theme.spacing(32),
+      },
+    }),
+    operation: css({
+      flexShrink: 0,
+      height: '100%',
+      width: theme.spacing(24),
+    }),
+    aggregations: css({
+      flexGrow: 1,
+    }),
   };
 };
 
