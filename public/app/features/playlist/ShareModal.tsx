@@ -60,13 +60,13 @@ export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
               <ClipboardButton
                 icon="copy"
                 variant="primary"
-                getText={() => {
+                getText={() => shareUrl}
+                onClipboardCopy={() => {
                   reportInteraction('grafana_kiosk_mode', {
                     action: 'share_playlist',
                     singleTopNav: Boolean(config.featureToggles.singleTopNav),
                     mode: mode,
                   });
-                  return shareUrl;
                 }}
               >
                 <Trans i18nKey="share-playlist.copy-link-button">Copy</Trans>
