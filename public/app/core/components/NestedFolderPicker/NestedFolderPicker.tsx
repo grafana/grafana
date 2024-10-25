@@ -6,7 +6,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Button, Icon, Input, LoadingBar, Text, useStyles2, Space } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingBar, Space, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import {
   skipToken,
@@ -323,6 +323,7 @@ export function NestedFolderPicker({
               onCancel={() => {
                 setIsCreatingFolder(false);
               }}
+              preventDefault={true}
             />
           </>
         )}

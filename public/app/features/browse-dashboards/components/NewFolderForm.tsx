@@ -9,6 +9,7 @@ import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 interface Props {
   onConfirm: (folderName: string) => void;
   onCancel: () => void;
+  preventDefault?: boolean;
 }
 
 interface FormModel {
@@ -17,7 +18,7 @@ interface FormModel {
 
 const initialFormModel: FormModel = { folderName: '' };
 
-export function NewFolderForm({ onCancel, onConfirm }: Props) {
+export function NewFolderForm({ onCancel, onConfirm, preventDefault = false }: Props) {
   const {
     handleSubmit,
     register,
@@ -46,7 +47,13 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
   return (
     <form
       name="addFolder"
-      onSubmit={handleSubmit((form) => onConfirm(form.folderName))}
+      onSubmit={handleSubmit((form, event) => {
+        if (preventDefault) {
+          // event?.preventDefault();
+          event?.stopPropagation();
+        }
+        onConfirm(form.folderName);
+      })}
       data-testid={selectors.pages.BrowseDashboards.NewFolderForm.form}
     >
       <Field
