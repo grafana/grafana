@@ -152,6 +152,6 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		})
 }
 
-func (b *NotificationsAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
+func (t *NotificationsAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
 	return nil
 }
