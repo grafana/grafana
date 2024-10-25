@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Dictionary } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -65,7 +65,7 @@ export function ScopesTreeItem({
             aria-selected={childNode.isExpanded}
             className={anyChildExpanded ? styles.expandedContainer : undefined}
           >
-            <div className={styles.title}>
+            <div className={cx(styles.title, childNode.isSelectable && !childNode.isExpanded && styles.titlePadding)}>
               {childNode.isSelectable && !childNode.isExpanded ? (
                 node.disableMultiSelect ? (
                   <RadioButtonDot
@@ -159,6 +159,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       '& > label': css({
         gap: 0,
       }),
+    }),
+    titlePadding: css({
+      paddingLeft: theme.spacing(0.5),
     }),
     expand: css({
       alignItems: 'center',
