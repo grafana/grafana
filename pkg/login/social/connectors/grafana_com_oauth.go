@@ -162,3 +162,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 
 	return userInfo, nil
 }
+
+func (s *SocialGrafanaCom) GetClientSecretJWT(ctx context.Context) (string, error) {
+	return "", fmt.Errorf("GetClientSecretJWT is not supported for %s", social.GrafanaComProviderName)
+}
