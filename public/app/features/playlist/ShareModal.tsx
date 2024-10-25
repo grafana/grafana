@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { buildBaseUrl } from 'app/features/dashboard/components/ShareModal/utils';
@@ -15,12 +16,14 @@ interface Props {
 export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
-  const modes: Array<SelectableValue<PlaylistMode>> = [
-    { label: t('share-playlist.mode-normal', 'Normal'), value: false },
-    { label: t('share-playlist.mode-tv', 'TV'), value: 'tv' },
-    { label: t('share-playlist.mode-kiosk', 'Kiosk'), value: true },
-  ];
+  const modes: Array<SelectableValue<PlaylistMode>> = [];
+  modes.push({ label: t('share-playlist.mode-normal', 'Normal'), value: false });
+  if (!isSingleTopNav) {
+    modes.push({ label: t('share-playlist.mode-tv', 'TV'), value: 'tv' });
+  }
+  modes.push({ label: t('share-playlist.mode-kiosk', 'Kiosk'), value: true });
 
   const params: UrlQueryMap = {};
   if (mode) {
