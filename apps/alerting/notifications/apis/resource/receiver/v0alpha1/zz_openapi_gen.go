@@ -52,7 +52,16 @@ func schema_apis_resource_receiver_v0alpha1_Integration(ref common.ReferenceCall
 					},
 					"settings": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/deepmap/oapi-codegen/pkg/types.File"),
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
 						},
 					},
 					"type": {
@@ -72,8 +81,6 @@ func schema_apis_resource_receiver_v0alpha1_Integration(ref common.ReferenceCall
 				Required: []string{"settings", "type"},
 			},
 		},
-		Dependencies: []string{
-			"github.com/deepmap/oapi-codegen/pkg/types.File"},
 	}
 }
 

@@ -19,7 +19,9 @@ receiver: {
 					uid?: string
 					type: string
 					disableResolveMessage?: bool
-					settings: bytes
+					settings: {
+						[string]: _
+					}
 					secureFields?: [string]: bool
 				}
 				spec: {
@@ -27,6 +29,9 @@ receiver: {
 					integrations : [...#Integration]
 				}
 			}
+			selectableFields: [
+				 "spec.title",
+			]
 		}
 	}
 }

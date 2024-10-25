@@ -4,11 +4,10 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/generic"
 
+	receiver "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1"
 	templategroup "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1"
 	timeinterval "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/timeinterval/v0alpha1"
 
@@ -28,28 +27,6 @@ const (
 )
 
 var (
-	ReceiverResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-		"receivers", "receiver", "Receiver",
-		func() runtime.Object { return &Receiver{} },
-		func() runtime.Object { return &ReceiverList{} },
-		utils.TableColumns{
-			Definition: []metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The receiver name"}, // TODO: Add integration types.
-			},
-			Reader: func(obj any) ([]interface{}, error) {
-				r, ok := obj.(*Receiver)
-				if ok {
-					return []interface{}{
-						r.Name,
-						r.Spec.Title,
-						// r.Spec, //TODO implement formatting for Spec, same as UI?
-					}, nil
-				}
-				return nil, fmt.Errorf("expected resource or info")
-			},
-		},
-	)
 	RouteResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		"routingtrees", "routingtree", "RoutingTree",
 		func() runtime.Object { return &RoutingTree{} },
@@ -89,8 +66,8 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 	scheme.AddKnownTypes(g,
 		&timeinterval.TimeInterval{},
 		&timeinterval.TimeIntervalList{},
-		&Receiver{},
-		&ReceiverList{},
+		&receiver.Receiver{},
+		&receiver.ReceiverList{},
 		&templategroup.TemplateGroup{},
 		&templategroup.TemplateGroupList{},
 		&RoutingTree{},
@@ -117,10 +94,12 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		return err
 	}
 
+	receiverKind := templategroup.Kind()
+	receiverGvk := receiverKind.GroupVersionKind()
 	err = scheme.AddFieldLabelConversionFunc(
-		ReceiverResourceInfo.GroupVersionKind(),
+		receiverGvk,
 		func(label, value string) (string, string, error) {
-			fieldSet := SelectableReceiverFields(&Receiver{})
+			fieldSet := receiver.SelectableFields(&receiver.Receiver{})
 			for key := range fieldSet {
 				if label == key {
 					return label, value, nil
@@ -152,16 +131,6 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 	}
 
 	return nil
-}
-
-func SelectableReceiverFields(obj *Receiver) fields.Set {
-	if obj == nil {
-		return nil
-	}
-	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"metadata.provenance": obj.GetProvenanceStatus(),
-		"spec.title":          obj.Spec.Title,
-	})
 }
 
 // Resource takes an unqualified resource and returns a Group qualified GroupResource

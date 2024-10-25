@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -13,7 +14,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
-	receiver "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routing_tree"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template_group"
 	timeInterval "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/timeinterval"
@@ -79,9 +80,6 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 		}
 		v[gvr.Resource] = s
 	}
-	scheme := opts.Scheme
-	optsGetter := opts.OptsGetter
-	dualWriteBuilder := opts.DualWriteBuilder
 
 	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, opts)
 	if err != nil {
@@ -89,11 +87,11 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 	}
 	addStorage(timeInterval.ResourceInfo.GroupVersionResource(), intervals)
 
-	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder, t.ng.Api.ReceiverService)
+	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, opts, t.ng.Api.ReceiverService)
 	if err != nil {
 		return fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}
-	addStorage(notificationsModels.ReceiverResourceInfo.GroupVersionResource(), recvStorage)
+	addStorage(receiver.ResourceInfo.GroupVersionResource(), recvStorage)
 
 	templ, err := template_group.NewStorage(t.ng.Api.Templates, t.namespacer, opts)
 	if err != nil {
@@ -112,16 +110,15 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 
 func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return func(c common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		result := make(map[string]common.OpenAPIDefinition)
-		for s, definition := range template_group.GetOpenAPIDefinitions(c) {
-			result[s] = definition
-		}
-		for s, definition := range timeInterval.GetOpenAPIDefinitions(c) {
-			result[s] = definition
-		}
-		for s, definition := range notificationsModels.GetOpenAPIDefinitions(c) {
-			result[s] = definition
-		}
+		tmpl := template_group.GetOpenAPIDefinitions(c)
+		tin := timeInterval.GetOpenAPIDefinitions(c)
+		recv := receiver.GetOpenAPIDefinitions(c)
+		rest := notificationsModels.GetOpenAPIDefinitions(c)
+		result := make(map[string]common.OpenAPIDefinition, len(tmpl)+len(tin)+len(recv)+len(rest))
+		maps.Copy(result, tmpl)
+		maps.Copy(result, tin)
+		maps.Copy(result, recv)
+		maps.Copy(result, rest)
 		return result
 	}
 }
@@ -139,7 +136,7 @@ func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3
 	root := "/apis/" + t.GetGroupVersion().String() + "/"
 
 	// Hide the ability to list or watch across all tenants
-	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+receiver.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+timeInterval.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+template_group.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+notificationsModels.RouteResourceInfo.GroupResource().Resource)
@@ -160,7 +157,7 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return template_group.Authorize(ctx, t.authz, a)
 			case timeInterval.ResourceInfo.GroupResource().Resource:
 				return timeInterval.Authorize(ctx, t.authz, a)
-			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:
+			case receiver.ResourceInfo.GroupResource().Resource:
 				return receiver.Authorize(ctx, t.receiverAuth, a)
 			case notificationsModels.RouteResourceInfo.GroupResource().Resource:
 				return routing_tree.Authorize(ctx, t.authz, a)
