@@ -6,14 +6,16 @@ import (
 	"github.com/openfga/language/pkg/go/transformer"
 )
 
-//go:embed core.fga
-var coreDSL string
-
-//go:embed dashboard.fga
-var dashboardDSL string
-
-//go:embed folder.fga
-var folderDSL string
+var (
+	//go:embed core.fga
+	coreDSL string
+	//go:embed dashboard.fga
+	dashboardDSL string
+	//go:embed folder.fga
+	folderDSL string
+	//go:embed resource.fga
+	resourceDSL string
+)
 
 var SchemaModules = []transformer.ModuleFile{
 	{
@@ -27,5 +29,9 @@ var SchemaModules = []transformer.ModuleFile{
 	{
 		Name:     "folder.fga",
 		Contents: folderDSL,
+	},
+	{
+		Name:     "resource.fga",
+		Contents: resourceDSL,
 	},
 }
