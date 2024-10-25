@@ -49,7 +49,7 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     reportInteraction('grafana_kiosk_mode', {
       action: 'start_playlist',
       singleTopNav: Boolean(config.featureToggles.singleTopNav),
-      state: mode,
+      mode: mode,
     });
   };
 

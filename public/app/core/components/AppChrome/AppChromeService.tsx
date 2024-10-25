@@ -209,7 +209,7 @@ export class AppChromeService {
     reportInteraction('grafana_kiosk_mode', {
       action: 'toggle',
       singleTopNav: Boolean(config.featureToggles.singleTopNav),
-      state: nextMode,
+      mode: nextMode,
     });
   };
 

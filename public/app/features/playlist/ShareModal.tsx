@@ -64,7 +64,7 @@ export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
                   reportInteraction('grafana_kiosk_mode', {
                     action: 'share_playlist',
                     singleTopNav: Boolean(config.featureToggles.singleTopNav),
-                    state: mode,
+                    mode: mode,
                   });
                   return shareUrl;
                 }}
