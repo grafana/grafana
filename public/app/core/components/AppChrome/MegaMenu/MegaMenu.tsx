@@ -13,9 +13,10 @@ import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
+import { MEGA_MENU_TOGGLE_ID } from '../TopBar/SingleTopBar';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
-import { MegaMenuHeader } from './MegaMenuHeader';
+import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
 import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
@@ -76,9 +77,11 @@ export const MegaMenu = memo(
       }
 
       // refocus on undock/menu open button when changing state
-      setTimeout(() => {
-        document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
-      });
+      if (!config.featureToggles.singleTopNav) {
+        setTimeout(() => {
+          document.getElementById(state.megaMenuDocked ? MEGA_MENU_TOGGLE_ID : DOCK_MENU_BUTTON_ID)?.focus();
+        });
+      }
     };
 
     const isPinned = useCallback(

@@ -167,7 +167,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAlerts) && len(notificationPolicies.Name) > 0 {
+	if len(notificationPolicies.Name) > 0 {
 		// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.NotificationPolicyType,

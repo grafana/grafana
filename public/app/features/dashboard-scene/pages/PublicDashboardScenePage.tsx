@@ -79,6 +79,10 @@ function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardSc
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
+    return refreshPicker.activate();
+  }, [refreshPicker]);
+
+  useEffect(() => {
     setIsActive(true);
     return model.activate();
   }, [model]);
