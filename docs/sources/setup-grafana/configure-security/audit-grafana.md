@@ -329,7 +329,7 @@ external group.
 #### Cloud migration management
 
 {{< docs/public-preview product="Cloud Migration Assistant" featureFlag="onPremToCloudMigrations" >}}
-
+ 
 | Action                           | Distinguishing fields                                       |
 | -------------------------------- | ----------------------------------------------------------- |
 | Connect to a cloud instance      | `{"action": "connect-instance"}`                            |
