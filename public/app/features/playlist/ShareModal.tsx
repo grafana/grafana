@@ -62,7 +62,7 @@ export const ShareModal = ({ playlistUid, onDismiss }: Props) => {
                 variant="primary"
                 getText={() => {
                   reportInteraction('grafana_kiosk_mode', {
-                    action: 'start_playlist',
+                    action: 'share_playlist',
                     singleTopNav: Boolean(config.featureToggles.singleTopNav),
                     state: mode,
                   });
