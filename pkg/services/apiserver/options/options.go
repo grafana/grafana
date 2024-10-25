@@ -20,6 +20,7 @@ const defaultEtcdPathPrefix = "/registry/grafana.app"
 
 type Options struct {
 	RecommendedOptions       *genericoptions.RecommendedOptions
+	AdmissionOptions         *genericoptions.AdmissionOptions
 	GrafanaAggregatorOptions *GrafanaAggregatorOptions
 	KubeAggregatorOptions    *KubeAggregatorOptions
 	StorageOptions           *StorageOptions

@@ -3,6 +3,7 @@ package apiserver
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"path"
 
@@ -41,6 +42,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
@@ -66,6 +68,7 @@ var (
 		&metav1.APIGroup{},
 		&metav1.APIResourceList{},
 	}
+	PluginName = "Validate"
 )
 
 func init() {
@@ -125,6 +128,8 @@ type service struct {
 	pluginStore     pluginstore.Store
 	unified         resource.ResourceClient
 }
+
+type validate struct{}
 
 func ProvideService(
 	cfg *setting.Cfg,
@@ -242,6 +247,9 @@ func (s *service) start(ctx context.Context) error {
 			// set the priority for the group+version
 			kubeaggregator.APIVersionPriorities[b.GetGroupVersion()] = kubeaggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
 		}
+
+		admissionOpts := s.options.AdmissionOptions
+		RegisterPlugin(admissionOpts.Plugins)
 
 		auth := b.GetAuthorizer()
 		if auth != nil {
@@ -556,4 +564,17 @@ func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID s
 	}
 
 	return p.contextProvider.PluginContextForDataSource(ctx, s)
+}
+
+// Register registers a plugin
+func RegisterPlugin(plugins *admission.Plugins) {
+	plugins.Register(PluginName, func(configFile io.Reader) (admission.Interface, error) {
+		return validate{}, nil
+	})
+}
+
+// Handles returns true if this admission controller can handle the given operation
+// where operation can be one of CREATE, UPDATE, DELETE, or CONNECT
+func (validate) Handles(operation admission.Operation) bool {
+	return true
 }
