@@ -4,6 +4,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 import { getOtelResources, totalOtelResources, isOtelStandardization, getDeploymentEnvironments } from './api';
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => {
     return {
       get: (

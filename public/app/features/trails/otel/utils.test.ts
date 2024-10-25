@@ -137,9 +137,7 @@ describe('limitOtelMatchTerms', () => {
     const jobs = ['a', 'b', 'c'];
     const instances = ['d', 'e', 'f'];
 
-    const missingOtelTargets = false;
-
-    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(true);
     expect(result.jobsRegex).toEqual('job=~"a"');
@@ -164,9 +162,7 @@ describe('limitOtelMatchTerms', () => {
     const jobs = ['a', 'b', 'c'];
     const instances = ['d', 'e', 'f'];
 
-    const missingOtelTargets = false;
-
-    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(true);
     expect(result.jobsRegex).toEqual('job=~"a|b"');
@@ -180,9 +176,7 @@ describe('limitOtelMatchTerms', () => {
 
     const instances = ['instance1', 'instance2', 'instance3', 'instance4', 'instance5'];
 
-    const missingOtelTargets = false;
-
-    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(false);
     expect(result.jobsRegex).toEqual('job=~"job1|job2|job3|job4|job5"');
