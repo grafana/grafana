@@ -166,7 +166,6 @@ type authorizerParams struct {
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		in, err := authorizerFunc(ctx, attr)
-
 		if err != nil {
 			if errors.Is(err, errNoUser) {
 				return authorizer.DecisionDeny, "", nil
