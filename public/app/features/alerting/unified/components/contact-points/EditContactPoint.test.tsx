@@ -1,8 +1,7 @@
 import 'core-js/stable/structured-clone';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, waitForElementToBeRemoved } from 'test/test-utils';
-import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
+import { render, screen } from 'test/test-utils';
 
 import EditContactPoint from 'app/features/alerting/unified/components/contact-points/EditContactPoint';
 import { AccessControlAction } from 'app/types';
