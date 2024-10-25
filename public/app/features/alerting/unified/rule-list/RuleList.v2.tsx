@@ -15,6 +15,7 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
@@ -329,7 +330,7 @@ const DataSourceSection = ({
                   title="alert rules"
                   component={
                     <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${uid}`}>
-                      Configure
+                      <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>
                     </LinkButton>
                   }
                 />
