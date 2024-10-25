@@ -2,7 +2,6 @@ import { isEqual } from 'lodash';
 
 import { locationUtil } from '@grafana/data';
 import { BackendSrvRequest, config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -11,7 +10,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
-import { ReloadDashboardEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -57,8 +55,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   constructor(state: DashboardScenePageState) {
     super(state);
-
-    appEvents.subscribe(ReloadDashboardEvent, ({ payload }) => this.reloadDashboard(payload));
   }
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.

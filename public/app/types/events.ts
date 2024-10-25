@@ -1,5 +1,4 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
-import { BackendSrvRequest } from '@grafana/runtime';
 import { IconName, ButtonVariant } from '@grafana/ui';
 
 /**
@@ -209,8 +208,4 @@ export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
 
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
-}
-
-export class ReloadDashboardEvent extends BusEventWithPayload<BackendSrvRequest['params']> {
-  static type = 'reload-dashboard';
 }

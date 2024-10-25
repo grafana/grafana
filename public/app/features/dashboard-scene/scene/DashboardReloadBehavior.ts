@@ -2,9 +2,9 @@ import { isEqual } from 'lodash';
 
 import { BackendSrvRequest } from '@grafana/runtime';
 import { sceneGraph, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
-import { appEvents } from 'app/core/core';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
-import { ReloadDashboardEvent } from 'app/types/events';
+
+import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 
 export interface DashboardReloadBehaviorState extends SceneObjectState {
   reloadOnParamsChange?: boolean;
@@ -73,7 +73,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
         params
       );
 
-      appEvents.publish(new ReloadDashboardEvent(params));
+      getDashboardScenePageStateManager().reloadDashboard(params);
     }
   }
 }
