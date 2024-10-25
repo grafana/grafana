@@ -531,8 +531,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
-	IndexPath      string
+	UnifiedStorage    map[string]UnifiedStorageConfig
+	IndexPath         string
+	IndexWorkers      int
+	IndexMaxBatchSize int
+	IndexListLimit    int
 }
 
 type UnifiedStorageConfig struct {
@@ -1341,7 +1344,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
-	cfg.setIndexPath()
 
 	return nil
 }
