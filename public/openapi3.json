@@ -2112,14 +2112,17 @@
                   "format": "int64",
                   "type": "integer"
                 },
-                "lbacRules": {
-                  "$ref": "#/components/schemas/TeamLBACRules"
-                },
                 "message": {
                   "type": "string"
                 },
                 "name": {
                   "type": "string"
+                },
+                "rules": {
+                  "items": {
+                    "$ref": "#/components/schemas/TeamLBACRule"
+                  },
+                  "type": "array"
                 },
                 "uid": {
                   "type": "string"
