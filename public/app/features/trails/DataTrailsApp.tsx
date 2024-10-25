@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 
@@ -15,8 +16,11 @@ import {
   SceneObjectState,
   UrlSyncContextProvider,
 } from '@grafana/scenes';
+import { useStyles2 } from '@grafana/ui/';
 import { Page } from 'app/core/components/Page/Page';
-import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
+import { getClosestScopesFacade, ScopesFacade, ScopesSelector } from 'app/features/scopes';
+
+import { AppChromeUpdate } from '../../core/components/AppChrome/AppChromeUpdate';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
@@ -90,6 +94,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
 }
 
 function DataTrailView({ trail }: { trail: DataTrail }) {
+  const styles = useStyles2(getStyles);
   const [isInitialized, setIsInitialized] = useState(false);
   const { metric } = trail.useState();
 
@@ -107,6 +112,15 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
   return (
     <UrlSyncContextProvider scene={trail}>
       <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
+        {config.featureToggles.singleTopNav && config.featureToggles.enableScopesInMetricsExplore && (
+          <AppChromeUpdate
+            actions={
+              <div className={styles.topNavContainer}>
+                <ScopesSelector />
+              </div>
+            }
+          />
+        )}
         <trail.Component model={trail} />
       </Page>
     </UrlSyncContextProvider>
@@ -140,3 +154,12 @@ export function getDataTrailsApp() {
 
   return dataTrailsApp;
 }
+
+const getStyles = () => ({
+  topNavContainer: css({
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyItems: 'flex-start',
+  }),
+});
