@@ -203,11 +203,20 @@ export class AppChromeService {
     const nextMode = this.getNextKioskMode();
     this.update({ kioskMode: nextMode });
     locationService.partial({ kiosk: this.getKioskUrlValue(nextMode) });
+    reportInteraction('grafana_kiosk_mode', {
+      action: 'toggle',
+      singleTopNav: Boolean(config.featureToggles.singleTopNav),
+      state: nextMode,
+    });
   };
 
   public exitKioskMode() {
     this.update({ kioskMode: undefined });
     locationService.partial({ kiosk: null });
+    reportInteraction('grafana_kiosk_mode', {
+      action: 'exit',
+      singleTopNav: Boolean(config.featureToggles.singleTopNav),
+    });
   }
 
   public setKioskModeFromUrl(kiosk: UrlQueryValue) {
