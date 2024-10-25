@@ -14,7 +14,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,8 +30,9 @@ type Client interface {
 
 // ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, acSvc accesscontrol.Service,
-	grpcServer grpcserver.Provider, tracer tracing.Tracer,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl,
+	authnSvc authn.Service, folderSvc folder.Service, grpcServer grpcserver.Provider,
+	tracer tracing.Tracer,
 ) (Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -43,7 +46,7 @@ func ProvideAuthZClient(
 	var client Client
 
 	// Register the server
-	server, err := newLegacyServer(acSvc, features, grpcServer, tracer, authCfg)
+	server, err := newLegacyServer(authnSvc, ac, folderSvc, features, grpcServer, tracer, authCfg)
 	if err != nil {
 		return nil, err
 	}
