@@ -180,6 +180,10 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	return userInfo, nil
 }
 
+func (s *SocialOkta) GetClientSecretJWT(ctx context.Context) (string, error) {
+	return "", fmt.Errorf("GetClientSecretJWT is not supported for %s", social.OktaProviderName)
+}
+
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
 	rawUserInfoResponse, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
