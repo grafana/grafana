@@ -176,6 +176,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
+func (s *SocialGoogle) GetClientSecretJWT(ctx context.Context) (string, error) {
+	return "", fmt.Errorf("GetClientSecretJWT is not supported for %s", social.GoogleProviderName)
+}
+
 type googleAPIData struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`
