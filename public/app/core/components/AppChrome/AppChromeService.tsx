@@ -37,6 +37,7 @@ export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
+  private isSingleTopNav = config.featureToggles.singleTopNav;
 
   private megaMenuDocked = Boolean(
     window.innerWidth >= config.theme2.breakpoints.values.xl &&
@@ -49,7 +50,8 @@ export class AppChromeService {
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
-    searchBarHidden: store.getBool(this.searchBarStorageKey, false),
+    // TODO remove this state once singleTopNav is live
+    searchBarHidden: this.isSingleTopNav ? false : store.getBool(this.searchBarStorageKey, false),
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
@@ -213,7 +215,9 @@ export class AppChromeService {
 
     switch (kiosk) {
       case 'tv':
-        newKioskMode = KioskMode.TV;
+        if (!this.isSingleTopNav) {
+          newKioskMode = KioskMode.TV;
+        }
         break;
       case '1':
       case true:
