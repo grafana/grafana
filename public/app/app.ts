@@ -293,6 +293,14 @@ function initExtensions() {
   }
 }
 
+function isCrossOriginIframe() {
+  if (window.location.ancestorOrigins[0] !== window.location.origin) {
+    return true;
+  }
+
+  return false;
+}
+
 function initEchoSrv() {
   setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
@@ -316,7 +324,7 @@ function initEchoSrv() {
     registerEchoBackend(new PerformanceBackend({}));
   }
 
-  if (config.grafanaJavascriptAgent.enabled) {
+  if (config.grafanaJavascriptAgent.enabled && !isCrossOriginIframe()) {
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
         ...config.grafanaJavascriptAgent,
