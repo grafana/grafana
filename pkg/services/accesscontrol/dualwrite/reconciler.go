@@ -41,28 +41,35 @@ type ZanzanaReconciler struct {
 
 func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, collectors ...TupleCollector) *ZanzanaReconciler {
 	// Append shared collectors that is used by both enterprise and oss
-	collectors = append(
-		collectors,
-		managedPermissionsCollector(store),
-		folderTreeCollector(store),
-		basicRolesCollector(store),
-		customRolesCollector(store),
-		basicRoleAssignemtCollector(store),
-		userRoleAssignemtCollector(store),
-		teamRoleAssignemtCollector(store),
-		fixedRoleTuplesCollector(store),
-	)
+	/*
+		collectors = append(
+			collectors,
+			managedPermissionsCollector(store),
+			folderTreeCollector(store),
+			basicRolesCollector(store),
+			customRolesCollector(store),
+			basicRoleAssignemtCollector(store),
+			userRoleAssignemtCollector(store),
+			teamRoleAssignemtCollector(store),
+			fixedRoleTuplesCollector(store),
+		)
+	*/
 
 	return &ZanzanaReconciler{
-		client:     client,
-		lock:       lock,
-		log:        log.New("zanzana.reconciler"),
-		collectors: collectors,
+		client: client,
+		lock:   lock,
+		log:    log.New("zanzana.reconciler"),
 		reconcilers: []resourceReconciler{
 			newResourceReconciler(
 				"team memberships",
 				teamMembershipCollector(store),
 				zanzanaCollector(client, []string{zanzana.RelationTeamMember, zanzana.RelationTeamAdmin}),
+				client,
+			),
+			newResourceReconciler(
+				"folder tree",
+				folderTreeCollector2(store),
+				zanzanaCollector(client, []string{zanzana.RelationParent}),
 				client,
 			),
 		},

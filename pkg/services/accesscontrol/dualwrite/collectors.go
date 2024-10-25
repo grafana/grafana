@@ -58,6 +58,57 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 	}
 }
 
+// folderTreeCollector collects folder tree structure and writes it as relation tuples
+func folderTreeCollector2(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error) {
+		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
+		defer span.End()
+
+		const query = `
+			SELECT uid, parent_uid, org_id FROM folder
+		`
+		type folder struct {
+			OrgID     int64  `xorm:"org_id"`
+			FolderUID string `xorm:"uid"`
+			ParentUID string `xorm:"parent_uid"`
+		}
+
+		var folders []folder
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&folders)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, f := range folders {
+			var tuple *openfgav1.TupleKey
+			if f.ParentUID == "" {
+				continue
+
+			}
+
+			tuple = &openfgav1.TupleKey{
+				Object:   zanzana.NewTupleEntry("folder2", f.FolderUID, ""),
+				Relation: zanzana.RelationParent,
+				User:     zanzana.NewTupleEntry("folder2", f.ParentUID, ""),
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+
+	}
+}
+
 func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCollector {
 	return func(ctx context.Context, client zanzana.Client, object string) (map[string]*openfgav1.TupleKey, error) {
 		// list will use continuation token to collect all tuples for object and relation
