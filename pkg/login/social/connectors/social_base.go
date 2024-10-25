@@ -122,6 +122,7 @@ func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.info.SkipOrgRoleSync))
 	bf.WriteString(fmt.Sprintf("client_id = %v\n", s.Config.ClientID))
 	bf.WriteString(fmt.Sprintf("client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
+	bf.WriteString(fmt.Sprintf("client_secret_jwt = %v\n", s.info.ClientSecretJWT))
 	bf.WriteString(fmt.Sprintf("auth_url = %v\n", s.Config.Endpoint.AuthURL))
 	bf.WriteString(fmt.Sprintf("token_url = %v\n", s.Config.Endpoint.TokenURL))
 	bf.WriteString(fmt.Sprintf("auth_style = %v\n", s.Config.Endpoint.AuthStyle))
