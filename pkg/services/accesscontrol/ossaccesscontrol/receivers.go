@@ -78,7 +78,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 	r.log.Debug("Setting default permissions for receiver", "receiver_uid", uid)
 	permissions := defaultPermissions()
 	clearCache := false
-	if user != nil && user.IsIdentityType(claims.TypeUser) {
+	if user != nil && user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			r.log.Error("Could not make user admin", "receiver_uid", uid, "id", user.GetID(), "error", err)
