@@ -1,4 +1,4 @@
-package template_group
+package templategroup
 
 import (
 	"k8s.io/apiserver/pkg/registry/rest"

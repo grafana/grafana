@@ -1,4 +1,4 @@
-package template_group
+package templategroup
 
 import (
 	"context"

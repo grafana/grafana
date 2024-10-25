@@ -1,4 +1,4 @@
-package routing_tree
+package routingtree
 
 import (
 	"strings"

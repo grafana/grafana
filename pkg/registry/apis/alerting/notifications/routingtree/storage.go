@@ -1,4 +1,4 @@
-package routing_tree
+package routingtree
 
 import (
 	"k8s.io/apiserver/pkg/registry/rest"
