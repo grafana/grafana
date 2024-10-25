@@ -135,6 +135,16 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthInternal.Errorf("failed to get %s oauth client: %w", c.name, errors.Join(errConnector, errHTTPClient))
 	}
 
+	// only use ClientSecretJWT if ClientSecret is not set
+	if oauthCfg.ClientSecret == "" && oauthCfg.ClientSecretJWT != "" {
+		clientAssertion, err := connector.GetClientSecretJWT(ctx)
+		if err != nil {
+			return nil, errOAuthTokenExchange.Errorf("failed to get client assertion: %w", err)
+		}
+		opts = append(opts, oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"))
+		opts = append(opts, oauth2.SetAuthURLParam("client_assertion", clientAssertion))
+	}
+
 	clientCtx := context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 	// exchange auth code to a valid token
 	token, err := connector.Exchange(clientCtx, r.HTTPRequest.URL.Query().Get("code"), opts...)

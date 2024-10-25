@@ -21,6 +21,7 @@ var (
 	auto_login = true
 	client_id = test_client_id
 	client_secret = test_client_secret
+	client_secret_jwt = test_client_secret_jwt
 	scopes = openid, profile, email
 	empty_scopes = false
 	email_attribute_name = email:primary
@@ -64,6 +65,7 @@ var (
 		"auto_login":                 true,
 		"client_id":                  "test_client_id",
 		"client_secret":              "test_client_secret",
+		"client_secret_jwt":          "test_client_secret_jwt",
 		"scopes":                     "openid, profile, email",
 		"empty_scopes":               false,
 		"email_attribute_name":       "email:primary",
