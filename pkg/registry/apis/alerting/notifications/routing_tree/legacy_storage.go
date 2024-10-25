@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	notifications "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1"
 	grafanaRest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -20,8 +20,6 @@ import (
 var (
 	_ grafanaRest.LegacyStorage = (*legacyStorage)(nil)
 )
-
-var resourceInfo = notifications.RouteResourceInfo
 
 type RouteService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
@@ -36,7 +34,7 @@ type legacyStorage struct {
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+	return ResourceInfo.NewFunc()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -46,18 +44,18 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+	return ResourceInfo.GetSingularName()
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+	return ResourceInfo.NewListFunc()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) getUserDefinedRoutingTree(ctx context.Context) (*notifications.RoutingTree, error) {
+func (s *legacyStorage) getUserDefinedRoutingTree(ctx context.Context) (*model.RoutingTree, error) {
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
@@ -75,16 +73,16 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 	if err != nil {
 		return nil, err
 	}
-	return &notifications.RoutingTreeList{
-		Items: []notifications.RoutingTree{
+	return &model.RoutingTreeList{
+		Items: []model.RoutingTree{
 			*user,
 		},
 	}, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
-	if name != notifications.UserDefinedRoutingTreeName {
-		return nil, errors.NewNotFound(resourceInfo.GroupResource(), name)
+	if name != model.UserDefinedRoutingTreeName {
+		return nil, errors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
 	return s.getUserDefinedRoutingTree(ctx)
 }
@@ -94,19 +92,19 @@ func (s *legacyStorage) Create(_ context.Context,
 	_ rest.ValidateObjectFunc,
 	_ *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	return nil, errors.NewMethodNotSupported(resourceInfo.GroupResource(), "create")
+	return nil, errors.NewMethodNotSupported(ResourceInfo.GroupResource(), "create")
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	if name != notifications.UserDefinedRoutingTreeName {
-		return nil, false, errors.NewNotFound(resourceInfo.GroupResource(), name)
+	if name != model.UserDefinedRoutingTreeName {
+		return nil, false, errors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
 	}
 
-	old, err := s.Get(ctx, notifications.UserDefinedRoutingTreeName, nil)
+	old, err := s.Get(ctx, model.UserDefinedRoutingTreeName, nil)
 	if err != nil {
 		return old, false, err
 	}
@@ -119,9 +117,9 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 			return nil, false, err
 		}
 	}
-	p, ok := obj.(*notifications.RoutingTree)
+	p, ok := obj.(*model.RoutingTree)
 	if !ok {
-		return nil, false, fmt.Errorf("expected %s but got %s", notifications.ReceiverResourceInfo.GroupVersionKind(), obj.GetObjectKind().GroupVersionKind())
+		return nil, false, fmt.Errorf("expected %s but got %s", ResourceInfo.GroupVersionKind(), obj.GetObjectKind().GroupVersionKind())
 	}
 
 	model, version, err := convertToDomainModel(p)
@@ -139,8 +137,8 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 // Delete implements rest.GracefulDeleter. It is needed for API server to not crash when it registers DeleteCollection method
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	if name != notifications.UserDefinedRoutingTreeName {
-		return nil, false, errors.NewNotFound(resourceInfo.GroupResource(), name)
+	if name != model.UserDefinedRoutingTreeName {
+		return nil, false, errors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -162,5 +160,5 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 }
 
 func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errors.NewMethodNotSupported(resourceInfo.GroupResource(), "delete")
+	return nil, errors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
 }

@@ -17,9 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -57,21 +56,19 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	client := adminK8sClient.NotificationsV0alpha1().RoutingTrees("default")
+	client := newClient(t, helper.Org1.Admin)
 
 	route := &v0alpha1.RoutingTree{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.RoutingTreeSpec{},
+		Spec: v0alpha1.Spec{},
 	}
-	_, err = client.Create(ctx, route, v1.CreateOptions{})
+	_, err := client.Create(ctx, route, v1.CreateOptions{})
 	assert.Error(t, err)
 	require.Truef(t, errors.IsMethodNotSupported(err), "Expected MethodNotSupported but got %s", err)
 
-	err = client.DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{})
+	err = client.Client.DeleteCollection(ctx, v1.DeleteOptions{}, v1.ListOptions{})
 	assert.Error(t, err)
 	require.Truef(t, errors.IsMethodNotSupported(err), "Expected MethodNotSupported but got %s", err)
 }
@@ -163,15 +160,11 @@ func TestIntegrationAccessControl(t *testing.T) {
 	}
 
 	admin := org1.Admin
-	adminK8sClient, err := versioned.NewForConfig(admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().RoutingTrees("default")
+	adminClient := newClient(t, admin)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			k8sClient, err := versioned.NewForConfig(tc.user.NewRestConfig())
-			require.NoError(t, err)
-			client := k8sClient.NotificationsV0alpha1().RoutingTrees("default")
+			client := newClient(t, tc.user)
 
 			if tc.canRead {
 				t.Run("should be able to list routing trees", func(t *testing.T) {
@@ -212,7 +205,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 			current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 			require.NoError(t, err)
-			expected := current.DeepCopy()
+			expected := current.Copy().(*v0alpha1.RoutingTree)
 			expected.Spec.Routes = []v0alpha1.Route{
 				{
 					Matchers: []v0alpha1.Matcher{
@@ -236,7 +229,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					expected = updated
 
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
-						up := expected.DeepCopy()
+						up := expected.Copy().(*v0alpha1.RoutingTree)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, v1.UpdateOptions{})
 						require.Error(t, err)
@@ -250,7 +243,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
-						up := expected.DeepCopy()
+						up := expected.Copy().(*v0alpha1.RoutingTree)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, v1.UpdateOptions{})
 						require.Error(t, err)
@@ -286,7 +279,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 		})
 
-		err = adminClient.Delete(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.DeleteOptions{})
+		err := adminClient.Delete(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.DeleteOptions{})
 		require.NoError(t, err)
 	}
 }
@@ -302,9 +295,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminK8sClient, err := versioned.NewForConfig(admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().RoutingTrees("default")
+	adminClient := newClient(t, admin)
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
@@ -323,7 +314,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.Equal(t, "API", got.GetProvenanceStatus())
 	})
 	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := current.DeepCopy()
+		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.Spec.Routes = []v0alpha1.Route{
 			{
 				Matchers: []v0alpha1.Matcher{
@@ -355,23 +346,21 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().RoutingTrees("default")
+	adminClient := newClient(t, helper.Org1.Admin)
 
 	current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 	require.NoError(t, err)
 	require.NotEmpty(t, current.ResourceVersion)
 
 	t.Run("should forbid if version does not match", func(t *testing.T) {
-		updated := current.DeepCopy()
+		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.ResourceVersion = "test"
 		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.Error(t, err)
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
-		updated := current.DeepCopy()
+		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "data")
 		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)
@@ -381,7 +370,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	t.Run("should update if version is empty", func(t *testing.T) {
 		current, err = adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 		require.NoError(t, err)
-		updated := current.DeepCopy()
+		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.ResourceVersion = ""
 		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.Route{Continue: true})
 
@@ -403,9 +392,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	client := adminK8sClient.NotificationsV0alpha1().RoutingTrees("default")
+	client := newClient(t, helper.Org1.Admin)
 
 	receiver := "grafana-default-email"
 	timeInterval := "test-time-interval"

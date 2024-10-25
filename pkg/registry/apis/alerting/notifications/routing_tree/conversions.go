@@ -12,14 +12,15 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 
-	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func convertToK8sResource(orgID int64, r definitions.Route, version string, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
-	spec := model.RoutingTreeSpec{
+	spec := model.Spec{
 		Defaults: model.RouteDefaults{
 			GroupBy:        r.GroupByStr,
 			GroupWait:      optionalPrometheusDurationToString(r.GroupWait),
@@ -36,10 +37,6 @@ func convertToK8sResource(orgID int64, r definitions.Route, version string, name
 	}
 
 	var result = &model.RoutingTree{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       model.RouteResourceInfo.GroupVersionKind().Kind,
-			APIVersion: model.APIVERSION,
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            model.UserDefinedRoutingTreeName,
 			Namespace:       namespacer(orgID),
@@ -48,6 +45,7 @@ func convertToK8sResource(orgID int64, r definitions.Route, version string, name
 		Spec: spec,
 	}
 	result.SetProvenanceStatus(string(r.Provenance))
+	result.UID = gapiutil.CalculateClusterWideUID(result)
 	return result, nil
 }
 
@@ -83,7 +81,7 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.Route {
 		for _, key := range keys {
 			m := model.Matcher{
 				Label: key,
-				Type:  model.MatcherTypeEqualRegex,
+				Type:  model.MatcherTypeEqualTilde,
 			}
 			value, _ := r.MatchRE[key].MarshalYAML()
 			if s, ok := value.(string); ok {

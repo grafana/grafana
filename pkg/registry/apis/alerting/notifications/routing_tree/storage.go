@@ -10,7 +10,7 @@ func NewStorage(legacySvc RouteService, namespacer request.NamespaceMapper) (res
 	legacyStore := &legacyStorage{
 		service:        legacySvc,
 		namespacer:     namespacer,
-		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
+		tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
 	}
 	// TODO implement dual write for routes. This API is a special beast - the resource is singleton.
 	return legacyStore, nil

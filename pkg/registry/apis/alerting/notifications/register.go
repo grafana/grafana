@@ -103,7 +103,7 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 	if err != nil {
 		return fmt.Errorf("failed to initialize route storage: %w", err)
 	}
-	addStorage(notificationsModels.RouteResourceInfo.GroupVersionResource(), routeStorage)
+	addStorage(routing_tree.ResourceInfo.GroupVersionResource(), routeStorage)
 
 	return nil
 }
@@ -113,7 +113,7 @@ func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefin
 		tmpl := template_group.GetOpenAPIDefinitions(c)
 		tin := timeInterval.GetOpenAPIDefinitions(c)
 		recv := receiver.GetOpenAPIDefinitions(c)
-		rest := notificationsModels.GetOpenAPIDefinitions(c)
+		rest := routing_tree.GetOpenAPIDefinitions(c)
 		result := make(map[string]common.OpenAPIDefinition, len(tmpl)+len(tin)+len(recv)+len(rest))
 		maps.Copy(result, tmpl)
 		maps.Copy(result, tin)
@@ -139,7 +139,7 @@ func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3
 	delete(oas.Paths.Paths, root+receiver.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+timeInterval.ResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+template_group.ResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+notificationsModels.RouteResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+routing_tree.ResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]
@@ -159,7 +159,7 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return timeInterval.Authorize(ctx, t.authz, a)
 			case receiver.ResourceInfo.GroupResource().Resource:
 				return receiver.Authorize(ctx, t.receiverAuth, a)
-			case notificationsModels.RouteResourceInfo.GroupResource().Resource:
+			case routing_tree.ResourceInfo.GroupResource().Resource:
 				return routing_tree.Authorize(ctx, t.authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil

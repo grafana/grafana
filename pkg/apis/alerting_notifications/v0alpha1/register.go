@@ -8,10 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	receiver "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1"
+	routingtree "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1"
 	templategroup "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1"
 	timeinterval "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/timeinterval/v0alpha1"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 )
 
@@ -27,27 +27,6 @@ const (
 )
 
 var (
-	RouteResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-		"routingtrees", "routingtree", "RoutingTree",
-		func() runtime.Object { return &RoutingTree{} },
-		func() runtime.Object { return &RoutingTreeList{} },
-		utils.TableColumns{
-			Definition: []metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				// {Name: "Intervals", Type: "string", Format: "string", Description: "The display name"},
-			},
-			Reader: func(obj any) ([]interface{}, error) {
-				r, ok := obj.(*RoutingTree)
-				if !ok {
-					return nil, fmt.Errorf("expected resource or info")
-				}
-				return []interface{}{
-					r.Name,
-					// r.Spec, //TODO implement formatting for Spec, same as UI?
-				}, nil
-			},
-		},
-	)
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 	// SchemaBuilder is used by standard codegen
@@ -70,8 +49,8 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		&receiver.ReceiverList{},
 		&templategroup.TemplateGroup{},
 		&templategroup.TemplateGroupList{},
-		&RoutingTree{},
-		&RoutingTreeList{},
+		&routingtree.RoutingTree{},
+		&routingtree.RoutingTreeList{},
 	)
 	metav1.AddToGroupVersion(scheme, g)
 
