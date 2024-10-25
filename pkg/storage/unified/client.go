@@ -5,19 +5,25 @@ import (
 	"fmt"
 	"path/filepath"
 
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"gocloud.dev/blob/fileblob"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	authnlib "github.com/grafana/authlib/authn"
+
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
+
+const resourceStoreAudience = "resourceStore"
 
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(
@@ -79,7 +85,13 @@ func ProvideUnifiedStorageClient(
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewResourceClient(conn), nil
+
+		// Create a client instance
+		client, err := newResourceClient(conn, cfg, features)
+		if err != nil {
+			return nil, err
+		}
+		return client, nil
 
 	// Use the local SQL
 	default:
@@ -89,4 +101,30 @@ func ProvideUnifiedStorageClient(
 		}
 		return resource.NewLocalResourceClient(server), nil
 	}
+}
+
+func clientCfgMapping(clientCfg *grpcutils.GrpcClientConfig) authnlib.GrpcClientConfig {
+	return authnlib.GrpcClientConfig{
+		TokenClientConfig: &authnlib.TokenExchangeConfig{
+			Token:            clientCfg.Token,
+			TokenExchangeURL: clientCfg.TokenExchangeURL,
+		},
+		TokenRequest: &authnlib.TokenExchangeRequest{
+			Namespace: clientCfg.TokenNamespace,
+			Audiences: []string{resourceStoreAudience},
+		},
+	}
+}
+
+func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resource.ResourceClient, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
+		return resource.NewLegacyResourceClient(conn), nil
+	}
+	if cfg.StackID == "" {
+		return resource.NewGRPCResourceClient(conn)
+	}
+
+	grpcClientCfg := grpcutils.ReadGrpcClientConfig(cfg)
+
+	return resource.NewCloudResourceClient(conn, clientCfgMapping(grpcClientCfg), cfg.Env == setting.Dev)
 }

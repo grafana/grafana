@@ -5,10 +5,9 @@ import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { isCompactUrl } from '../../../utils';
-import { Trans } from '../../../utils/i18n';
-import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
+import { Tooltip } from '../../Tooltip/Tooltip';
 
 export interface DataLinksListItemProps {
   index: number;
@@ -33,40 +32,33 @@ export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: Da
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
       {(provided) => (
-        <>
-          <div
-            className={cx(styles.wrapper, styles.dragRow)}
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            key={index}
-          >
-            <div className={styles.linkDetails}>
-              <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
-                {hasTitle ? title : 'Data link title not provided'}
-              </div>
+        <div
+          className={cx(styles.wrapper, styles.dragRow)}
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          key={index}
+        >
+          <div className={styles.linkDetails}>
+            <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
+              {hasTitle ? title : 'Data link title not provided'}
+            </div>
+            <Tooltip content={'Explore data link may not work in the future. Please edit.'} show={isCompactExploreUrl}>
               <div
                 className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
                 title={url}
               >
                 {hasUrl ? url : 'Data link url not provided'}
               </div>
-              {isCompactExploreUrl && (
-                <FieldValidationMessage>
-                  <Trans i18nKey="grafana-ui.data-links-list-item.compact-explore-disclaimer">
-                    Explore data link may not work in the future. Please edit.
-                  </Trans>
-                </FieldValidationMessage>
-              )}
-            </div>
-            <div className={styles.icons}>
-              <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit data link" />
-              <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove data link" />
-              <div className={styles.dragIcon} {...provided.dragHandleProps}>
-                <Icon name="draggabledots" size="lg" />
-              </div>
+            </Tooltip>
+          </div>
+          <div className={styles.icons}>
+            <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit data link" />
+            <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove data link" />
+            <div className={styles.dragIcon} {...provided.dragHandleProps}>
+              <Icon name="draggabledots" size="lg" />
             </div>
           </div>
-        </>
+        </div>
       )}
     </Draggable>
   );
@@ -79,7 +71,6 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       alignItems: 'center',
       justifyContent: 'space-between',
-      width: '100%',
       padding: '5px 0 5px 10px',
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.secondary,
@@ -112,6 +103,7 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
     }),
     dragRow: css({
       position: 'relative',
+      margin: '8px',
     }),
     icons: css({
       display: 'flex',

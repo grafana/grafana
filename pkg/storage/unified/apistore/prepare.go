@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -26,11 +27,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, err
 	}
 	if obj.GetName() == "" {
-		return nil, fmt.Errorf("new object must have a name")
+		return nil, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
 	}
+
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
@@ -75,9 +77,19 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if err != nil {
 		return nil, err
 	}
+
+	if previous.GetUID() == "" {
+		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
+	}
+
+	if obj.GetName() != previous.GetName() {
+		return nil, fmt.Errorf("name mismatch between existing and updated object")
+	}
+
 	obj.SetUID(previous.GetUID())
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
+	obj.SetResourceVersion("")
 
 	// Read+write will verify that origin format is accurate
 	origin, err := obj.GetOriginInfo()

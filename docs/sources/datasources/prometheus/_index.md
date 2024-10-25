@@ -199,7 +199,7 @@ Exemplars associate higher-cardinality metadata from a specific event with tradi
 Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
 {{% /admonition %}}
 
-Grafana 7.4 and higher can show exemplars data alongside a metric both in Explore and in Dashboards.
+Grafana can show exemplars data alongside a metric both in Explore and in Dashboards.
 
 {{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 
