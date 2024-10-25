@@ -116,11 +116,7 @@ func (query *Query) renderTags() []string {
 		case "Is", "Is Not":
 			textValue, tag.Operator = isOperatorTypeHandler(tag)
 		default:
-			 if isNumeric(tag.Value) {
-		        textValue = tag.Value
-		    } else {
-		        textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
-		    }
+			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
 		}
 
 		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
@@ -137,11 +133,6 @@ func (query *Query) renderTags() []string {
 	}
 
 	return res
-}
-
-func isNumeric(value string) bool {
-    _, err := strconv.Atoi(value)
-    return err == nil
 }
 
 func (query *Query) renderTimeFilter(queryContext *backend.QueryDataRequest) string {
