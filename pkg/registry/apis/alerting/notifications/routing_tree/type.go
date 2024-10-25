@@ -3,6 +3,7 @@ package routing_tree
 import (
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1"
@@ -17,3 +18,12 @@ var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 	func() runtime.Object { return kind.ZeroListValue() },
 	utils.TableColumns{},
 )
+
+func AddKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(ResourceInfo.GroupVersion(),
+		&model.RoutingTree{},
+		&model.RoutingTreeList{},
+	)
+	metav1.AddToGroupVersion(scheme, ResourceInfo.GroupVersion())
+	return nil
+}

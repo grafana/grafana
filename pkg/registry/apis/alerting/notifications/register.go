@@ -13,7 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/apis/resource"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routing_tree"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template_group"
@@ -36,7 +36,6 @@ type NotificationsAPIBuilder struct {
 	receiverAuth receiver.AccessControlService
 	ng           *ngalert.AlertNG
 	namespacer   request.NamespaceMapper
-	gv           schema.GroupVersion
 }
 
 func RegisterAPIService(
@@ -51,7 +50,6 @@ func RegisterAPIService(
 	builder := &NotificationsAPIBuilder{
 		ng:           ng,
 		namespacer:   request.GetNamespaceMapper(cfg),
-		gv:           notificationsModels.SchemeGroupVersion,
 		authz:        ng.Api.AccessControl,
 		receiverAuth: ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false),
 	}
@@ -60,15 +58,23 @@ func RegisterAPIService(
 }
 
 func (t *NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return t.gv
+	return resource.GroupVersion
 }
 
 func (t *NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := notificationsModels.AddToScheme(scheme)
-	if err != nil {
+	if err := receiver.AddKnownTypes(scheme); err != nil {
 		return err
 	}
-	return scheme.SetVersionPriority(notificationsModels.SchemeGroupVersion)
+	if err := routing_tree.AddKnownTypes(scheme); err != nil {
+		return err
+	}
+	if err := template_group.AddKnownTypes(scheme); err != nil {
+		return err
+	}
+	if err := timeInterval.AddKnownTypes(scheme); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
