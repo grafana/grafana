@@ -24,15 +24,15 @@ import (
 )
 
 var (
-	errPasswordlessClientInvalidCode             = errutil.Unauthorized("passwordless-auth.invalid.code", errutil.WithPublicMessage("Invalid code"))
-	errPasswordlessClientInvalidConfirmationCode = errutil.Unauthorized("passwordless-auth.invalid.confirmation-code", errutil.WithPublicMessage("Invalid confirmation code"))
-	errPasswordlessClientTooManyLoginAttempts    = errutil.Unauthorized("passwordless-auth.invalid.login-attempt", errutil.WithPublicMessage("Login temporarily blocked"))
-	errPasswordlessClientInvalidEmail            = errutil.Unauthorized("passwordless-auth.invalid.email", errutil.WithPublicMessage("Invalid email"))
-	errPasswordlessClientCodeAlreadySent         = errutil.Unauthorized("passwordless-auth.invalid.code", errutil.WithPublicMessage("Code already sent to email"))
+	errPasswordlessClientInvalidCode             = errutil.Unauthorized("passwordless.invalid.code", errutil.WithPublicMessage("Invalid code"))
+	errPasswordlessClientInvalidConfirmationCode = errutil.Unauthorized("passwordless.invalid.confirmation-code", errutil.WithPublicMessage("Invalid confirmation code"))
+	errPasswordlessClientTooManyLoginAttempts    = errutil.Unauthorized("passwordless.invalid.login-attempt", errutil.WithPublicMessage("Login temporarily blocked"))
+	errPasswordlessClientInvalidEmail            = errutil.Unauthorized("passwordless.invalid.email", errutil.WithPublicMessage("Invalid email"))
+	errPasswordlessClientCodeAlreadySent         = errutil.Unauthorized("passwordless.invalid.code", errutil.WithPublicMessage("Code already sent to email"))
 
-	errPasswordlessClientInternal = errutil.Internal("passwordless-auth.failed", errutil.WithPublicMessage("An internal error occurred in the Passwordless client"))
+	errPasswordlessClientInternal = errutil.Internal("passwordless.failed", errutil.WithPublicMessage("An internal error occurred in the Passwordless client"))
 
-	errPasswordlessClientMissingCode = errutil.BadRequest("passwordless-auth.missing.code", errutil.WithPublicMessage("Missing code"))
+	errPasswordlessClientMissingCode = errutil.BadRequest("passwordless.missing.code", errutil.WithPublicMessage("Missing code"))
 )
 
 const passwordlessKeyPrefix = "passwordless-%s"
