@@ -143,8 +143,8 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   ];
 
   useEffect(() => {
-    if (template && template.value?.name) {
-      setCustomTemplateValue(getUseTemplateText(template.value?.name));
+    if (template?.value?.name) {
+      setCustomTemplateValue(getUseTemplateText(template.value.name));
     }
   }, [template]);
 
