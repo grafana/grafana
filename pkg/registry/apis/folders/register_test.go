@@ -90,10 +90,10 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			out := authorizerFunc(identity.WithRequester(ctx, tt.input.user), authorizer.AttributesRecord{User: tt.input.user, Verb: tt.input.verb, Resource: "folders", ResourceRequest: true, Name: "123"})
-			allow, err := b.accessControl.Evaluate(ctx, out.user, out.eval)
+			out, err := authorizerFunc(identity.WithRequester(ctx, tt.input.user), authorizer.AttributesRecord{User: tt.input.user, Verb: tt.input.verb, Resource: "folders", ResourceRequest: true, Name: "123"})
+			allow, err := b.accessControl.Evaluate(ctx, out.user, out.evaluator)
 			require.NoError(t, err)
-			require.Equal(t, tt.expect.eval, out.eval.String())
+			require.Equal(t, tt.expect.eval, out.evaluator.String())
 			require.Equal(t, tt.expect.allow, allow)
 		})
 	}

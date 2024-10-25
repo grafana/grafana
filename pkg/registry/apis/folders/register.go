@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"errors"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +30,8 @@ import (
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = v0alpha1.FolderResourceInfo
+
+var errNoUser = errors.New("valid user is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -155,21 +158,22 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 }
 
 type authorizerParams struct {
-	user identity.Requester
-	eval accesscontrol.Evaluator
-	dec  authorizer.Decision
-	req  string
+	user      identity.Requester
+	evaluator accesscontrol.Evaluator
 }
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		in := authorizerFunc(ctx, attr)
+		in, err := authorizerFunc(ctx, attr)
 
-		if in.user == nil {
-			return in.dec, in.req, nil
+		if err != nil {
+			if err == errNoUser {
+				return authorizer.DecisionDeny, "", nil
+			}
+			return authorizer.DecisionNoOpinion, "", nil
 		}
 
-		ok, err := b.accessControl.Evaluate(ctx, in.user, in.eval)
+		ok, err := b.accessControl.Evaluate(ctx, in.user, in.evaluator)
 		if ok {
 			return authorizer.DecisionAllow, "", nil
 		}
@@ -177,21 +181,21 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	})
 }
 
-func authorizerFunc(ctx context.Context, attr authorizer.Attributes) authorizerParams {
+func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
 	verb := attr.GetVerb()
 	name := attr.GetName()
 	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
-		return authorizerParams{user: nil, eval: nil, dec: authorizer.DecisionNoOpinion, req: ""}
+		return nil, errors.New("resource name is required")
 	}
 
 	// require a user
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return authorizerParams{user: user, eval: nil, dec: authorizer.DecisionDeny, req: "valid user is required"}
+		return nil, errNoUser
 	}
 
 	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
-	eval := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
+	var eval accesscontrol.Evaluator
 
 	// "get" is used for sub-resources with GET http (parents, access, count)
 	switch verb {
@@ -205,6 +209,8 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) authorizerP
 		fallthrough
 	case utils.VerbDelete:
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
+	default:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 	}
-	return authorizerParams{user: user, eval: eval, dec: authorizer.DecisionNoOpinion, req: ""}
+	return &authorizerParams{evaluator: eval, user: user}, nil
 }
