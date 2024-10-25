@@ -32,6 +32,7 @@ var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 var resourceInfo = v0alpha1.FolderResourceInfo
 
 var errNoUser = errors.New("valid user is required")
+var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -185,7 +186,7 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 	verb := attr.GetVerb()
 	name := attr.GetName()
 	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
-		return nil, errors.New("resource name is required")
+		return nil, errNoResource
 	}
 
 	// require a user
