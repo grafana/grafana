@@ -93,7 +93,7 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
               </Stack>
             )}
 
-            {pluginDependants && (
+            {pluginDependants && pluginDependants.length > 0 && (
               <Stack direction="column" gap={1}>
                 <Text color="secondary">
                   <Trans i18nKey={'plugins.details.labels.pluginDependants'}>Required by: </Trans>
