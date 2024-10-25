@@ -412,6 +412,7 @@ def upload_cdn_step(ver_mode, trigger = None, depends_on = ["grafana-server"]):
       ver_mode: only uses the step trigger when ver_mode == 'release-branch' or 'main'
       trigger: a Drone trigger for the step.
         Defaults to None.
+      depends_on: drone steps that this step depends on
 
     Returns:
       Drone step.
@@ -937,6 +938,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rg
         It is combined with the 'grafana/' library prefix.
       trigger: a Drone trigger for the pipeline.
         Defaults to None.
+      depends_on: drone steps that this step depends on
 
     Returns:
       Drone step.
@@ -1160,6 +1162,7 @@ def upload_packages_step(ver_mode, trigger = None, depends_on = [
         edition packages when executed.
       trigger: a Drone trigger for the step.
         Defaults to None.
+      depends_on: drone steps that this step depends on
 
     Returns:
       Drone step.

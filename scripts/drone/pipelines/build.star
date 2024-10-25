@@ -42,6 +42,8 @@ load(
     "pipeline",
 )
 
+# This function isn't actually unused but I don't know why the linter thinks it is...
+# @unused
 def build_e2e(trigger, ver_mode):
     """Perform e2e building, testing, and publishing.
 
@@ -79,8 +81,8 @@ def build_e2e(trigger, ver_mode):
             "docker:grafana:linux/arm/v7:ubuntu",
         ],
         file = "packages.txt",
-        ubuntu = images["ubuntu"],
         tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
+        ubuntu = images["ubuntu"],
         ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
     )
 
