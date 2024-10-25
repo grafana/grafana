@@ -1,7 +1,5 @@
 ---
 Feedback Link: https://github.com/grafana/tutorials/issues/new
-authors:
-  - melori_arellano
 categories:
   - alerting
 description: Create alerts with Logs
@@ -168,7 +166,7 @@ In this step, we'll set up a new [contact point](https://grafana.com/docs/grafan
 
 1. In your browser, **sign in** to your Grafana Cloud account.
 
-   OSS users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
+   OSS users: To log in, navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
 
 1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. Copy Your unique URL.
@@ -176,7 +174,7 @@ In this step, we'll set up a new [contact point](https://grafana.com/docs/grafan
 
 {{< docs/ignore >}}
 
-1. Navigate to [http://localhost:3000](http://localhost:3000), where Grafana is running.
+1. Navigate to [http://localhost:3000](http://localhost:3000), where Grafana should be running.
 1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. Copy Your unique URL.
    {{< /docs/ignore >}}
@@ -213,48 +211,39 @@ Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alert
 
 ### Define query and alert condition
 
-In this section, we define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
+In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
 1. Select the **Loki** datasource from the drop-down.
-2. In the Query editor, switch to Code mode by clicking the button on the right.
-3. Paste the query below.
+1. In the Query editor, switch to **Code** mode by clicking the button on the right.
+1. Paste the query below.
 
    ```
    sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != "status=200" | pattern "<_> <message> duration<_>" [10m]))
    ```
 
-This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
+   This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
-You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
+   You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
 
-```
-2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
-```
+   ```
+   2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
+   ```
 
-  <!-- INTERACTIVE ignore START -->
+   <!-- INTERACTIVE ignore START -->
+   {{% admonition type="note" %}}
+   If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+   {{% / admonition %}}
+   <!-- INTERACTIVE ignore END -->
 
-{{% admonition type="note" %}}
+   {{< docs/ignore >}}
+   If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+   {{< /docs/ignore >}}
 
-If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+1. In the **Alert condition** section:
 
-{{% / admonition %}}
+   - Keep `Last` as the value for the reducer function (`WHEN`), and `0` as the threshold value. This is the value above which the alert rule should trigger.
 
-  <!-- INTERACTIVE ignore END -->
-
-{{< docs/ignore >}}
-
-If you're using your own logs, modify the LogQL query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
-
-{{< /docs/ignore >}}
-
-4. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
-
-5. In the ‘C’ **Threshold expression**:
-
-   - Change the **Input** to **'A'** to select the data source.
-   - Enter `0` as the threshold value. This is the value above which the alert rule should trigger.
-
-6. Click **Preview** to run the queries.
+1. Click **Preview alert rule condition** to run the query.
 
    It should return alert instances from log lines with a status code that is not 200 (OK), and that has met the alert condition. The condition for the alert rule to fire is any occurrence that goes over the threshold of `0`. Since the Loki query has returned more than zero alert instances, the alert rule is `Firing`.
 
