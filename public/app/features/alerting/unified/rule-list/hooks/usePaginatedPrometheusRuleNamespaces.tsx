@@ -1,17 +1,11 @@
-import { compact } from 'lodash';
 import { useState, useCallback, useEffect, useMemo, useDeferredValue } from 'react';
 import { usePrevious } from 'react-use';
 
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { groupRulesByFileName } from '../../api/prometheus';
 import { prometheusApi } from '../../api/prometheusApi';
-import { RulesFilter } from '../../search/rulesSearchParser';
-import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { getDatasourceAPIUid } from '../../utils/datasource';
-import { parseMatcher } from '../../utils/matchers';
-import { isAlertingRule } from '../../utils/rules';
 
 export function usePaginatedPrometheusRuleNamespaces(ruleSourceName: string, pageSize: number) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,71 +137,4 @@ function usePrometheusGroupsGenerator(ruleSourceName: string, pageSize: number) 
   }, [groupsGenerator]);
 
   return { groupsGenerator, isLoading, resetGenerator };
-}
-
-/**
- * Returns a new group with only the rules that match the filter.
- * @returns A new group with filtered rules, or undefined if the group does not match the filter or all rules are filtered out.
- */
-function getFilteredGroup(group: PromRuleGroupDTO, filterState: RulesFilter) {
-  const { name, rules, file } = group;
-
-  // TODO Add fuzzy filtering
-  if (filterState.namespace && !file.includes(filterState.namespace)) {
-    return undefined;
-  }
-
-  if (filterState.groupName && !name.includes(filterState.groupName)) {
-    return undefined;
-  }
-
-  const matchingRules = rules.filter((rule) => ruleMatchesFilter(rule, filterState));
-  if (matchingRules.length === 0) {
-    return undefined;
-  }
-
-  return { ...group, rules: matchingRules };
-}
-
-function ruleMatchesFilter(rule: PromRuleDTO, filterState: RulesFilter) {
-  const { name, labels = {}, health, type } = rule;
-
-  if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => name.includes(word))) {
-    return false;
-  }
-  if (filterState.ruleName && !name.includes(filterState.ruleName)) {
-    return false;
-  }
-  if (filterState.labels.length > 0) {
-    const matchers = compact(filterState.labels.map(looseParseMatcher));
-    const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(labels, matchers);
-    if (!doRuleLabelsMatchQuery) {
-      return false;
-    }
-  }
-  if (filterState.ruleType && type !== filterState.ruleType) {
-    return false;
-  }
-  if (filterState.ruleState) {
-    if (!isAlertingRule(rule)) {
-      return false;
-    }
-    if (rule.state !== filterState.ruleState) {
-      return false;
-    }
-  }
-  if (filterState.ruleHealth && health !== filterState.ruleHealth) {
-    return false;
-  }
-
-  return true;
-}
-
-function looseParseMatcher(matcherQuery: string): Matcher | undefined {
-  try {
-    return parseMatcher(matcherQuery);
-  } catch {
-    // Try to createa a matcher than matches all values for a given key
-    return { name: matcherQuery, value: '', isRegex: true, isEqual: true };
-  }
 }

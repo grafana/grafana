@@ -25,11 +25,15 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
+import { useRulesFilter } from '../hooks/useFilteredRules';
+import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAllRulesSources, isGrafanaRulesSource } from '../utils/datasource';
 import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
 
+import { FilterView } from './FilterView';
+import { StateView } from './StateView';
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
@@ -42,7 +46,12 @@ const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
 
 const RuleList = withErrorBoundary(
   () => {
+    const [queryParams] = useURLSearchParams();
     const ruleSources = getAllRulesSources();
+
+    const view = queryParams.get('view') ?? 'groups';
+
+    const { filterState, hasActiveFilters } = useRulesFilter();
 
     return (
       // We don't want to show the Loading... indicator for the whole page.
@@ -50,13 +59,21 @@ const RuleList = withErrorBoundary(
       <AlertingPageWrapper navId="alert-list" isLoading={false} actions={null}>
         <RulesFilter onClear={() => {}} />
         <Stack direction="column" gap={1}>
-          {ruleSources.map((ruleSource) => {
-            if (isGrafanaRulesSource(ruleSource)) {
-              return <GrafanaDataSourceLoader key={ruleSource} />;
-            } else {
-              return <DataSourceLoader key={ruleSource.uid} uid={ruleSource.uid} name={ruleSource.name} />;
-            }
-          })}
+          {view === 'state' ? (
+            <StateView namespaces={[]} />
+          ) : hasActiveFilters ? (
+            <FilterView filterState={filterState} />
+          ) : (
+            <>
+              {ruleSources.map((ruleSource) => {
+                if (isGrafanaRulesSource(ruleSource)) {
+                  return <GrafanaDataSourceLoader key={ruleSource} />;
+                } else {
+                  return <DataSourceLoader key={ruleSource.uid} uid={ruleSource.uid} name={ruleSource.name} />;
+                }
+              })}
+            </>
+          )}
         </Stack>
       </AlertingPageWrapper>
     );
