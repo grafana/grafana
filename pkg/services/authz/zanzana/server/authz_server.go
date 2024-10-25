@@ -68,7 +68,7 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 	}
 
 	if s.tenantID == "" {
-		s.tenantID = "stack-default"
+		s.tenantID = "stacks-default"
 	}
 
 	if len(s.modules) == 0 {
