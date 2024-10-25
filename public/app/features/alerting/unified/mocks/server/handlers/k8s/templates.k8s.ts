@@ -1,12 +1,12 @@
 import { HttpResponse, http } from 'msw';
 
-import alertmanagerConfig from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
+import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup } from 'app/features/alerting/unified/openapi/templatesApi.gen';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
-const config: AlertManagerCortexConfig = alertmanagerConfig;
+const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
 // Map alertmanager templates to k8s templates
 const mappedTemplates = Object.entries(

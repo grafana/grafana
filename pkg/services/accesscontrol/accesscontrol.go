@@ -36,6 +36,7 @@ type AccessControl interface {
 }
 
 type Service interface {
+	registry.BackgroundService
 	registry.ProvidesUsageStats
 	// GetRoleByName returns a role by name
 	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)

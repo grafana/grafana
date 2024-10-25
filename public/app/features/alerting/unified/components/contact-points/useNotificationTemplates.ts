@@ -26,6 +26,7 @@ export interface NotificationTemplate {
   title: string;
   content: string;
   provenance: string;
+  missing?: boolean;
 }
 
 const { useGetAlertmanagerConfigurationQuery, useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
@@ -84,12 +85,15 @@ function templateGroupToTemplate(
 }
 
 function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemplate[] {
+  const { alertmanager_config } = config;
+  const { templates = [] } = alertmanager_config;
   return Object.entries(config.template_files).map(([title, content]) => ({
     uid: title,
     title,
     content,
     // Undefined, null or empty string should be converted to PROVENANCE_NONE
     provenance: (config.template_file_provenances ?? {})[title] || PROVENANCE_NONE,
+    missing: !templates.includes(title),
   }));
 }
 
@@ -281,7 +285,15 @@ export function useDeleteNotificationTemplate({ alertmanager }: BaseAlertmanager
   return k8sApiSupported ? deleteUsingK8sApi : deleteUsingConfigFileApi;
 }
 
-export function useValidateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
+interface ValidateNotificationTemplateParams {
+  alertmanager: string;
+  originalTemplate?: NotificationTemplate;
+}
+
+export function useValidateNotificationTemplate({
+  alertmanager,
+  originalTemplate,
+}: ValidateNotificationTemplateParams) {
   const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
   const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
 
@@ -291,6 +303,11 @@ export function useValidateNotificationTemplate({ alertmanager }: BaseAlertmanag
     if (k8sApiSupported) {
       // K8s API handles validation for us, so we can just return true
       // and rely on API errors
+      return true;
+    }
+
+    if (originalTemplate?.title === name) {
+      // If original template is defined we update existing template so name will not be unique but it's ok
       return true;
     }
 

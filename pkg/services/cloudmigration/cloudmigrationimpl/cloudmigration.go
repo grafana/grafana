@@ -324,7 +324,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	defer span.End()
 
 	if err := s.gmsClient.ValidateKey(ctx, cm); err != nil {
-		return fmt.Errorf("validating token: %w", err)
+		return err
 	}
 
 	return nil
@@ -398,22 +398,22 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	base64Token := cmd.AuthToken
 	b, err := base64.StdEncoding.DecodeString(base64Token)
 	if err != nil {
-		return nil, fmt.Errorf("token could not be decoded")
+		return nil, cloudmigration.ErrTokenInvalid.Errorf("token could not be decoded")
 	}
 	var token cloudmigration.Base64EncodedTokenPayload
 	if err := json.Unmarshal(b, &token); err != nil {
-		return nil, fmt.Errorf("invalid token") // don't want to leak info here
+		return nil, cloudmigration.ErrTokenInvalid.Errorf("token could not be decoded") // don't want to leak info here
 	}
 
 	migration := token.ToMigration()
 	// validate token against GMS before saving
 	if err := s.ValidateToken(ctx, migration); err != nil {
-		return nil, fmt.Errorf("token validation: %w", err)
+		return nil, err
 	}
 
 	cm, err := s.store.CreateMigrationSession(ctx, migration)
 	if err != nil {
-		return nil, fmt.Errorf("error creating migration: %w", err)
+		return nil, cloudmigration.ErrSessionCreationFailure.Errorf("error creating migration")
 	}
 
 	s.report(ctx, &migration, gmsclient.EventConnect, 0, nil)
@@ -571,6 +571,13 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		if err != nil {
 			// treat this as non-fatal since the migration still succeeded
 			s.log.Error("error applying plugin warnings, please open a bug report: %w", err)
+		}
+
+		// Log the errors for resources with errors at migration
+		for _, resource := range resources {
+			if resource.Status == cloudmigration.ItemStatusError && resource.Error != "" {
+				s.log.Error("Could not migrate resource", "resourceID", resource.RefID, "error", resource.Error)
+			}
 		}
 
 		// We need to update the snapshot in our db before reporting anything
@@ -832,6 +839,7 @@ func (s *Service) getResourcesWithPluginWarnings(ctx context.Context, results []
 			// if the plugin is not found, it means it was uninstalled, meaning it wasn't core
 			if !p.IsCorePlugin() || !found {
 				r.Status = cloudmigration.ItemStatusWarning
+				r.ErrorCode = cloudmigration.ErrOnlyCoreDataSources
 				r.Error = "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack."
 			}
 

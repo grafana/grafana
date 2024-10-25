@@ -65,6 +65,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     app: {
       version: '1.0',
     },
+    allInstrumentationsEnabled: true,
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: true,
     webVitalsInstrumentalizationEnabled: true,

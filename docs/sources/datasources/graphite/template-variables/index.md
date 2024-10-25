@@ -73,7 +73,7 @@ For details, refer to the [Graphite docs on the autocomplete API for tags](http:
 
 ### Use multi-value variables in tag queries
 
-Multi-value variables in tag queries use the advanced formatting syntax for variables introduced in Grafana v5.0: `{var:regex}`.
+Multi-value variables in tag queries use the advanced formatting syntax for variables: `{var:regex}`.
 Non-tag queries use the default glob formatting for multi-value variables.
 
 #### Tag expression example
@@ -124,10 +124,6 @@ You can also create nested variables that use other variables in their definitio
 For example, `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
 ### Use `__searchFilter` to filter query variable results
-
-{{% admonition type="note" %}}
-Available in Grafana v6.5 and higher.
-{{% /admonition %}}
 
 You can use `__searchFilter` in the query field to filter the query result based on what the user types in the dropdown select box.
 The default value for `__searchFilter` is `*` if you've not entered anything, and `` when used as part of a regular expression.

@@ -58,9 +58,13 @@ export function AppChromeMenu({}: Props) {
           classNames={animationStyles.overlay}
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
-          <FocusScope contain autoFocus restoreFocus>
-            <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
-          </FocusScope>
+          <>
+            {isOpen && (
+              <FocusScope contain autoFocus restoreFocus>
+                <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
+              </FocusScope>
+            )}
+          </>
         </CSSTransition>
         <CSSTransition
           nodeRef={backdropRef}

@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,11 +32,15 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 	}
 
 	t.Run("Zanzana enabled", func(t *testing.T) {
-		// t.Helper()
-
 		features := featuremgmt.WithFeatures(featuremgmt.FlagZanzana)
-
 		db, cfg := db.InitTestDBWithCfg(t)
+
+		// Hack to skip these tests on mysql 5.7
+		if db.GetDialect().DriverName() == migrator.MySQL {
+			if supported, err := db.RecursiveQueriesAreSupported(); !supported || err != nil {
+				t.Skip("skipping integration test")
+			}
+		}
 
 		// Enable zanzana and run in embedded mode (part of grafana server)
 		cfg.Zanzana.ZanzanaOnlyEvaluation = true
@@ -77,7 +82,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		createDashboards(t, service, 100, "test-b")
 
 		// Sync Grafana DB with zanzana (migrate data)
-		zanzanaSyncronizer := migrator.NewZanzanaSynchroniser(zclient, db)
+		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(zclient, db, nil)
 		err = zanzanaSyncronizer.Sync(context.Background())
 		require.NoError(t, err)
 
