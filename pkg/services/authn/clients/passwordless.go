@@ -134,8 +134,6 @@ func (c *Passwordless) Name() string {
 }
 
 func (c *Passwordless) startPasswordless(ctx context.Context, email string) (string, error) {
-	// TODO: ratelimit on email as well (is there a record for this email in the last x minutes?) - return success message, but don't send email
-
 	// 1. check if is existing user with email or user invite with email
 	var existingUser *user.User
 	var tempUsers []*tempuser.TempUserDTO
@@ -162,7 +160,6 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 	}
 
 	if existingUser == nil {
-		// TODO: colin - check that this is the correct status - check when invites expire?
 		tempUsers, err = c.tempUserService.GetTempUsersQuery(ctx, &tempuser.GetTempUsersQuery{Email: email, Status: tempuser.TmpUserInvitePending})
 
 		if err != nil {
