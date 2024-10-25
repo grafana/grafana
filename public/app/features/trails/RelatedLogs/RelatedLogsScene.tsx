@@ -1,26 +1,26 @@
 import {
-  SceneComponentProps,
-  sceneGraph,
-  SceneObjectBase,
-  SceneObjectState,
+  CustomVariable,
   PanelBuilders,
   SceneFlexItem,
   SceneFlexLayout,
+  sceneGraph,
   SceneObject,
+  SceneObjectBase,
   SceneQueryRunner,
   SceneVariableSet,
-  VariableValueSelectors,
-  CustomVariable,
   VariableDependencyConfig,
-  SceneVariable,
+  VariableValueSelectors,
+  type SceneComponentProps,
+  type SceneObjectState,
+  type SceneVariable,
 } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
 
 import {
-  ExtractedRecordingRules,
   fetchAndExtractLokiRecordingRules,
-  getLogsUidOfMetric,
   getLogsQueryForMetric,
+  getLogsUidOfMetric,
+  type ExtractedRecordingRules,
 } from '../Integrations/logsIntegration';
 import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
