@@ -118,6 +118,10 @@ export function isEditableRuleIdentifier(identifier: RuleIdentifier): identifier
   return isGrafanaRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier);
 }
 
+export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
+  return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+}
+
 export function getRuleHealth(health: string): RuleHealth | undefined {
   switch (health) {
     case 'ok':

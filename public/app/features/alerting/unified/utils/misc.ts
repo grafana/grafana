@@ -7,24 +7,24 @@ import { DataSourceRef } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
-    alertInstanceKey,
-    isCloudRuleIdentifier,
-    isGrafanaRuleIdentifier,
-    isPrometheusRuleIdentifier
+  alertInstanceKey,
+  isCloudRuleIdentifier,
+  isGrafanaRuleIdentifier,
+  isPrometheusRuleIdentifier,
 } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
-    Alert,
-    CombinedRule,
-    FilterState,
-    RuleIdentifier,
-    RulesSource,
-    SilenceFilterState
+  Alert,
+  CombinedRule,
+  FilterState,
+  RuleIdentifier,
+  RulesSource,
+  SilenceFilterState,
 } from 'app/types/unified-alerting';
 import {
-    GrafanaAlertState,
-    PromAlertingRuleState,
-    mapStateWithReasonToBaseState,
+  GrafanaAlertState,
+  PromAlertingRuleState,
+  mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
@@ -121,13 +121,6 @@ export function makeAMLink(path: string, alertManagerName?: string, options?: UR
     search.set(ALERTMANAGER_NAME_QUERY_KEY, alertManagerName);
   }
   return `${path}?${search.toString()}`;
-}
-
-export const escapeQuotes = (input: string) => input.replace(/\"/g, '\\"');
-
-export function wrapWithQuotes(input: string) {
-  const alreadyWrapped = input.startsWith('"') && input.endsWith('"');
-  return alreadyWrapped ? escapeQuotes(input) : `"${escapeQuotes(input)}"`;
 }
 
 export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels: Labels) {

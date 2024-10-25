@@ -57,17 +57,21 @@ func New(
 		return nil, err
 	}
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
+	if httpMethod == "" {
+		httpMethod = http.MethodPost
+	}
 
 	timeInterval, err := maputil.GetStringOptional(jsonData, "timeInterval")
 	if err != nil {
 		return nil, err
 	}
 
-	if httpMethod == "" {
-		httpMethod = http.MethodPost
+	queryTimeout, err := maputil.GetStringOptional(jsonData, "queryTimeout")
+	if err != nil {
+		return nil, err
 	}
 
-	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
+	promClient := client.NewClient(httpClient, httpMethod, settings.URL, queryTimeout)
 
 	// standard deviation sampler is the default for backwards compatibility
 	exemplarSampler := exemplar.NewStandardDeviationSampler
@@ -153,7 +157,7 @@ func (s *QueryData) handleQuery(ctx context.Context, bq backend.DataQuery, fromA
 func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *models.Query,
 	enablePrometheusDataplane, hasPrometheusRunQueriesInParallel bool) *backend.DataResponse {
 	logger := s.log.FromContext(traceCtx)
-	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
+	logger.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr /*, "queryTimeout", s.QueryTimeout*/)
 
 	dr := &backend.DataResponse{
 		Frames: data.Frames{},

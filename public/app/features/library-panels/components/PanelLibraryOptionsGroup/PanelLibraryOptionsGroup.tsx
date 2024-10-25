@@ -84,7 +84,7 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false 
 };
 
 const styles = {
-  libraryPanelsView: css`
-    width: 100%;
-  `,
+  libraryPanelsView: css({
+    width: '100%',
+  }),
 };

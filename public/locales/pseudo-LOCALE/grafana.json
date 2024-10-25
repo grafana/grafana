@@ -866,6 +866,11 @@
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "logs": {
+      "logs-volume": {
+        "add-filters": "Åđđ mőřę ľäþęľş ŧő yőūř qūęřy ŧő ŉäřřőŵ đőŵŉ yőūř şęäřčĥ.",
+        "decrease-timerange": "Đęčřęäşę ŧĥę ŧįmę řäŉģę őƒ yőūř qūęřy.",
+        "much-data": "Ŧĥę qūęřy įş ŧřyįŉģ ŧő äččęşş ŧőő mūčĥ đäŧä. Ŧřy őŉę őř mőřę őƒ ŧĥę ƒőľľőŵįŉģ:"
+      },
       "maximum-pinned-logs": "Mäχįmūm őƒ {{PINNED_LOGS_LIMIT}} pįŉŉęđ ľőģş řęäčĥęđ. Ůŉpįŉ ä ľőģ ŧő äđđ äŉőŧĥęř.",
       "no-logs-found": "Ńő ľőģş ƒőūŉđ.",
       "scan-for-older-logs": "Ŝčäŉ ƒőř őľđęř ľőģş",
@@ -1093,9 +1098,6 @@
     "data-links-inline-editor": {
       "add-link": "Åđđ ľįŉĸ",
       "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
-    },
-    "data-links-list-item": {
-      "compact-explore-disclaimer": "Ēχpľőřę đäŧä ľįŉĸ mäy ŉőŧ ŵőřĸ įŉ ŧĥę ƒūŧūřę. Pľęäşę ęđįŧ."
     },
     "data-source-http-settings": {
       "access-help": "Ħęľp <1></1>",
@@ -1614,7 +1616,9 @@
       "dismiss-button": "ØĶ",
       "error-messages": {
         "dashboard-already-managed": "Đäşĥþőäřđ įş äľřęäđy přővįşįőŉęđ äŉđ mäŉäģęđ þy Ğřäƒäŉä įŉ ŧĥę čľőūđ įŉşŧäŉčę. Ŵę řęčőmmęŉđ ūşįŉģ ŧĥę přővįşįőŉęđ đäşĥþőäřđ ģőįŉģ ƒőřŵäřđ. Ĩƒ yőū şŧįľľ ŵįşĥ ŧő čőpy ŧĥę đäşĥþőäřđ ŧő ŧĥę čľőūđ įŉşŧäŉčę, ŧĥęŉ čĥäŉģę ŧĥę đäşĥþőäřđ ĨĐ įŉ ŧĥę đäşĥþőäřđ ĴŜØŃ, şävę ä ŉęŵ şŉäpşĥőŧ äŉđ ūpľőäđ äģäįŉ.",
+        "datasource-invalid-url": "Ŧĥęřę įş ä đäŧä şőūřčę ŵĥįčĥ ĥäş äŉ įŉväľįđ ŮŖĿ. Přővįđę ä väľįđ ŮŖĿ äŉđ ŧřy äģäįŉ.",
         "datasource-name-conflict": "Ŧĥęřę įş ä đäŧä şőūřčę ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę ŧäřģęŧ įŉşŧäŉčę. Ŗęŉämę őŉę őƒ ŧĥęm äŉđ ŧřy äģäįŉ.",
+        "folder-name-conflict": "Ŧĥęřę įş ä ƒőľđęř ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę ŧäřģęŧ įŉşŧäŉčę. Ŗęŉämę őŉę őƒ ŧĥęm äŉđ ŧřy äģäįŉ.",
         "generic-error": "Ŧĥęřę ĥäş þęęŉ äŉ ęřřőř ŵĥįľę mįģřäŧįŉģ. Pľęäşę čĥęčĸ ŧĥę čľőūđ mįģřäŧįőŉ ľőģş ƒőř mőřę įŉƒőřmäŧįőŉ.",
         "internal-service-error": "Ŧĥęřę ĥäş þęęŉ äŉ ęřřőř ŵĥįľę mįģřäŧįŉģ. Pľęäşę čĥęčĸ ŧĥę Ğřäƒäŉä şęřvęř ľőģş ƒőř mőřę đęŧäįľş.",
         "library-element-name-conflict": "Ŧĥęřę įş ä ľįþřäřy ęľęmęŉŧ ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę ŧäřģęŧ įŉşŧäŉčę. Ŗęŉämę őŉę őƒ ŧĥęm äŉđ ŧřy äģäįŉ.",
@@ -2169,6 +2173,8 @@
         "dependencies": "Đępęŉđęŉčįęş",
         "downloads": "Đőŵŉľőäđş",
         "from": "Fřőm",
+        "installedVersion": "Ĩŉşŧäľľęđ vęřşįőŉ: ",
+        "latestVersion": "Ŀäŧęşŧ vęřşįőŉ: ",
         "links": "Ŀįŉĸş ",
         "reportAbuse": "Ŗępőřŧ ä čőŉčęřŉ ",
         "signature": "Ŝįģŉäŧūřę",
@@ -2465,6 +2471,16 @@
     },
     "dismissable-button": "Cľőşę"
   },
+  "role-picker": {
+    "title": {
+      "description": "Åşşįģŉ řőľęş ŧő ūşęřş ŧő ęŉşūřę ģřäŉūľäř čőŉŧřőľ ővęř äččęşş ŧő Ğřäƒäŉä&ľşqūő;ş ƒęäŧūřęş äŉđ řęşőūřčęş. Fįŉđ őūŧ mőřę įŉ őūř <2>đőčūmęŉŧäŧįőŉ</2>."
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "ßäşįč Ŗőľęş"
+    }
+  },
   "save-dashboards": {
     "name-exists": {
       "message-info": "Å đäşĥþőäřđ ŵįŧĥ ŧĥę şämę ŉämę įŉ ŧĥę şęľęčŧęđ ƒőľđęř äľřęäđy ęχįşŧş, įŉčľūđįŉģ řęčęŉŧľy đęľęŧęđ đäşĥþőäřđş.",
@@ -2542,6 +2558,21 @@
   "select": {
     "select-menu": {
       "selected-count": "Ŝęľęčŧęđ "
+    }
+  },
+  "service-account-create-page": {
+    "create": {
+      "button": "Cřęäŧę"
+    },
+    "name": {
+      "label": "Đįşpľäy ŉämę",
+      "required-error": "Đįşpľäy ŉämę įş řęqūįřęđ"
+    },
+    "page-nav": {
+      "label": "Cřęäŧę şęřvįčę äččőūŉŧ"
+    },
+    "role": {
+      "label": "Ŗőľę"
     }
   },
   "service-accounts": {
