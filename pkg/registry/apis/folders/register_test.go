@@ -24,6 +24,7 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 	type expect struct {
 		eval  string
 		allow bool
+		err   error
 	}
 	var orgID int64 = 1
 
@@ -51,7 +52,18 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 			},
 		},
 		{
-			name: "user with no permissions should not be able to create a folder",
+			name: "not possible to create a folder without a user",
+			input: input{
+				user: nil,
+				verb: string(utils.VerbCreate),
+			},
+			expect: expect{
+				eval: "folders:create",
+				err:  errNoUser,
+			},
+		},
+		{
+			name: "user without permissions should not be able to create a folder",
 			input: input{
 				user: &user.SignedInUser{},
 				verb: string(utils.VerbCreate),
@@ -91,7 +103,11 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			out, err := authorizerFunc(identity.WithRequester(ctx, tt.input.user), authorizer.AttributesRecord{User: tt.input.user, Verb: tt.input.verb, Resource: "folders", ResourceRequest: true, Name: "123"})
-			allow, err := b.accessControl.Evaluate(ctx, out.user, out.evaluator)
+			if tt.expect.err != nil {
+				require.Error(t, err)
+				return
+			}
+			allow, _ := b.accessControl.Evaluate(ctx, out.user, out.evaluator)
 			require.NoError(t, err)
 			require.Equal(t, tt.expect.eval, out.evaluator.String())
 			require.Equal(t, tt.expect.allow, allow)

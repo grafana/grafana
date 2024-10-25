@@ -168,7 +168,7 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		in, err := authorizerFunc(ctx, attr)
 
 		if err != nil {
-			if err == errNoUser {
+			if errors.Is(err, errNoUser) {
 				return authorizer.DecisionDeny, "", nil
 			}
 			return authorizer.DecisionNoOpinion, "", nil
