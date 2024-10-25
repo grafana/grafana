@@ -199,21 +199,13 @@ export function NestedFolderPicker({
     [search, fetchFolderPage]
   );
 
-  const onFolderCreation = () => {
-    setIsCreatingFolder(true);
-  };
-
-  const onDismissFolderCreation = () => {
-    setIsCreatingFolder(false);
-  };
-
   const onCreateNewFolder = async (folderName: string) => {
     try {
       await newFolder({
         title: folderName,
       });
     } finally {
-      onDismissFolderCreation();
+      setIsCreatingFolder(false);
     }
     // TODO: catch error?
   };
@@ -310,7 +302,9 @@ export function NestedFolderPicker({
           <>
             <Space v={1} />
             <Button
-              onClick={onFolderCreation}
+              onClick={() => {
+                setIsCreatingFolder(true);
+              }}
               type="button"
               icon="plus"
               fill="outline"
@@ -324,7 +318,12 @@ export function NestedFolderPicker({
         {createFolder && isCreatingFolder && (
           <>
             <Space v={1} />
-            <NewFolderForm onConfirm={onCreateNewFolder} onCancel={onDismissFolderCreation} />
+            <NewFolderForm
+              onConfirm={onCreateNewFolder}
+              onCancel={() => {
+                setIsCreatingFolder(false);
+              }}
+            />
           </>
         )}
       </>
