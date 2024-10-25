@@ -11,9 +11,9 @@ type Props = {
   legacyLogGroupNames: string[];
 };
 
-const rowGap = css`
-  gap: 3px;
-`;
+const rowGap = css({
+  gap: '3px',
+});
 
 export const LegacyLogGroupSelection = ({ datasource, region, legacyLogGroupNames, onChange }: Props) => {
   return (

@@ -251,19 +251,19 @@ function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame }) {
 
 export const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
-    label: css`
-      label: Label;
-      line-height: 1.25;
-      color: ${theme.colors.text.disabled};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.fontWeightMedium};
-      padding-right: ${theme.spacing(1)};
-    `,
-    value: css`
-      label: Value;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.fontWeightMedium};
-      color: ${theme.colors.text.primary};
-    `,
+    label: css({
+      label: 'Label',
+      lineHeight: 1.25,
+      color: theme.colors.text.disabled,
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      paddingRight: theme.spacing(1),
+    }),
+    value: css({
+      label: 'Value',
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+    }),
   };
 };

@@ -504,16 +504,16 @@ export const QueryEditor = withTheme2(UnthemedQueryEditor);
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    file: css`
-      width: 100%;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      padding: ${theme.spacing(2)};
-      border: 1px dashed ${theme.colors.border.medium};
-      background-color: ${theme.colors.background.secondary};
-      margin-top: ${theme.spacing(1)};
-    `,
+    file: css({
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(2),
+      border: `1px dashed ${theme.colors.border.medium}`,
+      backgroundColor: theme.colors.background.secondary,
+      marginTop: theme.spacing(1),
+    }),
   };
 }

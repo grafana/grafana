@@ -10,18 +10,18 @@ import { shortenLine } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    mainGroup: css`
-      pointer-events: none;
-      font-size: 8px;
-    `,
+    mainGroup: css({
+      pointerEvents: 'none',
+      fontSize: '8px',
+    }),
 
-    background: css`
-      fill: ${theme.components.tooltip.background};
-    `,
+    background: css({
+      fill: theme.components.tooltip.background,
+    }),
 
-    text: css`
-      fill: ${theme.components.tooltip.text};
-    `,
+    text: css({
+      fill: theme.components.tooltip.text,
+    }),
   };
 };
 

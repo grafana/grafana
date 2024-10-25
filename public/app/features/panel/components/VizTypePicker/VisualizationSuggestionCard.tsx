@@ -83,55 +83,56 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.spacing(2),
       bottom: 0,
     }),
-    vizBox: css`
-      position: relative;
-      background: none;
-      border-radius: ${theme.shape.radius.default};
-      cursor: pointer;
-      border: 1px solid ${theme.colors.border.medium};
+    vizBox: css({
+      position: 'relative',
+      background: 'none',
+      borderRadius: theme.shape.radius.default,
+      cursor: 'pointer',
+      border: `1px solid ${theme.colors.border.medium}`,
 
-      transition: ${theme.transitions.create(['background'], {
-        duration: theme.transitions.duration.short,
-      })};
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
-      &:hover {
-        background: ${theme.colors.background.secondary};
-      }
-    `,
-    imgBox: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
+      '&:hover': {
+        background: theme.colors.background.secondary,
+      },
+    }),
+    imgBox: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
 
-      justify-self: center;
-      color: ${theme.colors.text.primary};
-      width: 100%;
-      display: flex;
+      justifySelf: 'center',
+      color: theme.colors.text.primary,
+      width: '100%',
 
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    `,
-    name: css`
-      padding-bottom: ${theme.spacing(0.5)};
-      margin-top: ${theme.spacing(-1)};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      white-space: nowrap;
-      overflow: hidden;
-      color: ${theme.colors.text.secondary};
-      font-weight: ${theme.typography.fontWeightMedium};
-      text-overflow: ellipsis;
-    `,
-    img: css`
-      max-width: ${theme.spacing(8)};
-      max-height: ${theme.spacing(8)};
-    `,
-    renderContainer: css`
-      position: absolute;
-      transform-origin: left top;
-      top: 6px;
-      left: 6px;
-    `,
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center',
+    }),
+    name: css({
+      paddingBottom: theme.spacing(0.5),
+      marginTop: theme.spacing(-1),
+      fontSize: theme.typography.bodySmall.fontSize,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeightMedium,
+      textOverflow: 'ellipsis',
+    }),
+    img: css({
+      maxWidth: theme.spacing(8),
+      maxHeight: theme.spacing(8),
+    }),
+    renderContainer: css({
+      position: 'absolute',
+      transformOrigin: 'left top',
+      top: '6px',
+      left: '6px',
+    }),
   };
 };
 

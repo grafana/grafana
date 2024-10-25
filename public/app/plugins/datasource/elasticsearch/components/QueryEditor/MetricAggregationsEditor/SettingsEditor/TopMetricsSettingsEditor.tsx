@@ -49,16 +49,16 @@ export const TopMetricsSettingsEditor = ({ metric }: Props) => {
       <InlineField
         label="Order By"
         labelWidth={16}
-        className={css`
-          & > div {
-            width: 100%;
-          }
-        `}
+        className={css({
+          '& > div': {
+            width: '100%',
+          },
+        })}
       >
         <SegmentAsync
-          className={css`
-            margin-right: 0;
-          `}
+          className={css({
+            marginRight: 0,
+          })}
           loadOptions={getOrderByOptions}
           onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'orderBy', newValue: e.value }))}
           placeholder="Select Field"

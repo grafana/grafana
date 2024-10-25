@@ -50,11 +50,11 @@ export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProp
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  editorBox: css`
-    label: editorBox;
-    border: 1px solid ${theme.colors.border.medium};
-    border-radius: ${theme.shape.radius.default};
-    margin: ${theme.spacing(0.5)} 0;
-    width: 100%;
-  `,
+  editorBox: css({
+    label: 'editorBox',
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    margin: theme.spacing(0.5, 0),
+    width: '100%',
+  }),
 });

@@ -57,21 +57,20 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(2, 4, 3)};
-  `,
-  table: css`
-    table-layout: fixed;
-    width: 100%;
-    td,
-    th {
-      padding: ${theme.spacing()} 0;
-    }
-    th {
-      font-size: ${theme.typography.h5.fontSize};
-    }
-  `,
-  currentVersion: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
+  container: css({
+    padding: theme.spacing(2, 4, 3),
+  }),
+  table: css({
+    tableLayout: 'fixed',
+    width: '100%',
+    'td, th': {
+      padding: `${theme.spacing()} 0`,
+    },
+    th: {
+      fontSize: theme.typography.h5.fontSize,
+    },
+  }),
+  currentVersion: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
 });

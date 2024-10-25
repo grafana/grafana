@@ -93,9 +93,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: `0 ${theme.spacing(1)}`,
     height: `${theme.v1.spacing.formInputHeight}px`,
   }),
-  error: css`
-    border: 1px solid ${theme.colors.error.main};
-  `,
+  error: css({
+    border: `1px solid ${theme.colors.error.main}`,
+  }),
   label: css({
     padding: 0,
     margin: 0,

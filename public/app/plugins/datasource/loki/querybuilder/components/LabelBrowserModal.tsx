@@ -86,11 +86,11 @@ export const LabelBrowserModal = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    modal: css`
-      width: 85vw;
-      ${theme.breakpoints.down('md')} {
-        width: 100%;
-      }
-    `,
+    modal: css({
+      width: '85vw',
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+    }),
   };
 };

@@ -174,13 +174,13 @@ const getCellActions = (dataFrame: DataFrame, field: Field) => {
 };
 
 const tableStyles = {
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-  `,
-  selectWrapper: css`
-    padding: 8px 8px 0px 8px;
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    height: '100%',
+  }),
+  selectWrapper: css({
+    padding: '8px 8px 0px 8px',
+  }),
 };

@@ -53,20 +53,20 @@ export const DetailsBadge = ({ children }: React.PropsWithChildren<{}>) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  badge: css`
-    background-color: ${theme.colors.background.canvas};
-    border-color: ${theme.colors.border.strong};
-    color: ${theme.colors.text.secondary};
-    white-space: nowrap;
-  `,
-  detailsWrapper: css`
-    align-items: center;
-    display: flex;
-  `,
-  strong: css`
-    color: ${theme.colors.text.primary};
-  `,
-  icon: css`
-    margin-right: ${theme.spacing(0.5)};
-  `,
+  badge: css({
+    backgroundColor: theme.colors.background.canvas,
+    borderColor: theme.colors.border.strong,
+    color: theme.colors.text.secondary,
+    whiteSpace: 'nowrap',
+  }),
+  detailsWrapper: css({
+    alignItems: 'center',
+    display: 'flex',
+  }),
+  strong: css({
+    color: theme.colors.text.primary,
+  }),
+  icon: css({
+    marginRight: theme.spacing(0.5),
+  }),
 });

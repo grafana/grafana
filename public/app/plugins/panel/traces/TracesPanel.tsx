@@ -9,10 +9,10 @@ import { SpanLinkFunc } from 'app/features/explore/TraceView/components';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 
 const styles = {
-  wrapper: css`
-    height: 100%;
-    overflow: scroll;
-  `,
+  wrapper: css({
+    height: '100%',
+    overflow: 'scroll',
+  }),
 };
 
 export interface TracesPanelOptions {

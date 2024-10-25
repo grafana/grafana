@@ -11,18 +11,18 @@ import { DebugSection } from './DebugSection';
 import { DerivedField } from './DerivedField';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addButton: css`
-    margin-right: 10px;
-  `,
-  derivedField: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  container: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
-  debugSection: css`
-    margin-top: ${theme.spacing(4)};
-  `,
+  addButton: css({
+    marginRight: '10px',
+  }),
+  derivedField: css({
+    marginBottom: theme.spacing(1),
+  }),
+  container: css({
+    marginBottom: theme.spacing(4),
+  }),
+  debugSection: css({
+    marginTop: theme.spacing(4),
+  }),
 });
 
 type Props = {
@@ -114,9 +114,9 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
         {showDebug && (
           <div className={styles.debugSection}>
             <DebugSection
-              className={css`
-                margin-bottom: 10px;
-              `}
+              className={css({
+                marginBottom: '10px',
+              })}
               derivedFields={fields}
             />
           </div>

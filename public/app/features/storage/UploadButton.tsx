@@ -112,7 +112,7 @@ export function UploadButton({ setErrorMessages, setPath, path, fileNames }: Pro
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  uploadButton: css`
-    margin-right: ${theme.spacing(2)};
-  `,
+  uploadButton: css({
+    marginRight: theme.spacing(2),
+  }),
 });

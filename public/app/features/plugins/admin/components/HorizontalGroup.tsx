@@ -18,16 +18,16 @@ export const HorizontalGroup = ({ children, wrap, className }: HorizontalGroupPr
 };
 
 const getStyles = (theme: GrafanaTheme2, wrap?: boolean) => ({
-  container: css`
-    display: flex;
-    flex-direction: row;
-    flex-wrap: ${wrap ? 'wrap' : 'no-wrap'};
-    & > * {
-      margin-bottom: ${theme.spacing()};
-      margin-right: ${theme.spacing()};
-    }
-    & > *:last-child {
-      margin-right: 0;
-    }
-  `,
+  container: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: wrap ? 'wrap' : 'nowrap',
+    '& > *': {
+      marginBottom: theme.spacing(),
+      marginRight: theme.spacing(),
+    },
+    '& > *:last-child': {
+      marginRight: 0,
+    },
+  }),
 });
