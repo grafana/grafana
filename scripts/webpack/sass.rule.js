@@ -5,8 +5,7 @@ const path = require('path');
 
 module.exports = function (options) {
   return {
-    test: /\.scss$/,
-    exclude: /node_modules/,
+    test: /\.(sa|sc|c)ss$/,
     use: [
       MiniCssExtractPlugin.loader,
       {

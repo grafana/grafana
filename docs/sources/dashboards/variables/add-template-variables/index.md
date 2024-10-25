@@ -304,17 +304,11 @@ Grafana has global built-in variables that can be used in expressions in the que
 
 ### $\_\_dashboard
 
-> Only available in Grafana v6.7+. In Grafana 7.1, the variable changed from showing the UID of the current dashboard to the name of the current dashboard.
-
 This variable is the name of the current dashboard.
 
 ### $\_\_from and $\_\_to
 
 Grafana has two built-in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default, but you can control date formatting.
-
-{{% admonition type="note" %}}
-This special formatting syntax is only available in Grafana 7.1.2+
-{{% /admonition %}}
 
 | Syntax                   | Example result           | Description                                                                                                                                                      |
 | ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -360,8 +354,6 @@ This variable is the ID of the current organization.
 `${__org.name}` is the name of the current organization.
 
 ### $\_\_user
-
-> Only available in Grafana v7.1+
 
 `${__user.id}` is the ID of the current user.
 `${__user.login}` is the login handle of the current user.
@@ -640,10 +632,6 @@ demo.robustperception.io:9100
 ```
 
 ### Filter and modify using named text and value capture groups
-
-{{% admonition type="note" %}}
-This feature is available in Grafana 7.4+.
-{{% /admonition %}}
 
 Using named capture groups, you can capture separate 'text' and 'value' parts from the options returned by the variable query. This allows the variable drop-down list to contain a friendly name for each value that can be selected.
 

@@ -42,6 +42,8 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 		middlewares = append(middlewares, GrafanaRequestIDHeaderMiddleware(cfg, logger))
 	}
 
+	middlewares = append(middlewares, sdkhttpclient.ErrorSourceMiddleware())
+
 	// SigV4 signing should be performed after all headers are added
 	if cfg.SigV4AuthEnabled {
 		authSettings := awsds.AuthSettings{

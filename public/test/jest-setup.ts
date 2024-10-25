@@ -117,3 +117,12 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
   unobserve() {}
 };
+
+global.BroadcastChannel = class BroadcastChannel {
+  onmessage() {}
+  onmessageerror() {}
+  postMessage(data: unknown) {}
+  close() {}
+  addEventListener() {}
+  removeEventListener() {}
+};

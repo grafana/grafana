@@ -1,5 +1,5 @@
 import { useObservable } from 'react-use';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -12,6 +12,7 @@ import { KioskMode } from 'app/types';
 import { RouteDescriptor } from '../../navigation/types';
 
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
@@ -55,6 +56,31 @@ export class AppChromeService {
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
+
+  public headerHeightObservable = this.state
+    .pipe(
+      map(({ actions, chromeless, kioskMode, searchBarHidden }) => {
+        if (config.featureToggles.singleTopNav) {
+          if (kioskMode || chromeless) {
+            return 0;
+          } else if (actions) {
+            return TOP_BAR_LEVEL_HEIGHT * 2;
+          } else {
+            return TOP_BAR_LEVEL_HEIGHT;
+          }
+        } else {
+          if (kioskMode || chromeless) {
+            return 0;
+          } else if (searchBarHidden) {
+            return TOP_BAR_LEVEL_HEIGHT;
+          } else {
+            return TOP_BAR_LEVEL_HEIGHT * 2;
+          }
+        }
+      })
+    )
+    // only emit if the state has actually changed
+    .pipe(distinctUntilChanged());
 
   public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {

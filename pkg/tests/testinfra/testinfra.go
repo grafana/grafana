@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -51,6 +52,11 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
+
+	// Replace the placeholder in the `signing_keys_url` with the actual address
+	grpcServerAuthSection := cfg.SectionWithEnvOverrides("grpc_server_authentication")
+	signingKeysUrl := grpcServerAuthSection.Key("signing_keys_url")
+	signingKeysUrl.SetValue(strings.Replace(signingKeysUrl.String(), "<placeholder>", listener.Addr().String(), 1))
 
 	// Potentially allocate a real gRPC port for unified storage
 	runstore := false
@@ -97,7 +103,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	// UnifiedStorageOverGRPC
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
-		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore, env.Cfg.Logger)
+		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
+			env.Cfg.Logger, prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -287,6 +294,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
+	require.NoError(t, err)
+
+	grpcServerAuth, err := cfg.NewSection("grpc_server_authentication")
+	require.NoError(t, err)
+	_, err = grpcServerAuth.NewKey("signing_keys_url", "http://<placeholder>/api/signing-keys/keys")
+	require.NoError(t, err)
+	_, err = grpcServerAuth.NewKey("allowed_audiences", "org:1")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {

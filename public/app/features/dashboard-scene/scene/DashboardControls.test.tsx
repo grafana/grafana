@@ -16,7 +16,11 @@ describe('DashboardControls', () => {
     });
 
     it('should return if time controls are hidden', () => {
-      const scene = buildTestScene({ hideTimeControls: false, hideVariableControls: false, hideLinksControls: false });
+      const scene = buildTestScene({
+        hideTimeControls: false,
+        hideVariableControls: false,
+        hideLinksControls: false,
+      });
       expect(scene.hasControls()).toBeTruthy();
       scene.setState({ hideTimeControls: true });
       expect(scene.hasControls()).toBeTruthy();
@@ -98,7 +102,11 @@ describe('DashboardControls', () => {
     });
 
     it('should not override state if no new state comes from url', () => {
-      const scene = buildTestScene({ hideTimeControls: true, hideVariableControls: true, hideLinksControls: true });
+      const scene = buildTestScene({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+      });
       scene.updateFromUrl({});
       expect(scene.state.hideTimeControls).toBeTruthy();
       expect(scene.state.hideVariableControls).toBeTruthy();
@@ -106,7 +114,11 @@ describe('DashboardControls', () => {
     });
 
     it('should not call setState if no changes', () => {
-      const scene = buildTestScene({ hideTimeControls: true, hideVariableControls: true, hideLinksControls: true });
+      const scene = buildTestScene({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+      });
       const setState = jest.spyOn(scene, 'setState');
 
       scene.updateFromUrl({

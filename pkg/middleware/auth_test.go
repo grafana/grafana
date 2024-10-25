@@ -352,7 +352,7 @@ func TestRemoveForceLoginparams(t *testing.T) {
 	}
 	for i, tc := range tcs {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
-			require.Equal(t, tc.exp, removeForceLoginParams(tc.inp))
+			require.Equal(t, tc.exp, RemoveForceLoginParams(tc.inp))
 		})
 	}
 }

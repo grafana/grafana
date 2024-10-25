@@ -47,7 +47,7 @@ func (m FakeServiceImpl) DeleteToken(_ context.Context, _ string) error {
 
 func (m FakeServiceImpl) CreateSession(_ context.Context, _ cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	if m.ReturnError {
-		return nil, fmt.Errorf("mock error")
+		return nil, cloudmigration.ErrSessionCreationFailure
 	}
 	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     "fake_uid",
@@ -98,10 +98,28 @@ func (m FakeServiceImpl) GetSnapshot(ctx context.Context, query cloudmigration.G
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
+	cloudMigrationResources := []cloudmigration.CloudMigrationResource{
+		{
+			Type:       cloudmigration.DashboardDataType,
+			RefID:      "123",
+			Status:     cloudmigration.ItemStatusPending,
+			Name:       "dashboard name",
+			ParentName: "dashboard parent name",
+		},
+		{
+			Type:       cloudmigration.DatasourceDataType,
+			RefID:      "456",
+			Status:     cloudmigration.ItemStatusOK,
+			Name:       "datasource name",
+			ParentName: "dashboard parent name",
+		},
+	}
+
 	return &cloudmigration.CloudMigrationSnapshot{
 		UID:        "fake_uid",
 		SessionUID: "fake_uid",
 		Status:     cloudmigration.SnapshotStatusCreating,
+		Resources:  cloudMigrationResources,
 	}, nil
 }
 
