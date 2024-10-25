@@ -65,6 +65,7 @@ func setup(t *testing.T) *Server {
 			},
 		},
 	})
+	require.NoError(t, err)
 	return srv
 }
 
