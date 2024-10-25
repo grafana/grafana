@@ -53,10 +53,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
   private dashboardCache?: DashboardCacheEntry;
 
-  constructor(state: DashboardScenePageState) {
-    super(state);
-  }
-
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
   public async fetchDashboard({
