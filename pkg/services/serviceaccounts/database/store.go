@@ -81,6 +81,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 
 	return &serviceaccounts.ServiceAccountDTO{
 		Id:         newSA.ID,
+		UID:        newSA.UID,
 		Name:       newSA.Name,
 		Login:      newSA.Login,
 		OrgId:      newSA.OrgID,
@@ -223,6 +224,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 			"org_user.role",
 			"user.email",
 			"user.name",
+			"user.uid",
 			"user.login",
 			"user.created",
 			"user.updated",
@@ -377,6 +379,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			"user.email",
 			"user.name",
 			"user.login",
+			"user.uid",
 			"user.last_seen_at",
 			"user.is_disabled",
 		)

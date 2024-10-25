@@ -73,6 +73,8 @@ type UpdateServiceAccountForm struct {
 // swagger: model
 type ServiceAccountDTO struct {
 	Id int64 `json:"id" xorm:"user_id"`
+	// example: fe1xejlha91xce
+	UID string `json:"uid" xorm:"uid"`
 	// example: grafana
 	Name string `json:"name" xorm:"name"`
 	// example: sa-grafana
@@ -135,6 +137,8 @@ type SearchOrgServiceAccountsResult struct {
 type ServiceAccountProfileDTO struct {
 	// example: 2
 	Id int64 `json:"id" xorm:"user_id"`
+	// example: fe1xejlha91xce
+	UID string `json:"uid" xorm:"uid"`
 	// example: test
 	Name string `json:"name" xorm:"name"`
 	// example: sa-grafana
