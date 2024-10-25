@@ -361,20 +361,21 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	for _, queryExecutor := range queries {
-		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
+		dr, queryRes, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
 		if err != nil {
 			errorsource.AddErrorToResponse(queryExecutor.getRefID(), resp, err)
 			return resp, err
 		}
-		err = queryExecutor.parseResponse(queryRes, dr, executedQueryString, logger)
+		err = queryExecutor.parseResponse(dr, queryRes, executedQueryString, logger)
 		if err != nil {
-			// Default to a plugin error if there's no source
+			dr.Error = err
+			// // Default to a plugin error if there's no source
 			errWithSource := errorsource.SourceError(backend.ErrorSourcePlugin, err, false)
-			queryRes.Error = errWithSource.Unwrap()
-			queryRes.ErrorSource = errWithSource.ErrorSource()
+			dr.Error = errWithSource.Unwrap()
+			dr.ErrorSource = errWithSource.ErrorSource()
 		}
 
-		resp.Responses[queryExecutor.getRefID()] = *queryRes
+		resp.Responses[queryExecutor.getRefID()] = *dr
 	}
 
 	return resp, nil
@@ -608,21 +609,21 @@ func unmarshalResponse(res *http.Response, logger log.Logger) (cloudMonitoringRe
 	}()
 
 	if res.StatusCode/100 != 2 {
-		logger.Error("Request failed", "status", res.Status, "body", string(body))
+		logger.Error("Request failed", "status", res.Status, "body", string(body), "statusSource", backend.ErrorSourceDownstream)
 		return cloudMonitoringResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("query failed: %s", string(body)), false)
 	}
 
 	var data cloudMonitoringResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body))
+		logger.Error("Failed to unmarshal CloudMonitoring response", "error", err, "status", res.Status, "body", string(body), "statusSource", backend.ErrorSourceDownstream)
 		return cloudMonitoringResponse{}, fmt.Errorf("failed to unmarshal query response: %w", err)
 	}
 
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string, unit string, period *string) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string, period *string, logger log.Logger) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
@@ -646,7 +647,7 @@ func addConfigData(frames data.Frames, dl string, unit string, period *string) d
 		if period != nil && *period != "" {
 			err := addInterval(*period, frames[i].Fields[0])
 			if err != nil {
-				backend.Logger.Error("Failed to add interval", "error", err)
+				logger.Error("Failed to add interval: %s", err, "statusSource", backend.ErrorSourceDownstream)
 			}
 		}
 	}

@@ -84,6 +84,7 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           onKeyDown={onSearchKeyDown}
           suffix={suffix}
           ref={searchInputRef}
+          autoFocus={true}
         />
         <div className={styles.showImages}>
           <span className={styles.illustationSwitchLabel}>Show images</span>{' '}

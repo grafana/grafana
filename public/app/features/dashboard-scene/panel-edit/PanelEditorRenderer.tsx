@@ -2,9 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
-import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
@@ -35,9 +34,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       <NavToolbarActions dashboard={dashboard} />
       <div
         {...containerProps}
-        className={cx(containerProps.className, {
-          [styles.content]: config.featureToggles.bodyScrolling,
-        })}
+        className={cx(containerProps.className, styles.content)}
         data-testid={selectors.components.PanelEditor.General.content}
       >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
@@ -57,7 +54,8 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
               />
             </div>
           )}
-          {!splitterState.collapsed && <optionsPane.Component model={optionsPane} />}
+          {!splitterState.collapsed && optionsPane && <optionsPane.Component model={optionsPane} />}
+          {!splitterState.collapsed && !optionsPane && <Spinner />}
         </div>
       </div>
     </>
@@ -66,9 +64,9 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
-  const { sourcePanel } = vizManager.useState();
-  const libraryPanel = getLibraryPanelBehavior(sourcePanel.resolve());
+  const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView } = model.useState();
+  const panel = model.getPanel();
+  const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
@@ -97,7 +95,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       )}
       <div {...containerProps}>
         <div {...primaryProps}>
-          <vizManager.Component model={vizManager} />
+          <VizWrapper panel={panel} tableView={tableView} />
         </div>
         {showLibraryPanelSaveModal && libraryPanel && (
           <SaveLibraryVizPanelModal
@@ -136,6 +134,22 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+interface VizWrapperProps {
+  panel: VizPanel;
+  tableView?: VizPanel;
+}
+
+function VizWrapper({ panel, tableView }: VizWrapperProps) {
+  const styles = useStyles2(getStyles);
+  const panelToShow = tableView ?? panel;
+
+  return (
+    <div className={styles.vizWrapper}>
+      <panelToShow.Component model={panelToShow} />
     </div>
   );
 }
@@ -217,6 +231,11 @@ function getStyles(theme: GrafanaTheme2) {
       svg: {
         rotate: '-90deg',
       },
+    }),
+    vizWrapper: css({
+      height: '100%',
+      width: '100%',
+      paddingLeft: theme.spacing(2),
     }),
   };
 }

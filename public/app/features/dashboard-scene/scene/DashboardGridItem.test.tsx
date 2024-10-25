@@ -8,6 +8,7 @@ import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-ut
 
 import { DashboardGridItem, DashboardGridItemState } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -122,8 +123,8 @@ describe('PanelRepeaterGridItem', () => {
       $variables: new SceneVariableSet({
         variables: [variable],
       }),
-      body: new SceneGridLayout({
-        children: [panel],
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [panel] }),
       }),
     });
 
@@ -143,8 +144,8 @@ describe('PanelRepeaterGridItem', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     vizPanel.setState({ title: 'Changed' });
-    //mimic returning to dashboard from panel edit cloning panel
-    panel.setState({ body: vizPanel.clone() });
+
+    panel.editingCompleted(true);
 
     // mimic returning to dashboard
     activateFullSceneTree(scene);
@@ -193,8 +194,10 @@ describe('PanelRepeaterGridItem', () => {
       $variables: new SceneVariableSet({
         variables: [variable],
       }),
-      body: new SceneGridLayout({
-        children: [panel, panel2],
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [panel, panel2],
+        }),
       }),
     });
 
@@ -214,10 +217,11 @@ describe('PanelRepeaterGridItem', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     vizPanel.setState({ title: 'Changed' });
-    //mimic returning to dashboard from panel edit cloning panel
-    panel.setState({ body: vizPanel.clone() });
+
+    panel.editingCompleted(true);
 
     const performRepeatMock = jest.spyOn(panel, 'performRepeat');
+
     // mimic returning to dashboard
     activateFullSceneTree(scene);
 
@@ -268,7 +272,8 @@ describe('PanelRepeaterGridItem', () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, maxPerRow: 2, itemHeight: 10 });
 
     const layoutForceRender = jest.fn();
-    (scene.state.body as SceneGridLayout).forceRender = layoutForceRender;
+    const layout = scene.state.body as DefaultGridLayoutManager;
+    layout.state.grid.forceRender = layoutForceRender;
 
     activateFullSceneTree(scene);
 

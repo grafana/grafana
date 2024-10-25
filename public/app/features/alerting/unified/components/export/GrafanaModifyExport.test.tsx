@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
@@ -55,9 +55,14 @@ const dataSources = {
 };
 
 function renderModifyExport(ruleId: string) {
-  render(<Route path="/alerting/:id/modify-export" component={GrafanaModifyExport} />, {
-    historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
-  });
+  render(
+    <Routes>
+      <Route path="/alerting/:id/modify-export" element={<GrafanaModifyExport />} />
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
+    }
+  );
 }
 
 const server = setupMswServer();

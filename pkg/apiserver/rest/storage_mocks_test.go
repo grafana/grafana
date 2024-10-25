@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 
 	"github.com/stretchr/testify/mock"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -22,6 +23,12 @@ type storageMock struct {
 }
 
 func (m legacyStoreMock) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, name, options)
 	if name == "object-fail" {
 		return nil, args.Error(1)
@@ -30,6 +37,12 @@ func (m legacyStoreMock) Get(ctx context.Context, name string, options *metav1.G
 }
 
 func (m legacyStoreMock) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, obj, createValidation, options)
 	acc, err := meta.Accessor(obj)
 	if err != nil {
@@ -43,6 +56,12 @@ func (m legacyStoreMock) Create(ctx context.Context, obj runtime.Object, createV
 }
 
 func (m legacyStoreMock) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, options)
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
@@ -55,6 +74,11 @@ func (m legacyStoreMock) NewList() runtime.Object {
 }
 
 func (m legacyStoreMock) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	select {
+	case <-ctx.Done():
+		return nil, false, errors.New("context canceled")
+	default:
+	}
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if name == "object-fail" {
 		return nil, false, args.Error(2)
@@ -63,6 +87,12 @@ func (m legacyStoreMock) Update(ctx context.Context, name string, objInfo rest.U
 }
 
 func (m legacyStoreMock) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	select {
+	case <-ctx.Done():
+		return nil, false, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, name, deleteValidation, options)
 	if name == "object-fail" {
 		return nil, false, args.Error(2)
@@ -74,6 +104,11 @@ func (m legacyStoreMock) Delete(ctx context.Context, name string, deleteValidati
 }
 
 func (m legacyStoreMock) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
 	args := m.Called(ctx, deleteValidation, options, listOptions)
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
@@ -83,6 +118,12 @@ func (m legacyStoreMock) DeleteCollection(ctx context.Context, deleteValidation 
 
 // Unified Store
 func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, name, options)
 	if name == "object-fail" {
 		return nil, args.Error(1)
@@ -94,6 +135,12 @@ func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOp
 }
 
 func (m storageMock) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, obj, createValidation, options)
 	acc, err := meta.Accessor(obj)
 	if err != nil {
@@ -107,6 +154,12 @@ func (m storageMock) Create(ctx context.Context, obj runtime.Object, createValid
 }
 
 func (m storageMock) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, options)
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
@@ -119,6 +172,12 @@ func (m storageMock) NewList() runtime.Object {
 }
 
 func (m storageMock) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	select {
+	case <-ctx.Done():
+		return nil, false, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if name == "object-fail" {
 		return nil, false, args.Error(2)
@@ -127,6 +186,12 @@ func (m storageMock) Update(ctx context.Context, name string, objInfo rest.Updat
 }
 
 func (m storageMock) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	select {
+	case <-ctx.Done():
+		return nil, false, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, name, deleteValidation, options)
 	if name == "object-fail" {
 		return nil, false, args.Error(2)
@@ -135,6 +200,12 @@ func (m storageMock) Delete(ctx context.Context, name string, deleteValidation r
 }
 
 func (m storageMock) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, deleteValidation, options, listOptions)
 	if options.Kind == "fail" {
 		return nil, args.Error(1)

@@ -1,6 +1,15 @@
 package dashboard
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -18,16 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
 )
 
 var (
@@ -44,6 +43,7 @@ type DashboardsAPIBuilder struct {
 	unified       resource.ResourceClient
 
 	log log.Logger
+	reg prometheus.Registerer
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
@@ -57,8 +57,8 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
+		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
 	}
 
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
@@ -75,7 +75,9 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 			resource:       dashboard.DashboardResourceInfo,
 			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
 			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
+			features:       features,
 		},
+		reg: reg,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -124,18 +126,15 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(resourceInfo.GroupVersion())
 }
 
-func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
-	dualWriteBuilder grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboard.GROUP, scheme, metav1.ParameterCodec, codecs)
+func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
 
+	optsGetter := opts.OptsGetter
+	dualWriteBuilder := opts.DualWriteBuilder
 	dash := b.legacy.resource
-	legacyStore, err := b.legacy.newStore(scheme, optsGetter)
+	legacyStore, err := b.legacy.newStore(scheme, optsGetter, b.reg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	storage := map[string]rest.Storage{}
@@ -147,25 +146,20 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 
 	// Dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil && dualWriteBuilder != nil {
-		store, err := newStorage(scheme)
+		store, err := grafanaregistry.NewRegistryStore(scheme, dash, optsGetter)
 		if err != nil {
-			return nil, err
-		}
-
-		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
-		if err := store.CompleteWithOptions(options); err != nil {
-			return nil, err
+			return err
 		}
 		storage[dash.StoragePath()], err = dualWriteBuilder(dash.GroupResource(), legacyStore, store)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], b)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Expose read only library panels
@@ -174,7 +168,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

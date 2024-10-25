@@ -19,7 +19,7 @@ labels:
 menuTitle: Manage dashboards
 title: Manage dashboards
 description: Learn about dashboard management and generative AI features for dashboards
-weight: 8
+weight: 300
 refs:
   build-dashboards:
     - pattern: /docs/grafana/

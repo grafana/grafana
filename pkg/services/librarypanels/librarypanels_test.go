@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -84,7 +85,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -182,7 +183,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
 
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -228,7 +229,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
@@ -284,7 +285,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
 			err = sc.elementService.ConnectElementsToDashboard(sc.ctx, sc.user, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -635,7 +636,6 @@ type scenarioContext struct {
 	folder         *folder.Folder
 	initialResult  libraryPanelResult
 	sqlStore       db.DB
-	replStore      db.ReplDB
 	lps            LibraryPanelService
 }
 
@@ -712,7 +712,7 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore db.ReplDB, user *user.SignedInUser, dash *dashboards.Dashboard) *dashboards.Dashboard {
+func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard) *dashboards.Dashboard {
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
@@ -724,16 +724,16 @@ func createDashboard(t *testing.T, sqlStore db.ReplDB, user *user.SignedInUser, 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashPermissionService := acmock.NewMockedPermissionsService()
 	dashPermissionService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-		foldertest.NewFakeService(),
+		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil,
 	)
 	require.NoError(t, err)
@@ -748,12 +748,15 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 
 	features := featuremgmt.WithFeatures()
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
+	folderPermissions := acmock.NewMockedPermissionsService()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.replStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	fStore := folderimpl.ProvideStore(sc.sqlStore)
+	s := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
+		features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := identity.WithRequester(context.Background(), sc.user)
@@ -815,9 +818,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		orgID := int64(1)
 		role := org.RoleAdmin
-		replStore, cfg := db.InitTestReplDBWithCfg(t)
-		sqlStore := replStore.DB()
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
+		features := featuremgmt.WithFeatures()
 
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashStore := &dashboards.FakeDashboardStore{}
@@ -825,20 +828,24 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		dashPermissionService := acmock.NewMockedPermissionsService()
 		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
-			setting.NewCfg(), dashStore, folderStore,
-			featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-			foldertest.NewFakeService(),
+			cfg, dashStore, folderStore,
+			features, acmock.NewMockedPermissionsService(), dashPermissionService, ac,
+			foldertest.NewFakeService(), folder.NewFakeStore(),
 			nil,
 		)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
+		guardian.InitAccessControlGuardian(cfg, ac, dashService)
 
-		dashboardStore, err := database.ProvideDashboardStore(replStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
-		features := featuremgmt.WithFeatures()
-		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		fStore := folderimpl.ProvideStore(sqlStore)
 
-		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, featuremgmt.WithFeatures(), ac)
+		folderPermissions, err := testutil.ProvideFolderPermissions(features, cfg, sqlStore)
+		require.NoError(t, err)
+		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
+			features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, fStore, features, ac)
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
@@ -886,7 +893,6 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			service:        &service,
 			elementService: elementService,
 			sqlStore:       sqlStore,
-			replStore:      replStore,
 			lps:            service,
 		}
 

@@ -221,6 +221,7 @@ export const SuggestionsInput = ({
           {...inputProps}
           ref={handleRef as unknown as React.RefObject<HTMLTextAreaElement>}
           autoFocus={autoFocus}
+          rows={5}
         />
       )}
     </div>

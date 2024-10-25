@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,7 +21,6 @@ func TestService_IsDisabled(t *testing.T) {
 			PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
 			PreinstallPluginsAsync: true,
 		},
-		featuremgmt.WithFeatures(featuremgmt.FlagBackgroundPluginInstaller),
 		pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 		&fakes.FakePluginInstaller{},
 		prometheus.NewRegistry(),
@@ -42,7 +40,6 @@ func TestService_Run(t *testing.T) {
 			&setting.Cfg{
 				PreinstallPlugins: []setting.InstallPlugin{{ID: "myplugin"}},
 			},
-			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 			&fakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
@@ -66,7 +63,6 @@ func TestService_Run(t *testing.T) {
 				PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin", Version: "1.0.0"}},
 				PreinstallPluginsAsync: true,
 			},
-			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 			&fakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
@@ -98,7 +94,6 @@ func TestService_Run(t *testing.T) {
 				PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
 				PreinstallPluginsAsync: true,
 			},
-			featuremgmt.WithFeatures(),
 			pluginstore.New(preg, &fakes.FakeLoader{}),
 			&fakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
@@ -131,7 +126,6 @@ func TestService_Run(t *testing.T) {
 				PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin", Version: "2.0.0"}},
 				PreinstallPluginsAsync: true,
 			},
-			featuremgmt.WithFeatures(),
 			pluginstore.New(preg, &fakes.FakeLoader{}),
 			&fakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
@@ -155,7 +149,6 @@ func TestService_Run(t *testing.T) {
 				PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
 				PreinstallPluginsAsync: true,
 			},
-			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 			&fakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
@@ -179,7 +172,6 @@ func TestService_Run(t *testing.T) {
 				PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin1"}, {ID: "myplugin2"}},
 				PreinstallPluginsAsync: true,
 			},
-			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 			&fakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
@@ -205,7 +197,6 @@ func TestService_Run(t *testing.T) {
 				PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
 				PreinstallPluginsAsync: false,
 			},
-			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 			&fakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
@@ -225,7 +216,6 @@ func TestService_Run(t *testing.T) {
 				PreinstallPlugins:      []setting.InstallPlugin{{ID: "myplugin"}},
 				PreinstallPluginsAsync: false,
 			},
-			featuremgmt.WithFeatures(),
 			pluginstore.New(registry.NewInMemory(), &fakes.FakeLoader{}),
 			&fakes.FakePluginInstaller{
 				AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {

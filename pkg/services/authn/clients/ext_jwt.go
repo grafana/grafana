@@ -101,7 +101,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
-	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.NamespaceMatches(authlib.NewIdentityClaims(idTokenClaims), allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(authlib.NewIdentityClaims(idTokenClaims), allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
 	}
 
@@ -138,7 +138,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 	return &authn.Identity{
 		ID:                         id,
 		Type:                       t,
-		OrgID:                      s.getDefaultOrgID(),
+		OrgID:                      s.cfg.DefaultOrgID(),
 		AccessTokenClaims:          &accessTokenClaims,
 		IDTokenClaims:              &idTokenClaims,
 		AuthenticatedBy:            login.ExtendedJWTModule,
@@ -150,12 +150,13 @@ func (s *ExtendedJWT) authenticateAsUser(
 				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
-		}}, nil
+		},
+	}, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
-	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.NamespaceMatches(authlib.NewAccessClaims(accessTokenClaims), allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(authlib.NewAccessClaims(accessTokenClaims), allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
@@ -185,10 +186,10 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	return &authn.Identity{
 		ID:                         id,
 		UID:                        id,
+		Name:                       id,
 		Type:                       t,
-		OrgID:                      s.getDefaultOrgID(),
+		OrgID:                      s.cfg.DefaultOrgID(),
 		AccessTokenClaims:          &accessTokenClaims,
-		IDTokenClaims:              nil,
 		AuthenticatedBy:            login.ExtendedJWTModule,
 		AuthID:                     accessTokenClaims.Subject,
 		AllowedKubernetesNamespace: accessTokenClaims.Rest.Namespace,
@@ -246,12 +247,4 @@ func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) stri
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
-}
-
-func (s *ExtendedJWT) getDefaultOrgID() int64 {
-	orgID := int64(1)
-	if s.cfg.AutoAssignOrg && s.cfg.AutoAssignOrgId > 0 {
-		orgID = int64(s.cfg.AutoAssignOrgId)
-	}
-	return orgID
 }

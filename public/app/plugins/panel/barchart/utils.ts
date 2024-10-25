@@ -18,7 +18,6 @@ import {
   AxisColorMode,
   AxisPlacement,
   FieldColorModeId,
-  GraphGradientMode,
   GraphThresholdsStyleMode,
   GraphTransform,
   ScaleDistribution,
@@ -230,9 +229,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     getColor = (seriesIdx: number, valueIdx: number) => disp(color!.values[valueIdx]).color!;
   } else {
     const hasPerBarColor = frame.fields.some((f) => {
-      const fromThresholds =
-        f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
-        f.config.color?.mode === FieldColorModeId.Thresholds;
+      const fromThresholds = f.config.color?.mode === FieldColorModeId.Thresholds;
 
       return (
         fromThresholds ||

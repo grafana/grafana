@@ -18,6 +18,14 @@ func (c *FakeNotificationsV0alpha1) Receivers(namespace string) v0alpha1.Receive
 	return &FakeReceivers{c, namespace}
 }
 
+func (c *FakeNotificationsV0alpha1) RoutingTrees(namespace string) v0alpha1.RoutingTreeInterface {
+	return &FakeRoutingTrees{c, namespace}
+}
+
+func (c *FakeNotificationsV0alpha1) TemplateGroups(namespace string) v0alpha1.TemplateGroupInterface {
+	return &FakeTemplateGroups{c, namespace}
+}
+
 func (c *FakeNotificationsV0alpha1) TimeIntervals(namespace string) v0alpha1.TimeIntervalInterface {
 	return &FakeTimeIntervals{c, namespace}
 }
