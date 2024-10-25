@@ -6,7 +6,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Button, Icon, Input, LoadingBar, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingBar, Text, useStyles2, Space } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import {
   skipToken,
@@ -307,24 +307,23 @@ export function NestedFolderPicker({
           {...getReferenceProps()}
         />
         {createFolder && !isCreatingFolder && (
-          <Button
-            onClick={onFolderCreation}
-            type="button"
-            icon="plus"
-            fill="outline"
-            variant="secondary"
-            disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
-          >
-            <Trans i18nKey="browse-dashboards.folder-picker.create-new-folder-button">Create new folder</Trans>
-          </Button>
+          <>
+            <Space v={1} />
+            <Button
+              onClick={onFolderCreation}
+              type="button"
+              icon="plus"
+              fill="outline"
+              variant="secondary"
+              disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+            >
+              <Trans i18nKey="browse-dashboards.folder-picker.create-new-folder-button">Create new folder</Trans>
+            </Button>
+          </>
         )}
         {createFolder && isCreatingFolder && (
           <>
-            <Text>
-              <Trans i18nKey="browse-dashboards.folder-picker.folder-creation-modal.text">
-                Create a new folder to store your restored dashboard
-              </Trans>
-            </Text>
+            <Space v={1} />
             <NewFolderForm onConfirm={onCreateNewFolder} onCancel={onDismissFolderCreation} />
           </>
         )}
