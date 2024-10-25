@@ -38,9 +38,11 @@ interface TableHeaderProps {
 }
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const columnWidth = fieldConfig?.defaults?.custom?.width || 'auto';
+  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || 150;
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -155,6 +157,8 @@ export function TableNG(props: TableNGProps) {
         renderHeaderCell: ({ column, sortDirection }) => (
           <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
         ),
+        width: columnWidth,
+        minWidth: columnMinWidth,
       });
 
       // Create row objects
@@ -228,7 +232,8 @@ export function TableNG(props: TableNGProps) {
         defaultColumnOptions={{
           sortable: true,
           resizable: true,
-          maxWidth: 200,
+          width: columnWidth,
+          minWidth: columnMinWidth,
         }}
         rowHeight={rowHeightNumber}
         // TODO: This doesn't follow current table behavior
