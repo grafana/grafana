@@ -47,6 +47,6 @@ func ProvideService(
 	}
 }
 
-func (s *Service) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return s.store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+func (s *Service) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return s.store.RetrieveServiceAccount(ctx, query)
 }

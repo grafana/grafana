@@ -100,6 +100,12 @@ type GetSATokensQuery struct {
 	ServiceAccountID *int64 // optional filtering by service account ID
 }
 
+type GetServiceAccountQuery struct {
+	OrgID int64  `json:"orgId"`
+	ID    int64  `json:"id"`
+	UID   string `json:"uid"`
+}
+
 type AddServiceAccountTokenCommand struct {
 	Name          string `json:"name" binding:"Required"`
 	OrgId         int64  `json:"-"`
