@@ -361,6 +361,7 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
   }, [abilities, actions]);
 }
 
+const { useGetGrafanaAlertingConfigurationStatusQuery } = alertmanagerApi;
 /**
  * We don't want to show the silence button if either
  * 1. the user has no permissions to create silences
@@ -370,17 +371,16 @@ function useCanSilence(rule?: RulerRuleDTO): [boolean, boolean] {
   const folderUID = isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
   const { loading: folderIsLoading, folder } = useFolder(folderUID);
 
+  const isGrafanaManagedRule = rule && isGrafanaRulerRule(rule);
+  const isGrafanaRecording = rule && isGrafanaRecordingRule(rule);
+
+  const { currentData: amConfigStatus, isLoading } = useGetGrafanaAlertingConfigurationStatusQuery(undefined, {
+    skip: !isGrafanaManagedRule || !rule,
+  });
+
   if (!rule) {
     return [false, false];
   }
-
-  const isGrafanaManagedRule = isGrafanaRulerRule(rule);
-  const isGrafanaRecording = isGrafanaRecordingRule(rule);
-
-  const { currentData: amConfigStatus, isLoading } =
-    alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {
-      skip: !isGrafanaManagedRule,
-    });
 
   // we don't support silencing when the rule is not a Grafana managed alerting rule
   // we simply don't know what Alertmanager the ruler is sending alerts to
