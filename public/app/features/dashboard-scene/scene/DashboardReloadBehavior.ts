@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { BackendSrvRequest } from '@grafana/runtime';
+import { UrlQueryMap } from '@grafana/data';
 import { sceneGraph, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 
@@ -59,13 +59,13 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
     if (!this.isEditing() && !this.isWaitingForVariables()) {
       const timeRange = sceneGraph.getTimeRange(this);
 
-      let params: BackendSrvRequest['params'] = {
+      let params: UrlQueryMap = {
         version: this.state.version,
         scopes: this._scopesFacade?.value.map((scope) => scope.metadata.name),
         ...timeRange.urlSync?.getUrlState(),
       };
 
-      params = sceneGraph.getVariables(this).state.variables.reduce<BackendSrvRequest['params']>(
+      params = sceneGraph.getVariables(this).state.variables.reduce<UrlQueryMap>(
         (acc, variable) => ({
           ...acc,
           ...variable.urlSync?.getUrlState(),

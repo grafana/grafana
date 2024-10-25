@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash';
 
-import { locationUtil } from '@grafana/data';
-import { BackendSrvRequest, config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -44,7 +44,7 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   urlFolderUid?: string;
-  queryParams?: BackendSrvRequest['params'];
+  queryParams?: UrlQueryMap;
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {

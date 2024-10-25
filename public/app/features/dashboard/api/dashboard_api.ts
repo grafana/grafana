@@ -1,4 +1,5 @@
-import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
+import { UrlQueryMap } from '@grafana/data';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
@@ -14,7 +15,7 @@ import { DashboardDTO, DashboardDataDTO, SaveDashboardResponseDTO } from 'app/ty
 
 export interface DashboardAPI {
   /** Get a dashboard with the access control metadata */
-  getDashboardDTO(uid: string, params?: BackendSrvRequest['params']): Promise<DashboardDTO>;
+  getDashboardDTO(uid: string, params?: UrlQueryMap): Promise<DashboardDTO>;
   /** Save dashboard */
   saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */
@@ -40,7 +41,7 @@ class LegacyDashboardAPI implements DashboardAPI {
     return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
   }
 
-  getDashboardDTO(uid: string, params?: BackendSrvRequest['params']): Promise<DashboardDTO> {
+  getDashboardDTO(uid: string, params?: UrlQueryMap): Promise<DashboardDTO> {
     return getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, params);
   }
 }
