@@ -662,7 +662,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 function ExtensionsDropdown(context: { query: any }) {
   const extensions = usePluginLinks({
     extensionPointId: 'grafana/query-editor-row/actions',
-    context: cloneDeep(context),
+    context: context,
   });
 
   if (extensions.isLoading || extensions.links.length === 0) {
