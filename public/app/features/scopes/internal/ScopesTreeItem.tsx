@@ -161,6 +161,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }),
     }),
     titlePadding: css({
+      // Fix for checkboxes and radios outline overflow due to scrollbars
       paddingLeft: theme.spacing(0.5),
     }),
     expand: css({

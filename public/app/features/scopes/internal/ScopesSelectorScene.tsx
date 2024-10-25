@@ -425,6 +425,8 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
       flexDirection: 'column',
       maxHeight: '100%',
       overflowY: 'hidden',
+      // Fix for top level search outline overflow due to scrollbars
+      paddingLeft: theme.spacing(0.5),
     }),
     buttonsContainer: css({
       display: 'flex',
