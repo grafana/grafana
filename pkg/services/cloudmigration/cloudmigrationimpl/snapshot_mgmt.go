@@ -36,6 +36,7 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.NotificationTemplateType,
 	cloudmigration.ContactPointType,
 	cloudmigration.NotificationPolicyType,
+	cloudmigration.AlertRuleType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
@@ -90,10 +91,17 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Alerts: Alert Rules
+	alertRules, err := s.getAlertRules(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert rules", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
 		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
-			len(muteTimings)+len(notificationTemplates)+len(contactPoints),
+			len(muteTimings)+len(notificationTemplates)+len(contactPoints)+len(alertRules),
 	)
 
 	for _, ds := range dataSources {
@@ -174,6 +182,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: notificationPolicies.Name, // no UID available
 			Name:  notificationPolicies.Name,
 			Data:  notificationPolicies.Routes,
+		})
+	}
+
+	for _, alertRule := range alertRules {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.AlertRuleType,
+			RefID: alertRule.UID,
+			Name:  alertRule.Title,
+			Data:  alertRule,
 		})
 	}
 

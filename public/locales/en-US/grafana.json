@@ -1552,6 +1552,7 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "alert_rules": "alert rules",
       "contact_points": "contact points",
       "dashboards": "dashboards",
       "datasources": "data sources",
@@ -1652,6 +1653,7 @@
       "unknown-datasource-type": "Unknown data source"
     },
     "resource-type": {
+      "alert_rule": "Alert Rule",
       "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
