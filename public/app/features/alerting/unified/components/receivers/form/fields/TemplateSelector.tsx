@@ -207,7 +207,9 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
               />
               <IconButton
                 tooltip="Copy selected template to clipboard. You can use it in the custom tab."
-                onClick={() => copyToClipboard(defaultTemplateValue?.value?.content ?? template?.value?.content ?? '')}
+                onClick={() =>
+                  copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
+                }
                 name="copy"
               />
             </Stack>
