@@ -237,31 +237,29 @@ Make it short and descriptive as this will appear in your alert notification. Fo
 
 ### Define query and alert condition
 
-In this section, we use the **Advanced options** for Grafana-managed alert rule creation. The advanced options let us define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
+In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
-1. Toggle **Advanced options** to view additional configuration options.
 1. Select **TestData** data source from the drop-down menu.
 1. From **Scenario** select **CSV Content**.
 1. In the Query editor, switch to **Code** mode by clicking the button on the right.
 1. Copy in the following CSV data:
 
-```
-device,views
-desktop,1200
-mobile,900
-```
+   ```
+   device,views
+   desktop,1200
+   mobile,900
+   ```
 
-The above CSV data simulates a data source returning multiple time series, each leading to the creation of an alert instance for that specific time series. Note that the data returned matches the example in the [Alert instance](#alert-instances) section.
+   The above CSV data simulates a data source returning multiple time series, each leading to the creation of an alert instance for that specific time series. Note that the data returned matches the example in the [Alert instance](#alert-instances) section.
 
-1. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression is default, and in this case, is not required since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
-1. In the ‘C’ **Threshold expression**:
-   - Change the **Input** to ‘**A**’ to select the data source.
-   - Enter `1000` as the threshold value. This is the value above which the alert rule should trigger.
+1. In the **Alert condition** section:
+
+   - Keep `Last` as the value for the reducer function (`WHEN`), and `1000` as the threshold value. This is the value above which the alert rule should trigger.
 1. Click **Preview** to run the queries.
 
 It should return two series.`desktop` in Firing state, and `mobile` in Normal state. The values `1`, and `0` mean that the condition is either `true` or `false`.
 
-{{< figure alt="Screenshot showing a preview of a query in Grafana that returns two alert instances, including the query results and relevant alert details" src="/media/docs/alerting/get-started-expression-instances.png" max-width="1200px" caption="Preview of a query returning two alert instances in Grafana." >}}
+{{< figure alt="Screenshot showing a preview of a query in Grafana that returns two alert instances, including the query results and relevant alert details" src="/media/docs/alerting/firing-instances.png" max-width="1200px" caption="Preview of a query returning two alert instances in Grafana." >}}
 
 <!-- INTERACTIVE page step6.md END -->
 <!-- INTERACTIVE page step7.md START -->
