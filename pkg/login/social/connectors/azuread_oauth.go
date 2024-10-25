@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	jose "github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/google/uuid"
@@ -166,6 +168,35 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	}
 
 	return userInfo, nil
+}
+
+func (s *SocialAzureAD) GetClientSecretJWT(ctx context.Context) (string, error) {
+	// exchange auth code to a valid token
+	managedIdentityClientID := s.GetOAuthInfo().ClientSecretJWT
+	azScopes := []string{"api://AzureADTokenExchange/.default"}
+
+	mic, err := azidentity.NewManagedIdentityCredential(
+		&azidentity.ManagedIdentityCredentialOptions{
+			ID: azidentity.ClientID(managedIdentityClientID),
+		},
+	)
+	if err != nil {
+		// return nil, errOAuthTokenExchange.Errorf("error constructing managed identity credential: %w", err)
+		return "", err
+	}
+
+	getAssertion := func(ctx context.Context) (string, error) {
+		tk, err := mic.GetToken(ctx, policy.TokenRequestOptions{Scopes: azScopes})
+		return tk.Token, err
+	}
+
+	micToken, err := getAssertion(context.Background())
+	if err != nil {
+		// return nil, errOAuthTokenExchange.Errorf("error getting managed identity token: %w", err)
+		return "", err
+	}
+
+	return micToken, nil
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {

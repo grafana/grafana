@@ -335,6 +335,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	return userInfo, nil
 }
 
+func (s *SocialGenericOAuth) GetClientSecretJWT(ctx context.Context) (string, error) {
+	return "", fmt.Errorf("GetClientSecretJWT is not supported for %s", social.GenericOAuthProviderName)
+}
+
 func (s *SocialGenericOAuth) canFetchPrivateEmail(userinfo *social.BasicUserInfo) bool {
 	return s.info.ApiUrl != "" && userinfo.Email == ""
 }

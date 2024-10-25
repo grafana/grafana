@@ -72,6 +72,7 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 	result := map[string]any{
 		"client_id":                  section.Key("client_id").Value(),
 		"client_secret":              section.Key("client_secret").Value(),
+		"client_secret_jwt":          section.Key("client_secret_jwt").Value(),
 		"scopes":                     section.Key("scopes").Value(),
 		"empty_scopes":               section.Key("empty_scopes").MustBool(false),
 		"auth_style":                 section.Key("auth_style").Value(),
