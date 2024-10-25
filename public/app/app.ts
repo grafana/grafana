@@ -294,7 +294,9 @@ function initExtensions() {
 }
 
 function isCrossOriginIframe() {
-  if (window.location.ancestorOrigins[0] !== window.location.origin) {
+  console.log(window.location.ancestorOrigins);
+  console.log(window.location.origin);
+  if (window.location.ancestorOrigins.length !== 0 && window.location.ancestorOrigins[0] !== window.location.origin) {
     return true;
   }
 
