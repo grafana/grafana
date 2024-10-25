@@ -46,13 +46,15 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 
 | **Anticipated release date** | **Grafana versions** | **Release type**   |
 | ---------------------------- | -------------------- | ------------------ |
-| May 14, 2024                 | 11                   | Major and patching |
-| June 25, 2024                | 11.1                 | Minor and patching |
-| July 23, 2024                | 11.1.x               | Patching           |
-| Aug. 27, 2024                | 11.2                 | Minor and patching |
-| Sept. 24, 2024               | 11.2.x               | Patching           |
-| Oct. 22, 2024                | 11.3                 | Minor and patching |
-| November/December 2024       | To be determined     | To be determined   |
+| May 14, 2024                 | 11, Supported Versions                 | Major and patching |
+| June 25, 2024                | 11.1, Supported Versions                 | Minor and patching |
+| July 23, 2024                | Supported Versions   | Patching           |
+| Aug. 27, 2024                | 11.2, Supported Versions                 | Minor and patching |
+| Sept. 24, 2024               | Supported Versions   | Patching           |
+| Oct. 22, 2024                | 11.3, Supported Versions                 | Minor and patching |
+| Nov. 19, 2024                |Supported Versions    | Patching   |
+| Dec. 5, 2024                |11.4, Supported Versions    | Minor and Patching   |
+
 
 ### A few important notes
 
@@ -60,6 +62,7 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 - High severity security and feature degradation incidents will result in ad-hoc releases that are not scheduled ahead of time.
 - Patching releases are for the current (last released) minor version of Grafana. Additional older versions of Grafana may be included if there is a critical bug or security vulnerability that needs to be patched.
 - A Grafana release freeze occurs for a week in November and again during the end of December. This does not apply to changes that may be required during the course of an operational or security incident.
+   -  2024 Release Pause Dates: Nov 25 to Dec 3, Dec 19 to Jan 3
 
 ## What to know about version support
 
@@ -74,7 +77,7 @@ Here is an overview of projected version support through 2024:
 
 | **Version**               | **Release date**        | **Support end of life (EOL)** |
 | ------------------------- | ----------------------- | ----------------------------- |
-| 10.3                      | January 2024            | October 2024                  |
+| 10.3                      | January 2024            | October 2024 (No longer supported)|
 | 10.4 (Last minor of 10.0) | March 2024              | June 2025 (extended support)  |
 | 11.0                      | May 2024                | February 2025                 |
 | 11.1                      | June 2024               | March 2025                    |
