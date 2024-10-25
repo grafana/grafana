@@ -198,7 +198,7 @@ export class AppChromeService {
 
     this.update({ searchBarHidden: newSearchBarHidden, kioskMode: null });
     reportInteraction('grafana_search_bar', {
-      action: newSearchBarHidden ? 'hide' : 'show',
+      show: newSearchBarHidden,
     });
   };
 
