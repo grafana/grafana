@@ -25,7 +25,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.23 // @grafana/grafana-backend-group
 	github.com/BurntSushi/toml v1.4.0 // @grafana/identity-access-team
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
-	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-release-guild
+	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-developer-enablement-squad
 	github.com/Masterminds/sprig/v3 v3.2.3 // @grafana/grafana-backend-group
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // @grafana/plugins-platform-backend
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
@@ -36,7 +36,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
 	github.com/beevik/etree v1.4.1 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
-	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-release-guild
+	github.com/blang/semver/v4 v4.0.0 // indirect; @grafana/grafana-developer-enablement-squad
 	github.com/blugelabs/bluge v0.1.9 // @grafana/grafana-backend-group
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/grafana-backend-group
 	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874 // @grafana/grafana-backend-group
@@ -72,7 +72,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.13.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20241010165806-807ddf183724 // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20241021123319-be61d61f71e7 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20241018103850-afc1195d8240 // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20241018085709-130ad686d80e // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
@@ -87,7 +87,7 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.255.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.258.0 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240821155123-6891eb1d35da // @grafana/grafana-app-platform-squad
@@ -117,7 +117,7 @@ require (
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.1.1 // @grafana/alerting-backend
-	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
+	github.com/magefile/mage v1.15.0 // @grafana/grafana-developer-enablement-squad
 	github.com/matryer/is v1.4.0 // @grafana/grafana-as-code
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
 	github.com/mattn/go-sqlite3 v1.14.22 // @grafana/grafana-backend-group
@@ -135,7 +135,7 @@ require (
 	github.com/openfga/openfga v1.6.2 // @grafana/identity-access-team
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
 	github.com/prometheus/alertmanager v0.27.0 // @grafana/alerting-backend
-	github.com/prometheus/client_golang v1.20.4 // @grafana/alerting-backend
+	github.com/prometheus/client_golang v1.20.5 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.1 // @grafana/grafana-backend-group
 	github.com/prometheus/common v0.60.0 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-backend
@@ -148,16 +148,16 @@ require (
 	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/grafana-backend-group
-	github.com/urfave/cli v1.22.15 // indirect; @grafana/grafana-backend-group
+	github.com/urfave/cli v1.22.16 // indirect; @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
 	github.com/wk8/go-ordered-map v1.0.0 // @grafana/grafana-backend-group
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // @grafana/grafana-operator-experience-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/collector/pdata v1.12.0 // @grafana/grafana-backend-group
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.55.0 // @grafana/plugins-platform-backend
-	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.55.0 // @grafana/grafana-operator-experience-squad
-	go.opentelemetry.io/contrib/propagators/jaeger v1.29.0 // @grafana/grafana-backend-group
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0 // @grafana/plugins-platform-backend
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.56.0 // @grafana/grafana-operator-experience-squad
+	go.opentelemetry.io/contrib/propagators/jaeger v1.31.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.25.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel v1.31.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // @grafana/grafana-backend-group
@@ -254,7 +254,7 @@ require (
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
@@ -422,7 +422,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.14 // indirect
 	go.mongodb.org/mongo-driver v1.16.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.55.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0 // indirect
 	go.opentelemetry.io/otel/metric v1.31.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	go.uber.org/mock v0.4.0 // indirect

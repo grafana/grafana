@@ -39,71 +39,74 @@ export function DataSourceCard({ ds, onClick, selected, description, ...htmlProp
 // Get styles for the component
 function getStyles(theme: GrafanaTheme2, builtIn = false) {
   return {
-    card: css`
-      cursor: pointer;
-      background-color: ${theme.colors.background.primary};
-      border-bottom: 1px solid ${theme.colors.border.weak};
+    card: css({
+      cursor: 'pointer',
+      backgroundColor: theme.colors.background.primary,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
       // Move to list component
-      margin-bottom: 0;
-      border-radius: 0;
-      padding: ${theme.spacing(1)};
-    `,
-    heading: css`
-      width: 100%;
-      overflow: hidden;
+      marginBottom: 0,
+      // set this to 0 to override the default card radius
+      // also need to disable our eslint rule
+      // eslint-disable-next-line @grafana/no-border-radius-literal
+      borderRadius: 0,
+      padding: theme.spacing(1),
+    }),
+    heading: css({
+      width: '100%',
+      overflow: 'hidden',
       // This is needed to enable ellipsis when text overlfows
-      > button {
-        width: 100%;
-      }
-    `,
-    headingContent: css`
-      color: ${theme.colors.text.secondary};
-      width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      display: flex;
-      justify-content: space-between;
-    `,
-    logo: css`
-      width: 32px;
-      height: 32px;
-      padding: ${theme.spacing(0, 1)};
-      display: flex;
-      align-items: center;
+      '> button': {
+        width: '100%',
+      },
+    }),
+    headingContent: css({
+      color: theme.colors.text.secondary,
+      width: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
+    logo: css({
+      width: '32px',
+      height: '32px',
+      padding: theme.spacing(0, 1),
+      display: 'flex',
+      alignItems: 'center',
 
-      > img {
-        max-height: 100%;
-        min-width: 24px;
-        filter: invert(${builtIn && theme.isLight ? 1 : 0});
-      }
-    `,
-    name: css`
-      color: ${theme.colors.text.primary};
-      display: flex;
-      gap: ${theme.spacing(2)};
-    `,
-    type: css`
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-    `,
-    separator: css`
-      margin: 0 ${theme.spacing(1)};
-      color: ${theme.colors.border.weak};
-    `,
-    selected: css`
-      background-color: ${theme.colors.background.secondary};
-    `,
-    meta: css`
-      display: block;
-      overflow-wrap: unset;
-      white-space: nowrap;
-      width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    `,
+      '> img': {
+        maxHeight: '100%',
+        minWidth: '24px',
+        filter: `invert(${builtIn && theme.isLight ? 1 : 0})`,
+      },
+    }),
+    name: css({
+      color: theme.colors.text.primary,
+      display: 'flex',
+      gap: theme.spacing(2),
+    }),
+    type: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    separator: css({
+      margin: theme.spacing(0, 1),
+      color: theme.colors.border.weak,
+    }),
+    selected: css({
+      backgroundColor: theme.colors.background.secondary,
+    }),
+    meta: css({
+      display: 'block',
+      overflowWrap: 'unset',
+      whiteSpace: 'nowrap',
+      width: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }),
   };
 }

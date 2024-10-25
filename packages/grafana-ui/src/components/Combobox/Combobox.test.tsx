@@ -179,6 +179,8 @@ describe('Combobox', () => {
           return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 1000));
         } else if (searchTerm === 'ab') {
           return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'second' }]), 200));
+        } else if (searchTerm === 'abc') {
+          return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'third' }]), 500));
         }
         return Promise.resolve([]);
       });
@@ -186,26 +188,39 @@ describe('Combobox', () => {
       render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
 
       const input = screen.getByRole('combobox');
-      await user.click(input); // First request
+      await user.click(input);
+      await user.keyboard('abc');
+      jest.advanceTimersByTime(200); // Resolve the second request, should be ignored
 
-      await user.keyboard('ab'); // Second request
-      jest.advanceTimersByTime(210); // Resolve the second request
-
-      let item: HTMLElement | null = await screen.findByRole('option', { name: 'second' });
       let firstItem = screen.queryByRole('option', { name: 'first' });
+      let secondItem = screen.queryByRole('option', { name: 'second' });
+      let thirdItem = screen.queryByRole('option', { name: 'third' });
 
-      expect(item).toBeInTheDocument();
       expect(firstItem).not.toBeInTheDocument();
+      expect(secondItem).not.toBeInTheDocument();
+      expect(thirdItem).not.toBeInTheDocument();
 
-      act(() => {
-        jest.advanceTimersByTime(1100); // Resolve the first request
-      });
+      jest.advanceTimersByTime(500); // Resolve the third request, should be shown
 
-      item = screen.queryByRole('option', { name: 'first' });
-      firstItem = screen.queryByRole('option', { name: 'second' });
+      firstItem = screen.queryByRole('option', { name: 'first' });
+      secondItem = screen.queryByRole('option', { name: 'second' });
+      thirdItem = await screen.findByRole('option', { name: 'third' });
 
-      expect(item).not.toBeInTheDocument();
-      expect(firstItem).toBeInTheDocument();
+      expect(firstItem).not.toBeInTheDocument();
+      expect(secondItem).not.toBeInTheDocument();
+      expect(thirdItem).toBeInTheDocument();
+
+      jest.advanceTimersByTime(1000); // Resolve the first request, should be ignored
+
+      firstItem = screen.queryByRole('option', { name: 'first' });
+      secondItem = screen.queryByRole('option', { name: 'second' });
+      thirdItem = screen.queryByRole('option', { name: 'third' });
+
+      expect(firstItem).not.toBeInTheDocument();
+      expect(secondItem).not.toBeInTheDocument();
+      expect(thirdItem).toBeInTheDocument();
+
+      jest.clearAllTimers();
     });
 
     it('should allow custom value while async is being run', async () => {
