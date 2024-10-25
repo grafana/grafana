@@ -294,11 +294,11 @@ function initExtensions() {
 }
 
 function isCrossOriginIframe() {
-  if (window.location.ancestorOrigins.length !== 0 && window.location.ancestorOrigins[0] !== window.location.origin) {
+  try {
+    return document.location.hostname !== window.parent.location.hostname;
+  } catch (e) {
     return true;
   }
-
-  return false;
 }
 
 function initEchoSrv() {
