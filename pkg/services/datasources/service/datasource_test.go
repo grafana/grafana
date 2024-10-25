@@ -569,6 +569,196 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.True(t, mutateExecuted)
 		require.Equal(t, "test-datasource-updated", dsUpdated.Name)
 	})
+
+	t.Run("Should update LBAC rules when updating from API", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+
+		// Create a datasource with existing LBAC rules
+		existingRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team1",
+			},
+		}
+		jsonData := simplejson.NewFromAny(map[string]interface{}{
+			"teamHttpHeaders": existingRules,
+		})
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:    1,
+			Name:     "test-datasource",
+			Type:     "prometheus",
+			JsonData: jsonData,
+		})
+		require.NoError(t, err)
+		// Verify that the datasource was created with the correct JsonData
+		createdDS, err := dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
+			OrgID: ds.OrgID,
+			ID:    ds.ID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdDS.JsonData)
+		createdRules := createdDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, existingRules, createdRules)
+
+		// Update the datasource with new LBAC rules from API
+		newRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team2",
+			},
+		}
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "updated-datasource",
+			Type:  "prometheus",
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"teamHttpHeaders": newRules,
+			}),
+			AllowLBACRuleUpdates: true,
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+
+		// Check if the LBAC rules are updated
+		updatedRules := updatedDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, newRules, updatedRules)
+	})
+	t.Run("Should preserve LBAC rules when not updating from API", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+		// Create a datasource with existing LBAC rules
+		existingRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team1",
+			},
+		}
+		jsonData := simplejson.NewFromAny(map[string]interface{}{
+			"teamHttpHeaders": existingRules,
+		})
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:    1,
+			Name:     "test-datasource",
+			Type:     "prometheus",
+			JsonData: jsonData,
+		})
+		require.NoError(t, err)
+		// Verify that the datasource was created with the correct JsonData
+		createdDS, err := dsService.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{
+			OrgID: ds.OrgID,
+			ID:    ds.ID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdDS.JsonData)
+		createdRules := createdDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, existingRules, createdRules)
+
+		// Update the datasource without LBAC rules in the command
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "updated-datasource",
+			Type:  "prometheus",
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"someOtherSetting": "value",
+			}),
+			AllowLBACRuleUpdates: false,
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+
+		// Check if the LBAC rules are preserved
+		updatedRules := updatedDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, existingRules, updatedRules)
+	})
+
+	t.Run("Should not remove stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+
+		// Create a datasource with existing LBAC rules
+		existingRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team1",
+			},
+		}
+		jsonData := simplejson.NewFromAny(map[string]interface{}{
+			"teamHttpHeaders": existingRules,
+		})
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:    1,
+			Name:     "test-datasource",
+			Type:     "prometheus",
+			JsonData: jsonData,
+		})
+		require.NoError(t, err)
+
+		// Update the datasource without any LBAC rules in the command
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			ID:                   ds.ID,
+			OrgID:                ds.OrgID,
+			Name:                 "updated-datasource",
+			Type:                 "prometheus",
+			AllowLBACRuleUpdates: false,
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+
+		// Check if the LBAC rules are preserved
+		updatedRules := updatedDS.JsonData.Get("teamHttpHeaders").MustArray()
+		require.Equal(t, existingRules, updatedRules)
+	})
+
+	t.Run("Should not populate empty stored rules without AllowLBACRuleUpdates", func(t *testing.T) {
+		dsService := initDSService(t)
+		dsService.features = featuremgmt.WithFeatures(featuremgmt.FlagTeamHttpHeaders)
+
+		// Create a datasource with empty LBAC rules
+		jsonData := simplejson.New()
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:    1,
+			Name:     "test-datasource",
+			Type:     "prometheus",
+			JsonData: jsonData,
+		})
+		require.NoError(t, err)
+
+		// Update the datasource with new LBAC rules but without AllowLBACRuleUpdates
+		newRules := []interface{}{
+			map[string]interface{}{
+				"name":  "X-Grafana-Team",
+				"value": "team2",
+			},
+		}
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "updated-datasource",
+			Type:  "prometheus",
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"teamHttpHeaders": newRules,
+			}),
+			AllowLBACRuleUpdates: false,
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+
+		// Check if the LBAC rules are still empty
+		updatedRules, ok := updatedDS.JsonData.CheckGet("teamHttpHeaders")
+		require.False(t, ok)
+		require.Nil(t, updatedRules)
+	})
 }
 
 func TestService_DeleteDataSource(t *testing.T) {
