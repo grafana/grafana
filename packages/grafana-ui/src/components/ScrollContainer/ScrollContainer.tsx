@@ -8,7 +8,7 @@ import { useStyles2 } from '../../themes';
 import { ScrollIndicators } from '../CustomScrollbar/ScrollIndicators';
 import { Box, BoxProps } from '../Layout/Box/Box';
 
-interface Props extends Omit<BoxProps, 'display' | 'direction' | 'flex'> {
+interface Props extends Omit<BoxProps, 'display' | 'direction' | 'flex' | 'position'> {
   showScrollIndicators?: boolean;
   onScroll?: UIEventHandler<HTMLDivElement>;
   overflowX?: Property.OverflowX;
