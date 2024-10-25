@@ -4,12 +4,16 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Label, Stack, useStyles2 } from '@grafana/ui';
 
-export function EditorColumnHeader({ label, actions }: { label: string; actions?: React.ReactNode }) {
+type Props = { label: string; actions?: React.ReactNode; id?: string };
+
+export function EditorColumnHeader({ label, actions, id }: Props) {
   const styles = useStyles2(editorColumnStyles);
 
   return (
     <div className={styles.container}>
-      <Label className={styles.label}>{label}</Label>
+      <Label className={styles.label} id={id}>
+        {label}
+      </Label>
       <Stack direction="row" gap={1}>
         {actions}
       </Stack>
@@ -17,7 +21,7 @@ export function EditorColumnHeader({ label, actions }: { label: string; actions?
   );
 }
 
-export const editorColumnStyles = (theme: GrafanaTheme2) => ({
+const editorColumnStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',
     flexDirection: 'row',
