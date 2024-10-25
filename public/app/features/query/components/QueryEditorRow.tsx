@@ -24,8 +24,14 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
+import {
+  AngularComponent,
+  getAngularLoader,
+  getDataSourceSrv,
+  reportInteraction,
+  usePluginLinks,
+} from '@grafana/runtime';
+import { Badge, Dropdown, ErrorBoundaryAlert, Menu, IconButton } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -482,6 +488,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
+        <ExtensionsDropdown query={this.props.query} />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
@@ -650,4 +657,39 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     errors: error ? [error] : undefined,
     timeRange,
   };
+}
+
+function ExtensionsDropdown(context: { query: any }) {
+  const extensions = usePluginLinks({
+    extensionPointId: 'grafana/query-editor-row/actions',
+    context: cloneDeep(context),
+  });
+
+  if (extensions.isLoading || extensions.links.length === 0) {
+    return null;
+  }
+
+  const menu = (
+    <Menu>
+      {extensions.links.map((link) => {
+        return (
+          <Menu.Item
+            ariaLabel={link.title}
+            icon={link?.icon || 'plug'}
+            key={link.id}
+            label={link.title}
+            onClick={(event) => {
+              link.onClick?.(event);
+            }}
+          />
+        );
+      })}
+    </Menu>
+  );
+
+  return (
+    <Dropdown placement="bottom-start" overlay={menu}>
+      <IconButton aria-label="extensions" name={'apps'} />
+    </Dropdown>
+  );
 }
