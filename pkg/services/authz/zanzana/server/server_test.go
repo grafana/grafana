@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -26,9 +28,20 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestServer(t *testing.T) {
-	srv := setup(t)
+func TestIntegrationServer(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
+	testDB, cfg := db.InitTestDBWithCfg(t)
+	// Hack to skip these tests on mysql 5.7
+	if testDB.GetDialect().DriverName() == migrator.MySQL {
+		if supported, err := testDB.RecursiveQueriesAreSupported(); !supported || err != nil {
+			t.Skip("skipping integration test")
+		}
+	}
+
+	srv := setup(t, testDB, cfg)
 	t.Run("test check", func(t *testing.T) {
 		testCheck(t, srv)
 	})
@@ -38,8 +51,8 @@ func TestServer(t *testing.T) {
 	})
 }
 
-func setup(t *testing.T) *Server {
-	testDB, cfg := db.InitTestDBWithCfg(t)
+func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
+	t.Helper()
 	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
 	require.NoError(t, err)
 	openfga, err := NewOpenFGA(&cfg.Zanzana, store, log.NewNopLogger())
