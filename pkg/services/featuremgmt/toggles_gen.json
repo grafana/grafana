@@ -82,7 +82,8 @@
       "metadata": {
         "name": "alertStateHistoryLokiOnly",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-30T18:53:21Z"
+        "creationTimestamp": "2023-03-30T18:53:21Z",
+        "deletionTimestamp": "2024-10-26T01:32:52Z"
       },
       "spec": {
         "description": "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
@@ -94,7 +95,8 @@
       "metadata": {
         "name": "alertStateHistoryLokiPrimary",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-30T18:53:21Z"
+        "creationTimestamp": "2023-03-30T18:53:21Z",
+        "deletionTimestamp": "2024-10-26T01:32:42Z"
       },
       "spec": {
         "description": "Enable a remote Loki instance as the primary source for state history reads.",
@@ -106,7 +108,8 @@
       "metadata": {
         "name": "alertStateHistoryLokiSecondary",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-30T18:53:21Z"
+        "creationTimestamp": "2023-03-30T18:53:21Z",
+        "deletionTimestamp": "2024-10-26T01:32:32Z"
       },
       "spec": {
         "description": "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
@@ -2349,20 +2352,6 @@
     },
     {
       "metadata": {
-        "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1728903221522",
-        "creationTimestamp": "2024-10-14T10:53:41Z"
-      },
-      "spec": {
-        "description": "Enables reload of dashboards on scopes, time range and variables changes",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
         "creationTimestamp": "2024-06-20T15:49:19Z",
@@ -2839,6 +2828,20 @@
         "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "reloadDashboardsOnParamsChange",
+        "resourceVersion": "1728903221522",
+        "creationTimestamp": "2024-10-14T10:53:41Z"
+      },
+      "spec": {
+        "description": "Enables reload of dashboards on scopes, time range and variables changes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
