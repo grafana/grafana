@@ -47,6 +47,7 @@ type SocialConnector interface {
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error)
+	GetClientSecretJWT(ctx context.Context) (string, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
 	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
 	SupportBundleContent(*bytes.Buffer) error
@@ -63,6 +64,7 @@ type OAuthInfo struct {
 	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login"`
 	ClientId                string            `mapstructure:"client_id" toml:"client_id"`
 	ClientSecret            string            `mapstructure:"client_secret" toml:"-"`
+	ClientSecretJWT         string            `mapstructure:"client_secret_jwt" toml:"client_secret_jwt"`
 	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
 	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`
 	EmptyScopes             bool              `mapstructure:"empty_scopes" toml:"empty_scopes"`

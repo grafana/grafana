@@ -90,6 +90,22 @@ func (_m *MockSocialConnector) Exchange(ctx context.Context, code string, authOp
 	return r0, r1
 }
 
+// GetClientSecretJWT provides a mock function with given fields: ctx
+func (_m *MockSocialConnector) GetClientSecretJWT(ctx context.Context) (string, error) {
+
+	ret := _m.Called(ctx)
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0, r1
+}
+
 // GetOAuthInfo provides a mock function with given fields:
 func (_m *MockSocialConnector) GetOAuthInfo() *social.OAuthInfo {
 	ret := _m.Called()
