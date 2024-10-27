@@ -1346,11 +1346,17 @@ export const processQueryResponse = (
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
+  const shouldHaveNodeGraph = !!state.queries.find((q) => q?.scenarioId === 'node_graph' && !q.hide);
+  const mergedNodeGraphFrames = shouldHaveNodeGraph
+    ? [...state.queryResponse.nodeGraphFrames, ...nodeGraphFrames]
+    : nodeGraphFrames;
+
   return {
     ...state,
-    queryResponse: response,
-    graphResult,
-    tableResult,
+    queryResponse: { ...response, nodeGraphFrames: mergedNodeGraphFrames },
+    // queryResponse: response,
+    graphResult: graphResult,
+    tableResult: tableResult,
     rawPrometheusResult,
     logsResult:
       state.isLive && logsResult
@@ -1360,7 +1366,7 @@ export const processQueryResponse = (
     showMetrics: !!graphResult,
     showTable: !!tableResult?.length,
     showTrace: !!traceFrames.length,
-    showNodeGraph: !!nodeGraphFrames.length,
+    showNodeGraph: !!mergedNodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
     showCustom: !!customFrames?.length,
