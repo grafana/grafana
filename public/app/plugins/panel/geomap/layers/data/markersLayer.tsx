@@ -141,12 +141,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (dims?.rotation) {
               values.rotation = dims.rotation.get(idx);
             }
-            const colorHex = tinycolor(theme.visualization.getColorByName(values.color)).toString();
-            const colorValues = getRGBFromHex(colorHex);
+            const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
+            const colorValues = getRGBValues(colorString);
 
-            feature.setProperties({ red: colorValues.r });
-            feature.setProperties({ green: colorValues.g });
-            feature.setProperties({ blue: colorValues.b });
+            feature.setProperties({ red: colorValues?.r ?? 255 });
+            feature.setProperties({ green: colorValues?.g ?? 0 });
+            feature.setProperties({ blue: colorValues?.b ?? 0 });
             feature.setProperties({ size: (values.size ?? 1) * 10 });
             feature.setProperties({ rotation: values.rotation });
             feature.setProperties({ opacity: values.opacity });
@@ -182,6 +182,24 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
   defaultOptions,
 };
 
+function getRGBValues(colorString: string) {
+  // Check if it's a hex color
+  if (colorString.startsWith('#')) {
+    return getRGBFromHex(colorString);
+  }
+
+  // Check if it's an RGB color
+  else if (colorString.startsWith('rgb')) {
+    return getRGBFromRGBString(colorString);
+  }
+
+  // Handle other color formats if needed
+  else {
+    console.warn(`Unsupported color format: ${colorString}`);
+  }
+  return null;
+}
+
 function getRGBFromHex(hexColor: string) {
   // Remove the '#' character
   hexColor = hexColor.slice(1);
@@ -192,4 +210,20 @@ function getRGBFromHex(hexColor: string) {
   const b = parseInt(hexColor.slice(4, 6), 16);
 
   return { r, g, b };
+}
+
+function getRGBFromRGBString(rgbString: string) {
+  // Use regex to extract the numbers
+  const matches = rgbString.match(/\d+/g);
+
+  if (matches && matches.length === 3) {
+    return {
+      r: parseInt(matches[0], 10),
+      g: parseInt(matches[1], 10),
+      b: parseInt(matches[2], 10),
+    };
+  } else {
+    console.warn(`Unsupported color format: ${rgbString}`);
+  }
+  return null;
 }
