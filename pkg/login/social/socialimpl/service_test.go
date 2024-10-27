@@ -220,6 +220,7 @@ allow_sign_up = false
 auto_login = true
 client_id = test_client_id
 client_secret = test_client_secret
+client_secret_jwt = test_client_secret_jwt
 scopes = ["openid", "profile", "email"]
 empty_scopes = false
 email_attribute_name = email:primary
@@ -264,6 +265,7 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 		AutoLogin:               true,
 		ClientId:                "test_client_id",
 		ClientSecret:            "test_client_secret",
+		ClientSecretJWT:         "test_client_secret_jwt",
 		Scopes:                  []string{"openid", "profile", "email"},
 		EmptyScopes:             false,
 		EmailAttributeName:      "email:primary",
