@@ -620,7 +620,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(
         exploreId,
-        queries,
+        queries.filter((q) => !q.hide),
         queryOptions,
         range,
         scanning,
@@ -1346,25 +1346,29 @@ export const processQueryResponse = (
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
-  const shouldHaveNodeGraph = !!state.queries.find((q) => q?.scenarioId === 'node_graph' && !q.hide);
-  const mergedNodeGraphFrames = shouldHaveNodeGraph
+  const haveNodeGraphScenario = !!state.queries.find((q) => q?.scenarioId === 'node_graph' && !q.hide);
+  const visibleQueriesCount = state.queries.filter((q) => !q.hide).length;
+  const isNodeGraphResponse = nodeGraphFrames.length > 0;
+  const mergedNodeGraphFrames = haveNodeGraphScenario
     ? [...state.queryResponse.nodeGraphFrames, ...nodeGraphFrames]
     : nodeGraphFrames;
+
+  const mergedGraphResult = isNodeGraphResponse ? (visibleQueriesCount === 1 ? graphResult : graphResult) : graphResult;
+  const mergedTableResult = isNodeGraphResponse ? (visibleQueriesCount === 1 ? tableResult : tableResult) : tableResult;
 
   return {
     ...state,
     queryResponse: { ...response, nodeGraphFrames: mergedNodeGraphFrames },
-    // queryResponse: response,
-    graphResult: graphResult,
-    tableResult: tableResult,
+    graphResult: mergedGraphResult,
+    tableResult: mergedTableResult,
     rawPrometheusResult,
     logsResult:
       state.isLive && logsResult
         ? { ...logsResult, rows: filterLogRowsByIndex(state.clearedAtIndex, logsResult.rows) }
         : logsResult,
     showLogs: !!logsResult,
-    showMetrics: !!graphResult,
-    showTable: !!tableResult?.length,
+    showMetrics: !!mergedGraphResult,
+    showTable: !!mergedTableResult?.length,
     showTrace: !!traceFrames.length,
     showNodeGraph: !!mergedNodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
