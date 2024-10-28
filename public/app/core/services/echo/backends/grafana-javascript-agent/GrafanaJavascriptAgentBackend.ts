@@ -17,6 +17,14 @@ import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentEchoEvent, User } from './types';
 
+function isCrossOriginIframe() {
+  try {
+    return document.location.hostname !== window.parent.location.hostname;
+  } catch (e) {
+    return true;
+  }
+}
+
 export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   buildInfo: BuildInfo;
   customEndpoint: string;
@@ -40,7 +48,8 @@ export class GrafanaJavascriptAgentBackend
 
     const transports: BaseTransport[] = [new EchoSrvTransport()];
 
-    if (options.customEndpoint) {
+    // If in cross origin iframe, default to writing to instance logging endpoint
+    if (options.customEndpoint && !isCrossOriginIframe()) {
       transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
     }
 
