@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"errors"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +30,9 @@ import (
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = v0alpha1.FolderResourceInfo
+
+var errNoUser = errors.New("valid user is required")
+var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -154,42 +158,59 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
+type authorizerParams struct {
+	user      identity.Requester
+	evaluator accesscontrol.Evaluator
+}
+
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			verb := attr.GetVerb()
-			name := attr.GetName()
-			if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
-				return authorizer.DecisionNoOpinion, "", nil
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		in, err := authorizerFunc(ctx, attr)
+		if err != nil {
+			if errors.Is(err, errNoUser) {
+				return authorizer.DecisionDeny, "", nil
 			}
+			return authorizer.DecisionNoOpinion, "", nil
+		}
 
-			// require a user
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "valid user is required", err
-			}
+		ok, err := b.accessControl.Evaluate(ctx, in.user, in.evaluator)
+		if ok {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "folder", err
+	})
+}
 
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
-			eval := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
+func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
+	verb := attr.GetVerb()
+	name := attr.GetName()
+	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
+		return nil, errNoResource
+	}
 
-			// "get" is used for sub-resources with GET http (parents, access, count)
-			switch verb {
-			case utils.VerbCreate:
-				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
-			case utils.VerbPatch:
-				fallthrough
-			case utils.VerbUpdate:
-				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
-			case utils.VerbDeleteCollection:
-				fallthrough
-			case utils.VerbDelete:
-				eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
-			}
+	// require a user
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, errNoUser
+	}
 
-			ok, err := b.accessControl.Evaluate(ctx, user, eval)
-			if ok {
-				return authorizer.DecisionAllow, "", nil
-			}
-			return authorizer.DecisionDeny, "folder", err
-		})
+	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
+	var eval accesscontrol.Evaluator
+
+	// "get" is used for sub-resources with GET http (parents, access, count)
+	switch verb {
+	case utils.VerbCreate:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+	case utils.VerbPatch:
+		fallthrough
+	case utils.VerbUpdate:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
+	case utils.VerbDeleteCollection:
+		fallthrough
+	case utils.VerbDelete:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
+	default:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
+	}
+	return &authorizerParams{evaluator: eval, user: user}, nil
 }
