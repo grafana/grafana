@@ -37,11 +37,19 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.ContactPointType,
 	cloudmigration.NotificationPolicyType,
 	cloudmigration.AlertRuleType,
+	cloudmigration.PluginDataType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getMigrationDataJSON")
 	defer span.End()
+
+	// Plugins
+	plugins, err := s.getPlugins(ctx)
+	if err != nil {
+		s.log.Error("Failed to get plugins", "err", err)
+		return nil, err
+	}
 
 	// Data sources
 	dataSources, err := s.getDataSourceCommands(ctx)
@@ -100,7 +108,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
-		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
+		len(plugins)+len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
 			len(muteTimings)+len(notificationTemplates)+len(contactPoints)+len(alertRules),
 	)
 
@@ -191,6 +199,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: alertRule.UID,
 			Name:  alertRule.Title,
 			Data:  alertRule,
+		})
+	}
+
+	for _, plugin := range plugins {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.PluginDataType,
+			RefID: plugin.ID,
+			Name:  plugin.Name,
+			Data:  plugin,
 		})
 	}
 
@@ -353,6 +370,33 @@ func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *
 	}
 
 	return cmds, nil
+}
+
+type Plugin struct {
+	Name string `json:"name"`
+	ID   string `json:"uid"`
+	Type string `json:"type"`
+}
+
+// getPlugins returns the json payloads required by the plugin creation API
+func (s *Service) getPlugins(ctx context.Context) ([]Plugin, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getPlugins")
+	defer span.End()
+
+	results := make([]Plugin, 0)
+	plugins := s.pluginStore.Plugins(ctx)
+	for _, plugin := range plugins {
+		if !plugin.IsCorePlugin() {
+			// TODO: filter unisigned and private plugins
+			results = append(results, Plugin{
+				Name: plugin.Name,
+				ID:   plugin.ID,
+				Type: string(plugin.Type),
+			})
+		}
+	}
+
+	return results, nil
 }
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status

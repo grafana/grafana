@@ -1561,7 +1561,8 @@
       "library_elements": "library elements",
       "mute_timings": "mute timings",
       "notification_policies": "notification policies",
-      "notification_templates": "notification templates"
+      "notification_templates": "notification templates",
+      "plugins": "plugins"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1663,6 +1664,7 @@
       "mute_timing": "Mute Timing",
       "notification_policy": "Notification Policy",
       "notification_template": "Notification Template",
+      "plugin": "Plugin",
       "unknown": "Unknown"
     },
     "summary": {

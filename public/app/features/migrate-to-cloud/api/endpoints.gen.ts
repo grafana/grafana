@@ -190,7 +190,8 @@ export type MigrateDataResponseItemDto = {
     | 'CONTACT_POINT'
     | 'NOTIFICATION_POLICY'
     | 'NOTIFICATION_TEMPLATE'
-    | 'MUTE_TIMING';
+    | 'MUTE_TIMING'
+    | 'PLUGIN';
 };
 export type SnapshotResourceStats = {
   statuses?: {
