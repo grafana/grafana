@@ -276,6 +276,18 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	return results, nil
 }
 
+func (i *Index) Count() (uint64, error) {
+	var total uint64
+	for _, shard := range i.shards {
+		count, err := shard.index.DocCount()
+		if err != nil {
+			i.log.Error("failed to get doc count", "error", err)
+		}
+		total += count
+	}
+	return total, nil
+}
+
 type Opts struct {
 	Workers   int    // This controls how many goroutines are used to index objects
 	BatchSize int    // This is the batch size for how many objects to add to the index at once

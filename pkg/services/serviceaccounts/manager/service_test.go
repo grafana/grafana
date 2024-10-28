@@ -35,7 +35,7 @@ func newServiceAccountStoreFake() *FakeServiceAccountStore {
 }
 
 // CreateServiceAccount is a fake creating a service account.
-func (f *FakeServiceAccountStore) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+func (f *FakeServiceAccountStore) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfileDTO, f.ExpectedError
 }
 
