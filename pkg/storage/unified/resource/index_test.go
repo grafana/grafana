@@ -24,7 +24,14 @@ func TestIndexBatch(t *testing.T) {
 	}
 
 	tmpdir := os.TempDir() + "testindexbatch"
-	defer os.RemoveAll(tmpdir)
+
+	defer func() {
+		err := os.RemoveAll(tmpdir)
+		if err != nil {
+			t.Fatal(err)
+			return
+		}
+	}()
 
 	index := &Index{
 		tracer: trace,
