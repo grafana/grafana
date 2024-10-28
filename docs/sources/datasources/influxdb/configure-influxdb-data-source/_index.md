@@ -36,8 +36,6 @@ refs:
 
 # Configure the InfluxDB data source
 
-
-
 ## Before you begin
 
 To configure the InfluxDB data source you must have the `Administrator` role.
@@ -63,6 +61,14 @@ Complete the following steps to set up a new InfluxDB data source:
 5. Click **Add new data source** in the upper right.
 
 You are taken to the **Settings** tab where you will configure the data source.
+
+## InfluxDB configuration options
+
+The following configuration options apply to **all three query language options**.
+
+
+
+## InfluxDB-specific configuration options
 
 - **Name** -  Sets the name you use to refer to the data source in panels and queries. Examples: `InfluxDB-InfluxQL`, `InfluxDB_SQL`.
 - **Default** - Toggle to set as the default data source.  

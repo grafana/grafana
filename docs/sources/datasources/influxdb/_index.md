@@ -52,7 +52,7 @@ Once you've added the InfluxDB data source, you can [configure it](#configure-th
 instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when
 they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
-The following documents will help you get tarted working with InfluxDB andd Grafana:
+The following documents will help you get tarted working with the InfluxDB data source: 
 
 - [Configure the InfluxDB data source]()
 
