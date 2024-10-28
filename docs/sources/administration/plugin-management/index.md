@@ -275,9 +275,9 @@ Examples of plugins where the sandbox is particularly important include:
 If a plugin isn't functioning correctly with the Frontend Sandbox enabled:
 
 1. Temporarily disable the sandbox for that specific plugin
-2. Test if the plugin works correctly without the sandbox
-3. If the plugin only works with the sandbox disabled, ensure you trust the plugin source before continuing to use it without sandbox protection
-4. Report any sandbox-related issues to the plugin developer
+1. Test if the plugin works correctly without the sandbox
+1. If the plugin only works with the sandbox disabled, ensure you trust the plugin source before continuing to use it without sandbox protection
+1. Report any sandbox-related issues to the plugin developer
 
 ## Learn more
 
