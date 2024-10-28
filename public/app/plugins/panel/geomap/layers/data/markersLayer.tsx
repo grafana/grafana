@@ -147,7 +147,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             feature.setProperties({ red: colorValues?.r ?? 255 });
             feature.setProperties({ green: colorValues?.g ?? 0 });
             feature.setProperties({ blue: colorValues?.b ?? 0 });
-            feature.setProperties({ size: (values.size ?? 1) * 2 });
+            feature.setProperties({ size: (values.size ?? 1) * 3 }); // TODO figure out size conversion
             feature.setProperties({ rotation: values.rotation });
             feature.setProperties({ opacity: values.opacity });
           });
