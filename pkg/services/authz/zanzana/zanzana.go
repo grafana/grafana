@@ -21,23 +21,33 @@ const (
 )
 
 const (
+	// Team member relations
 	RelationTeamMember string = "member"
 	RelationTeamAdmin  string = "admin"
-	RelationParent     string = "parent"
-	RelationAssignee   string = "assignee"
-	RelationOrg        string = "org"
 
-	// FIXME action sets
-	RelationAdmin            string = "admin"
-	RelationRead             string = "read"
-	RelationWrite            string = "write"
-	RelationCreate           string = "create"
-	RelationDelete           string = "delete"
-	RelationPermissionsRead  string = "permissions_read"
-	RelationPermissionsWrite string = "permissions_write"
+	// Folder tree relations
+	RelationParent string = "parent"
+
+	// Role assignment relation
+	RelationAssignee string = "assignee"
+
+	RelationOrg string = "org"
+
+	// sets for resources
+	RelationView  string = common.RelationView
+	RelationEdit  string = common.RelationEdit
+	RelationAdmin string = common.RelationAdmin
+
+	// common relations for resources
+	RelationRead             string = common.RelationRead
+	RelationWrite            string = common.RelationWrite
+	RelationCreate           string = common.RelationCreate
+	RelationDelete           string = common.RelationDelete
+	RelationPermissionsRead  string = common.RelationPermissionsRead
+	RelationPermissionsWrite string = common.RelationPermissionsWrite
 )
 
-var ResourceRelations = []string{RelationRead, RelationWrite, RelationCreate, RelationDelete, RelationPermissionsRead, RelationPermissionsWrite}
+var ResourceRelations = common.ResourceRelations
 
 const (
 	KindOrg        string = "org"

@@ -6,6 +6,7 @@ package authz.extention.v1;
 
 service AuthzExtentionService {
   rpc List(ListRequest) returns (ListResponse);
+  rpc Capabilities(CapabilitiesRequest) returns (CapabilitiesResponse);
 }
 
 message ListRequest {
@@ -20,4 +21,19 @@ message ListResponse {
   bool all = 1;
   repeated string folders = 2;
   repeated string items = 3;
+}
+
+message CapabilitiesRequest {
+  string subject = 1;
+  string group = 3;
+  string namespace = 5;
+  string resource = 4;
+  string name = 6;
+  string folder = 9;
+  string path = 8;
+  string subresource = 7;
+}
+
+message CapabilitiesResponse {
+  repeated string capabilities = 1;
 }

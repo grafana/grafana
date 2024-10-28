@@ -16,15 +16,14 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 	ctx, span := tracer.Start(ctx, "authzServer.List")
 	defer span.End()
 
+	relation := common.VerbMapping[r.GetVerb()]
 	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return s.listTyped(ctx, r, info)
+		return s.listTyped(ctx, r, info, relation)
 	}
 
-	return s.listGeneric(ctx, r)
+	return s.listGeneric(ctx, r, relation)
 }
-func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info common.TypeInfo) (*authzextv1.ListResponse, error) {
-	relation := common.VerbMapping[r.GetVerb()]
-
+func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info common.TypeInfo, relation string) (*authzextv1.ListResponse, error) {
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              s.storeID,
@@ -60,9 +59,7 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 	}, nil
 }
 
-func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
-	relation := common.VerbMapping[r.GetVerb()]
-
+func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest, relation string) (*authzextv1.ListResponse, error) {
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              s.storeID,

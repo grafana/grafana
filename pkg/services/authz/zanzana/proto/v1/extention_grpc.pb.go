@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	AuthzExtentionService_List_FullMethodName = "/authz.extention.v1.AuthzExtentionService/List"
+	AuthzExtentionService_List_FullMethodName         = "/authz.extention.v1.AuthzExtentionService/List"
+	AuthzExtentionService_Capabilities_FullMethodName = "/authz.extention.v1.AuthzExtentionService/Capabilities"
 )
 
 // AuthzExtentionServiceClient is the client API for AuthzExtentionService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthzExtentionServiceClient interface {
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	Capabilities(ctx context.Context, in *CapabilitiesRequest, opts ...grpc.CallOption) (*CapabilitiesResponse, error)
 }
 
 type authzExtentionServiceClient struct {
@@ -47,11 +49,22 @@ func (c *authzExtentionServiceClient) List(ctx context.Context, in *ListRequest,
 	return out, nil
 }
 
+func (c *authzExtentionServiceClient) Capabilities(ctx context.Context, in *CapabilitiesRequest, opts ...grpc.CallOption) (*CapabilitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CapabilitiesResponse)
+	err := c.cc.Invoke(ctx, AuthzExtentionService_Capabilities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthzExtentionServiceServer is the server API for AuthzExtentionService service.
 // All implementations should embed UnimplementedAuthzExtentionServiceServer
 // for forward compatibility
 type AuthzExtentionServiceServer interface {
 	List(context.Context, *ListRequest) (*ListResponse, error)
+	Capabilities(context.Context, *CapabilitiesRequest) (*CapabilitiesResponse, error)
 }
 
 // UnimplementedAuthzExtentionServiceServer should be embedded to have forward compatible implementations.
@@ -60,6 +73,9 @@ type UnimplementedAuthzExtentionServiceServer struct {
 
 func (UnimplementedAuthzExtentionServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedAuthzExtentionServiceServer) Capabilities(context.Context, *CapabilitiesRequest) (*CapabilitiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Capabilities not implemented")
 }
 
 // UnsafeAuthzExtentionServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -91,6 +107,24 @@ func _AuthzExtentionService_List_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthzExtentionService_Capabilities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CapabilitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzExtentionServiceServer).Capabilities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzExtentionService_Capabilities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzExtentionServiceServer).Capabilities(ctx, req.(*CapabilitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthzExtentionService_ServiceDesc is the grpc.ServiceDesc for AuthzExtentionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -101,6 +135,10 @@ var AuthzExtentionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "List",
 			Handler:    _AuthzExtentionService_List_Handler,
+		},
+		{
+			MethodName: "Capabilities",
+			Handler:    _AuthzExtentionService_Capabilities_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
