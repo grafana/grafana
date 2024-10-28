@@ -1060,6 +1060,7 @@ export const versionedComponents = {
   },
   CodeEditor: {
     container: {
+      '11.4.0': 'data-testid abc',
       '10.2.3': 'data-testid Code editor container',
       [MIN_GRAFANA_VERSION]: 'Code editor container',
     },
