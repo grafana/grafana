@@ -26,12 +26,18 @@ func (b *builderAdmission) Handles(operation admission.Operation) bool {
 	return true
 }
 
-func NewAdmission(builders []APIGroupBuilder) admission.Interface {
-	b := &builderAdmission{}
+func NewAdmissionFromBuilders(builders []APIGroupBuilder) *builderAdmission {
+	validators := make(map[schema.GroupVersion]APIGroupValidation)
 	for _, builder := range builders {
 		if v, ok := builder.(APIGroupValidation); ok {
-			b.validators[builder.GetGroupVersion()] = v
+			validators[builder.GetGroupVersion()] = v
 		}
 	}
-	return b
+	return NewAdmission(validators)
+}
+
+func NewAdmission(validators map[schema.GroupVersion]APIGroupValidation) *builderAdmission {
+	return &builderAdmission{
+		validators: validators,
+	}
 }
