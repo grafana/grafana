@@ -263,7 +263,7 @@ We strongly recommend enabling the Frontend Sandbox for plugins that allow users
 Examples of plugins where the sandbox is particularly important include:
 
 - Panel plugins that allow users to write custom JavaScript code
-- Plugins from third parties (other than Grafana Labs)
+- Plugins from untrusted sources
 
 ### Troubleshooting
 
