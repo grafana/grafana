@@ -38,10 +38,10 @@
 /docs/.codespellignore                                                            @grafana/docs-tooling
 /docs/sources/                                                                    @irenerl24
 
-/docs/sources/administration/                                                     @jdbaldry
+/docs/sources/administration/                                                     @irenerl24
 /docs/sources/alerting/                                                           @brendamuir
 /docs/sources/dashboards/                                                         @imatwawana
-/docs/sources/datasources/                                                        @jdbaldry
+/docs/sources/datasources/                                                        @irenerl24
 /docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
 /docs/sources/fundamentals                                                        @irenerl24
 /docs/sources/getting-started/                                                    @irenerl24
