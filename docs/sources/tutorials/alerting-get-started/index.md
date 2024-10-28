@@ -11,18 +11,18 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting - Part 1
+title: Get Started with Grafana Alerting - Part 1 of 2
 weight: 50
 killercoda:
-  title: Get started with Grafana Alerting - Part 1
-  description: Get started with Grafana Alerting by creating your first alert in just a few minutes. Learn how to set up an alert, send alert notifications to a public webhook, and generate sample data to observe your alert in action.
+  title: Get Started with Grafana Alerting - Part 1 of 2
+  description: Get started with Grafana Alerting by creating your first alert rule, sending notifications to a webhook, and generating data to test it live — Part 1.
   backend:
     imageid: ubuntu
 ---
 
 <!-- INTERACTIVE page intro.md START -->
 
-# Get Started with Grafana Alerting - Part 1
+# Get Started with Grafana Alerting - Part 1 of 2
 
 In this guide, we walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
@@ -36,7 +36,7 @@ In this tutorial you will:
 
 {{< admonition type="tip" >}}
 
-Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
+Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Part 2 Alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/).
 
 {{< /admonition >}}
 
@@ -44,7 +44,7 @@ Before you dive in, remember that you can [explore advanced topics like alert in
 
 {{< docs/ignore >}}
 
-> Before you dive in, remember that you can [explore advanced topics like alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in the second part of this guide.
+> Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Part 2 Alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/).
 
 {{< /docs/ignore >}}
 
@@ -52,36 +52,28 @@ Before you dive in, remember that you can [explore advanced topics like alert in
 <!-- INTERACTIVE page step1.md START -->
 <!-- INTERACTIVE ignore START -->
 
-{{< docs/ignore >}}
-
-## Set up the Grafana stack
-
-{{< /docs/ignore >}}
-
 ## Before you begin
 
 There are different ways you can follow along with this tutorial.
 
-### Grafana Cloud
+- Grafana Cloud
 
-As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
+  - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
 
-Continue to [Create a contact point](#create-a-contact-point).
+  Continue to [Create a contact point](#create-a-contact-point).
 
-### Interactive learning environment
+- Interactive learning environment
 
-Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
+  - Alternatively, you can [try out this example in our interactive learning environment]((https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/)). It's a fully configured environment with all the dependencies already installed.
 
-It's a fully configured environment with all the dependencies already installed.
+- Grafana OSS
 
-### Grafana OSS
+  - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
-If you opt to run a Grafana stack locally, ensure you have the following applications installed:
+  - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
+  - [Git](https://git-scm.com/)
 
-- [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
-- [Git](https://git-scm.com/)
-
-#### Set up the Grafana stack (OSS users)
+### Set up the Grafana stack (OSS users)
 
 <!-- INTERACTIVE ignore END -->
 
@@ -274,13 +266,13 @@ By incrementing the threshold, the condition is no longer met, and after the eva
 
 <!-- INTERACTIVE page finish.md START -->
 
-## Learn more
+## Learn more in [Grafana Alerting Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
+In [Get started with Grafana Alerting - Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /admonition >}}
 
@@ -288,7 +280,7 @@ Advance your skills by exploring [alert instances and notification routing](http
 
 {{< docs/ignore >}}
 
-Advance your skills by exploring [alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/) in Part 2 of your learning journey.
+In [Get started with Grafana Alerting - Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /docs/ignore >}}
 
