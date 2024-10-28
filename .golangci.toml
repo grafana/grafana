@@ -187,7 +187,6 @@ enable = [
   "errcheck",
   "errorlint",
   "exhaustive",
-  "exportloopref",
   # "gochecknoinits",
   # "goconst",
   # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
