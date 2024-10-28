@@ -567,20 +567,12 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
-    // TONY: CHECK IF WE NEED TO FILTER OUT QUERIES (HIDDEN OR NOT)
     const queries = exploreItemState.queries
       .map((query) => ({
         ...query,
         datasource: query.datasource || datasourceInstance?.getRef(),
       }))
       .filter((q) => !q.hide);
-
-    const hiddenQueriesRefs = exploreItemState.queries
-      .map((query) => ({
-        ...query,
-        datasource: query.datasource || datasourceInstance?.getRef(),
-      }))
-      .filter((q) => q.hide);
 
     if (datasourceInstance != null) {
       handleHistory(dispatch, getState().explore, datasourceInstance, queries);
@@ -645,7 +637,6 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       );
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
-      debugger;
 
       newQuerySource = combineLatest([
         runRequest(datasourceInstance, transaction.request)
@@ -670,7 +661,6 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
       newQuerySubscription = newQuerySource.subscribe({
         next(data) {
-          // TODO: TONY: only dispatch update to merge data if: Data is not empty or the query is not filtered out
           const exploreState = getState().explore.panes[exploreId];
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
