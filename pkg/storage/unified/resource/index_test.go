@@ -25,7 +25,7 @@ func TestIndexBatch(t *testing.T) {
 	tmpdir := os.TempDir() + "testindexbatch"
 
 	defer func() {
-		err := os.RemoveAll(tmpdir)
+		err = os.RemoveAll(tmpdir)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -48,9 +48,6 @@ func TestIndexBatch(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i))}
 		start := time.Now()
-		if err != nil {
-			t.Fatal(err)
-		}
 		_, err = index.AddToBatches(ctx, list)
 		if err != nil {
 			t.Fatal(err)
