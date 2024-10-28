@@ -13,7 +13,7 @@ labels:
     - alerting
 tags:
   - advanced
-title: How to create alerts with log data
+title: How to create alert rules with log data
 weight: 70
 killercoda:
   title: How to create alerts with log data
