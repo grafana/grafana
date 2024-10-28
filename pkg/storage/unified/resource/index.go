@@ -53,24 +53,18 @@ func NewIndex(s *server, opts Opts, path string, tracer tracing.Tracer) *Index {
 func (i *Index) IndexBatch(ctx context.Context, list *ListResponse) error {
 	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"CreateIndexBatches")
 	for _, obj := range list.Items {
-		res, err := NewIndexedResource(obj.Value)
-		if err != nil {
-			return err
-		}
-
-		shard, err := i.getShard(res.Namespace)
-		if err != nil {
-			return err
-		}
-		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "tenant", res.Namespace)
-
-		// Transform the raw resource into a more generic indexable resource
 		indexableResource, err := NewIndexedResource(obj.Value)
 		if err != nil {
 			return err
 		}
 
-		err = shard.batch.Index(res.Uid, indexableResource)
+		shard, err := i.getShard(indexableResource.Namespace)
+		if err != nil {
+			return err
+		}
+		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "tenant", indexableResource.Namespace)
+
+		err = shard.batch.Index(indexableResource.Uid, indexableResource)
 		if err != nil {
 			return err
 		}
