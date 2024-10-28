@@ -25,7 +25,6 @@ import (
 )
 
 var (
-	errPasswordlessClientInvalidCode             = errutil.Unauthorized("passwordless.invalid.code", errutil.WithPublicMessage("Invalid code"))
 	errPasswordlessClientInvalidConfirmationCode = errutil.Unauthorized("passwordless.invalid.confirmation-code", errutil.WithPublicMessage("Invalid confirmation code"))
 	errPasswordlessClientTooManyLoginAttempts    = errutil.Unauthorized("passwordless.invalid.login-attempt", errutil.WithPublicMessage("Login temporarily blocked"))
 	errPasswordlessClientInvalidEmail            = errutil.Unauthorized("passwordless.invalid.email", errutil.WithPublicMessage("Invalid email"))
@@ -169,7 +168,6 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 		if tempUsers == nil {
 			return "", errPasswordlessClientInvalidEmail.Errorf("no user or invite found with email %s", email)
 		}
-
 	}
 
 	// 2. if existing user or temp user found, send email with passwordless link
