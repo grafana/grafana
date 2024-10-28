@@ -68,7 +68,6 @@ func TestIndexBatch(t *testing.T) {
 	assert.Equal(t, 3, len(index.shards))
 
 	total, err := index.Count()
-	fmt.Println("Total docs:", total)
 	if err != nil {
 		t.Fatal(err)
 	}
