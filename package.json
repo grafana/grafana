@@ -415,6 +415,7 @@
   "resolutions": {
     "underscore": "1.13.7",
     "@types/slate": "0.47.11",
+    "@grafana/e2e-selectors": "workspace:*",
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "semver@~7.0.0": "7.5.4",
     "semver@7.3.4": "7.5.4",
