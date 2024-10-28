@@ -19,35 +19,37 @@ export function DataTrailsRecentMetrics({ model }: SceneComponentProps<DataTrail
     setShowAll(!showAll);
   };
 
+  if (recentMetrics.length === 0) {
+    return null;
+  }
+
   return (
-    recentMetrics.length > 0 && (
-      <>
-        <div className={styles.recentExplorationHeader}>
-          <div className={styles.header}>
-            <Trans i18nKey="trails.recent-metrics.or-view-a-recent-exploration">Or view a recent exploration</Trans>
-          </div>
+    <>
+      <div className={styles.recentExplorationHeader}>
+        <div className={styles.header}>
+          <Trans i18nKey="trails.recent-metrics.or-view-a-recent-exploration">Or view a recent exploration</Trans>
         </div>
-        <div className={css(styles.trailList, styles.bottomGap24)}>
-          {getTrailStore()
-            .recent.slice(0, showAll ? recentMetrics.length : 3)
-            .map((trail, index) => {
-              const resolvedTrail = trail.resolve();
-              return (
-                <DataTrailCard
-                  key={(resolvedTrail.state.key || '') + index}
-                  trail={resolvedTrail}
-                  onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
-                />
-              );
-            })}
-        </div>
-        {recentMetrics.length > 3 && (
-          <Button variant="secondary" size="sm" onClick={handleToggleShow}>
-            {showAll ? 'Show less' : 'Show more'}
-          </Button>
-        )}
-      </>
-    )
+      </div>
+      <div className={css(styles.trailList, styles.bottomGap24)}>
+        {getTrailStore()
+          .recent.slice(0, showAll ? recentMetrics.length : 3)
+          .map((trail, index) => {
+            const resolvedTrail = trail.resolve();
+            return (
+              <DataTrailCard
+                key={(resolvedTrail.state.key || '') + index}
+                trail={resolvedTrail}
+                onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
+              />
+            );
+          })}
+      </div>
+      {recentMetrics.length > 3 && (
+        <Button variant="secondary" size="sm" onClick={handleToggleShow}>
+          {showAll ? 'Show less' : 'Show more'}
+        </Button>
+      )}
+    </>
   );
 }
 
