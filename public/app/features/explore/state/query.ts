@@ -1346,15 +1346,40 @@ export const processQueryResponse = (
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
-  const haveNodeGraphScenario = !!state.queries.find((q) => q?.scenarioId === 'node_graph' && !q.hide);
+  /*
+   * queryCount = 0: No Data
+   * queryCount == 1 && nodeGraph --> graphResult = null; tableResult = null;
+   * queryCount > 1:
+   *  if nodeGraph:
+   *    setNodeGraphFrames
+   *    leaveGraphResult and tableResult untouch (DO NOT Re assign)
+   *  if other:
+   *    mergeNdoeGraphFrames in response (instead of reassign)
+   *    assign other things
+   *
+   *
+   */
   const visibleQueriesCount = state.queries.filter((q) => !q.hide).length;
   const isNodeGraphResponse = nodeGraphFrames.length > 0;
-  const mergedNodeGraphFrames = haveNodeGraphScenario
-    ? [...state.queryResponse.nodeGraphFrames, ...nodeGraphFrames]
-    : nodeGraphFrames;
-
-  const mergedGraphResult = isNodeGraphResponse ? (visibleQueriesCount === 1 ? graphResult : graphResult) : graphResult;
-  const mergedTableResult = isNodeGraphResponse ? (visibleQueriesCount === 1 ? tableResult : tableResult) : tableResult;
+  let mergedNodeGraphFrames = nodeGraphFrames;
+  let mergedGraphResult = state.graphResult;
+  let mergedTableResult = state.tableResult;
+  if (visibleQueriesCount === 1) {
+    if (isNodeGraphResponse) {
+      mergedNodeGraphFrames = nodeGraphFrames;
+    }
+    mergedGraphResult = graphResult ?? [];
+    mergedTableResult = tableResult ?? [];
+  } else if (visibleQueriesCount > 1) {
+    if (isNodeGraphResponse) {
+      mergedGraphResult = state.graphResult ?? [];
+      mergedTableResult = state.tableResult ?? [];
+    } else {
+      mergedGraphResult = graphResult;
+      mergedTableResult = tableResult;
+      mergedNodeGraphFrames = state.queryResponse.nodeGraphFrames;
+    }
+  }
 
   return {
     ...state,
