@@ -146,7 +146,7 @@ export const UsersTable = ({
               variant="secondary"
               size="sm"
               icon="pen"
-              href={`admin/users/edit/${original.id}`}
+              href={`admin/users/edit/${original.uid}`}
               aria-label={`Edit user ${original.name}`}
               tooltip={'Edit user'}
             />
