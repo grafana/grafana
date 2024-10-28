@@ -38,17 +38,11 @@
 /docs/.codespellignore                                                            @grafana/docs-tooling
 /docs/sources/                                                                    @irenerl24
 
-/docs/sources/administration/                                                     @jdbaldry
 /docs/sources/alerting/                                                           @brendamuir
 /docs/sources/dashboards/                                                         @imatwawana
-/docs/sources/datasources/                                                        @jdbaldry
 /docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
-/docs/sources/fundamentals                                                        @irenerl24
-/docs/sources/getting-started/                                                    @irenerl24
-/docs/sources/introduction/                                                       @irenerl24
 /docs/sources/panels-visualizations/                                              @imatwawana
-/docs/sources/release-notes/                                                      @Eve832 @GrafanaWriter
-/docs/sources/setup-grafana/                                                      @irenerl24
+/docs/sources/release-notes/                                                      @irenerl24 @GrafanaWriter
 /docs/sources/upgrade-guide/                                                      @imatwawana
 /docs/sources/whatsnew/                                                           @imatwawana
 
