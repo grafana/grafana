@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import debounce from 'debounce-promise';
 import { useCombobox } from 'downshift';
 import { useCallback, useId, useMemo, useState } from 'react';
 
@@ -135,6 +136,24 @@ export const Combobox = <T extends string | number>({
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
 
+  const debounceAsync = useMemo(
+    () =>
+      debounce((inputValue: string, customValueOption: ComboboxOption<T> | null) => {
+        loadOptions(inputValue)
+          .then((opts) => {
+            setItems(customValueOption ? [customValueOption, ...opts] : opts);
+            setAsyncLoading(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              // TODO: handle error
+              setAsyncLoading(false);
+            }
+          });
+      }, 300),
+    [loadOptions]
+  );
+
   const {
     getInputProps,
     getMenuProps,
@@ -175,17 +194,7 @@ export const Combobox = <T extends string | number>({
           setItems([customValueOption]);
         }
         setAsyncLoading(true);
-        loadOptions(inputValue)
-          .then((opts) => {
-            setItems(customValueOption ? [customValueOption, ...opts] : opts);
-            setAsyncLoading(false);
-          })
-          .catch((err) => {
-            if (!(err instanceof StaleResultError)) {
-              // TODO: handle error
-              setAsyncLoading(false);
-            }
-          });
+        debounceAsync(inputValue, customValueOption);
 
         return;
       }
