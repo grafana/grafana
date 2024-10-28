@@ -72,23 +72,22 @@ import {
   getCorrelationsData,
   getDatasourceUIDs,
   getResultsFromCache,
-  makeExplorePaneState,
 } from './utils';
 
 /**
- * Derives from explore state if a given Explore pane is waiting for more data to be received */ export const selectIsWaitingForData =
-  (exploreId: string) => {
-    return (state: StoreState) => {
-      const panelState = state.explore.panes[exploreId];
-      if (!panelState) {
-        return false;
-      }
-      return panelState.queryResponse
-        ? panelState.queryResponse.state === LoadingState.Loading ||
-            panelState.queryResponse.state === LoadingState.Streaming
-        : false;
-    };
+ * Derives from explore state if a given Explore pane is waiting for more data to be received */
+export const selectIsWaitingForData = (exploreId: string) => {
+  return (state: StoreState) => {
+    const panelState = state.explore.panes[exploreId];
+    if (!panelState) {
+      return false;
+    }
+    return panelState.queryResponse
+      ? panelState.queryResponse.state === LoadingState.Loading ||
+          panelState.queryResponse.state === LoadingState.Streaming
+      : false;
   };
+};
 
 /**
  * Adds a query row after the row with the given index.
@@ -193,10 +192,10 @@ export interface QueryEndedPayload {
 }
 export const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore/queryStreamUpdated');
 
-export interface ResetQueriesPayload {
+interface ResetPanelItemResults {
   exploreId: string;
 }
-export const resetQueriesAction = createAction<ResetQueriesPayload>('explore/resetQueries');
+const resetPanelItemResultsAction = createAction<ResetPanelItemResults>('explore/resetPanelItemResults');
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
@@ -606,7 +605,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         return;
       }
 
-      dispatch(resetQueriesAction({ exploreId }));
+      dispatch(resetPanelItemResultsAction({ exploreId }));
       // Some datasource's query builders allow per-query interval limits,
       // but we're using the datasource interval limit for now
       const minInterval = datasourceInstance?.interval;
@@ -1227,7 +1226,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (resetQueriesAction.match(action)) {
+  if (resetPanelItemResultsAction.match(action)) {
     return {
       ...state,
       graphResult: null,
