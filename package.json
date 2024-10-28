@@ -372,6 +372,7 @@
     "react-resizable": "3.0.5",
     "react-responsive-carousel": "^3.2.23",
     "react-router-dom": "^6.26.2",
+    "react-router-dom-v5-compat": "^6.27.0",
     "react-select": "5.8.1",
     "react-split-pane": "0.1.92",
     "react-table": "7.8.0",

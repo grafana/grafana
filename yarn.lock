@@ -1514,6 +1514,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.7.6":
+  version: 7.26.0
+  resolution: "@babel/runtime@npm:7.26.0"
+  dependencies:
+    regenerator-runtime: "npm:^0.14.0"
+  checksum: 10/9f4ea1c1d566c497c052d505587554e782e021e6ccd302c2ad7ae8291c8e16e3f19d4a7726fb64469e057779ea2081c28b7dbefec6d813a22f08a35712c0f699
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.22.5, @babel/template@npm:^7.24.7, @babel/template@npm:^7.25.9, @babel/template@npm:^7.3.3":
   version: 7.25.9
   resolution: "@babel/template@npm:7.25.9"
@@ -19257,6 +19266,7 @@ __metadata:
     react-resizable: "npm:3.0.5"
     react-responsive-carousel: "npm:^3.2.23"
     react-router-dom: "npm:^6.26.2"
+    react-router-dom-v5-compat: "npm:^6.27.0"
     react-select: "npm:5.8.1"
     react-select-event: "npm:5.5.1"
     react-split-pane: "npm:0.1.92"
@@ -19595,6 +19605,15 @@ __metadata:
     tiny-warning: "npm:^1.0.0"
     value-equal: "npm:^1.0.1"
   checksum: 10/042373f69dad6419a4d551b995ef40f449a8854775a1157c4e9f077ee39aea6ca7ed8f45ec3e1762ef1891357a724d17dad11f2fe7d0edeebcbcf9f48ed3e4d4
+  languageName: node
+  linkType: hard
+
+"history@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "history@npm:5.3.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.7.6"
+  checksum: 10/52ba685b842ca6438ff11ef459951eb13d413ae715866a8dc5f7c3b1ea0cdeb8db6aabf7254551b85f56abc205e6e2d7e1d5afb36b711b401cdaff4f2cf187e9
   languageName: node
   linkType: hard
 
@@ -27809,6 +27828,21 @@ __metadata:
     prop-types: "npm:^15.5.8"
     react-easy-swipe: "npm:^0.0.21"
   checksum: 10/1c4883e3085af3a6c242f3f4375f9532bd7ba2b0dde17b2abc6954e80cbcbf074721f61c28781403139eb0453a2a0d0213bdd3d9cb999206309ef05e141ce961
+  languageName: node
+  linkType: hard
+
+"react-router-dom-v5-compat@npm:^6.27.0":
+  version: 6.27.0
+  resolution: "react-router-dom-v5-compat@npm:6.27.0"
+  dependencies:
+    "@remix-run/router": "npm:1.20.0"
+    history: "npm:^5.3.0"
+    react-router: "npm:6.27.0"
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+    react-router-dom: 4 || 5
+  checksum: 10/dd966aaa3b583a2e7e4aa62a45a7d30f9783d391beafc1ee11c0d68c15f18d01b82d8ad65d97655f8b2a8609813d9265d01ab117274a33e09a858a9bb5c035ce
   languageName: node
   linkType: hard
 
