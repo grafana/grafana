@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,7 +43,10 @@ type FolderAPIBuilder struct {
 	namespacer    request.NamespaceMapper
 	folderSvc     folder.Service
 	accessControl accesscontrol.AccessControl
+	validator     builder.Validator
 }
+
+type folderValidator struct{}
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -61,6 +65,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		namespacer:    request.GetNamespaceMapper(cfg),
 		folderSvc:     folderSvc,
 		accessControl: accessControl,
+		validator:     &folderValidator{},
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -216,6 +221,13 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 	return &authorizerParams{evaluator: eval, user: user}, nil
 }
 
-func (b *FolderAPIBuilder) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
+func (v *folderValidator) Validate(_ context.Context, _ admission.Attributes, _ admission.ObjectInterfaces) error {
+	fmt.Println("HIIIIII FOLDER VALIDATE")
 	return nil
+}
+
+// Handles returns true if this admission controller can handle the given operation
+// where operation can be one of CREATE, UPDATE, DELETE, or CONNECT
+func (v *folderValidator) Handles(operation admission.Operation) bool {
+	return true
 }

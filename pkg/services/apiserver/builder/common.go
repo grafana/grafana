@@ -48,7 +48,7 @@ type APIGroupBuilder interface {
 	GetAuthorizer() authorizer.Authorizer
 
 	// Validate is used to validate the object before it is persisted
-	Validate(context.Context, admission.Attributes, admission.ObjectInterfaces) error
+	// Validate(context.Context, admission.Attributes, admission.ObjectInterfaces) error
 }
 
 type APIGroupOptions struct {
@@ -82,4 +82,9 @@ type APIRoutes struct {
 
 type APIRegistrar interface {
 	RegisterAPI(builder APIGroupBuilder)
+}
+
+type Validator interface {
+	Validate(context.Context, admission.Attributes, admission.ObjectInterfaces) error
+	Handles(admission.Operation) bool
 }
