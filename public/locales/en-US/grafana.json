@@ -2886,7 +2886,6 @@
       "or-view-bookmarks": "Or view bookmarks"
     },
     "card": {
-      "created-at": "{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}",
       "data-source": "Data source: ",
       "date-created": "Date created: ",
       "metric": "Metric:"
