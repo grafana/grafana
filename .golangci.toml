@@ -262,6 +262,10 @@ text = "G110"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]
+text = "G115" # integet overflowconversion
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
 text = "G201"
 
 [[issues.exclude-rules]]
