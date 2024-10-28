@@ -283,8 +283,6 @@ export const versionedComponents = {
           labelSelect: {
             '10.4.0': 'data-testid label values label select',
           },
-          // metric select see queryEditor: builder for more context
-          // label select for metric filtering see queryEditor: builder for more context
         },
         metricNames: {
           metricRegex: {
