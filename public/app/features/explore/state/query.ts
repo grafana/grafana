@@ -620,7 +620,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(
         exploreId,
-        queries.filter((q) => !q.hide),
+        queries,
         queryOptions,
         range,
         scanning,
@@ -1346,19 +1346,7 @@ export const processQueryResponse = (
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
-  /*
-   * queryCount = 0: No Data
-   * queryCount == 1 && nodeGraph --> graphResult = null; tableResult = null;
-   * queryCount > 1:
-   *  if nodeGraph:
-   *    setNodeGraphFrames
-   *    leaveGraphResult and tableResult untouch (DO NOT Re assign)
-   *  if other:
-   *    mergeNdoeGraphFrames in response (instead of reassign)
-   *    assign other things
-   *
-   *
-   */
+  // Avoid the packet's responses overriding each other data frames
   const visibleQueriesCount = state.queries.filter((q) => !q.hide).length;
   const haveNodeGraphQuery = !!state.queries.find((q) => !q.hide && q.scenarioId === 'node_graph');
   const isNodeGraphResponse = nodeGraphFrames.length > 0;
