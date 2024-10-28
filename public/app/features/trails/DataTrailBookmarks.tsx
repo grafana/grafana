@@ -13,6 +13,7 @@ import { getTrailStore, getBookmarkKey } from './TrailStore/TrailStore';
 interface Props extends SceneComponentProps<DataTrailsHome> {
   onDelete: (index: number) => void;
 }
+
 export function DataTrailsBookmarks({ model, onDelete }: Props) {
   const [toggleBookmark, setToggleBookmark] = useState(false);
   const styles = useStyles2(getStyles);
