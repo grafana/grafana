@@ -21,6 +21,8 @@ export function prettyTypeName(type: ResourceTableItem['type']) {
       return t('migrate-to-cloud.resource-type.contact_point', 'Contact Point');
     case 'NOTIFICATION_POLICY':
       return t('migrate-to-cloud.resource-type.notification_policy', 'Notification Policy');
+    case 'ALERT_RULE':
+      return t('migrate-to-cloud.resource-type.alert_rule', 'Alert Rule');
     default:
       return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
   }
