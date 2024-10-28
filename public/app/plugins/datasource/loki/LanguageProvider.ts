@@ -44,11 +44,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: Record<string, string | number>) => {
+  request = async (url: string, params?: Record<string, string | number>, throwError?: boolean) => {
     try {
       return await this.datasource.metadataRequest(url, params);
     } catch (error) {
       console.error(error);
+      if (throwError) {
+        throw error;
+      }
     }
 
     return undefined;
@@ -242,7 +245,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   async fetchDetectedLabelValues(
     labelName: string,
-    options?: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars }
+    options?: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars; throw?: boolean }
   ): Promise<string[]> {
     const label = encodeURIComponent(this.datasource.interpolateString(labelName));
 
@@ -289,6 +292,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
       } catch (error) {
         console.error(error);
         resolve([]);
+        if (options?.throw === true) {
+          throw error;
+        }
       }
     });
     this.detectedLabelValuesPromisesCache.set(cacheKey, labelValuesPromise);
