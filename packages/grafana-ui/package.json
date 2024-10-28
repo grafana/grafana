@@ -40,7 +40,8 @@
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "postpack": "mv package.json.bak package.json",
+    "test-ct": "playwright test -c playwright-ct.config.ts"
   },
   "browserslist": [
     "defaults",
@@ -118,6 +119,7 @@
     "@babel/core": "7.25.9",
     "@faker-js/faker": "^9.0.0",
     "@grafana/tsconfig": "^2.0.0",
+    "@playwright/experimental-ct-react": "^1.48.2",
     "@rollup/plugin-node-resolve": "15.3.0",
     "@storybook/addon-a11y": "^8.1.6",
     "@storybook/addon-actions": "^8.1.6",
