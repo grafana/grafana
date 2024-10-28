@@ -2886,15 +2886,16 @@
       "or-view-bookmarks": "Øř vįęŵ þőőĸmäřĸş"
     },
     "card": {
+      "created-at": "{čřęäŧęđÅŧ && đäŧęŦįmęFőřmäŧ(čřęäŧęđÅŧ, { ƒőřmäŧ: 'ŸŸŸŸ-MM-ĐĐ' })}",
       "data-source": "Đäŧä şőūřčę: ",
       "date-created": "Đäŧę čřęäŧęđ: ",
       "metric": "Męŧřįč:"
     },
     "home": {
-      "explore-your-prometheus-compatible-metrics-without-writing-a-query": "Ēχpľőřę yőūř Přőmęŧĥęūş-čőmpäŧįþľę męŧřįčş ŵįŧĥőūŧ ŵřįŧįŉģ ä qūęřy.",
       "learn-more": "Ŀęäřŉ mőřę",
       "lets-start": "Ŀęŧ'ş şŧäřŧ!",
-      "start-your-metrics-exploration": "Ŝŧäřŧ yőūř męŧřįčş ęχpľőřäŧįőŉ!"
+      "start-your-metrics-exploration": "Ŝŧäřŧ yőūř męŧřįčş ęχpľőřäŧįőŉ!",
+      "subtitle": "Ēχpľőřę yőūř Přőmęŧĥęūş-čőmpäŧįþľę męŧřįčş ŵįŧĥőūŧ ŵřįŧįŉģ ä qūęřy."
     },
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",

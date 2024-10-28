@@ -72,7 +72,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             </Text>
             <Box>
               <Text element="p" textAlignment="center" color="secondary">
-                <Trans i18nKey="trails.home.explore-your-prometheus-compatible-metrics-without-writing-a-query">
+                <Trans i18nKey="trails.home.subtitle">
                   Explore your Prometheus-compatible metrics without writing a query.
                 </Trans>
                 <TextLink

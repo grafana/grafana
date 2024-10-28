@@ -2886,15 +2886,16 @@
       "or-view-bookmarks": "Or view bookmarks"
     },
     "card": {
+      "created-at": "{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}",
       "data-source": "Data source: ",
       "date-created": "Date created: ",
       "metric": "Metric:"
     },
     "home": {
-      "explore-your-prometheus-compatible-metrics-without-writing-a-query": "Explore your Prometheus-compatible metrics without writing a query.",
       "learn-more": "Learn more",
       "lets-start": "Let's start!",
-      "start-your-metrics-exploration": "Start your metrics exploration!"
+      "start-your-metrics-exploration": "Start your metrics exploration!",
+      "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
     },
     "metric-overview": {
       "description-label": "Description",
