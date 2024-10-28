@@ -93,10 +93,6 @@ export GF_FEATURE_TOGGLES_ENABLE=newNavigation
 
 ## Variable expansion
 
-{{% admonition type="note" %}}
-Only available in Grafana 7.1+.
-{{% /admonition %}}
-
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
 variable expander. The expander runs the provider with the provided argument
@@ -768,7 +764,7 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 This feature prevents users from setting the dashboard refresh interval to a lower value than a given interval value. The default interval value is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
-As of Grafana v7.3, this also limits the refresh interval options in Explore.
+This also limits the refresh interval options in Explore.
 
 ### default_home_dashboard_path
 
@@ -1069,13 +1065,9 @@ Limit of API key seconds to live before expiration. Default is -1 (unlimited).
 
 ### sigv4_auth_enabled
 
-> Only available in Grafana 7.3+.
-
 Set to `true` to enable the AWS Signature Version 4 Authentication option for HTTP-based datasources. Default is `false`.
 
 ### sigv4_verbose_logging
-
-> Only available in Grafana 8.4+.
 
 Set to `true` to enable verbose request signature logging when AWS Signature Version 4 Authentication is enabled. Default is `false`.
 
@@ -1480,8 +1472,6 @@ Syslog tag. By default, the process's `argv[0]` is used.
 <hr>
 
 ## [log.frontend]
-
-**Note:** This feature is available in Grafana 7.4+.
 
 ### enabled
 
