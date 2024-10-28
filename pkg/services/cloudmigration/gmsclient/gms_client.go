@@ -49,7 +49,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	req, err := http.NewRequestWithContext(ctx, "POST", path, bytes.NewReader(nil))
 	if err != nil {
 		c.log.Error("error creating http request for token validation", "err", err.Error())
-		return fmt.Errorf("http request error: %w", err)
+		return cloudmigration.ErrTokenRequestError.Errorf("create http request error")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
@@ -57,17 +57,21 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request for token validation", "err", err.Error())
-		return fmt.Errorf("http request error: %w", err)
+		return cloudmigration.ErrTokenRequestError.Errorf("send http request error")
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			err = errors.Join(err, fmt.Errorf("closing response body: %w", closeErr))
+			c.log.Error("error closing the request body", "err", err.Error())
+			err = errors.Join(err, cloudmigration.ErrTokenRequestError.Errorf("closing response body"))
 		}
 	}()
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("token validation failure: %v", string(body))
+		if gmsErr := c.handleGMSErrors(body); gmsErr != nil {
+			return gmsErr
+		}
+		return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
 	}
 
 	return nil
@@ -257,4 +261,23 @@ func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
 		return domain
 	}
 	return fmt.Sprintf("https://cms-%s.%s/cloud-migrations", clusterSlug, domain)
+}
+
+// handleGMSErrors parses the error message from GMS and translates it to an appropriate error message
+// use ErrTokenValidationFailure for any errors which are not specifically handled
+func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) error {
+	var apiError GMSAPIError
+	if err := json.Unmarshal(responseBody, &apiError); err != nil {
+		return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
+	}
+
+	if strings.Contains(apiError.Message, GMSErrorMessageInstanceUnreachable) {
+		return cloudmigration.ErrInstanceUnreachable.Errorf("instance unreachable")
+	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceCheckingError) {
+		return cloudmigration.ErrInstanceRequestError.Errorf("instance checking error")
+	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceFetching) {
+		return cloudmigration.ErrInstanceRequestError.Errorf("fetching instance")
+	}
+
+	return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
 }

@@ -39,23 +39,23 @@ export function Breadcrumb({ pathName, onPathChange, rootIcon }: Props) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    breadCrumb: css`
-      list-style: none;
-      padding: ${theme.spacing(2, 1)};
+    breadCrumb: css({
+      listStyle: 'none',
+      padding: theme.spacing(2, 1),
 
-      li {
-        display: inline;
+      li: {
+        display: 'inline',
 
-        :not(:last-child) {
-          color: ${theme.colors.text.link};
-          cursor: pointer;
-        }
-        + li:before {
-          content: '>';
-          padding: ${theme.spacing(1)};
-          color: ${theme.colors.text.secondary};
-        }
-      }
-    `,
+        ':not(:last-child)': {
+          color: theme.colors.text.link,
+          cursor: 'pointer',
+        },
+        '+ li:before': {
+          content: "'>'",
+          padding: theme.spacing(1),
+          color: theme.colors.text.secondary,
+        },
+      },
+    }),
   };
 }

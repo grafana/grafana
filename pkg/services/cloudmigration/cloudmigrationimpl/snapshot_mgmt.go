@@ -36,6 +36,7 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.NotificationTemplateType,
 	cloudmigration.ContactPointType,
 	cloudmigration.NotificationPolicyType,
+	cloudmigration.AlertRuleType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
@@ -90,10 +91,17 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Alerts: Alert Rules
+	alertRules, err := s.getAlertRules(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert rules", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
 		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
-			len(muteTimings)+len(notificationTemplates)+len(contactPoints),
+			len(muteTimings)+len(notificationTemplates)+len(contactPoints)+len(alertRules),
 	)
 
 	for _, ds := range dataSources {
@@ -167,13 +175,24 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
-	// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
-	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-		Type:  cloudmigration.NotificationPolicyType,
-		RefID: notificationPolicies.Name, // no UID available
-		Name:  notificationPolicies.Name,
-		Data:  notificationPolicies.Routes,
-	})
+	if len(notificationPolicies.Name) > 0 {
+		// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.NotificationPolicyType,
+			RefID: notificationPolicies.Name, // no UID available
+			Name:  notificationPolicies.Name,
+			Data:  notificationPolicies.Routes,
+		})
+	}
+
+	for _, alertRule := range alertRules {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.AlertRuleType,
+			RefID: alertRule.UID,
+			Name:  alertRule.Title,
+			Data:  alertRule,
+		})
+	}
 
 	// Obtain the names of parent elements for Dashboard and Folders data types
 	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements)
