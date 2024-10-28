@@ -1360,6 +1360,7 @@ export const processQueryResponse = (
    *
    */
   const visibleQueriesCount = state.queries.filter((q) => !q.hide).length;
+  const haveNodeGraphQuery = !!state.queries.find((q) => !q.hide && q.scenarioId === 'node_graph');
   const isNodeGraphResponse = nodeGraphFrames.length > 0;
   let mergedNodeGraphFrames = nodeGraphFrames;
   let mergedGraphResult = state.graphResult;
@@ -1379,6 +1380,9 @@ export const processQueryResponse = (
       mergedTableResult = tableResult;
       mergedNodeGraphFrames = state.queryResponse.nodeGraphFrames;
     }
+  }
+  if (!haveNodeGraphQuery) {
+    mergedNodeGraphFrames = [];
   }
 
   return {
