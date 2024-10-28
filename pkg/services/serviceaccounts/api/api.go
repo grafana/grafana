@@ -33,9 +33,9 @@ type ServiceAccountsAPI struct {
 
 func MiddlewareServiceAccountUIDResolver(saService serviceaccounts.Service, paramName string) web.Handler {
 	return func(c *contextmodel.ReqContext) {
-		// Get sa id from request, fetch team and replace teamId with team id
+		// Get service account id from request
 		saUID := web.Params(c.Req)[paramName]
-		// if saID is empty or is an integer, we assume it's a team id and we don't need to resolve it
+		// if saID is empty or is an integer, we assume it's a service account id and we don't need to resolve it
 		_, err := strconv.ParseInt(saUID, 10, 64)
 		if saUID == "" || err == nil {
 			return
