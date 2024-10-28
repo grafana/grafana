@@ -41,24 +41,23 @@ type ZanzanaReconciler struct {
 
 func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, collectors ...TupleCollector) *ZanzanaReconciler {
 	// Append shared collectors that is used by both enterprise and oss
-	/*
-		collectors = append(
-			collectors,
-			managedPermissionsCollector(store),
-			folderTreeCollector(store),
-			basicRolesCollector(store),
-			customRolesCollector(store),
-			basicRoleAssignemtCollector(store),
-			userRoleAssignemtCollector(store),
-			teamRoleAssignemtCollector(store),
-			fixedRoleTuplesCollector(store),
-		)
-	*/
+	collectors = append(
+		collectors,
+		managedPermissionsCollector(store),
+		folderTreeCollector(store),
+		basicRolesCollector(store),
+		customRolesCollector(store),
+		basicRoleAssignemtCollector(store),
+		userRoleAssignemtCollector(store),
+		teamRoleAssignemtCollector(store),
+		fixedRoleTuplesCollector(store),
+	)
 
 	return &ZanzanaReconciler{
-		client: client,
-		lock:   lock,
-		log:    log.New("zanzana.reconciler"),
+		client:     client,
+		lock:       lock,
+		log:        log.New("zanzana.reconciler"),
+		collectors: collectors,
 		reconcilers: []resourceReconciler{
 			newResourceReconciler(
 				"team memberships",
@@ -149,19 +148,15 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
 	}
 
-	// in tests we can skip creating a lock
-	/*
-		if r.lock == nil {
-			run(ctx)
-			return
-		}
+	if r.lock == nil {
+		run(ctx)
+		return
+	}
 
-		// We ignore the error for now
-		_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
-			run(ctx)
-		})
-	*/
-	run(ctx)
+	// We ignore the error for now
+	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+		run(ctx)
+	})
 }
 
 // managedPermissionsCollector collects managed permissions into provided tuple map.

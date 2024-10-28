@@ -90,8 +90,6 @@ func (c *Client) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckR
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
 	defer span.End()
 
-	// FIXME: handle non subject requests
-
 	res, err := c.authz.Check(ctx, &authzv1.CheckRequest{
 		Subject:     id.GetUID(),
 		Verb:        req.Verb,
@@ -111,7 +109,6 @@ func (c *Client) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckR
 	return authz.CheckResponse{Allowed: res.GetAllowed()}, nil
 }
 
-// Compile implements authz.AccessClient.
 func (c *Client) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Compile")
 	defer span.End()
