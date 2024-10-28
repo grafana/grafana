@@ -1,6 +1,6 @@
 import { PureComponent } from 'react';
 
-import { FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { FetchError, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 
@@ -11,8 +11,8 @@ const isOauthEnabled = () => {
 };
 
 const showPasswordlessConfirmation = () => {
-  const queryValues = Object.fromEntries(new URLSearchParams(window.location.search.split(/\?/)[1]));
-  return !!queryValues.code;
+  const queryValues = locationService.getSearch();
+  return !!queryValues.get('code');
 };
 
 export interface FormModel {

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { t } from 'app/core/internationalization';
@@ -35,24 +36,23 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
     Branding.GetLoginSubTitle = () =>
       "Check your inbox and click the confirmation link or use the confirmation code we've sent.";
 
-    const queryValues = Object.fromEntries(new URLSearchParams(window.location.search.split(/\?/)[1]));
-    console.log('queryValues', queryValues);
-    console.log('signup', queryValues.signup);
-    setValue('code', queryValues.code);
-    if (queryValues.confirmationCode) {
-      setValue('confirmationCode', queryValues.confirmationCode);
-      if (!queryValues.signup) {
+    const queryValues = locationService.getSearch();
+
+    setValue('code', queryValues.get('code') || '');
+    if (queryValues.get('confirmationCode')) {
+      setValue('confirmationCode', queryValues.get('confirmationCode') || '');
+      if (!queryValues.get('signup')) {
         handleSubmit(onSubmit)();
       }
     }
-    if (queryValues.signup) {
+    if (queryValues.get('signup')) {
       setSignup(true);
     }
-    if (queryValues.username) {
-      setValue('username', queryValues.username);
+    if (queryValues.get('username')) {
+      setValue('username', queryValues.get('username') || '');
     }
-    if (queryValues.name) {
-      setValue('name', queryValues.name);
+    if (queryValues.get('name')) {
+      setValue('name', queryValues.get('name') || '');
     }
   }, [setValue, handleSubmit, onSubmit, setSignup]);
 

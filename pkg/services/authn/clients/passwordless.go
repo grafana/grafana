@@ -85,6 +85,19 @@ func (c *Passwordless) Authenticate(ctx context.Context, r *authn.Request) (*aut
 	return c.authenticatePasswordless(ctx, r, form)
 }
 
+func (c *Passwordless) generateCodes() (string, string, error) {
+	alphabet := []byte("BCDFGHJKLMNPQRSTVWXZ")
+	confirmationCode, err := util.GetRandomString(8, alphabet...)
+	if err != nil {
+		return "", "", err
+	}
+	code, err := util.GetRandomString(32)
+	if err != nil {
+		return "", "", err
+	}
+	return confirmationCode, code, err
+}
+
 // RedirectURL implements authn.RedirectClient.
 func (c *Passwordless) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	var form EmailForm
@@ -171,43 +184,25 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 	}
 
 	// 2. if existing user or temp user found, send email with passwordless link
-	alphabet := []byte("BCDFGHJKLMNPQRSTVWXZ")
-	confirmationCode, err := util.GetRandomString(8, alphabet...)
-	if err != nil {
-		return "", err
-	}
-	code, err := util.GetRandomString(32)
+	confirmationCode, code, err := c.generateCodes()
 	if err != nil {
 		return "", err
 	}
 
-	c.log.Info("code: ", code)
-	c.log.Info("confirmation code: ", confirmationCode)
-
-	var emailCmd notifications.SendEmailCommand
+	emailCmd := notifications.SendEmailCommand{
+		To: []string{email},
+		Data: map[string]any{
+			"Email":            email,
+			"ConfirmationCode": confirmationCode,
+			"Code":             code,
+			"Expire":           c.cfg.PasswordlessCodeExpiration.Minutes(),
+		},
+	}
 
 	if existingUser != nil {
-		emailCmd = notifications.SendEmailCommand{
-			To:       []string{email},
-			Template: "passwordless_verify_existing_user",
-			Data: map[string]any{
-				"Email":            email,
-				"ConfirmationCode": confirmationCode,
-				"Code":             code,
-				"Expire":           c.cfg.PasswordlessCodeExpiration.Minutes(),
-			},
-		}
+		emailCmd.Template = "passwordless_verify_existing_user"
 	} else {
-		emailCmd = notifications.SendEmailCommand{
-			To:       []string{email},
-			Template: "passwordless_verify_new_user",
-			Data: map[string]any{
-				"Email":            email,
-				"ConfirmationCode": confirmationCode,
-				"Code":             code,
-				"Expire":           c.cfg.PasswordlessCodeExpiration.Minutes(),
-			},
-		}
+		emailCmd.Template = "passwordless_verify_new_user"
 	}
 
 	err = c.notificationService.SendEmailCommandHandler(ctx, &emailCmd)
