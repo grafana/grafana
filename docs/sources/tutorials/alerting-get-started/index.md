@@ -56,17 +56,17 @@ Once you have completed Part 1, don’t forget to explore the advanced but essen
 
 There are different ways you can follow along with this tutorial.
 
-- Grafana Cloud
+- **Grafana Cloud**
 
   - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
 
   Continue to [Create a contact point](#create-a-contact-point).
 
-- Interactive learning environment
+- **Interactive learning environment**
 
   - Alternatively, you can [try out this example in our interactive learning environment]((https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/)). It's a fully configured environment with all the dependencies already installed.
 
-- Grafana OSS
+- **Grafana OSS**
 
   - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
