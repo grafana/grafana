@@ -229,5 +229,6 @@ func (v *folderValidator) Validate(_ context.Context, _ admission.Attributes, _ 
 // Handles returns true if this admission controller can handle the given operation
 // where operation can be one of CREATE, UPDATE, DELETE, or CONNECT
 func (v *folderValidator) Handles(operation admission.Operation) bool {
+	fmt.Println("HIIIIII FOLDER HANDLES")
 	return true
 }

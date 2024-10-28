@@ -569,12 +569,6 @@ func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID s
 // Register registers a plugin
 func RegisterPlugin(plugins *admission.Plugins) {
 	plugins.Register(PluginName, func(configFile io.Reader) (admission.Interface, error) {
-		return validate{}, nil
+		return (builder.Validator)(nil), nil
 	})
-}
-
-// Handles returns true if this admission controller can handle the given operation
-// where operation can be one of CREATE, UPDATE, DELETE, or CONNECT
-func (validate) Handles(operation admission.Operation) bool {
-	return true
 }
