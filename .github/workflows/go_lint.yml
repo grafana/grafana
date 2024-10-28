@@ -13,6 +13,7 @@ permissions:
   contents: read
 
 jobs:
+
   lint-go:
     runs-on: ubuntu-latest
     steps:
@@ -27,5 +28,6 @@ jobs:
         with:
           version: v1.61.0
           args: |
-            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(go list -m -json | jq -s '.' | jq -c '[.[].Dir]')
+            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose
+            $(go list -m -json | jq -r '.Path | sub("^github.com/grafana/grafana"; ".") + "/..."')
           install-mode: binary
