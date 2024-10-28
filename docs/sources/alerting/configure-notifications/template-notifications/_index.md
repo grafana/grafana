@@ -99,7 +99,7 @@ The notification template is assigned to the contact point to determine the noti
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" caption="A flow of the alert notification process, from querying the alert rule to sending the alert notification message." >}}
 
-By default, Grafana provides default templates, such as `default.title` and `default.message`, to format notification messages.
+By default, Grafana provides default templates, such as `{{define "default.title"}}` and `{{define "default.message"}}`, to format notification messages.
 
 ## More information
 
