@@ -246,7 +246,7 @@ The Frontend Sandbox feature is currently behind the `pluginsFrontendSandbox` fe
 
 2. For self-hosted Grafana installations, add the plugin IDs you want to sandbox in the `~security~` section using the `~enable_frontend_sandbox_for_plugins~` configuration option.
 
-For Grafana Cloud users, you can simply use the toggle switch in the plugin configuration page to enable or disable the sandbox for each plugin. By default, the sandbox is enabled for all plugins to ensure maximum security.
+For Grafana Cloud users, you can simply use the toggle switch in the plugin catalog page to enable or disable the sandbox for each plugin. By default, the sandbox is disabled for all plugins.
 
 {{% admonition type="note" %}}
 Enabling the Frontend Sandbox might impact the performance of certain plugins. Only disable the sandbox if you fully trust the plugin and understand the security implications.
