@@ -124,7 +124,7 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
 
 if (relatedLogsFeatureEnabled) {
   actionViewsDefinitions.push({
-    displayName: 'Related Logs',
+    displayName: 'Related logs',
     value: 'related-logs',
     getScene: buildRelatedLogsScene,
     description: 'Relevant logs based on current label filters and time range',
