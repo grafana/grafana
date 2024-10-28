@@ -34,7 +34,10 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  ignoreUrls: RegExp[];
 }
+
+const TRACKING_URLS = [/.*.google-analytics.com*.*/, /.*.googletagmanager.com*.*/, /frontend-metrics/];
 
 export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
@@ -87,7 +90,7 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
       ],
-      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), /frontend-metrics/],
+      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), ...TRACKING_URLS, ...options.ignoreUrls],
       sessionTracking: {
         persistent: true,
       },
