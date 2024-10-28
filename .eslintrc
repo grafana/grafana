@@ -18,6 +18,7 @@
     "import/external-module-folders": ["node_modules", ".yarn"],
   },
   "rules": {
+    "@emotion/syntax-preference": [2, "object"],
     "@grafana/no-border-radius-literal": "error",
     "@grafana/no-unreduced-motion": "error",
     "react/prop-types": "off",
