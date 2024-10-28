@@ -100,7 +100,11 @@ export function DataTrailCard(props: Props) {
         <div className={styles.secondaryFont}>
           <Trans i18nKey="trails.card.date-created">Date created: </Trans>
         </div>
-        <div className={styles.primaryFont}>{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}</div>
+        <div className={styles.primaryFont}>
+          <Trans i18nKey="trails.card.created-at" values={{ createdAt }}>
+            {createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}
+          </Trans>
+        </div>
       </div>
     </div>
   );
