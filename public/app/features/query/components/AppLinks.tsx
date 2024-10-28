@@ -6,10 +6,12 @@ import { DataQuery, PluginExtensionPoints, PluginMeta } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
 import { QueryToAppPluginContext } from '@grafana/data/src/types/pluginExtensions';
 import { usePluginLinks } from '@grafana/runtime';
-import { LinkButton } from '@grafana/ui';
+import { Dropdown, LinkButton, ToolbarButton } from '@grafana/ui';
 import { useStyles2, Tooltip } from '@grafana/ui/';
 
+import { useGrafana } from '../../../core/context/GrafanaContext';
 import { Trans } from '../../../core/internationalization';
+import { ToolbarExtensionPointMenu } from '../../explore/extensions/ToolbarExtensionPointMenu';
 import { getPluginMeta } from '../../plugins/admin/api';
 
 type Props = {
@@ -39,31 +41,60 @@ export const AppLinks = ({ query }: Props) => {
     datasource: query.datasource,
   };
 
-  const [plugin, setPlugin] = useState<PluginMeta | undefined>(undefined);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [plugins, setPlugins] = useState<Record<string, PluginMeta> | undefined>(undefined);
 
-  const links = usePluginLinks({
+  let links = usePluginLinks({
     extensionPointId: PluginExtensionPoints.QueryToAppPlugin,
     context,
-  });
+  }).links;
 
   const styles = useStyles2(getStyles);
 
-  const firstLink = first(links.links)!;
-
   useEffect(() => {
-    firstLink?.pluginId && getPluginMeta(firstLink.pluginId).then(setPlugin);
-  }, [firstLink?.pluginId]);
+    links.forEach((link) => {
+      getPluginMeta(link.pluginId).then((meta) => {
+        setPlugins((plugins) => ({
+          ...plugins,
+          [link.pluginId]: meta,
+        }));
+      });
+    });
+  }, [links]);
 
-  if (links.links.length === 0 || !plugin) {
+  if (links.length === 0) {
     return undefined;
   }
 
-  return (
-    <Tooltip content={firstLink.description}>
-      <LinkButton variant="secondary" fill="text" className={styles.goQueryLessLink}>
-        <Trans i18nKey="query-operation.header.go-queryless">Go Queryless</Trans>
-        <img className={styles.goQueryLessIcon} alt={firstLink.title} src={plugin.info.logos.small} />
-      </LinkButton>
-    </Tooltip>
-  );
+  if (links.length === 1) {
+    const link = first(links);
+    const icon = plugins?.[link.pluginId].info.logos.small;
+    return (
+      <Tooltip content={link.description}>
+        <LinkButton
+          variant="secondary"
+          fill="text"
+          className={styles.goQueryLessLink}
+          onClick={() => window.open(link.path, '_blank')}
+        >
+          <Trans i18nKey="query-operation.header.go-queryless">Go Queryless</Trans>
+          {icon && <img className={styles.goQueryLessIcon} alt={link.title} src={icon} />}
+        </LinkButton>
+      </Tooltip>
+    );
+  } else {
+    const menu = (
+      <ToolbarExtensionPointMenu
+        extensions={links}
+        onSelect={(link) => link.path && window.open(link.path, '_blank')}
+      />
+    );
+    return (
+      <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
+        <ToolbarButton aria-label="Go to" variant="canvas" isOpen={isOpen}>
+          Go to
+        </ToolbarButton>
+      </Dropdown>
+    );
+  }
 };
