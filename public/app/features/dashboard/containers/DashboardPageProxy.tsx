@@ -43,16 +43,16 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return stateManager.fetchDashboard({ route: props.route.routeName as DashboardRoutes, uid: params.uid ?? '' });
   }, [params.uid, props.route.routeName]);
 
-  if (!config.featureToggles.dashboardSceneForViewers) {
-    return <DashboardPage {...props} params={params} location={location} />;
-  }
-
   if (dashboard.loading) {
     return null;
   }
 
   if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
     return null;
+  }
+
+  if (!config.featureToggles.dashboardSceneForViewers) {
+    return <DashboardPage {...props} params={params} location={location} />;
   }
 
   if (
