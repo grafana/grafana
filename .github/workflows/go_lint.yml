@@ -28,5 +28,4 @@ jobs:
           version: v1.60.1
           args: |
             --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(./scripts/go-workspace/golangci-lint-includes.sh)
-          skip-cache: true
           install-mode: binary
