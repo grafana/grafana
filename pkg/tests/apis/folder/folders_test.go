@@ -699,7 +699,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
 	folderWithUIDTooLong := "{ \"uid\": \"asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm\", \"title\": \"Third folder\"}"
-	folderWithSameName := "{\"title\": \"same name\"}"
 
 	type testCase struct {
 		description            string
