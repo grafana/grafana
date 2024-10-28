@@ -846,4 +846,8 @@ const (
 	// FlagPlaylistsWatcher
 	// Enables experimental watcher for playlists
 	FlagPlaylistsWatcher = "playlistsWatcher"
+
+	// FlagExploreMetricsRelatedLogs
+	// Display Related Logs in Explore Metrics
+	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
 )

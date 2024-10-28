@@ -38,6 +38,8 @@ import {
 } from './shared';
 import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
+const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLogs;
+
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
   metric: string;
@@ -118,13 +120,16 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
     getScene: buildRelatedMetricsScene,
     description: 'Relevant metrics based on current label filters',
   },
-  {
+];
+
+if (relatedLogsFeatureEnabled) {
+  actionViewsDefinitions.push({
     displayName: 'Related Logs',
     value: 'related-logs',
     getScene: buildRelatedLogsScene,
     description: 'Relevant logs based on current label filters and time range',
-  },
-];
+  });
+}
 
 export interface MetricActionBarState extends SceneObjectState {}
 

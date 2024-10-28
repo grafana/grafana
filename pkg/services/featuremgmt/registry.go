@@ -1570,6 +1570,14 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:         "exploreMetricsRelatedLogs",
+			Description:  "Display Related Logs in Explore Metrics",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
 	}
 )
 

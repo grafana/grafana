@@ -3,6 +3,7 @@ import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
   PanelBuilders,
@@ -56,6 +57,7 @@ import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
 
 const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
+const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLogs;
 
 export interface LabelBreakdownSceneState extends SceneObjectState {
   body?: LayoutSwitcher;
@@ -336,7 +338,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
             )}
           </div>
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
-          <relatedLogsScene.Component model={relatedLogsScene} />
+          {relatedLogsFeatureEnabled && <relatedLogsScene.Component model={relatedLogsScene} />}
         </StatusWrapper>
       </div>
     );
