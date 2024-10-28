@@ -60,7 +60,7 @@ type ExtSvcAccountsService interface {
 
 func UIDToIDHandler(saService ServiceAccountRetriever) func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 	return func(ctx context.Context, orgID int64, resourceID string) (string, error) {
-		// if saID is empty or is an integer, we assume it's a team id and we don't need to resolve it
+		// if saID is empty or is an integer, we assume it's a service account id and we don't need to resolve it
 		_, err := strconv.ParseInt(resourceID, 10, 64)
 		if resourceID == "" || err == nil {
 			return resourceID, nil
