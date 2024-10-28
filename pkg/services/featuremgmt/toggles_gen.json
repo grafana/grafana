@@ -2349,9 +2349,24 @@
     },
     {
       "metadata": {
+        "name": "reloadDashboardsOnParamsChange",
+        "resourceVersion": "1728903221522",
+        "creationTimestamp": "2024-10-14T10:53:41Z"
+      },
+      "spec": {
+        "description": "Enables reload of dashboards on scopes, time range and variables changes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
-        "creationTimestamp": "2024-06-20T15:49:19Z"
+        "creationTimestamp": "2024-06-20T15:49:19Z",
+        "deletionTimestamp": "2024-10-14T10:53:41Z"
       },
       "spec": {
         "description": "Enables the passing of scopes to dashboards fetching in Grafana",

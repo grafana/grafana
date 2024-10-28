@@ -351,102 +351,102 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  cardContainer: css`
-    padding: ${theme.spacing(0.5)} 0 ${theme.spacing(0.25)} 0;
-    line-height: ${theme.typography.body.lineHeight};
-    margin-bottom: 0px;
-  `,
-  container: css`
-    overflow-y: auto;
-    height: 100%;
-  `,
-  alertRuleList: css`
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    list-style-type: none;
-  `,
-  alertRuleItem: css`
-    display: flex;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    background: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-    border-radius: ${theme.shape.radius.default};
-    margin-bottom: ${theme.spacing(0.5)};
+  cardContainer: css({
+    padding: theme.spacing(0.5, 0, 0.25, 0),
+    lineHeight: theme.typography.body.lineHeight,
+    marginBottom: 0,
+  }),
+  container: css({
+    overflowY: 'auto',
+    height: '100%',
+  }),
+  alertRuleList: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    listStyleType: 'none',
+  }),
+  alertRuleItem: css({
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+    background: theme.colors.background.secondary,
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.radius.default,
+    marginBottom: theme.spacing(0.5),
 
-    gap: ${theme.spacing(2)};
-  `,
-  alertName: css`
-    font-size: ${theme.typography.h6.fontSize};
-    font-weight: ${theme.typography.fontWeightBold};
+    gap: theme.spacing(2),
+  }),
+  alertName: css({
+    fontSize: theme.typography.h6.fontSize,
+    fontWeight: theme.typography.fontWeightBold,
 
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `,
-  alertNameWrapper: css`
-    display: flex;
-    flex: 1;
-    flex-wrap: nowrap;
-    flex-direction: column;
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
+  alertNameWrapper: css({
+    display: 'flex',
+    flex: 1,
+    flexWrap: 'nowrap',
+    flexDirection: 'column',
 
-    min-width: 100px;
-  `,
-  alertLabels: css`
-    > * {
-      margin-right: ${theme.spacing(0.5)};
-    }
-  `,
-  alertDuration: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-  alertRuleItemText: css`
-    font-weight: ${theme.typography.fontWeightBold};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    margin: 0;
-  `,
-  alertRuleItemTime: css`
-    color: ${theme.colors.text.secondary};
-    font-weight: normal;
-    white-space: nowrap;
-  `,
-  alertRuleItemInfo: css`
-    font-weight: normal;
-    flex-grow: 2;
-    display: flex;
-    align-items: flex-end;
-  `,
-  noAlertsMessage: css`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-  `,
-  alertIcon: css`
-    margin-right: ${theme.spacing(0.5)};
-  `,
-  instanceDetails: css`
-    min-width: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `,
-  customGroupDetails: css`
-    margin-bottom: ${theme.spacing(0.5)};
-  `,
-  link: css`
-    word-break: break-all;
-    color: ${theme.colors.primary.text};
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(1)};
-  `,
-  hidden: css`
-    display: none;
-  `,
+    minWidth: '100px',
+  }),
+  alertLabels: css({
+    '> *': {
+      marginRight: theme.spacing(0.5),
+    },
+  }),
+  alertDuration: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  alertRuleItemText: css({
+    fontWeight: theme.typography.fontWeightBold,
+    fontSize: theme.typography.bodySmall.fontSize,
+    margin: 0,
+  }),
+  alertRuleItemTime: css({
+    color: theme.colors.text.secondary,
+    fontWeight: 'normal',
+    whiteSpace: 'nowrap',
+  }),
+  alertRuleItemInfo: css({
+    fontWeight: 'normal',
+    flexGrow: 2,
+    display: 'flex',
+    alignItems: 'flex-end',
+  }),
+  noAlertsMessage: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  }),
+  alertIcon: css({
+    marginRight: theme.spacing(0.5),
+  }),
+  instanceDetails: css({
+    minWidth: '1px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  }),
+  customGroupDetails: css({
+    marginBottom: theme.spacing(0.5),
+  }),
+  link: css({
+    wordBreak: 'break-all',
+    color: theme.colors.primary.text,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  hidden: css({
+    display: 'none',
+  }),
 });
 
 export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>) {

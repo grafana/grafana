@@ -128,7 +128,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
       const key = `${requestN}-${requestGroup}`;
       const retries = retriesMap.get(key) ?? 0;
-      if (retries > 3) {
+      if (retries > 0) {
         return false;
       }
 
