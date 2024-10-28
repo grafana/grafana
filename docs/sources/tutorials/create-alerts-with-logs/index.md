@@ -16,7 +16,7 @@ tags:
 title: How to create alert rules with log data
 weight: 70
 killercoda:
-  title: How to create alerts with log data
+  title: How to create alert rules with log data
   description: Learn how to use Loki with Grafana Alerting to keep track of what’s happening in your environment with real log data.
   preprocessing:
     substitutions:
