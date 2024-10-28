@@ -1,10 +1,10 @@
 // @ts-nocheck
+import { initCrashDetection } from 'crashme';
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';
 
 import { contextSrv } from '../services/context_srv';
-import initCrashDetection from '../utils/crashdetection/client-controller';
 
 const logger = createMonitoringLogger('core.crash-detection');
 

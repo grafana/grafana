@@ -1,4 +1,4 @@
-import { initDetectorWorker } from '../utils/crashdetection/detector-worker';
+import { initDetectorWorker } from 'crashme';
 
 initDetectorWorker({
   dbName: 'grafana.crashes',

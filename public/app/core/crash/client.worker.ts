@@ -1,4 +1,4 @@
-import { initClientWorker } from '../utils/crashdetection/client-worker';
+import { initClientWorker } from 'crashme';
 
 initClientWorker({
   dbName: 'grafana.crashes',
