@@ -68,10 +68,10 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
    * onClickHideField?: (key: string) => void;
-   * 
+   *
    * Passed to the LogRowMenuCell component to be rendered before the default actions in the menu.
    * logRowMenuIconsBefore?: ReactNode[];
-   * 
+   *
    * Passed to the LogRowMenuCell component to be rendered after the default actions in the menu.
    * logRowMenuIconsAfter?: ReactNode[];
    */

@@ -40,6 +40,6 @@ export function isOnClickHideField(callback: unknown): callback is isOnClickHide
   return typeof callback === 'function';
 }
 
-export function isReactNodeArray(node: any): node is ReactNode[] {
+export function isReactNodeArray(node: unknown): node is ReactNode[] {
   return Array.isArray(node) && node.every(React.isValidElement);
 }
