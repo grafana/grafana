@@ -140,6 +140,11 @@ Example:
 [auth.anonymous]
 enabled = true
 
+{{< admonition type="note" >}}
+Enabling anonymous access is a disallowed configuration setting on Hosted Grafana and not recommended due [security implications](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/#implications-of-enabling-anonymous-access-to-dashboards). 
+Use [public dashboard](https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/) feature instead.
+{{< /admonition >}}
+
 # Organization name that should be used for unauthenticated users
 org_name = Main Org.
 
