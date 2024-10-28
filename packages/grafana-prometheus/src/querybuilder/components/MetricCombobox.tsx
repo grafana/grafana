@@ -22,35 +22,28 @@ export interface MetricComboboxProps {
   variableEditor?: boolean;
 }
 
-export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
-
 export function MetricCombobox({
   datasource,
   query,
   onChange,
   onGetMetrics,
   labelsFilters,
-  metricLookupDisabled,
-  onBlur,
   variableEditor,
 }: Readonly<MetricComboboxProps>) {
   /**
    * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
    */
   const getMetricLabels = useCallback(
-    (query: string) => {
-      const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
+    async (query: string) => {
+      const results = await datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
 
-      return results.then((results) => {
-        const resultsOptions = results.map((result) => {
-          return {
-            label: result.text,
-            value: result.text,
-          };
-        });
-
-        return resultsOptions;
+      const resultsOptions = results.map((result) => {
+        return {
+          label: result.text,
+          value: result.text,
+        };
       });
+      return resultsOptions;
     },
     [datasource, labelsFilters]
   );
@@ -62,20 +55,9 @@ export function MetricCombobox({
     [onChange, query]
   );
 
-  // TODO: not currently debounced
   const loadOptions = useCallback(
     async (input: string): Promise<ComboboxOption[]> => {
-      // PR DONT MERGE - make it take at least 2 seconds
-      const _devMinTime = 2 * 1000;
-      const _devStart = Date.now();
-
       const metrics = input.length ? await getMetricLabels(input) : await onGetMetrics();
-
-      const _devEnd = Date.now();
-      const timeRemaining = _devMinTime - (_devEnd - _devStart);
-      if (timeRemaining > 0) {
-        await new Promise((resolve) => setTimeout(resolve, timeRemaining));
-      }
 
       return metrics.map((option) => ({
         label: option.label ?? option.value,
@@ -87,24 +69,19 @@ export function MetricCombobox({
 
   const asyncSelect = () => {
     return (
-      <Combobox placeholder="Select metric" options={loadOptions} value={query.metric} onChange={onComboboxChange} />
+      <Combobox
+        placeholder="Select metric"
+        width="auto"
+        minWidth={25}
+        options={loadOptions}
+        value={query.metric}
+        onChange={onComboboxChange}
+      />
     );
   };
 
   return (
     <>
-      {/* {prometheusMetricEncyclopedia && !datasource.lookupsDisabled && state.metricsModalOpen && (
-        <MetricsModal
-          datasource={datasource}
-          isOpen={state.metricsModalOpen}
-          onClose={() => setState({ ...state, metricsModalOpen: false })}
-          query={query}
-          onChange={onChange}
-          initialMetrics={state.initialMetrics ?? []}
-        />
-      )} */}
-
-      {/* format the ui for either the query editor or the variable editor */}
       {variableEditor ? (
         <InlineFieldRow>
           <InlineField
