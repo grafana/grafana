@@ -110,7 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     th: {
       fontSize: theme.typography.h5.fontSize,
     },
-    'tr:nth-child(odd)': {
+    'tbody tr:nth-child(odd)': {
       background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
     },
   }),
