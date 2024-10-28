@@ -89,7 +89,7 @@ func (i *Index) IndexBatches(ctx context.Context, maxSize int, tenants []string)
 
 // AddToBatches adds resources to their respective shard's batch
 func (i *Index) AddToBatches(ctx context.Context, list *ListResponse, kind string) ([]string, error) {
-	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"AddToBatches")
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"AddToBatches")
 	defer span.End()
 
 	tenantsWithChanges := make(map[string]bool)
@@ -116,7 +116,7 @@ func (i *Index) AddToBatches(ctx context.Context, list *ListResponse, kind strin
 		}
 	}
 
-	var tenants []string
+	tenants := make([]string, 0, len(tenantsWithChanges))
 	for tenant, _ := range tenantsWithChanges {
 		tenants = append(tenants, tenant)
 	}
@@ -293,7 +293,7 @@ func createFileIndex(path string) (bleve.Index, string, error) {
 }
 
 func (i *Index) allTenants() []string {
-	var tenants []string
+	tenants := make([]string, 0, len(i.shards))
 	for tenant := range i.shards {
 		tenants = append(tenants, tenant)
 	}
