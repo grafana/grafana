@@ -64,7 +64,7 @@ There are different ways you can follow along with this tutorial.
 
 - **Grafana OSS**
 
-  - To run a Grafana stack locally, ensure you have the following applications installed:
+  To run a Grafana stack locally, ensure you have the following applications installed:
 
   - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
   - [Git](https://git-scm.com/)
@@ -73,7 +73,7 @@ There are different ways you can follow along with this tutorial.
 
   - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs). It's a fully configured environment with all the dependencies already installed.
 
-### Set up the Grafana stack
+## Set up the Grafana stack
 
 <!-- INTERACTIVE ignore END -->
 
