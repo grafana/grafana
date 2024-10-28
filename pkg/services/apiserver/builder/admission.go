@@ -7,8 +7,6 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 )
 
-const PluginName = "GrafanaAdmission"
-
 type builderAdmission struct {
 	validators map[schema.GroupVersion]APIGroupValidation
 }
