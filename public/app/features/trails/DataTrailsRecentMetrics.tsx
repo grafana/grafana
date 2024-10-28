@@ -18,6 +18,7 @@ export function DataTrailsRecentMetrics({ model }: SceneComponentProps<DataTrail
   const handleToggleShow = () => {
     setShowAll(!showAll);
   };
+
   return (
     recentMetrics.length > 0 && (
       <>
