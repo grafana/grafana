@@ -73,9 +73,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       title={isRecordingRuleByType(type) ? 'Add labels' : 'Configure labels and notifications'}
       description={
         <Stack direction="row" gap={0.5} alignItems="center">
-          {type === RuleFormType.cloudRecording ? (
+          {isRecordingRuleByType(type) ? (
             <Text variant="bodySmall" color="secondary">
-              Add labels to help you better manage your recording rules
+              Add labels to help you better manage your recording rules.
             </Text>
           ) : (
             shouldAllowSimplifiedRouting && (

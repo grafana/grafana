@@ -74,7 +74,7 @@ module.exports = (env = {}) => {
         },
         require('./sass.rule.js')({
           sourceMap: false,
-          preserveUrl: false,
+          preserveUrl: true,
         }),
       ],
     },
@@ -111,7 +111,7 @@ module.exports = (env = {}) => {
             async: true, // don't block webpack emit
             typescript: {
               mode: 'write-references',
-              memoryLimit: 4096,
+              memoryLimit: 5096,
               diagnosticOptions: {
                 semantic: true,
                 syntactic: true,

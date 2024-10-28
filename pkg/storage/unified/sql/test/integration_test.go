@@ -5,12 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -350,7 +352,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry())
 	require.NoError(t, err)
 	var client resource.ResourceStoreClient
 
@@ -373,7 +375,8 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		require.NoError(t, err)
-		client = resource.NewResourceClient(conn)
+		client, err = resource.NewGRPCResourceClient(conn)
+		require.NoError(t, err)
 	})
 
 	t.Run("Create a resource", func(t *testing.T) {

@@ -75,6 +75,11 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 
 		err = m.Add(ctx, dep.ID, dep.Version, opts)
 		if err != nil {
+			var dupeErr plugins.DuplicateError
+			if errors.As(err, &dupeErr) {
+				m.log.Info("Dependency already installed", "pluginId", dep.ID)
+				continue
+			}
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 	}

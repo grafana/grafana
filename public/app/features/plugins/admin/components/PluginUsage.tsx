@@ -86,12 +86,12 @@ export function PluginUsage({ plugin }: Props) {
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrap: css`
-      width: 100%;
-      height: 100%;
-    `,
-    info: css`
-      padding-bottom: 30px;
-    `,
+    wrap: css({
+      width: '100%',
+      height: '100%',
+    }),
+    info: css({
+      paddingBottom: '30px',
+    }),
   };
 };

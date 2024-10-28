@@ -279,6 +279,50 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []string{p2Zip, p1Zip}, loadedPaths)
 	})
+
+	t.Run("Plugin can successfully install even if dependency plugin is already installed", func(t *testing.T) {
+		const pluginDependencyID = "test-plugin-dependency"
+		reg := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				pluginDependencyID: createPlugin(t, pluginDependencyID, plugins.ClassExternal, false, false),
+			},
+		}
+
+		var loadedPaths []string
+		loader := &fakes.FakeLoader{
+			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				return []*plugins.Plugin{}, nil
+			},
+		}
+
+		pluginRepo := &fakes.FakePluginRepo{
+			GetPluginArchiveFunc: func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				return &repo.PluginArchive{File: &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+					FileHeader: zip.FileHeader{Name: fmt.Sprintf("%s.zip", id)},
+				}}}}}, nil
+			},
+		}
+
+		fs := &fakes.FakePluginStorage{
+			ExtractFunc: func(_ context.Context, id string, _ storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+				switch id {
+				case testPluginID:
+					return &storage.ExtractedPluginArchive{
+						Dependencies: []*storage.Dependency{{ID: pluginDependencyID}},
+						Path:         "test-plugin.zip",
+					}, nil
+				default:
+					return nil, fmt.Errorf("unknown plugin %s", id)
+				}
+			},
+		}
+
+		inst := New(reg, loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
+		err := inst.Add(context.Background(), testPluginID, "", testCompatOpts())
+		require.NoError(t, err)
+		require.Equal(t, []string{"test-plugin.zip"}, loadedPaths)
+	})
 }
 
 func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) *plugins.Plugin {

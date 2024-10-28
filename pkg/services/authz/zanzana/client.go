@@ -16,15 +16,21 @@ import (
 // Client is a wrapper around [openfgav1.OpenFGAServiceClient]
 type Client interface {
 	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
+	Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error)
 	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 	Write(ctx context.Context, in *openfgav1.WriteRequest) error
 }
 
 func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*client.Client, error) {
+	stackID := cfg.StackID
+	if stackID == "" {
+		stackID = "default"
+	}
+
 	return client.New(
 		ctx,
 		cc,
-		client.WithTenantID(fmt.Sprintf("stack-%s", cfg.StackID)),
+		client.WithTenantID(fmt.Sprintf("stacks-%s", stackID)),
 		client.WithLogger(log.New("zanzana-client")),
 	)
 }
