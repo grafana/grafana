@@ -60,26 +60,20 @@ In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials
 
 <!-- INTERACTIVE ignore START -->
 
-### Grafana Cloud
+There are different ways you can follow along with this tutorial.
 
-As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
+- **Grafana OSS**
 
-Continue to [Create a contact point](#create-a-contact-point).
+  - To run a Grafana stack locally, ensure you have the following applications installed:
 
-### Interactive learning environment
+  - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
+  - [Git](https://git-scm.com/)
 
-Alternatively, you can try out this example in our interactive learning environment: [Create alert rules with log data](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs).
+- **Interactive learning environment**
 
-It's a fully configured environment with all the dependencies already installed.
+  - Alternatively, you can [try out this example in our interactive learning environment](https://killercoda.com/grafana-labs/course/grafana/alerting-loki-logs). It's a fully configured environment with all the dependencies already installed.
 
-### Grafana OSS
-
-If you opt to run a Grafana stack locally, ensure you have the following applications installed:
-
-- [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
-- [Git](https://git-scm.com/)
-
-#### Set up the Grafana stack (OSS users)
+### Set up the Grafana stack
 
 <!-- INTERACTIVE ignore END -->
 

@@ -494,7 +494,7 @@ Let's see how we can configure this.
 
 {{< admonition type="tip" >}}
 
-Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting-get-started-pt2/) for more insights and tips.
+In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /admonition >}}
 
@@ -502,7 +502,7 @@ Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting
 
 {{< docs/ignore >}}
 
-> Check out our [advanced alerting tutorial](http://grafana.com/tutorials/alerting-get-started-pt2/) for more insights and tips.
+> In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /docs/ignore >}}
 
