@@ -24,7 +24,7 @@ export function DataTrailsBookmarks({ model, onDelete }: Props) {
         <>
           <div className={styles.horizontalLine} />
           <div className={css(styles.gap20, styles.bookmarkHeader, styles.bottomGap24)}>
-            <div className={styles.header}>
+            <div className={styles.header} style={{ marginRight: '16px' }}>
               <Trans i18nKey="trails.bookmarks.or-view-bookmarks">Or view bookmarks</Trans>
             </div>
             <IconButton
