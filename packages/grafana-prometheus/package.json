@@ -111,7 +111,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "28.8.3",
     "eslint-plugin-jsdoc": "48.11.0",
-    "eslint-plugin-jsx-a11y": "6.10.1",
+    "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-lodash": "7.4.0",
     "eslint-plugin-react": "7.37.2",
     "eslint-plugin-react-hooks": "4.6.0",
