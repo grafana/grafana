@@ -61,7 +61,7 @@ cards:
 Explore is your starting point for querying, analyzing, and aggregating data in Grafana. You can quickly begin creating queries to start analyzing data without having to create a dashboard or customize a visualization.
 
 {{% admonition type="note" %}}
-If you're using Mimir, Loki, Tempo or Pyroscope, be sure to try our [simplified queryless Explore experiences]({{< relref "simplified-exploration" >}}).
+If you're using Mimir, Loki, Tempo, or Pyroscope, try the [queryless Explore experiences]({{< relref "simplified-exploration" >}}).
 {{% /admonition %}}
 
 ## Explore

@@ -28,4 +28,6 @@ Grafana OnCall is an open source incident response management tool built to help
 
 ### Explore Apps
 
-Our new suite of apps provides queryless point-and-click experiences for working with Mimir, Loki, Tempo and Pyroscope data. Diagnose issues and understand your systems faster than ever regardless of your level of expertise. For more information, check out [Explore Apps simplified exploration documentation](/docs/grafana/latest/explore/simplified-exploration/).
+The Explore Apps provides queryless point-and-click experiences for working with Mimir, Loki, Tempo, and Pyroscope data.
+You can diagnose issues and understand your systems faster regardless of your level of expertise.
+For more information, refer to the [Explore apps documentation](/docs/grafana/latest/explore/simplified-exploration/).
