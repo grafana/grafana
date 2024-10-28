@@ -19,16 +19,8 @@ load(
 )
 load("scripts/drone/events/rrc-patch.star", "rrc_patch_pipelines")
 load(
-    "scripts/drone/pipelines/ci_images.star",
-    "publish_ci_windows_test_image_pipeline",
-)
-load(
     "scripts/drone/pipelines/publish_images.star",
     "publish_image_pipelines_public",
-)
-load(
-    "scripts/drone/pipelines/windows.star",
-    "windows_test_backend",
 )
 load(
     "scripts/drone/rgm.star",
@@ -46,12 +38,7 @@ def main(_ctx):
         publish_npm_pipelines() +
         publish_packages_pipeline() +
         rgm() +
-        [windows_test_backend({
-            "event": ["promote"],
-            "target": ["test-windows"],
-        }, "oss", "testing")] +
         integration_test_pipelines() +
-        publish_ci_windows_test_image_pipeline() +
         cronjobs() +
         secrets()
     )

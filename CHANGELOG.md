@@ -1,12 +1,57 @@
-<!-- 11.1.7+security-01 START -->
+<!-- 11.3.0 START -->
 
-# 11.1.7+security-01 (2024-10-17)
+# 11.3.0 (2024-10-22)
+
+### Features and enhancements
+
+- **Alerting:** Add manage permissions UI logic for Contact Points [#92885](https://github.com/grafana/grafana/pull/92885), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Allow linking to silence form with `__alert_rule_uid__` value preset [#93526](https://github.com/grafana/grafana/pull/93526), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Hide query name when using simplified mode in the alert rule [#93779](https://github.com/grafana/grafana/pull/93779), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Limit and clean up old alert rules versions [#89754](https://github.com/grafana/grafana/pull/89754), [@igloo12](https://github.com/igloo12)
+- **Alerting:** Style nits for the simple query mode [#93930](https://github.com/grafana/grafana/pull/93930), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Update texts in annotations step [#93977](https://github.com/grafana/grafana/pull/93977), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Use useProduceNewAlertmanagerConfiguration for contact points [#88456](https://github.com/grafana/grafana/pull/88456), [@gillesdemey](https://github.com/gillesdemey)
+- **Auth:** Attach external session info to Grafana session [#93849](https://github.com/grafana/grafana/pull/93849), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Auth:** Replace jmespath/go-jmespath with jmespath-community/go-jmespath [#94203](https://github.com/grafana/grafana/pull/94203), [@mgyongyosi](https://github.com/mgyongyosi)
+- **CloudMigrations:** Add support for migration of Library Elements (Panels) resources [#93898](https://github.com/grafana/grafana/pull/93898), [@macabu](https://github.com/macabu)
+- **Cloudwatch:** Update grafana-aws-sdk [#94155](https://github.com/grafana/grafana/pull/94155), [@iwysiu](https://github.com/iwysiu)
+- **Explore Logs:** Preinstall for onprem Grafana instances [#94221](https://github.com/grafana/grafana/pull/94221), [@svennergr](https://github.com/svennergr)
+- **ExploreMetrics:** Ensure compatibility with Incremental Querying [#94355](https://github.com/grafana/grafana/pull/94355), [@NWRichmond](https://github.com/NWRichmond)
+- **FieldConfig:** Add support for Actions [#92874](https://github.com/grafana/grafana/pull/92874), [@adela-almasan](https://github.com/adela-almasan)
+- **Plugin Extensions:** Require meta-data to be defined in `plugin.json` during development mode [#93429](https://github.com/grafana/grafana/pull/93429), [@leventebalogh](https://github.com/leventebalogh)
+- **Reporting:** Display template variables in the PDF (Enterprise)
+- **Tempo:** Add deprecation notice for Aggregate By [#94050](https://github.com/grafana/grafana/pull/94050), [@joey-grafana](https://github.com/joey-grafana)
 
 ### Bug fixes
 
-- **SQL Expressions**: Fixes CVE-2024-9264
+- **Alerting/Chore:** Fix TimeRangeInput not working across multiple months [#93622](https://github.com/grafana/grafana/pull/93622), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Fix default value for input in simple condition [#94248](https://github.com/grafana/grafana/pull/94248), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Fix eval interval not being saved when creating a new group [#93821](https://github.com/grafana/grafana/pull/93821), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93940](https://github.com/grafana/grafana/pull/93940), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Fix panics when attempting to create an Alertmanager after failing [#94023](https://github.com/grafana/grafana/pull/94023), [@santihernandezc](https://github.com/santihernandezc)
+- **DashboardScene:** Fixes url issue with subpath when exiting edit mode [#93962](https://github.com/grafana/grafana/pull/93962), [@torkelo](https://github.com/torkelo)
+- **Dashboards:** Enable scenes by default [#93818](https://github.com/grafana/grafana/pull/93818), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Dashboards:** Fixes view & edit keyboard shortcuts when grafana is behind a subpath [#93955](https://github.com/grafana/grafana/pull/93955), [@torkelo](https://github.com/torkelo)
+- **ElasticSearch:** Fix errorsource in newInstanceSettings [#93859](https://github.com/grafana/grafana/pull/93859), [@iwysiu](https://github.com/iwysiu)
+- **Reporting:** Fix reports on multi-org instance (Enterprise)
+- **SubMenu:** Fix expanding sub menu items on touch devices [#93208](https://github.com/grafana/grafana/pull/93208), [@yincongcyincong](https://github.com/yincongcyincong)
 
-<!-- 11.1.7+security-01 END -->
+<!-- 11.3.0 END -->
+<!-- 11.2.3 START -->
+
+# 11.2.3 (2024-10-22)
+
+### Bug fixes
+
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93947](https://github.com/grafana/grafana/pull/93947), [@alexweav](https://github.com/alexweav)
+- **AzureMonitor:** Fix App Insights portal URL for multi-resource trace queries [#94475](https://github.com/grafana/grafana/pull/94475), [@aangelisc](https://github.com/aangelisc)
+- **Canvas:** Allow API calls to grafana origin [#94129](https://github.com/grafana/grafana/pull/94129), [@adela-almasan](https://github.com/adela-almasan)
+- **Folders:** Correctly show new folder button under root folder [#94712](https://github.com/grafana/grafana/pull/94712), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **OrgSync:** Do not set default Organization for a user to a non-existent Organization [#94549](https://github.com/grafana/grafana/pull/94549), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Plugins:** Skip install errors if dependency plugin already exists [#94717](https://github.com/grafana/grafana/pull/94717), [@wbrowne](https://github.com/wbrowne)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94959](https://github.com/grafana/grafana/pull/94959), [@samjewell](https://github.com/samjewell)
+
+<!-- 11.2.3 END -->
 <!-- 11.2.2+security-01 START -->
 
 # 11.2.2+security-01 (2024-10-17)
@@ -27,6 +72,27 @@
 - **SQL Expressions**: Fixes CVE-2024-9264
 
 <!-- 11.2.1+security-01 END -->
+<!-- 11.1.8 START -->
+
+# 11.1.8 (2024-10-22)
+
+### Bug fixes
+
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93948](https://github.com/grafana/grafana/pull/93948), [@alexweav](https://github.com/alexweav)
+- **AzureMonitor:** Fix App Insights portal URL for multi-resource trace queries [#94474](https://github.com/grafana/grafana/pull/94474), [@aangelisc](https://github.com/aangelisc)
+- **OrgSync:** Do not set default Organization for a user to a non-existent Organization [#94551](https://github.com/grafana/grafana/pull/94551), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94969](https://github.com/grafana/grafana/pull/94969), [@scottlepp](https://github.com/scottlepp)
+
+<!-- 11.1.8 END -->
+<!-- 11.1.7+security-01 START -->
+
+# 11.1.7+security-01 (2024-10-17)
+
+### Bug fixes
+
+- **SQL Expressions**: Fixes CVE-2024-9264
+
+<!-- 11.1.7+security-01 END -->
 <!-- 11.1.6+security-01 START -->
 
 # 11.1.6+security-01 (2024-10-17)
@@ -97,6 +163,19 @@
 - **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93487](https://github.com/grafana/grafana/pull/93487), [@wbrowne](https://github.com/wbrowne)
 
 <!-- 11.1.7 END -->
+<!-- 11.0.7 START -->
+
+# 11.0.7 (2024-10-22)
+
+### Bug fixes
+
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93949](https://github.com/grafana/grafana/pull/93949), [@alexweav](https://github.com/alexweav)
+- **AzureMonitor:** Fix App Insights portal URL for multi-resource trace queries [#94489](https://github.com/grafana/grafana/pull/94489), [@aangelisc](https://github.com/aangelisc)
+- **Dashboard:** Make dashboard search faster [#94702](https://github.com/grafana/grafana/pull/94702), [@knuzhdin](https://github.com/knuzhdin)
+- **OrgSync:** Do not set default Organization for a user to a non-existent Organization [#94552](https://github.com/grafana/grafana/pull/94552), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94971](https://github.com/grafana/grafana/pull/94971), [@samjewell](https://github.com/samjewell)
+
+<!-- 11.0.7 END -->
 <!-- 11.0.6 START -->
 
 # 11.0.6 (2024-10-01)
@@ -114,6 +193,17 @@
 - **Plugins:** Avoid returning 404 for `AutoEnabled` apps [#93486](https://github.com/grafana/grafana/pull/93486), [@wbrowne](https://github.com/wbrowne)
 
 <!-- 11.0.6 END -->
+<!-- 10.4.11 START -->
+
+# 10.4.11 (2024-10-22)
+
+### Bug fixes
+
+- **Alerting:** Fix broken panelId links [#94686](https://github.com/grafana/grafana/pull/94686), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93946](https://github.com/grafana/grafana/pull/93946), [@alexweav](https://github.com/alexweav)
+- **Dashboard:** Make dashboard search faster [#94703](https://github.com/grafana/grafana/pull/94703), [@knuzhdin](https://github.com/knuzhdin)
+
+<!-- 10.4.11 END -->
 <!-- 10.4.10 START -->
 
 # 10.4.10 (2024-10-01)
@@ -129,6 +219,16 @@
 - **Correlations:** Limit access to correlations page to users who can access Explore [#93673](https://github.com/grafana/grafana/pull/93673), [@ifrost](https://github.com/ifrost)
 
 <!-- 10.4.10 END -->
+<!-- 10.3.12 START -->
+
+# 10.3.12 (2024-10-22)
+
+### Bug fixes
+
+- **Alerting:** Fix incorrect permission on POST external rule groups endpoint [CVE-2024-8118] [#93945](https://github.com/grafana/grafana/pull/93945), [@alexweav](https://github.com/alexweav)
+- **Dashboard:** Make dashboard search faster [#94704](https://github.com/grafana/grafana/pull/94704), [@knuzhdin](https://github.com/knuzhdin)
+
+<!-- 10.3.12 END -->
 <!-- 10.3.11 START -->
 
 # 10.3.11 (2024-10-01)
