@@ -243,10 +243,14 @@ describe('Combobox', () => {
       expect(asyncSpy).toHaveBeenCalledTimes(1); // Called on open
       asyncSpy.mockClear();
 
-      await user.keyboard('abc');
-      await act(async () => {
-        jest.advanceTimersByTime(300); // Debounce value
-      });
+      await user.keyboard('a');
+      await act(async () => jest.advanceTimersByTime(10));
+
+      await user.keyboard('b');
+      await act(async () => jest.advanceTimersByTime(10));
+
+      await user.keyboard('c');
+      await act(async () => jest.advanceTimersByTime(300));
 
       expect(asyncSpy).toHaveBeenCalledTimes(1); // Called only for 'abc'
     });
