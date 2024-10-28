@@ -72,23 +72,23 @@ import {
   getCorrelationsData,
   getDatasourceUIDs,
   getResultsFromCache,
+  makeExplorePaneState,
 } from './utils';
 
 /**
- * Derives from explore state if a given Explore pane is waiting for more data to be received
- */
-export const selectIsWaitingForData = (exploreId: string) => {
-  return (state: StoreState) => {
-    const panelState = state.explore.panes[exploreId];
-    if (!panelState) {
-      return false;
-    }
-    return panelState.queryResponse
-      ? panelState.queryResponse.state === LoadingState.Loading ||
-          panelState.queryResponse.state === LoadingState.Streaming
-      : false;
+ * Derives from explore state if a given Explore pane is waiting for more data to be received */ export const selectIsWaitingForData =
+  (exploreId: string) => {
+    return (state: StoreState) => {
+      const panelState = state.explore.panes[exploreId];
+      if (!panelState) {
+        return false;
+      }
+      return panelState.queryResponse
+        ? panelState.queryResponse.state === LoadingState.Loading ||
+            panelState.queryResponse.state === LoadingState.Streaming
+        : false;
+    };
   };
-};
 
 /**
  * Adds a query row after the row with the given index.
@@ -192,6 +192,11 @@ export interface QueryEndedPayload {
   response: ExplorePanelData;
 }
 export const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore/queryStreamUpdated');
+
+export interface ResetQueriesPayload {
+  exploreId: string;
+}
+export const resetQueriesAction = createAction<ResetQueriesPayload>('explore/resetQueries');
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
@@ -562,12 +567,20 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
+    // TONY: CHECK IF WE NEED TO FILTER OUT QUERIES (HIDDEN OR NOT)
     const queries = exploreItemState.queries
       .map((query) => ({
         ...query,
         datasource: query.datasource || datasourceInstance?.getRef(),
       }))
       .filter((q) => !q.hide);
+
+    const hiddenQueriesRefs = exploreItemState.queries
+      .map((query) => ({
+        ...query,
+        datasource: query.datasource || datasourceInstance?.getRef(),
+      }))
+      .filter((q) => q.hide);
 
     if (datasourceInstance != null) {
       handleHistory(dispatch, getState().explore, datasourceInstance, queries);
@@ -601,6 +614,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         return;
       }
 
+      dispatch(resetQueriesAction({ exploreId }));
       // Some datasource's query builders allow per-query interval limits,
       // but we're using the datasource interval limit for now
       const minInterval = datasourceInstance?.interval;
@@ -656,6 +670,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
       newQuerySubscription = newQuerySource.subscribe({
         next(data) {
+          // TODO: TONY: only dispatch update to merge data if: Data is not empty or the query is not filtered out
           const exploreState = getState().explore.panes[exploreId];
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
@@ -1222,6 +1237,26 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
+  if (resetQueriesAction.match(action)) {
+    return {
+      ...state,
+      graphResult: null,
+      tableResult: null,
+      logsResult: null,
+      nodeGraphResult: null,
+      showFlameGraph: false,
+      showNodeGraph: false,
+      showLogs: false,
+      showTable: false,
+      showTrace: false,
+      showCustom: false,
+      showMetrics: false,
+      showRawPrometheus: false,
+      isLive: false,
+      isPaused: false,
+    };
+  }
+
   if (setPausedStateAction.match(action)) {
     const { isPaused } = action.payload;
     return {
@@ -1349,21 +1384,27 @@ export const processQueryResponse = (
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
+  // Avoid NodeGraph response overriding the data of other scenario type and vice versa.
+  const isNodeGraphReponse = nodeGraphFrames.length > 0;
+  const graph = isNodeGraphReponse ? state.graphResult : graphResult;
+  const table = isNodeGraphReponse ? state.tableResult : tableResult;
+
   return {
     ...state,
     queryResponse: response,
-    graphResult: graphResult,
-    tableResult: tableResult,
+    graphResult: graph,
+    tableResult: table,
+    nodeGraphResult: isNodeGraphReponse ? nodeGraphFrames : state.nodeGraphResult,
     rawPrometheusResult,
     logsResult:
       state.isLive && logsResult
         ? { ...logsResult, rows: filterLogRowsByIndex(state.clearedAtIndex, logsResult.rows) }
         : logsResult,
     showLogs: !!logsResult,
-    showMetrics: !!graphResult,
-    showTable: !!tableResult?.length,
+    showMetrics: !!graph,
+    showTable: !!table?.length,
     showTrace: !!traceFrames.length,
-    showNodeGraph: !!nodeGraphFrames.length,
+    showNodeGraph: isNodeGraphReponse ? !!nodeGraphFrames.length : state.showNodeGraph,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
     showCustom: !!customFrames?.length,

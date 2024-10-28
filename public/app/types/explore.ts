@@ -127,6 +127,8 @@ export interface ExploreItemState {
    * List of timeseries to be shown in the Explore graph result viewer.
    */
   graphResult: DataFrame[] | null;
+
+  nodeGraphResult?: DataFrame[] | null;
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
