@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import debounce from 'debounce-promise';
 import { useCombobox } from 'downshift';
+import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
