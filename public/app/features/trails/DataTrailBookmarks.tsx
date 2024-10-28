@@ -16,6 +16,7 @@ interface Props extends SceneComponentProps<DataTrailsHome> {
 export function DataTrailsBookmarks({ model, onDelete }: Props) {
   const [toggleBookmark, setToggleBookmark] = useState(false);
   const styles = useStyles2(getStyles);
+
   return (
     <>
       {getTrailStore().bookmarks.length > 0 && (
