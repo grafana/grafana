@@ -77,9 +77,14 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/#raw
   add-a-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#add-a-data-source
+  filter-dashboard:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#filter-dashboard-data
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#filter-dashboard-data
 ---
 
 # Add variables
@@ -101,21 +106,33 @@ The following table lists the types of variables shipped with Grafana.
 ## Enter General options
 
 You must enter general options for any type of variable that you create.
+To create a variable, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click **Settings**.
 1. Go to the **Variables** tab.
-1. Click **Add variable**.
+1. Click **Add variable**, or if there are already existing variables, **+ New variable**.
+1. Choose an option in the **Select variable type** drop-down list.
 1. Enter a **Name** for the variable.
-1. In the **Select variable type** drop-down, choose **Query**.
-1. (Optional) In **Label**, enter the display name of the variable dropdown.
+1. (Optional) In the **Label** field, enter the display name for the variable drop-down list.
 
-   If you don't enter a display name, then the dropdown label is the variable name.
+   If you don't enter a display name, then the drop-down list label is the variable name.
 
 1. Choose a **Show on dashboard** option:
-   - **Label and value** - The variable drop-down displays the variable **Name** or **Label** value. This is the default.
-   - **Value:** The variable drop-down only displays the selected variable value and a down arrow.
-   - **Nothing:** No variable drop-down is displayed on the dashboard.
+
+   - **Label and value** - The variable drop-down list displays the variable **Name** or **Label** value. This is the default.
+   - **Value:** The variable drop-down list only displays the selected variable value and a down arrow.
+   - **Nothing:** No variable drop-down list is displayed on the dashboard.
+
+1. Click one of the following links to complete the steps for adding your selected variable type:
+
+   - [Query](#add-a-query-variable)
+   - [Custom](#add-a-custom-variable)
+   - [Textbox](#add-a-text-box-variable)
+   - [Constant](#add-a-constant-variable)
+   - [Data source](#add-a-data-source-variable)
+   - [Interval](#add-an-interval-variable)
+   - [Ad hoc filters](#add-ad-hoc-filters)
 
 ## Add a query variable
 
@@ -233,23 +250,32 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 ## Add ad hoc filters
 
-_Ad hoc filters_ enable you to add key/value filters that are automatically added to all metric queries that use the specified data source. Unlike other variables, you do not use ad hoc filters in queries. Instead, you use ad hoc filters to write filters for existing queries.
+_Ad hoc filters_ are one of the most complex and flexible variable options available.
+Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query.
+
+Ad hoc filters let you add label/value filters that are automatically added to all metric queries that use the specified data source.
+Unlike other variables, you don't use ad hoc filters in queries.
+Instead, you use ad hoc filters to write filters for existing queries.
 
 {{% admonition type="note" %}}
-Not all data sources support ad hoc filters. Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
+Not all data sources support ad hoc filters.
+Examples of those that do include Prometheus, Loki, InfluxDB, and Elasticsearch.
 {{% /admonition %}}
 
+To create an ad hoc filter, follow these steps:
+
 1. [Enter general options](#enter-general-options).
-1. In the **Data source** list, select the target data source.
+1. Under the **Ad-hoc options** section of the page, select a target data source in the **Data source** drop-down list.
 
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+   For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
+1. (Optional) To provide the filter dimensions as comma-separated values (CSV), toggle the **Use static key dimensions** switch on, and then enter the values in the space provided.
 1. Click **Save dashboard**.
+1. Enter an optional description of your dashboard changes, and then click **Save**.
 1. Click **Back to dashboard** and **Exit edit**.
 
-### Create ad hoc filters
-
-Ad hoc filters are one of the most complex and flexible variable options available. Instead of a regular list of variable options, this variable allows you to build a dashboard-wide ad hoc query. Filters you apply in this manner are applied to all panels on the dashboard.
+Now you can [filter data on the dashboard](ref:filter-dashboard).
 
 ## Configure variable selection options
 
