@@ -202,10 +202,11 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
             </Box>
           )}
 
-          {/* name field for the template */}
+          {/* title/name field for the template */}
           <FieldSet disabled={isProvisioned} className={styles.fieldset}>
             <InlineField
-              label="Template name"
+              label="Template title/name"
+              tooltip="The template name is set using {{ define }}. The Alerting Provisioning HTTP API refers to this field as the template name."
               error={errors?.title?.message}
               invalid={!!errors.title?.message}
               required
