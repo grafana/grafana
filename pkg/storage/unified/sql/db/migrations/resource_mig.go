@@ -109,5 +109,9 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Cols: []string{"group", "resource", "resource_version"}, Type: migrator.IndexType,
 	}))
 
+	mg.AddMigration("Add index to resource for loading", migrator.NewAddIndexMigration(resource_table, &migrator.Index{
+		Cols: []string{"group", "resource"}, Type: migrator.IndexType,
+	}))
+
 	return marker
 }

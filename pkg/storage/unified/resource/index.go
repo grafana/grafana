@@ -16,6 +16,7 @@ import (
 )
 
 const tracingPrexfixIndex = "unified_storage.index."
+const pageSize = 10000
 
 type Shard struct {
 	index bleve.Index
@@ -49,27 +50,21 @@ func NewIndex(s *server, opts Opts, path string, tracer tracing.Tracer) *Index {
 	return idx
 }
 
-func (i *Index) IndexBatch(ctx context.Context, list *ListResponse, kind string) error {
+func (i *Index) IndexBatch(ctx context.Context, list *ListResponse) error {
 	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"CreateIndexBatches")
 	for _, obj := range list.Items {
-		res, err := NewIndexedResource(obj.Value)
-		if err != nil {
-			return err
-		}
-
-		shard, err := i.getShard(res.Namespace)
-		if err != nil {
-			return err
-		}
-		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "kind", kind, "tenant", res.Namespace)
-
-		// Transform the raw resource into a more generic indexable resource
 		indexableResource, err := NewIndexedResource(obj.Value)
 		if err != nil {
 			return err
 		}
 
-		err = shard.batch.Index(res.Uid, indexableResource)
+		shard, err := i.getShard(indexableResource.Namespace)
+		if err != nil {
+			return err
+		}
+		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "tenant", indexableResource.Namespace)
+
+		err = shard.batch.Index(indexableResource.Uid, indexableResource)
 		if err != nil {
 			return err
 		}
@@ -98,7 +93,7 @@ func (i *Index) Init(ctx context.Context) error {
 	totalObjectsFetched := 0
 	for _, rt := range resourceTypes {
 		i.log.Info("indexing resource", "kind", rt.Key.Resource)
-		r := &ListRequest{Options: rt, Limit: 100}
+		r := &ListRequest{Options: rt, Limit: pageSize}
 
 		// Paginate through the list of resources and index each page
 		for {
@@ -111,7 +106,7 @@ func (i *Index) Init(ctx context.Context) error {
 			totalObjectsFetched += len(list.Items)
 
 			// Index current page
-			err = i.IndexBatch(ctx, list, rt.Key.Resource)
+			err = i.IndexBatch(ctx, list)
 			if err != nil {
 				return err
 			}
@@ -224,6 +219,18 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	}
 
 	return results, nil
+}
+
+func (i *Index) Count() (uint64, error) {
+	var total uint64
+	for _, shard := range i.shards {
+		count, err := shard.index.DocCount()
+		if err != nil {
+			i.log.Error("failed to get doc count", "error", err)
+		}
+		total += count
+	}
+	return total, nil
 }
 
 type Opts struct {
