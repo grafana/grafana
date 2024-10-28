@@ -49,6 +49,14 @@
             "importNames": ["Trans", "t"],
             "message": "Please import from app/core/internationalization instead",
           },
+          {
+            "name": "react-router-dom",
+            "message": "Please import from react-router-dom-v5-compat instead"
+          },
+          {
+            "name": "react-router",
+            "message": "Please import from react-router-dom-v5-compat instead"
+          }
         ],
       },
     ],
