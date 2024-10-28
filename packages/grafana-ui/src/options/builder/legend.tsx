@@ -7,7 +7,8 @@ import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 export function addLegendOptions<T extends OptionsWithLegend>(
   builder: PanelOptionsEditorBuilder<T>,
   includeLegendCalcs = true,
-  showLegend = true
+  showLegend = true,
+  includeStatePercentage = false,
 ) {
   builder
     .addBooleanSwitch({
@@ -68,6 +69,16 @@ export function addLegendOptions<T extends OptionsWithLegend>(
         allowMultiple: true,
       },
       showIf: (currentConfig) => currentConfig.legend.showLegend !== false,
+    });
+  }
+
+  if (includeStatePercentage) {
+    builder.addBooleanSwitch({
+      path: 'legend.showStatePercentage',
+      name: 'State Percentage',
+      category: ['Legend'],
+      description: '',
+      defaultValue: false,
     });
   }
 }

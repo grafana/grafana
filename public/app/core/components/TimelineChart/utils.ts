@@ -566,10 +566,10 @@ export function prepareTimelineLegendItems(
     return undefined;
   }
 
-  return getFieldLegendItem(allNonTimeFields(frames), theme);
+  return getFieldLegendItem(allNonTimeFields(frames), options, theme);
 }
 
-export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
+export function getFieldLegendItem(fields: Field[], options: VizLegendOptions, theme: GrafanaTheme2): VizLegendItem[] | undefined {
   if (!fields.length) {
     return undefined;
   }
@@ -591,22 +591,27 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   }
 
   const stateColors: Map<string, string | undefined> = new Map();
+  const stateCounts: Map<string, number> = new Map();
 
   fields.forEach((field) => {
     if (!field.config.custom?.hideFrom?.legend) {
       field.values.forEach((v) => {
         let state = field.display!(v);
         if (state.color) {
+          stateCounts.set(state.text, (stateCounts.get(state.text) ?? 0) + 1);
           stateColors.set(state.text, state.color!);
         }
       });
     }
   });
 
+  const allValuesCount = [...stateCounts.values()].reduce((acc, value) => acc + value, 0);
+
   stateColors.forEach((color, label) => {
     if (label.length > 0) {
+      const suffix = options.showStatePercentage ? ` (${Math.floor((stateCounts.get(label) ?? 0) * 100 / allValuesCount)}%)` : ''
       items.push({
-        label: label!,
+        label: label! + suffix,
         color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
         yAxis: 1,
       });
