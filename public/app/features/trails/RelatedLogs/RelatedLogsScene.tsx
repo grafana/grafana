@@ -15,7 +15,7 @@ import {
   type SceneObjectState,
   type SceneVariable,
 } from '@grafana/scenes';
-import { Stack, ToolbarButton } from '@grafana/ui';
+import { Stack, Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import {
@@ -131,7 +131,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
     return (
       <div>
         <Stack gap={1} direction={'column'} grow={1}>
-          <Stack gap={1} direction={'row'} grow={1} justifyContent={'space-between'} alignItems={'center'}>
+          <Stack gap={1} direction={'row'} grow={1} justifyContent={'space-between'} alignItems={'start'}>
             {Boolean(controls?.length) && (
               <Stack gap={1}>
                 {controls.map((control) => (
@@ -139,9 +139,10 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
                 ))}
               </Stack>
             )}
-            <ToolbarButton
-              variant={'canvas'}
-              tooltip="Navigate to the Explore Logs app"
+            <Button
+              variant="secondary"
+              size="sm"
+              tooltip="Navigate to the Explore logs app"
               onClick={() => {
                 reportExploreMetrics('related_logs_action_clicked', { action: 'open_explore_logs' });
                 // We prefix with the appSubUrl for environments that don't host grafana at the root.
@@ -149,8 +150,8 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
                 window.open(exploreLogsHomepage, '_blank');
               }}
             >
-              <Trans i18nKey="explore-metrics.related-logs.openExploreLogs">Open Explore Logs</Trans>
-            </ToolbarButton>
+              <Trans i18nKey="explore-metrics.related-logs.openExploreLogs">Open explore logs</Trans>
+            </Button>
           </Stack>
           <body.Component model={body} />
         </Stack>
