@@ -27,5 +27,5 @@ jobs:
         with:
           version: v1.61.0
           args: |
-            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(./scripts/go-workspace/golangci-lint-includes.sh)
+            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(go list -m -json | jq -s '.' | jq -c '[.[].Dir]')
           install-mode: binary
