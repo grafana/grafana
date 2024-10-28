@@ -57,7 +57,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     recentExplorationHeader: css({
       marginTop: theme.spacing(6),
-      marginBottom: '20px',
+      marginBottom: theme.spacing(3),
     }),
     header: css({
       color: 'var(--text-primary, rgba(204, 204, 220, 0.7))',
@@ -73,7 +73,7 @@ function getStyles(theme: GrafanaTheme2) {
     trailList: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: `${theme.spacing(3)} 31px`,
+      gap: `${theme.spacing(4)}`,
       alignItems: 'stretch',
       justifyItems: 'center',
     }),

@@ -60,7 +60,7 @@ function getStyles(theme: GrafanaTheme2) {
     trailList: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: `${theme.spacing(3)} 31px`,
+      gap: `${theme.spacing(4)}`,
       alignItems: 'stretch',
       justifyItems: 'center',
     }),
