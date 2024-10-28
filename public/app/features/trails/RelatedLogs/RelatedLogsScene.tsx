@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import {
   CustomVariable,
   PanelBuilders,
@@ -14,7 +15,8 @@ import {
   type SceneObjectState,
   type SceneVariable,
 } from '@grafana/scenes';
-import { Stack } from '@grafana/ui';
+import { Stack, ToolbarButton } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import {
   fetchAndExtractLokiRecordingRules,
@@ -22,6 +24,7 @@ import {
   getLogsUidOfMetric,
   type ExtractedRecordingRules,
 } from '../Integrations/logsIntegration';
+import { reportExploreMetrics } from '../interactions';
 import { VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR, VAR_METRIC_EXPR } from '../shared';
 
 import { NoRelatedLogsScene } from './NoRelatedLogsFoundScene';
@@ -128,13 +131,27 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
     return (
       <div>
         <Stack gap={1} direction={'column'} grow={1}>
-          {controls && (
-            <Stack gap={1}>
-              {controls.map((control) => (
-                <control.Component key={control.state.key} model={control} />
-              ))}
-            </Stack>
-          )}
+          <Stack gap={1} direction={'row'} grow={1} justifyContent={'space-between'} alignItems={'center'}>
+            {Boolean(controls?.length) && (
+              <Stack gap={1}>
+                {controls.map((control) => (
+                  <control.Component key={control.state.key} model={control} />
+                ))}
+              </Stack>
+            )}
+            <ToolbarButton
+              variant={'canvas'}
+              tooltip="Navigate to the Explore Logs app"
+              onClick={() => {
+                reportExploreMetrics('related_logs_action_clicked', { action: 'open_explore_logs' });
+                // We prefix with the appSubUrl for environments that don't host grafana at the root.
+                const exploreLogsHomepage = `${config.appSubUrl}/a/grafana-lokiexplore-app`;
+                window.open(exploreLogsHomepage, '_blank');
+              }}
+            >
+              <Trans i18nKey="explore-metrics.related-logs.openExploreLogs">Open Explore Logs</Trans>
+            </ToolbarButton>
+          </Stack>
           <body.Component model={body} />
         </Stack>
       </div>
