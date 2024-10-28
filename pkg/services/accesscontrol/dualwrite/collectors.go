@@ -88,7 +88,6 @@ func folderTreeCollector2(store db.DB) legacyTupleCollector {
 			var tuple *openfgav1.TupleKey
 			if f.ParentUID == "" {
 				continue
-
 			}
 
 			tuple = &openfgav1.TupleKey{
@@ -105,7 +104,6 @@ func folderTreeCollector2(store db.DB) legacyTupleCollector {
 		}
 
 		return tuples, nil
-
 	}
 }
 
@@ -167,7 +165,6 @@ func managedPermissionsCollector2(store db.DB) legacyTupleCollector {
 			}
 
 			tuples[tuple.Object][tuple.String()] = tuple
-
 		}
 
 		return tuples, nil

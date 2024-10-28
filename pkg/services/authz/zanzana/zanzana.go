@@ -125,7 +125,6 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 		}
 
 		return common.NewFolderTuple(subject, m.relation, name), true
-
 	}
 
 	return common.NewTypedTuple(translation.typ, subject, m.relation, name), true
