@@ -77,9 +77,11 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const newStyle = {
       symbol: {
         symbolType: 'image',
-        offset: [0, 12],
-        size: [4, 8],
-        src: '../static/exclamation-mark.png',
+        size: ['get', 'size', 'number'],
+        color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
+        rotation: ['get', 'rotation', 'number'],
+        opacity: ['get', 'opacity', 'number'],
+        src: '../../../../../../../public/img/icons/marker/plane.svg',
       },
     };
     const styleTriangle = {
