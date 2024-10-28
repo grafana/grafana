@@ -689,13 +689,11 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			permissions:  folderCreatePermission,
 		},
 		{
-			description:  "folder creation fails without permissions to create a folder",
-			input:        folderWithoutParentInput,
-			expectedCode: http.StatusForbidden,
-			// #TODO: instead of "access denied to folder", currently we are returning something like `folders.folder.grafana.app is
-			// forbidden: User "" cannot create resource "folders" in API group "folder.grafana.app" in the namespace "default": folder``
-			// expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
-			permissions: []resourcepermissions.SetResourcePermissionCommand{},
+			description:     "folder creation fails without permissions to create a folder",
+			input:           folderWithoutParentInput,
+			expectedCode:    http.StatusForbidden,
+			expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
+			permissions:     []resourcepermissions.SetResourcePermissionCommand{},
 		},
 		{
 			// #TODO This test case doesn't set up the conditions it describes. We should have created a folder with the same UID before
