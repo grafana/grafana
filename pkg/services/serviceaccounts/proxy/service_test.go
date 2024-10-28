@@ -154,7 +154,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
-				sa, err := svc.RetrieveServiceAccount(context.Background(), autoAssignOrgID, testServiceAccountId)
+				sa, err := svc.RetrieveServiceAccount(context.Background(), &sa.GetServiceAccountQuery{OrgID: autoAssignOrgID, ID: testServiceAccountId})
 				assert.NoError(t, err, tc.description)
 				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal, tc.description)
 			})

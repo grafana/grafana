@@ -51,7 +51,10 @@ func ProvideServiceAccountPermissions(
 			if err != nil {
 				return err
 			}
-			_, err = serviceAccountRetrieverService.RetrieveServiceAccount(ctx, orgID, id)
+			_, err = serviceAccountRetrieverService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{
+				OrgID: orgID,
+				ID:    id,
+			})
 			return err
 		},
 		Assignments: resourcepermissions.Assignments{

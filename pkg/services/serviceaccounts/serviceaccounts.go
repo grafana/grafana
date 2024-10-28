@@ -17,7 +17,7 @@ do not have a password.
 type Service interface {
 	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*ServiceAccountProfileDTO, error)
+	RetrieveServiceAccount(ctx context.Context, query *GetServiceAccountQuery) (*ServiceAccountProfileDTO, error)
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 	SearchOrgServiceAccounts(ctx context.Context, query *SearchOrgServiceAccountsQuery) (*SearchOrgServiceAccountsResult, error)
 	EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error

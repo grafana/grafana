@@ -51,7 +51,7 @@ var _ serviceaccounts.Service = (*ServiceAccountsProxy)(nil)
 
 func (s *ServiceAccountsProxy) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{ID: serviceAccountID, OrgID: cmd.OrgId})
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +77,7 @@ func (s *ServiceAccountsProxy) CreateServiceAccount(ctx context.Context, orgID i
 
 func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{ID: serviceAccountID, OrgID: orgID})
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func (s *ServiceAccountsProxy) DeleteServiceAccount(ctx context.Context, orgID, 
 
 func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, orgID int64, serviceAccountID int64, tokenID int64) error {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: serviceAccountID})
 		if err != nil {
 			return err
 		}
@@ -107,7 +107,7 @@ func (s *ServiceAccountsProxy) DeleteServiceAccountToken(ctx context.Context, or
 
 func (s *ServiceAccountsProxy) EnableServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64, enable bool) error {
 	if s.isProxyEnabled {
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: serviceAccountID})
 		if err != nil {
 			return err
 		}
@@ -131,8 +131,8 @@ func (s *ServiceAccountsProxy) MigrateApiKeysToServiceAccounts(ctx context.Conte
 	return s.proxiedService.MigrateApiKeysToServiceAccounts(ctx, orgID)
 }
 
-func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	sa, err := s.proxiedService.RetrieveServiceAccount(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, 
 			s.log.Error("Invalid service account name", "name", *saForm.Name)
 			return nil, extsvcaccounts.ErrInvalidName
 		}
-		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+		sa, err := s.proxiedService.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: serviceAccountID})
 		if err != nil {
 			return nil, err
 		}

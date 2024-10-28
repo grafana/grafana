@@ -17,7 +17,7 @@ import (
 // At the time of writing, this service is only used by the service accounts permissions service
 // to avoid cyclic dependency between the ServiceAccountService and the ServiceAccountPermissionsService
 type ServiceAccountRetriever interface {
-	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error)
+	RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error)
 }
 
 // ServiceAccountRetriever is the service that manages service accounts.
@@ -47,6 +47,6 @@ func ProvideService(
 	}
 }
 
-func (s *Service) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	return s.store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
+func (s *Service) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return s.store.RetrieveServiceAccount(ctx, query)
 }

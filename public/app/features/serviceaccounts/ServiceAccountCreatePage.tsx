@@ -22,11 +22,12 @@ const createServiceAccount = async (sa: ServiceAccountDTO) => {
   return result;
 };
 
-const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
-  getBackendSrv().patch(`/api/serviceaccounts/${id}`, sa);
+const updateServiceAccount = async (uid: string, sa: ServiceAccountDTO) =>
+  getBackendSrv().patch(`/api/serviceaccounts/${uid}`, sa);
 
 const defaultServiceAccount = {
   id: 0,
+  uid: '',
   orgId: contextSrv.user.orgId,
   role: contextSrv.licensedAccessControlEnabled() ? OrgRole.None : OrgRole.Viewer,
   tokens: 0,
@@ -81,6 +82,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
         const newAccount: ServiceAccountCreateApiResponse = {
           avatarUrl: response.avatarUrl,
           id: response.id,
+          uid: response.uid,
           isDisabled: response.isDisabled,
           login: response.login,
           name: response.name,
@@ -88,7 +90,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           role: response.role,
           tokens: response.tokens,
         };
-        await updateServiceAccount(response.id, data);
+        await updateServiceAccount(newAccount.uid, data);
         if (
           contextSrv.licensedAccessControlEnabled() &&
           contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
@@ -99,7 +101,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       } catch (e) {
         console.error(e); // TODO: handle error
       }
-      locationService.push(`/org/serviceaccounts/${response.id}`);
+      locationService.push(`/org/serviceaccounts/${response.uid}`);
     },
     [serviceAccount.role, pendingRoles]
   );

@@ -3,6 +3,7 @@ package database
 //nolint:goimports
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -81,6 +82,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 
 	return &serviceaccounts.ServiceAccountDTO{
 		Id:         newSA.ID,
+		UID:        newSA.UID,
 		Name:       newSA.Name,
 		Login:      newSA.Login,
 		OrgId:      newSA.OrgID,
@@ -100,7 +102,7 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(
 
 	err := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		updatedUser, err = s.RetrieveServiceAccount(ctx, orgId, serviceAccountId)
+		updatedUser, err = s.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgId, ID: serviceAccountId})
 		if err != nil {
 			return err
 		}
@@ -192,8 +194,15 @@ func (s *ServiceAccountsStoreImpl) EnableServiceAccount(ctx context.Context, org
 	})
 }
 
-// RetrieveServiceAccount returns a service account by its ID
-func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, orgId, serviceAccountId int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+// RetrieveServiceAccount returns a service account by its ID or UID
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if query.ID == 0 && query.UID == "" {
+		return nil, errors.New("either ID or UID must be provided")
+	}
+	if query.OrgID == 0 {
+		return nil, errors.New("OrgID must be provided")
+	}
+
 	serviceAccount := &serviceaccounts.ServiceAccountProfileDTO{}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -205,10 +214,17 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		whereParams := make([]any, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
-		whereParams = append(whereParams, orgId)
+		whereParams = append(whereParams, query.OrgID)
 
-		whereConditions = append(whereConditions, "org_user.user_id = ?")
-		whereParams = append(whereParams, serviceAccountId)
+		if query.ID != 0 {
+			whereConditions = append(whereConditions, "org_user.user_id = ?")
+			whereParams = append(whereParams, query.ID)
+		}
+
+		if query.UID != "" {
+			whereConditions = append(whereConditions, "user.uid = ?")
+			whereParams = append(whereParams, query.UID)
+		}
 
 		whereConditions = append(whereConditions,
 			fmt.Sprintf("%s.is_service_account = %s",
@@ -223,6 +239,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 			"org_user.role",
 			"user.email",
 			"user.name",
+			"user.uid",
 			"user.login",
 			"user.created",
 			"user.updated",
@@ -232,7 +249,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 		if ok, err := sess.Get(serviceAccount); err != nil {
 			return err
 		} else if !ok {
-			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id %d not found", serviceAccountId)
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id %d or uid %s not found", query.ID, query.UID)
 		}
 
 		return nil
@@ -377,6 +394,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 			"user.email",
 			"user.name",
 			"user.login",
+			"user.uid",
 			"user.last_seen_at",
 			"user.is_disabled",
 		)

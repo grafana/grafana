@@ -68,7 +68,6 @@ export const ServiceAccountPageUnconnected = ({
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
   const { id = '' } = useParams();
 
-  const serviceAccountId = parseInt(id, 10);
   const tokenActionsDisabled =
     serviceAccount.isDisabled ||
     serviceAccount.isExternal ||
@@ -87,12 +86,12 @@ export const ServiceAccountPageUnconnected = ({
   };
 
   useEffect(() => {
-    loadServiceAccount(serviceAccountId);
-    loadServiceAccountTokens(serviceAccountId);
+    loadServiceAccount(id);
+    loadServiceAccountTokens(id);
     if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
-  }, [loadServiceAccount, loadServiceAccountTokens, serviceAccountId]);
+  }, [loadServiceAccount, loadServiceAccountTokens, id]);
 
   const onProfileChange = (serviceAccount: ServiceAccountDTO) => {
     updateServiceAccount(serviceAccount);
@@ -107,7 +106,7 @@ export const ServiceAccountPageUnconnected = ({
   };
 
   const handleServiceAccountDelete = () => {
-    deleteServiceAccount(serviceAccount.id);
+    deleteServiceAccount(serviceAccount.uid);
   };
 
   const handleServiceAccountDisable = () => {
@@ -120,11 +119,11 @@ export const ServiceAccountPageUnconnected = ({
   };
 
   const onDeleteServiceAccountToken = (key: ApiKey) => {
-    deleteServiceAccountToken(serviceAccount?.id, key.id!);
+    deleteServiceAccountToken(serviceAccount?.uid, key.id!);
   };
 
   const onCreateToken = (token: ServiceAccountToken) => {
-    createServiceAccountToken(serviceAccount?.id, token, setNewToken);
+    createServiceAccountToken(serviceAccount?.uid, token, setNewToken);
   };
 
   const onTokenModalClose = () => {
