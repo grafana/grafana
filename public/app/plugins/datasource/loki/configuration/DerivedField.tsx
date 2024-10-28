@@ -12,29 +12,29 @@ import { DerivedFieldConfig } from '../types';
 type MatcherType = 'label' | 'regex';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  row: css`
-    display: flex;
-    align-items: baseline;
-  `,
-  nameField: css`
-    flex: 2;
-    margin-right: ${theme.spacing(0.5)};
-  `,
-  regexField: css`
-    flex: 3;
-    margin-right: ${theme.spacing(0.5)};
-  `,
-  urlField: css`
-    flex: 1;
-    margin-right: ${theme.spacing(0.5)};
-  `,
-  urlDisplayLabelField: css`
-    flex: 1;
-  `,
-  internalLink: css`
-    margin-right: ${theme.spacing(1)};
-  `,
-  dataSource: css``,
+  row: css({
+    display: 'flex',
+    alignItems: 'baseline',
+  }),
+  nameField: css({
+    flex: 2,
+    marginRight: theme.spacing(0.5),
+  }),
+  regexField: css({
+    flex: 3,
+    marginRight: theme.spacing(0.5),
+  }),
+  urlField: css({
+    flex: 1,
+    marginRight: theme.spacing(0.5),
+  }),
+  urlDisplayLabelField: css({
+    flex: 1,
+  }),
+  internalLink: css({
+    marginRight: theme.spacing(1),
+  }),
+  dataSource: css({}),
   nameMatcherField: css({
     width: theme.spacing(20),
     marginRight: theme.spacing(0.5),
