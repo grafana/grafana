@@ -70,7 +70,7 @@ func ProvideUnifiedStorageGrpcService(
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, &grpc.Authenticator{})
+	authn, err := grpcutils.NewGrpcAuthenticatorWithFallback(cfg, prometheus.DefaultRegisterer, tracing, &grpc.Authenticator{})
 	if err != nil {
 		return nil, err
 	}
