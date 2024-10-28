@@ -14,7 +14,7 @@ export const Pages = {
     skip: 'data-testid Skip change password button',
   },
   PasswordlessLogin: {
-    url: '/login/passwordless',
+    url: '/login/passwordless/authenticate',
     email: 'data-testid Email input field',
     submit: 'data-testid PasswordlessLogin button',
   },

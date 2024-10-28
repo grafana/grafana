@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -145,8 +146,8 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 
 	cacheKey := fmt.Sprintf(passwordlessKeyPrefix, email)
 	_, err = c.cache.Get(ctx, cacheKey)
-	if err != nil && err != remotecache.ErrCacheItemNotFound {
-		return "", err
+	if err != nil && !errors.Is(err, remotecache.ErrCacheItemNotFound) {
+		return "", errPasswordlessClientInternal.Errorf("cache error: %s", err)
 	}
 
 	// if code already sent to email, return error
@@ -155,14 +156,14 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 	}
 
 	existingUser, err = c.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: email})
-	if err != nil && err != user.ErrUserNotFound {
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		return "", errPasswordlessClientInternal.Errorf("error retreiving user by email: %w - email: %s", err, email)
 	}
 
 	if existingUser == nil {
 		tempUsers, err = c.tempUserService.GetTempUsersQuery(ctx, &tempuser.GetTempUsersQuery{Email: email, Status: tempuser.TmpUserInvitePending})
 
-		if err != nil {
+		if err != nil && !errors.Is(err, tempuser.ErrTempUserNotFound) {
 			return "", err
 		}
 		if tempUsers == nil {
@@ -229,7 +230,10 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 	}
 
 	cacheKey = fmt.Sprintf(passwordlessKeyPrefix, code)
-	c.cache.Set(ctx, cacheKey, valueBytes, c.cfg.PasswordlessCodeExpiration)
+	err = c.cache.Set(ctx, cacheKey, valueBytes, c.cfg.PasswordlessCodeExpiration)
+	if err != nil {
+		return "", errPasswordlessClientInternal.Errorf("cache error: %s", err)
+	}
 
 	// second cache entry to lookup code by email
 	emailValue := &PasswordlessCacheEmailEntry{
@@ -242,7 +246,10 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 	}
 
 	cacheKey = fmt.Sprintf(passwordlessKeyPrefix, email)
-	c.cache.Set(ctx, cacheKey, valueBytes, c.cfg.PasswordlessCodeExpiration)
+	err = c.cache.Set(ctx, cacheKey, valueBytes, c.cfg.PasswordlessCodeExpiration)
+	if err != nil {
+		return "", errPasswordlessClientInternal.Errorf("cache error: %s", err)
+	}
 
 	return code, nil
 }
@@ -258,7 +265,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 	cacheKey := fmt.Sprintf(passwordlessKeyPrefix, code)
 	jsonData, err := c.cache.Get(ctx, cacheKey)
 	if err != nil {
-		return nil, err
+		return nil, errPasswordlessClientInternal.Errorf("cache error: %s", err)
 	}
 
 	var codeEntry PasswordlessCacheCodeEntry
@@ -284,7 +291,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 	}
 
 	usr, err := c.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: codeEntry.Email})
-	if err != nil && err != user.ErrUserNotFound {
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		return nil, errPasswordlessClientInternal.Errorf("error retreiving user by email: %w - email: %s", err, codeEntry.Email)
 	}
 

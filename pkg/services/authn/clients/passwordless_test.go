@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempusertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -21,11 +22,12 @@ import (
 
 func TestPasswordless_StartPasswordless(t *testing.T) {
 	type testCase struct {
-		desc        string
-		email       string
-		findUser    bool
-		blockLogin  bool
-		expectedErr error
+		desc         string
+		email        string
+		findUser     bool
+		findTempUser bool
+		blockLogin   bool
+		expectedErr  error
 	}
 
 	tests := []testCase{
@@ -36,11 +38,19 @@ func TestPasswordless_StartPasswordless(t *testing.T) {
 			blockLogin: false,
 		},
 		{
-			desc:        "should fail if user is not found",
-			email:       "user@domain.com",
-			findUser:    false,
-			blockLogin:  false,
-			expectedErr: errPasswordlessClientInvalidEmail.Errorf("no user or invite found with email user@domain.com"),
+			desc:         "should succeed if temp user is found",
+			email:        "user@domain.com",
+			findUser:     false,
+			findTempUser: true,
+			blockLogin:   false,
+		},
+		{
+			desc:         "should fail if user or temp user is not found",
+			email:        "user@domain.com",
+			findUser:     false,
+			findTempUser: false,
+			blockLogin:   false,
+			expectedErr:  errPasswordlessClientInvalidEmail.Errorf("no user or invite found with email user@domain.com"),
 		},
 	}
 
@@ -52,12 +62,26 @@ func TestPasswordless_StartPasswordless(t *testing.T) {
 			}
 			las := &loginattempttest.FakeLoginAttemptService{ExpectedValid: !tt.blockLogin}
 			tus := &tempusertest.FakeTempUserService{}
+			tus.GetTempUsersQueryFN = func(ctx context.Context, query *tempuser.GetTempUsersQuery) ([]*tempuser.TempUserDTO, error) {
+				return []*tempuser.TempUserDTO{{
+					ID:        1,
+					Email:     "user@domain.com",
+					Status:    tempuser.TmpUserInvitePending,
+					EmailSent: true,
+				}}, nil
+			}
 			ns := notifications.MockNotificationService()
 			cache := remotecache.NewFakeCacheStorage()
 
 			if !tt.findUser {
 				userService.ExpectedUser = nil
 				userService.ExpectedError = user.ErrUserNotFound
+			}
+
+			if !tt.findTempUser {
+				tus.GetTempUsersQueryFN = func(ctx context.Context, query *tempuser.GetTempUsersQuery) ([]*tempuser.TempUserDTO, error) {
+					return nil, tempuser.ErrTempUserNotFound
+				}
 			}
 
 			c := ProvidePasswordless(setting.NewCfg(), las, userService, tus, ns, cache)
