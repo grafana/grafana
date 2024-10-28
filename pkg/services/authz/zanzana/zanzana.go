@@ -110,16 +110,25 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 		return nil, false
 	}
 
-	relation, ok := translation.actionMapping[action]
+	m, ok := translation.mapping[action]
 	if !ok {
 		return nil, false
 	}
 
 	if translation.typ == TypeResource {
-		return common.NewResourceTuple(subject, relation, translation.group, translation.resource, name), true
+		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, name), true
 	}
 
-	return common.NewTypedTuple(translation.typ, subject, relation, name), true
+	if translation.typ == TypeFolder2 {
+		if m.group != "" && m.resource != "" {
+			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, name), true
+		}
+
+		return common.NewFolderTuple(subject, m.relation, name), true
+
+	}
+
+	return common.NewTypedTuple(translation.typ, subject, m.relation, name), true
 }
 
 func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.TupleKey, bool) {
