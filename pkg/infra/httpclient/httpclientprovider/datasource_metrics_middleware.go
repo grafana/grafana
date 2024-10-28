@@ -12,6 +12,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+const kb = 1024
+const mb = kb * kb
+const gb = mb * kb
+
 var (
 	datasourceRequestCounter = promauto.NewCounterVec(
 		prometheus.CounterOpts{
@@ -33,10 +37,12 @@ var (
 
 	datasourceResponseHistogram = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Namespace:                       "grafana",
-			Name:                            "datasource_response_size_bytes",
-			Help:                            "histogram of data source response sizes returned to Grafana",
-			Buckets:                         []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
+			Namespace: "grafana",
+			Name:      "datasource_response_size_bytes",
+			Help:      "histogram of data source response sizes returned to Grafana",
+			Buckets: []float64{128, 256, 512, 1 * kb, 2 * kb, 4 * kb, 8 * kb, 16 * kb, 32 * kb, 64 * kb, 128 * kb, 256 * kb, 512 * kb, 1 * mb,
+				2 * mb, 4 * mb, 8 * mb, 16 * mb, 32 * mb, 64 * mb, 128 * mb, 256 * mb, 512 * mb, 1 * gb,
+				2 * gb, 4 * gb, 8 * gb},
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  100,
 			NativeHistogramMinResetDuration: time.Hour,
