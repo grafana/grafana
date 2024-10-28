@@ -664,6 +664,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 	type testCase struct {
 		description            string
 		expectedCode           int
+		expectedMessage        string
 		expectedFolderSvcError error
 		permissions            []resourcepermissions.SetResourcePermissionCommand
 		input                  string
@@ -691,12 +692,16 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:  "folder creation fails without permissions to create a folder",
 			input:        folderWithoutParentInput,
 			expectedCode: http.StatusForbidden,
-			permissions:  []resourcepermissions.SetResourcePermissionCommand{},
+			// #TODO: instead of "access denied to folder", currently we are returning something like `folders.folder.grafana.app is
+			// forbidden: User "" cannot create resource "folders" in API group "folder.grafana.app" in the namespace "default": folder``
+			// expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
+			permissions: []resourcepermissions.SetResourcePermissionCommand{},
 		},
 		{
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutUID,
 			expectedCode:           http.StatusConflict,
+			expectedMessage:        dashboards.ErrFolderSameNameExists.Error(),
 			expectedFolderSvcError: dashboards.ErrFolderWithSameUIDExists,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
@@ -705,6 +710,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithTitleEmpty,
 			expectedCode:           http.StatusBadRequest,
+			expectedMessage:        dashboards.ErrFolderTitleEmpty.Error(),
 			expectedFolderSvcError: dashboards.ErrFolderTitleEmpty,
 			permissions:            folderCreatePermission,
 		},
@@ -712,6 +718,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithInvalidUid,
 			expectedCode:           http.StatusBadRequest,
+			expectedMessage:        dashboards.ErrFolderTitleEmpty.Error(),
 			expectedFolderSvcError: dashboards.ErrDashboardInvalidUid,
 			permissions:            folderCreatePermission,
 		},
@@ -719,6 +726,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithUIDTooLong,
 			expectedCode:           http.StatusBadRequest,
+			expectedMessage:        dashboards.ErrFolderTitleEmpty.Error(),
 			expectedFolderSvcError: dashboards.ErrDashboardUidTooLong,
 			permissions:            folderCreatePermission,
 		},
@@ -726,6 +734,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithSameName,
 			expectedCode:           http.StatusConflict,
+			expectedMessage:        dashboards.ErrFolderSameNameExists.Error(),
 			expectedFolderSvcError: dashboards.ErrFolderSameNameExists,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
@@ -734,6 +743,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusPreconditionFailed,
+			expectedMessage:        dashboards.ErrFolderVersionMismatch.Error(),
 			expectedFolderSvcError: dashboards.ErrFolderVersionMismatch,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
@@ -792,7 +802,12 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			require.NotNil(t, resp)
 			require.Equal(t, tc.expectedCode, resp.StatusCode)
 
-			folder := dtos.Folder{}
+			type folderWithMessage struct {
+				dtos.Folder
+				Message string `json:"message"`
+			}
+
+			folder := folderWithMessage{}
 			err = json.NewDecoder(resp.Body).Decode(&folder)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
@@ -800,6 +815,10 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			if tc.expectedCode == http.StatusOK {
 				require.Equal(t, "uid", folder.UID)
 				require.Equal(t, "Folder", folder.Title)
+			}
+
+			if tc.expectedMessage != "" {
+				require.Equal(t, tc.expectedMessage, folder.Message)
 			}
 		})
 	}
