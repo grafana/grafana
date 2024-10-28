@@ -147,10 +147,20 @@ Query expressions are different for each data source. For more information, refe
 {{< /admonition >}}
 
 1. [Enter general options](#enter-general-options).
-1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
-1. In the **Refresh** list, select when the variable should update options.
-   - **On Dashboard Load:** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
-   - **On Time Range Change:** Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
+1. Under the **Query options** section of the page, select a target data source in the **Data source** drop-down list.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+   For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+
+1. In the **Query type** drop-down list, select one of the following options:
+
+   - **Label names**
+   - **Label values**
+   - **Metrics**
+   - **Query result**
+   - **Series query**
+   - **Classic query**
+
 1. In the **Query** field, enter a query.
 
    - The query field varies according to your data source. Some data sources have custom query editors.
@@ -159,9 +169,18 @@ Query expressions are different for each data source. For more information, refe
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 
 1. (Optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex](#filter-variables-with-regex).
-1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
-1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
-1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. In the **Sort** drop-down list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
+1. Under **Refresh**, select when the variable should update options:
+
+   - **On dashboard load** - Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
+   - **On time range change** - Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
+
+1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
+
+   - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Include All option** - Enables an option to include all variables.
+
+1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
@@ -172,9 +191,16 @@ Use a _custom_ variable for a value that does not change, such as a number or a 
 For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they do not change, you might use them in [chained variables](#chained-variables) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Values separated by comma** list, enter the values for this variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
-1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
-1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. Under the **Custom options** section of the page, in the **Values separated by comma** field, enter the values for this variable in a comma-separated list.
+
+   You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
+
+1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
+
+   - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Include All option** - Enables an option to include all variables.
+
+1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
@@ -185,8 +211,10 @@ _Text box_ variables display a free text input field with an optional default va
 For more information about cardinality, refer to [What are cardinality spikes and why do they matter?](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/)
 
 1. [Enter general options](#enter-general-options).
-1. (Optional) In the **Default value** field, select the default value for the variable. If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
-1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. (Optional) Under the **Text options** section of the page, in the **Default value** field, enter the default value for the variable.
+
+   If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
+
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
@@ -199,8 +227,10 @@ Constant variables are _not_ flexible. Each constant variable only holds one val
 Constant variables are useful when you have complex values that you need to include in queries but don't want to retype in every query. For example, if you had a server path called `i-0b6a61efe2ab843gg`, then you could replace it with a variable called `$path_gg`.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](ref:raw-format).
-1. In **Preview of values**, Grafana displays the current variable value. Review it to ensure it matches what you expect.
+1. Under the **Constant options** section of the page, in the **Value** field, enter the variable value.
+
+   You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](ref:raw-format).
+
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
@@ -209,13 +239,17 @@ Constant variables are useful when you have complex values that you need to incl
 _Data source_ variables enable you to quickly change the data source for an entire dashboard. They are useful if you have multiple instances of a data source, perhaps in different environments.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Type** list, select the target data source for the variable.
+1. Under the **Data source options** section of the page, in the **Type** drop-down list, select the target data source for the variable.
+1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list.
 
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
+   Leave this field empty to display all instances.
 
-1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
-1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
-1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
+
+   - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Include All option** - Enables an option to include all variables.
+
+1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
@@ -226,11 +260,18 @@ Use an _interval_ variable to represents time spans such as `1m`,`1h`, `1d`. You
 You can use an interval variable as a parameter to group by time (for InfluxDB), date histogram interval (for Elasticsearch), or as a summarize function parameter (for Graphite).
 
 1. [Enter general options](#enter-general-options).
-1. In the **Values** field, enter the time range intervals that you want to appear in the variable drop-down list. The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`. You can also accept or edit the default values: `1m,10m,30m,1h,6h,12h,1d,7d,14d,30d`.
-1. (Optional) Turn on the **Auto Option** if you want to add the `auto` option to the list. This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span. If you turn it on, then two more options appear:
-   - **Step count -** Select the number of times the current time range will be divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps.
-   - **Min Interval -** The minimum threshold below which the step count intervals will not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
-1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. Under the **Interval options** section, in the **Values** field, enter the time range intervals that you want to appear in the variable drop-down list.
+
+   The following time units are supported: `s (seconds)`, `m (minutes)`, `h (hours)`, `d (days)`, `w (weeks)`, `M (months)`, and `y (years)`. You can also accept or edit the default values: `1m,10m,30m,1h,6h,12h,1d,7d,14d,30d`.
+
+1. (Optional) Select on the **Auto option** checkbox if you want to add the `auto` option to the list.
+
+   This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span. If you turn it on, then two more options appear:
+
+   - **Step count** - Select the number of times the current time range will be divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps.
+   - **Min interval** - The minimum threshold below which the step count intervals will not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
+
+1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
 
