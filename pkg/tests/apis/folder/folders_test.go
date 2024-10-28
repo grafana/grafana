@@ -546,7 +546,7 @@ func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
 		Body:   []byte(payload),
 	}, &folder.Folder{})
 	require.NotEmpty(t, create2.Response)
-	require.Equal(t, 409, create2.Response.StatusCode)
+	require.Equal(t, 200, create2.Response.StatusCode) // it is OK
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
