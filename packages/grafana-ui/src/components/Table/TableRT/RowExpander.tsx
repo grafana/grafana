@@ -1,9 +1,7 @@
 import { Icon } from '../../Icon/Icon';
-
 import { GrafanaTableRow } from '../types';
 
 import { TableStyles } from './styles';
-
 
 export interface Props {
   row: GrafanaTableRow;
