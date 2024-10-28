@@ -1,5 +1,4 @@
 import 'react-data-grid/lib/styles.css';
-import { css } from '@linaria/core';
 import React, { useMemo, useState, useLayoutEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn } from 'react-data-grid';
 import { Cell } from 'react-table';
@@ -14,6 +13,7 @@ import { TableCellDisplayMode, TableNGProps } from '../types';
 import { getCellColors } from '../utils';
 
 import { TableCellNG } from './Cells/TableCellNG';
+import { styles } from './TableNG.styles';
 
 const DEFAULT_CELL_PADDING = 6;
 
@@ -179,7 +179,7 @@ export function TableNG(props: TableNGProps) {
           onClick={() => {
             setIsInspecting(true);
           }}
-          className={menuItem}
+          className={styles.menuItem}
         />
       </>
     );
@@ -260,8 +260,3 @@ function getComparator(sortColumnType: string): Comparator {
       return (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
   }
 }
-
-// styles
-const menuItem = css`
-  max-width: 200px;
-`;

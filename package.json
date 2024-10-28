@@ -303,6 +303,7 @@
     "@visx/tooltip": "3.3.0",
     "@welldone-software/why-did-you-render": "8.0.3",
     "@wyw-in-js/babel-preset": "^0.5.4",
+    "@wyw-in-js/webpack-loader": "^0.5.4",
     "angular": "1.8.3",
     "angular-bindonce": "0.3.1",
     "angular-route": "1.8.3",

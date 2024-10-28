@@ -11995,6 +11995,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wyw-in-js/webpack-loader@npm:^0.5.4":
+  version: 0.5.4
+  resolution: "@wyw-in-js/webpack-loader@npm:0.5.4"
+  dependencies:
+    "@wyw-in-js/shared": "npm:0.5.4"
+    "@wyw-in-js/transform": "npm:0.5.4"
+  peerDependencies:
+    webpack: ^5.76.0
+  checksum: 10/c41f8e1f7663bb7adb4c8ec3acadce9339bbe75a42a87b08d888c02cac8fcb1b95e9e6887878d7a0847ffc32090d7f4261a2a78ece784b175ef8e20abd2a1035
+  languageName: node
+  linkType: hard
+
 "@xobotyi/scrollbar-width@npm:^1.9.5":
   version: 1.9.5
   resolution: "@xobotyi/scrollbar-width@npm:1.9.5"
@@ -19449,6 +19461,7 @@ __metadata:
     "@visx/tooltip": "npm:3.3.0"
     "@welldone-software/why-did-you-render": "npm:8.0.3"
     "@wyw-in-js/babel-preset": "npm:^0.5.4"
+    "@wyw-in-js/webpack-loader": "npm:^0.5.4"
     angular: "npm:1.8.3"
     angular-bindonce: "npm:0.3.1"
     angular-route: "npm:1.8.3"

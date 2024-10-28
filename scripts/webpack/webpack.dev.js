@@ -72,6 +72,10 @@ module.exports = (env = {}) => {
             options: esbuildOptions,
           },
         },
+        {
+          test: /\.styles\.ts$/,
+          use: [{ loader: '@wyw-in-js/webpack-loader' }],
+        },
         require('./sass.rule.js')({
           sourceMap: false,
           preserveUrl: false,

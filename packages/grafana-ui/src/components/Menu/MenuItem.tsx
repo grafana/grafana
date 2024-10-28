@@ -150,6 +150,7 @@ export const MenuItem = React.memo(
       <ItemElement
         target={target}
         className={itemStyle}
+        data-test="hello :)"
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         href={url}
         onClick={(event) => {
