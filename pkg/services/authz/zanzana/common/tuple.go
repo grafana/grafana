@@ -74,9 +74,13 @@ func NewNamespaceResourceTuple(subject, relation, group, resource string) *openf
 }
 
 func NewFolderTuple(subject, relation, name string) *openfgav1.TupleKey {
+	return NewTypedTuple("folder2", subject, relation, name)
+}
+
+func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
 		Relation: relation,
-		Object:   NewTypedIdent("folder2", name),
+		Object:   NewTypedIdent(typ, name),
 	}
 }

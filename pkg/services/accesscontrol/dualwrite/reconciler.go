@@ -72,6 +72,12 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.S
 				zanzanaCollector(client, []string{zanzana.RelationParent}),
 				client,
 			),
+			newResourceReconciler(
+				"managed permissison",
+				managedPermissionsCollector2(store),
+				zanzanaCollector(client, zanzana.ResourceRelations),
+				client,
+			),
 		},
 	}
 }
@@ -144,15 +150,18 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	}
 
 	// in tests we can skip creating a lock
-	if r.lock == nil {
-		run(ctx)
-		return
-	}
+	/*
+		if r.lock == nil {
+			run(ctx)
+			return
+		}
 
-	// We ignore the error for now
-	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
-		run(ctx)
-	})
+		// We ignore the error for now
+		_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+			run(ctx)
+		})
+	*/
+	run(ctx)
 }
 
 // managedPermissionsCollector collects managed permissions into provided tuple map.

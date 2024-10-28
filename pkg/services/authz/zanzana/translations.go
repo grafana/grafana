@@ -1,5 +1,10 @@
 package zanzana
 
+import (
+	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+)
+
 type actionKindTranslation struct {
 	objectType   string
 	orgScoped    bool
@@ -101,4 +106,40 @@ var basicRolesTranslations = map[string]string{
 	RoleEditor:       "basic_editor",
 	RoleViewer:       "basic_viewer",
 	RoleNone:         "basic_none",
+}
+
+type resourceTranslation struct {
+	typ           string
+	group         string
+	resource      string
+	actionMapping map[string]string
+}
+
+var resourceTranslations = map[string]resourceTranslation{
+	KindFolders: {
+		typ:      TypeFolder2,
+		group:    folderalpha1.FolderResourceInfo.GroupResource().Group,
+		resource: folderalpha1.FolderResourceInfo.GroupResource().Resource,
+		actionMapping: map[string]string{
+			"folders:read":              RelationRead,
+			"folders:write":             RelationWrite,
+			"folders:create":            RelationCreate,
+			"folders:delete":            RelationDelete,
+			"folders.permissions:read":  RelationPermissionsRead,
+			"folders.permissions:write": RelationPermissionsWrite,
+		},
+	},
+	KindDashboards: {
+		typ:      TypeResource,
+		group:    dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
+		resource: dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+		actionMapping: map[string]string{
+			"dashboards:read":              RelationRead,
+			"dashboards:write":             RelationWrite,
+			"dashboards:create":            RelationCreate,
+			"dashboards:delete":            RelationDelete,
+			"dashboards.permissions:read":  RelationPermissionsRead,
+			"dashboards.permissions:write": RelationPermissionsWrite,
+		},
+	},
 }
