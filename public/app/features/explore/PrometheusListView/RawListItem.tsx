@@ -24,54 +24,50 @@ export const rawListItemColumnWidth = '80px';
 export const rawListPaddingToHoldSpaceForCopyIcon = '25px';
 
 const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number, isExpandedView: boolean) => ({
-  rowWrapper: css`
-    border-bottom: 1px solid ${theme.colors.border.medium};
-    display: flex;
-    position: relative;
-    padding-left: 22px;
-    ${!isExpandedView ? 'align-items: center;' : ''}
-    ${!isExpandedView ? 'height: 100%;' : ''}
-  `,
-  copyToClipboardWrapper: css`
-    position: absolute;
-    left: 0;
-    ${!isExpandedView ? 'bottom: 0;' : ''}
-    ${isExpandedView ? 'top: 4px;' : 'top: 0;'}
-    margin: auto;
-    z-index: 1;
-    height: 16px;
-    width: 16px;
-  `,
-  rowLabelWrapWrap: css`
-    position: relative;
-    width: calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${rawListPaddingToHoldSpaceForCopyIcon});
-  `,
-  rowLabelWrap: css`
-    white-space: nowrap;
-    overflow-x: auto;
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-    padding-right: ${rawListExtraSpaceAtEndOfLine};
+  rowWrapper: css({
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
+    display: 'flex',
+    position: 'relative',
+    paddingLeft: '22px',
+    alignItems: !isExpandedView ? 'center' : '',
+    height: !isExpandedView ? '100%' : '',
+  }),
+  copyToClipboardWrapper: css({
+    position: 'absolute',
+    left: 0,
+    bottom: !isExpandedView ? '0' : '',
+    top: isExpandedView ? '4px' : '0',
+    margin: 'auto',
+    zIndex: 1,
+    height: '16px',
+    width: '16px',
+  }),
+  rowLabelWrapWrap: css({
+    position: 'relative',
+    width: `calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${rawListPaddingToHoldSpaceForCopyIcon})`,
+  }),
+  rowLabelWrap: css({
+    whiteSpace: 'nowrap',
+    overflowX: 'auto',
+    MsOverflowStyle: 'none' /* IE and Edge */,
+    scrollbarWidth: 'none' /* Firefox */,
+    paddingRight: rawListExtraSpaceAtEndOfLine,
 
-    &::-webkit-scrollbar {
-      display: none; /* Chrome, Safari and Opera */
-    }
+    '&::-webkit-scrollbar': {
+      display: 'none' /* Chrome, Safari and Opera */,
+    },
 
-    &:after {
-      pointer-events: none;
-      content: '';
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      left: 0;
-      top: 0;
-      background: linear-gradient(
-        to right,
-        transparent calc(100% - ${rawListExtraSpaceAtEndOfLine}),
-        ${theme.colors.background.primary}
-      );
-    }
-  `,
+    '&:after': {
+      pointerEvents: 'none',
+      content: "''",
+      width: '100%',
+      height: '100%',
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      background: `linear-gradient(to right, transparent calc(100% - ${rawListExtraSpaceAtEndOfLine}), ${theme.colors.background.primary})`,
+    },
+  }),
 });
 
 function getQueryValues(allLabels: Pick<instantQueryRawVirtualizedListData, 'Value' | string | number>) {

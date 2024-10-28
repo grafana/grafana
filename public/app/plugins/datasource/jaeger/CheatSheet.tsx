@@ -48,10 +48,10 @@ export default function CheatSheet() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  anchorTag: css`
-    color: ${theme.colors.text.link};
-  `,
-  unorderedList: css`
-    list-style-type: none;
-  `,
+  anchorTag: css({
+    color: theme.colors.text.link,
+  }),
+  unorderedList: css({
+    listStyleType: 'none',
+  }),
 });

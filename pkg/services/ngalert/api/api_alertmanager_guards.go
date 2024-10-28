@@ -38,24 +38,30 @@ func (srv AlertmanagerSrv) k8sApiServiceGuard(currentConfig apimodels.GettableUs
 	// - Since the UIDs stored in the database for the purposes of per-receiver RBAC are generated based on the receiver
 	//   name, we would need to ensure continuity of permissions when a receiver is renamed. This would, preferably,
 	//   require detecting renames and updating the permissions UID in the database.
-	// - It would need to determine newly created and deleted receivers so it can populate per-receiver access control defaults.
+	// - Editors don't have permission to manage all receiver permissions by default, only admin users do. This means that
+	//   certain combined operations (e.g. swapping the name of receivers) would require careful handling to ensure
+	//   that the correct permissions are maintained, and considering receivers don't have a unique identifier outside
+	//   their name, this is non-trivial.
 
 	// Neither of these are insurmountable, but considering this endpoint will be removed once FlagAlertingApiServer
 	// becomes GA, the complexity may not be worthwhile. To that end, for now we reject any request that attempts to
-	// modify receivers.
+	// update receivers, while allowing operations that add or remove receivers.
 	delta, err := calculateReceiversDelta(currentConfig.AlertmanagerConfig.Receivers, newConfig.AlertmanagerConfig.Receivers)
 	if err != nil {
 		return err
 	}
-	if !delta.IsEmpty() {
-		return fmt.Errorf("cannot modify receivers using this API while per-receiver RBAC is enabled; either disable the `alertingApiServer` feature flag or use an API that supports per-receiver RBAC (e.g. provisioning or receivers API)")
+	if len(delta.Updated) > 0 {
+		return fmt.Errorf("cannot update receivers using this API while per-receiver RBAC is enabled; either disable the `alertingApiServer` feature flag or use an API that supports per-receiver RBAC (e.g. provisioning or receivers API)")
 	}
 	return nil
 }
 
 func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
 	reporter := cmputil.DiffReporter{}
-	options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{})}
+	options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{}), cmp.Transformer("", func(regexp amConfig.Regexp) any {
+		r, _ := regexp.MarshalYAML()
+		return r
+	})}
 	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, options...)
 	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != apimodels.Provenance(ngmodels.ProvenanceNone) {
 		return fmt.Errorf("policies were provisioned and cannot be changed through the UI")
