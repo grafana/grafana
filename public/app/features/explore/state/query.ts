@@ -1349,44 +1349,21 @@ export const processQueryResponse = (
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
-  // Avoid the packet's responses overriding each other data frames
-  const visibleQueriesCount = state.queries.filter((q) => !q.hide).length;
-  const haveNodeGraphQuery = !!state.queries.find((q) => !q.hide && q.scenarioId === 'node_graph');
-  const isNodeGraphResponse = nodeGraphFrames.length > 0;
-  let mergedNodeGraphFrames = nodeGraphFrames;
-  let mergedGraphResult = state.graphResult ? [...state.graphResult] : null;
-  let mergedTableResult = state.tableResult ? [...state.tableResult] : null;
-  if (visibleQueriesCount === 1) {
-    if (isNodeGraphResponse) {
-      mergedNodeGraphFrames = nodeGraphFrames;
-    }
-    mergedGraphResult = graphResult;
-    mergedTableResult = tableResult;
-  } else if (visibleQueriesCount > 1 && !isNodeGraphResponse) {
-    mergedGraphResult = graphResult;
-    mergedTableResult = tableResult;
-    mergedNodeGraphFrames = [...state.queryResponse.nodeGraphFrames];
-  }
-  if (!haveNodeGraphQuery) {
-    mergedNodeGraphFrames = [];
-  }
-
-  debugger;
   return {
     ...state,
-    queryResponse: { ...response, nodeGraphFrames: mergedNodeGraphFrames },
-    graphResult: mergedGraphResult,
-    tableResult: mergedTableResult,
+    queryResponse: response,
+    graphResult: graphResult,
+    tableResult: tableResult,
     rawPrometheusResult,
     logsResult:
       state.isLive && logsResult
         ? { ...logsResult, rows: filterLogRowsByIndex(state.clearedAtIndex, logsResult.rows) }
         : logsResult,
     showLogs: !!logsResult,
-    showMetrics: !!mergedGraphResult,
-    showTable: !!mergedTableResult?.length,
+    showMetrics: !!graphResult,
+    showTable: !!tableResult?.length,
     showTrace: !!traceFrames.length,
-    showNodeGraph: !!mergedNodeGraphFrames.length,
+    showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
     showCustom: !!customFrames?.length,
