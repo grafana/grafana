@@ -9,13 +9,7 @@ import {
   PageLayoutType,
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import {
-  SceneComponentProps,
-  sceneGraph,
-  SceneObjectBase,
-  SceneObjectState,
-  UrlSyncContextProvider,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, UrlSyncContextProvider } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui/';
 import { Page } from 'app/core/components/Page/Page';
 import { getClosestScopesFacade, ScopesFacade, ScopesSelector } from 'app/features/scopes';
@@ -138,7 +132,7 @@ export function getDataTrailsApp() {
               const trail = facade.parent && 'trail' in facade.parent.state ? facade.parent.state.trail : undefined;
 
               if (trail instanceof DataTrail) {
-                sceneGraph.getTimeRange(trail).onRefresh();
+                trail.checkDataSourceForOTelResources();
               }
             },
           }),
