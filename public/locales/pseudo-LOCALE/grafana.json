@@ -140,6 +140,7 @@
     "contact-point": "Cőŉŧäčŧ Pőįŉŧ",
     "contact-points": {
       "create": "Cřęäŧę čőŉŧäčŧ pőįŉŧ",
+      "custom-template-value": "Cūşŧőm ŧęmpľäŧę väľūę",
       "delete-reasons": {
         "heading": "Cőŉŧäčŧ pőįŉŧ čäŉŉőŧ þę đęľęŧęđ ƒőř ŧĥę ƒőľľőŵįŉģ řęäşőŉş:",
         "no-permissions": "Ÿőū đő ŉőŧ ĥävę ŧĥę řęqūįřęđ pęřmįşşįőŉ ŧő đęľęŧę ŧĥįş čőŉŧäčŧ pőįŉŧ",
@@ -1552,6 +1553,7 @@
       "title": "Ŀęŧ ūş ĥęľp yőū mįģřäŧę ŧő ŧĥįş şŧäčĸ"
     },
     "migrated-counts": {
+      "alert_rules": "äľęřŧ řūľęş",
       "contact_points": "čőŉŧäčŧ pőįŉŧş",
       "dashboards": "đäşĥþőäřđş",
       "datasources": "đäŧä şőūřčęş",
@@ -1652,6 +1654,7 @@
       "unknown-datasource-type": "Ůŉĸŉőŵŉ đäŧä şőūřčę"
     },
     "resource-type": {
+      "alert_rule": "Åľęřŧ Ŗūľę",
       "contact_point": "Cőŉŧäčŧ Pőįŉŧ",
       "dashboard": "Đäşĥþőäřđ",
       "datasource": "Đäŧä şőūřčę",

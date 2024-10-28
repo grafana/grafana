@@ -120,12 +120,12 @@ const getTooltips = () => {
 
 function getStyle() {
   return {
-    list: css`
-      margin-left: 20px;
-    `,
-    removeIcon: css`
-      margin: 0 0 0 4px;
-      align-items: center;
-    `,
+    list: css({
+      marginLeft: '20px',
+    }),
+    removeIcon: css({
+      margin: '0 0 0 4px',
+      alignItems: 'center',
+    }),
   };
 }
